@@ -235,6 +235,10 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const [deviceClass, setDeviceClass] = useState('');
   const [reviewPanel, setReviewPanel] = useState('');
   const [predicateK, setPredicateK] = useState('');
+  /* The predicate's trade name. The official eSTAR prints it beside the
+     submission number, both from `predicate_devices[0]`, so the pair travels
+     together — the server refuses one without the other. */
+  const [predicateName, setPredicateName] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
   const [deviceFlags, setDeviceFlags] = useState<DeviceFlagId[]>([]);
   const toggleFlag = (id: DeviceFlagId) =>
@@ -325,7 +329,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
         ? {
             deviceClassification: {
               productCode, regulationNumber, deviceClass,
-              reviewPanel, predicateK, intendedUse,
+              reviewPanel, predicateK, predicateName, intendedUse,
               flags: deviceFlags,
             },
           }
@@ -678,7 +682,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                   </label>
 
                   <label className="npw-field">
-                    <span className="npw-field-l">Predicate device</span>
+                    <span className="npw-field-l">Predicate 510(k) number</span>
                     <input
                       className="c2c-input"
                       value={predicateK}
@@ -688,6 +692,22 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     />
                     <span className="npw-field-help" id="npw-pk-help">
                       The cleared device this one is substantially equivalent to.
+                    </span>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Predicate device name</span>
+                    <input
+                      className="c2c-input"
+                      value={predicateName}
+                      onChange={e => setPredicateName(e.target.value)}
+                      placeholder="the predicate’s trade name, as it is marketed"
+                      aria-describedby="npw-pn-help"
+                    />
+                    <span className="npw-field-help" id="npw-pn-help">
+                      The eSTAR prints this beside the number, so give both or
+                      neither — the record does not hold half a claim of
+                      substantial equivalence.
                     </span>
                   </label>
                 </div>
@@ -830,7 +850,13 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     </div>
                     <div className="npw-review-row">
                       <dt>Predicate</dt>
-                      <dd>{predicateK || 'Not recorded'}</dd>
+                      <dd>
+                        {predicateK && predicateName
+                          ? `${predicateK} — ${predicateName}`
+                          : predicateK || predicateName
+                            ? 'Not recorded — the number and the trade name are filed together'
+                            : 'Not recorded'}
+                      </dd>
                     </div>
                     {deviceFlags.length > 0 && (
                       <div className="npw-review-row">

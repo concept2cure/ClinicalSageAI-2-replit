@@ -60,6 +60,11 @@ export interface DeviceClassification {
   deviceClass?: DeviceClass;
   reviewPanel?: string;
   predicateK?: string;
+  /* The predicate's TRADE NAME. The official eSTAR prints it beside the
+     submission number, both out of `predicate_devices[0]`, so the pair travels
+     together or not at all — see the predicate rule in
+     normalizeDeviceClassification. */
+  predicateName?: string;
   intendedUse?: string;
   flags?: DeviceFlagId[];
 }
@@ -70,6 +75,17 @@ export const PRODUCT_CODE_RE = /^[A-Z]{3}$/;
 export const REGULATION_NUMBER_RE = /^8[0-9]{2}\.[0-9]{4}$/;
 /** A cleared 510(k) number: K, two-digit year, four digits. */
 export const K_NUMBER_RE = /^K[0-9]{6}$/i;
+
+/**
+ * Why half a predicate is refused, in the words the caller is given. Exported
+ * so a test asserts the reason rather than a substring of it.
+ */
+export const HALF_PREDICATE = {
+  nameMissing:
+    'predicateName is required with predicateK: the eSTAR prints the predicate’s trade name beside its submission number, and a record holding one without the other files half a claim of substantial equivalence',
+  numberMissing:
+    'predicateK is required with predicateName: the eSTAR prints the predicate’s submission number beside its trade name, and a record holding one without the other files half a claim of substantial equivalence',
+} as const;
 
 const FLAG_IDS = new Set<string>(DEVICE_FLAGS.map((f) => f.id));
 
@@ -121,10 +137,35 @@ export function normalizeDeviceClassification(raw: unknown): {
     else rejected.push('reviewPanel is not a CDRH panel');
   }
 
+  /* The predicate of record is a claim of substantial equivalence the sponsor
+     makes to FDA (21 CFR 807.87(f)), and the official eSTAR prints BOTH its
+     submission number and its trade name from `predicate_devices[0]`. So the
+     two arrive together or neither is accepted: a record holding one would file
+     half a claim, and the governed write refuses such a row outright
+     (`predicateDeviceSchema` requires id and name).
+
+     2026-10-19: POST /api/c2c/projects wrote `[{ kNumber }]` — no id, no name —
+     from a wizard that asked only for the number, so a project created there
+     put a nameless claim on the record while the same column written through
+     the interview could not. Enforced here rather than in the route, so every
+     caller of this normaliser gets the same rule. */
   const predicateK = str('predicateK')?.toUpperCase();
-  if (predicateK) {
-    if (K_NUMBER_RE.test(predicateK)) out.predicateK = predicateK;
-    else rejected.push('predicate must be a K number, e.g. K181234');
+  const predicateName = str('predicateName');
+  const malformedNumber = predicateK !== undefined && !K_NUMBER_RE.test(predicateK);
+  if (malformedNumber) rejected.push('predicate must be a K number, e.g. K181234');
+  else if (predicateK) out.predicateK = predicateK;
+  if (predicateName) out.predicateName = predicateName.slice(0, 500);
+  /* The halves are only reported as missing when the other half was ACCEPTED.
+     A malformed number has already been named; saying the number is also
+     absent would be two complaints about one mistake. */
+  if (out.predicateK && !out.predicateName) {
+    delete out.predicateK;
+    rejected.push(HALF_PREDICATE.nameMissing);
+  } else if (out.predicateName && !out.predicateK && !malformedNumber) {
+    delete out.predicateName;
+    rejected.push(HALF_PREDICATE.numberMissing);
+  } else if (out.predicateName && malformedNumber) {
+    delete out.predicateName;
   }
 
   const intendedUse = str('intendedUse');
