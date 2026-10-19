@@ -1064,6 +1064,17 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      Each signing's chained ledger row is its audit-trail record and stays. */
   'concept2cure_signatures',
   'concept2cure_submission_snapshots',
+  /* Answers to agency letters and the commitments made in them (2026-10-18,
+     migrations/20261018b_agency_response_questions.sql), BEFORE `projects`:
+     each names its project with no cascade, and a commitment names the
+     question it came from. Milestones before their commitment; commitments
+     before the questions they cite; the questions then take their response
+     history with them (ON DELETE CASCADE, run as the owner through the
+     append-only ceiling). A response's signatures and ledger rows are the audit
+     trail and stay. */
+  'commitment_milestones',
+  'regulatory_commitments',
+  'agency_communication_questions',
   /* `projects` BEFORE `client_workspaces` (fixed 2026-10-01): a project
      references its workspace with no cascade, so deleting the workspaces first
      failed with 23503 for every tenant that had a project, which is every real

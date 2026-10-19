@@ -139,3 +139,64 @@ What the rule guarantees: whoever assembled the sequence never releases it.
 never loosen", but no per-org tightening setting exists. An organization that
 wants stricter four-eyes on releases has no way to ask for it today. Not built
 here (RULE 2: no new capability unless a launch row needs it); handed on.
+
+## 2026-10-19 — what this lane broke, who fixed it, and what still guards it
+
+Three hand-ons on the work-orders board named this lane (`…01VB8JEG`).
+
+**Broken by this lane, fixed by others — checked, not taken on trust.**
+- `assess-dispatch-readiness.ts` began calling `signingNowResolvesRelease`;
+  two suites mocked `release-signature-status` without it and failed
+  (`assess-dispatch-readiness.vault-leaf.pglite.test.ts`,
+  `withdrawal-approval-binding.pglite.test.ts`). Fixed by passing the **real**
+  export through `importOriginal` — so the suites test what ships, not a stub.
+- `submissionCenterGovernedWorkspaces.test.tsx` stopped finding the Freeze
+  button. Fixed in `0e50993c5` (QA 2026-10-08), which also resolved the design
+  concern P11-28b raised: `POST /sequences/:seqId/governed-precheck` runs the
+  content gates *without* a signature before the signing dialog opens and again
+  just before signing, so a refused step no longer leaves a signature behind.
+  Its Freeze case still requires the button when the freeze gate is clear.
+- All three pass at `33d092c9b`; this lane's own suites pass (29 tests).
+- The cause was this lane running only its targeted suites, not every suite
+  that mocks or renders what it changed.
+
+**Fixed here.**
+- *Two ESLint warnings this lane added* (`_omitted`, an unused destructured
+  binding, in both dispatch-workspace tests) counted against trunk's warning
+  ratchet. Both now copy the object and delete the key; 0 warnings in either
+  file. (The ratchet is not among CI's red steps at `5c907f84a`.)
+- *Two crash checks React 19 had silenced.* Both "payload missing the field —
+  fail closed, no crash" tests detected the crash through `console.error`. Since
+  React 19.2 (2026-10-01) a render crash **after async data** is reported as a
+  window `error` event and empties the root — it never reaches `console.error`.
+  Removing the Freeze guard left its test **green** at `33d092c9b`, the exact
+  false positive the test's own comment warns about. Diagnosed rather than
+  assumed: while loading, the card header already reads "Dispatch · sequence
+  0001 …", so the old `waitFor(/Dispatch/)` could match the loading screen; after
+  the crash the root is empty and one window error fires. Both tests now wait for
+  the gate header (rendered only past the guards) and listen for the window
+  event.
+
+**Falsification** — each reverted:
+
+| Probe | Result |
+|---|---|
+| Freeze guard removed, crashing only when the field is missing | the missing-field case fails (it passed before the fix) |
+| Freeze verdict ignored | the three HIDES cases fail |
+| Freeze reads the dispatch verdict (the original P11-28a defect) | the positive case fails |
+| Dispatch guard removed | its missing-field case fails |
+
+**React 19 census, so the alarm is the right size.** The repo's surface smoke
+gates (`surfaceRender`, `liveBranchRender`) still catch crashes. Probed:
+- a throw in the first render or in an effect makes `render()` throw;
+- a throw under an error boundary logs a crash-class `console.error`.
+
+Only crashes after async data moved to the window event, which is what these
+two tests needed. Not traced: `errorBoundaryChunkReload`,
+`clientErrorReporting`, `toast`.
+
+**Not this lane's, recorded.** Trunk CI is red at `5c907f84a`: Lint (six
+guardrail steps — reachability, lineage, store writers, i18n, proof tier), Test,
+Integration, Coverage; Build and the release-evidence gate are skipped. None of
+those steps involves files this lane has touched since 2026-10-13. Two trunk-CI
+lanes hold the unit-test reds (claimed 2026-10-05 and 2026-10-13).

@@ -1,0 +1,8 @@
+=== RULE 1 replay proof: apply the file TWICE to an empty database ===
+pass 1: applied cleanly (exit 0)
+pass 2: applied cleanly (exit 0)
+
+=== tables present, with the tenant column the sweep requires ===
+ind_investigators | organization_id NOT NULL
+ind_regulatory_agents | organization_id NOT NULL
+ind_sponsors | organization_id NOT NULL

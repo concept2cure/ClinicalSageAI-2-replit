@@ -113,11 +113,29 @@ export function productTypeFixedByFiling(registryId: string | null | undefined):
   return BY_REGISTRY_ID.get(id)?.productTypeByFiling?.[id] ?? null;
 }
 
-/** A class or application type as a sentence names it: "An IND safety report", "A PAS". */
-export function filingTypeInSentence(programType: string): string {
+/** A class or application type as a sentence names it: "An IND safety report", "A PAS"; mid-sentence, "an IND safety report". */
+export function filingTypeInSentence(programType: string, midSentence = false): string {
   const label = filingDocumentClassOf(programType)?.label ?? String(programType).toUpperCase().replace(/_/g, ' ');
   const word = /^[aeiou]/i.test(label) || /^(FDA|NDA|NDS|MAA|IND|ANDA|EU|RMP|HDE|IDE|IVD|MDR|IVDR)\b/.test(label) ? 'An' : 'A';
-  return `${word} ${label}`;
+  return `${midSentence ? word.toLowerCase() : word} ${label}`;
+}
+
+/**
+ * Why a class's documents are authored here and never sent from here — the one
+ * wording the market offer, the project's Submit tab, Submission Readiness and
+ * the add-market refusal share. It states the platform's limit, never a
+ * regulatory fact: a supplement, an IND amendment or a meeting package IS sent
+ * to the agency, as a sequence to its parent application; this platform does
+ * not build that sequence (review finding, 2026-10-18).
+ */
+export function classNotSequencedReason(c: FilingDocumentClass, agency?: string): string {
+  if (c.docType === 'pas' || c.docType === 'cbe') {
+    return `An FDA supplement is not built as a sequence yet, so this platform sends nothing for the ${c.label}.`;
+  }
+  if (c.packAgency === 'ich') {
+    return `The ${c.label} is a harmonised (ICH) document placed into an application's sequence; this platform sends nothing for it on its own.`;
+  }
+  return `This platform builds no ${agency ?? c.packAgency.toUpperCase()} sequence for the ${c.label} on its own.`;
 }
 
 /** Every class's program type, for the create endpoint's accepted set and the document-class map. */
