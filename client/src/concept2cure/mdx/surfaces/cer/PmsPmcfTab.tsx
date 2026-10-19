@@ -21,6 +21,7 @@
 import * as React from 'react';
 import { I } from '../../icons';
 import type { DeviceProfileView } from '../../hooks/useDeviceProfile';
+import { isIvdFamily } from '@shared/constants/domain/product-types';
 import {
   POST_MARKET_DOC_LABELS,
   useCerPostMarketStatus,
@@ -56,8 +57,13 @@ const LIFECYCLE_PILL: Record<string, string> = {
 };
 
 export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
-  const deviceClass = profile?.deviceClass ?? null;
-  const { report, loading, error, refresh } = useCerPostMarketStatus(programId, deviceClass);
+  /* A device is classified under the MDR and a diagnostic under the IVDR, so
+     the product type picks the regulation this panel reports against. The
+     class itself is read from the programme record server-side — this panel
+     used to pass `profile.deviceClass`, the US 21 CFR 860 class, which an MDR
+     assessment refused by name. */
+  const regulation = isIvdFamily(profile?.productType ?? null) ? 'IVDR' : 'MDR';
+  const { report, loading, error, refresh } = useCerPostMarketStatus(programId, regulation);
   const { busy, outcome, generate } = useGeneratePostMarketDraft(refresh);
 
   const deviceName = (profile?.productName ?? profile?.name ?? '').trim();
@@ -75,7 +81,9 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
         : report
           ? `${report.requiredPresent} of ${report.requiredTotal} required documents present · ` +
             `${report.requiredApprovedCount} approved · ${report.regulation}` +
-            (report.deviceClass ? ` · class ${report.deviceClass}` : ' · device class not set')
+            (report.deviceClass
+              ? ` · class ${report.deviceClass}`
+              : ` · no ${report.regulation} class on the program record`)
           : 'No status yet';
 
   const generateStatus = busy
@@ -173,7 +181,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
                               programId,
                               documentType: d.documentType as PostMarketDocType,
                               deviceName,
-                              deviceClass,
+                              regulation,
                             })
                           }
                         >
