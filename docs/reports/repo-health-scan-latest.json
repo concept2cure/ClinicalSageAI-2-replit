@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T21:49:36.641Z",
+  "generatedAt": "2026-10-19T02:24:20.275Z",
   "git": {
-    "sha": "eb1a009798bea309ab28d70fd84348852984a960",
+    "sha": "cc7d8c4e5d1d1d9beb1f22599f912deb9e214640",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2421,7 +2421,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 102506
+        "bytes": 103131
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2695,7 +2695,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2021
+        "lines": 2028
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
@@ -2875,7 +2875,7 @@
       },
       {
         "file": "server/routes/mdx-qms.ts",
-        "lines": 1560
+        "lines": 1562
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",

@@ -157,6 +157,28 @@ if ! npm run --silent ci:migration-guard-order:selftest >/dev/null 2>&1 || ! npm
 fi
 echo "   ✅ Migration apply-order passed."
 
+# The two appliers read DIFFERENT file lists, and only one of them is exercised
+# by a fresh install. install-fresh's step-3 overlay reads <repo>/migrations and
+# never walks db/migrations/, so a root-tree file that FKs or ALTERs a table only
+# db/migrations/ creates defers on every pass and the installer reports
+# INCOMPLETE — while deploy-migrate, which applies the whole set, stays green and
+# hides it. That has cost five outages: three found by the 2026-07-30 blank-DB
+# audit, ana_runs on 2026-10-09, and 20261018b_agency_response_questions.sql on
+# 2026-10-19, which failed step 8 of Tier 5 Browser Smoke — a required
+# release-evidence job whose logs could not even be fetched to diagnose it.
+echo "   Validating the fresh-install overlay can reach what it depends on..."
+if ! npm run --silent ci:install-fresh-overlay-deps:selftest >/dev/null 2>&1 || ! npm run --silent ci:install-fresh-overlay-deps 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a root-tree migration depends on a table only db/migrations/ creates."
+  echo "   install-fresh's overlay never walks that tree, so this cannot apply on a"
+  echo "   fresh install and blank-db provisioning + Tier 5 will fail while the deploy"
+  echo "   path stays green. Add the creator to PRE_OVERLAY_CREATORS in"
+  echo "   scripts/db/install-fresh.mjs with a dated note saying which file needed it."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Fresh-install overlay dependencies reachable."
+
 # The sibling hazard to apply-order, and the same shape of invisible: the
 # applier re-executes EVERY file on every deploy (scripts/db/migration-set.mjs
 # applyMigrationFiles — no skip branch; the journal records a drift status the

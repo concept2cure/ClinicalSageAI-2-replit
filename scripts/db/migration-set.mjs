@@ -2935,6 +2935,35 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260615_ind_icsr_transmissions.sql',
   'migrations/20260615_regulatory_assessments.sql',
   'migrations/20260615_tmf_artifact_filings.sql',
+  // 2026-10-19 (D7, MR-10 CAT2-02 prerequisite): the third instance of this same
+  // gap in the same subsystem. `20260609_ind_master_data.sql` creates the Form
+  // 1571/1572 master-data registries — ind_sponsors, ind_regulatory_agents,
+  // ind_investigators — and nothing a deploy runs creates them: not this array,
+  // not AUTHORING_SUBSYSTEM_FILES, not the drizzle journal, and drizzle-kit does
+  // not push shared/schema/ind-master-data.ts. Yet /api/ind-master-data is
+  // MOUNTED in production (server/bootstrap/register-ind-lifecycle-routes.ts:24)
+  // and ind-master-data-service.ts both inserts into and selects from all three,
+  // as do the IND documents, filing and forms routes and the IND OpenAPI spec.
+  // So on any database this array provisioned, every one of those answers
+  // "relation does not exist". The file's own header even says its migration was
+  // left for "a human — NOT done here"; the export half of that note was done,
+  // the deploy half was not.
+  //
+  // It is also the blocker under CAT2-02. The FDA us-regional backbone names the
+  // applicant's <id> (a D-U-N-S number) and an <applicant-contacts> block, and
+  // the sequence path has no recorded home for either, so it writes the
+  // placeholder UNASSIGNED-ORG-<orgId> (package-identity.ts header records the
+  // gap). ind_sponsors.duns and its contact_name/contact_phone/contact_email are
+  // that home — and a column cannot be read on a database where its table was
+  // never created.
+  //
+  // CREATE TABLE/INDEX IF NOT EXISTS only, no DROP, no ALTER, public, each table
+  // keyed by organization_id INTEGER NOT NULL and indexed on it — so it is a
+  // no-op where the tables exist, and the sweep below gives them their tenant
+  // policy where they were missing. Replayed twice against PostgreSQL 16.13 on
+  // an empty database: clean both passes, 3 of 3 tables with organization_id
+  // NOT NULL. Evidence docs/evidence/D7-IND-MASTER-DATA-ON-DEPLOY-PATH/.
+  'migrations/20260609_ind_master_data.sql',
 
   // ── Shared state across API tasks: continuity baseline and presence roster
   //    (2026-10-01, D1, audit W2 fix units U14 + U16) ───────────────────────

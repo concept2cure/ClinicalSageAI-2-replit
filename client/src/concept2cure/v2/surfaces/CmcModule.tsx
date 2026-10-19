@@ -76,6 +76,7 @@ import { useAuth } from '@/services/portal/authService';
 import { useNavEntitlements } from '../navEntitlements';
 import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
 import { CmcVariationAssessment } from './CmcVariationAssessment';
+import { RecordHistoryPanel } from './cmcRecordHistory';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1337,6 +1338,11 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
 
   const [registering, setRegistering] = useState(false);
   const [recording, setRecording] = useState<StabilityStudyApiRow | null>(null);
+  /* The study's §11.10(e) change history — who recorded it, who changed it and
+     what each change moved (URS-CMC-026). This register is not a RegisterCard,
+     so it needs its own action; a register whose edits are recorded and never
+     shown is the half of §11.10(e) an inspector reads for a changed record. */
+  const [historyFor, setHistoryFor] = useState<StabilityStudyApiRow | null>(null);
   const [closing, setClosing] = useState<StabilityStudyApiRow | null>(null);
   /* ICH Q1E estimates, keyed by study. Held per study rather than globally
      because the estimate belongs to the batch and condition it was fitted from —
@@ -1623,6 +1629,14 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                             {I.sigma} {estimating === r.id ? 'Fitting…' : 'Estimate Q1E'}
                           </button>
                           <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setClosing(r)}>{I.checkCircle} Shelf life</button>
+                          <button
+                            className="nda-open"
+                            style={{ marginLeft: 6 }}
+                            title="Who recorded this study, who changed it, and what each change moved"
+                            onClick={() => setHistoryFor(historyFor?.id === r.id ? null : r)}
+                          >
+                            {I.history} History
+                          </button>
                         </td>
                       </tr>
                       {isOpen && results.length > 0 && (
@@ -1662,6 +1676,14 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         </div>
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Stability register -> §3.2.S.7'} nav={nav} bar /></div>}
       </div>
+      {historyFor && (
+        <RecordHistoryPanel
+          registerPath="stability-studies"
+          recordId={historyFor.id}
+          subject={`Stability study · ${historyFor.studyTitle || historyFor.productName}`}
+          onClose={() => setHistoryFor(null)}
+        />
+      )}
       <div className="pj-card" style={{ marginTop: 16 }}>
         <div className="pj-card-h"><span className="t">Shelf-life evidence</span><span className="s">ICH Q1E</span></div>
         <div className="pj-card-b">

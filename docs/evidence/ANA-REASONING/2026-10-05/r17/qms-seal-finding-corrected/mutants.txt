@@ -1,0 +1,27 @@
+Mutant run — the QMS send-for-review seal guarantee
+Suite:   server/services/qms/__tests__/qms-send-for-review-respects-the-seal.pglite.test.ts
+Targets: server/services/authoring/authoring-permissions.ts (N1,N2,N3,N6)
+         server/services/qms/controlled-document-service.ts (N4,N5)
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <suite>
+
+N1 FROZEN dropped from the immutable list      KILLED  Tests  3 failed | 3 passed (6)
+N2 APPROVED dropped from the immutable list    KILLED  Tests  1 failed | 5 passed (6)
+N3 immutability checked AFTER the admin bypass KILLED  Tests  4 failed | 2 passed (6)
+N4 QMS asks for 'view' instead of 'edit'       KILLED  Tests  3 failed | 3 passed (6)
+N5 QMS access check removed                    KILLED  Tests  3 failed | 3 passed (6)
+N6 export no longer allowed on a sealed doc    KILLED  Tests  1 failed | 5 passed (6)
+
+killed 6/6
+
+Both mutated files were restored and verified clean (git diff --stat empty)
+after the run. N4 and N5 touch a file under another lane's 24h hold; they were
+transient mutations in the working tree only, never committed.
+
+THE FIRST RUN OF THIS SUITE WAS THE WRONG RED. Written against the false
+finding, it expected a new refusal code QMS_DOCUMENT_SEALED and got
+QMS_DOCUMENT_PERMISSION_DENIED on four cases — which is not "the gate is
+missing", it is "the gate is somewhere else". Reading that error is what
+overturned the finding. Recorded because a red that looks like the one you
+wanted is the easiest kind to accept: the tally was 5 failed | 3 passed, and
+had I read only the tally I would have shipped a guard for a hole that is not
+there.

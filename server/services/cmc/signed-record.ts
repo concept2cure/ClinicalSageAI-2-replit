@@ -34,6 +34,13 @@ import { writeChainedAuditRow } from '../auditService.js';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { type Refusal, refuse, inRefusableTransaction } from '../vault/vault-refusal.js';
 
+/**
+ * The action a signed record's retirement records on the chain. Exported so the
+ * one place that writes it and the one place that labels it for a reader
+ * (`register-history.ts`) cannot drift into two spellings of one act.
+ */
+export const CMC_REGISTER_RETIRE_SIGNED = 'cmc.register.retire_signed' as const;
+
 /* ─── Specifications ───────────────────────────────────────────────────────── */
 
 export function isApprovedSpecification(stored: { approval_status?: unknown }): boolean {
@@ -258,7 +265,7 @@ export async function retireSignedRecord(a: {
     await writeChainedAuditRow(client, {
       tenantId: a.organizationId,
       userId: a.userId,
-      action: 'cmc.register.retire_signed',
+      action: CMC_REGISTER_RETIRE_SIGNED,
       resourceType: table,
       resourceId: String(row.id),
       ipAddress: a.ipAddress,

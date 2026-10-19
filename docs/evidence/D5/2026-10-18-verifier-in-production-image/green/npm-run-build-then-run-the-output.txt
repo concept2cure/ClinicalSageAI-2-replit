@@ -1,0 +1,18 @@
+$ node scripts/build-server.mjs
+✅ Server build complete → dist/index.js
+✅ Audit-chain verifier build complete → dist/ops/verify-audit-chain.mjs
+
+$ ls -la dist/ops/
+41264 verify-audit-chain.mjs
+
+$ env -i PATH=$PATH node dist/ops/verify-audit-chain.mjs; echo exit=$?
+verify-audit-chain: error: column "hmac_seal" does not exist
+    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async verifyAuditEvents (file:///home/user/ClinicalSageAI-2-replit/dist/ops/verify-audit-chain.mjs:54:7386)
+    at async verifyAuditChains (file:///home/user/ClinicalSageAI-2-replit/dist/ops/verify-audit-chain.mjs:77:961)
+    at async main (file:///home/user/ClinicalSageAI-2-replit/dist/ops/verify-audit-chain.mjs:78:366)
+exit=2
+
+$ grep -c 'require(' dist/ops/verify-audit-chain.mjs
+0

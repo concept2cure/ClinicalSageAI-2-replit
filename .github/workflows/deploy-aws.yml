@@ -41,8 +41,10 @@ env:
   #
   # The path was removed rather than a Dockerfile invented, because there is no
   # worker to put in one:
-  #   • `npm run build` (scripts/build-server.mjs) emits exactly ONE artifact,
-  #     dist/index.js, from server/index.ts. There is no second entrypoint.
+  #   • `npm run build` (scripts/build-server.mjs) emits ONE server artifact,
+  #     dist/index.js, from server/index.ts. There is no second server
+  #     entrypoint. (Since 2026-10-18 it also emits dist/ops/verify-audit-chain.mjs,
+  #     an operator CLI run as a one-off task, never a service.)
   #   • Every background job — driftSentinel, auditChainIntegrity,
   #     corpusIngestion, regulatoryHorizon, externalIntelligence,
   #     scheduleOfEvents, taskDue (server/jobs/*) — is started IN-PROCESS by

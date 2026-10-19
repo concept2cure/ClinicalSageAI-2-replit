@@ -346,6 +346,43 @@ describe('approving: what the signature binds, and what goes back with it', () =
   });
 });
 
+describe('a status change that is not a signature commits with its provenance event', () => {
+  // 2026-10-18 (D5): the unsigned branch wrote the status, then the provenance
+  // event, as two autocommitted statements.
+  const RETURN = { reason: 'Returned for rework of section 2.' };
+  it.each([
+    ['review → draft', 'review', 'draft'],
+    ['approved → review', 'approved', 'review'],
+  ] as const)('%s: changed, with one provenance event naming it', async (_label, from, to) => {
+    await seed(from);
+    const res = await putStatus({ status: to, ...RETURN });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: to });
+    expect(await provenance()).toEqual([{ event_action: `status_${to}` }]);
+  });
+
+  it.each([
+    ['review → draft', 'review', 'draft'],
+    ['approved → review', 'approved', 'review'],
+  ] as const)('%s: a provenance event that cannot be written takes the change back', async (_label, from, to) => {
+    await seed(from);
+    await holder.pg.exec('ALTER TABLE concept2cure_provenance_events RENAME TO concept2cure_provenance_events_away');
+    let res: request.Response;
+    try {
+      res = await putStatus({ status: to, ...RETURN });
+    } finally {
+      await holder.pg.exec('ALTER TABLE concept2cure_provenance_events_away RENAME TO concept2cure_provenance_events');
+    }
+
+    expect(res.status).toBe(500);
+    expect(await artifactRow(), 'answered 500 over a committed status change with no provenance').toMatchObject({
+      status: from,
+    });
+    expect(await provenance()).toEqual([]);
+  });
+});
+
 describe('locking an approved artifact is an electronic signature', () => {
   it('without re-authentication: refused 401, not locked, no snapshot', async () => {
     await seed('approved');

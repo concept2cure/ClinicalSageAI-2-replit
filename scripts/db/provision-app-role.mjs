@@ -248,6 +248,12 @@ export const APPEND_ONLY_TABLES = Object.freeze(
     // append_only.sql); every writer INSERTs only (census in that file).
     { schema: 'public', name: 'cmc_module3_section_versions' },
     { schema: 'public', name: 'cmc_provenance_events' },
+    // 2026-10-18: every text an agency response has had; a signature binds one
+    // of them by digest (migrations/20261018b_agency_response_questions.sql).
+    // Its one writer INSERTs (agency-responses/response-service.ts
+    // saveResponseTx). Erased only by the cascade from its question, which
+    // runs as the owner.
+    { schema: 'public', name: 'agency_question_response_revisions' },
   ].map((t) => Object.freeze(t)),
 );
 

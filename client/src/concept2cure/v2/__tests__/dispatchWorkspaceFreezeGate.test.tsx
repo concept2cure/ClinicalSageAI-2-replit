@@ -76,6 +76,16 @@ const text = () => document.body.textContent ?? '';
 const freezeButton = () =>
   Array.from(document.querySelectorAll('button')).find(b => /Freeze sequence/.test(b.textContent ?? ''));
 
+/**
+ * Wait until the assessment has RENDERED: the gate header exists only once the
+ * payload was read past the freeze/dispatch guards. Waiting for the word
+ * "Dispatch" did not prove that. The card header reads "Dispatch · sequence
+ * 0001 …" while the read is still loading (checked 2026-10-19), so whether an
+ * assertion ran before or after the payload rendered was down to how fast the
+ * mock resolved, and after a crash it could match the loading screen.
+ */
+const rendered = () => waitFor(() => expect(text()).toMatch(/Dispatch gate|Dispatch blocked/));
+
 beforeEach(() => apiRequest.mockReset());
 afterEach(() => cleanup());
 
@@ -85,7 +95,7 @@ describe('DispatchWorkspace — the Freeze button is gated on freezeGate', () =>
     // freeze must follow the freeze one.
     serve(AWAITING_RELEASE_SIGNATURE);
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch/));
+    await rendered();
     await waitFor(() => expect(freezeButton()).toBeTruthy());
   });
 
@@ -99,7 +109,7 @@ describe('DispatchWorkspace — the Freeze button is gated on freezeGate', () =>
       dispatchGateOnSigning: { cleared: false, blockers: ['No completed Shadow Review has run for this sequence'] },
     });
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch/));
+    await rendered();
     expect(freezeButton()).toBeFalsy();
   });
 
@@ -117,7 +127,7 @@ describe('DispatchWorkspace — the Freeze button is gated on freezeGate', () =>
       releaseSignature: { required: true, verdict: 'invalid', cleared: false },
     });
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch/));
+    await rendered();
     expect(freezeButton()).toBeFalsy();
   });
 
@@ -128,27 +138,35 @@ describe('DispatchWorkspace — the Freeze button is gated on freezeGate', () =>
     //
     // The absent-button assertion ALONE does not test this. Without the `?.`
     // the component throws a TypeError mid-render, React discards its output,
-    // and "no Freeze button" is then true for the worst possible reason —
-    // vitest reports the throw as an unhandled error and still passes the
-    // test, warning "this might cause false positive tests". Proven: reverting
-    // the guard left this test green until the error assertion below existed.
-    // So the crash itself has to be what fails.
+    // and "no Freeze button" is then true for the worst possible reason.
+    // Proven twice: on 2026-09-28 reverting the guard left this test green
+    // until an error assertion existed, and on 2026-10-19 it was green again,
+    // because that assertion listened to console.error and React 19 stopped
+    // reporting render crashes there. So the crash itself has to be what fails.
+    // How the crash is detected: React 19 reports an uncaught render error as a
+    // window 'error' event and empties the root. It no longer reaches
+    // console.error, which this test listened to until 2026-10-19, so after
+    // the upgrade (2026-10-01) the crash it exists to catch passed silently.
+    // Both signals are checked: the window event, and rendered() above, which
+    // cannot find the gate header in an emptied root.
     const errors: string[] = [];
-    const spy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
-      errors.push(args.map(String).join(' '));
-    });
+    const onError = (e: ErrorEvent) => { errors.push(String(e.message)); e.preventDefault(); };
+    window.addEventListener('error', onError);
     try {
-      const { freezeGate: _omitted, ...withoutFreezeGate } = AWAITING_RELEASE_SIGNATURE;
+      // A copy without the field, rather than a destructured binding left unused
+      // (it counted against trunk's ESLint warning ratchet).
+      const withoutFreezeGate: Record<string, unknown> = { ...AWAITING_RELEASE_SIGNATURE };
+      delete withoutFreezeGate.freezeGate;
       serve(withoutFreezeGate);
       render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
-      await waitFor(() => expect(text()).toMatch(/Dispatch/));
+      await rendered();
 
       expect(freezeButton()).toBeFalsy();
       // The button is absent because the guard refused it, not because the
       // render died on the way to it.
       expect(errors.join('\n')).not.toMatch(/Cannot read propert|TypeError/);
     } finally {
-      spy.mockRestore();
+      window.removeEventListener('error', onError);
     }
   });
 });

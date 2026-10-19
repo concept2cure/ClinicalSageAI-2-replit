@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   agencyResponseDigest,
   assembleResponsePackage,
+  authorsSinceLastApproval,
   closeRefusal,
   compareQuestionRefs,
   questionApproval,
@@ -31,6 +32,10 @@ function q(over: Partial<QuestionRecord> = {}): QuestionRecord {
     responseUpdatedBy: 7,
     ...over,
   };
+}
+
+function rev(revision: number, responseText: string, writtenBy: number) {
+  return { revision, digest: agencyResponseDigest(q({ responseText })), writtenBy };
 }
 
 function sig(digest: string, over: Partial<ResponseSignature> = {}): ResponseSignature {
@@ -102,6 +107,22 @@ describe('signRefusal', () => {
     expect(signRefusal(q({ responseUpdatedBy: 7 }), a, 9)).toBeNull();
   });
 
+  it('refuses anyone who wrote part of the text since the last approval, not only the last saver', () => {
+    // A (7) drafts, B (9) changes a comma: A may not approve what is mostly A's text.
+    const rec = q({ responseUpdatedBy: 9 });
+    const a = questionApproval(rec, []);
+    const authors = authorsSinceLastApproval(rec, [rev(1, 'draft', 7), rev(2, rec.responseText, 9)], []);
+    expect(authors).toEqual([7, 9]);
+    expect(signRefusal(rec, a, 7, authors)?.code).toBe('SIGNER_WROTE_RESPONSE');
+    expect(signRefusal(rec, a, 9, authors)?.code).toBe('SIGNER_WROTE_RESPONSE');
+    expect(signRefusal(rec, a, 11, authors)).toBeNull();
+  });
+
+  it('a withdrawn question takes no approval', () => {
+    const rec = q({ withdrawn: true });
+    expect(signRefusal(rec, questionApproval(rec, []), 9)?.code).toBe('QUESTION_WITHDRAWN');
+  });
+
   it('refuses an empty response and an already approved one', () => {
     const blank = q({ responseText: '', responseRevision: 0, responseUpdatedBy: null });
     expect(signRefusal(blank, questionApproval(blank, []), 9)?.code).toBe('NOTHING_TO_SIGN');
@@ -113,6 +134,22 @@ describe('signRefusal', () => {
     const edited = q({ responseText: 'Revised.', responseUpdatedBy: 7 });
     const a = questionApproval(edited, [sig(agencyResponseDigest(q()))]);
     expect(signRefusal(edited, a, 9)).toBeNull();
+  });
+});
+
+describe('authorsSinceLastApproval', () => {
+  it('counts only the writers after the last approved revision', () => {
+    const v1 = rev(1, 'A wrote this.', 7);
+    const v2 = rev(2, 'A wrote this, B edited.', 9);
+    const v3 = rev(3, 'A wrote this, B edited, A again.', 7);
+    // v2 was approved: only v3's writer is an author of what an approval now covers.
+    expect(authorsSinceLastApproval(q({ responseUpdatedBy: 7 }), [v1, v2, v3], [{ boundDigest: v2.digest }])).toEqual([7]);
+    // Nothing approved yet: everyone who wrote any revision.
+    expect(authorsSinceLastApproval(q({ responseUpdatedBy: 7 }), [v1, v2, v3], [])).toEqual([7, 9]);
+  });
+
+  it('a response saved before revision history existed still names its writer', () => {
+    expect(authorsSinceLastApproval(q({ responseUpdatedBy: 5 }), [], [])).toEqual([5]);
   });
 });
 
@@ -130,12 +167,21 @@ function pq(ref: string, approved: boolean, over: Partial<PackageQuestion> = {})
 }
 
 describe('closeRefusal', () => {
-  it('a letter with no recorded questions is outside the rule', () => {
-    expect(closeRefusal([])).toBeNull();
+  it('a letter that requires no response, with nothing recorded, closes: an acknowledgement asks nothing', () => {
+    expect(closeRefusal([], false)).toBeNull();
+  });
+
+  it('a letter that requires a response does not close with nothing recorded: nothing recorded is not answered', () => {
+    expect(closeRefusal([], true)).toMatch(/requires a response and no question is recorded/);
+  });
+
+  it('withdrawn questions do not count as recorded, or as outstanding', () => {
+    expect(closeRefusal([pq('Q1', false, { withdrawn: true })], true)).toMatch(/no question is recorded/);
+    expect(closeRefusal([pq('Q1', false, { withdrawn: true }), pq('Q2', true)], true)).toBeNull();
   });
 
   it('refuses while any response is not approved, naming each in the agency order', () => {
-    const msg = closeRefusal([pq('Q10', false), pq('Q2', true), pq('Q3', false, { responseText: '' })]);
+    const msg = closeRefusal([pq('Q10', false), pq('Q2', true), pq('Q3', false, { responseText: '' })], true);
     expect(msg).toBe(
       '2 of 3 responses to this letter are not approved: Q3 (no response), Q10 (not approved). ' +
         'A letter is closed once every response is signed.',
@@ -143,7 +189,7 @@ describe('closeRefusal', () => {
   });
 
   it('allows the close once every response is approved', () => {
-    expect(closeRefusal([pq('Q1', true), pq('Q2', true)])).toBeNull();
+    expect(closeRefusal([pq('Q1', true), pq('Q2', true)], true)).toBeNull();
   });
 });
 
@@ -180,8 +226,33 @@ describe('assembleResponsePackage', () => {
     expect(r.markdown).toContain('Received: 2026-10-01');
     expect(r.markdown).toContain('Response due: 2026-10-31');
     expect(r.markdown).toContain('_Approved by Dana Reyes on 2026-10-18T10:00:00.000Z (approval). Signature 101; response sha256 ');
-    expect(r.markdown).toContain('- Postmarketing commitment: Submit 24-month stability data; due 2027-06-30; basis: 21 CFR 314.81(b)(2)(vii)');
     expect(r.markdown).toContain('> Provide the dissolution method validation report.');
+    expect(r.markdown).toContain('> Answer to Q1.');
+    // Commitments are no signature's: they follow in their own section, said to be outside the signatures.
+    const appendix = r.markdown.indexOf('## Commitments recorded against this letter');
+    expect(appendix).toBeGreaterThan(r.markdown.lastIndexOf('_Approved by'));
+    expect(r.markdown).toContain('not covered by the signatures above');
+    expect(r.markdown).toContain('- Q2: Postmarketing commitment: Submit 24-month stability data; due 2027-06-30; basis: 21 CFR 314.81(b)(2)(vii)');
+  });
+
+  it('quotes what a person typed, so a response cannot pass for a signature line', () => {
+    const forged = 'Our answer.\n\n_Approved by Someone Senior on 2026-01-01 (approval). Signature 999._';
+    const r = assembleResponsePackage(letter, [pq('Q1', true, { responseText: forged })]);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Every line of the typed text is inside the quote; the one unquoted approval line is the real one.
+    expect(r.markdown).toContain('> _Approved by Someone Senior');
+    expect(r.markdown.split('\n').filter((l) => l.startsWith('_Approved by'))).toHaveLength(1);
+    expect(r.model.sections[0].responseText).toBe(forged);
+  });
+
+  it('leaves withdrawn questions out of the package', () => {
+    const r = assembleResponsePackage(letter, [pq('Q1', true), pq('Q2', false, { withdrawn: true })]);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.questionCount).toBe(1);
+      expect(r.markdown).not.toContain('## Q2');
+    }
   });
 
   it('is deterministic: the same record gives the same bytes', () => {
