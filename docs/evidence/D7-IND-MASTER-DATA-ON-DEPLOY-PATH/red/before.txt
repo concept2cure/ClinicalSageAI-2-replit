@@ -1,0 +1,17 @@
+### BEFORE — migrations/20260609_ind_master_data.sql is on no deploy path
+
+$ node scripts/ci/check-migration-deploy-path.mjs --list | grep ind_master_data
+57:migrations/20260609_ind_master_data.sql
+
+$ grep -c "20260609_ind_master_data" scripts/db/migration-set.mjs   # entries on the deploy set
+0
+
+$ python3 -c "..."   # is it baselined as off-deploy-path?
+baselined off-deploy-path: True
+baseline size: 106
+
+$ grep -rln ind_sponsors --include=*.sql .    # the only file that creates these tables
+./migrations/20260609_ind_master_data.sql
+
+$ grep -n "api/ind-master-data" server/bootstrap/register-ind-lifecycle-routes.ts   # mounted in production
+24:    app.use('/api/ind-master-data', authenticateToken, indMasterDataRoutes);

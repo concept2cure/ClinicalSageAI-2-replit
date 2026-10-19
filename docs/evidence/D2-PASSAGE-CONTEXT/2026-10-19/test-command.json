@@ -1,0 +1,22 @@
+[
+  "node", "node_modules/vitest/vitest.mjs", "run", "--config", "vitest.config.ts",
+  "--maxWorkers=1", "--no-file-parallelism",
+  "server/services/vault/__tests__/passage-context-span.test.ts",
+  "server/services/vault/__tests__/passage-context-span-nested.test.ts",
+  "server/services/__tests__/rag-context-expansion-span.test.ts",
+  "server/services/vault/__tests__/document-passage-search-context.test.ts",
+  "server/services/ana/__tests__/document-passage-tools-budget.test.ts",
+  "server/services/__tests__/rag-vault-span.pglite.integration.test.ts",
+  "server/services/ana/__tests__/document-source-access-tools.test.ts",
+  "server/services/ana/__tests__/project-knowledge-search-model-free.test.ts",
+  "server/services/ana/__tests__/document-passage-tools.test.ts",
+  "server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts",
+  "server/services/__tests__/rag-context-expansion.test.ts",
+  "server/services/__tests__/rag-generation-request.test.ts",
+  "server/services/__tests__/rag-disposition.pglite.integration.test.ts",
+  "server/services/__tests__/rag-actor-programme-scope.test.ts",
+  "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts",
+  "server/services/vault/__tests__/retrieval-actor-filter.test.ts",
+  "server/services/authoring/__tests__/authoring-draft-sources.test.ts",
+  "server/eval/rag/__tests__/run-eval-completeness.test.ts"
+]

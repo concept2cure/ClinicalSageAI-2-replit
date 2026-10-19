@@ -190,7 +190,7 @@ const agencyResponseBinding: ContentBinder = async (client, rest, orgId, ledgerF
 };
 
 /**
- * regulatory-commitment:<id>: a commitment's recorded fulfilment (P-40,
+ * regulatory-commitment:<id>: a commitment's recorded fulfilment (P-41,
  * 2026-10-19), as the signing transaction has just written it. The digest is
  * commitmentFulfilmentDigest over readCommitmentFulfilmentContent, the one
  * reader the list read uses too, so the binder and "does the signature match

@@ -1,6 +1,6 @@
 /**
  * The order a commitment's fulfilment is refused in (rows D2 and D5,
- * 2026-10-19; decision P-40), through the organisation's real router.
+ * 2026-10-19; decision P-41), through the organisation's real router.
  *
  * Recording a PMR, PMC or REMS as fulfilled is a signed act naming what met it.
  * Every refusal the server can give without a password is given before one is

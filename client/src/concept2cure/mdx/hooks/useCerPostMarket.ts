@@ -81,38 +81,34 @@ export interface UseCerPostMarketStatusResult {
   refresh: () => void;
 }
 
-/** Device facts the obligations depend on. null/undefined = not stated; never sent as false. */
-export interface PostMarketDeviceFacts {
-  implantable?: boolean | null;
-  customMade?: boolean | null;
-}
-
-/** The documentation-status query string (pinned by __tests__/useCerPostMarket.query.test.ts). */
-export function postMarketStatusQuery(
-  deviceClass: string | null,
-  regulation: 'MDR' | 'IVDR',
-  facts: PostMarketDeviceFacts = {},
-): string {
-  const params = new URLSearchParams({ regulation });
-  if (deviceClass) params.set('deviceClass', deviceClass);
-  if (typeof facts.implantable === 'boolean') params.set('implantable', String(facts.implantable));
-  if (typeof facts.customMade === 'boolean') params.set('customMade', String(facts.customMade));
-  return params.toString();
+/**
+ * The documentation-status query string: the regulation, and nothing else
+ * (pinned by __tests__/useCerPostMarket.query.test.ts).
+ *
+ * 2026-10-19: this also sent `deviceClass`, `implantable` and `customMade`, so
+ * the obligation set the server computed came from whatever this surface held
+ * — and what it held was `device_class`, the US 21 CFR 860 class, which an MDR
+ * assessment rightly refused. Those three facts now come from the programme
+ * record on the server (programme-eu-device-record.ts); the regulation stays
+ * here because it is this surface's view, not a fact about the device.
+ */
+export function postMarketStatusQuery(regulation: 'MDR' | 'IVDR'): string {
+  return new URLSearchParams({ regulation }).toString();
 }
 
 /**
  * Fetch the per-type documentation status. The server decides what the device
- * owes from the regulation, the class and the stated facts. Without a class it
- * reports 'class_unrecognised' rather than inventing one; without `implantable`
- * the SSCP of a non-Class-III device stays 'undetermined' rather than assumed.
+ * owes from the regulation and the class, implantable and custom-made facts
+ * the programme record states. A record with no EU class for the regulation
+ * reports 'class_unrecognised' rather than inventing one; an unstated
+ * `implantable` leaves the SSCP of a non-Class-III device 'undetermined'
+ * rather than assumed.
  */
 export function useCerPostMarketStatus(
   programId: string | null,
-  deviceClass: string | null,
   regulation: 'MDR' | 'IVDR' = 'MDR',
-  facts: PostMarketDeviceFacts = {},
 ): UseCerPostMarketStatusResult {
-  const query = postMarketStatusQuery(deviceClass, regulation, facts);
+  const query = postMarketStatusQuery(regulation);
   const url = programId
     ? `/api/post-market/programs/${encodeURIComponent(programId)}/documentation-status?${query}`
     : null;
@@ -129,7 +125,9 @@ export interface GenerateDraftArgs {
   programId: string;
   documentType: PostMarketDocType;
   deviceName: string;
-  deviceClass?: string | null;
+  /* No `deviceClass`: the drafted document cites the class the programme
+     record states, read server-side. Sending one from here is what put the US
+     class into an MDR PMS plan. */
   regulation?: 'MDR' | 'IVDR';
 }
 
@@ -164,7 +162,6 @@ export async function generatePostMarketDraft(args: GenerateDraftArgs): Promise<
         headers: { 'Content-Type': 'application/json', ...buildAuthHeaders() },
         body: JSON.stringify({
           deviceName,
-          deviceClass: args.deviceClass ?? undefined,
           regulation: args.regulation ?? undefined,
         }),
       },

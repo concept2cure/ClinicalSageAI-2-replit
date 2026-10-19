@@ -42,6 +42,9 @@ import {
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const FILE = 'migrations/20261018_filing_class_rule_packs.sql';
+/** The review corrections: ten new versions superseding exactly the ones FILE seeded. */
+const CORRECTIONS = 'migrations/20261018c_filing_class_packs_review_corrections.sql';
+const CLASS_FILES = [FILE, CORRECTIONS];
 
 /** The rule-pack files, in the order the applier runs them — never a hand-kept order. */
 const PACK_FILES = [
@@ -60,11 +63,14 @@ const PACK_FILES = [
   '20261005b_pma_fda_outline_v1_1_software_documentation_level.sql',
   '20261005c_k510_denovo_estar_outline_v1_1.sql',
   '20261018_filing_class_rule_packs.sql',
+  '20261018c_filing_class_packs_review_corrections.sql',
 ];
-const inSetOrder = (withClasses: boolean) => {
+/** The set in applier order; without the class files, or stopping before the corrections. */
+const inSetOrder = (withClasses: boolean | 'before-corrections') => {
   const files = (C2C_MIGRATION_FILES as string[]).filter((f) => PACK_FILES.some((b) => f.endsWith(`/${b}`)));
   expect(files, 'every rule-pack file is on the applier').toHaveLength(PACK_FILES.length);
-  return withClasses ? files : files.filter((f) => !f.endsWith(FILE));
+  if (withClasses === 'before-corrections') return files.filter((f) => !f.endsWith(CORRECTIONS));
+  return withClasses ? files : files.filter((f) => !CLASS_FILES.some((c) => f.endsWith(c)));
 };
 
 const ORG = 7;
@@ -72,7 +78,7 @@ const PROJECT = '11111111-2222-3333-4444-555555555555';
 let pg: PGlite;
 const client = () => ({ query: (sql: string, p?: unknown[]) => pg.query(sql, p as any[]) }) as any;
 
-async function boot(withClasses = true) {
+async function boot(withClasses: boolean | 'before-corrections' = true) {
   pg = new PGlite();
   await pg.exec(`
     CREATE TABLE organizations (id serial PRIMARY KEY);
@@ -157,6 +163,12 @@ describe('every filing document class has its own governed outline', () => {
     expect(rows[0]?.superseded_by).toBe('ich-e3-v1.0');
   });
 
+});
+
+/* The content of individual packs, held to what the corrected records say. */
+describe('the packs carry what their filings need', () => {
+  beforeEach(() => boot());
+
   it('a supplement carries its own parts, not the NDA dossier', async () => {
     const pas = await filingClassPackSections('pas');
     const labels = pas.map((s) => s.label);
@@ -164,11 +176,34 @@ describe('every filing document class has its own governed outline', () => {
       'Cover Letter', 'Form FDA 356h', 'Summary and Description of the Change',
       'Environmental Assessment or Categorical Exclusion Claim',
     ]));
-    // The NDA's nonclinical and clinical modules are not what a supplement files.
-    expect(pas.some((s) => /^(M[1-5]|4\.2\.3|5\.3)$/.test(s.key))).toBe(false);
+    // No NDA module container: the CTD sections a change updates sit under the
+    // supplement's own "Updated CTD Sections", each optional. An efficacy
+    // supplement's clinical sections are among them (review finding,
+    // 2026-10-18: v1.0 held Module 3 only).
+    expect(pas.some((s) => /^M[1-5]$/.test(s.key))).toBe(false);
+    const ctd = pas.filter((s) => /^[2-5]/.test(s.key));
+    expect(ctd.map((s) => s.key)).toEqual(expect.arrayContaining(['2.5', '2.7', '5.3', '3.2.S', '3.2.P']));
+    expect(ctd.every((s) => s.parent_key === 'CTD' && !s.mandatory)).toBe(true);
+    expect(pas.find((s) => s.key === 'PAS-CLINICAL')?.mandatory).toBe(false);
+    // PDUFA VI removed supplement fees: the fee part is no longer required.
+    expect(pas.find((s) => s.key === 'PAS-FEE')?.mandatory).toBe(false);
   });
 
-  it('the five prior versions are superseded by exactly the new one', async () => {
+  it('a CBE-0 needs its change description and environmental claim as much as a CBE-30 does', async () => {
+    const cbe = await filingClassPackSections('cbe');
+    const part = (label: string) => cbe.find((s) => s.label === label);
+    expect(part('Description and Justification of the Change')?.mandatory).toBe(true);
+    expect(part('Categorical Exclusion Claim or Environmental Assessment')?.mandatory).toBe(true);
+    expect(cbe.some((s) => /\(CBE-30\)$/.test(s.label) && /Change|Environmental/.test(s.label))).toBe(false);
+  });
+
+});
+
+/* Supersession, scaffolding and replay over the set. */
+describe('the class packs supersede, scaffold and replay', () => {
+  beforeEach(() => boot());
+
+  it('every superseded prior version is superseded by exactly the version that replaced it', async () => {
     for (const spec of FILING_CLASS_PACKS.filter((p) => p.supersedes)) {
       const { rows } = await pg.query<{ superseded_by: string | null }>(
         `SELECT superseded_by FROM c2c_rule_packs WHERE doc_type = $1 AND agency = $2 AND version = $3`,
@@ -184,7 +219,7 @@ describe('every filing document class has its own governed outline', () => {
     const doc = await pg.query<{ doc_type: string; agency: string; rule_pack_version: string; title: string }>(
       `SELECT doc_type, agency, rule_pack_version, title FROM c2c_documents WHERE id = $1`, [pas.documentId],
     );
-    expect(doc.rows[0]).toMatchObject({ doc_type: 'pas', agency: 'fda', rule_pack_version: 'fda-pas-lifecycle-v1.0' });
+    expect(doc.rows[0]).toMatchObject({ doc_type: 'pas', agency: 'fda', rule_pack_version: FILING_CLASS_PACKS.find((p) => p.docType === 'pas')?.version });
     expect(pas.sectionCount).toBe((await filingClassPackSections('pas')).length);
 
     await pg.query(`DELETE FROM c2c_document_sections`);
@@ -201,9 +236,12 @@ describe('every filing document class has its own governed outline', () => {
 
   it('the next deploy replays the set over a supplement document without error or change', async () => {
     await scaffold('pas', 'FDA');
-    const before = await pg.query(`SELECT doc_type, agency, version, superseded_by, required_sections FROM c2c_rule_packs ORDER BY 1,2,3`);
+    // Provenance too: 20261018 re-asserts its literal every deploy and 20261018c
+    // corrects it after, so a deploy must end exactly where the last one did.
+    const cols = 'doc_type, agency, version, superseded_by, required_sections, confidence, governing_rule, uncertainties';
+    const before = await pg.query(`SELECT ${cols} FROM c2c_rule_packs ORDER BY 1,2,3`);
     for (const f of inSetOrder(true)) await pg.exec(read(f));
-    const after = await pg.query(`SELECT doc_type, agency, version, superseded_by, required_sections FROM c2c_rule_packs ORDER BY 1,2,3`);
+    const after = await pg.query(`SELECT ${cols} FROM c2c_rule_packs ORDER BY 1,2,3`);
     expect(after.rows).toEqual(before.rows);
     const docs = await pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM c2c_documents WHERE doc_type = 'pas'`);
     expect(docs.rows[0].n).toBe(1);
@@ -212,32 +250,66 @@ describe('every filing document class has its own governed outline', () => {
 
 /*
  * A changed outline is minted in a NEW file that supersedes exactly the version
- * this one seeded (scripts/db/emit-filing-class-packs.ts refuses to rewrite it).
- * The deployed-database case: a later v1.1 is live, v1.0 superseded, and every
- * deploy replays this file. Its assertions must hold — the row it seeded is still
- * there and unchanged, superseded by a version that exists, and exactly one pack
- * is live (review finding, 2026-10-18).
+ * 20261018 seeded (scripts/db/emit-filing-class-packs.ts never rewrites a file
+ * on the applier). The deployed-database case: 20261018 has run on an earlier
+ * deploy and its v1.0 packs are live, with a document bound to one. The next
+ * deploy runs the whole set: 20261018 replays (its assertions must hold over a
+ * superseded row), then 20261018c supersedes. Then a third deploy replays both.
  */
-describe('a later version supersedes this file, and the set still replays', () => {
-  it('pas:fda v1.1 from a later file is the one live pack, and replaying 20261018 changes nothing', async () => {
-    await boot();
-    await pg.exec(`
-      DO $later$
-      BEGIN
-        INSERT INTO c2c_rule_packs (doc_type, agency, version, label, required_sections, effective_from)
-        SELECT doc_type, agency, 'fda-pas-lifecycle-v1.1', label, required_sections, DATE '2026-11-01'
-          FROM c2c_rule_packs WHERE doc_type = 'pas' AND agency = 'fda' AND version = 'fda-pas-lifecycle-v1.0'
-        ON CONFLICT (doc_type, agency, version) DO NOTHING;
-        UPDATE c2c_rule_packs SET superseded_by = 'fda-pas-lifecycle-v1.1'
-         WHERE doc_type = 'pas' AND agency = 'fda' AND version = 'fda-pas-lifecycle-v1.0' AND superseded_by IS NULL;
-      END
-      $later$;`);
-    await expect(pg.exec(read(FILE))).resolves.toBeDefined();
-    for (const f of inSetOrder(true)) await pg.exec(read(f));
-    const live = await pg.query<{ version: string }>(
-      `SELECT version FROM c2c_rule_packs WHERE doc_type = 'pas' AND agency = 'fda' AND superseded_by IS NULL`,
+describe('the review corrections supersede 20261018 on a deployed database', () => {
+  it('v1.0 is live, a document is bound to it; two deploys later the corrections are live and the document keeps its outline', async () => {
+    await boot('before-corrections');
+    const before = await scaffold('pas', 'FDA');
+    const bound = await pg.query<{ rule_pack_version: string }>(
+      `SELECT rule_pack_version FROM c2c_documents WHERE id = $1`, [before.documentId],
     );
-    expect(live.rows.map((r) => r.version)).toEqual(['fda-pas-lifecycle-v1.1']);
+    expect(bound.rows[0].rule_pack_version).toBe('fda-pas-lifecycle-v1.0');
+    for (let deploy = 0; deploy < 2; deploy++) {
+      for (const f of inSetOrder(true)) await pg.exec(read(f));
+    }
+    for (const spec of FILING_CLASS_PACKS) {
+      const live = await pg.query<{ version: string }>(
+        `SELECT version FROM c2c_rule_packs WHERE doc_type = $1 AND agency = $2 AND superseded_by IS NULL`,
+        [spec.docType, spec.agency],
+      );
+      expect(live.rows.map((r) => r.version), `${spec.docType}:${spec.agency}`).toEqual([spec.version]);
+    }
+    const still = await pg.query<{ rule_pack_version: string; n: number }>(
+      `SELECT d.rule_pack_version, (SELECT count(*)::int FROM c2c_document_sections s WHERE s.document_id = d.id) AS n
+         FROM c2c_documents d WHERE d.id = $1`, [before.documentId],
+    );
+    expect(still.rows[0]).toEqual({ rule_pack_version: 'fda-pas-lifecycle-v1.0', n: before.sectionCount });
+  }, 90_000);
+});
+
+/*
+ * A document bound to a superseded version keeps its outline, so the version
+ * says what superseded it, and a provenance claim the review found false is not
+ * left standing on it (second review, 2026-10-18).
+ */
+describe('a superseded version says why, and keeps no withdrawn claim', () => {
+  it('the v1.0 IND safety report and NDA annual report packs no longer claim what the review withdrew', async () => {
+    await boot();
+    const row = async (docType: string, version: string) => (await pg.query<{ confidence: string; governing_rule: string; uncertainties: string }>(
+      `SELECT confidence, governing_rule, uncertainties FROM c2c_rule_packs WHERE doc_type = $1 AND agency = 'fda' AND version = $2`,
+      [docType, version],
+    )).rows[0];
+    const sr = await row('ind_safety_report', 'fda-ind-safety-report-v1.0');
+    expect(sr.confidence).toBe('low');
+    expect(sr.governing_rule).not.toMatch(/checked against the regulator's text/);
+    expect(sr.uncertainties).toContain('Superseded by fda-ind-safety-report-v1.1 on 2026-10-18');
+    const ar = await row('annual_report', 'fda-annual-report-lifecycle-v1.0');
+    expect(ar.governing_rule).not.toMatch(/601\.12\(a\) and 601\.28 \(annual/);
+    expect(ar.governing_rule).toContain('601.12(d)');
+    for (const spec of FILING_CLASS_PACKS.filter((p) => p.supersedes && p.changeNote)) {
+      const { rows } = await pg.query<{ uncertainties: string | null }>(
+        `SELECT uncertainties FROM c2c_rule_packs WHERE doc_type = $1 AND agency = $2 AND version = $3`,
+        [spec.docType, spec.agency, spec.supersedes],
+      );
+      // The five 20261018 superseded before provenance existed on them stay as they were.
+      if (spec.supersedes && ['ich-m4-v2.0', 'fda-meeting-2024', 'ich-e2c-r2'].includes(spec.supersedes)) continue;
+      expect(rows[0]?.uncertainties, `${spec.docType} ${spec.supersedes}`).toContain(`Superseded by ${spec.version}`);
+    }
   }, 60_000);
 });
 
@@ -257,5 +329,22 @@ describe('the contract is falsifiable', () => {
        VALUES ('pas', 'fda', 'fda-pas-lifecycle-v1.0', 'tampered', '[{"key":"X","parent_key":null,"label":"X","mandatory":true,"path_order":1}]'::jsonb, now())`,
     );
     await expect(pg.exec(read(FILE))).rejects.toThrow(/pas:fda fda-pas-lifecycle-v1\.0 must hold this file's 11 nodes/);
+  }, 60_000);
+
+  // Second review, 2026-10-18: the corrections file's own assertion was never
+  // exercised. A row holding the v1.1 key with the right node count and one
+  // flag flipped is kept by ON CONFLICT DO NOTHING; only the tree check refuses it.
+  it('a v1.1 row with the right node count and one flag flipped stops the corrections file', async () => {
+    await boot('before-corrections');
+    const tree = await filingClassPackSections('pas');
+    const flipped = tree.map((r, i) => (i === 0 ? { ...r, mandatory: !r.mandatory } : r));
+    await pg.query(
+      `INSERT INTO c2c_rule_packs (doc_type, agency, version, label, required_sections, effective_from)
+       VALUES ('pas', 'fda', 'fda-pas-lifecycle-v1.1', 'tampered', $1::jsonb, now())`,
+      [JSON.stringify(flipped)],
+    );
+    await expect(pg.exec(read(CORRECTIONS))).rejects.toThrow(
+      new RegExp(`pas:fda fda-pas-lifecycle-v1\\.1 must hold this file's ${tree.length} nodes; found ${tree.length} \\(tree matches: false\\)`),
+    );
   }, 60_000);
 });

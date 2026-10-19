@@ -29,7 +29,7 @@
 -- 20261019_commitment_fulfilment_evidence.sql
 --
 -- Rows D2 (Communication, Meetings & commitments) and D5 (Part 11). Decision
--- P-40 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-18 decisions). Evidence
+-- P-41 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-18 decisions). Evidence
 -- docs/evidence/D2-COMMITMENT-FULFILMENT/2026-10-19/.
 --
 -- WHAT IT ADDS to public.regulatory_commitments
@@ -264,7 +264,7 @@ END;
 $fn$;
 
 COMMENT ON FUNCTION public.regulatory_commitments_fulfilment_record_guard() IS
-  'P-40: a type fixed from INSERT, attribution of a fulfilment, evidence written only with it (this organisation, a sequence the agency received, a Vault version at its own sha256), a recorded fulfilment fixed (deleted_at with it), deleted_at written once. migrations/20261019_commitment_fulfilment_evidence.sql';
+  'P-41: a type fixed from INSERT, attribution of a fulfilment, evidence written only with it (this organisation, a sequence the agency received, a Vault version at its own sha256), a recorded fulfilment fixed (deleted_at with it), deleted_at written once. migrations/20261019_commitment_fulfilment_evidence.sql';
 
 -- 2. At COMMIT: a fulfilled PMR, PMC or REMS has its signature.
 CREATE OR REPLACE FUNCTION public.regulatory_commitments_signed_fulfilment_guard()
@@ -321,7 +321,7 @@ END;
 $fn$;
 
 COMMENT ON FUNCTION public.regulatory_commitments_signed_fulfilment_guard() IS
-  'P-40: refuses, at COMMIT, a fulfilled PMR/PMC/REMS without evidence, or without a live governed-action signature of basis commitment-fulfilment-content-sha256 written by the same transaction, by its recorder, over the same evidence and date. migrations/20261019_commitment_fulfilment_evidence.sql';
+  'P-41: refuses, at COMMIT, a fulfilled PMR/PMC/REMS without evidence, or without a live governed-action signature of basis commitment-fulfilment-content-sha256 written by the same transaction, by its recorder, over the same evidence and date. migrations/20261019_commitment_fulfilment_evidence.sql';
 
 DO $mig$
 DECLARE

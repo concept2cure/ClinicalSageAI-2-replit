@@ -13,7 +13,7 @@ const ARTIFACT_BUILDERS = new Map([
 const CALLERS = new Map([
   ['server/services/csr/vault-source-input.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/csr/source-receipt-eligibility.ts', { alias: 'd', builders: VAULT_BUILDERS }],
-  // A commitment's fulfilment evidence (P-40, 2026-10-19): the Vault version's
+  // A commitment's fulfilment evidence (P-41, 2026-10-19): the Vault version's
   // data eligibility and supersession, read through the canonical builders.
   ['server/services/ha-interactions/commitment-fulfilment.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/figureGenerationService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],

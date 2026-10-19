@@ -1,6 +1,6 @@
 /**
  * What a commitment's fulfilment must carry, and the digest its signature binds
- * (rows D2 and D5, 2026-10-19; decision P-40). Pure, no DB, no model.
+ * (rows D2 and D5, 2026-10-19; decision P-41). Pure, no DB, no model.
  *
  * Recording a PMR, PMC or REMS as fulfilled is a Part 11 signed act that names
  * the dispatched sequence the agency received or the Vault version that met it.

@@ -1,5 +1,5 @@
 /**
- * What met a regulatory commitment (rows D2 and D5, 2026-10-19; decision P-40).
+ * What met a regulatory commitment (rows D2 and D5, 2026-10-19; decision P-41).
  *
  * ── The record ───────────────────────────────────────────────────────────────
  * A commitment's fulfilment names the dispatched eCTD sequence the agency

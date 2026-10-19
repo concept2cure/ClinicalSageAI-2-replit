@@ -1,0 +1,37 @@
+Green, 2026-10-19, after folding three labelled-figure lexicons into one and two
+cross-document grouping implementations into one.
+
+Every suite that touches the fold — the canonical extractor and its four existing honesty
+suites, the new duplication contract, the claim/source comparator, the Authoring
+document-consistency check, the AnA tool envelope, the arithmetic check in its new home, the
+reconciliation engine and the device reconciler that feeds it, the three harmonize suites,
+and the two living-record suites that read extractNumericalFacts:
+
+ Test Files  17 passed (17)
+      Tests  210 passed (210)
+
+npm run typecheck (tsc --noEmit, NODE_OPTIONS=--max-old-space-size=24576 per package.json):
+
+      DONE-0
+
+A note on that: a plain `npx tsc --noEmit` aborted twice with "Ineffective mark-compacts near
+heap limit" at the default heap and at 8 GB. package.json documents exactly this and pins
+24576 MB, with its own note that 6144 was reproduced OOMing on this project. The repo's own
+script is what works.
+
+ESLint over the changed and new files: 0 errors.
+
+  harmonize-engine.ts            1 warning  — checkTerminology complexity 18, PRE-EXISTING
+                                              and untouched. checkNumerics hit 16 after the
+                                              migration and was brought back under by
+                                              extracting labelledReadings().
+  cross-artifact-consistency.ts  3 warnings — checkDossierConsistency length/complexity and
+                                              one no-useless-assignment, all three measured
+                                              on origin before this change (git stash,
+                                              re-lint, restore). The file crossed the
+                                              500-line limit while the hand-rolled
+                                              reconciler lived in it; moving that onto the
+                                              existing engine took it back under, so the
+                                              count is unchanged rather than +1.
+
+Net-new warnings on the changed files: 0.

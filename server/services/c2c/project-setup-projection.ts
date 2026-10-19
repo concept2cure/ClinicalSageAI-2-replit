@@ -56,6 +56,7 @@ import {
   MDR_DECLARED_CLASSES,
   euDeviceClassOf,
 } from '../../../shared/regulatory/device-class.js';
+import { K_NUMBER_RE } from '../../../shared/constants/domain/device-classification.js';
 import { programmeFactsFrom } from '../ana/intelligence-questions/programme-facts.js';
 import type { ProgrammeProfilePatch } from './programme-profile-write.js';
 
@@ -127,6 +128,8 @@ export const PROJECTED_FIELDS: readonly string[] = [
   'project_priority',
   'primary_regulatory_agency',
   'additional_agencies',
+  'predicate_device_name',
+  'predicate_510k_number',
   ...TEAM_ROLES.map(([field]) => field),
 ];
 
@@ -146,8 +149,6 @@ export const NOT_PROJECTED: Readonly<Record<string, string>> = {
 
   /* ── No column holds it: the work this projection documents ──────────── */
   notified_body: 'No column holds the notified body.',
-  predicate_device:
-    'The predicate OF RECORD carries the trade name the eSTAR prints beside the submission number, and this question asks only for the identifier. Projecting the identifier as the name would assert one.',
   therapeutic_area: 'No column holds the therapeutic area; the indication is what the record carries.',
   route_of_administration: 'No column holds the route of administration.',
   organization_name: 'The organization is the tenant, not a column of the programme.',
@@ -349,6 +350,49 @@ const projectEuClasses: Projector = (flat, patch, say) => {
   );
 };
 
+/**
+ * The predicate OF RECORD. `predicate_devices[0]` is what the official eSTAR
+ * prints the predicate submission number and trade name from, so an entry here
+ * is a claim of substantial equivalence the sponsor makes to FDA (21 CFR
+ * 807.87(f)) — not a comparison under consideration.
+ *
+ * Both facts or neither: the form prints both, and a record holding one would
+ * file half a claim. Which one is missing is said, so the person can see what
+ * to answer rather than being told the answer did not land.
+ */
+const projectPredicate: Projector = (flat, patch, say) => {
+  const name = text(flat.predicate_device_name);
+  const kNumber = text(flat.predicate_510k_number);
+  if (!name && !kNumber) return;
+  if (!name || !kNumber) {
+    say(
+      name ? 'predicate_510k_number' : 'predicate_device_name',
+      name
+        ? 'The predicate of record carries the submission number the eSTAR prints beside the trade name, and this interview holds only the name. Filing the name alone would put half a claim of substantial equivalence on the record.'
+        : 'The predicate of record carries the trade name the eSTAR prints beside the submission number, and this interview holds only the number. Reading a trade name out of a K-number would be asserting one.',
+    );
+    return;
+  }
+  /* The official eSTAR prints this string as the predicate's submission
+     number, so it is checked here too and not only by the question's own
+     validator: the projection decides what reaches the record, and an API
+     caller does not go through the card.
+
+     K###### only, which is the shape both interviews ask for. A De Novo grant
+     (DEN######) or a pre-amendments predicate with no number at all is refused
+     by the QUESTION already — a limitation of the 510(k) flow, not something
+     this check introduces, and widening it means widening the question. */
+  if (!K_NUMBER_RE.test(kNumber)) {
+    say(
+      'predicate_510k_number',
+      'The official eSTAR prints this as the predicate’s submission number, and a 510(k) number is K followed by six digits. A string that is not one would be printed on a filed form as though it were.',
+    );
+    return;
+  }
+  const submission = kNumber.toUpperCase();
+  patch.predicateDevices = [{ id: submission, name, kNumber: submission }];
+};
+
 const PROJECTORS: readonly Projector[] = [
   projectEuClasses,
   projectProse,
@@ -358,6 +402,7 @@ const PROJECTORS: readonly Projector[] = [
   projectPriority,
   projectAgencies,
   projectTeam,
+  projectPredicate,
 ];
 
 /**

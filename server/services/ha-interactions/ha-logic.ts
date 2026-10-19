@@ -76,7 +76,7 @@ export function summarizeCommitmentPortfolio(commitments: CommitmentView[], toda
   return s;
 }
 
-// ─── Fulfilment: what met a commitment (P-40, 2026-10-19) ───────────────────
+// ─── Fulfilment: what met a commitment (P-41, 2026-10-19) ───────────────────
 
 /**
  * The commitment types whose fulfilment is a Part 11 signed act. Recording a

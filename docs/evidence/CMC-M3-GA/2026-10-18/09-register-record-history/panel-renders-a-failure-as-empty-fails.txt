@@ -1,0 +1,12 @@
+   → Unable to find an element by: [data-testid="cmc-history-error"]
+            [33mdata-testid[39m=[32m"cmc-history-empty"[39m
+              [33mdata-testid[39m=[32m"cmc-history-empty"[39m
+   → Unable to find an element by: [data-testid="cmc-history-error"]
+            [33mdata-testid[39m=[32m"cmc-history-empty"[39m
+              [33mdata-testid[39m=[32m"cmc-history-empty"[39m
+   → Unable to find an element by: [data-testid="cmc-history-error"]
+            [33mdata-testid[39m=[32m"cmc-history-empty"[39m
+              [33mdata-testid[39m=[32m"cmc-history-empty"[39m
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > reports a failed read as a failure, never as a record with no changes
+TestingLibraryElementError: Unable to find an element by: [data-testid="cmc-history-error"]

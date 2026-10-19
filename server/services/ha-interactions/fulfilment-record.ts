@@ -1,5 +1,5 @@
 /**
- * The one read of what a commitment's fulfilment signature binds (P-40,
+ * The one read of what a commitment's fulfilment signature binds (P-41,
  * 2026-10-19).
  *
  * Two places compute commitmentFulfilmentDigest: the content binder, at the

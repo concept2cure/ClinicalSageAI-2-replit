@@ -48,6 +48,7 @@ import {
   voidSignatureForRefusedAct,
   VOIDED_VERIFICATION_STATUS,
 } from '../part11/signature-persistence';
+import { releaseActMeaningRefusal } from '../part11/signature-meanings';
 import { createScopedLogger } from '../../utils/logger';
 import { isFiledDispatchStatus } from './filed-dispatch';
 import { canMutateProgram, programInOrganization } from '../c2c/program-access';
@@ -867,8 +868,14 @@ const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
  * The meanings an intent narrows Gate 1 to, beyond requiresIndependence. A
  * waiver (P-34) and a finding disposition (P-35) are decisions the signer
  * approves or answers for: responsibility or approval, never review or release.
+ * Freeze, dispatch and transmit are approval or release steps
+ * (RELEASE_ACT_MEANINGS). Until 2026-10-19 they had no entry here, so a
+ * signature declaring "review", or no meaning at all, authorized them.
  */
 const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: unknown) => string | null>> = {
+  freeze: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.freeze),
+  dispatch: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.dispatch),
+  transmit: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.transmit),
   [SHADOW_WAIVER_INTENT]: shadowWaiverMeaningRefusal,
   [SHADOW_FINDING_DISPOSITION_INTENT]: shadowFindingDispositionMeaningRefusal,
 };

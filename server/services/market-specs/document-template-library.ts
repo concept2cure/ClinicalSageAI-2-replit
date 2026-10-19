@@ -29,6 +29,7 @@ import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 import { IB_FRONT_MATTER, IB_SUBSECTIONS } from './ib-outline-detail.js';
+import { PBRER_TEMPLATE } from './pbrer-outline.js';
 import { citeE6R3 } from '../../../shared/regulatory/ich-e6r3';
 import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
@@ -463,37 +464,8 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     ],
   },
 
-  // ── Periodic Benefit-Risk Evaluation Report (ICH E2C(R2)) ───────────────────
-  {
-    id: 'pbrer',
-    title: 'Periodic Benefit-Risk Evaluation Report (PBRER/PSUR)',
-    families: ['ectd'],
-    regulatoryBasis: 'ICH E2C(R2) §1–§19; EU GVP Module VII',
-    // Interim hand copy of the E2C(R2) numbering until one canonical E2C(R2)
-    // tree exists; the heading facts are in docs/evidence/D2-ANA-DOCUMENT-
-    // INTELLIGENCE/2026-10-04-depth/b1-template-library-facts.md.
-    sections: [
-      { number: '1', heading: 'Introduction', purpose: 'Reporting interval, product(s), and scope.', required: true },
-      { number: '2', heading: 'Worldwide Marketing Authorisation Status', purpose: 'Authorisation dates and indications by country.', required: true },
-      { number: '3', heading: 'Actions Taken for Safety Reasons', purpose: 'Significant safety-related actions in the interval.', required: true },
-      { number: '4', heading: 'Changes to Reference Safety Information', purpose: 'Changes to the RSI in the interval.', required: true },
-      { number: '5', heading: 'Estimated Exposure and Use Patterns', purpose: 'Cumulative and interval patient exposure.', required: true },
-      { number: '6', heading: 'Data in Summary Tabulations', purpose: 'Cumulative and interval adverse-event tabulations.', required: true },
-      { number: '7', heading: 'Summaries of Significant Findings from Clinical Trials', purpose: 'Completed/ongoing trial safety findings.', required: true },
-      { number: '8', heading: 'Findings from Non-Interventional Studies', purpose: 'Safety findings from observational studies.', required: false },
-      { number: '9', heading: 'Information from Other Clinical Trials and Sources', purpose: 'Other relevant safety information.', required: false },
-      { number: '10', heading: 'Non-Clinical Data', purpose: 'Relevant nonclinical safety findings.', required: false },
-      { number: '11', heading: 'Literature', purpose: 'Relevant published literature.', required: false },
-      { number: '12', heading: 'Other Periodic Reports', purpose: 'Significant findings from other periodic reports, including those from partners, not presented elsewhere.', required: false },
-      { number: '13', heading: 'Lack of Efficacy in Controlled Clinical Trials', purpose: 'Lack-of-efficacy data from clinical trials in the interval that bear on benefit-risk.', required: true },
-      { number: '14', heading: 'Late-Breaking Information', purpose: 'Significant safety or efficacy information arising after the data lock point.', required: true },
-      { number: '15', heading: 'Overview of Signals: New, Ongoing, or Closed', purpose: 'Signals new, ongoing, or closed during the reporting interval.', required: true },
-      { number: '16', heading: 'Signal and Risk Evaluation', purpose: 'Summary of safety concerns, signal evaluation, and risk characterisation.', required: true },
-      { number: '17', heading: 'Benefit Evaluation', purpose: 'Baseline and newly identified benefit information.', required: true },
-      { number: '18', heading: 'Integrated Benefit-Risk Analysis for Approved Indications', purpose: 'Integrated benefit-risk for approved indications.', required: true },
-      { number: '19', heading: 'Conclusions and Actions', purpose: 'Conclusions and any proposed/needed actions.', required: true },
-    ],
-  },
+  // ── Periodic Benefit-Risk Evaluation Report (ICH E2C(R2)) — pbrer-outline.ts
+  PBRER_TEMPLATE,
 
   // ── Clinical Study Report (ICH E3) ──────────────────────────────────────────
   {
@@ -581,7 +553,10 @@ export interface RegistryDocumentTemplateCoverage {
   region: RegulatoryApplicationType['region'];
   applicationFamily: RegulatoryApplicationType['applicationFamily'];
   requestedBlueprintId: string;
+  /** The project blueprint the served outline is read from; absent when the outline is a record, not a blueprint. */
   blueprintId?: string;
+  /** Where the served outline is read from (a blueprint, a lifecycle record, a document outline). */
+  outlineSource?: DocumentTemplateStructure['outlineSource'];
   outlineAvailable: boolean;
   reason?: 'existing_blueprint_requires_regional_review' | 'no_dedicated_existing_outline';
 }
@@ -590,7 +565,13 @@ export interface RegistryDocumentTemplateCoverage {
 export async function registryDocumentTemplateCoverage(): Promise<RegistryDocumentTemplateCoverage[]> {
   return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map(async (entry) => {
     const outline = await getRegistryDocumentTemplate(entry.id);
-    const blueprint = await getDedicatedSectionBlueprint(entry.id) ?? exactBlueprint(entry);
+    // The row names the outline actually served: a filing whose outline is a
+    // lifecycle record no longer reports the blueprint it was once read from
+    // (review nit, 2026-10-18: US_TYPE_B_MEETING reported us_type_b_meeting_sections).
+    // A blueprint id is reported only when that blueprint is what is served: a
+    // component template or a record is not a blueprint (review nit, 2026-10-18).
+    const source = outline?.outlineSource;
+    const blueprint = source && 'blueprintId' in source ? { id: source.blueprintId } : undefined;
     return {
       registryId: entry.id,
       displayName: entry.displayName,
@@ -598,6 +579,7 @@ export async function registryDocumentTemplateCoverage(): Promise<RegistryDocume
       applicationFamily: entry.applicationFamily,
       requestedBlueprintId: entry.defaultSectionBlueprint,
       ...(blueprint ? { blueprintId: blueprint.id } : {}),
+      ...(source ? { outlineSource: source } : {}),
       outlineAvailable: Boolean(outline),
       ...(!outline ? { reason: BLUEPRINTS_REQUIRING_REVIEW.has(entry.id)
         ? 'existing_blueprint_requires_regional_review' as const

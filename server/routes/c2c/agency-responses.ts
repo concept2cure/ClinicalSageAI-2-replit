@@ -20,7 +20,7 @@
  *   POST /projects/:projectId/commitments/:commitmentId/fulfill
  *
  * The two commitment fulfilment routes are commitment-fulfil-route.ts, shared
- * with the organisation's door (2026-10-19, P-40): a PMR, PMC or REMS is
+ * with the organisation's door (2026-10-19, P-41): a PMR, PMC or REMS is
  * fulfilled by a Part 11 signature naming the sequence or Vault version that
  * met it, here constrained to this project's program.
  *
@@ -468,7 +468,7 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
      admission, and only when the letter it came from is one this person may
      see; /api/ha-interactions reaches only the organisation's own (project_id
      IS NULL). One implementation (ha-service, commitment-fulfil-route), scoped
-     per door. Since 2026-10-19 (P-40) what met a commitment is named, and may
+     per door. Since 2026-10-19 (P-41) what met a commitment is named, and may
      only be of this project's program. */
   const projectDoor = (req: Request): CommitmentDoor => ({
     scope: { projectId: Number(req.params.projectId) },

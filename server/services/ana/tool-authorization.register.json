@@ -3643,7 +3643,7 @@
   },
   "fulfill_regulatory_commitment": {
    "class": "confirm",
-   "writes": "UPDATE regulatory_commitments fulfilled (terminal), meeting commitment or other only; a PMR, PMC or REMS writes nothing (a signed act, P-40)",
+   "writes": "UPDATE regulatory_commitments fulfilled (terminal), meeting commitment or other only; a PMR, PMC or REMS writes nothing (a signed act, P-41)",
    "site": "AnaToolExecutor.ts:13503"
   },
   "gateway_configuration_status": {

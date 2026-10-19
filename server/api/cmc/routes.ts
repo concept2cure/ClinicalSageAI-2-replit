@@ -55,7 +55,7 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
    eligibility rules there are the safety story for a shelf-life claim and have
    two callers — this route and AnA's `assess_recorded_batch_poolability` tool —
    so there is exactly one copy of them. */
-import { assessRecordedPoolability } from '../../services/cmc/recorded-stability';
+import { assessRecordedPoolability, readRecordedStabilityResults } from '../../services/cmc/recorded-stability';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
 import { clientIpOf } from '../../utils/client-ip';
@@ -85,6 +85,22 @@ import { linkToModule3, type LinkableRow, type WriteThroughFn } from '../../serv
    in this module rather than in the register service, and are recorded the
    same way, from the same helper. */
 import { createOnConnection, insertRegisterRow } from '../../services/cmc/register-audit';
+/* §11.10(e)'s other half: who CHANGED the row, and what they changed, on the
+   row's own transaction. Every PUT below was a bare db.update with no audit row
+   and no middleware behind it, so the register layer recorded who entered a
+   value and never who changed it
+   (services/cmc/register-edit-audit.ts). */
+import { updateOnConnection, updateRegisterRow } from '../../services/cmc/register-edit-audit';
+import { type CmcRegisterHistoryPath } from '../../../shared/constants/cmc-register-history';
+import {
+  MissingAuditStore,
+  REGISTER_HISTORY_PATHS,
+  REGISTER_HISTORY_PATH_NAMES,
+  readRegisterHistory,
+  registerRecordIsTenants,
+} from '../../services/cmc/register-history';
+import { setTenantContextTx } from '../../services/tenant/governed-tenant-context';
+import { getTableName } from 'drizzle-orm';
 /* The register creates, their body schemas and the governed-state refusals
    live in ONE service, called by these routes and by the guided interview's
    commit projector alike (services/cmc/interview-commit.ts). */
@@ -348,11 +364,14 @@ router.put('/analytical-methods/:id', async (req, res) => {
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'analytical-methods', stored?.status)) return;
     // Strip organizationId so the tenant scope cannot be overridden by the request body.
     const safeData = withoutProject(withoutSignatureFields(SIGNED_REGISTERS.analyticalMethods, validatedData as Record<string, unknown>));
-    const [method] = await db
-      .update(analyticalMethods)
-      .set({ ...safeData, ...filing.set, updatedAt: new Date() })
-      .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
-      .returning();
+    const method = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'analytical_method',
+      table: analyticalMethods,
+      where: and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)),
+      patch: { ...safeData, ...filing.set, updatedAt: new Date() },
+    });
     if (!method) return res.status(404).json({ success: false, error: 'Analytical method not found' });
     const linkage = await linkToModule3('write_through_analytical_method', orgId, method, writeThroughAnalyticalMethod, req);
     res.json({ success: true, data: method, ...linkage });
@@ -459,15 +478,18 @@ router.put('/process-validation/:id', async (req, res) => {
       (row) => linkToModule3('write_through_process_validation', orgId, row, writeThroughProcessValidation, req),
     )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'process-validation', stored?.status)) return;
-    const [validation] = await db
-      .update(processValidation)
-      .set({
+    const validation = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'process_validation',
+      table: processValidation,
+      where: and(eq(processValidation.id, id), eq(processValidation.organizationId, orgId)),
+      patch: {
         ...withoutProject(withoutSignatureFields(SIGNED_REGISTERS.processValidation, validatedData as Record<string, unknown>)),
         ...filing.set,
         updatedAt: new Date(),
-      })
-      .where(and(eq(processValidation.id, id), eq(processValidation.organizationId, orgId)))
-      .returning();
+      },
+    });
     if (!validation) return res.status(404).json({ success: false, error: 'Process validation record not found' });
     const linkage = await linkToModule3('write_through_process_validation', orgId, validation, writeThroughProcessValidation, req);
     res.json({ success: true, data: validation, ...linkage });
@@ -549,13 +571,26 @@ router.get('/stability-studies', async (req, res) => {
   }
 });
 
+const reselectStabilityStudy = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(stabilityStudies)
+    .where(and(eq(stabilityStudies.id, parseInt(id, 10)), eq(stabilityStudies.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
 router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = stabilityStudyBody.parse(req.body);
+    /* A study is not born closed out. `status: 'COMPLETED'` with a shelf life
+       was a plain create until 2026-10-19, and the shelf life is what
+       §3.2.S.7.1 / §3.2.P.8.1 prints as the dossier's claim and what the ICH
+       Q1E rule judges the programme against. */
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'stability-studies')) return;
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
     const study = await insertRegisterRow(orgId, recordedBy(req), 'stability_study', stabilityStudies, {
-      ...validatedData,
+      ...withoutSignatureFields(SIGNED_REGISTERS.stabilityStudies, validatedData as Record<string, unknown>),
       projectId,
       organizationId: orgId,
     } as typeof stabilityStudies.$inferInsert);
@@ -579,17 +614,104 @@ router.put('/stability-studies/:id', async (req, res) => {
     const validatedData = stabilityStudyBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.stabilityStudy, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Stability study not found' });
-    const [study] = await db
-      .update(stabilityStudies)
-      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
-      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)))
-      .returning();
+    const stored = await reselectStabilityStudy(String(id), orgId);
+    /* A closed-out study is closed to content edits: the shelf life, the
+       recorded series and the conditions are what the signature accepted, and
+       §3.2.S.7 / §3.2.P.8 prints them. Retiring it is a lifecycle end, not a
+       reversal, and is allowed. */
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.stabilityStudies, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectStabilityStudy(String(id), orgId),
+      (row) => linkToModule3('write_through_stability_study', orgId, row, writeThroughStabilityStudy, req),
+    )) return;
+    /* ...and the close-out itself is reached only through the ceremony. The
+       shelf life may still be RECORDED by an ordinary edit — that is the
+       evidence the signature then accepts, audited with both values on the
+       chain — but the terminal status is the signed act. */
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'stability-studies', stored?.status)) return;
+    const study = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'stability_study',
+      table: stabilityStudies,
+      where: and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)),
+      patch: {
+        ...withoutProject(withoutOrgId(withoutSignatureFields(
+          SIGNED_REGISTERS.stabilityStudies, validatedData as Record<string, unknown>,
+        ))),
+        ...filing.set,
+        updatedAt: new Date(),
+      },
+    });
     if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
     const linkage = await linkToModule3('write_through_stability_study', orgId, study, writeThroughStabilityStudy, req);
     res.json({ success: true, data: study, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update stability study');
   }
+});
+
+/**
+ * The governed close-out of a stability study (21 CFR Part 11, ICH Q1A(R2)/Q1E).
+ *
+ * This is the act that turns a running study into the dossier's shelf-life
+ * claim. §3.2.S.7.1 / §3.2.P.8.1 print `shelf_life` verbatim as the proposed
+ * storage period, the ICH Q1E rule judges the programme's claim against the
+ * recorded coverage, and the contradiction sweep reads the terminal status —
+ * and until 2026-10-19 all of it was an ordinary PUT:
+ * `{"shelfLife":"36 months at 25C/60%RH","status":"COMPLETED"}` answered 200
+ * with no signature, no reason and no re-authentication.
+ *
+ * The shelf life itself is still recorded by an ordinary edit, as the Q2
+ * package and the validation report are for their registers: the evidence is
+ * entered, then the signature accepts it. What the ceremony writes is the
+ * terminal status, the signer and the date; after it, the record's content is
+ * closed (`answeredSignedRecordEdit`).
+ */
+router.post('/stability-studies/:id/close-out', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    register: SIGNED_REGISTERS.stabilityStudies,
+    target: 'stability_study',
+    surface: 'cmc-stability',
+    propagation: 'write_through_stability_study',
+    reselect: reselectStabilityStudy,
+    writeThrough: writeThroughStabilityStudy,
+    precondition: (row) => {
+      /* Two things must be true of a study before a shelf life may be signed
+         for, and they fail differently:
+
+         1. A shelf life must be RECORDED. A signature over an empty claim
+            accepts nothing, and §3.2.S.7.1 would print a blank period.
+         2. The study must have produced RESULTS. A shelf-life claim over a
+            study with nothing pulled is the fabrication the Q1E rule exists to
+            catch (docs/evidence/CMC-M3-GA/2026-10-18/06-ich-q1e-verdict/: the
+            planned schedule is not data), and a signature would make it a
+            governed one. A column that holds something unreadable is NOT the
+            same as a study with no results, and is refused as its own case. */
+      const claim = String(row.shelf_life ?? row.shelfLife ?? '').trim();
+      if (!claim) {
+        return (
+          'This study records no shelf life, so there is nothing to sign for: a closed-out study states the period ' +
+          'and the storage condition §3.2.S.7.1 / §3.2.P.8.1 will print (for example "36 months at 25°C/60% RH"). ' +
+          'Record the shelf life on the study first.'
+        );
+      }
+      const recorded = readRecordedStabilityResults(row.stability_data ?? row.stabilityData);
+      if (recorded.unreadable) {
+        return (
+          'This study’s recorded results could not be read, so what the shelf life rests on cannot be established. ' +
+          'A signature is not made over data the platform cannot parse. Correct the recorded series first.'
+        );
+      }
+      if (recorded.points.length === 0) {
+        return (
+          `This study has no recorded pull-point results, so "${claim}" is a claim over no data. A planned schedule ` +
+          'is not data: record the results pulled at each time point, then close the study out.'
+        );
+      }
+      return null;
+    },
+  });
 });
 
 // QC Testing Routes
@@ -713,15 +835,18 @@ router.put('/qc-testing/:id', async (req, res) => {
         });
       }
     }
-    const [test] = await db
-      .update(qcTesting)
-      .set({
+    const test = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'qc_test',
+      table: qcTesting,
+      where: and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)),
+      patch: {
         ...safeData,
         ...(claimsReview ? { reviewedBy: reviewerId } : {}),
         updatedAt: new Date(),
-      })
-      .where(and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)))
-      .returning();
+      },
+    });
     if (!test) return res.status(404).json({ success: false, error: 'QC test record not found' });
     /* The review IS the state change that matters downstream: an unreviewed
        result is not releasable evidence, so the canonical source must be
@@ -777,11 +902,14 @@ router.put('/change-control/:id', async (req, res) => {
     const validatedData = changeControlBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.changeControl, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Change-control record not found' });
-    const [change] = await db
-      .update(cmcChangeControl)
-      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
-      .where(and(eq(cmcChangeControl.id, id), eq(cmcChangeControl.organizationId, orgId)))
-      .returning();
+    const change = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'change_control',
+      table: cmcChangeControl,
+      where: and(eq(cmcChangeControl.id, id), eq(cmcChangeControl.organizationId, orgId)),
+      patch: { ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() },
+    });
     if (!change) return res.status(404).json({ success: false, error: 'Change-control record not found' });
     const linkage = await linkToModule3('write_through_change_control', orgId, change, writeThroughChangeControl, req);
     res.json({ success: true, data: change, ...linkage });
@@ -838,11 +966,14 @@ router.put('/drug-substances/:id', async (req, res) => {
     const validatedData = drugSubstanceBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugSubstance, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Drug substance not found' });
-    const [substance] = await db
-      .update(drugSubstances)
-      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
-      .where(and(eq(drugSubstances.id, id), eq(drugSubstances.organizationId, orgId)))
-      .returning();
+    const substance = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'drug_substance',
+      table: drugSubstances,
+      where: and(eq(drugSubstances.id, id), eq(drugSubstances.organizationId, orgId)),
+      patch: { ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() },
+    });
     if (!substance) return res.status(404).json({ success: false, error: 'Drug substance not found' });
     const linkage = await linkToModule3('write_through_drug_substance', orgId, substance, writeThroughDrugSubstance, req);
     res.json({ success: true, data: substance, ...linkage });
@@ -905,11 +1036,14 @@ router.put('/drug-products/:id', async (req, res) => {
     const validatedData = drugProductBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugProduct, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Drug product not found' });
-    const [product] = await db
-      .update(drugProducts)
-      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
-      .where(and(eq(drugProducts.id, id), eq(drugProducts.organizationId, orgId)))
-      .returning();
+    const product = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'drug_product',
+      table: drugProducts,
+      where: and(eq(drugProducts.id, id), eq(drugProducts.organizationId, orgId)),
+      patch: { ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() },
+    });
     if (!product) return res.status(404).json({ success: false, error: 'Drug product not found' });
     const linkage = await linkToModule3('write_through_drug_product', orgId, product, writeThroughDrugProduct, req);
     res.json({ success: true, data: product, ...linkage });
@@ -1082,7 +1216,10 @@ async function qualifyRegisterRecord(
     signedAtColumn: spec.register.signedAtColumn,
   };
   /** The act, as the compliance statement and the failure message name it. */
-  const act = { qualify: 'qualification', validate: 'validation', approve: 'approval' }[spec.register.signPath];
+  const act = {
+    qualify: 'qualification', validate: 'validation', approve: 'approval',
+    'close-out': 'close-out',
+  }[spec.register.signPath];
   const subject = spec.register.noun;
   const table = spec.register.table;
   const rawId = String(req.params.id ?? '').trim();
@@ -1129,7 +1266,13 @@ async function qualifyRegisterRecord(
     /* Already signed. Re-signing would stamp a second person over the first and
        lose who actually qualified it, so it is refused with the record's own
        facts rather than overwritten. */
-    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue) {
+    /* Both sides lowercased: a register keeps its own casing for its own
+       vocabulary (the stability words are upper-case), and comparing a
+       lowercased stored value to a raw upper-case signed word made this check
+       never fire — a second close-out answered 200 and re-stamped the signature
+       date over the first signer's
+       (docs/evidence/CMC-M3-GA/2026-10-19/11-stability-close-out/). */
+    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue.toLowerCase()) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
@@ -1267,11 +1410,14 @@ router.put('/container-closures/:id', async (req, res) => {
     const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
       SIGNED_REGISTERS.containerClosures, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
-    const [row] = await db
-      .update(cmcContainerClosures)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(cmcContainerClosures.id, id), eq(cmcContainerClosures.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'container_closure',
+      table: cmcContainerClosures,
+      where: and(eq(cmcContainerClosures.id, id), eq(cmcContainerClosures.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Container closure system not found' });
     const linkage = await linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1351,11 +1497,14 @@ router.put('/reference-standards/:id', async (req, res) => {
     const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
       SIGNED_REGISTERS.referenceStandards, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
-    const [row] = await db
-      .update(cmcReferenceStandards)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(cmcReferenceStandards.id, id), eq(cmcReferenceStandards.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'reference_standard',
+      table: cmcReferenceStandards,
+      where: and(eq(cmcReferenceStandards.id, id), eq(cmcReferenceStandards.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Reference standard not found' });
     const linkage = await linkToModule3('write_through_reference_standard', orgId, row, writeThroughReferenceStandard, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1442,11 +1591,14 @@ router.put('/impurity-profiles/:id', async (req, res) => {
     const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
       SIGNED_REGISTERS.impurityProfiles, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
-    const [row] = await db
-      .update(cmcImpurityProfiles)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(cmcImpurityProfiles.id, id), eq(cmcImpurityProfiles.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'impurity_profile',
+      table: cmcImpurityProfiles,
+      where: and(eq(cmcImpurityProfiles.id, id), eq(cmcImpurityProfiles.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Impurity profile not found' });
     const linkage = await linkToModule3('write_through_impurity_profile', orgId, row, writeThroughImpurityProfile, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1531,11 +1683,14 @@ router.put('/dissolution-profiles/:id', async (req, res) => {
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
-    const [row] = await db
-      .update(cmcDissolutionProfiles)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(cmcDissolutionProfiles.id, id), eq(cmcDissolutionProfiles.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'dissolution_profile',
+      table: cmcDissolutionProfiles,
+      where: and(eq(cmcDissolutionProfiles.id, id), eq(cmcDissolutionProfiles.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Dissolution profile not found' });
     const linkage = await linkToModule3('write_through_dissolution_profile', orgId, row, writeThroughDissolutionProfile, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1584,11 +1739,14 @@ router.put('/material-specs/:id', async (req, res) => {
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
-    const [row] = await db
-      .update(cmcMaterialSpecs)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(cmcMaterialSpecs.id, id), eq(cmcMaterialSpecs.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'material_spec',
+      table: cmcMaterialSpecs,
+      where: and(eq(cmcMaterialSpecs.id, id), eq(cmcMaterialSpecs.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Material specification not found' });
     const linkage = await linkToModule3('write_through_material_spec', orgId, row, writeThroughMaterialSpec, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1647,11 +1805,14 @@ router.put('/formulation-records/:id', async (req, res) => {
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
-    const [row] = await db
-      .update(cmcFormulationRecords)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'formulation_record',
+      table: cmcFormulationRecords,
+      where: and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Formulation record not found' });
     const linkage = await linkToModule3('write_through_formulation_record', orgId, row, writeThroughFormulationRecord, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1751,11 +1912,14 @@ router.put('/manufacturing-processes/:id', async (req, res) => {
     /* Never write an empty lifecycle: an omitted or cleared status leaves the
        stored one alone rather than nulling the column. */
     if (clearedStatus) delete (editable as Record<string, unknown>).validationStatus;
-    const [row] = await db
-      .update(manufacturingProcesses)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(manufacturingProcesses.id, id), eq(manufacturingProcesses.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'manufacturing_process',
+      table: manufacturingProcesses,
+      where: and(eq(manufacturingProcesses.id, id), eq(manufacturingProcesses.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
     const linkage = await linkToModule3('write_through_manufacturing_process', orgId, row, writeThroughManufacturingProcess, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1839,11 +2003,14 @@ router.put('/characterization-studies/:id', async (req, res) => {
     const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
       SIGNED_REGISTERS.characterizationStudies, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
-    const [row] = await db
-      .update(cmcCharacterizationStudies)
-      .set({ ...editable, updatedAt: new Date() })
-      .where(and(eq(cmcCharacterizationStudies.id, id), eq(cmcCharacterizationStudies.organizationId, orgId)))
-      .returning();
+    const row = await updateRegisterRow({
+      orgId,
+      actor: recordedBy(req),
+      register: 'characterization_study',
+      table: cmcCharacterizationStudies,
+      where: and(eq(cmcCharacterizationStudies.id, id), eq(cmcCharacterizationStudies.organizationId, orgId)),
+      patch: { ...editable, updatedAt: new Date() },
+    });
     if (!row) return res.status(404).json({ success: false, error: 'Characterisation study not found' });
     const linkage = await linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, req);
     res.json({ success: true, data: row, ...linkage });
@@ -1928,6 +2095,13 @@ router.post('/comparability-studies', async (req, res) => {
        request-body fields: an ordinary create could file an approved assessment
        naming any reviewer, with no signature and no reason. */
     if (refusesUngovernedQualification(res, req.body?.status, 'comparability-studies')) return;
+    /* And the program it is filed under must be this organisation's. The raw
+       INSERT below wrote req.body.projectId straight into the column, so a
+       typo filed an assessment under a programme that does not exist and
+       another organisation's id filed one under a dossier this tenant does not
+       hold — while the fifteen Drizzle creates beside it refused the same body
+       (docs/evidence/CMC-M3-GA/2026-10-19/10-unverified-programme/). */
+    const filedProject = await filedProjectOnCreate(orgId, req.body?.projectId);
     const created = await createOnConnection(
       getPool(),
       {
@@ -1947,7 +2121,7 @@ router.post('/comparability-studies', async (req, res) => {
                      justification as outcome, reviewed_by as owner`,
           [
             orgId,
-            req.body.projectId,
+            filedProject,
             req.body.title || '',
             req.body.type || '',
             req.body.product || '',
@@ -1969,8 +2143,13 @@ router.post('/comparability-studies', async (req, res) => {
     const linkage = await linkToModule3('write_through_comparability', orgId, created as LinkableRow, writeThroughComparability);
     res.json({ success: true, data: created, ...linkage });
   } catch (error) {
-    console.error('Error creating comparability study:', error);
-    res.status(500).json({ success: false, error: 'Failed to create comparability study' });
+    /* Through the same reader as every other register create: a refusal the
+       caller can act on — a programme that is not this organisation's, a
+       governed status claimed on a create — is a 409 naming it, not a 500.
+       It answered 500 'Failed to create comparability study' for an unknown
+       programme until 2026-10-19, which reads as a server fault for what is a
+       bad request (docs/evidence/CMC-M3-GA/2026-10-19/10-unverified-programme/). */
+    return respondWriteError(res, error, 'Failed to create comparability study');
   }
 });
 
@@ -2014,38 +2193,76 @@ router.put('/comparability-studies/:id', async (req, res) => {
       (row) => linkToModule3('write_through_comparability', orgId, row, writeThroughComparability),
     )) return;
     if (refusesUngovernedQualification(res, req.body?.status, 'comparability-studies', stored.status)) return;
-    const { rows } = await pool.query(
-      `UPDATE cmc_comparability_assessments
-       SET assessment_name = COALESCE($1, assessment_name),
-           changed_element = COALESCE($2, changed_element),
-           change_type = COALESCE($3, change_type),
-           affected_process_parameters = COALESCE($4::jsonb, affected_process_parameters),
-           justification = COALESCE($5, justification),
-           status = COALESCE($6, status),
-           updated_at = NOW()
-       WHERE id = $7 AND organization_id = $8
-       RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
-                 created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
-                 justification as outcome, reviewed_by as owner`,
-      [
-        req.body.title,
-        req.body.product,
-        req.body.type,
-        req.body.methods ? JSON.stringify(req.body.methods) : null,
-        req.body.outcome,
-        /* `owner` (reviewed_by) is dropped here for the same reason it is
-           dropped on the create: it is the approver, written by the signature. */
-        req.body.status,
-        req.params.id,
-        orgId,
-      ]
+    /* The one register whose edit is raw SQL rather than a Drizzle update, so
+       it takes the pinned-connection door: the stored row is re-read FOR UPDATE
+       on the same connection as the UPDATE and the audit row, and the three
+       commit together. The `stored` read above is the signed-state check, which
+       runs before the transaction opens; the diff is computed against the row
+       read INSIDE it, because a diff against a row read outside would name a
+       `from` some other writer had already replaced. */
+    const updated = await updateOnConnection<{ id: number | string }>(
+      pool,
+      {
+        organizationId: orgId,
+        actor: recordedBy(req),
+        register: 'comparability_study',
+        table: 'cmc_comparability_assessments',
+      },
+      /* `SELECT *` and `RETURNING *`, not the camelCase projection: the diff is
+         computed over these two rows, and the trail should name the TABLE's own
+         columns (`assessment_name`, `changed_element`) rather than the aliases
+         the API happens to answer with. It also keeps the column list out of
+         the SQL text — `ci:sql-interpolation` counts an interpolated identifier,
+         and this is the better answer than raising its baseline again. The
+         response's shape is re-read below through the one projection. */
+      async (client) => {
+        const { rows } = await client.query(
+          `SELECT * FROM cmc_comparability_assessments
+            WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+          [req.params.id, orgId],
+        );
+        return rows[0];
+      },
+      async (client) => {
+        const { rows } = await client.query(
+          `UPDATE cmc_comparability_assessments
+           SET assessment_name = COALESCE($1, assessment_name),
+               changed_element = COALESCE($2, changed_element),
+               change_type = COALESCE($3, change_type),
+               affected_process_parameters = COALESCE($4::jsonb, affected_process_parameters),
+               justification = COALESCE($5, justification),
+               status = COALESCE($6, status),
+               updated_at = NOW()
+           WHERE id = $7 AND organization_id = $8
+           RETURNING *`,
+          [
+            req.body.title,
+            req.body.product,
+            req.body.type,
+            req.body.methods ? JSON.stringify(req.body.methods) : null,
+            req.body.outcome,
+            /* `owner` (reviewed_by) is dropped here for the same reason it is
+               dropped on the create: it is the approver, written by the
+               signature. */
+            req.body.status,
+            req.params.id,
+            orgId,
+          ],
+        );
+        return rows[0] as { id: number | string } | undefined;
+      },
     );
-    if (!rows[0]) {
+    if (!updated) {
       return res.status(404).json({ success: false, error: 'Study not found' });
     }
+    /* Re-read through the one projection, so the response carries the same
+       camelCase shape every other comparability endpoint returns — the register
+       table adopts the server row after a write, and a snake_case body would
+       blank every column it just filled in. */
+    const projected = (await reselectComparabilityAssessment(String(req.params.id), orgId)) ?? updated;
     /* The program is the stored row's (project_id), never the request body's. */
-    const linkage = await linkToModule3('write_through_comparability', orgId, rows[0], writeThroughComparability);
-    res.json({ success: true, data: rows[0], ...linkage });
+    const linkage = await linkToModule3('write_through_comparability', orgId, projected as LinkableRow, writeThroughComparability);
+    res.json({ success: true, data: projected, ...linkage });
   } catch (error) {
     console.error('Error updating comparability study:', error);
     res.status(500).json({ success: false, error: 'Failed to update comparability study' });
@@ -2064,6 +2281,33 @@ router.put('/comparability-studies/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Is this programme one the organisation holds? Every route below derives,
+ * judges or projects over ONE programme's records, and until 2026-10-19 none of
+ * them asked.
+ *
+ * `POST /api/cmc/ich-compliance` answered **200 with a complete
+ * eleven-guideline verdict and nine findings** for a programme that does not
+ * exist, for another organisation's programme, and for the string
+ * `not-a-uuid`. The findings were the "nothing is recorded" ones, so a mistyped
+ * id read as a confident compliance report about an empty register — which is
+ * what the process-capability route's own docstring, three screens down, calls
+ * the one thing it must never produce.
+ *
+ * A 404, not a 403: that a programme exists in another organisation is not this
+ * caller's to learn. Returns true when the caller may proceed; the refusal is
+ * already written when it returns false.
+ */
+async function answeredUnknownProgram(res: express.Response, orgId: number, projectId: string): Promise<boolean> {
+  const { projectBelongsToTenant } = await import('../../services/cmc/project-membership');
+  if (await projectBelongsToTenant({ organizationId: orgId, projectId })) return false;
+  res.status(404).json({
+    success: false,
+    error: 'No such program in this organization — nothing was assessed.',
+  });
+  return true;
+}
+
+/**
  * GET /api/cmc/quality/qbd/:projectId
  * Derive CQAs and CPPs from the project's actual stored data
  * (specifications, methods, stability, processes, source objects).
@@ -2075,6 +2319,7 @@ router.get('/quality/qbd/:projectId', async (req, res) => {
     if (!projectId) {
       return res.status(400).json({ success: false, error: 'projectId is required' });
     }
+    if (await answeredUnknownProgram(res, orgId, projectId)) return;
     const { analyzeQbdFromSources } = await import('../../services/cmc/qbd-analyzer');
     const result = await analyzeQbdFromSources(orgId, projectId);
     res.json({ success: true, data: result });
@@ -2097,6 +2342,7 @@ router.post('/ich-compliance', async (req, res) => {
     if (!projectId || typeof projectId !== 'string') {
       return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
     }
+    if (await answeredUnknownProgram(res, orgId, projectId)) return;
     const { runIchComplianceCheck } = await import('../../services/cmc/ich-compliance-checker');
     const report = await runIchComplianceCheck(orgId, projectId);
     res.json({ success: true, data: report });
@@ -2159,6 +2405,7 @@ router.post('/control-strategy', async (req, res) => {
         error: 'scope must be one of drug_substance | drug_product | both',
       });
     }
+    if (await answeredUnknownProgram(res, orgId, projectId)) return;
     const { generateControlStrategy } = await import('../../services/cmc/control-strategy-generator');
     const strategy = await generateControlStrategy(orgId, projectId, scope);
     res.json({ success: true, data: strategy });
@@ -2422,6 +2669,104 @@ router.post('/stability-studies/poolability', async (req, res) => {
     return res.json({ success: true, data: outcome.data });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to assess batch poolability');
+  }
+});
+
+/**
+ * GET /api/cmc/register-history/:register/:id — every chained act recorded
+ * against one register record, oldest first, each with the fields that moved
+ * and both values.
+ *
+ * 21 CFR 11.10(e): "Record changes shall not obscure previously recorded
+ * information." The before-values reached the chain on 2026-10-18
+ * (URS-CMC-025) and no working route returned them — the tenant ledger carries
+ * the act and the actor but no changed fields and no way to ask about one
+ * record, and the per-entity Part 11 route is deliberately disconnected. See
+ * `services/cmc/register-history.ts`.
+ *
+ * ── Why its own namespace, and not `/:register/:id/history` ──────────────────
+ * Two reasons, both found by running the checks rather than reasoning about it:
+ *
+ *  1. This router is mounted on the bare `/api/cmc` BEFORE the specifications
+ *     and batch-records routers (`bootstrap/register-core-routes.ts`), so a
+ *     parameter route here swallows `/api/cmc/specifications/:id/history` —
+ *     a working capability over a different store — and answers 404 for it.
+ *  2. `ci:launch-scope-api` refused the client call: a path whose FIRST
+ *     segment is a variable normalises to `/api/cmc/:p/:p/history`, which no
+ *     surface prefix can claim. P-28 deliberately does not claim the bare
+ *     `/api/cmc`, so the alternative would have been to widen the catalog's
+ *     narrowest claim to make a read route attributable. A fixed namespace is
+ *     one prefix, declared with its reason, and exactly as narrow as the thing
+ *     it serves (`shared/constants/ui-surface-registry.ts`).
+ *
+ * `specifications` is deliberately not one of the registers served here: it has
+ * its own history route over `specification_audit_log` (`specificationRoutes.ts`).
+ */
+router.get('/register-history/:register/:id', async (req, res) => {
+  const registerPath = String(req.params.register);
+  const target = (REGISTER_HISTORY_PATHS as Record<string, (typeof REGISTER_HISTORY_PATHS)[CmcRegisterHistoryPath]>)[
+    registerPath
+  ];
+  if (!target) {
+    return res.status(404).json({
+      success: false,
+      error:
+        `No change history is kept for /api/cmc/${registerPath}. Registers with one: ` +
+        `${REGISTER_HISTORY_PATH_NAMES.join(', ')}.`,
+    });
+  }
+  const recordId = String(req.params.id);
+  let client;
+  try {
+    const orgId = getOrgId(req);
+    /* The record must be this organisation's before its history is read, and
+       another tenant's record is a 404: that it exists at all is not this
+       caller's to learn. */
+    if (!(await registerRecordIsTenants(target, recordId, orgId))) {
+      return res.status(404).json({ success: false, error: `No such ${target.noun} in this organization.` });
+    }
+    client = await getPool().connect();
+    await client.query('BEGIN');
+    await setTenantContextTx(client, orgId);
+    const history = await readRegisterHistory(client, {
+      orgId,
+      tableName: getTableName(target.table),
+      recordId,
+    });
+    await client.query('COMMIT');
+    const entries = history.entries;
+    return res.json({
+      success: true,
+      data: {
+        register: target.register,
+        recordId,
+        entries,
+        /* A record with more acts than one read returns loses its OLDEST,
+           possibly its create — so the reader is told, rather than shown a
+           history that begins in the middle as if it began there. */
+        earlierActsNotShown: history.earlierActsNotShown,
+        /* What an empty history is, said plainly: no act was chained against
+           this record, which is not the same as nothing having happened to it.
+           A record written before 2026-10-18 has no operator on the chain, and
+           an edit made before that date has no change record. */
+        note:
+          entries.length === 0
+            ? 'No chained act is recorded against this record. A record created before 2026-10-18 carries no ' +
+              'operator, and an edit made before that date carries no change history.'
+            : null,
+      },
+    });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(() => undefined);
+    /* Fail closed. An empty §11.10(e) history and a history that could not be
+       read are indistinguishable to an inspector, and only one of them is
+       something this route may claim. */
+    if (error instanceof MissingAuditStore) {
+      return res.status(503).json({ success: false, error: 'AUDIT_TABLE_MISSING' });
+    }
+    return respondWriteError(res, error, `Failed to read the ${target.noun} history`);
+  } finally {
+    client?.release();
   }
 });
 

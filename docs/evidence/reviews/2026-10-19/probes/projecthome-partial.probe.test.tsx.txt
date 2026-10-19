@@ -1,0 +1,36 @@
+// @vitest-environment jsdom
+// THROWAWAY PROBE (honest-state review 2026-10-19). Lives in the scratchpad, not the repo.
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
+import { ProjectHome } from '@/concept2cure/v2/surfaces/ProjectHome';
+import { clearNavParams } from '@/concept2cure/v2/navParams';
+const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';
+const WORK_URL = `/api/concept2cure/projects/${PROGRAM}/unified-work`;
+const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
+const work = (items: unknown[], partial: boolean) => ({ items, summary: { total: items.length, blocking: 0, open: items.length, inProgress: 0, done: 0, bySource: {}, partial }, sources: { unified_tasks: { ran: !partial } } });
+beforeEach(() => { clearNavParams(); (window as any).C2C_PROJECT = { id: PROGRAM, title: 'BX-256' }; });
+afterEach(() => { cleanup(); clearNavParams(); delete (window as any).C2C_PROJECT; });
+function route(w: () => Response) {
+  apiRequest.mockReset();
+  apiRequest.mockImplementation(async (_m: string, url: string) => {
+    if (url === WORK_URL) return w();
+    if (url.startsWith('/api/chat/threads?')) return ok({ threads: [] });
+    return ok({});
+  });
+}
+describe('PROBE: ProjectHome Review stage when a store could not be read and the rest are empty', () => {
+  it('partial=true, items=[]', async () => {
+    route(() => ok(work([], true)));
+    render(<ProjectHome {...({ surface: { id: 'project-home', label: 'Project' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' } as any)} />);
+    fireEvent.click(screen.getByTitle('Review, approve & e-sign'));
+    await screen.findByText(/No tasks or approvals on this program/);
+    await new Promise((r) => setTimeout(r, 150));
+    const body = document.body.textContent ?? '';
+    const r = { saysNone: /No tasks or approvals on this program/.test(body), mentionsUnreadStore: /One of the stores this list reads could not be read/.test(body), workPanelText: (document.querySelector('section[aria-label="Tasks and approvals"]')?.textContent ?? '').slice(0, 400) };
+    console.log('PROBE-RESULT-PROJECTHOME ' + JSON.stringify(r));
+    expect(r.mentionsUnreadStore, 'a partial read must not render as a plain empty list').toBe(true);
+  });
+});

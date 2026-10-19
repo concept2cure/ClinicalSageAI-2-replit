@@ -1,6 +1,6 @@
 /**
  * What the database holds when a regulatory commitment is fulfilled (rows D2
- * and D5, 2026-10-19; decision P-40), whatever the route:
+ * and D5, 2026-10-19; decision P-41), whatever the route:
  *
  *   - a fulfilled PMR, PMC or REMS commits only naming evidence and with a
  *     live signature written by the same transaction, by the person recorded,

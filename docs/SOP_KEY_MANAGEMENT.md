@@ -124,8 +124,11 @@ symmetric seal (server authenticity) in place of an asymmetric signature.
 - Multi-Region KMS key with a replica in a second region; RPO 0, RTO under one
   hour. Symmetric keys replicated by Secrets Manager multi-region replication.
 - Database restore is drilled by `scripts/ops/dr-restore-drill.sh` and
-  `.github/workflows/database-dr-restore-proof.yml`; after a restore, run
-  `npm run ops:verify-audit-chain` and file the output.
+  `.github/workflows/database-dr-restore-proof.yml`; after a restore, run the
+  audit-chain verifier against the restored database and file the output. Inside
+  the VPC it runs from the production image, as §10 step 5 shows; against a drill
+  database a checkout can reach, `npm run ops:verify-audit-chain` is the same
+  verifier.
 
 ## 9. Change control
 Any change to key policy, rotation schedule or signer mode is a change under
@@ -147,8 +150,32 @@ policy and sets the three variables on both task definitions.
    before it rolls.
 4. Sign one release on staging; export it; file the `payloadSignature` envelope
    and an offline `openssl` verification of it.
-5. Run `npm run ops:verify-audit-chain` against production; file the output
-   under `docs/evidence/W3b/<date>/`.
+5. Run the audit-chain verifier against production; file the output under
+   `docs/evidence/W3b/<date>/`. The database admits only the API's own tasks
+   (`scripts/ops/ecs-one-off-task.sh` says why), so the verifier runs as a
+   one-off task from the deployed image, through the runner the migration uses,
+   with an operator's credentials (the GitHub deploy role may run only the
+   migrate and provision families):
+   ```sh
+   ECS_CLUSTER=c2c-production ECS_API_SERVICE=c2c-production-api \
+   SOURCE_TD_ARN=<the running API task definition revision> CONTAINER_NAME=api \
+   FAMILY=c2c-production-verify-audit-chain \
+   IMAGE=<the deployed API image>@sha256:<digest> \
+   COMMAND_JSON='["node","dist/ops/verify-audit-chain.mjs","--json"]' \
+   LABEL=audit-chain-verify STARTED_BY=verify-audit-chain \
+     bash scripts/ops/ecs-one-off-task.sh
+   ```
+   Exit 0: every chain verified. 2: the verifier could not check a table, or
+   could not reach the database. 124: the deadline passed. Exit 1 is a broken
+   chain only when the report printed with it says `"verdict": "broken"` and names
+   the first break; an exit 1 with no report means the verifier never ran (the
+   runner answers 1 for a container that did not start, and Node for a module it
+   cannot load, as in any image built before this one). `npm run build` emits `dist/ops/verify-audit-chain.mjs` beside
+   the server (`scripts/build-server.mjs`, since 2026-10-18). Until then the image
+   had no runnable copy: `npm run ops:verify-audit-chain` is
+   `tsx scripts/ops/verify-audit-chain.mjs`, and the image has neither tsx nor
+   `scripts/ops`. That command remains the checkout form, which cannot reach
+   this database.
 
 ## Revision history
 | Version | Date | Change |
@@ -156,3 +183,4 @@ policy and sets the three variables on both task definitions.
 | 0.1 | (undated) | Original: described KMS custody as if implemented. |
 | 0.2 | 2026-09-20 | Rewritten against the code. Names every key and env var; marks each section implemented / partial / planned; adds the signer-mode boot gate, the envelope, offline verification and the live steps still owed. |
 | 0.3 | 2026-09-23 | Production signer mode decided: `kms` (§2a). The key, key policy, alias and task-definition variables are written as Terraform (`release_signing.tf`) and validated; not yet applied. §10 steps 1–3 collapse into one apply. |
+| 0.4 | 2026-10-18 | §5: a rotated-out key stays trusted for verification by public-key fingerprint (`CONCEPT2CURE_SIGNER_KMS_VERIFY_KEY_IDS`); before this, the rotation step would have failed every earlier release. §8 and §10 step 5: the audit-chain verifier runs from the production image (`node dist/ops/verify-audit-chain.mjs` as a one-off task); the command named before could not run there. |

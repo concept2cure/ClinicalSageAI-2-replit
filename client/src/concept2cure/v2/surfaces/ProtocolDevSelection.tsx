@@ -56,7 +56,11 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
   const [filing, setFiling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return <div className="pde-note" style={{ margin: 16 }}>
-    <div className="pde-actions">
+    {/* pde-picker styles these two selects (protocol-dev-editing.css). The bar
+        that replaced the old picker on 2026-10-17 dropped the class, so they
+        fell to the shell reset — no border, no background — and read as plain
+        text (weekly review 2026-10-19, DS-F1). */}
+    <div className="pde-actions pde-picker">
       <label>Protocol scope <select aria-label="Protocol scope" value={scope} onChange={(event) => setScope(event.target.value)}>
         {programId && <option value={programId}>Open program: {programName || programId}</option>}
         <option value="unfiled">Unfiled protocols</option><option value="all">All organization protocols</option>

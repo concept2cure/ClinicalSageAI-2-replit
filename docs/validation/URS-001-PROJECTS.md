@@ -20,7 +20,7 @@
 | 0.5 | 2026-09-26 | D6 | URS-PROJ-013 added. A 24-hour token opened the API whether or not anyone was at the keyboard, and the rolling refresh renewed it for ever; the tenant's `sessionTimeoutMinutes` was stored and never read (security audit 2026-09-24, IAM-06; plan P1-1). |
 | 0.4 | 2026-09-23 | W3 | URS-PROJ-012 added. An account taken out of use (suspended by an administrator, or deprovisioned by the organisation's identity provider) signed in, signed, and kept every session it held: nothing read `users.status` but the release signature, and no requirement asked that it be read (VSR-001 §16, F-28, F-29). |
 | 0.6 | 2026-09-28 | W3 | URS-PROJ-004: a ledger entry names the account that acted by reference, not only by display name. The ledger named its actor by name alone, and in the 2026-09-27 execution the run identity and the demo account were both "JM Smith" (VSR-001 F-42). OQ-PROJ-06b (OQ-001 v0.9) verifies it. |
-| 0.7 | 2026-10-19 | D2 | URS-PROJ-014 added (decision P-40). Recording a PMR, PMC or REMS as fulfilled took a date and a reason, unsigned, naming nothing, and no requirement asked for more. Verified by automated tests on real PostgreSQL as the runtime role (`tests/db/commitment-fulfilment-evidence.dbtest.ts`, `tests/db/commitment-fulfilment-database.dbtest.ts`); the OQ-PROJ step is open (VSR-001 §19). |
+| 0.7 | 2026-10-19 | D2 | URS-PROJ-014 added (decision P-41). Recording a PMR, PMC or REMS as fulfilled took a date and a reason, unsigned, naming nothing, and no requirement asked for more. Verified by automated tests on real PostgreSQL as the runtime role (`tests/db/commitment-fulfilment-evidence.dbtest.ts`, `tests/db/commitment-fulfilment-database.dbtest.ts`); the OQ-PROJ step is open (VSR-001 §19). |
 
 ## 1. Intended use
 

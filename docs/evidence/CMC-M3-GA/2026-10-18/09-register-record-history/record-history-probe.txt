@@ -1,0 +1,21 @@
+
+── an analytical method, created then edited twice ──
+  register=analytical_method  recordId=123  acts=3  note=None
+  2026-10-18T22:34:28 Recorded  JM Smith   seq=6852   sealed=True  —
+  2026-10-18T22:34:28 Changed   JM Smith   seq=6853   sealed=True  title: 'Assay by HPLC' → 'Assay by RP-HPLC'
+  2026-10-18T22:34:28 Changed   JM Smith   seq=6854   sealed=True  purpose: 'Assay' → 'Assay and related substances'; matrix: 'Drug substance' → 'Drug product'
+
+── a comparability assessment (uuid-keyed) ──
+  register=comparability_study  recordId=37c3c7a1-2057-4754-bf2e-a6076e52a2fa  acts=2  note=None
+  2026-10-18T22:34:28 Recorded  JM Smith   seq=6855   sealed=True  —
+  2026-10-18T22:34:28 Changed   JM Smith   seq=6856   sealed=True  justification: None → 'Comparable on every attribute against the pre-change criteria.'
+
+── what the route refuses ──
+  a record that does not exist                 404  {"success":false,"error":"No such analytical method in this organization."}
+  a uuid register given an integer id          404  {"success":false,"error":"No such manufacturing process in this organization."}
+  a register that keeps no history             404  {"success":false,"error":"No change history is kept for /api/cmc/qbd-elements. Registers with one: analytical-methods,
+  specifications — its own history route     404  {"success":false,"error":"No change history is kept for /api/cmc/specifications. Registers with one: analytical-method
+
+── and the route specifications has kept all along ──
+  GET /api/cmc/specifications/<projectId>      200  {"success":true,"data":[{"id":"aff4a284-0a5a-4aa2-a443-7422b13c9ed9","project_id":"1b77c00b-5112-4bc6-9816-2e2e28d60de
+  GET /api/cmc/specifications/<id>/history     200  {"success":true,"data":[{"id":"bef480d8-c1f1-47e2-b28b-6331ccb6abd1","specification_id":"aff4a284-0a5a-4aa2-a443-7422b

@@ -43,6 +43,10 @@ describe('a filing document class records the product class the filing fixes', (
     expect(filingTypeInSentence('ib')).toBe("An investigator's brochure");
     expect(filingTypeInSentence('csr')).toBe('A clinical study report');
     expect(filingTypeInSentence('rems')).toBe('A REMS');
+    // One class per FD&C Act 506 designation (second review, 2026-10-18).
+    expect(filingTypeInSentence('rmat')).toBe('An RMAT designation request');
+    expect(filingTypeInSentence('fast_track')).toBe('A fast track designation request');
+    expect(filingTypeInSentence('designation')).toBe('A breakthrough therapy designation request');
     expect(filingTypeInSentence('ind')).toBe('An IND');
     expect(filingTypeInSentence('cta')).toBe('A CTA');
     expect((productTypeForIntake('ind', '') as { refusal: string }).refusal).toMatch(/: an IND filing covers both/);

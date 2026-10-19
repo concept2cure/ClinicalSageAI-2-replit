@@ -56,6 +56,7 @@ import {
   stabilityResultForm,
   stabilityResultBody,
   stabilityCloseoutForm,
+  qualifyBody,
   stabilityCloseoutBody,
   readStabilityResults,
   type StabilityResult,
@@ -76,6 +77,7 @@ import { useAuth } from '@/services/portal/authService';
 import { useNavEntitlements } from '../navEntitlements';
 import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
 import { CmcVariationAssessment } from './CmcVariationAssessment';
+import { RecordHistoryPanel } from './cmcRecordHistory';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1337,6 +1339,11 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
 
   const [registering, setRegistering] = useState(false);
   const [recording, setRecording] = useState<StabilityStudyApiRow | null>(null);
+  /* The study's §11.10(e) change history — who recorded it, who changed it and
+     what each change moved (URS-CMC-026). This register is not a RegisterCard,
+     so it needs its own action; a register whose edits are recorded and never
+     shown is the half of §11.10(e) an inspector reads for a changed record. */
+  const [historyFor, setHistoryFor] = useState<StabilityStudyApiRow | null>(null);
   const [closing, setClosing] = useState<StabilityStudyApiRow | null>(null);
   /* ICH Q1E estimates, keyed by study. Held per study rather than globally
      because the estimate belongs to the batch and condition it was fitted from —
@@ -1496,24 +1503,49 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     }
   };
 
+  /**
+   * The close-out, in the two acts the server governs it as: the shelf life and
+   * its basis recorded by an ordinary (audited) edit, then the terminal status
+   * under a 21 CFR Part 11 signature.
+   *
+   * Sending them as one PUT is what this surface did until 2026-10-19, and the
+   * server took it — the shelf-life claim §3.2.S.7.1 prints was recorded with
+   * no signature at all.
+   *
+   * If the edit lands and the signature does not, the shelf life is recorded
+   * and the study is still running. That is recoverable and it is what
+   * happened, so the toast says exactly that rather than reporting a close-out
+   * that did not occur.
+   */
   const closeOut = async (v: Record<string, string>) => {
     if (!closing) return;
     const study = closing;
     try {
-      const res = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
+      const recorded = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
         ...stabilityCloseoutBody(v),
         ...(projectId ? { projectId } : {}),
       });
-      const json = await res.json().catch(() => null);
-      if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (!res.ok) { fireToast(cmcWriteFailed('shelf life', json, res.status), 'error'); return; }
-      const row = adopt(json);
-      if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      const recordedJson = await recorded.json().catch(() => null);
+      if (!recorded.ok) { fireToast(cmcWriteFailed('shelf life', recordedJson, recorded.status), 'error'); return; }
+
+      const signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
+      const signedJson = await signed.json().catch(() => null);
+      if (!signed.ok) {
+        /* The shelf life IS recorded; only the signature failed. Say both. */
+        const why = cmcWriteFailed('close-out', signedJson, signed.status);
+        fireToast(`${why} The shelf life is recorded; the study is still running until the close-out is signed.`, 'error');
+        const partial = adopt(recordedJson);
+        if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
+        return;
+      }
+      reportCmcLinkage(signedJson, 'CMC record');
+      const row = adopt(signedJson);
+      if (!row) { fireToast('Signed, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
       setRows((rs) => rs.map((r) => (r.id === study.id ? row : r)));
       setClosing(null);
-      fireToast(`Shelf life recorded for ${row.studyTitle || row.productName}: ${row.shelfLife}.`);
+      fireToast(`${row.studyTitle || row.productName} closed out under your signature: ${row.shelfLife}.`);
     } catch (e) {
-      fireToast(cmcWriteThrew('shelf life', e), 'error');
+      fireToast(cmcWriteThrew('close-out', e), 'error');
     }
   };
 
@@ -1623,6 +1655,14 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                             {I.sigma} {estimating === r.id ? 'Fitting…' : 'Estimate Q1E'}
                           </button>
                           <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setClosing(r)}>{I.checkCircle} Shelf life</button>
+                          <button
+                            className="nda-open"
+                            style={{ marginLeft: 6 }}
+                            title="Who recorded this study, who changed it, and what each change moved"
+                            onClick={() => setHistoryFor(historyFor?.id === r.id ? null : r)}
+                          >
+                            {I.history} History
+                          </button>
                         </td>
                       </tr>
                       {isOpen && results.length > 0 && (
@@ -1662,6 +1702,14 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         </div>
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Stability register -> §3.2.S.7'} nav={nav} bar /></div>}
       </div>
+      {historyFor && (
+        <RecordHistoryPanel
+          registerPath="stability-studies"
+          recordId={historyFor.id}
+          subject={`Stability study · ${historyFor.studyTitle || historyFor.productName}`}
+          onClose={() => setHistoryFor(null)}
+        />
+      )}
       <div className="pj-card" style={{ marginTop: 16 }}>
         <div className="pj-card-h"><span className="t">Shelf-life evidence</span><span className="s">ICH Q1E</span></div>
         <div className="pj-card-b">

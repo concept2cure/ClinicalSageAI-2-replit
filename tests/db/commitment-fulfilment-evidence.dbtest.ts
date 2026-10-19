@@ -1,6 +1,6 @@
 /**
  * A commitment's fulfilment names what met it (rows D2 and D5, 2026-10-19;
- * decision P-40, docs/LAUNCH_DEFINITION_OF_DONE.md).
+ * decision P-41, docs/LAUNCH_DEFINITION_OF_DONE.md).
  *
  * ── The gap this pins (trunk at ae287394) ────────────────────────────────────
  * Recording a PMR, PMC or REMS as fulfilled took a date and a reason, from any

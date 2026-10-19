@@ -1,7 +1,13 @@
 # D2, D5: a regulatory commitment's fulfilment names what met it, and a PMR, PMC or REMS is fulfilled by signature
 
+> **Numbering.** This decision was written as P-40 and renumbered **P-41** on merge, because another session had
+> recorded its own P-40 on the trunk first (a sealed editing copy is revisable). The captured test runs in this
+> directory (`red.txt`, `green.txt`, `mutation-*.txt`) are kept exactly as they ran, so their test names still read
+> "P-40"; they are this decision, P-41.
+
+
 **Rows:** D2 (Communication, Meetings & commitments, in the Projects app) and D5 (Part 11 record integrity).
-**Date:** 2026-10-19. **Decision:** P-40 (`docs/LAUNCH_DEFINITION_OF_DONE.md`, under the 2026-10-18 decisions).
+**Date:** 2026-10-19. **Decision:** P-41 (`docs/LAUNCH_DEFINITION_OF_DONE.md`, under the 2026-10-18 decisions).
 **Closes:** item 3 of "Next in-catalog work" and the fulfilment row of `docs/design/RIM_GAP_ANALYSIS_2026-10-18.md`.
 **How it was built:** from a design that two critics checked against the committed tree (`ae287394`). Their 31
 problems were binding; where this change departs from one, the departure and its reason are under
@@ -24,7 +30,7 @@ postmarketing requirement (PMR), a postmarketing commitment (PMC) and a REMS:
 fulfilment with no evidence answered 201 with ledger `['create','resolve']`. It now asserts a 400
 `EVIDENCE_REQUIRED` and an unchanged row (`red.txt` §3 shows it failing on the old code).
 
-## The decision (P-40) and its basis
+## The decision (P-41) and its basis
 
 Recording a PMR, PMC or REMS as fulfilled is an attestation, so it is a Part 11 signed act. It goes through the one
 ceremony (`server/routes/governed-signed-act.ts` `signGovernedAct`), with meaning approval or responsibility
@@ -74,7 +80,7 @@ What the database does **not** hold:
 | A project's Vault search names each version's sha256 (`contentHash`), as the library search already did, so the picker can show what the signature will pin. | `server/routes/c2c/project-vault.ts` |
 | The new service is an approved caller of the Vault supersession and eligibility builders. No predicate is hand-copied and no baseline is raised. | `scripts/ci/lib/approved-sql-predicates.mjs` |
 | The purge order comment. Commitments now go before the Vault versions they name. | `server/services/tenant/tenant-offboarding.ts` |
-| P-40; the gap analysis; URS-PROJ-014 (URS-001 v0.7); its risk row (RA-001 v0.22); VSR-001 §19 (an OQ step is owed) | `docs/LAUNCH_DEFINITION_OF_DONE.md`, `docs/design/RIM_GAP_ANALYSIS_2026-10-18.md`, `docs/validation/URS-001-PROJECTS.md`, `docs/validation/RA-001-RISK-ASSESSMENT.md`, `docs/validation/VSR-001-VALIDATION-SUMMARY-REPORT.md` |
+| P-41; the gap analysis; URS-PROJ-014 (URS-001 v0.7); its risk row (RA-001 v0.22); VSR-001 §19 (an OQ step is owed) | `docs/LAUNCH_DEFINITION_OF_DONE.md`, `docs/design/RIM_GAP_ANALYSIS_2026-10-18.md`, `docs/validation/URS-001-PROJECTS.md`, `docs/validation/RA-001-RISK-ASSESSMENT.md`, `docs/validation/VSR-001-VALIDATION-SUMMARY-REPORT.md` |
 
 ## Proof
 
@@ -138,7 +144,7 @@ The clone is shallow: 766 commits are reachable from HEAD.
 1. **A sequence still pending transmit is refused, not accepted with a warning.** The two critics disagreed. One
    said to keep accepting `pending`, because a sequence transmitted outside the platform is a real case. The other
    said only `sent` or `acknowledged` means the agency has it. This change follows the second. That is the
-   platform's own "filed" rule, and P-40's wording follows it. A customer who transmitted outside the platform names
+   platform's own "filed" rule, and P-41's wording follows it. A customer who transmitted outside the platform names
    the Vault version. The options list offers only filed sequences.
 2. **`FILED_DISPATCH_STATUSES` lives in its own module** (`submission-service/filed-dispatch.ts`), not "next to
    `resendRefusal` in `submission-service.ts`". That way the commitment service and the database tests read the rule
@@ -208,7 +214,7 @@ selection passing on the unmutated tree first, then failing with the mutation.
 | 1, 5 | An open PMR could be retyped to `other` and fulfilled, unsigned and naming nothing, in one UPDATE or in two. The COMMIT guard reads the type the row has at COMMIT. | The BEFORE guard fixes `commitment_type` on every row, not only on a terminal one. The migration is amended in place, with a dated note in its header (Rule 1). No code retypes a commitment. | `commitment-fulfilment-database.dbtest.ts` "an open PMR cannot be retyped out of its signature" | `mutation-review-1` |
 | 2 | Four clauses of the COMMIT guard had never been seen to fail: the binding basis, the meaning, withdrawal, and "written by this transaction". | Nine forged-signature cases, each correct in every respect except one. Beside them, a control: the same forged row, fully correct, is accepted. A further case: a signature committed in an earlier transaction. | the same file, "the signature the COMMIT requires" | `-3` basis, `-4` meaning, `-5` revoked/voided, `-6` superseded, `-7` invalid, `-8` same transaction |
 | 3, 12, 25 | Neither the signature dialog nor the row showed the sha256 the signature binds, or the version's project. This README said the dialog did. | A project's Vault search now returns `contentHash`, as the library search already did. The picker carries it (`pinnedSha256`). The picked line and the signature dialog name the version, its project on the organisation's door, and `sha256` plus its first 12 hex characters. The row shows the pinned sha256, with the full value on hover. A version with no recorded sha256 cannot be chosen. README "The change" is corrected. | `commitmentFulfilment.test.tsx`: "signs through the project's door"; "names the version's project and sha256"; "no recorded sha256"; the row case | `-14`, `-15` |
-| 4 | A recorded fulfilment could be soft-deleted by an UPDATE. (Split finding.) | `deleted_at` joins the columns a recorded fulfilment fixes. The purge hard-deletes and no route soft-deletes, so this costs nothing. A hard DELETE is still not held, and URS-PROJ-014, P-40 and this README now say so. | database dbtest "not removed from the register by an UPDATE" | `-2` |
+| 4 | A recorded fulfilment could be soft-deleted by an UPDATE. (Split finding.) | `deleted_at` joins the columns a recorded fulfilment fixes. The purge hard-deletes and no route soft-deletes, so this costs nothing. A hard DELETE is still not held, and URS-PROJ-014, P-41 and this README now say so. | database dbtest "not removed from the register by an UPDATE" | `-2` |
 | 6 | The organisation door's program filter on the options list had no test. | DB cases: a member is not offered program Q's sequence, and nothing of it appears in the body. The signer is offered it. A commitment made under a submission is offered only that submission's sequences. | `commitment-fulfilment-evidence.dbtest.ts` | `-9`. The first attempt deleted the predicate, which left the statement's `$3` unused, so the run answered 500 instead of showing a leak. The predicate is now replaced by a tautology, and the leak shows. |
 | 7, 11 | A list cut at 200 kept the oldest submissions, while the dialog said "the 200 most recent". | All three statements order by `s.id DESC`, newest first. | evidence dbtest: 230 + 3 filed sequences in two submissions, on both doors | `-10` (project), `-11` (organisation). The single-submission statement already kept the newest by sequence number, so it changed only for consistency. |
 | 8, 23 | On a project's door, while the options read was loading or had failed, the Vault picker searched every accessible project. The server refuses those versions, but only after the signature dialog. | `vaultScopeOf`: on a project's door, the picker appears only once the project's program is read. Until then it says why. | client: "offers no other project's Vault"; "offers no Vault search until the project's program is read" | `-16` |

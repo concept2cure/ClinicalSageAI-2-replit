@@ -1,6 +1,6 @@
 /**
  * Recording a regulatory commitment as fulfilled, on both of its doors (rows
- * D2 and D5, 2026-10-19; decision P-40).
+ * D2 and D5, 2026-10-19; decision P-41).
  *
  * The commitments register has two doors (ha-service.ts CommitmentScope): the
  * organisation's own commitments at /api/ha-interactions, and a project's at
@@ -36,7 +36,7 @@
  * any other signed act. (Reviewed 2026-10-19: the limiter used to sit in front
  * of the route and counted those refusals too.)
  *
- * ── Why a signature (P-40) ───────────────────────────────────────────────────
+ * ── Why a signature (P-41) ───────────────────────────────────────────────────
  * Recording a PMR, PMC or REMS as fulfilled takes an obligation off the
  * overdue register and out of the annual status report (21 CFR
  * 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1): an attestation, so it is

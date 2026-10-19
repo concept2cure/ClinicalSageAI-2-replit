@@ -466,7 +466,7 @@ describe('the commitments register (Communication, Commitments tab)', () => {
   });
 
   /* Until 2026-10-19 this case fulfilled the PMR here with a date and a
-     reason, unsigned. P-40 made that a signed act naming what met it; the
+     reason, unsigned. P-41 made that a signed act naming what met it; the
      positive case is tests/db/commitment-fulfilment-evidence.dbtest.ts. */
   it('an unsigned PMR fulfilment that names nothing is refused, and nothing changes', async () => {
     const res = await request(app)

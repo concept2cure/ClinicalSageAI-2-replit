@@ -6,7 +6,7 @@
  * → COMMIT, org-scoped from the verified request context. Commitments thread onto
  * the provenance spine in the service. Mounted at /api/ha-interactions.
  *
- * A commitment's fulfilment (2026-10-19, P-40) and its options read are
+ * A commitment's fulfilment (2026-10-19, P-41) and its options read are
  * commitment-fulfil-route.ts, mounted here for the organisation's own
  * commitments: a PMR, PMC or REMS is fulfilled by a Part 11 signature naming
  * the sequence or Vault version that met it.
@@ -240,7 +240,7 @@ router.get('/commitments', async (req, res) => {
   }
 });
 
-/* The organisation's door onto a commitment's fulfilment (P-40, 2026-10-19):
+/* The organisation's door onto a commitment's fulfilment (P-41, 2026-10-19):
    its own commitments only (project_id IS NULL). A PMR, PMC or REMS is
    fulfilled by a signature naming what met it; anything else with a reason.
    The rules, the order of refusals and the body are commitment-fulfil-route.ts,

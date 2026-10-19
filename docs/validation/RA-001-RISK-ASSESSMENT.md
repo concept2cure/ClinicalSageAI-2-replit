@@ -33,7 +33,7 @@
 | 0.19 | 2026-10-01 | `…01DiJJAk` (VR-14c) | URS-VAULT-020 extended to official eSTAR exports; still medium, scripted. |
 | 0.20 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-021 (review annotations) assessed: high, scripted. |
 | 0.21 | 2026-10-15 | D2 (P-34) | URS-SUBC-013 (the signed Shadow Review waiver) assessed: high, scripted (negative) on an installation; the positive path over the real act in PGlite. |
-| 0.22 | 2026-10-19 | D2 (P-40) | URS-PROJ-014 (a PMR, PMC or REMS is fulfilled only by a signature naming what met it, held by the database at commit) assessed: high, scripted. Automated on real PostgreSQL as the runtime role, each database clause shown to catch its own removal; the credentialed OQ-PROJ step is owed (VSR-001 §19). |
+| 0.22 | 2026-10-19 | D2 (P-41) | URS-PROJ-014 (a PMR, PMC or REMS is fulfilled only by a signature naming what met it, held by the database at commit) assessed: high, scripted. Automated on real PostgreSQL as the runtime role, each database clause shown to catch its own removal; the credentialed OQ-PROJ step is owed (VSR-001 §19). |
 
 ## 1. Risk model
 

@@ -34,6 +34,13 @@ import { writeChainedAuditRow } from '../auditService.js';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { type Refusal, refuse, inRefusableTransaction } from '../vault/vault-refusal.js';
 
+/**
+ * The action a signed record's retirement records on the chain. Exported so the
+ * one place that writes it and the one place that labels it for a reader
+ * (`register-history.ts`) cannot drift into two spellings of one act.
+ */
+export const CMC_REGISTER_RETIRE_SIGNED = 'cmc.register.retire_signed' as const;
+
 /* ─── Specifications ───────────────────────────────────────────────────────── */
 
 export function isApprovedSpecification(stored: { approval_status?: unknown }): boolean {
@@ -52,12 +59,21 @@ export interface SignedRegister {
     | 'manufacturing_processes'
     | 'analytical_methods'
     | 'process_validation'
-    | 'cmc_comparability_assessments';
+    | 'cmc_comparability_assessments'
+    | 'stability_studies';
   /** The status column, snake_case. */
   statusColumn: 'status' | 'validation_status';
   /** The same column as the request body names it. */
   statusField: 'status' | 'validationStatus';
-  signedValue: 'qualified' | 'validated' | 'approved';
+  /**
+   * The word the register's own status column holds when the record is signed,
+   * in the register's own casing: the stability register's vocabulary is
+   * upper-case (DRAFT, ACTIVE, PAUSED, COMPLETED), and writing a lower-case
+   * word into it would leave one row disagreeing with the other three hundred
+   * — and lose the status chip's tone, which compares the word exactly
+   * (CmcModule.tsx). Every comparison against it lowercases BOTH sides.
+   */
+  signedValue: 'qualified' | 'validated' | 'approved' | 'COMPLETED';
   /** The two columns the signature writes, snake_case, then as a body names them. */
   signedByColumn: string;
   signedAtColumn: string;
@@ -79,7 +95,7 @@ export interface SignedRegister {
    * POST to, so the message can never name an endpoint that does not exist.
    */
   registerPath: string;
-  signPath: 'qualify' | 'validate' | 'approve';
+  signPath: 'qualify' | 'validate' | 'approve' | 'close-out';
   /** What a refusal calls the act — the subject of "X is a governed action". */
   verb: string;
   /** What the audit row and the messages call the record. */
@@ -171,6 +187,24 @@ export const SIGNED_REGISTERS = {
        the ceremony against the register rather than by reading it. */
     noun: 'comparability assessment', idKind: 'uuid',
   },
+  /* ── Added 2026-10-19: the last ungoverned signed state. ──────────────────
+     The shelf life §3.2.S.7.1 / §3.2.P.8.1 prints as the dossier's claim, and
+     the value the ICH Q1E rule judges a programme against, was set by an
+     ordinary PUT together with the terminal status:
+     `{"shelfLife":"36 months at 25C/60%RH","status":"COMPLETED"}` answered 200
+     with no signature row, no reason and no re-authentication
+     (docs/evidence/CMC-M3-GA/2026-10-19/11-stability-close-out/).
+
+     The two signature columns are new (the sibling registers already had
+     theirs): migrations/20261019_stability_shelf_life_signature.sql. */
+  stabilityStudies: {
+    table: 'stability_studies', statusColumn: 'status', statusField: 'status',
+    signedValue: 'COMPLETED', signedByColumn: 'shelf_life_signed_by', signedAtColumn: 'shelf_life_signed_at',
+    signedByField: 'shelfLifeSignedBy', signedAtField: 'shelfLifeSignedAt',
+    registerPath: 'stability-studies', signPath: 'close-out',
+    verb: 'Closing out a stability study with its shelf life',
+    noun: 'stability study', idKind: 'integer',
+  },
 } as const satisfies Record<string, SignedRegister>;
 
 /** The register that owns an /api/cmc path segment, or undefined. */
@@ -195,7 +229,7 @@ export function withoutSignatureFields<T extends Record<string, unknown>>(
 
 /** Whether the stored status is the register's signed state. */
 export function isSigned(register: SignedRegister, storedStatus: unknown): boolean {
-  return String(storedStatus ?? '').trim().toLowerCase() === register.signedValue;
+  return String(storedStatus ?? '').trim().toLowerCase() === register.signedValue.toLowerCase();
 }
 
 /** Whether a patch asks only to retire the record (with or without a reason). */
@@ -248,7 +282,11 @@ export async function retireSignedRecord(a: {
     );
     const row = rows[0];
     if (!row) return refuse(404, 'NOT_FOUND', `That ${noun} was not found.`);
-    if (String(row.status ?? '').toLowerCase() !== signedValue) {
+    /* Both sides lowercased — see `isSigned`: a register keeps its own casing
+       (the stability vocabulary is upper-case), and a raw comparison here would
+       refuse to retire a closed-out stability study with "that study is not
+       COMPLETED" while it plainly is. */
+    if (String(row.status ?? '').toLowerCase() !== signedValue.toLowerCase()) {
       return refuse(409, 'NOT_SIGNED', `That ${noun} is not ${signedValue}; retire it with an ordinary edit.`);
     }
     await client.query(
@@ -258,7 +296,7 @@ export async function retireSignedRecord(a: {
     await writeChainedAuditRow(client, {
       tenantId: a.organizationId,
       userId: a.userId,
-      action: 'cmc.register.retire_signed',
+      action: CMC_REGISTER_RETIRE_SIGNED,
       resourceType: table,
       resourceId: String(row.id),
       ipAddress: a.ipAddress,

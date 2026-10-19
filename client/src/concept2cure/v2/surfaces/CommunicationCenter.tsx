@@ -16,7 +16,7 @@
  *                   in answers to its agency letters, behind project admission).
  *                   A row is CommitmentRow.tsx, its fulfilment dialog CommitmentFulfilment.tsx:
  *                   a PMR, PMC or REMS is fulfilled by a Part 11 signature that
- *                   names what met it (P-40, 2026-10-19).
+ *                   names what met it (P-41, 2026-10-19).
  *   Authority     → GET /api/concept2cure/projects/:pid/authority-profiles
  *   profiles        REAL (server routes/concept2cure.ts → concept2cure_authority_profiles).
  *   FDA loop      → GET /api/concept2cure/projects/:pid/submission-center/items

@@ -152,14 +152,14 @@ describe('the register lets a handler refuse only where the handler is pinned', 
 });
 
 /*
- * P-40 (2026-10-19): recording a PMR, PMC or REMS as fulfilled is a signed act
+ * P-41 (2026-10-19): recording a PMR, PMC or REMS as fulfilled is a signed act
  * that names the sequence or Vault version that met it. AnA's
  * fulfill_regulatory_commitment cannot sign, so for those three it reads the
  * commitment's type, writes nothing and hands the act to the screen. Its own
  * describe: unlike SIGNING_TOOLS it does connect, because the type is read
  * from the record, never taken from the model.
  */
-describe('fulfill_regulatory_commitment refuses a signed fulfilment (P-40)', () => {
+describe('fulfill_regulatory_commitment refuses a signed fulfilment (P-41)', () => {
   function clientWith(type: string) {
     const sql: string[] = [];
     const client = {

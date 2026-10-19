@@ -268,7 +268,7 @@ export interface FulfilmentEvidenceIds {
 }
 
 /**
- * Record a commitment as fulfilled (C2C-03; P-40, 2026-10-19). The caller has
+ * Record a commitment as fulfilled (C2C-03; P-41, 2026-10-19). The caller has
  * resolved the evidence in this transaction (commitment-fulfilment.ts) and,
  * for a PMR, PMC or REMS, is inside the signing ceremony. Here, on the row
  * locked FOR UPDATE: the date rule, the terminal check, and the type's rule

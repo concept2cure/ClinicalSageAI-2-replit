@@ -598,7 +598,7 @@ describe('the real registry with the IND tools in Submission Center, agency ques
       '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7/commitments',
       '/api/concept2cure/projects/42/agency-communications/ace_1/response-package',
       '/api/ha-interactions/commitments/3/fulfill',
-      // A fulfilment names what met it (P-40, 2026-10-19): the options read on
+      // A fulfilment names what met it (P-41, 2026-10-19): the options read on
       // both doors, and the project door's list and fulfil.
       '/api/ha-interactions/commitments/3/fulfilment-options',
       '/api/concept2cure/projects/42/commitments',
