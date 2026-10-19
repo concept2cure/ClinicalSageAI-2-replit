@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-19T06:01:45.675Z",
+  "generatedAt": "2026-10-19T12:23:45.276Z",
   "git": {
-    "sha": "d85f5336c8d4f523a3863d9de59aefa7abc0af4e",
+    "sha": "99acc88dcd232c18891208a992c3387d29b745c4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2209,7 +2209,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1152983
+        "bytes": 1154046
       },
       {
         "file": "shared/schema.ts",
@@ -2245,7 +2245,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 189192
+        "bytes": 189222
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2385,7 +2385,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 113954
+        "bytes": 114189
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2416,12 +2416,12 @@
         "bytes": 107786
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 103264
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "bytes": 103131
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 102117
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2439,7 +2439,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22050
+        "lines": 22064
       },
       {
         "file": "shared/schema.ts",
@@ -2483,7 +2483,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 3852
+        "lines": 3853
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2587,7 +2587,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2380
+        "lines": 2384
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2642,10 +2642,6 @@
         "lines": 2158
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2156
-      },
-      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
@@ -2660,6 +2656,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "lines": 2124
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2122
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
