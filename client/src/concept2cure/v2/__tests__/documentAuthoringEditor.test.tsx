@@ -29,6 +29,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // a real-shaped user so the surface renders (it still joins no room here —
 // these tests set no C2C_PROJECT, so the collab layer honestly renders null).
 vi.mock('@/services/portal/authService', () => ({
+  // authService too: useAuthoringAssemblyBuild's actor() reads the singleton.
+  authService: { getUser: () => ({ id: 1, organizationId: 1 }) },
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 

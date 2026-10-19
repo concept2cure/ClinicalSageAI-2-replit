@@ -47,7 +47,8 @@ const DEVICE_ANSWERS = {
   device_classification: { device_class: 'class_ii', product_code: 'QAS', eu_mdr_class: 'class_iib' },
   medtech_regulatory: {
     device_submission_pathway: 'US_510K',
-    predicate_device: 'K123456',
+    predicate_device_name: 'GlucoTrend CGM System',
+    predicate_510k_number: 'k123456',
     notified_body: 'BSI (2797)',
   },
   team_assignment: { project_lead: 'R. Okafor', regulatory_lead: 'J. Lindqvist', team_size: 9 },
@@ -77,6 +78,7 @@ describe('what reaches the programme record', () => {
         { name: 'R. Okafor', role: 'Project lead' },
         { name: 'J. Lindqvist', role: 'Regulatory lead' },
       ],
+      predicateDevices: [{ id: 'K123456', name: 'GlucoTrend CGM System', kNumber: 'K123456' }],
     });
   });
 
@@ -142,7 +144,6 @@ describe('what it says about the answers it cannot carry', () => {
       'development_phase',
       'product_type',
       'therapeutic_area',
-      'predicate_device',
       'notified_body',
       'team_size',
       'project_timezone',
@@ -184,12 +185,41 @@ describe('what it says about the answers it cannot carry', () => {
     expect(reasonFor(DEVICE_ANSWERS, 'multi_country_submission'), 'not a fact of its own').toMatch(/gate/);
   });
 
-  it('will not project a predicate identifier as a predicate NAME', () => {
-    /* The predicate of record carries the trade name the eSTAR prints beside
-       the submission number. The question asks only for the identifier, and
-       projecting it twice would assert a trade name the sponsor never gave. */
-    expect(projected(DEVICE_ANSWERS).patch.predicateDevices).toBeUndefined();
-    expect(reasonFor(DEVICE_ANSWERS, 'predicate_device')).toMatch(/trade name/);
+  /**
+   * Until 2026-10-19 one box asked for "K123456 — Brand Name by Manufacturer"
+   * and the projection refused it outright: the predicate of record carries
+   * the trade name the official eSTAR prints BESIDE the submission number, and
+   * reading a trade name out of that blob would be asserting one. So a
+   * programme named its predicate and the record kept nothing. The interview
+   * now asks the two facts the form prints.
+   */
+  it('files the predicate of record from the two facts the eSTAR prints', () => {
+    expect(projected(DEVICE_ANSWERS).patch.predicateDevices).toEqual([
+      { id: 'K123456', name: 'GlucoTrend CGM System', kNumber: 'K123456' },
+    ]);
+  });
+
+  it('refuses a submission number that is not one, rather than printing it on a form', () => {
+    const answers = (n: string) => ({
+      medtech_regulatory: { predicate_device_name: 'GlucoTrend CGM System', predicate_510k_number: n },
+    });
+    for (const bad of ['K12345', 'DEN200001', 'K1234567', '123456', 'see attached']) {
+      expect(projected(answers(bad)).patch.predicateDevices, bad).toBeUndefined();
+      expect(reasonFor(answers(bad), 'predicate_510k_number'), bad).toMatch(/six digits/);
+    }
+    expect(projected(answers('k123456')).patch.predicateDevices, 'the person’s case is not their mistake').toEqual([
+      { id: 'K123456', name: 'GlucoTrend CGM System', kNumber: 'K123456' },
+    ]);
+  });
+
+  it('files neither half alone, and says which half is missing', () => {
+    const nameOnly = { medtech_regulatory: { predicate_device_name: 'GlucoTrend CGM System' } };
+    expect(projected(nameOnly).patch.predicateDevices, 'half a claim of substantial equivalence').toBeUndefined();
+    expect(reasonFor(nameOnly, 'predicate_510k_number')).toMatch(/submission number/);
+
+    const numberOnly = { medtech_regulatory: { predicate_510k_number: 'K123456' } };
+    expect(projected(numberOnly).patch.predicateDevices).toBeUndefined();
+    expect(reasonFor(numberOnly, 'predicate_device_name')).toMatch(/trade name/);
   });
 
   it('keeps the development phase away from the workflow phase', () => {

@@ -150,13 +150,11 @@ name comes back as the same question with *"Product Name is required"*, and
    silent: the biomarker strategy, orphan natural-history data, ethnic bridging
    (ICH E5/E17), human-factors validation (IEC 62366-1), the planned interim
    analysis, and the long-term stability months the ICH Q1E check needs.
-2. **The predicate of record needs a trade name** the question does not ask, so
-   a predicate identifier alone is reported rather than filed.
-3. **No per-programme mutation authority on the profile write** — any editor can
+2. **No per-programme mutation authority on the profile write** — any editor can
    configure any programme in the tenant; every other programme mutation admits
    the programme lead or a manager. Tightening it changes who can use the device
    panel today, so it is a founder's call.
-4. **The commit confirmation does not show the patch it will write** — you
+3. **The commit confirmation does not show the patch it will write** — you
    confirm a session id, not the columns.
 
 ## What I could not verify
