@@ -41,7 +41,9 @@
 `agency-question:<id>` binds the digest of the response as it stands. The approval is never stored, so it cannot
 disagree with the signature table. Editing one character changes the digest. The earlier signature still exists and
 still says what it approved, but it no longer approves this text. The screen says "changed after approval" and names
-the earlier signer. The signature goes through the platform's one ceremony (`governed-signed-act.ts`): reason,
+the earlier signer. **Correction (2026-10-18, review round):** as committed in `0308ee25`, the edit overwrote the approved text, so the
+earlier signature held a digest of text that existed nowhere. Every text is now kept, append-only, with the
+signature that approved it; see `../2026-10-18-review/README.md`, finding 1. The signature goes through the platform's one ceremony (`governed-signed-act.ts`): reason,
 meaning (approval or responsibility), password, second factor when enrolled, signing authority from the membership
 row. The domain write, the ledger pair and the `electronic_signatures` row commit together.
 

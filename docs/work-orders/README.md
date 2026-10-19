@@ -2423,3 +2423,33 @@ What does work is reproducing the step locally — that is how the four fixture
 causes were identified rather than guessed, and `docs/evidence/D6/2026-10-11-trunk-ci/`
 shows another lane doing the same for the purge ratchet.
 
+
+---
+
+## 2026-10-18 — the D5 audit's eleven leads, each verified at HEAD (`…01P6GWSv`)
+
+A six-dimension audit of the Part 11 path ran on 2026-10-13 and lost **every**
+verifier to usage limits, twice. Its eleven findings were therefore never
+checked, and they were 583 commits stale by the time they could be. Each was
+verified by hand at `155783880`. Recorded here, with the verdicts that say *not
+a defect*, so the next session does not re-flag them.
+
+One note on the audit itself: its first run reported four findings as
+**refuted** when every verifier had simply died. The script counted zero votes
+as a dismissal. It now reports them `unverified`, which is what they were.
+
+| # | Lead | Verdict |
+|---|---|---|
+| 8 | Section-lock audit rows written through the pool | **Confirmed, fixed** — `28d6b01b7`. Every lock event was filed as a pre-migration *legacy* row (`chain_seq NULL`). Not "permanently breaks the chain", which was not demonstrated. `docs/evidence/D5/2026-10-18-section-lock-audit-chain/` |
+| 3 | KMS verifier vs SOP §5 rotation | **Confirmed, fixed** — `1abe5828f`. The verifier used the current key only, so the SOP's own annual rotation would have failed every earlier release. Latent, because KMS is not yet live. `docs/evidence/D5/2026-10-18-kms-verify-survives-rotation/` |
+| 10 | Artifact status route: the *unsigned* branch updates and inserts provenance as two autocommitted statements, then answers 500 for a change that happened | **Confirmed. Not fixed yet: by the 24-hour rule.** `server/routes/c2c/artifacts.ts` was last touched 2026-10-17 23:02 UTC. The signed branch beside it already puts provenance inside its transaction; the fix is to do the same. **Handed on** if another lane takes the file first. |
+| 1 | `ops:verify-audit-chain` cannot run against production | **Confirmed — blocked, not done.** The production stage installs `--omit=dev` (no `tsx`), copies only `scripts/db` and two shell scripts, and the command is `tsx scripts/ops/verify-audit-chain.mjs` importing `.ts` modules. The verifier itself is sound (its detection is proven, 41/41). Closing this is a deployment decision (ship a compiled entry, or run it from the builder image) and needs production access. The in-process `auditChainIntegritySweep` runs the same verifiers daily, but its output goes to logs, not to a filed report. |
+| 4 | AUDIT_HMAC_KEY / MFA_ENCRYPTION_KEY only as Terraform, in plaintext state | **Overstated.** Both go to Secrets Manager under `aws_kms_key.secrets`, the variables are `sensitive`, and the state bucket **enforces a customer-managed KMS key** by policy (`terraform/environments/*/main.tf`). "Plaintext in state" means plaintext *inside* a CMK-encrypted object, as with every Terraform secret. Whether it is applied cannot be checked without AWS. Generating the key material inside AWS would be a hardening. |
+| 5 | Evidence approval takes the approver from the body | **Already fixed** by `534f98104` (2026-10-15), which now answers 501 and describes this exact defect in its comment. A real critical, found by the audit. |
+| 2, 9 | RBM approval re-authenticates and writes no signature | **Deliberate, documented deferral.** Baselined in `sign-ceremony-baseline.json` with the reason *"RBM is outside the launch catalog (RULE 2), so it is recorded here, not fixed."* Respected. |
+| 6 | `/api/operating-system/decisions/:id/approve` stamps from the session | **Not a defect** under the repo's own definition. A decision record is a recommendation moving proposed → approved → executed, with the authenticated actor and an audit row: an audit-trailed workflow transition (§11.10(e)), not an approval of regulated content (§11.50/11.70). `ci:sign-ceremony` does not classify it as a sign write. |
+| 7 | `/api/module-integration/approve-step`, "surviving twin" of a deleted route | **Not the claimed defect.** `approveWorkflowStep` marks a review-routing *step* approved and, on the last step, the *workflow* completed. It **never sets the document's status**; the document's approval is a separately signed act. One transaction, tenant-scoped, ownership checked before any write. |
+| 11 | AnA `create_task` reports success when lineage fails | **Not a defect.** The canonical record (`unified_tasks`) and its lineage are written in **one** transaction (`boardWriteWithLineage`), so the governed pair cannot land half. Only a non-canonical `project_tasks` row survives a failure, and the response says so: *"It is not on the task board: the board entry and its audit record could not be written"*, `onTaskBoard: false`. Deliberate and documented in the helper. |
+
+Three dimensions of the audit never ran at all: binding-and-meaning,
+separation-of-duties, append-only. They are not covered by anything above.

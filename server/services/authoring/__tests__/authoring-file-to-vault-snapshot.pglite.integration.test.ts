@@ -52,6 +52,14 @@ beforeAll(async () => {
       metadata jsonb, tenant_id integer, exported_at timestamptz DEFAULT now());
     CREATE TABLE test_filing_audit (id uuid DEFAULT gen_random_uuid(), tenant_id integer,
       operation text, entry jsonb);
+    /* The governed filing store, so the P-29.2 agreement check has something to
+       compare against. Without these three pieces filingAgreesWithEditing
+       answers "the governed document store is not provisioned here" and records
+       nothing — which is the correct fail-soft posture, and is also why the
+       divergence case below could not be written against this harness before. */
+    ALTER TABLE authoring_documents ADD COLUMN IF NOT EXISTS c2c_document_id text;
+    ALTER TABLE c2c_document_sections ADD COLUMN IF NOT EXISTS section_key text,
+      ADD COLUMN IF NOT EXISTS content jsonb;
   `);
   const query = async (sql: string, params?: unknown[]) => {
     h.sql.push(sql);
@@ -195,6 +203,45 @@ describe('file-to-Vault records the same section snapshot it rendered', () => {
     expect(h.trail).not.toHaveBeenCalled();
     expect(h.pdf.mock.calls[0][0]).toContain('Original endpoint result.');
     expect(h.pdf.mock.calls[0][0]).not.toContain('Changed endpoint result.');
+  });
+
+  it('records on the filed rendition that the filing holds other text, without refusing the draft', async () => {
+    /* P-29.2. Filing to the Vault is the one exit outside the seal cone: it
+       takes working drafts BY DESIGN and stamps "WORKING DRAFT — not a sealed
+       21 CFR Part 11 record" on page one, so refusing here would dead-end a
+       draft for no gain. But a filed rendition whose source sections' filed
+       copies are not this document's text is a fact about THIS artefact, so it
+       belongs on the artefact's own record. */
+    const d = await workingDraft();
+    const filingId = 'filing_ftv_1';
+    await d.f.pg.query(`INSERT INTO c2c_documents (id, org_id) VALUES ($1, $2)`, [filingId, d.f.org]);
+    await d.f.pg.query(
+      `INSERT INTO c2c_document_sections (document_id, section_key, content)
+       VALUES ($1, $2, jsonb_build_object('text', $3::text))`,
+      [filingId, d.sections[0].code, 'Text nobody typed here.'],
+    );
+    await d.f.pg.query(`UPDATE authoring_documents SET c2c_document_id=$1 WHERE id=$2`, [filingId, d.docId]);
+
+    admit(d);
+    await file(d);
+    const [row] = (await facts(d)).history;
+    // The draft still filed: it has an export record and a live Vault row.
+    expect(row, 'a working draft must still file').toBeDefined();
+    const diverged = (row.metadata as { filingDiverged?: Array<{ key: string; filed: string }> }).filingDiverged;
+    expect(diverged, 'the filed rendition says nothing about a filing holding other text').toEqual([
+      { key: d.sections[0].code, filed: 'different', section: d.sections[0].code },
+    ]);
+  });
+
+  it('says nothing on the record when the document is bound to no filing', async () => {
+    // The control: the common case must not grow a key, and the check must not
+    // invent a divergence out of an unbound document.
+    const d = await workingDraft();
+    admit(d);
+    await file(d);
+    const after = await facts(d);
+    expect(after.history[0], 'the draft must still file').toBeDefined();
+    expect(after.history[0].metadata).not.toHaveProperty('filingDiverged');
   });
 
   it('files a stable working snapshot with its canonical digest and locks sections before the final read/history', async () => {

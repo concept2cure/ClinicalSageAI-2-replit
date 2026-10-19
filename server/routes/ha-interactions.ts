@@ -23,6 +23,7 @@ import {
   listInteractions,
   listCommitments,
   getInteractionReadinessInput,
+  ORG_LEVEL,
 } from '../services/ha-interactions/ha-service';
 import { evaluateMeetingReadiness, deriveCommitmentStatus, summarizeCommitmentPortfolio } from '../services/ha-interactions/ha-logic';
 import { recordHaInteractionCreated, recordHaCommitmentCreated, recordHaCommitmentFulfilled } from '../services/ha-metrics';
@@ -64,6 +65,13 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
+/** A refused body, said as a sentence naming the field, so the person reads what to fix. */
+function validationRefusal(res: Response, err: z.ZodError) {
+  const first = err.issues[0];
+  return res.status(400).json({
+    error: { code: 'VALIDATION', message: `${first?.message ?? 'Invalid input.'} (${first?.path?.join('.') || 'request'}) Nothing was changed.`, details: err.flatten() },
+  });
+}
 
 async function governedMutation(
   req: Request,
@@ -111,7 +119,7 @@ const interactionSchema = z.object({
 
 router.post('/interactions', async (req, res) => {
   const parsed = interactionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id } = await createInteractionTx(client, orgId, userId, parsed.data);
     recordHaInteractionCreated();
@@ -142,7 +150,7 @@ router.patch('/interactions/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await updateInteractionStatusTx(client, orgId, id, parsed.data.status, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
@@ -162,7 +170,7 @@ router.post('/interactions/:id/questions', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = questionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: qid } = await addQuestionTx(client, orgId, userId, id, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { questionId: qid }, body: { interactionId: id, questionId: qid } };
@@ -199,7 +207,7 @@ const commitmentSchema = z.object({
 
 router.post('/commitments', async (req, res) => {
   const parsed = commitmentSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id, provenanceLinkIds } = await createCommitmentTx(client, orgId, userId, parsed.data);
     recordHaCommitmentCreated(parsed.data.commitmentType);
@@ -225,24 +233,21 @@ router.get('/commitments', async (req, res) => {
   }
 });
 
-/* A fulfilment date is a fact about the past: yyyy-mm-dd, and not after today
-   (UTC). A future date would record as met a commitment that is not yet met. */
-const fulfillSchema = z.object({
-  fulfilledDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use yyyy-mm-dd.')
-    .refine((d) => d <= today(), 'A commitment cannot be fulfilled on a date that has not happened yet.')
-    .optional(),
-  reason,
-});
+/* A fulfilment date is a fact about the past. The rule (a real yyyy-mm-dd, not
+   after today allowing for time zones) is the service's, fulfilmentDateRefusal,
+   so every door that fulfils a commitment applies it: this route, the
+   project's route and AnA's tool. */
+const fulfillSchema = z.object({ fulfilledDate: z.string().optional(), reason });
 
 router.post('/commitments/:id/fulfill', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = fulfillSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'resolve', parsed.data.reason, async (client, orgId) => {
-    await fulfillCommitmentTx(client, orgId, id, parsed.data.fulfilledDate ?? null);
+    // The organisation's commitments only: one made in a project's agency
+    // letter is fulfilled from that project (CommitmentScope).
+    await fulfillCommitmentTx(client, orgId, id, parsed.data.fulfilledDate ?? null, ORG_LEVEL, today());
     recordHaCommitmentFulfilled();
     return { target: `regulatory-commitment:${id}`, payload: { status: 'fulfilled' }, body: { id, status: 'fulfilled' } };
   });
@@ -254,7 +259,7 @@ router.post('/commitments/:id/milestones', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = milestoneSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: mid } = await addMilestoneTx(client, orgId, userId, id, parsed.data);
     return { target: `regulatory-commitment:${id}`, payload: { milestoneId: mid }, body: { commitmentId: id, milestoneId: mid } };

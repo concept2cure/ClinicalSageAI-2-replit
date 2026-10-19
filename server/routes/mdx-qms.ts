@@ -595,6 +595,8 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
   if (err.code === 'NOT_FOUND') return notFoundInTenant(res, what);
   if (err.code === 'SELF_APPROVAL') return clientError(res, 403, err.message, { code: 'QMS_SELF_APPROVAL' });
   if (err.code === 'INVALID_AUTHORSHIP') return clientError(res, 409, err.message, { code: 'QMS_INVALID_AUTHORSHIP' });
+  // Its own code: the remedy is to re-file the section, not to change the document's state.
+  if (err.code === 'FILING_DIVERGED') return clientError(res, 409, err.message, { code: 'FILING_DIVERGED' });
   return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
 }
 

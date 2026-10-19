@@ -569,6 +569,81 @@ is granted are the same sets as before (`server/services/entitlements/__tests__/
 stays as a catalog and entitlement entry. The left rail is not changed: the founder kept Home, Apps catalog,
 Tasking and Communication on it (request of 2026-10-16, reconfirmed 2026-10-17).
 
+## Product decisions, 2026-10-18 (under the founder's delegation of that day)
+
+The founder, on the open questions of `docs/design/RIM_GAP_ANALYSIS_2026-10-18.md`: "I will follow you guidance
+and SME level intelligence and allow you do make these product level choices." Each is decided on what the launch
+customer files (P-28: a sponsor composing small-molecule Module 3 for a US IND) and on Rule 2.
+
+### P-37 — Regulatory information management at launch is the IND sponsor's RIM; registrations, labels and a multi-region planner wait for a marketing application
+
+In the launch catalog, and finished in this order (gap analysis, "Next in-catalog work"): correspondence with the
+agency and the signed answer to each question (P-32), the commitments made in those answers and their fulfilment,
+submission assembly and the eCTD viewer in Submission Center, and the dossier templates the project wizard
+scaffolds.
+
+**Not in the launch catalog: registrations and labels** (`server/routes/rim.ts`, `rim_*`). A launch customer holds
+no marketing authorisation and has no approved label: the register would be empty for every one of them, and the
+signed label approval would have nothing to approve. `migrations/20260610_rim_lite.sql` stays off the deploy path
+and no session builds on it. **Not in the launch catalog: a multi-region submission planner.** P-28 refuses a non-US
+clinical-trial application by name, so a plan across markets has one market. Both are reopened together with any
+widening of the P-28 boundary to a marketing application or a non-US application, which is the founder's decision.
+**A workflow designer** is new capability under Rule 2: the platform's governed acts (signatures, reasons, the
+ledger) are fixed and validated, and a configurable one would need its own validation for every configuration.
+
+### P-38 — Agency questions have one home: the letter they came in
+
+`haq-manager` does not reopen as a screen. P-32's condition is met (approval is a signed act), but the same record
+is worked on the letter, in Communication and in Project home's Respond, and a second screen would give one
+capability two homes (the P-36 reasoning). Its catalog entry keeps no API prefix; the HAQ view inside Communication
+reads the project inbox.
+
+### P-39 — The duplicate correspondence and commitment stores converge in this order
+
+Each store moves onto its canonical record and is retired in the same change (zero duplication), with the
+deletion record the working agreement requires:
+
+1. **`reg_questions`** (`/api/cmc/agency-questions`), onto `agency_communication_questions`. It is the one inside a
+   launch app (CMC / Module 3), and closing a question there is a status update, not a signature.
+2. **`c2c_commitments`** (`/api/c2c/commitments`), onto `regulatory_commitments`: an AI extraction with an
+   ungoverned create.
+3. **The `c2c_correspondence` family** (`/api/regulatory-correspondence`), onto the project inbox, keeping its issue
+   parser and response clock as the inbox's.
+4. **`haq_session`**, **`lifecycle_obligations`** and the **`c2c_agency_meetings`** minutes, onto the inbox,
+   `regulatory_commitments` and `ha_interactions` respectively.
+
+### P-40 — A sealed editing copy is revisable, and the refusal says so
+
+Decided 2026-10-19 under the founder's delegation of 2026-10-13 (document creation and editing).
+
+A QMS register entry at `draft` whose bound editing copy had been frozen or approved could go **nowhere**. It
+could not be sent for review — correctly, because `decideAuthoringPermission` refuses an edit of an immutable
+document ahead of every grant and bypass, which is what keeps the freeze meaningful. And it could not be revised:
+`reviseControlledQmsDocument` admitted `effective`, `retired`, `superseded` and `in_review`, not `draft`. There is
+no unfreeze anywhere (a freeze is the platform's one signing ceremony, DP-35 / P1-32) and no new-version route on
+the authoring side at all, so the frozen message's own remedy — "Create a new version to make further changes" —
+had nothing behind it.
+
+**A `draft` whose editing copy is sealed is revisable, and nothing else about `draft` is.** A revision is what
+"create a new version" means here: the sealed text is copied onto a new editing copy, the version is bumped, the
+old document id is retained in `metadata.retainedAuthoringDocuments`, and the seal and every signature over it are
+untouched. The condition is the seal, because without it this would be a free version bump on any draft — a new
+door, not a remedy.
+
+**The refusal names it.** `requireContentAccess` collapsed every permission outcome into 403
+`QMS_DOCUMENT_PERMISSION_DENIED`, "You do not have permission to read or change this authored document" — said to
+the owner-administrator of a sealed document, which is false and names no way forward. The decider already returns
+`document-immutable` separately; that is now a 409 `QMS_DOCUMENT_SEALED` which says the text is sealed and points at
+the controlled revision. Naming a remedy that did not exist would have repeated a mistake this lane had already
+made once, so the two halves ship together.
+
+**What was NOT changed, deliberately.** The seal still refuses the send-for-review and the rename; `IN_REVIEW`
+remains a non-sealing status, because review is a state a document is edited during and the review board finds its
+work by `upper(d.status) = 'IN_REVIEW'`. The two disagreeing definitions of which statuses seal content —
+`LOCKED_DOCUMENT_STATUSES` (two) in `document-lock.ts` against `IMMUTABLE_DOCUMENT_STATUSES` (eight) in
+`authoring-permissions.ts` — are recorded as open, not reconciled here: both are load-bearing in different places
+and each list has mutants that open a real hole.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
