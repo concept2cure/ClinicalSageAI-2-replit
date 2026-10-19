@@ -248,6 +248,45 @@ export interface ContradictionFinding {
   updatedAt: string;
 }
 
+/**
+ * What a cross-artifact content scan actually read, compared and recorded.
+ *
+ * `scanProjectFull`'s fail-closed gate exists because "a scan that could not run its full
+ * detector set is unknown, not clean". A detector that drops findings INSIDE itself does the
+ * same harm without failing: the promise resolves, `detectionMethods` asserts it ran, and
+ * `summary.total` — read by `buildPreflightContradictionContext` as `blockingCount` — comes
+ * back short. This record is how a bounded or empty scan stops reading as a complete one.
+ */
+export interface CrossArtifactCoverage {
+  /** Artifacts with a CTD section and enough text to compare. */
+  sectionsRead: number;
+  /** Artifacts set aside for having less text than the reader's minimum. */
+  sectionsSkippedShort: number;
+  /** Significant issues Harmonize returned. */
+  issuesFound: number;
+  /** Findings actually recorded, which is `issuesFound` unless the bound cut in. */
+  findingsRecorded: number;
+  /** True when the bound dropped issues: the result is incomplete and must not read as clean. */
+  truncated: boolean;
+  /** True when fewer than two sections were readable, so nothing was compared at all. */
+  comparedNothing: boolean;
+}
+
+/** How many findings one cross-artifact scan records. A bound on writes, never silent. */
+export const CROSS_ARTIFACT_FINDING_CAP = 10;
+
+/** Worst-first, so a bounded scan keeps the findings that matter most. */
+const SEVERITY_ORDER: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+
+/**
+ * A HarmonizeIssue's severity as a finding's. Named once so the order the bound keeps and
+ * the severity it records cannot drift apart — sorting by one and recording the other is how
+ * a "worst first" bound quietly stops being one.
+ */
+function findingSeverityOf(harmonizeSeverity: string): Severity {
+  return harmonizeSeverity === 'critical' ? 'critical' : 'high';
+}
+
 export interface OverlayRule {
   id: string;
   organizationId: number;
@@ -1416,9 +1455,17 @@ class ContradictionEngineService {
   async detectCrossArtifactContentConflict(
     organizationId: number,
     projectId: number
-  ): Promise<ContradictionFinding[]> {
+  ): Promise<{ findings: ContradictionFinding[]; coverage: CrossArtifactCoverage }> {
     log.info('Detecting cross-artifact content conflicts', { projectId });
     const findings: ContradictionFinding[] = [];
+    const coverage: CrossArtifactCoverage = {
+      sectionsRead: 0,
+      sectionsSkippedShort: 0,
+      issuesFound: 0,
+      findingsRecorded: 0,
+      truncated: false,
+      comparedNothing: false,
+    };
 
     try {
       const { db } = await import('../db.js');
@@ -1445,19 +1492,35 @@ class ContradictionEngineService {
                 .replace(/\s+/g, ' ')
                 .trim()
             : '';
-        if (content.length < 50) continue; // Skip trivial content
+        // Counted, not merely skipped: a section nobody could read is not a section that agrees.
+        if (content.length < 50) {
+          coverage.sectionsSkippedShort++;
+          continue;
+        }
         sections[art.ctdSection] = content;
         sectionArtifactMap[art.ctdSection] = art;
       }
 
-      if (Object.keys(sections).length < 2) return findings;
+      coverage.sectionsRead = Object.keys(sections).length;
+      if (coverage.sectionsRead < 2) {
+        /* Nothing was compared. The caller used to receive the same empty array it receives
+           for "two sections compared and they agree", with `cross_artifact_content` listed
+           among the detectors that ran. */
+        coverage.comparedNothing = true;
+        log.info('Cross-artifact content: nothing compared', { projectId, ...coverage });
+        return { findings, coverage };
+      }
 
       const result = await engine.check({ sections, submissionType: 'IND' });
 
       // Convert critical and error harmonize issues to contradiction findings
-      const significantIssues = result.issues.filter(
-        i => i.severity === 'critical' || i.severity === 'error'
-      );
+      const significantIssues = result.issues
+        .filter(i => i.severity === 'critical' || i.severity === 'error')
+        /* Worst first. `.slice` took Harmonize's own order, so a critical sample-size
+           conflict could be dropped in favour of ten error-severity ones. */
+        .sort((a, b) => SEVERITY_ORDER[findingSeverityOf(a.severity)] - SEVERITY_ORDER[findingSeverityOf(b.severity)]);
+      coverage.issuesFound = significantIssues.length;
+      coverage.truncated = significantIssues.length > CROSS_ARTIFACT_FINDING_CAP;
 
       const HARMONIZE_TO_CONTRADICTION: Record<string, ContradictionType> = {
         terminology: 'parameter_mismatch',
@@ -1467,7 +1530,7 @@ class ContradictionEngineService {
         cross_section: 'factual_contradiction',
       };
 
-      for (const issue of significantIssues.slice(0, 10)) {
+      for (const issue of significantIssues.slice(0, CROSS_ARTIFACT_FINDING_CAP)) {
         const artA = sectionArtifactMap[issue.sectionA];
         const artB = issue.sectionB ? sectionArtifactMap[issue.sectionB] : null;
         if (!artA) continue;
@@ -1487,7 +1550,7 @@ class ContradictionEngineService {
             ? `${artB.title || issue.sectionB} (${issue.sectionB})`
             : issue.sectionB || undefined,
           contradictionType,
-          severity: issue.severity === 'critical' ? 'critical' : 'high',
+          severity: findingSeverityOf(issue.severity),
           truthHierarchyLevel: 5,
           confidenceScore: issue.severity === 'critical' ? 0.9 : 0.75,
           confidenceLevel: issue.severity === 'critical' ? 'high' : 'moderate',
@@ -1513,7 +1576,8 @@ class ContradictionEngineService {
       throw err;
     }
 
-    return findings;
+    coverage.findingsRecorded = findings.length;
+    return { findings, coverage };
   }
 
   /**
@@ -1631,13 +1695,27 @@ class ContradictionEngineService {
     opts?: { regulatorBody?: string; submissionType?: string }
   ): Promise<{
     findings: ContradictionFinding[];
-    summary: { total: number; bySeverity: Record<string, number>; byType: Record<string, number> };
+    summary: {
+      total: number;
+      bySeverity: Record<string, number>;
+      byType: Record<string, number>;
+      /**
+       * True when a detector bounded or skipped its own work, so `total` is a floor and not
+       * a count. A caller must not read "ready to promote" from an incomplete scan.
+       */
+      incomplete: boolean;
+    };
     detectionMethods: string[];
+    /** What the cross-artifact content detector read, compared and recorded. */
+    crossArtifactCoverage?: CrossArtifactCoverage;
   }> {
     await this.requireProjectInOrganisation(organizationId, projectId);
     log.info('Running FULL contradiction scan (Pass 8)', { projectId, opts });
 
     const detectionMethods: string[] = [];
+    /* What the cross-artifact detector read and recorded. Undefined only if that detector
+       rejected, in which case the gate below throws and no verdict is produced at all. */
+    let crossArtifactCoverage: CrossArtifactCoverage | undefined;
     const allPromises: Promise<ContradictionFinding[]>[] = [
       // Pass 7 detectors
       this.detectAssumptionDrift(organizationId, projectId).then(r => {
@@ -1663,7 +1741,8 @@ class ContradictionEngineService {
       }),
       this.detectCrossArtifactContentConflict(organizationId, projectId).then(r => {
         detectionMethods.push('cross_artifact_content');
-        return r;
+        crossArtifactCoverage = r.coverage;
+        return r.findings;
       }),
     ];
 
@@ -1703,10 +1782,16 @@ class ContradictionEngineService {
       byType[f.contradictionType] = (byType[f.contradictionType] ?? 0) + 1;
     }
 
+    /* `total` is a floor, not a count, whenever a detector bounded or skipped its own work.
+       The fail-closed gate above covers a detector that CRASHED; this covers one that
+       quietly returned less than it found. */
+    const incomplete = Boolean(crossArtifactCoverage?.truncated || crossArtifactCoverage?.comparedNothing);
+
     return {
       findings: allFindings,
-      summary: { total: allFindings.length, bySeverity, byType },
+      summary: { total: allFindings.length, bySeverity, byType, incomplete },
       detectionMethods,
+      ...(crossArtifactCoverage ? { crossArtifactCoverage } : {}),
     };
   }
 
@@ -1760,6 +1845,18 @@ class ContradictionEngineService {
     }>;
     overlayEscalatedToBlocking: boolean;
     linkedDecisionIds: string[];
+    /**
+     * True when the scan behind these counts bounded or skipped its own work, so
+     * `unresolvedCount` and `blockingCount` are floors rather than counts.
+     *
+     * A caller must not render a 0 from such a scan as an absence of contradictions.
+     * decision-lifecycle-service's status summary reads a 0 as "No pending decisions or
+     * contradictions", which is a positive assertion of cleanliness; from an incomplete
+     * scan that sentence is false.
+     */
+    scanIncomplete: boolean;
+    /** What the cross-artifact content detector read, compared and recorded. */
+    crossArtifactCoverage?: CrossArtifactCoverage;
   }> {
     const scanResult = await this.scanProjectFull(organizationId, projectId, {
       regulatorBody: scope.regulatorBody,
@@ -1850,6 +1947,8 @@ class ContradictionEngineService {
       })),
       overlayEscalatedToBlocking: overlayEscalated,
       linkedDecisionIds,
+      scanIncomplete: scanResult.summary.incomplete,
+      ...(scanResult.crossArtifactCoverage ? { crossArtifactCoverage: scanResult.crossArtifactCoverage } : {}),
     };
   }
 }
