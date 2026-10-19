@@ -24,6 +24,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 vi.mock('@/services/portal/authService', () => ({
+  // authService too: useAuthoringAssemblyBuild's actor() reads the singleton.
+  authService: { getUser: () => ({ id: 1, organizationId: 1 }) },
   useAuth: () => ({ user: { displayName: 'Test Reviewer', email: 'reviewer@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
