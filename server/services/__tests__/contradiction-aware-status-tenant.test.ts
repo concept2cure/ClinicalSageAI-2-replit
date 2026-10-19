@@ -63,3 +63,65 @@ describe('computeContradictionAwareStatus', () => {
     expect(H.buildContext).not.toHaveBeenCalled();
   });
 });
+
+describe('an incomplete scan is not rendered as an absence of contradictions', () => {
+  /*
+   * The same sentence this file already holds, for the other way of reaching a 0.
+   *
+   * "A failed read left the counts at 0 and the summary at 'No pending decisions or
+   * contradictions'; it now fails, rather than reporting none" — the method's own comment.
+   * A scan that SUCCEEDS but bounded or skipped its own work reaches the same 0 by a
+   * different road: detectCrossArtifactContentConflict dropped every significant issue past
+   * the tenth, and returned an empty array when fewer than two artifacts were readable.
+   * Rendering that 0 as "No pending decisions or contradictions" asserts cleanliness about a
+   * comparison that did not happen.
+   */
+  it('says the scan was incomplete instead of "no contradictions"', async () => {
+    H.buildContext.mockResolvedValue({
+      unresolvedCount: 0,
+      blockingCount: 0,
+      overlayActiveCount: 0,
+      scanIncomplete: true,
+      crossArtifactCoverage: {
+        sectionsRead: 1, sectionsSkippedShort: 0, issuesFound: 0,
+        findingsRecorded: 0, truncated: false, comparedNothing: true,
+      },
+    });
+
+    const s = await decisionLifecycleService.computeContradictionAwareStatus('42', { organizationId: 77 });
+
+    expect(s.contradictionScanIncomplete).toBe(true);
+    expect(s.summary).not.toBe('No pending decisions or contradictions');
+    expect(s.summary).toMatch(/incomplete/i);
+  });
+
+  it('a truncated scan says so, and does not read as a complete count', async () => {
+    H.buildContext.mockResolvedValue({
+      unresolvedCount: 10,
+      blockingCount: 0,
+      overlayActiveCount: 0,
+      scanIncomplete: true,
+      crossArtifactCoverage: {
+        sectionsRead: 12, sectionsSkippedShort: 0, issuesFound: 25,
+        findingsRecorded: 10, truncated: true, comparedNothing: false,
+      },
+    });
+
+    const s = await decisionLifecycleService.computeContradictionAwareStatus('42', { organizationId: 77 });
+
+    expect(s.contradictionScanIncomplete).toBe(true);
+    // The count is a floor, and the sentence must not present it as the total.
+    expect(s.summary).toMatch(/incomplete|at least/i);
+  });
+
+  it('a complete scan with nothing to report still says so plainly', async () => {
+    H.buildContext.mockResolvedValue({
+      unresolvedCount: 0, blockingCount: 0, overlayActiveCount: 0, scanIncomplete: false,
+    });
+
+    const s = await decisionLifecycleService.computeContradictionAwareStatus('42', { organizationId: 77 });
+
+    expect(s.contradictionScanIncomplete).toBe(false);
+    expect(s.summary).toBe('No pending decisions or contradictions');
+  });
+});

@@ -911,6 +911,16 @@ export class DecisionLifecycleService {
     contradictionCount: number;
     contradictionBlockingCount: number;
     overlayActiveCount: number;
+    /**
+     * True when the scan behind the counts bounded or skipped its own work, so they are
+     * floors rather than counts.
+     *
+     * The comment below records the same decision for a FAILED read. This is the other way
+     * to a 0: a scan that succeeded while dropping findings inside a detector. A 0 from such
+     * a scan is unknown, not clean, and `summary` says so instead of
+     * "No pending decisions or contradictions".
+     */
+    contradictionScanIncomplete: boolean;
     summary: string;
   }> {
     /* Both reads are the caller's tenant's (2026-10-15). The contradiction read
@@ -942,16 +952,31 @@ export class DecisionLifecycleService {
     const contradictionCount = contradictionContext.unresolvedCount;
     const contradictionBlockingCount = contradictionContext.blockingCount;
     const overlayActiveCount = contradictionContext.overlayActiveCount;
+    const contradictionScanIncomplete = Boolean(contradictionContext.scanIncomplete);
 
     const parts: string[] = [];
     if (baseStatus.summary !== 'No pending decisions') {
       parts.push(baseStatus.summary);
     }
     if (contradictionCount > 0) {
-      parts.push(`${contradictionCount} contradiction(s) (${contradictionBlockingCount} blocking)`);
+      /* "at least" when the scan is incomplete: the count is a floor. */
+      const n = contradictionScanIncomplete ? `at least ${contradictionCount}` : `${contradictionCount}`;
+      parts.push(`${n} contradiction(s) (${contradictionBlockingCount} blocking)`);
     }
     if (overlayActiveCount > 0) {
       parts.push(`${overlayActiveCount} regulator overlay(s) active`);
+    }
+    if (contradictionScanIncomplete) {
+      /* Said whatever the count, including 0. A scan that compared nothing, or stopped at
+         its bound, has not established that the project is clean. */
+      const cov = contradictionContext.crossArtifactCoverage;
+      parts.push(
+        cov?.comparedNothing
+          ? 'contradiction scan incomplete: fewer than two artifacts could be compared'
+          : cov?.truncated
+            ? `contradiction scan incomplete: ${cov.findingsRecorded} of ${cov.issuesFound} cross-artifact issues recorded`
+            : 'contradiction scan incomplete',
+      );
     }
 
     return {
@@ -959,6 +984,7 @@ export class DecisionLifecycleService {
       contradictionCount,
       contradictionBlockingCount,
       overlayActiveCount,
+      contradictionScanIncomplete,
       summary: parts.length > 0 ? parts.join('; ') : 'No pending decisions or contradictions',
     };
   }
