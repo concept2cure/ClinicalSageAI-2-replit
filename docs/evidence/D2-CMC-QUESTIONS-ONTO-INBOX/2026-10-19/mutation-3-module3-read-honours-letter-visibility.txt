@@ -1,0 +1,71 @@
+# MUTATION 3 the CMC read honours letter visibility (E1 counts every letter of the project)
+# File: server/routes/c2c/agency-responses.ts
+# Replaced:
+#   -       const letters = all.filter((l) => canView(l.visibilityTier, req.userRole));
+# With:
+#   +       const letters = all;
+# Command: npx vitest run --config vitest.db.config.ts tests/db/cmc-agency-questions-converged.dbtest.ts
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored: sha256 7da01020a0882fbc… before = 7da01020a0882fbc… after (byte-identical)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-19T10:32:22.501Z","pid":11442,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-19T10:32:22.502Z","pid":11442,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-19T10:32:22.502Z","pid":11442,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cmc-agency-questions-converged.dbtest.ts
+[database] Database connection successful
+
+{"level":20,"time":"2026-10-19T10:32:26.035Z","pid":11442,"hostname":"vm","context":{"auditId":"audit_1792405946026_4c06d9ad5a1fca9c","action":"CREATE","entityType":"project","entityId":"proj_665"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the setting > runs as a role RLS applies to (not the owner, not BYPASSRLS) 6ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > records a question with its section in the repository's one spelling, with the section in its ledger row 236ms
+{"level":20,"time":"2026-10-19T10:32:26.198Z","pid":11442,"hostname":"vm","context":{"auditId":"audit_1792405946192_1c367d91a0d21657","action":"CREATE","entityType":"project","entityId":"proj_665"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > refuses a section that is not a CTD code, and records nothing 95ms
+{"level":20,"time":"2026-10-19T10:32:26.295Z","pid":11442,"hostname":"vm","context":{"auditId":"audit_1792405946290_d28ac511b8ebbb7d","action":"CREATE","entityType":"project","entityId":"proj_665"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > corrects a section with a reason, records from and to, and refuses what it should 441ms
+{"level":20,"time":"2026-10-19T10:32:26.719Z","pid":11442,"hostname":"vm","context":{"auditId":"audit_1792405946716_17311665c291ffb4","action":"CREATE","entityType":"project","entityId":"proj_665"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > lists the Module 3 questions with the server's state and overdue, and an approved answer is never overdue 286ms
+{"level":20,"time":"2026-10-19T10:32:27.050Z","pid":11442,"hostname":"vm","context":{"auditId":"audit_1792405947048_2f389a684d72dec5","action":"CREATE","entityType":"project","entityId":"proj_665"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > counts from every row it read, and keeps the earlier CMC file out of the count 27ms
+ × tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > a Module 3 question on a letter the person may not see is neither listed nor counted; the letter is counted as withheld 124ms
+   → expected true to be false // Object.is equality
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > refuses a module that is not one of the five 18ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > another organisation's member is refused by project admission; the runtime role in their scope reads none of these rows 21ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > GET lists the organisation's rows as they are stored, with counts from the store 10ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > POST and PATCH answer 410 and change nothing 13ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the runtime role is refused INSERT, UPDATE and DELETE by the privilege, before any trigger, even WHERE false 18ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the owner too is refused an INSERT and an UPDATE by the guard; DELETE is left for a purge door 6ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  10:32:20
+   Duration  6.92s (transform 2.97s, setup 90ms, import 234ms, tests 6.27s, environment 0ms)
+
+stderr | tests/db/cmc-agency-questions-converged.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+(node:11442) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > a Module 3 question on a letter the person may not see is neither listed nor counted; the letter is counted as withheld
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/cmc-agency-questions-converged.dbtest.ts:338:100
+    336|
+    337|     const asViewer = (await module3('viewer')).body.data;
+    338|     expect(asViewer.questions.some((q: { letter: { id: string } }) => …
+       |                                                                                                    ^
+    339|     expect(asViewer.withheld).toBe(before.withheld + 1);
+    340|     expect(asViewer.summary).toEqual(before.summary);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

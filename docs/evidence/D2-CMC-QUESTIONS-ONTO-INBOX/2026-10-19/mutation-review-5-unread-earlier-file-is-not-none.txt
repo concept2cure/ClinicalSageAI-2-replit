@@ -1,0 +1,33 @@
+# MUTATION-REVIEW 5 an earlier CMC file that was not read counted as zero open rows again ((earlierOpen ?? 0) === 0)
+# Finding: Findings 3, 19: a loading or failed read of the earlier file let the Overview turn 'good' and reassure.
+# File: client/src/concept2cure/v2/surfaces/CmcModule.tsx
+# Replaced:
+#   -     && fig.overdueLettersWithoutQuestions === 0 && earlierOpen === 0;
+# With:
+#   +     && fig.overdueLettersWithoutQuestions === 0 && (earlierOpen ?? 0) === 0;
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored client/src/concept2cure/v2/surfaces/CmcModule.tsx: sha256 713c22b419e8f051… before = 713c22b419e8f051… after (byte-identical)
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > shows each section's completeness, names the missing inputs, and withholds approval from an incomplete one 358ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > a 409 shows the server's own reason — 409 no longer means only "contradictions" 369ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > shows the composed narrative and tables BEFORE the signature form appears 248ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature 339ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > offers NO signature when the section could not be read 259ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > warns when the section is stale or its tables are unknown 198ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > reassures when both reads are measured and nothing is open 42ms
+ × client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > withholds it, and says why, when the earlier file could not be read 56ms
+   → expected <div class="al-re">…(1)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > withholds it while the earlier file holds questions not closed there 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > sectionsUnreadable renders the failed-read copy and not "No Module 3 sections yet" 46ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > renders a null submission count as unknown even without a portfolioUnreadable flag 24ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > portfolioUnreadable renders the failed-read copy and not "No submissions yet" 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Not export ready with the gate's reasons when every section is approved but one is incomplete 50ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Export ready only when the gate does 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > renders a failed readiness read as a failed read, not as ready and not as not-ready 49ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected <div class="al-re">…(1)</div> to be null
+- Expected:
++ Received:

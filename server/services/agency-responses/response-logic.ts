@@ -41,6 +41,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { utcDay } from '../../../shared/utils/utc-day';
 
 /** Recipe tag inside the digested bytes, so a later recipe cannot collide with this one. */
 export const AGENCY_RESPONSE_DIGEST_RECIPE = 'agency-response/v1' as const;
@@ -237,6 +238,51 @@ export function closeRefusal(
     `${open.length} of ${active.length} responses to this letter are not approved: ` +
     `${describeOutstanding(open)}. A letter is closed once every response is signed.`
   );
+}
+
+// ── Overdue: one definition, a property of the letter (2026-10-19) ────────────
+//
+// CMC / Module 3 counted "information requests overdue" by its own rule over
+// its own file (a question past its own due date whose status a person had not
+// set to CLOSED), and the inbox card said "(-1d)" from the browser's clock (it
+// now counts the same UTC days, shared/utils/utc-day.ts, and claims no verdict).
+// An agency's clock runs on the letter, and a letter is answered when its
+// responses are approved: the close rule above. So overdue is that rule's
+// shadow, and nothing else may compute it.
+
+/* The UTC calendar day of a stored date: one rule, shared with the inbox's day
+   count (shared/utils/utc-day.ts), so the card and this verdict read the same day. */
+export { utcDay };
+
+export interface DueLetter {
+  responseRequired: boolean;
+  closureStatus: string;
+  dueDate: string | null;
+}
+
+/**
+ * Whether a letter is overdue on `today` (the server's UTC day): it requires a
+ * response, is not closed, its due date's UTC day is before today, and it may
+ * not be closed as its questions stand (closeRefusal: a response-required
+ * letter with nothing recorded is not answered, and every recorded question
+ * must be approved as it stands). Due today is not overdue. An approved answer
+ * never makes a letter overdue; a letter whose questions are all approved is
+ * not overdue while it waits to be closed.
+ */
+export function letterOverdue(
+  letter: DueLetter,
+  questions: ReadonlyArray<QuestionRecord & { approval: QuestionApproval }>,
+  today: string,
+): boolean {
+  if (!letter.responseRequired || letter.closureStatus === 'closed') return false;
+  const due = utcDay(letter.dueDate);
+  if (due === null || due >= today) return false;
+  return closeRefusal(questions, true) !== null;
+}
+
+/** A question is overdue when its letter is and it is not answered as it stands; approved and withdrawn ones never are. */
+export function questionOverdue(letterIsOverdue: boolean, state: ResponseState): boolean {
+  return letterIsOverdue && (state === 'unanswered' || state === 'drafted' || state === 'changed-after-approval');
 }
 
 // ── The response package ────────────────────────────────────────────────────

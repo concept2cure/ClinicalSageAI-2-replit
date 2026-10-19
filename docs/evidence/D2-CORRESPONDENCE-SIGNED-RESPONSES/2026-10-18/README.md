@@ -104,6 +104,11 @@ surfaces (`ci:launch-scope`, `ci:launch-scope-api`, and `server/middleware/__tes
 ## Owed
 
 - The six other correspondence and commitment stores listed in the gap analysis. `reg_questions` (CMC / Module 3)
-  goes first, because it sits inside a launch app.
+  goes first, because it sits inside a launch app. *2026-10-19:* done as far as P-39 item 1 asks: CMC reads Module 3's
+  questions from the letters and writes none, and `reg_questions` is read-only in the route and the database
+  (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`). Still owed from it: the governed act that moves a row
+  not closed there onto a letter (deferred until a deployed estate shows such rows; the count query is in that
+  README), and a purge door for the file (it refuses DELETE and TRUNCATE to every role). A question's owner is set on
+  the letter, with a reason, since that slice's review.
 - Extracting questions from the letter file; a fulfilment naming the sequence or document that met it.
 - URS and OQ coverage for this function (row D4).

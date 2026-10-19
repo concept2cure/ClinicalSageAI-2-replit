@@ -1,0 +1,49 @@
+# MUTATION 9 the database refuses a section the CTD rule would never store (CHECK made vacuous)
+# File: migrations/20261018b_agency_response_questions.sql
+# Replaced:
+#   -              OR (length(ctd_section) <= 40 AND ctd_section ~ '^[1-5](\.[0-9A-Z]+)*$'));
+# With:
+#   +              OR true);
+# Command: npx vitest run server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored: sha256 9eed9779aa32a996… before = 9eed9779aa32a996… after (byte-identical)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > ctd_section on the canonical question (20261018b, amended in place) > admits every form the repository's CTD rule stores, and no section at all 17ms
+ × server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > ctd_section on the canonical question (20261018b, amended in place) > refuses, in the database, what the rule would never store 7ms
+   → foo: expected undefined to be '23514' // Object.is equality
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > ctd_section on the canonical question (20261018b, amended in place) > is declared once, however many times the file runs 2ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > refuses an INSERT, for every role, and names where agency questions are recorded now 4ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > refuses an UPDATE of any column, the status included 5ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > leaves DELETE to the owner, for a later purge door 2ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > has one guard however many times the file runs, and replays on a database without the table 1630ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  10:31:54
+   Duration  4.50s (transform 87ms, setup 85ms, import 51ms, tests 4.07s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > ctd_section on the canonical question (20261018b, amended in place) > refuses, in the database, what the rule would never store
+AssertionError: foo: expected undefined to be '23514' // Object.is equality
+
+- Expected:
+"23514"
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts:102:87
+    100|
+    101|   it('refuses, in the database, what the rule would never store', asyn…
+    102|     for (const raw of CTD_SECTION_RAW_REFUSED) expect((await insert(ra…
+       |                                                                                       ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

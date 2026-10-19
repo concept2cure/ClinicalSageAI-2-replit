@@ -604,6 +604,10 @@ describe('the real registry with the IND tools in Submission Center, agency ques
       '/api/concept2cure/projects/42/commitments',
       '/api/concept2cure/projects/42/commitments/3/fulfill',
       '/api/concept2cure/projects/42/commitments/3/fulfilment-options',
+      // CMC / Module 3 reads the letters' questions (P-39 item 1, 2026-10-19);
+      // a question's CTD section is corrected on its letter.
+      '/api/concept2cure/projects/42/agency-questions',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7',
     ]) expect((await run(gate, p)).passed, p).toBe(true);
   });
 });

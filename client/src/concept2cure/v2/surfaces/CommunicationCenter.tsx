@@ -39,7 +39,8 @@ import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import { CC_SOURCE_TYPES, CC_INTERACTION_TYPES } from '../fixtures/commcenter';
-import { AgencyInboxList, daysTo, draftResponseWithAna, letterSourceOptions, letterSourceRef, useAgencyInbox } from './AgencyInbox';
+import { AgencyInboxList, daysTo, dueInWords, draftResponseWithAna, letterSourceOptions, letterSourceRef, useAgencyInbox, type LetterOpening } from './AgencyInbox';
+import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { isSourcesPage, sourcesUrl, type SourcesPage } from './projectSources';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -119,6 +120,34 @@ function currentProjectId(): string | null {
 
 /* ── Helpers ── */
 
+/** The id shapes a letter link may carry (notificationTarget.ts's safe id); anything else opens nothing. */
+const SAFE_LETTER_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+
+/**
+ * A link from another screen to one letter (2026-10-19): CMC / Module 3's
+ * "Open on its letter" stashes `{ letterId, questionId }` for this surface on
+ * the navigation-params channel (navParams.ts). Read once after mount, and on
+ * the channel's event while mounted; consumed on read, so a later visit opens
+ * nothing. An id that is not id-shaped is ignored.
+ */
+function useLetterLink(onLink: (opening: Omit<LetterOpening, 'token'>) => void) {
+  const latest = React.useRef(onLink);
+  latest.current = onLink;
+  React.useEffect(() => {
+    const receive = () => {
+      const p = consumeNavParams('communication-center');
+      const letterId = p?.letterId;
+      if (typeof letterId !== 'string' || !SAFE_LETTER_ID.test(letterId)) return;
+      const q = /^\d{1,10}$/.test(p?.questionId ?? '') ? Number(p!.questionId) : null;
+      latest.current({ letterId, questionId: q });
+    };
+    // After commit, not in a state initialiser: StrictMode may run one twice.
+    receive();
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, []);
+}
+
 
 /* Honest loading → error → empty guard for a list slice (mirrors the reference
    re-anchors). */
@@ -177,6 +206,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const [owner, setOwner] = React.useState<'all' | 'mine'>('all');
   const [form, setForm] = React.useState(false);
   const [toast, fire] = useToast();
+  /* A letter another screen links to opens on the inbox, with every owner
+     shown, so the filter cannot hide it. */
+  const [opening, setOpening] = React.useState<LetterOpening | null>(null);
+  useLetterLink((o) => {
+    setTab('inbox');
+    setOwner('all');
+    setOpening((prev) => ({ ...o, token: (prev?.token ?? 0) + 1 }));
+  });
 
   const projectId = currentProjectId();
 
@@ -448,7 +485,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               {critical[0].dueDate ? (
                 <>
                   {' '}
-                  — you have <b>{daysTo(critical[0].dueDate)} days</b> to respond
+                  {(daysTo(critical[0].dueDate) ?? 0) > 0
+                    ? <>— you have <b>{dueInWords(critical[0].dueDate)?.replace(/^in /, '')}</b> to respond</>
+                    : daysTo(critical[0].dueDate) === 0
+                      ? <>— it is due <b>today</b></>
+                      : <>— its due date was <b>{dueInWords(critical[0].dueDate)}</b></>}
                 </>
               ) : null}
               .
@@ -460,7 +501,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               {responseDue.length === 1 ? 'needs' : 'need'} a response
               {soonest && soonest.dueDate ? (
                 <>
-                  , the soonest in <b>{daysTo(soonest.dueDate)} days</b>
+                  , the soonest {(daysTo(soonest.dueDate) ?? 0) >= 0 ? 'due' : 'was due'} <b>{dueInWords(soonest.dueDate)}</b>
                 </>
               ) : null}
               .
@@ -626,6 +667,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             onAsk={onAsk}
             onOpenTask={() => nav('tasks')}
             responses={projectId ? { projectId, fire } : undefined}
+            opening={opening}
           />
         </>
       )}

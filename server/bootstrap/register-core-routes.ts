@@ -194,8 +194,10 @@ export function registerCoreRoutes({
        Module 3 sections (/api/cmc/module3-os/sections). */
     // Module 3 board — portfolio + governed section read-model for the ui-v2 cmc surface.
     app.use('/api/cmc/module3-board', authenticateToken, cmcModule3BoardRoutes());
-    // Agency questions — the org-scoped WRITE half of the correspondence loop
-    // the board reads (log a question, triage status/assignee/due date).
+    // The earlier CMC agency-question file (reg_questions), read-only history
+    // since 2026-10-19 (P-39 item 1): GET lists it; POST and PATCH answer 410.
+    // Agency questions are recorded on their letter, and CMC reads them from
+    // /api/concept2cure/projects/:projectId/agency-questions.
     app.use('/api/cmc/agency-questions', authenticateToken, cmcAgencyQuestionRoutes());
     // /api/cmc/dashboard removed — backed by Prisma which was excised in
     // 066acdb. Route file (cmc-dashboard-prisma.ts) had zero callers.

@@ -1,20 +1,18 @@
 import { google } from 'googleapis';
-import { getPool } from '../../../db';
-
-// Database connection - use canonical pool
-const pool = getPool();
-
-// Helper function for database queries
-const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
-  if (!pool) throw new Error('Database pool not initialized');
-  const client = await pool.connect();
-  try {
-    const result = await client.query(query, params);
-    return { rows: result.rows };
-  } finally {
-    client.release();
-  }
-};
+/*
+ * Gmail read access for correspondence search (server/services/integrations/
+ * correspondence-search.ts, gmail.readonly scope). Nothing here writes.
+ *
+ * Removed 2026-10-19 (rows D2 and D5; decision P-39 item 1): gmailIngestToReg
+ * and resolveSubmissionId, with the module's own pool. The ingest had no caller
+ * anywhere; it wrote reg_questions columns the table does not have (sub_id,
+ * sec_code, source, raw_text) into a file that is now read-only in the database
+ * (migrations/20261019b_reg_questions_read_only.sql), and resolveSubmissionId
+ * read the newest reg_submissions row of any tenant. Agency questions are
+ * recorded on the letter they came in (agency_communication_questions); taking
+ * them from a letter's file is the gap analysis's "Next" item 2
+ * (docs/design/RIM_GAP_ANALYSIS_2026-10-18.md).
+ */
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 
@@ -80,71 +78,4 @@ export async function gmailFetchRecent(limit = 20) {
     });
   }
   return out;
-}
-
-/** Heuristic to map to a submission by product code in subject, else default */
-async function resolveSubmissionId(subject: string) {
-  // naive: try to find latest submission
-  const row = (
-    await q<any>(`SELECT sub_id FROM reg_submissions ORDER BY created_at DESC LIMIT 1`, [])
-  ).rows[0];
-  return row?.sub_id || null;
-}
-
-/** Parse as IR (questions) or obligations; create rows; return counters */
-export async function gmailIngestToReg(): Promise<{
-  createdQuestions: number;
-  createdObls: number;
-  saved: number;
-}> {
-  const msgs = await gmailFetchRecent(20);
-  let createdQuestions = 0,
-    createdObls = 0,
-    saved = 0;
-
-  for (const m of msgs) {
-    // skip if already seen
-    const seen = (await q<any>(`SELECT 1 FROM reg_mail_ingest WHERE msg_id=$1`, [m.id])).rows[0];
-    if (seen) continue;
-
-    const subId = await resolveSubmissionId(m.subject);
-
-    // --- Extract "questions" style (IR/deficiency) ---
-    // Very light heuristic: look for keywords
-    const looksIR = /information request|deficiency|additional information|clarify/i.test(
-      m.subject + ' ' + m.body
-    );
-    const extracted: {
-      questions: Array<{ raw: string }>;
-      obligations: any[];
-      region?: any;
-    } = { questions: [], obligations: [], region: undefined };
-
-    if (looksIR) {
-      // Extremely light extractor (your Questions Hub likely has a richer AI route already)
-      // We'll store raw text; the PM can then click "AI Draft" in Questions UI
-      extracted.questions = [{ raw: m.body.slice(0, 12000) }];
-      createdQuestions += 1;
-
-      // insert a draft Question
-      await q(
-        `INSERT INTO reg_questions (sub_id, sec_code, question_text, status, due_date, source, raw_text)
-               VALUES ($1, null, $2, 'OPEN', (now()+interval '30 day')::date, 'EMAIL', $3)`,
-        [subId, m.subject || 'Agency Request', m.body.slice(0, 15000)]
-      );
-    }
-
-    // --- Extract obligations with graceful fallback to none ---
-    // For now, we'll skip AI extraction and just store the raw data
-    // This can be enhanced later with actual AI processing
-
-    await q(
-      `INSERT INTO reg_mail_ingest (msg_id, thread_id, sub_id, subject, from_addr, to_addr, received_at, snippet, labels, extracted)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [m.id, m.threadId, subId, m.subject, m.from, m.to, m.date, m.snippet, [], extracted]
-    );
-    saved += 1;
-  }
-
-  return { createdQuestions, createdObls, saved };
 }

@@ -22,6 +22,14 @@
  *     in the record, marked withdrawn, and needs no response.
  *   - Mark a letter that requires a response as asking nothing, with a reason,
  *     when no question is recorded on it.
+ *   - Record the CTD section a question concerns, and correct it with a reason
+ *     (2026-10-19). It is classification: the signature does not cover it.
+ *   - Set who owns preparing a question's response, or clear it, with a reason
+ *     (2026-10-19): an active member who may open the letter at its
+ *     visibility, which the server checks. It replaces the free-text
+ *     assignment CMC kept on its own, now read-only, question file.
+ *     CMC / Module 3 lists the program's questions about its sections from it
+ *     and opens each here, on its letter (P-38, P-39 item 1).
  *   - Read every text a response has had, who wrote it and why, and the
  *     signature that approved it, if one did (the history disclosure).
  *   - Download the response package once every response is approved as it
@@ -29,8 +37,8 @@
  *
  * This module decides nothing. A response's state (no response, draft,
  * changed after approval, approved, withdrawn), whether this person may write
- * or sign, why the letter cannot close yet, and whether the package is ready
- * are all the server's words. Nothing here says a response is approved that
+ * or sign, why the letter cannot close yet, whether it is overdue, and whether
+ * the package is ready are all the server's words. Nothing here says a response is approved that
  * the server did not say is, and no control is offered that the server says
  * this person would be refused.
  */
@@ -45,8 +53,7 @@ import { EmptyState, useLiveData } from '../dataConnect';
 import { downloadBlob } from '../download';
 import { I } from '../icons';
 import type { CommRow } from './AgencyInbox';
-
-type ResponseState = 'unanswered' | 'drafted' | 'changed-after-approval' | 'approved' | 'withdrawn';
+import { RESPONSE_STATE_LABEL as STATE_LABEL, RESPONSE_STATE_TONE as STATE_TONE, type ResponseState } from './agencyQuestionState';
 
 interface SignatureView {
   signatureId: number;
@@ -87,6 +94,11 @@ export interface AgencyQuestionView {
   questionRef: string;
   questionText: string;
   discipline: string | null;
+  /** The CTD section the question concerns, in the repository's one spelling; null when none is recorded. */
+  ctdSection?: string | null;
+  /** Who owns preparing the response; null (or absent) with none. */
+  ownerUserId?: number | null;
+  ownerName?: string | null;
   severity: string;
   responseText: string;
   responseRevision: number;
@@ -111,6 +123,8 @@ interface QuestionsPayload {
     responseRequired: boolean;
     /** Why the letter may not be closed now, in the server's words; null when it may. */
     closeRefusal: string | null;
+    /** The server's one overdue verdict (response-logic letterOverdue), the same CMC counts. */
+    overdue?: boolean;
   };
   viewer: ViewerCapabilities;
   questions: AgencyQuestionView[];
@@ -123,20 +137,15 @@ function isQuestionsPayload(v: unknown): v is QuestionsPayload {
   return Boolean(p && p.letter && p.viewer && Array.isArray(p.questions) && Array.isArray(p.outstanding));
 }
 
-const STATE_LABEL: Record<ResponseState, string> = {
-  unanswered: 'No response',
-  drafted: 'Draft',
-  'changed-after-approval': 'Changed after approval',
-  approved: 'Approved',
-  withdrawn: 'Withdrawn',
-};
-const STATE_TONE: Record<ResponseState, string> = {
-  unanswered: 'idle',
-  drafted: 'warn',
-  'changed-after-approval': 'err',
-  approved: 'ok',
-  withdrawn: 'idle',
-};
+/** One active member of the organisation, as GET …/projects/:projectId/team lists them. */
+interface TeamMember {
+  userId: number;
+  name: string;
+  role: string | null;
+}
+/** The owner select's value for "no owner". */
+const NO_OWNER = 'none';
+
 /** Refusals that mean the record moved under this person: show it as it now stands. */
 const STALE_CODES = new Set(['RESPONSE_CHANGED', 'ALREADY_APPROVED', 'NOTHING_TO_SIGN', 'QUESTION_WITHDRAWN', 'LETTER_CLOSED']);
 const COMMITMENT_TYPES = [
@@ -176,20 +185,31 @@ function QuestionCard({
   closed,
   busy,
   viewer,
+  targeted = false,
   onSave,
   onSign,
   onCommit,
   onWithdraw,
+  onClassify,
+  onAssign,
 }: {
   q: AgencyQuestionView;
   closed: boolean;
   busy: boolean;
   viewer: ViewerCapabilities;
+  /** Opened from a link to this question (CMC's "Open on its letter"): scrolled into view. */
+  targeted?: boolean;
   onSave: (q: AgencyQuestionView, baseRevision: number, text: string, reason: string) => Promise<boolean>;
   onSign: (q: AgencyQuestionView) => void;
   onCommit: (q: AgencyQuestionView) => void;
   onWithdraw: (q: AgencyQuestionView) => void;
+  onClassify: (q: AgencyQuestionView) => void;
+  onAssign: (q: AgencyQuestionView) => void;
 }) {
+  const itemRef = React.useRef<React.ElementRef<'li'> | null>(null);
+  React.useEffect(() => {
+    if (targeted) itemRef.current?.scrollIntoView?.({ block: 'center' });
+  }, [targeted]);
   const [editing, setEditing] = React.useState(false);
   const [text, setText] = React.useState(q.responseText);
   const [reason, setReason] = React.useState('');
@@ -215,10 +235,14 @@ function QuestionCard({
   };
 
   return (
-    <li className="cc-q" data-state={q.state}>
+    <li ref={itemRef} className="cc-q" data-state={q.state} data-question-id={q.id} data-targeted={targeted || undefined}>
       <div className="cc-comm-top">
         <span className="cc-comm-t">{q.questionRef}</span>
         {q.discipline && <span className="cc-comm-src">{q.discipline}</span>}
+        {q.ctdSection && <span className="cc-comm-src mono" title="CTD section">§{q.ctdSection}</span>}
+        {q.ownerUserId != null && (
+          <span className="cc-comm-src" title="Owns preparing the response">Owner: {q.ownerName ?? 'a member'}</span>
+        )}
         <span className={'rd-chip tone-' + (q.severity === 'critical' ? 'err' : q.severity === 'major' ? 'warn' : 'idle')}>
           {q.severity}
         </span>
@@ -350,6 +374,17 @@ function QuestionCard({
               Withdraw question
             </button>
           )}
+          {/* "Record" when none is recorded; "Correct" only when one is. */}
+          {writable && (
+            <button className="cc-btn sm" disabled={busy} onClick={() => onClassify(q)}>
+              {q.ctdSection ? 'Correct section' : 'Record section'}
+            </button>
+          )}
+          {writable && (
+            <button className="cc-btn sm" disabled={busy} onClick={() => onAssign(q)}>
+              {q.ownerUserId != null ? 'Change owner' : 'Set owner'}
+            </button>
+          )}
           {signable && signBlock && (
             <span id={`${textId}-why`} className="cc-q-note">{signBlock}</span>
           )}
@@ -364,10 +399,13 @@ export function AgencyResponses({
   projectId,
   letter,
   fire,
+  focusQuestionId = null,
 }: {
   projectId: string;
   letter: CommRow;
   fire: (m: string, tone?: 'ok' | 'error') => void;
+  /** A question another screen linked to (CMC's "Open on its letter"). */
+  focusQuestionId?: number | null;
 }) {
   const base = `/api/concept2cure/projects/${encodeURIComponent(projectId)}/agency-communications/${encodeURIComponent(letter.id)}`;
   const [version, setVersion] = React.useState(0);
@@ -378,6 +416,15 @@ export function AgencyResponses({
   const [adding, setAdding] = React.useState(false);
   const [committing, setCommitting] = React.useState<AgencyQuestionView | null>(null);
   const [withdrawing, setWithdrawing] = React.useState<AgencyQuestionView | null>(null);
+  const [classifying, setClassifying] = React.useState<AgencyQuestionView | null>(null);
+  const [assigning, setAssigning] = React.useState<AgencyQuestionView | null>(null);
+  /* The organisation's active members, read only while the owner form is
+     open. The server decides who may own a response (a member who may open
+     this letter at its visibility) and says so if the one chosen may not. */
+  const team = useLiveData<TeamMember[]>(
+    assigning ? `/api/concept2cure/projects/${encodeURIComponent(projectId)}/team` : null,
+    [projectId, assigning?.id ?? null],
+  );
   const [askingNothing, setAskingNothing] = React.useState(false);
   const [signing, setSigning] = React.useState<AgencyQuestionView | null>(null);
   /* Reload when the signing dialog closes: after a signature, or after a
@@ -394,6 +441,7 @@ export function AgencyResponses({
         questionRef: v.questionRef,
         questionText: v.questionText,
         discipline: v.discipline || undefined,
+        ctdSection: v.ctdSection?.trim() || undefined,
         severity: v.severity || 'major',
         reason: v.reason,
       });
@@ -455,6 +503,47 @@ export function AgencyResponses({
       reload();
     } catch (e) {
       fire(`Question ${withdrawing.questionRef} not withdrawn: ${said(e)}.`, 'error');
+      if (e instanceof ApiRequestError && e.code && STALE_CODES.has(e.code)) reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* A question's CTD section, corrected with a reason. The server normalises
+     it (3.2.p.5 → 3.2.P.5) or refuses what is not a CTD code; an empty value
+     clears it. The approval is not affected: the signature does not cover it. */
+  const classify = async (v: Record<string, string>) => {
+    if (!classifying) return;
+    setBusy(true);
+    try {
+      await apiRequest('PATCH', `${base}/questions/${classifying.id}`, { ctdSection: v.ctdSection?.trim() || null, reason: v.reason });
+      fire(`Section of ${classifying.questionRef} recorded, with an audit entry.`);
+      setClassifying(null);
+      reload();
+    } catch (e) {
+      fire(`Section of ${classifying.questionRef} not changed: ${said(e)}.`, 'error');
+      if (e instanceof ApiRequestError && e.code && STALE_CODES.has(e.code)) reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* The owner of a question's response, set or cleared with a reason. */
+  const assign = async (v: Record<string, string>) => {
+    if (!assigning) return;
+    const ownerUserId = v.owner === NO_OWNER ? null : Number(v.owner);
+    setBusy(true);
+    try {
+      await apiRequest('PATCH', `${base}/questions/${assigning.id}/owner`, { ownerUserId, reason: v.reason });
+      fire(
+        ownerUserId === null
+          ? `Owner of ${assigning.questionRef} cleared, with an audit entry.`
+          : `Owner of ${assigning.questionRef} recorded, with an audit entry.`,
+      );
+      setAssigning(null);
+      reload();
+    } catch (e) {
+      fire(`Owner of ${assigning.questionRef} not changed: ${said(e)}.`, 'error');
       if (e instanceof ApiRequestError && e.code && STALE_CODES.has(e.code)) reload();
     } finally {
       setBusy(false);
@@ -591,11 +680,22 @@ export function AgencyResponses({
               }}
               onCommit={setCommitting}
               onWithdraw={setWithdrawing}
+              onClassify={setClassifying}
+              onAssign={setAssigning}
+              targeted={focusQuestionId === q.id}
             />
           ))}
         </ol>
       )}
 
+      {/* The server's verdict, said as what made it: responses not approved,
+          or (a response-required letter) no question to answer recorded. */}
+      {!closed && data?.letter.overdue && (
+        <p className="cc-q-note" data-tone="err" role="note">
+          Overdue: past its due date{data.letter.dueDate ? ` (${data.letter.dueDate.slice(0, 10)})` : ''}
+          {asked.length === 0 ? ', with no question recorded.' : ', with responses not approved as they stand.'}
+        </p>
+      )}
       {!closed && data?.letter.closeRefusal && (
         <p className="cc-q-note" role="note">
           {data.letter.closeRefusal}
@@ -638,6 +738,7 @@ export function AgencyResponses({
               { key: 'questionRef', label: 'Question number', type: 'text', placeholder: 'As the agency numbered it, e.g. Q3', required: true, half: true },
               { key: 'discipline', label: 'Discipline', type: 'select', options: ['Clinical', 'Nonclinical', 'CMC', 'Biostatistics', 'Labeling', 'Safety', 'Regulatory'], half: true },
               { key: 'severity', label: 'Severity', type: 'seg', options: ['major', 'minor', 'critical'] },
+              { key: 'ctdSection', label: 'CTD section (optional)', type: 'text', placeholder: 'e.g. 3.2.P.5.1', half: true },
               { key: 'questionText', label: 'Question text', type: 'textarea', placeholder: 'Paste the question verbatim', required: true },
               { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Recording the IR received 2026-10-12', required: true },
             ],
@@ -661,6 +762,62 @@ export function AgencyResponses({
           }}
           onCancel={() => setWithdrawing(null)}
           onSubmit={(v) => void withdraw(v)}
+        />
+      )}
+
+      {classifying && (
+        <C2CForm
+          config={{
+            eyebrow: `${classifying.questionRef} · CTD section`,
+            title: classifying.ctdSection ? 'Correct the section' : 'Record the section',
+            sub: classifying.ctdSection
+              ? `The CTD section ${classifying.questionRef} concerns, as the agency's question cites it. Leave it empty to record none. It classifies the question; the approval does not cover it.`
+              : `No CTD section is recorded for ${classifying.questionRef}. Record the one the agency's question cites. It classifies the question; the approval does not cover it.`,
+            governed: 'Recorded with your reason in the audit trail.',
+            submitLabel: classifying.ctdSection ? 'Correct section' : 'Record section',
+            fields: [
+              { key: 'ctdSection', label: 'CTD section', type: 'text', placeholder: 'e.g. 3.2.S.4.1', default: classifying.ctdSection ?? '' },
+              { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. The agency cites the impurity specification', required: true },
+            ],
+          }}
+          onCancel={() => setClassifying(null)}
+          onSubmit={(v) => void classify(v)}
+        />
+      )}
+
+      {assigning && (
+        <C2CForm
+          config={{
+            eyebrow: `${assigning.questionRef} · Owner`,
+            title: assigning.ownerUserId != null ? 'Change the owner' : 'Set the owner',
+            sub:
+              `Who prepares the response to ${assigning.questionRef}. ` +
+              'They must be able to open this letter at its visibility. The approval does not cover it.',
+            governed: 'Recorded with your reason in the audit trail.',
+            submitLabel: 'Record owner',
+            fields: [
+              {
+                key: 'owner',
+                label: 'Owner',
+                type: 'select',
+                required: true,
+                default: assigning.ownerUserId != null ? String(assigning.ownerUserId) : '',
+                options: [
+                  ...(assigning.ownerUserId != null ? [{ value: NO_OWNER, label: 'No owner' }] : []),
+                  ...(team.data ?? []).map((m) => ({ value: String(m.userId), label: m.role ? `${m.name} (${m.role})` : m.name })),
+                ],
+                descLive: true,
+                desc: team.loading
+                  ? "Reading the organisation's members…"
+                  : team.error
+                    ? "The organisation's members could not be read, so no one can be chosen now."
+                    : undefined,
+              },
+              { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Ines leads the dissolution work', required: true },
+            ],
+          }}
+          onCancel={() => setAssigning(null)}
+          onSubmit={(v) => void assign(v)}
         />
       )}
 

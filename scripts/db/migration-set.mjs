@@ -3418,6 +3418,15 @@ export const C2C_MIGRATION_FILES = [
   // public, and the table already carries organization_id INTEGER NOT NULL, so
   // the sweep at the tail polices it.
   'migrations/20261019_stability_shelf_life_signature.sql',
+  // The earlier CMC agency-question file is read-only (2026-10-19, rows D2 and
+  // D5; decisions P-38 and P-39 item 1): reg_questions refuses every INSERT and
+  // UPDATE, for every role, by a row trigger; the runtime role's SELECT-only
+  // ceiling is APPEND_ONLY_TABLES. Agency questions are recorded on the letter
+  // (20261018b above, which gains ctd_section in place the same day). After the
+  // table's own column file (db/migrations/20260830_reg_questions_response_doc.sql,
+  // line ~2029); no set file issues DML on it. Creates no table (the sweeps are
+  // unaffected) and drops nothing; CREATE OR REPLACE throughout.
+  'migrations/20261019b_reg_questions_read_only.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

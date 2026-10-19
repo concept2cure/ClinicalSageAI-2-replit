@@ -605,6 +605,11 @@ deletion record the working agreement requires:
 
 1. **`reg_questions`** (`/api/cmc/agency-questions`), onto `agency_communication_questions`. It is the one inside a
    launch app (CMC / Module 3), and closing a question there is a status update, not a signature.
+   *2026-10-19:* converged, and the file made read-only rather than retired: CMC reads a program's Module 3 questions
+   from the letters and opens each on its letter, writing none; `/api/cmc/agency-questions` answers 410 to a write and
+   the database refuses one (`migrations/20261019b_reg_questions_read_only.sql`); its rows stay as history. The act
+   that moves a row not closed there onto a letter is owed, deferred until a deployed estate shows such rows
+   (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`).
 2. **`c2c_commitments`** (`/api/c2c/commitments`), onto `regulatory_commitments`: an AI extraction with an
    ungoverned create.
 3. **The `c2c_correspondence` family** (`/api/regulatory-correspondence`), onto the project inbox, keeping its issue

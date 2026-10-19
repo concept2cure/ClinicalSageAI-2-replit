@@ -1,0 +1,130 @@
+# MUTATION 4 an approved answer is never overdue (questionOverdue ignores the state)
+# File: server/services/agency-responses/response-logic.ts
+# Replaced:
+#   -   return letterIsOverdue && (state === 'unanswered' || state === 'drafted' || state === 'changed-after-approval');
+# With:
+#   +   return letterIsOverdue && state !== null;
+# Command: npx vitest run server/services/agency-responses/__tests__/module-view.test.ts
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored: sha256 dfb2ab0b710b77d3… before = dfb2ab0b710b77d3… after (byte-identical)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.P.7" is stored as "3.2.P.7" 2ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "m3.2.s.4.1" is stored as "3.2.S.4.1" 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "M3.2.P.5" is stored as "3.2.P.5" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "  3.2.p.8.1  " is stored as "3.2.P.8.1" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3" is stored as "3" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.P.100" is stored as "3.2.P.100" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.R.US" is stored as "3.2.R.US" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "2.3.S" is stored as "2.3.S" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "5.3.5.1" is stored as "5.3.5.1" 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "foo" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "6.1" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.S.4.1 (impurities)" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3..2" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "§3.2.P.7" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > every stored form matches the CHECK the migration declares 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > membership is by whole segment: 3.2.P.5 holds 3.2.P.5.1, not 3.2.P.50 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > utcDay > reads the stored instant as its UTC calendar day, and nothing for no date 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a response-required letter past its date with an unanswered question is overdue 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a letter whose questions are all approved is not overdue, though it is not yet closed 8ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a response-required letter with no question recorded is overdue past its date (nothing recorded is not answered) 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > due today is not overdue; a due date late on the UTC day is still that day 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > no due date, a closed letter, or a letter needing no response is never overdue 0ms
+ × server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a question is overdue only when its letter is and it is not answered as it stands 8ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > the question's own section decides, even against the letter and the discipline 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > then the letter's codes, normalised; codes that do not parse are ignored 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > then, for Module 3 only, the CMC discipline (any case), with no section claimed 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > whole segments: a question at 3.2.P.50 is in Module 3, and a letter at 30.1 is not a code 0ms
+ × server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > an approved answer on an overdue letter is never counted overdue; the unanswered one beside it is 6ms
+   → expected [ [ 'Q2', 'unanswered', true ], …(1) ] to deeply equal [ [ 'Q2', 'unanswered', true ], …(1) ]
+ × server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > the letter is overdue on ALL its questions, the module's count is of the module's: a Clinical question keeps a CMC letter overdue 3ms
+   → expected { questions: 1, outstanding: +0, …(3) } to match object { questions: 1, outstanding: +0, …(2) }
+(6 matching properties omitted from actual)
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > counts an outstanding question it cannot classify, rather than dropping it 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > a Module 3 letter with no question recorded is named; an overdue one it cannot classify is counted as not counted 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > a closed letter's questions are listed after the open ones and are neither outstanding nor overdue 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > lists a page and counts the whole: the summary is of every row read 1ms
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 30 passed (33)
+   Start at  10:31:24
+   Duration  575ms (transform 143ms, setup 88ms, import 99ms, tests 46ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a question is overdue only when its letter is and it is not answered as it stands
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/agency-responses/__tests__/module-view.test.ts:143:47
+    141|     expect(questionOverdue(true, 'drafted')).toBe(true);
+    142|     expect(questionOverdue(true, 'changed-after-approval')).toBe(true);
+    143|     expect(questionOverdue(true, 'approved')).toBe(false);
+       |                                               ^
+    144|     expect(questionOverdue(true, 'withdrawn')).toBe(false);
+    145|     expect(questionOverdue(false, 'unanswered')).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > an approved answer on an overdue letter is never counted overdue; the unanswered one beside it is
+AssertionError: expected [ [ 'Q2', 'unanswered', true ], …(1) ] to deeply equal [ [ 'Q2', 'unanswered', true ], …(1) ]
+
+- Expected
++ Received
+
+@@ -5,8 +5,8 @@
+      true,
+    ],
+    [
+      "Q1",
+      "approved",
+-     false,
++     true,
+    ],
+  ]
+
+ ❯ server/services/agency-responses/__tests__/module-view.test.ts:185:73
+    183|       today: TODAY,
+    184|     });
+    185|     expect(v.questions.map((q) => [q.questionRef, q.state, q.overdue])…
+       |                                                                         ^
+    186|       ['Q2', 'unanswered', true],
+    187|       ['Q1', 'approved', false],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > the letter is overdue on ALL its questions, the module's count is of the module's: a Clinical question keeps a CMC letter overdue
+AssertionError: expected { questions: 1, outstanding: +0, …(3) } to match object { questions: 1, outstanding: +0, …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "lettersOverdue": 1,
+    "outstanding": 0,
+    "questions": 1,
+-   "questionsOverdue": 0,
++   "questionsOverdue": 1,
+  }
+
+ ❯ server/services/agency-responses/__tests__/module-view.test.ts:202:23
+    200|     expect(v.questions.map((q) => q.questionRef)).toEqual(['Q1']);
+    201|     expect(v.questions[0].letter.overdue).toBe(true);
+    202|     expect(v.summary).toMatchObject({ questions: 1, outstanding: 0, qu…
+       |                       ^
+    203|   });
+    204|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+

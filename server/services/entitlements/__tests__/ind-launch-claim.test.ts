@@ -105,6 +105,9 @@ describe('P-32: agency questions are answered on the inbox, with approval a sign
       '/api/concept2cure/projects/42/agency-communications/ace_1/questions',
       '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7/approve',
       '/api/concept2cure/projects/42/agency-communications/ace_1/response-package',
+      // CMC's Module 3 view of them, and a question's section correction (2026-10-19).
+      '/api/concept2cure/projects/42/agency-questions',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7',
     ]) expect(verdict(p), p).toBe('launch');
     expect(modulesForPath('/api/regulatory-correspondence/7', prefixMap)?.has('haq-manager')).toBe(false);
     expect(modulesForPath('/api/precedent-engine/search', prefixMap)?.has('haq-manager')).toBe(false);

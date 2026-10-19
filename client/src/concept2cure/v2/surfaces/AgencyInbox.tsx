@@ -27,9 +27,17 @@
  * 2026-10-18): a response per question, approved by a Part 11 signature, and
  * the response package. Closing a letter with recorded questions is refused by
  * the server until every response is approved.
+ *
+ * Another screen can open one letter (2026-10-19): CMC / Module 3 lists the
+ * program's Module 3 questions read from their letters, and each opens here,
+ * on its letter, where it is worked (P-38). The list takes `openLetterId`
+ * (from the navigation-params channel, consumed by CommunicationCenter), opens
+ * that card, scrolls it into view and moves focus to it; a letter that is not
+ * in the list is said to be so, and no other letter opens.
  */
 import React from 'react';
 import { I } from '../icons';
+import { utcDaysUntil } from '@shared/utils/utc-day';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { CC_SOURCE_TYPES, CC_TONE, CC_CLOSURE } from '../fixtures/commcenter';
@@ -159,13 +167,17 @@ export function useAgencyInbox(projectId: string | null, fire: (m: string, tone?
   const live = useLiveRows<CommRow>(path);
   const seed = !path || live.loading || live.error ? EMPTY_COMMS : live.rows;
   const [comms, setComms] = React.useState<CommRow[]>(() => seed.map((c) => ({ ...c })));
-  const seedRef = React.useRef<CommRow[]>(seed);
-  React.useEffect(() => {
-    if (seed !== seedRef.current) {
-      seedRef.current = seed;
-      setComms(seed.map((c) => ({ ...c })));
-    }
-  }, [seed]);
+  /* Adopt a new read DURING the render that sees it, not in an effect after
+     it: an effect left one committed frame with the read settled (loading
+     false) and the rows still the empty copy, so the inbox painted "No agency
+     communications yet" and, for a letter another screen linked to, a
+     role="alert" "That letter is not in this project's inbox" over a letter
+     that was there (review of 2026-10-19). React re-renders before committing. */
+  const [adopted, setAdopted] = React.useState<CommRow[]>(seed);
+  if (adopted !== seed) {
+    setAdopted(seed);
+    setComms(seed.map((c) => ({ ...c })));
+  }
 
   /* The audited write. The row adopted is the SERVER's record (real id, real
      generated task id); on failure nothing is added and the caller says so. */
@@ -228,10 +240,28 @@ export function useAgencyInbox(projectId: string | null, fire: (m: string, tone?
   return { path, live, comms, log, advance, projectId, fire };
 }
 
-/** Whole days from now to a date; null when there is none. */
-export function daysTo(d: string | null | undefined): number | null {
-  if (!d) return null;
-  return Math.round((new Date(d).getTime() - Date.now()) / 86400000);
+/**
+ * Whole UTC calendar days from today to a date (0 on the day itself, negative
+ * once it has passed); null when there is none. The same days the server's
+ * overdue verdict compares (shared/utils/utc-day.ts): counted in milliseconds
+ * from the browser's clock, a letter due today read "-1d" from 12:00 UTC on.
+ */
+export function daysTo(d: string | null | undefined, now: Date = new Date()): number | null {
+  return utcDaysUntil(d, now.toISOString());
+}
+
+/**
+ * A due date's day count in words: "today", "in 3 days", "4 days ago". A date
+ * that has passed is said as that, never as "overdue": whether a letter is
+ * overdue is the server's verdict (its questions not all approved), not the
+ * calendar's.
+ */
+export function dueInWords(d: string | null | undefined, short = false): string | null {
+  const n = daysTo(d);
+  if (n === null) return null;
+  if (n === 0) return 'today';
+  const unit = short ? 'd' : n === 1 || n === -1 ? ' day' : ' days';
+  return n > 0 ? `in ${n}${unit}` : `${-n}${unit} ago`;
 }
 
 /** Where a card opens its letter's questions and responses. */
@@ -240,18 +270,57 @@ export interface InboxResponses {
   fire: (m: string, tone?: 'ok' | 'error') => void;
 }
 
+/** A request, from another screen, to open one letter (and one of its questions). */
+export interface LetterOpening {
+  letterId: string;
+  questionId: number | null;
+  /** A new request for the same letter opens it again. */
+  token: number;
+}
+
+/** Opens, scrolls to and focuses a card another screen linked to; a new link for the same card does it again. */
+function useLinkedOpen(targeted: boolean, token: number | undefined, setOpen: (open: boolean) => void) {
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    if (!targeted) return;
+    setOpen(true);
+    ref.current?.scrollIntoView?.({ block: 'start' });
+    ref.current?.focus();
+  }, [targeted, token, setOpen]);
+  return ref;
+}
+
 /** One agency communication: what came in, its triage state and its actions. */
-function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, responses }: {
+function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, responses, opening }: {
   c: CommRow;
   onAdvance: (id: string) => void;
   onAsk: (q: string) => void;
   onOpenTask?: () => void;
   responses?: InboxResponses;
+  opening?: LetterOpening | null;
 }) {
   const [open, setOpen] = React.useState(false);
   const panelId = React.useId();
+  const targeted = opening?.letterId === c.id;
+  const cardRef = useLinkedOpen(targeted, opening?.token, setOpen);
+  const titleId = React.useId();
+  const linkedNoteId = React.useId();
+  /* The card a link opened takes focus, so it is a named region: its name is
+     its own title plus a note that a link opened it. A name on a role-less
+     div is prohibited (ARIA 1.2) and, where honoured, hides the card's due
+     date, state and actions behind the label. */
   return (
-    <div className="cc-comm" data-fresh={c._new || undefined} data-urgency={c.urgency}>
+    <div
+      ref={cardRef}
+      className="cc-comm"
+      data-fresh={c._new || undefined}
+      data-urgency={c.urgency}
+      data-letter-id={c.id}
+      tabIndex={targeted ? -1 : undefined}
+      role={targeted ? 'region' : undefined}
+      aria-labelledby={targeted ? `${titleId} ${linkedNoteId}` : undefined}
+    >
+      {targeted ? <span id={linkedNoteId} className="sr-only">opened from a link</span> : null}
       <div className="cc-comm-l">
         {/* Urgency on an agency communication was carried by the dot's tone alone. */}
         <span className={'cc-comm-dot tone-' + (CC_TONE[c.urgency] || 'idle')} aria-hidden="true" />
@@ -259,7 +328,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, responses }: {
       </div>
       <div className="cc-comm-b">
         <div className="cc-comm-top">
-          <span className="cc-comm-t">{c.communicationType}</span>
+          <span className="cc-comm-t" id={titleId}>{c.communicationType}</span>
           <span className="cc-comm-src">{CC_SOURCE_TYPES[c.sourceType] || c.sourceType}</span>
           {c.responseRequired && <span className="rd-chip tone-err">response required</span>}
           {/* closureStatus is nullable on the register (a row logged before
@@ -274,7 +343,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, responses }: {
         <div className="cc-comm-meta mono">
           {c.sourceChannel} · received {c.receivedDate}
           {c.dueDate
-            ? ' · due ' + c.dueDate + (daysTo(c.dueDate) != null ? ' (' + daysTo(c.dueDate) + 'd)' : '')
+            ? ' · due ' + c.dueDate + (dueInWords(c.dueDate, true) != null ? ' (' + dueInWords(c.dueDate, true) + ')' : '')
             : ''}
           {/* linkedSectionCodes / extractedIssues are absent, not [], on rows
               the list read narrows or that predate the columns. */}
@@ -317,7 +386,12 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, responses }: {
         </div>
         {responses && open && (
           <div id={panelId}>
-            <AgencyResponses projectId={responses.projectId} letter={c} fire={responses.fire} />
+            <AgencyResponses
+              projectId={responses.projectId}
+              letter={c}
+              fire={responses.fire}
+              focusQuestionId={targeted ? opening?.questionId ?? null : null}
+            />
           </div>
         )}
       </div>
@@ -335,6 +409,7 @@ export function AgencyInboxList({
   onAsk,
   onOpenTask,
   responses,
+  opening = null,
   emptyHint = 'Nothing has been logged for this project. Inbound agency letters, IRs and gateway acks appear here once captured.',
 }: {
   hasProject: boolean;
@@ -346,8 +421,19 @@ export function AgencyInboxList({
   onOpenTask?: () => void;
   /** Lets each card open its letter's questions and responses. */
   responses?: InboxResponses;
+  /** A letter another screen asked to open (CMC's "Open on its letter"). */
+  opening?: LetterOpening | null;
   emptyHint?: string;
 }) {
+  /* A letter that is not in this list (deleted, restricted from this person,
+     another project's) is said to be so; no other letter is opened instead. */
+  const missing = opening && !loading && !error && !rows.some((c) => c.id === opening.letterId)
+    ? (
+        <p className="cc-q-note" role="alert">
+          That letter is not in this project's inbox, or you cannot open it.
+        </p>
+      )
+    : null;
   if (!hasProject) {
     return (
       <EmptyState
@@ -375,13 +461,21 @@ export function AgencyInboxList({
     );
   }
   if (rows.length === 0) {
-    return <EmptyState icon={I.fileText} title="No agency communications yet" hint={emptyHint} />;
+    return (
+      <>
+        {missing}
+        <EmptyState icon={I.fileText} title="No agency communications yet" hint={emptyHint} />
+      </>
+    );
   }
   return (
-    <div className="cc-comms">
-      {rows.map((c) => (
-        <AgencyInboxCard key={c.id} c={c} onAdvance={onAdvance} onAsk={onAsk} onOpenTask={onOpenTask} responses={responses} />
-      ))}
-    </div>
+    <>
+      {missing}
+      <div className="cc-comms">
+        {rows.map((c) => (
+          <AgencyInboxCard key={c.id} c={c} onAdvance={onAdvance} onAsk={onAsk} onOpenTask={onOpenTask} responses={responses} opening={opening} />
+        ))}
+      </div>
+    </>
   );
 }

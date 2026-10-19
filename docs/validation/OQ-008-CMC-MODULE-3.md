@@ -3,16 +3,18 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-008 |
-| Version | 0.8 |
+| Version | 0.10 |
 | Status | **DRAFT — UNSIGNED, NOT EXECUTED** |
 | Parent | VMP-001 §5; requirements URS-007 |
-| Runner (the executable protocol) | `tests/validation/oq/cmc/run.mjs` (steps 19–33 in `tests/validation/oq/cmc/steps-filing.mjs`; 34–36 in `steps-registers.mjs`; 37–40 in `steps-attribution.mjs`) |
+| Runner (the executable protocol) | `tests/validation/oq/cmc/run.mjs` (steps 19–33 in `tests/validation/oq/cmc/steps-filing.mjs`; 34–36 in `steps-registers.mjs`; 37–41 in `steps-attribution.mjs`; 42 in `steps-correspondence.mjs`) |
 | Record | `docs/evidence/W3/<date>/OQ-CMC/OQ-008-execution-record.md` (generated on execution; does not exist) |
 
 ## Revision history
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.10 | 2026-10-19 | Claude | OQ-CMC-42 after review: DELETE and TRUNCATE probed as the runtime role, each rolled back; the owner of the question's response set with a reason and read back in the Module 3 view. |
+| 0.9 | 2026-10-19 | Claude | OQ-CMC-42 added for URS-CMC-030 (agency questions on Module 3 are the letter's record; the earlier CMC question file is read-only), implemented in `steps-correspondence.mjs`. |
 | 0.8 | 2026-10-19 | Claude | OQ-CMC-41 added for URS-CMC-029 (the composed section states whether its shelf-life claim was signed for). |
 | 0.7 | 2026-10-19 | Claude | OQ-CMC-40 added for URS-CMC-028 (the stability close-out under a signature). Steps 37–40 moved into `steps-attribution.mjs` as `steps-registers.mjs` passed the 500-line cap. |
 | 0.6 | 2026-10-19 | Claude | OQ-CMC-39 added for URS-CMC-027 (no verdict and no filing for a programme the organisation does not hold). |
@@ -91,6 +93,7 @@ recomputed from the stored section record and compared with the
 | OQ-CMC-39 | URS-CMC-027 | scripted | ask for an ICH compliance verdict, a QbD derivation and a control strategy, and file a container closure, a comparability assessment and a material specification, under three programme ids the organisation does not hold — one well-formed uuid naming nothing, one malformed id, and (when supplied) one of a second tenant — then the same six under the run's own programme; and one create with no programme at all | each read 404 stating nothing was assessed and each create 409 naming the programme as not this organisation's, with nothing written; the same six succeed under the run's own programme; the create with no programme is accepted as an organisation-wide record |
 | OQ-CMC-40 | URS-CMC-028 | scripted | create a study already COMPLETED with a shelf life, then close an ordinary study out by PUT; then sign the close-out with no reason, with a reason but no re-authentication, with both but no shelf life recorded, with a shelf life but no results pulled, and with everything; then edit the closed-out study and close it out again | the create and the PUT each refused 409 naming POST /api/cmc/stability-studies/:id/close-out with nothing stored; then 400, then 401, then 409 naming the missing shelf life, then 409 naming the absent results; then 200 with COMPLETED, the signer and the date set and one `electronic_signatures` row; the edit after is 409 and a second close-out is 409 already COMPLETED |
 | OQ-CMC-41 | URS-CMC-029 | scripted | record the same shelf-life claim, the same three pull-point results and the same condition on two programmes, close one out under a signature, and compose §3.2.P.8 for each | both sections state the period and the data it is subject to review of; the signed one reads *accepted on a signed study close-out* and the running one *recorded on a study that has not been closed out under signature* — the only difference between the two sections |
+| OQ-CMC-42 | URS-CMC-030 | scripted | POST and PATCH `/api/cmc/agency-questions`; as the runtime role (`DATABASE_URL_RUNTIME`), INSERT, UPDATE, DELETE and TRUNCATE on `reg_questions`, each in a transaction rolled back; log a response-required letter on the programme and record a question on it at §3.2.P.7 with a reason; set its owner to a member of the organisation with a reason; read the programme's Module 3 questions | 410 `CMC_QUESTION_FILE_READ_ONLY` twice with the earlier file's counts unchanged; the database refuses all four statements (42501); 201 for the question; 200 for the owner; the Module 3 read lists it at §3.2.P.7 from the question itself, unanswered, not overdue, with that owner. The owner role's refusal (the trigger) is evidenced outside this run, which holds no owner connection: `tests/db/cmc-agency-questions-converged.dbtest.ts`. Without `DATABASE_URL_RUNTIME` the database half is a deviation, *not executed*. Withheld letters are evidenced outside this run (no legal-role identity is provisioned for an OQ run): `tests/db/cmc-agency-questions-converged.dbtest.ts` |
 | OQ-CMC-31 | URS-CMC-001, URS-CMC-022 | ad-hoc | the tester records anything observed that no step above covers | reviewer judgment |
 
 ## 3. Execution record
