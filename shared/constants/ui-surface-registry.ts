@@ -541,6 +541,13 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/cmc/formulation-records',
       '/api/cmc/manufacturing-processes',
       '/api/cmc/characterization-studies',
+      /* The §11.10(e) change history of one register record — who recorded it,
+         who changed it, and what each change moved (URS-CMC-025). Its own
+         namespace because the register is a path PARAMETER: a path whose first
+         segment is a variable normalises to '/api/cmc/:p/:p/history', which no
+         prefix can claim, and the only prefix that would have covered it is the
+         bare '/api/cmc' that P-28 deliberately does not claim. */
+      '/api/cmc/register-history',
       '/api/cmc/quality/qbd',
       '/api/cmc/ich-compliance',
       '/api/cmc/control-strategy',

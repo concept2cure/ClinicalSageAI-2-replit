@@ -1,0 +1,98 @@
+# The register layer's edit half, before and after
+
+## Before: how many register rows carry an edit, and how many of those edits are on the ledger
+
+A row whose `updated_at` is later than its `created_at` was changed after it
+was entered. Across the seven CMC registers on this deployment:
+
+```
+           register            | rows_showing_an_edit | edits_on_the_ledger 
+-------------------------------+----------------------+---------------------
+ qc_testing                    |                   87 |                   0
+ stability_studies             |                   70 |                   2
+ cmc_batch_records             |                   24 |                   0
+ analytical_methods            |                   23 |                   3
+ cmc_comparability_assessments |                   14 |                   2
+ drug_substances               |                    4 |                   2
+ cmc_change_control            |                    1 |                   1
+(7 rows)
+
+```
+
+223 register rows carry an edit. Ten of those edits are on the ledger, and
+all ten were written by the probe below, run minutes before this file. The
+other 213 — every register edit in this database's recorded history before
+today — left no trace of who made it or what moved.
+
+And the ledger, by action:
+
+```
+           action           | count |   first    |    last    
+----------------------------+-------+------------+------------
+ cmc.register.create        |   629 | 2026-10-18 | 2026-10-18
+ cmc.register.retire_signed |    19 | 2026-10-05 | 2026-10-18
+ cmc.register.update        |    10 | 2026-10-18 | 2026-10-18
+(3 rows)
+
+```
+## After: the same five registers, through the product's own routes
+
+One create and one edit per register (`probe-edit-audit.sh`), then the
+ledger read back through `GET /api/audit-trail/ledger`:
+
+```
+analytical-method        create ok  edit 200
+stability-study          create ok  edit 200
+drug-substance           create ok  edit 200
+change-control           create ok  edit 200
+comparability            create ok  edit 200
+
+— the chained ledger, rows recorded for these records —
+  analytical_methods:109                         Cmc Register Create, Cmc Register Update
+  cmc_change_control:1                           Cmc Register Create, Cmc Register Update
+  cmc_comparability_assessments:1c33720d-…       Cmc Register Create, Cmc Register Update
+  drug_substances:144                            Cmc Register Create, Cmc Register Update
+  stability_studies:243                          Cmc Register Create, Cmc Register Update
+
+  chain verified: True
+```
+
+And what each row actually records — the fields that moved, with both values:
+
+```
+analytical_methods:108  actor=3  seq=6530
+  {"register":"analytical_method","projectId":"937eae21-3b8c-41a4-b1e2-b376e8de70d9","recordId":108,"changed":{"title":{"from":"Probe assay","to":"Probe assay (rev 2)"},"status":{"from":"development","to":"validation"}},"changedFields":["title","status"]}
+stability_studies:242  actor=3  seq=6532
+  {"register":"stability_study","projectId":"937eae21-3b8c-41a4-b1e2-b376e8de70d9","recordId":242,"changed":{"status":{"from":"ACTIVE","to":"PAUSED"}},"changedFields":["status"]}
+drug_substances:143  actor=3  seq=6534
+  {"register":"drug_substance","projectId":"937eae21-3b8c-41a4-b1e2-b376e8de70d9","recordId":143,"changed":{"status":{"from":"development","to":"characterized"}},"changedFields":["status"]}
+cmc_comparability_assessments:0d072b60-2f27-453e-95cb-3ea166e75673  actor=3  seq=6536
+  {"register":"comparability_study","projectId":"937eae21-3b8c-41a4-b1e2-b376e8de70d9","recordId":"0d072b60-2f27-453e-95cb-3ea166e75673","changed":{"justification":{"from":null,"to":"Comparable on every attribute."}},"changedFields":["justification"]}
+analytical_methods:109  actor=3  seq=6540
+  {"register":"analytical_method","projectId":"45e2b787-42e3-4a2e-98d9-84fdce1fabbd","recordId":109,"changed":{"title":{"from":"Probe assay","to":"Probe assay (rev 2)"},"status":{"from":"development","to":"validation"}},"changedFields":["title","status"]}
+stability_studies:243  actor=3  seq=6542
+  {"register":"stability_study","projectId":"45e2b787-42e3-4a2e-98d9-84fdce1fabbd","recordId":243,"changed":{"status":{"from":"ACTIVE","to":"PAUSED"}},"changedFields":["status"]}
+drug_substances:144  actor=3  seq=6544
+  {"register":"drug_substance","projectId":"45e2b787-42e3-4a2e-98d9-84fdce1fabbd","recordId":144,"changed":{"status":{"from":"development","to":"characterized"}},"changedFields":["status"]}
+cmc_change_control:1  actor=3  seq=6546
+  {"register":"change_control","projectId":"45e2b787-42e3-4a2e-98d9-84fdce1fabbd","recordId":1,"changed":{"regulatoryFiling":{"from":null,"to":"CBE-30"},"status":{"from":"draft","to":"under-review"}},"changedFields":["regulatoryFiling","status"]}
+cmc_comparability_assessments:1c33720d-223c-49e4-adbe-2805d1a1898b  actor=3  seq=6548
+  {"register":"comparability_study","projectId":"45e2b787-42e3-4a2e-98d9-84fdce1fabbd","recordId":"1c33720d-223c-49e4-adbe-2805d1a1898b","changed":{"justification":{"from":null,"to":"Comparable on every attribute."}},"changedFields":["justification"]}
+analytical_methods:109  actor=3  seq=6549
+  {"register":"analytical_method","projectId":"45e2b787-42e3-4a2e-98d9-84fdce1fabbd","recordId":109,"changed":{"title":{"from":"Probe assay (rev 2)","to":"Probe assay (rev 3)"}},"changedFields":["title"]}
+```
+
+## An edit that moves nothing writes no row
+
+The same PUT body sent twice. The second changes nothing, so §11.10(e) has
+nothing to record, and a ledger of no-ops would bury the real edits:
+
+```
+a no-op edit:                 HTTP 200   update rows before=1 after=1
+an edit that moves one field: HTTP 200   update rows now=2
+```
+
+The second attempt in that run was `{"status":"validated"}` and came back
+**409** — `validated` is a governed signed state, reachable only through the
+signing ceremony, not an ordinary PUT. That is the ungoverned-signed-state
+refusal from slice 05 holding; the one-field edit above used `title`.

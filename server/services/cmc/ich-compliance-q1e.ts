@@ -43,7 +43,7 @@ import { cite } from './ich-compliance-q2';
    the poolability estimator use — it already tells UNREADABLE data from ABSENT
    data, which is the distinction this rule turns on. A second parser here would
    be a second answer to "what data is on file". */
-import { readRecordedStabilityResults } from './recorded-stability';
+import { readRecordedStabilityResults, parseMonthTime } from './recorded-stability';
 /* The scope vocabulary is owned by the shared module every register resolves
    its side through; this is its seventh consumer, not a second parser. */
 import { normalizeMaterialScope, scopeCovers, type CmcMaterialScope } from '../../../shared/cmc/material-scope';
@@ -100,10 +100,23 @@ export function monthsIn(text: unknown): number | null {
   return credible(Math.round(n));
 }
 
-/** The largest month value in a comma/space separated list of time points. */
+/**
+ * The largest month value in a comma/space separated list of time points.
+ *
+ * A time point is parsed by the CANONICAL time parser, not by `monthsIn`: the
+ * register writes them as bare numbers, as "Month 24", and inside a
+ * JSON-shaped list, and `monthsIn` — written for the claim's free text —
+ * refuses the second of those and refuses a bare `0`. `monthsIn` keeps the
+ * claim and the planned duration, which are prose ("24 months at 25C/60%RH")
+ * and need a unit; a pull point's time is a number on a schedule and needs
+ * this one.
+ */
 export function latestTimePoint(text: unknown): number | null {
-  const parts = String(text ?? '').split(/[,;/|]+|\s+/).map((p) => p.trim()).filter(Boolean);
-  const months = parts.map((p) => monthsIn(p)).filter((n): n is number => n !== null);
+  const parts = String(text ?? '')
+    .split(/[,;/|]+|\s+/)
+    .map((p) => p.trim().replace(/^[[({"']+|[\])}"']+$/g, ''))
+    .filter(Boolean);
+  const months = parts.map((p) => parseMonthTime(p)).filter((n): n is number => n !== null);
   return months.length === 0 ? null : Math.max(...months);
 }
 
@@ -183,7 +196,10 @@ export function studyCoverage(s: Record<string, unknown>): {
     (pt) => pt.result !== undefined && pt.result !== null && String(pt.result).trim() !== '',
   );
   const months = withResult
-    .map((pt) => monthsIn(pt.timePoint))
+    /* The canonical parser for this field. `monthsIn` is the claim's parser and
+       reads "Month 24" as nothing, so a complete study labelled that way
+       reported 0 months recorded and FAILED a compliant dossier. */
+    .map((pt) => parseMonthTime(pt.timePoint))
     .filter((n): n is number => n !== null);
   /* No recorded point at all is zero months of data, not "unknown": the study
      exists and has produced nothing. Zero is then compared with the claim like
