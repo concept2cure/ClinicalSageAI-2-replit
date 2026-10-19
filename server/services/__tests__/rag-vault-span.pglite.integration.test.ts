@@ -31,7 +31,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 
 const seam = vi.hoisted(() => ({
-  db: null as null | { query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+  db: null as null | { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
 }));
 vi.mock('../vault/retrieval-source-access.js', async original => ({ ...(await original() as object),
   withRetrievalReadScope: async (scope: unknown, run: (q: unknown, current: unknown) => Promise<unknown>) => {

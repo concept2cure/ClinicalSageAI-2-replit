@@ -72,6 +72,17 @@ Five subagents worked in parallel. One session made every commit, all to
   column. Only that locator was updated, and its fence assertions are
   unchanged.
 
+## Publication note
+
+The first push was refused by the whole-project typecheck gate
+(`push-attempt-1-typecheck-red.txt`). The PGlite test's seam declared its
+executor's rows as `Record<string, unknown>[]`, while the harness executor
+returns `unknown[]`; the second test author ran ESLint but not `tsc`. The
+declaration was widened to `unknown[]`. The value is only passed through as
+`unknown`, so no assertion changed. All six new test files then typecheck
+with zero errors, the suite still passes 10 of 10, and `frozen-tests.sha256`
+pins the corrected bytes.
+
 ## Limits and follow-ups
 
 - **Narrower generation context.** `regulatory_qa` generation context

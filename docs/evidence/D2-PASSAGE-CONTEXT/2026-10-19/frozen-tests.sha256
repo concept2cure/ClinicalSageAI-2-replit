@@ -3,4 +3,4 @@
 22d17e9cf45c852e6fd7670cdfa30e265dc4e4e2589a638ec646fe5e40b24195  server/services/__tests__/rag-context-expansion-span.test.ts
 483784665c5b8e0791d3d6d2a4f22a6682174e6b824a11f4db54f2d045fd7fd7  server/services/vault/__tests__/document-passage-search-context.test.ts
 16fc68663cf4b83a251904588831c5c8be0344e8b2917bcfa15c7196e7e5c8a0  server/services/ana/__tests__/document-passage-tools-budget.test.ts
-0b92095910034cdc6631070efdc16a86a7908acbc28a503a7d245dbd890fe002  server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+94987ecc12e78d29ece45a22be7b76bd241457f94e1599e3a34c12b34c022eb5  server/services/__tests__/rag-vault-span.pglite.integration.test.ts
