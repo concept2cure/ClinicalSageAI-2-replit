@@ -132,7 +132,7 @@ async function sign(
       actionId,
       orgId,
       target,
-      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: 'I approve this release.' }),
+      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: 'release' }),
       opts.state ?? 'executed',
       USER,
     ],
