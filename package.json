@@ -185,6 +185,8 @@
     "ci:class-vocabulary": "node scripts/ci/check-class-vocabulary.mjs",
     "ci:class-vocabulary:selftest": "node scripts/ci/check-class-vocabulary.mjs --selftest",
     "ci:migration-set-order": "node scripts/ci/check-migration-set-order.mjs",
+    "ci:install-fresh-overlay-deps": "node scripts/ci/check-install-fresh-overlay-deps.mjs",
+    "ci:install-fresh-overlay-deps:selftest": "node scripts/ci/check-install-fresh-overlay-deps.mjs --selftest",
     "ci:migration-guard-order": "node scripts/ci/check-migration-guard-order.mjs",
     "ci:migration-guard-order:selftest": "node scripts/ci/check-migration-guard-order.mjs --selftest",
     "ci:coverage-ratchet": "node scripts/ci/check-coverage-ratchet.mjs",
