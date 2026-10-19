@@ -127,7 +127,7 @@ async function currentDigest(sequenceId: number, orgId: number): Promise<string>
 async function sign(
   sequenceId: number,
   orgId: number,
-  opts: { intent?: string; digest?: string; basis?: string; state?: string; revoked?: boolean } = {},
+  opts: { intent?: string; meaning?: string; digest?: string; basis?: string; state?: string; revoked?: boolean } = {},
 ): Promise<number> {
   const target = `ectd-sequence:${sequenceId}`;
   const actionId = `act_${sequenceId}_${opts.intent ?? 'dispatch'}_${Math.floor(performance.now() * 1000)}`;
@@ -138,7 +138,7 @@ async function sign(
       actionId,
       orgId,
       target,
-      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: 'I approve this release.' }),
+      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: opts.meaning ?? 'release' }),
       opts.state ?? 'executed',
       USER,
     ],
@@ -224,6 +224,14 @@ describe('against the real schema', () => {
     const sequenceId = await makeSequence(ORG, '0002', 1);
     await sign(sequenceId, ORG, { intent: 'freeze' });
     expect((await resolve(sequenceId)).verdict).toBe('unsigned');
+  });
+
+  // 2026-10-19 (D5): the resolver read the intent and never the meaning, so a
+  // dispatch signature declaring "review" was counted as the §11.70 release.
+  it('a dispatch-intent signature declaring review is not a release', async () => {
+    const sequenceId = await makeSequence(ORG, '0090', 1);
+    await sign(sequenceId, ORG, { meaning: 'review' });
+    expect((await resolve(sequenceId)).verdict, 'a "review" signature was counted as the release').toBe('unsigned');
   });
 
   it('a sign action that never executed does not count', async () => {

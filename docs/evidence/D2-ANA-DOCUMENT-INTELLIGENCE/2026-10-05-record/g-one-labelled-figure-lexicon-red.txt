@@ -1,0 +1,93 @@
+Red — before any production file changed (2026-10-19).
+server/services/intelligence/__tests__/one-labelled-figure-extractor.test.ts
+
+== The duplication detector, naming every lexicon it found ==
+
+  server/services/ana/dossierReconciliation.ts (8 rows)
+  server/services/harmonize-engine.ts (6 rows)
+  server/services/translation/glossary.ts (5 rows)
+
+The third is a FALSE POSITIVE and the detector was narrowed for it: glossary.ts pairs labels
+with regexes for CFR citations, ICH citations, eCTD module tokens and slash commands. It is a
+translation protect-list, not a figure lexicon. The detector now requires a NUMERIC capture.
+
+== Every ported label, red on the canonical extractor ==
+
+ × the five labels only the deleted module had > alpha, from "alpha = 0.05" and from "Significance level: 0.025"
+   → expected [] to deeply equal [ 0.05 ]
+ × the five labels only the deleted module had > power, with a percentage normalised to a fraction — "90%" is 0.9
+   → expected [] to deeply equal [ 0.9 ]
+ × the five labels only the deleted module had > hazard_ratio, from the word and from the abbreviation
+   → expected [] to deeply equal [ 0.7 ]
+ × the five labels only the deleted module had > sites, counting centres and centers alike
+   → expected [] to deeply equal [ 30 ]
+ × the five labels only the deleted module had > events, counting events and deaths
+   → expected [] to deeply equal [ 180 ]
+ × the five labels only the deleted module had > the enrolled-N prose form, which the canonical pattern required an "=" for
+   → expected [] to deeply equal [ 240 ]
+ × per-label numeric normalisation lives in one place > a count sheds its thousands separator
+   → expected [] to deeply equal [ 1240 ]
+ × per-label numeric normalisation lives in one place > every label the lexicon holds has a comparison precision
+   → compareDecimalsFor is not a function
+ × cross-document reconciliation > flags an enrolled-N disagreement across documents
+   → reconcileLabelledFigures is not a function
+ × the claim/source comparator reads the canonical extractor > figure-consistency.ts imports it
+   → expected '/**\n * The consistency check's verd…' to contain 'from '../intelligence/cross-artifact…'
+ × the claim/source comparator reads the canonical extractor > terminology-consistency.ts reads the arithmetic check from its own module
+   → expected '/**\n * In-document terminology & val…' to contain 'from './figure-arithmetic''
+
+      Tests  18 failed | 0 passed (18)
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════
+The old harmonize-engine.checkNumerics restored on the GREEN tree, its eight new tests run
+against it, then restored again. server/services/__tests__/harmonize-numerics-on-one-lexicon.test.ts
+════════════════════════════════════════════════════════════════════════════════════════════════
+
+ × a figure is compared as a number, not as the string it was written as >
+   a real disagreement is still reported, with both values and both sections
+   → expected undefined to be truthy
+
+   THE MOST SERIOUS OF THE FOUR. The old `sample_size` pattern required an `=`, so a real
+   enrolled-N conflict between Module 2.5 and Module 5.3.5 — the exact finding this engine
+   exists for — was invisible to it. A false negative, not a false positive.
+
+ × a label stated more than once is compared as a set >
+   …and one section holding a count the other does not is reported once, not per pair
+   → expected [] to have a length of 1 but got +0
+
+ × a confidence interval's bounds are compared, not its level > two different intervals at the same level disagree
+   → expected false to be true
+
+ × a confidence interval's bounds are compared, not its level >
+   the same interval reported at 95% and at 99% is not a disagreement about the interval
+   → expected true to be false
+
+      Tests  4 failed | 4 passed (8)
+
+The four that PASSED against the old method did so for reasons worth stating rather than
+counting as proof: its `hazard_ratio` pattern required `[=:]`, so "hazard ratio of 0.70" matched
+nothing and the "0.70 vs 0.7" case passed by extracting neither value. The old method's problem
+was as much what it never read as what it mis-compared.
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════
+Two bugs of my own, each caught by a test that already existed.
+════════════════════════════════════════════════════════════════════════════════════════════════
+
+Clamping the comparator's precision to each label's compareDecimalsFor:
+
+ × compareLabelledFigures > compares at the coarser precision of the two
+   → expected 'match' to be 'conflict'
+
+   Two hazard ratios of 0.7104 and 0.7096 made to agree at three places, losing a conflict
+   figure-consistency.test.ts has pinned since an adversarial review of its first version.
+   The clamp was removed; the coarser of the two written readings already did the job.
+
+Splitting figure-arithmetic.ts out left roundDp behind, defined above the cut point:
+
+ × checkFigureArithmetic — percent of n/N > flags a percentage that does not match its own n/N
+   → roundDp is not defined
+   ReferenceError: roundDp is not defined
+
+      Tests  4 failed | 43 passed (47)
