@@ -44,6 +44,15 @@ const APPROVED_JS = new Set([
   // Imports ONLY the convertInchesToTwip unit helper from 'docx' — no
   // Document generation (AnA integration, 2026-06-29).
   'server/services/templates/templateRenderAdapter.ts',
+  // 2026-10-19 (d8ebc6116, D2/D5): a deliberate second renderer, not a
+  // convenience. docxGenerator.generateDocxBuffer takes Markdown, splits on
+  // blank lines and puts each block in one run — so a line break inside an
+  // APPROVED response vanished and the Markdown's own quote and emphasis marks
+  // printed as characters. Reflowing text a signature approved is a §11.10(e)
+  // problem, not a formatting one, so this module reproduces a signed answer
+  // line for line: one paragraph per line, blank lines kept, nothing re-wrapped.
+  // Reached from server/routes/c2c/agency-responses.ts:539 (the ?docx download).
+  'server/services/agency-responses/response-package-docx.ts',
 ]);
 
 const APPROVED_PYTHON = new Set([

@@ -1,0 +1,18 @@
+— before: the close-out, through an ordinary PUT —
+
+  HTTP 200
+  stored: status=COMPLETED shelfLife='36 months at 25C/60%RH'
+
+— and is there any signature row for it? —
+  {"success":true,"data":[]}
+
+— what the ledger recorded —
+  cmc.register.create|3|{"register":"stability_study",...}
+  cmc.register.update|3|{"register":"stability_study",..."changed":{"notes":...}}
+
+— and a SECOND close-out, after the ceremony existed but while the already-signed
+  check still compared a lowercased status to the raw upper-case word —
+
+  HTTP 200   (re-stamped shelf_life_signed_at: 03:20:19 → 03:20:35)
+
+(captured against the running dev server; the after state is in after.txt)

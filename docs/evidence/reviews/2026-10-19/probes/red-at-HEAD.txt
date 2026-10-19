@@ -1,0 +1,16 @@
+as2-outcome.probe.test.tsx > PROBE: does the As2 receipt outcome survive the log reload that onRecorded triggers? > REJECTED + UNRECONCILED receipt: is the outcome sentence ever visible? 807ms
+nda-stale.probe.test.tsx > PROBE: NDA cockpit BLA tab after the embedded workbench saves the first draft > table below vs workbench notice 770ms
+gateway-cap.probe.test.tsx > PROBE: transmittal log at the server cap (LIMIT 100, meta.count = page length) > what does the header claim when exactly 100 rows come back? 525ms
+projecthome-partial.probe.test.tsx > PROBE: ProjectHome Review stage when a store could not be read and the rest are empty > partial=true, items=[] 302ms
+protocol-scope.probe.test.tsx > PROBE: protocol empty-state title vs selected scope > program open, scope = Unfiled protocols (zero unfiled) 236ms
+protocol-scope.probe.test.tsx > PROBE: protocol empty-state title vs selected scope > no program open, scope = Unfiled protocols (zero unfiled) 39ms
+taskboard-partial.probe.test.tsx > PROBE: TaskBoard when the board answers zero cards but one store was unreadable > partial=true, data=[] 230ms
+AssertionError: the agency-rejection sentence must remain visible after recording: expected false to be true // Object.is equality
+AssertionError: a page at its cap must say it is a page: expected false to be true // Object.is equality
+AssertionError: table must not still claim none exist after a draft was saved: expected true to be false // Object.is equality
+AssertionError: a partial read must not render as a plain empty list: expected false to be true // Object.is equality
+AssertionError: expected 'No protocol in development for BX-256' not to match /for BX-256/
+AssertionError: expected 'No protocol in development yet' not to match /yet$/
+AssertionError: a partial board read must not render as a plain empty board: expected false to be true // Object.is equality
+ Test Files  6 failed (6)
+      Tests  7 failed (7)

@@ -56,6 +56,7 @@ import {
   stabilityResultForm,
   stabilityResultBody,
   stabilityCloseoutForm,
+  qualifyBody,
   stabilityCloseoutBody,
   readStabilityResults,
   type StabilityResult,
@@ -1502,24 +1503,49 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     }
   };
 
+  /**
+   * The close-out, in the two acts the server governs it as: the shelf life and
+   * its basis recorded by an ordinary (audited) edit, then the terminal status
+   * under a 21 CFR Part 11 signature.
+   *
+   * Sending them as one PUT is what this surface did until 2026-10-19, and the
+   * server took it — the shelf-life claim §3.2.S.7.1 prints was recorded with
+   * no signature at all.
+   *
+   * If the edit lands and the signature does not, the shelf life is recorded
+   * and the study is still running. That is recoverable and it is what
+   * happened, so the toast says exactly that rather than reporting a close-out
+   * that did not occur.
+   */
   const closeOut = async (v: Record<string, string>) => {
     if (!closing) return;
     const study = closing;
     try {
-      const res = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
+      const recorded = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
         ...stabilityCloseoutBody(v),
         ...(projectId ? { projectId } : {}),
       });
-      const json = await res.json().catch(() => null);
-      if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (!res.ok) { fireToast(cmcWriteFailed('shelf life', json, res.status), 'error'); return; }
-      const row = adopt(json);
-      if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      const recordedJson = await recorded.json().catch(() => null);
+      if (!recorded.ok) { fireToast(cmcWriteFailed('shelf life', recordedJson, recorded.status), 'error'); return; }
+
+      const signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
+      const signedJson = await signed.json().catch(() => null);
+      if (!signed.ok) {
+        /* The shelf life IS recorded; only the signature failed. Say both. */
+        const why = cmcWriteFailed('close-out', signedJson, signed.status);
+        fireToast(`${why} The shelf life is recorded; the study is still running until the close-out is signed.`, 'error');
+        const partial = adopt(recordedJson);
+        if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
+        return;
+      }
+      reportCmcLinkage(signedJson, 'CMC record');
+      const row = adopt(signedJson);
+      if (!row) { fireToast('Signed, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
       setRows((rs) => rs.map((r) => (r.id === study.id ? row : r)));
       setClosing(null);
-      fireToast(`Shelf life recorded for ${row.studyTitle || row.productName}: ${row.shelfLife}.`);
+      fireToast(`${row.studyTitle || row.productName} closed out under your signature: ${row.shelfLife}.`);
     } catch (e) {
-      fireToast(cmcWriteThrew('shelf life', e), 'error');
+      fireToast(cmcWriteThrew('close-out', e), 'error');
     }
   };
 

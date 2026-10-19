@@ -514,26 +514,47 @@ function isStabilityResult(v: unknown): v is StabilityResult {
   return Boolean(v) && typeof v === 'object' && typeof (v as StabilityResult).parameter === 'string';
 }
 
-/** Close a study out with the shelf life its data support. */
+/**
+ * Close a study out with the shelf life its data support — under a signature.
+ *
+ * Until 2026-10-19 this drawer sent `{shelfLife, status: 'COMPLETED', notes}`
+ * as ONE ordinary PUT, and the server took it: the shelf-life claim
+ * §3.2.S.7.1 / §3.2.P.8.1 prints, and the value the ICH Q1E rule judges the
+ * programme against, was recorded with no signature, no reason and no
+ * re-authentication. The status is now the signed act
+ * (POST /api/cmc/stability-studies/:id/close-out), so this drawer carries the
+ * evidence AND the signature, and the surface sends them in that order.
+ *
+ * The status field is gone: there is one terminal state a close-out reaches,
+ * and offering a dropdown implied the person could pick another. Pausing or
+ * cancelling a study is an ordinary edit on the register.
+ */
 export function stabilityCloseoutForm(current: { shelfLife?: string | null }): C2CFormConfig {
   return {
-    eyebrow: 'Stability — study close-out',
-    title: 'Set the supported shelf life',
-    sub: 'Recorded on the study and read by §3.2.S.7 / §3.2.P.8',
-    submitLabel: 'Save shelf life',
+    eyebrow: 'Stability close-out — 21 CFR Part 11 signature',
+    title: 'Close the study out with its shelf life',
+    sub: 'Printed by §3.2.S.7.1 / §3.2.P.8.1 as the proposed storage period, and judged against the recorded data by ICH Q1E',
+    submitLabel: 'Sign and close out',
+    governed:
+      'Your name, the time and the reason below are recorded against this study. ' +
+      'A closed-out study cannot be reopened or its shelf life changed by an ordinary edit.',
     fields: [
       { key: 'shelfLife', label: 'Supported shelf life', type: 'text', required: true, half: true, default: current.shelfLife ?? '', placeholder: 'e.g. 24 months at 5°C ± 3°C' },
-      { key: 'status', label: 'Study status', type: 'select', options: STABILITY_STATUSES, required: true, half: true, default: 'COMPLETED' },
+      { key: 'meaning', label: 'Meaning of signature', type: 'select', options: ['approval', 'review', 'responsibility'], default: 'approval', required: true, half: true },
       { key: 'notes', label: 'Basis', type: 'textarea', placeholder: 'The data supporting this claim — ICH Q1E extrapolation, worst-case batch, statistical treatment…' },
+      { key: 'reason', label: 'Reason', type: 'textarea', required: true, placeholder: 'Why the recorded data support this shelf life' },
+      { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
+      { key: 'totp', label: 'Authenticator', type: 'text', placeholder: '6-digit code', half: true },
     ],
   };
 }
 
-export function stabilityCloseoutBody(v: Record<string, string>): { shelfLife: string; status: string; notes?: string } {
-  const body: { shelfLife: string; status: string; notes?: string } = {
-    shelfLife: req(v.shelfLife),
-    status: req(v.status) || 'COMPLETED',
-  };
+/**
+ * The evidence half: the shelf life and its basis, recorded by an ordinary
+ * (audited) edit. No status — the signature sets that.
+ */
+export function stabilityCloseoutBody(v: Record<string, string>): { shelfLife: string; notes?: string } {
+  const body: { shelfLife: string; notes?: string } = { shelfLife: req(v.shelfLife) };
   const notes = opt(v.notes);
   if (notes) body.notes = notes;
   return body;
@@ -934,9 +955,15 @@ export function statusOptionsFor(
      a validated process. */
   signedValue = 'qualified',
 ): string[] {
+  /* Both sides lowercased, and the register's own casing returned: the
+     stability vocabulary is upper-case (DRAFT, ACTIVE, PAUSED, COMPLETED) while
+     every other register's is lower-case, and a raw comparison would have left
+     a closed-out study's drawer opening on 'draft' — the same shape as the
+     validated-process defect this parameter exists to fix. */
   const v = String(current ?? '').trim().toLowerCase();
+  const signed = signedValue.toLowerCase();
   const base = statuses[0] ?? 'draft';
-  return v === signedValue ? [signedValue, ...statuses.filter((s) => s !== base)] : statuses;
+  return v === signed ? [signedValue, ...statuses.filter((s) => s.toLowerCase() !== base.toLowerCase())] : statuses;
 }
 
 /** The status an edit drawer opens on: the stored one where it is offerable. */
@@ -946,7 +973,7 @@ export function statusDefaultFor(
   signedValue = 'qualified',
 ): string {
   const v = String(current ?? '').trim().toLowerCase();
-  if (v === signedValue) return signedValue;
+  if (v === signedValue.toLowerCase()) return signedValue;
   return current && statuses.includes(current) ? current : (statuses[0] ?? 'draft');
 }
 
@@ -1330,6 +1357,10 @@ export const SIGNED_ACTS = {
   qualify: { noun: 'Qualification', verb: 'Qualify', imperative: 'qualify' },
   validate: { noun: 'Validation', verb: 'Validate', imperative: 'validate' },
   approve: { noun: 'Approval', verb: 'Approve', imperative: 'approve' },
+  /* The stability close-out: the act that turns a running study into the
+     shelf-life claim §3.2.S.7.1 / §3.2.P.8.1 prints
+     (docs/evidence/CMC-M3-GA/2026-10-19/11-stability-close-out/). */
+  closeOut: { noun: 'Close-out', verb: 'Close out', imperative: 'close out' },
 } as const;
 
 export type SignedAct = (typeof SIGNED_ACTS)[keyof typeof SIGNED_ACTS];
@@ -1366,7 +1397,7 @@ export function qualifyBody(v: Record<string, string>): QualifyBody {
    reason (server/services/cmc/signed-record.ts). The register says so before
    the person tries. */
 
-export type SignedWord = 'qualified' | 'validated' | 'approved';
+export type SignedWord = 'qualified' | 'validated' | 'approved' | 'COMPLETED';
 
 export function isSignedRecord(status: unknown, signed: SignedWord): boolean {
   return String(status ?? '').trim().toLowerCase() === signed;

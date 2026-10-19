@@ -31,6 +31,7 @@ import {
   stabilityResultForm,
   stabilityResultBody,
   stabilityCloseoutBody,
+  stabilityCloseoutForm,
   readStabilityResults,
   processValidationForm,
   processValidationBody,
@@ -143,9 +144,16 @@ describe('analytical methods — analytical_methods', () => {
         characteristics: ['Specificity', 'Linearity', 'Accuracy'],
         summary: 'All characteristics met.',
       },
-      validationDate: new Date('2026-05-04').toISOString(),
+      /* No validationDate. The signature writes it
+         (POST /api/cmc/analytical-methods/:id/validate, 2026-10-18), so the
+         create body carries neither it nor the signer — and the server strips
+         both regardless (`withoutSignatureFields`). This expectation still
+         listed it, and had been red since that change: a stale test is a claim
+         about behaviour nobody checked. */
       projectId: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
     });
+    expect('validationDate' in body).toBe(false);
+    expect('validatedBy' in body).toBe(false);
   });
 
   it('omits the validation date and the project when neither is given', () => {
@@ -388,9 +396,28 @@ describe('stability results — the series accumulates, it never overwrites', ()
     expect(config.fields.find((f) => f.key === 'parameter')?.type).toBe('text');
   });
 
-  it('close-out records the shelf life and the status without inventing a basis', () => {
+  it('close-out records the shelf life, and no status: the status is the signed act', () => {
+    /* Changed 2026-10-19 (URS-CMC-028). This body carried `status: 'COMPLETED'`
+       and the server took it, so the shelf-life claim §3.2.S.7.1 prints was
+       recorded with no signature. The terminal status is now reached only by
+       POST /api/cmc/stability-studies/:id/close-out, so a status in this body
+       would be stripped at best and refused at worst — and the drawer no longer
+       offers one. The basis is still not invented when it is left blank. */
     expect(stabilityCloseoutBody({ shelfLife: '24 months at 5°C ± 3°C', status: 'COMPLETED', notes: '' }))
-      .toEqual({ shelfLife: '24 months at 5°C ± 3°C', status: 'COMPLETED' });
+      .toEqual({ shelfLife: '24 months at 5°C ± 3°C' });
+    expect(stabilityCloseoutBody({ shelfLife: '24 months', notes: 'ICH Q1E extrapolation over three batches.' }))
+      .toEqual({ shelfLife: '24 months', notes: 'ICH Q1E extrapolation over three batches.' });
+  });
+
+  it('close-out asks for the signature as well as the claim', () => {
+    /* The drawer is the ceremony: without the reason and the password the
+       person would meet a 400 and a 401 from the server after typing the
+       shelf life. */
+    const keys = stabilityCloseoutForm({ shelfLife: null }).fields.map((f) => f.key);
+    expect(keys).toEqual(expect.arrayContaining(['shelfLife', 'meaning', 'reason', 'password']));
+    /* And no status control: there is one terminal state a close-out reaches. */
+    expect(keys).not.toContain('status');
+    expect(stabilityCloseoutForm({ shelfLife: null }).governed).toMatch(/cannot be reopened/i);
   });
 });
 

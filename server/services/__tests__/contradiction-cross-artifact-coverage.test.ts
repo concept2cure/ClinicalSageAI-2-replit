@@ -54,11 +54,13 @@ const artifactsDisagreeingOn = (codes: readonly string[]) =>
   }));
 
 interface Coverage {
-  sectionsRead: number;
-  sectionsSkippedShort: number;
-  issuesFound: number;
-  findingsRecorded: number;
-  truncated: boolean;
+  detector: string;
+  readTruncated: boolean;
+  read: number;
+  skipped: number;
+  found: number;
+  recorded: number;
+  recordTruncated: boolean;
   comparedNothing?: boolean;
 }
 interface Svc {
@@ -90,9 +92,9 @@ describe('the detector says what it compared and what it dropped', () => {
     const r = await service.detectCrossArtifactContentConflict(9901, 1);
 
     // The whole defect in one assertion: the result knows it is incomplete.
-    expect(r.coverage.truncated).toBe(true);
-    expect(r.coverage.issuesFound).toBeGreaterThan(r.coverage.findingsRecorded);
-    expect(r.findings.length).toBe(r.coverage.findingsRecorded);
+    expect(r.coverage.recordTruncated).toBe(true);
+    expect(r.coverage.found).toBeGreaterThan(r.coverage.recorded);
+    expect(r.findings.length).toBe(r.coverage.recorded);
   });
 
   it('never drops a critical finding in favour of a lesser one', async () => {
@@ -116,9 +118,9 @@ describe('the detector says what it compared and what it dropped', () => {
 
     expect(r.findings).toEqual([]);
     expect(r.coverage.comparedNothing).toBe(true);
-    expect(r.coverage.sectionsRead).toBeLessThan(2);
+    expect(r.coverage.read).toBeLessThan(2);
     // …and that is not the same answer as "two sections compared, nothing wrong".
-    expect(r.coverage.truncated).toBe(false);
+    expect(r.coverage.recordTruncated).toBe(false);
   });
 
   it('counts the artifacts it skipped for being too short to read', async () => {
@@ -130,8 +132,8 @@ describe('the detector says what it compared and what it dropped', () => {
 
     const r = await service.detectCrossArtifactContentConflict(9901, 1);
 
-    expect(r.coverage.sectionsSkippedShort).toBe(2);
-    expect(r.coverage.sectionsRead).toBe(2);
+    expect(r.coverage.skipped).toBe(2);
+    expect(r.coverage.read).toBe(2);
   });
 
   it('a complete scan of two agreeing sections is complete, and reports no conflict', async () => {
@@ -144,8 +146,8 @@ describe('the detector says what it compared and what it dropped', () => {
     const r = await service.detectCrossArtifactContentConflict(9901, 1);
 
     expect(r.coverage.comparedNothing).toBeFalsy();
-    expect(r.coverage.truncated).toBe(false);
-    expect(r.coverage.sectionsRead).toBe(2);
+    expect(r.coverage.recordTruncated).toBe(false);
+    expect(r.coverage.read).toBe(2);
     expect(r.findings).toEqual([]);
   });
 });
@@ -163,11 +165,13 @@ describe('an incomplete scan never reads as "no contradictions"', () => {
       Promise.resolve({
         findings: [],
         coverage: {
-          sectionsRead: 0,
-          sectionsSkippedShort: 0,
-          issuesFound: 0,
-          findingsRecorded: 0,
-          truncated: false,
+          detector: 'cross_artifact_content',
+          read: 0,
+          skipped: 0,
+          found: 0,
+          recorded: 0,
+          readTruncated: false,
+          recordTruncated: false,
           comparedNothing: false,
           ...coverage,
         },
@@ -177,7 +181,7 @@ describe('an incomplete scan never reads as "no contradictions"', () => {
         o: number,
         p: number,
         s: Record<string, string | undefined>,
-      ) => Promise<{ blockingCount: number; scanIncomplete: boolean; crossArtifactCoverage?: Coverage }>;
+      ) => Promise<{ blockingCount: number; scanIncomplete: boolean; coverage: Coverage[] }>;
     };
   };
 
@@ -187,22 +191,41 @@ describe('an incomplete scan never reads as "no contradictions"', () => {
     /* One readable section: nothing was compared across artifacts. The counts are 0, and a 0
        from a scan that compared nothing is unknown, not clean — decision-lifecycle-service
        renders a 0 as "No pending decisions or contradictions". */
-    const ctx = await withCoverage({ comparedNothing: true, sectionsRead: 1 }).buildPreflightContradictionContext(9901, 1, {});
+    const ctx = await withCoverage({ comparedNothing: true, read: 1 }).buildPreflightContradictionContext(9901, 1, {});
     expect(ctx.blockingCount).toBe(0);
     expect(ctx.scanIncomplete).toBe(true);
-    expect(ctx.crossArtifactCoverage?.comparedNothing).toBe(true);
+    expect(ctx.coverage.find((c) => c.detector === 'cross_artifact_content')?.comparedNothing).toBe(true);
   });
 
   it('a scan whose bound cut in is reported incomplete', async () => {
-    const ctx = await withCoverage({ truncated: true, sectionsRead: 12, issuesFound: 25, findingsRecorded: 10 })
+    const ctx = await withCoverage({ recordTruncated: true, read: 12, found: 25, recorded: 10 })
       .buildPreflightContradictionContext(9901, 1, {});
     expect(ctx.scanIncomplete).toBe(true);
-    expect(ctx.crossArtifactCoverage?.issuesFound).toBe(25);
-    expect(ctx.crossArtifactCoverage?.findingsRecorded).toBe(10);
+    const cov = ctx.coverage.find((c) => c.detector === 'cross_artifact_content');
+    expect(cov?.found).toBe(25);
+    expect(cov?.recorded).toBe(10);
   });
 
-  it('a complete scan with nothing wrong is NOT marked incomplete', async () => {
-    const ctx = await withCoverage({ sectionsRead: 2 }).buildPreflightContradictionContext(9901, 1, {});
-    expect(ctx.scanIncomplete).toBe(false);
+  it('the cross-artifact detector reports complete even while the scan is not', async () => {
+    /* With only this detector stubbed, the other five read nothing from the mock and report
+       `comparedNothing` honestly, so the SCAN is incomplete — which is the point of the
+       scan-level flag, and is asserted at the scan level in
+       contradiction-detector-coverage.test.ts. What belongs here is that this detector's own
+       record says it compared two sections and was not bounded. */
+    const ctx = await withCoverage({ read: 2 }).buildPreflightContradictionContext(9901, 1, {});
+    const cov = ctx.coverage.find((c) => c.detector === 'cross_artifact_content');
+    expect(cov?.comparedNothing).toBe(false);
+    expect(cov?.recordTruncated).toBe(false);
+    expect(cov?.read).toBe(2);
+  });
+
+  it('a detector that compared nothing makes the whole scan incomplete', async () => {
+    /* The honest answer for a project with nothing to compare is "nothing was compared", and
+       the rendered summary must not be "No pending decisions or contradictions". Asserted on
+       the stubbed detector and the scan-level flag; the other five read through services this
+       file does not mock, so their own coverage is not what is under test here. */
+    const ctx = await withCoverage({ comparedNothing: true }).buildPreflightContradictionContext(9901, 1, {});
+    expect(ctx.scanIncomplete).toBe(true);
+    expect(ctx.coverage.find((c) => c.detector === 'cross_artifact_content')?.comparedNothing).toBe(true);
   });
 });

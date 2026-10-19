@@ -3387,6 +3387,17 @@ export const C2C_MIGRATION_FILES = [
   // the new table. Additive and IF NOT EXISTS throughout; drops nothing.
   'migrations/20261018b_agency_response_questions.sql',
 
+  // The signer and date of a stability study's shelf-life close-out (2026-10-19).
+  // The shelf life §3.2.S.7 / §3.2.P.8 prints as the dossier's claim, and the
+  // value the ICH Q1E rule judges, was set by an ordinary PUT with no
+  // signature: the last ungoverned signed state in the CMC registers after the
+  // 2026-10-18 ceremony generalisation. Two nullable columns and a partial
+  // index, IF NOT EXISTS; no backfill, because a study closed out before this
+  // has no signer and inventing one is the fabrication the columns prevent.
+  // public, and the table already carries organization_id INTEGER NOT NULL, so
+  // the sweep at the tail polices it.
+  'migrations/20261019_stability_shelf_life_signature.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
