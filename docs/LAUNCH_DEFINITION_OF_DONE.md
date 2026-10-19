@@ -612,6 +612,38 @@ deletion record the working agreement requires:
 4. **`haq_session`**, **`lifecycle_obligations`** and the **`c2c_agency_meetings`** minutes, onto the inbox,
    `regulatory_commitments` and `ha_interactions` respectively.
 
+### P-40 — A sealed editing copy is revisable, and the refusal says so
+
+Decided 2026-10-19 under the founder's delegation of 2026-10-13 (document creation and editing).
+
+A QMS register entry at `draft` whose bound editing copy had been frozen or approved could go **nowhere**. It
+could not be sent for review — correctly, because `decideAuthoringPermission` refuses an edit of an immutable
+document ahead of every grant and bypass, which is what keeps the freeze meaningful. And it could not be revised:
+`reviseControlledQmsDocument` admitted `effective`, `retired`, `superseded` and `in_review`, not `draft`. There is
+no unfreeze anywhere (a freeze is the platform's one signing ceremony, DP-35 / P1-32) and no new-version route on
+the authoring side at all, so the frozen message's own remedy — "Create a new version to make further changes" —
+had nothing behind it.
+
+**A `draft` whose editing copy is sealed is revisable, and nothing else about `draft` is.** A revision is what
+"create a new version" means here: the sealed text is copied onto a new editing copy, the version is bumped, the
+old document id is retained in `metadata.retainedAuthoringDocuments`, and the seal and every signature over it are
+untouched. The condition is the seal, because without it this would be a free version bump on any draft — a new
+door, not a remedy.
+
+**The refusal names it.** `requireContentAccess` collapsed every permission outcome into 403
+`QMS_DOCUMENT_PERMISSION_DENIED`, "You do not have permission to read or change this authored document" — said to
+the owner-administrator of a sealed document, which is false and names no way forward. The decider already returns
+`document-immutable` separately; that is now a 409 `QMS_DOCUMENT_SEALED` which says the text is sealed and points at
+the controlled revision. Naming a remedy that did not exist would have repeated a mistake this lane had already
+made once, so the two halves ship together.
+
+**What was NOT changed, deliberately.** The seal still refuses the send-for-review and the rename; `IN_REVIEW`
+remains a non-sealing status, because review is a state a document is edited during and the review board finds its
+work by `upper(d.status) = 'IN_REVIEW'`. The two disagreeing definitions of which statuses seal content —
+`LOCKED_DOCUMENT_STATUSES` (two) in `document-lock.ts` against `IMMUTABLE_DOCUMENT_STATUSES` (eight) in
+`authoring-permissions.ts` — are recorded as open, not reconciled here: both are load-bearing in different places
+and each list has mutants that open a real hole.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

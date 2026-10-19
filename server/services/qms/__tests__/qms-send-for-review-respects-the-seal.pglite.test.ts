@@ -59,7 +59,7 @@ vi.mock('../../part11/signature-persistence', async (original) => ({
   ...await original<typeof import('../../part11/signature-persistence')>(),
   persistGovernedActionSignature: async () => ({ id: 51, signedAt: new Date('2026-10-14T12:00:00Z') }),
 }));
-import { createControlledQmsDocument, updateControlledQmsDocument } from '../controlled-document-service';
+import { createControlledQmsDocument, reviseControlledQmsDocument, updateControlledQmsDocument } from '../controlled-document-service';
 import { decideAuthoringPermission, resolveAuthoringDocumentScope } from '../../authoring/authoring-permissions';
 import type { CreateContext } from '../../authoring/authoring-documents';
 import { installQmsProgramAccessHarness } from './qms-authoring-harness';
@@ -118,7 +118,7 @@ describe('a sealed editing copy survives a send-for-review', () => {
       const row = await controlled(seal);
       await expect(
         updateControlledQmsDocument(ctx, row.id, { status: 'in_review', reason: 'Send for independent review' }),
-      ).rejects.toMatchObject({ status: 403, code: 'QMS_DOCUMENT_PERMISSION_DENIED' });
+      ).rejects.toMatchObject({ status: 409, code: 'QMS_DOCUMENT_SEALED' });
       expect(await authoringStatus(row.authoring_document_id), 'the seal must still be there').toBe(seal);
       // And the register entry did not move either: the refusal is the whole act.
       const after = await db.query<{ status: string }>('SELECT status FROM qms_documents WHERE id = $1', [row.id]);
@@ -144,11 +144,27 @@ describe('a sealed editing copy survives a send-for-review', () => {
     }
   });
 
+  it('says the document is sealed, and does not blame the reader\'s permissions', async () => {
+    /* P-40. This refused with 403 QMS_DOCUMENT_PERMISSION_DENIED, "You do not
+       have permission to read or change this authored document" — to an
+       organization ADMIN who owns it. The refusal was right and its sentence
+       was false: the reason the decider returned was `document-immutable`, and
+       requireContentAccess collapsed every outcome into the permission one,
+       throwing away the information an honest message needs. */
+    const row = await controlled('FROZEN');
+    const err = await updateControlledQmsDocument(ctx, row.id, {
+      status: 'in_review', reason: 'Send for independent review',
+    }).catch((e) => e);
+    expect(String(err.message), 'the seal, not the reader').not.toMatch(/permission/i);
+    expect(String(err.message), 'what is true').toMatch(/sealed/i);
+    expect(String(err.message), 'and what to do about it').toMatch(/revision/i);
+  });
+
   it('does not rename a sealed editing copy either', async () => {
     const row = await controlled('FROZEN');
     await expect(
       updateControlledQmsDocument(ctx, row.id, { title: 'Renamed after sealing', reason: 'Correct the register title' }),
-    ).rejects.toMatchObject({ status: 403, code: 'QMS_DOCUMENT_PERMISSION_DENIED' });
+    ).rejects.toMatchObject({ status: 409, code: 'QMS_DOCUMENT_SEALED' });
     const doc = await db.query<{ title: string }>('SELECT title FROM authoring_documents WHERE id = $1', [row.authoring_document_id]);
     expect(doc.rows[0].title, 'a sealed row is not relabelled').not.toBe('Renamed after sealing');
   });
@@ -170,5 +186,40 @@ describe('an unsealed draft still goes to review, exactly as before', () => {
     await updateControlledQmsDocument(ctx, row.id, { title: 'Renamed while a draft', reason: 'Correct the register title' });
     const doc = await db.query<{ title: string }>('SELECT title FROM authoring_documents WHERE id = $1', [row.authoring_document_id]);
     expect(doc.rows[0].title).toBe('Renamed while a draft');
+  });
+});
+
+describe('the remedy that sentence names is performable (P-40)', () => {
+  /* Before P-40 it was not. A register entry at `draft` whose editing copy was
+     sealed could not be sent for review (the seal, correctly) and could not be
+     revised either: reviseControlledQmsDocument admitted
+     effective/retired/superseded/in_review and not `draft`. The frozen
+     message's own remedy — "Create a new version to make further changes" —
+     has no route on the authoring side at all, and there is no unfreeze. So
+     the document was stranded, and naming a revision in the refusal above
+     would have been the same unperformable-remedy mistake this session already
+     made once with FILING_DIVERGED. */
+
+  it('revises a draft whose editing copy is sealed, onto a NEW editing copy', async () => {
+    const row = await controlled('FROZEN');
+    const revised = await reviseControlledQmsDocument(ctx, row.id, 'Revise because the sealed copy needs changes');
+    expect(revised.version, 'a revision bumps the version').toBe('2.0');
+    expect(revised.authoring_document_id, 'and binds a NEW editing copy').not.toBe(row.authoring_document_id);
+    // The seal and every signature over it are untouched; the old copy is
+    // retained by id, which is what makes this safe rather than an un-freeze.
+    expect(await authoringStatus(row.authoring_document_id)).toBe('FROZEN');
+    expect(revised.metadata.retainedAuthoringDocuments).toContain(row.authoring_document_id);
+    // The sealed text came across, so the revision starts from what was sealed.
+    const copied = await db.query<{ content: string }>('SELECT content FROM authoring_sections WHERE doc_id = $1', [revised.authoring_document_id]);
+    expect(copied.rows.some((r) => r.content.includes('Controlled procedure text.'))).toBe(true);
+  });
+
+  it('still refuses to revise a draft whose editing copy is NOT sealed', async () => {
+    // The widening is conditional on the seal. Without that condition it would
+    // be a free version bump on any draft — a new door, not a remedy.
+    const row = await controlled(null);
+    await expect(
+      reviseControlledQmsDocument(ctx, row.id, 'Revise an ordinary draft for no reason'),
+    ).rejects.toMatchObject({ code: 'QMS_INVALID_STATE' });
   });
 });
