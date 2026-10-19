@@ -560,12 +560,17 @@ export class AssumptionRegistryService {
   private async triggerDriftDetection(organizationId: number, projectId: number): Promise<void> {
     try {
       const { contradictionEngineService } = await import('./contradiction-engine-service');
-      const findings = await contradictionEngineService.detectAssumptionDrift(
+      const { findings, coverage } = await contradictionEngineService.detectAssumptionDrift(
         organizationId,
         projectId
       );
       if (findings.length > 0) {
-        log.info('Assumption drift detected', { projectId, count: findings.length });
+        log.info('Assumption drift detected', { projectId, count: findings.length, coverage });
+      } else if (coverage.comparedNothing || coverage.readTruncated) {
+        /* No drift found is not the same as no drift: with one assumption per category there
+           is no pair to compare, and a read that stopped at its limit left records
+           uncompared. Logged so the breadcrumb is not "detected none". */
+        log.info('Assumption drift: nothing established', { projectId, coverage });
       }
     } catch {
       // Contradiction engine may not have tables yet — silently skip

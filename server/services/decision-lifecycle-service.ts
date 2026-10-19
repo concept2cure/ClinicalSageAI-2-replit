@@ -969,14 +969,21 @@ export class DecisionLifecycleService {
     if (contradictionScanIncomplete) {
       /* Said whatever the count, including 0. A scan that compared nothing, or stopped at
          its bound, has not established that the project is clean. */
-      const cov = contradictionContext.crossArtifactCoverage;
-      parts.push(
-        cov?.comparedNothing
-          ? 'contradiction scan incomplete: fewer than two artifacts could be compared'
-          : cov?.truncated
-            ? `contradiction scan incomplete: ${cov.findingsRecorded} of ${cov.issuesFound} cross-artifact issues recorded`
-            : 'contradiction scan incomplete',
+      const short = (contradictionContext.coverage ?? []).filter(
+        c => c.readTruncated || c.recordTruncated || c.comparedNothing,
       );
+      /* Named, so the reader knows which comparison was short and why. A reason per
+         detector beats one sentence that says only "incomplete". */
+      const why = short
+        .map(c =>
+          c.comparedNothing
+            ? `${c.detector}: nothing to compare`
+            : c.recordTruncated
+              ? `${c.detector}: ${c.recorded} of ${c.found} recorded`
+              : `${c.detector}: read stopped at ${c.readLimit}`,
+        )
+        .join(', ');
+      parts.push(why ? `contradiction scan incomplete (${why})` : 'contradiction scan incomplete');
     }
 
     return {
