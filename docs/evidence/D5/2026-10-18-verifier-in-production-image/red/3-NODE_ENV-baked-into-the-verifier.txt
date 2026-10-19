@@ -1,0 +1,9 @@
+ × server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts > the audit-chain verifier ships in a form production can run > `npm run build` emits it under dist/, which the production stage copies whole 18ms
+ ✓ server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts > the audit-chain verifier ships in a form production can run > runs in plain Node with no tsx and a clean environment, and refuses with exit 2 when there is no database 118ms
+ ✓ server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts > the audit-chain verifier ships in a form production can run > agrees with the source verifier on a real chain: audit_logs verified, walk only 11ms
+ ✓ server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts > the audit-chain verifier ships in a form production can run > after one row is tampered with, both report the chain broken, at the same row 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts > the audit-chain verifier ships in a form production can run > `npm run build` emits it under dist/, which the production stage copies whole
+AssertionError: expected { Object (process.env.NODE_ENV) } to be undefined
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
