@@ -15,6 +15,7 @@ import { findActiveTransmittal } from './fda-esg';
 import { filedEntryHolding } from '../ectd/package-sequence-lifecycle';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import type { GovernedTransmitInput, ResolvedBundle } from './governed-transmit';
+import { RELEASE_ACT_MEANINGS } from '../part11/signature-meanings';
 
 /* ─── Refusal vocabulary ─────────────────────────────────────────── */
 
@@ -40,6 +41,7 @@ export type GovernedTransmitRefusalCode =
   | 'ACTIVE_TRANSMITTAL'
   | 'SIGNER_IS_AUTHOR'
   | 'AUTHORSHIP_NOT_A_RELEASE'
+  | 'MEANING_NOT_A_RELEASE'
   | 'SIGNER_INDEPENDENCE_UNRESOLVED'
   | 'ESIGNATURE_NO_AUTHORITY';
 
@@ -256,6 +258,17 @@ export async function assertTransmitterIndependent(
     throw new GovernedTransmitRefusal(
       'AUTHORSHIP_NOT_A_RELEASE',
       `A transmission to the agency is a release, not an authorship attestation; it cannot be signed with the meaning '${meaning}'. ` +
+        'Sign it as release, approval or responsibility. Nothing was transmitted.',
+      422,
+    );
+  }
+  // 2026-10-19 (D5): authorship was the only meaning refused, so a package
+  // went to the agency on a signature that said "I reviewed". Shared by the
+  // HTTP transmit and AnA's k510 transmit (executeGovernedTransmit).
+  if (!(RELEASE_ACT_MEANINGS as readonly string[]).includes(meaning)) {
+    throw new GovernedTransmitRefusal(
+      'MEANING_NOT_A_RELEASE',
+      `A transmission to the agency is a release; it cannot be signed with the meaning '${meaning || 'none'}'. ` +
         'Sign it as release, approval or responsibility. Nothing was transmitted.',
       422,
     );
