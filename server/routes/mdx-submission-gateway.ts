@@ -18,6 +18,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { RELEASE_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
@@ -75,8 +76,9 @@ function getUserId(req: Request): number | null {
 const REGION_SET   = ['fda', 'ema', 'pmda', 'ca'] as const;
 const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] as const;
 const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** §11.50: the meanings a signer may declare on this router's governed signs
- *  (transmit, technical rejection) — one list, so the two cannot drift. */
+/** §11.50: the meanings a signer may declare on a technical rejection. A
+ *  transmission takes RELEASE_ACT_MEANINGS only (2026-10-19), refused here
+ *  before the password is asked for. */
 const SIGN_MEANINGS = ['authorship', 'review', 'approval', 'responsibility', 'release'] as const;
 /** The §11 re-authentication envelope every governed write here carries. */
 const reauthEnvelope = z
@@ -278,8 +280,8 @@ const transmitBody = z.object({
   }).optional(),
   metadata: z.record(z.unknown()).optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
-  /** §11.50: the meaning the signer declares for this transmission. */
-  meaning: z.enum(SIGN_MEANINGS),
+  /** §11.50: the meaning the signer declares for this transmission: a release act. */
+  meaning: z.enum(RELEASE_ACT_MEANINGS),
   reauth: reauthEnvelope,
 });
 

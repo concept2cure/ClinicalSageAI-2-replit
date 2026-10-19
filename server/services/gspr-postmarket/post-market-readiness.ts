@@ -27,7 +27,7 @@
  * this table states current law until that proposal is adopted.
  */
 
-import { IVDR_CLASSES, MDR_DECLARED_CLASSES, mdrClassINeedsNotifiedBody, type IvdrClass, type MdrDeclaredClass } from '../../../shared/regulatory/device-class';
+import { IVDR_CLASSES, MDR_DECLARED_CLASSES, euDeviceClassOf, mdrClassINeedsNotifiedBody, type IvdrClass, type MdrDeclaredClass } from '../../../shared/regulatory/device-class';
 import { listProgramDocuments, validateDocument } from './post-market.service';
 import type {
   PostMarketDocument,
@@ -366,23 +366,28 @@ export const EU_POSTMARKET_DOCUMENT_TYPES: Readonly<Record<EuRegulation, readonl
 // Class normalisation — exact vocabulary, no guessing
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MDR_CLASS_BY_KEY: Readonly<Record<string, EuMdrClass>> = { I: 'I', IS: 'Is', IM: 'Im', IR: 'Ir', IIA: 'IIa', IIB: 'IIb', III: 'III' };
-const IVDR_CLASS_BY_KEY: Readonly<Record<string, EuIvdrClass>> = { A: 'A', B: 'B', C: 'C', D: 'D' };
-
 /**
- * The regulation's class for a stated class string, or null. Accepts the class
- * itself with an optional "Class" prefix, any case ("Class IIb", "iib", "IS");
- * anything else — another regulation's class, or text such as "IIb implantable"
- * — is not recognised.
+ * The regulation's class for a stated class string, or null. The spelling is
+ * read by `euDeviceClassOf`, the one reader of a written EU class in the
+ * platform ("Class IIb", "iib", "IS", "class_iii"); this adds the regulation,
+ * because the other regulation's class is not this device's class. Anything
+ * else — text such as "IIb implantable", a US 21 CFR 860 class — is not
+ * recognised.
+ *
+ * 2026-10-19: this held its own two key tables, a second spelling of the same
+ * vocabulary. They disagreed with the shared reader on the underscore form the
+ * interview stores (`class_iib`), so a class written that way read as
+ * unrecognised here and as IIb everywhere else.
  */
 export function normaliseEuDeviceClass(
   deviceClass: string | null | undefined,
   regulation: EuRegulation
 ): EuDeviceClass | null {
-  if (typeof deviceClass !== 'string') return null;
-  const key = deviceClass.trim().replace(/^class\s+/i, '').toUpperCase();
-  const table: Readonly<Record<string, EuDeviceClass>> = regulation === 'MDR' ? MDR_CLASS_BY_KEY : IVDR_CLASS_BY_KEY;
-  return Object.prototype.hasOwnProperty.call(table, key) ? table[key] : null;
+  const declared = euDeviceClassOf(deviceClass);
+  if (declared === null) return null;
+  return (CLASS_VOCABULARY[regulation] as readonly string[]).includes(declared)
+    ? (declared as EuDeviceClass)
+    : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
