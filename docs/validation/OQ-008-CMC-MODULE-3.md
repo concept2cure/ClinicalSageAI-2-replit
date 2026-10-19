@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-008 |
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | **DRAFT — UNSIGNED, NOT EXECUTED** |
 | Parent | VMP-001 §5; requirements URS-007 |
 | Runner (the executable protocol) | `tests/validation/oq/cmc/run.mjs` (steps 19–33 in `tests/validation/oq/cmc/steps-filing.mjs`; 34–38 in `tests/validation/oq/cmc/steps-registers.mjs`) |
@@ -13,6 +13,7 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.6 | 2026-10-19 | Claude | OQ-CMC-39 added for URS-CMC-027 (no verdict and no filing for a programme the organisation does not hold). |
 | 0.5 | 2026-10-18 | Claude | OQ-CMC-37 and OQ-CMC-38 added for URS-CMC-025 and URS-CMC-026 (every register edit records who changed it; the record's history is readable against the record). |
 | 0.4 | 2026-10-18 | Claude | OQ-CMC-36 added for URS-CMC-024 (the ICH Q1E verdict). |
 | 0.3 | 2026-10-18 | Claude | OQ-CMC-34 and OQ-CMC-35 added for URS-CMC-023 (the signing ceremony on every register that has a signed state). Four earlier steps corrected: OQ-CMC-26 and OQ-CMC-29 were passing on evidence that observed nothing, and OQ-CMC-04's expected prose did not match what it asserted — see `docs/evidence/CMC-M3-GA/2026-10-18/04-oq-008-runner/`. |
@@ -85,6 +86,7 @@ recomputed from the stored section record and compared with the
 | OQ-CMC-36 | URS-CMC-024 | scripted | record four programmes: a shelf-life claim within the long-term coverage, one beyond it, one beyond it with no accelerated study, and one whose claim is free text that states no period; read the ICH compliance verdict for each | Q1E `pass`, then a finding naming the months claimed and the months covered, then a second finding that Q1E admits extrapolation only on accelerated data, then `not_evaluated` quoting the text it could not read — never a pass. The clinical-trial verdicts cite 21 CFR 312.23(a)(7)(ii) |
 | OQ-CMC-37 | URS-CMC-025 | scripted | edit one record in each of three registers — a serial one, a uuid one, and one moved by two fields at once — then send the same body again; then edit a record that does not exist; read each record's chained history back | one act per edit that moved something, each naming the actor, the fields that moved and both values; the repeat body adds no act; the unknown record is a 404 that adds none; every act is sealed into the tenant chain, and the ledger's own chain verdict is `ok` |
 | OQ-CMC-38 | URS-CMC-026 | scripted | read the change history through the product's own route for each edited record, then ask it for a record that does not exist and for a register that keeps no history; read the specifications register's own history route | the create and each edit in order with the person, the fields and both values; 404 for the unknown record; 404 naming the registers that do keep one — never an empty history; the specifications route still answers 200. Cross-tenant refusal is evidenced outside this run (no second organisation is provisioned for an OQ run) |
+| OQ-CMC-39 | URS-CMC-027 | scripted | ask for an ICH compliance verdict, a QbD derivation and a control strategy, and file a container closure, a comparability assessment and a material specification, under three programme ids the organisation does not hold — one well-formed uuid naming nothing, one malformed id, and (when supplied) one of a second tenant — then the same six under the run's own programme; and one create with no programme at all | each read 404 stating nothing was assessed and each create 409 naming the programme as not this organisation's, with nothing written; the same six succeed under the run's own programme; the create with no programme is accepted as an organisation-wide record |
 | OQ-CMC-31 | URS-CMC-001, URS-CMC-022 | ad-hoc | the tester records anything observed that no step above covers | reviewer judgment |
 
 ## 3. Execution record

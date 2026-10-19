@@ -67,7 +67,8 @@ describe('existing RAG actor programme filtering', () => {
   });
   it('context expansion preserves programme, exact byte hash, currentness and live-parent fences', async () => {
     await pipeline().expandContext([{ id: 'chunk', documentId: DOCUMENT, programId: PROGRAM, contentHash: HASH, chunkIndex: 1, atomType: 'vault_chunk', content: 'text' }], 1, UUID, 7, { filters: { allowedProgramIds: [PROGRAM] }, sourceReadScope: SCOPE });
-    const [sql, params] = h.query.mock.calls.find(([s]) => /SELECT c.chunk_text/.test(s))!;
+    // The neighbour read now also selects coordinates (D2-PASSAGE-CONTEXT); the fences are unchanged.
+    const [sql, params] = h.query.mock.calls.find(([s]) => /SELECT c\.id, c\.chunk_index, c\.char_start, c\.char_end, c\.chunk_text/.test(s))!;
     expect(sql).toMatch(/d\.program_id = ANY/);
     expect(sql).toContain('AND d.content_hash =');
     expect(sql).toContain('p.deleted_at IS NULL');
