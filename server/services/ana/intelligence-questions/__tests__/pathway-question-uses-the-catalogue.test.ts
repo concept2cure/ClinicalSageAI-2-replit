@@ -147,26 +147,33 @@ describe('the pathway question', () => {
     expect(valuesOf(field)).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'US' }).map(o => o.value));
   });
 
-  it('sends the predicate question with its gate, for the card to decide', () => {
-    /* `predicate_device` is gated on the route — a field in its OWN question —
-       so the server cannot decide it: the person has not chosen a route yet
-       when the question is drawn. It is sent with its predicate and the card
-       shows it the moment a 510(k) is picked. Until the 2026-10-12 review this
-       node dropped it, so a person choosing a 510(k) was never asked for the
-       predicate at all. */
+  it('sends both predicate questions with their gate, for the card to decide', () => {
+    /* The predicate fields are gated on the route — a field in their OWN
+       question — so the server cannot decide them: the person has not chosen a
+       route yet when the question is drawn. They are sent with their predicate
+       and the card shows them the moment a 510(k) is picked. Until the
+       2026-10-12 review this node dropped them, so a person choosing a 510(k)
+       was never asked for the predicate at all.
+       2026-10-19: one `predicate_device` box asking for
+       "K123456 — Brand Name by Manufacturer" became the two facts the eSTAR
+       prints from `predicate_devices[0]`, so the record can hold what the
+       person answers. */
     const node = advanceFlow(
       stateWith({ regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' } }),
       'device_classification',
       { device_class: 'class_ii' },
       ctx('medtech'),
     ).event!.node;
-    const predicate = node.fields.find(f => f.id === 'predicate_device')!;
-    expect(predicate, 'the question a 510(k) turns on must reach the person').toBeDefined();
-    expect(predicate.visibleWhen).toEqual({
-      field: 'device_submission_pathway',
-      operator: 'eq',
-      value: 'US_510K',
-    });
+    expect(node.fields.map(f => f.id), 'the one box could fill neither column').not.toContain('predicate_device');
+    for (const id of ['predicate_device_name', 'predicate_510k_number']) {
+      const field = node.fields.find(f => f.id === id)!;
+      expect(field, `${id}: the question a 510(k) turns on must reach the person`).toBeDefined();
+      expect(field.visibleWhen).toEqual({
+        field: 'device_submission_pathway',
+        operator: 'eq',
+        value: 'US_510K',
+      });
+    }
   });
 
   it('still decides a gate that an EARLIER question answered', () => {
