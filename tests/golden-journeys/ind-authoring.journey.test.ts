@@ -309,6 +309,23 @@ beforeAll(async () => {
       // rather than letting the journey pass on a database smaller than
       // production's. On the durable apply path via AUTHORING_SUBSYSTEM_FILES.
       'db/migrations/20260727_authoring_object_permissions.sql',
+      // The controlled-document register the authoring WRITE path consults, and
+      // LAST on purpose: qms_documents FKs organizations/users/regulatory_programs
+      // and qms_document_versions FKs both qms_documents (id, organization_id) and
+      // authoring_documents (id, tenant_id), so every one of those must already
+      // exist. Placed earlier it failed on regulatory_programs, then on
+      // authoring_documents, in that order.
+      //
+      // Why the journey needs them at all: qmsAuthoringRefusal
+      // (services/qms/controlled-document-content.ts) SELECTs both tables on every
+      // authoring write and CATCHES, answering 503
+      // QMS_CONTENT_GOVERNANCE_UNAVAILABLE. That is fail-closed and right in
+      // production, but against a fixture without the tables it meant every write
+      // here was refused for an absent relation rather than evaluated — and a step
+      // that expects a refusal would pass on the wrong refusal, which is the exact
+      // hazard assertNoSchemaGaps exists to name.
+      'migrations/20260511_qms_and_labeling.sql',
+      'db/migrations/20261014_qms_controlled_authoring_content.sql',
     ],
   });
   h.db = jdb.db;
