@@ -134,6 +134,15 @@ name comes back as the same question with *"Product Name is required"*, and
    whole signature, naming the section and how to recover. That is correct — a
    signature must not attest to text the submission does not contain — and the
    recovery it names (re-save that section, sign again) is now pinned by a test.
+4. **"No MDR class on the program record" on the PMS/PMCF tab.** That tab now
+   reports against the EU class the programme record holds — `eu_mdr_class` for
+   a device, `eu_ivdr_class` for a diagnostic — and against nothing else. Until
+   you answer the MDR or IVDR classification question in project setup, the
+   record holds no EU class and the tab says so, with every class-dependent
+   obligation undetermined. It is the honest answer, not a failure: until
+   2026-10-19 the tab sent the US 21 CFR 860 class instead, and a European
+   programme was told `"class II" is not an MDR device class`. Answer the
+   classification question, commit, and the obligations resolve.
 
 **Genuinely open, and in the task list:**
 
@@ -141,16 +150,13 @@ name comes back as the same question with *"Product Name is required"*, and
    silent: the biomarker strategy, orphan natural-history data, ethnic bridging
    (ICH E5/E17), human-factors validation (IEC 62366-1), the planned interim
    analysis, and the long-term stability months the ICH Q1E check needs.
-2. **The two EU classification columns are written and not yet read.** The
-   post-market and CER surfaces still take a class from their own stores, so a
-   European class you enter is recorded but does not yet drive those surfaces.
-3. **The predicate of record needs a trade name** the question does not ask, so
+2. **The predicate of record needs a trade name** the question does not ask, so
    a predicate identifier alone is reported rather than filed.
-4. **No per-programme mutation authority on the profile write** — any editor can
+3. **No per-programme mutation authority on the profile write** — any editor can
    configure any programme in the tenant; every other programme mutation admits
    the programme lead or a manager. Tightening it changes who can use the device
    panel today, so it is a founder's call.
-5. **The commit confirmation does not show the patch it will write** — you
+4. **The commit confirmation does not show the patch it will write** — you
    confirm a session id, not the columns.
 
 ## What I could not verify
