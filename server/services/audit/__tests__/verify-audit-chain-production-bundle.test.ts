@@ -33,7 +33,7 @@
  * subprocess, which is the runtime that ships.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { build } from 'esbuild';
+import { build, type BuildOptions } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -56,7 +56,7 @@ const VERIFIER_ENTRY = path.join(REPO_ROOT, 'scripts/ops/verify-audit-chain.mjs'
 // subprocess case below must see no database, as an unprovisioned container would.
 const CACHE_ROOT = path.join(REPO_ROOT, 'node_modules', '.cache', `verifier-bundle-${process.pid}`);
 
-type ProductionBuild = { label: string; options: { entryPoints: string[]; outfile: string } & Record<string, unknown> };
+type ProductionBuild = { label: string; options: BuildOptions & { entryPoints: string[]; outfile: string } };
 /** The verifier's entry in the list `npm run build` iterates, writing under outDir. */
 const verifierBuild = (outDir?: string) =>
   (productionBuilds(outDir) as ProductionBuild[]).find((b) => b.options.entryPoints.includes(VERIFIER_ENTRY));
