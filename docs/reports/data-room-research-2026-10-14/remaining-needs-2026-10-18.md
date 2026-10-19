@@ -32,9 +32,11 @@ assembly now selects Japanese passages; see
 The recorded probe now selects `[37501, 38001]`, where it previously selected
 `[0, 500]`. Text without Japanese is unchanged; 230,000 randomized cases showed
 no difference. The fixtures are engineering cases, not expert relevance labels.
-Vector passage search and chunk-boundary context remain open; the
-[passage context span design](../../design/PASSAGE_CONTEXT_SPAN_2026-10-18.md)
-proposes the coordinate-identity contract for the latter.
+Chunk-boundary context is delivered 2026-10-19; see
+[passage context spans](../../evidence/D2-PASSAGE-CONTEXT/2026-10-19/README.md).
+A vault passage's surrounding text is one exact, verified source span with a
+re-verifiable reference; joined chunk text is no longer produced or quoted.
+Multilingual vector retrieval qualification remains open.
 
 Delivery update, 2026-10-18: the budget and coverage part of priority 4 is
 delivered; see [OCR budgets](../../evidence/D2-OCR-BUDGET/2026-10-18/README.md).

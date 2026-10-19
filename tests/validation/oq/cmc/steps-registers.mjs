@@ -545,5 +545,131 @@ await step(
   },
 );
 
+/**
+ * OQ-CMC-39: URS-CMC-027, a programme the organisation does not hold.
+ *
+ * Found by a route sweep on 2026-10-19: `POST /api/cmc/ich-compliance` answered
+ * 200 with a complete eleven-guideline verdict and nine findings for a
+ * programme that does not exist, for another organisation's programme, and for
+ * the string `not-a-uuid` — and five register creates wrote the body's
+ * programme id into the row with no check at all
+ * (docs/evidence/CMC-M3-GA/2026-10-19/10-unverified-programme/).
+ */
+
+/** The reads and derivations, each over ONE programme. */
+const PROGRAMME_READS = [
+  { label: 'POST /ich-compliance', method: 'POST', at: () => '/api/cmc/ich-compliance', body: (id) => ({ projectId: id }) },
+  { label: 'GET /quality/qbd/:projectId', method: 'GET', at: (id) => `/api/cmc/quality/qbd/${id}` },
+  { label: 'POST /control-strategy', method: 'POST', at: () => '/api/cmc/control-strategy', body: (id) => ({ projectId: id, scope: 'both' }) },
+];
+
+/** The creates that file a record UNDER a programme. */
+const PROGRAMME_CREATES = [
+  {
+    label: 'POST /container-closures',
+    at: '/api/cmc/container-closures',
+    body: (id, s) => ({ projectId: id, systemName: `OQ CCS ${s}`, containerDescription: 'HDPE bottle', closureDescription: 'CR cap', status: 'draft' }),
+  },
+  {
+    /* Raw SQL rather than Drizzle, and it answered 500 for an unknown
+       programme until the refusal reached the shared reader. */
+    label: 'POST /comparability-studies',
+    at: '/api/cmc/comparability-studies',
+    body: (id, s) => ({ projectId: id, title: `OQ comparability ${s}`, type: 'process', product: 'Scale', status: 'draft' }),
+  },
+  {
+    label: 'POST /material-specs',
+    at: '/api/cmc/material-specs',
+    body: (id, s) => ({ projectId: id, materialName: `OQ excipient ${s}`, materialRole: 'excipient', grade: 'USP' }),
+  },
+];
+
+const callRead = (api, read, id) =>
+  read.method === 'GET' ? api('GET', read.at(id)) : api(read.method, read.at(id), read.body(id));
+
+await step(
+  {
+    id: 'OQ-CMC-39',
+    urs: ['URS-CMC-027'],
+    title: 'No verdict and no filing for a programme the organisation does not hold',
+    action:
+      'ask for an ICH compliance verdict, a QbD derivation and a control strategy, and file a container closure, a ' +
+      'comparability assessment and a material specification, under programme ids the organisation does not hold; then ' +
+      'the same six under the run’s own programme; and one create with no programme at all',
+    expected:
+      'each read 404 stating nothing was assessed and each create 409 naming the programme as not this organisation’s, ' +
+      'with nothing written; the same six succeed under the run’s own programme; the create with no programme is ' +
+      'accepted as an organisation-wide record',
+    dependsOn: ['OQ-CMC-03'],
+  },
+  async ({ api, expect, attach, deviation }) => {
+    /* A well-formed uuid naming no programme, and an id that is not a uuid at
+       all — two different ways of being wrong, because a route that validates
+       the SHAPE and not the ownership passes the first and fails the second. */
+    const unheld = [
+      { kind: 'a uuid naming no programme', id: '99999999-9999-4999-8999-999999999999' },
+      { kind: 'an id that is not a uuid', id: 'not-a-uuid' },
+    ];
+    const foreign = process.env.OQ_FOREIGN_PROJECT_ID;
+    if (foreign) unheld.push({ kind: "a second tenant's programme", id: foreign });
+    else {
+      deviation(
+        'partly executed — a programme that does not exist and a malformed id were both refused by all six paths, but ' +
+          'OQ_FOREIGN_PROJECT_ID (a programme of a second tenant) was not supplied, so refusal of ANOTHER ' +
+          "ORGANISATION'S programme was not observed in this run.",
+        { unheld: unheld.map((u) => u.kind) },
+      );
+    }
+
+    const observed = [];
+    for (const { kind, id } of unheld) {
+      for (const read of PROGRAMME_READS) {
+        const r = await callRead(api, read, id);
+        expect(r.status === 404, `${read.label} for ${kind} expected 404, got ${r.status}`, r.json);
+        expect(
+          /nothing was assessed/i.test(errDetail(r)),
+          `${read.label} for ${kind}: the refusal does not say nothing was assessed`,
+          errDetail(r).slice(0, 200),
+        );
+        observed.push({ path: read.label, programme: kind, status: r.status });
+      }
+      for (const create of PROGRAMME_CREATES) {
+        const r = await api('POST', create.at, create.body(id, stamp));
+        expect(r.status === 409, `${create.label} for ${kind} expected 409, got ${r.status}`, r.json);
+        expect(
+          /not one of this organisation/i.test(errDetail(r)),
+          `${create.label} for ${kind}: the refusal does not name the programme`,
+          errDetail(r).slice(0, 200),
+        );
+        observed.push({ path: create.label, programme: kind, status: r.status });
+      }
+    }
+
+    /* The control: the same six under the run's own programme still work, or
+       the refusal above is a broken route rather than a guard. */
+    for (const read of PROGRAMME_READS) {
+      const r = await callRead(api, read, state.projectId);
+      expect(r.status === 200, `${read.label} for this run's own programme expected 200, got ${r.status}`, r.json);
+    }
+    for (const create of PROGRAMME_CREATES) {
+      const r = await api('POST', create.at, create.body(state.projectId, `${stamp}b`));
+      expect(r.status === 200 || r.status === 201, `${create.label} for this run's own programme expected 200, got ${r.status}`, r.json);
+      expect(String(dataOf(r).projectId ?? dataOf(r).project_id ?? '') === String(state.projectId), `${create.label}: filed under another programme`, dataOf(r));
+    }
+
+    /* And a record with no programme at all, which these registers hold
+       organisation-wide: a check that refused it would break the register
+       rather than guard it. */
+    const orgWide = await api('POST', '/api/cmc/material-specs', {
+      materialName: `OQ org-wide excipient ${stamp}`, materialRole: 'excipient', grade: 'USP',
+    });
+    expect(orgWide.status === 200 || orgWide.status === 201, `an org-wide record expected 200, got ${orgWide.status}`, orgWide.json);
+    expect(dataOf(orgWide).projectId == null, 'an org-wide record was filed under a programme', dataOf(orgWide));
+
+    attach('unheld-programmes.json', observed);
+    return `${unheld.length} unheld programme(s) × 6 paths refused; the same 6 serve this run's own programme; an org-wide record is accepted`;
+  },
+);
+
 /** @see SURFACE_STEPS — the chain that serialises these modules. */
 export const REGISTER_STEPS = `${SURFACE_STEPS} → steps-registers.mjs`;
