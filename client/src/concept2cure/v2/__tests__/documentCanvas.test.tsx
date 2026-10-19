@@ -26,6 +26,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
+  // authService too: useAuthoringAssemblyBuild's actor() reads the singleton.
+  authService: { getUser: () => ({ id: 1, organizationId: 1 }) },
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 /* The editor's header widgets and the filing dialog are unrelated to the
