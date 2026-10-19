@@ -1,0 +1,27 @@
+### AFTER — the file is on the deploy set and the ratchet shrank
+
+$ grep -c "20260609_ind_master_data" scripts/db/migration-set.mjs
+2
+
+$ node -e 'C2C_MIGRATION_FILES includes it; sweep still last'
+set size: 411
+includes: true
+last entry (must be the sweep): db/migrations/20260801_tenant_isolation_sweep.sql
+
+$ python3  # baseline shrank 106 -> 105
+baseline size: 105
+still baselined: False
+
+$ npm run ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new.
+$ npm run ci:migration-set-order
+[ci:migration-set-order] OK — 411 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+$ npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 411 migrations, 38 DROP(s), none re-created by the set; 5 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+$ npm run ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+$ npm run db:sync-manifest:check
+Manifest is in sync.
+
+$ npm run ci:migration-deploy-path:selftest   # the gate's failure branch still fires
+[ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
