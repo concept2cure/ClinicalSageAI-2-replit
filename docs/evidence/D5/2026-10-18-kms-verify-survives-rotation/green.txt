@@ -1,0 +1,32 @@
+### payload-signer-rotation.test.ts, against the fix
+ ✓ before rotation: a release signed under the alias verifies (the alias and the envelope ARN never match as text)
+ ✓ after rotation, with the previous key retained for Verify: the 2026 release still verifies
+ ✓ and a release signed after rotation is signed with, and verifies against, the new key
+ ✓ after rotation WITHOUT retaining the previous key: the 2026 release fails closed (the SOP requires keeping it)
+ ✓ a retained key that cannot be read does not stop a current-key release verifying
+ ✓ an envelope signed by an attacker's own key, naming that key, fails — it is not a trusted key
+ ✓ borrowing a trusted key's fingerprint selects that key, and KMS then refuses the forged signature
+ ✓ a retained key never signs: signing after rotation uses only the current key
+      Tests  8 passed (8)
+
+# Against the ORIGINAL: 1 failed (the rotation case), 7 passed.
+# Both security cases pass on BOTH: the fix preserves the property, it does not depend on it.
+
+### Every signer suite
+ Test Files  4 passed (4)
+      Tests  36 passed (36)     # 27 pre-existing, unchanged; 8 rotation; 1 parsing
+
+### Every suite that reaches the verifier
+# 13 unit suites (incl. sign-payload-kms-seam, sign-payload-seal,
+# signed-package-export, release-signature-status):
+ Test Files  13 passed (13)
+      Tests  217 passed (217)
+# dispatch-on-signing.pglite.integration -- the one PGlite suite that reaches it:
+      Tests  4 passed (4)
+# The other six PGlite suites vi.mock release-signature-status, so the verifier
+# sits behind a module they replace; this change cannot reach them.
+
+### Lint
+eslint (4 changed files)   exit 0
+# and a deliberate unused variable in the same directory IS reported, so the
+# clean result is a real lint of these paths.
