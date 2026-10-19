@@ -55,7 +55,7 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
    eligibility rules there are the safety story for a shelf-life claim and have
    two callers — this route and AnA's `assess_recorded_batch_poolability` tool —
    so there is exactly one copy of them. */
-import { assessRecordedPoolability } from '../../services/cmc/recorded-stability';
+import { assessRecordedPoolability, readRecordedStabilityResults } from '../../services/cmc/recorded-stability';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
 import { clientIpOf } from '../../utils/client-ip';
@@ -571,13 +571,26 @@ router.get('/stability-studies', async (req, res) => {
   }
 });
 
+const reselectStabilityStudy = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(stabilityStudies)
+    .where(and(eq(stabilityStudies.id, parseInt(id, 10)), eq(stabilityStudies.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
 router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = stabilityStudyBody.parse(req.body);
+    /* A study is not born closed out. `status: 'COMPLETED'` with a shelf life
+       was a plain create until 2026-10-19, and the shelf life is what
+       §3.2.S.7.1 / §3.2.P.8.1 prints as the dossier's claim and what the ICH
+       Q1E rule judges the programme against. */
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'stability-studies')) return;
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
     const study = await insertRegisterRow(orgId, recordedBy(req), 'stability_study', stabilityStudies, {
-      ...validatedData,
+      ...withoutSignatureFields(SIGNED_REGISTERS.stabilityStudies, validatedData as Record<string, unknown>),
       projectId,
       organizationId: orgId,
     } as typeof stabilityStudies.$inferInsert);
@@ -601,13 +614,34 @@ router.put('/stability-studies/:id', async (req, res) => {
     const validatedData = stabilityStudyBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.stabilityStudy, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Stability study not found' });
+    const stored = await reselectStabilityStudy(String(id), orgId);
+    /* A closed-out study is closed to content edits: the shelf life, the
+       recorded series and the conditions are what the signature accepted, and
+       §3.2.S.7 / §3.2.P.8 prints them. Retiring it is a lifecycle end, not a
+       reversal, and is allowed. */
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.stabilityStudies, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectStabilityStudy(String(id), orgId),
+      (row) => linkToModule3('write_through_stability_study', orgId, row, writeThroughStabilityStudy, req),
+    )) return;
+    /* ...and the close-out itself is reached only through the ceremony. The
+       shelf life may still be RECORDED by an ordinary edit — that is the
+       evidence the signature then accepts, audited with both values on the
+       chain — but the terminal status is the signed act. */
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'stability-studies', stored?.status)) return;
     const study = await updateRegisterRow({
       orgId,
       actor: recordedBy(req),
       register: 'stability_study',
       table: stabilityStudies,
       where: and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)),
-      patch: { ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() },
+      patch: {
+        ...withoutProject(withoutOrgId(withoutSignatureFields(
+          SIGNED_REGISTERS.stabilityStudies, validatedData as Record<string, unknown>,
+        ))),
+        ...filing.set,
+        updatedAt: new Date(),
+      },
     });
     if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
     const linkage = await linkToModule3('write_through_stability_study', orgId, study, writeThroughStabilityStudy, req);
@@ -615,6 +649,69 @@ router.put('/stability-studies/:id', async (req, res) => {
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update stability study');
   }
+});
+
+/**
+ * The governed close-out of a stability study (21 CFR Part 11, ICH Q1A(R2)/Q1E).
+ *
+ * This is the act that turns a running study into the dossier's shelf-life
+ * claim. §3.2.S.7.1 / §3.2.P.8.1 print `shelf_life` verbatim as the proposed
+ * storage period, the ICH Q1E rule judges the programme's claim against the
+ * recorded coverage, and the contradiction sweep reads the terminal status —
+ * and until 2026-10-19 all of it was an ordinary PUT:
+ * `{"shelfLife":"36 months at 25C/60%RH","status":"COMPLETED"}` answered 200
+ * with no signature, no reason and no re-authentication.
+ *
+ * The shelf life itself is still recorded by an ordinary edit, as the Q2
+ * package and the validation report are for their registers: the evidence is
+ * entered, then the signature accepts it. What the ceremony writes is the
+ * terminal status, the signer and the date; after it, the record's content is
+ * closed (`answeredSignedRecordEdit`).
+ */
+router.post('/stability-studies/:id/close-out', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    register: SIGNED_REGISTERS.stabilityStudies,
+    target: 'stability_study',
+    surface: 'cmc-stability',
+    propagation: 'write_through_stability_study',
+    reselect: reselectStabilityStudy,
+    writeThrough: writeThroughStabilityStudy,
+    precondition: (row) => {
+      /* Two things must be true of a study before a shelf life may be signed
+         for, and they fail differently:
+
+         1. A shelf life must be RECORDED. A signature over an empty claim
+            accepts nothing, and §3.2.S.7.1 would print a blank period.
+         2. The study must have produced RESULTS. A shelf-life claim over a
+            study with nothing pulled is the fabrication the Q1E rule exists to
+            catch (docs/evidence/CMC-M3-GA/2026-10-18/06-ich-q1e-verdict/: the
+            planned schedule is not data), and a signature would make it a
+            governed one. A column that holds something unreadable is NOT the
+            same as a study with no results, and is refused as its own case. */
+      const claim = String(row.shelf_life ?? row.shelfLife ?? '').trim();
+      if (!claim) {
+        return (
+          'This study records no shelf life, so there is nothing to sign for: a closed-out study states the period ' +
+          'and the storage condition §3.2.S.7.1 / §3.2.P.8.1 will print (for example "36 months at 25°C/60% RH"). ' +
+          'Record the shelf life on the study first.'
+        );
+      }
+      const recorded = readRecordedStabilityResults(row.stability_data ?? row.stabilityData);
+      if (recorded.unreadable) {
+        return (
+          'This study’s recorded results could not be read, so what the shelf life rests on cannot be established. ' +
+          'A signature is not made over data the platform cannot parse. Correct the recorded series first.'
+        );
+      }
+      if (recorded.points.length === 0) {
+        return (
+          `This study has no recorded pull-point results, so "${claim}" is a claim over no data. A planned schedule ` +
+          'is not data: record the results pulled at each time point, then close the study out.'
+        );
+      }
+      return null;
+    },
+  });
 });
 
 // QC Testing Routes
@@ -1119,7 +1216,10 @@ async function qualifyRegisterRecord(
     signedAtColumn: spec.register.signedAtColumn,
   };
   /** The act, as the compliance statement and the failure message name it. */
-  const act = { qualify: 'qualification', validate: 'validation', approve: 'approval' }[spec.register.signPath];
+  const act = {
+    qualify: 'qualification', validate: 'validation', approve: 'approval',
+    'close-out': 'close-out',
+  }[spec.register.signPath];
   const subject = spec.register.noun;
   const table = spec.register.table;
   const rawId = String(req.params.id ?? '').trim();
@@ -1166,7 +1266,13 @@ async function qualifyRegisterRecord(
     /* Already signed. Re-signing would stamp a second person over the first and
        lose who actually qualified it, so it is refused with the record's own
        facts rather than overwritten. */
-    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue) {
+    /* Both sides lowercased: a register keeps its own casing for its own
+       vocabulary (the stability words are upper-case), and comparing a
+       lowercased stored value to a raw upper-case signed word made this check
+       never fire — a second close-out answered 200 and re-stamped the signature
+       date over the first signer's
+       (docs/evidence/CMC-M3-GA/2026-10-19/11-stability-close-out/). */
+    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue.toLowerCase()) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
