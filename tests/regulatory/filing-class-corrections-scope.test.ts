@@ -31,11 +31,18 @@ describe('the designation and orphan corrections stay with the US requests', () 
     },
   );
 
-  it.each(['US_BTD', 'US_FAST_TRACK', 'US_RMAT'])('%s carries one node per FD&C Act 506 criterion', async (id) => {
-    const s = await outline(id);
-    expect(s.map((x) => x.number)).toEqual(['1', '2', '3', '4', '5', '7', '8', '6']);
-    expect(s.find((x) => x.number === '7')?.heading).toMatch(/Substantial Improvement .*\(Breakthrough\)/);
-    expect(s.find((x) => x.number === '4')?.required).toBe(false);
+  // One outline per designation, each requiring its own FD&C Act 506 criterion
+  // (second review, 2026-10-18: one shared outline left a Fast Track request
+  // with no required criterion).
+  it.each([
+    ['US_BTD', ['1', '2', '3', '5', '7', '6'], ['5', '7']],
+    ['US_FAST_TRACK', ['1', '2', '3', '4', '6'], ['4']],
+    ['US_RMAT', ['1', '2', '8', '3', '5', '4', '6'], ['8', '5', '4']],
+  ])('%s requires its own statutory criteria', async (id, numbers, criteria) => {
+    const s = await outline(id as string);
+    expect(s.map((x) => x.number)).toEqual(numbers);
+    expect(s.every((x) => x.required)).toBe(true);
+    for (const c of criteria as string[]) expect(s.find((x) => x.number === c)?.purpose).toMatch(/FD&C Act 506/);
   });
 
   it('the EU orphan request carries no 21 CFR 316.20 node; the US request does', async () => {

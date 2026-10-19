@@ -236,9 +236,12 @@ describe('the class packs supersede, scaffold and replay', () => {
 
   it('the next deploy replays the set over a supplement document without error or change', async () => {
     await scaffold('pas', 'FDA');
-    const before = await pg.query(`SELECT doc_type, agency, version, superseded_by, required_sections FROM c2c_rule_packs ORDER BY 1,2,3`);
+    // Provenance too: 20261018 re-asserts its literal every deploy and 20261018c
+    // corrects it after, so a deploy must end exactly where the last one did.
+    const cols = 'doc_type, agency, version, superseded_by, required_sections, confidence, governing_rule, uncertainties';
+    const before = await pg.query(`SELECT ${cols} FROM c2c_rule_packs ORDER BY 1,2,3`);
     for (const f of inSetOrder(true)) await pg.exec(read(f));
-    const after = await pg.query(`SELECT doc_type, agency, version, superseded_by, required_sections FROM c2c_rule_packs ORDER BY 1,2,3`);
+    const after = await pg.query(`SELECT ${cols} FROM c2c_rule_packs ORDER BY 1,2,3`);
     expect(after.rows).toEqual(before.rows);
     const docs = await pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM c2c_documents WHERE doc_type = 'pas'`);
     expect(docs.rows[0].n).toBe(1);
@@ -279,6 +282,37 @@ describe('the review corrections supersede 20261018 on a deployed database', () 
   }, 90_000);
 });
 
+/*
+ * A document bound to a superseded version keeps its outline, so the version
+ * says what superseded it, and a provenance claim the review found false is not
+ * left standing on it (second review, 2026-10-18).
+ */
+describe('a superseded version says why, and keeps no withdrawn claim', () => {
+  it('the v1.0 IND safety report and NDA annual report packs no longer claim what the review withdrew', async () => {
+    await boot();
+    const row = async (docType: string, version: string) => (await pg.query<{ confidence: string; governing_rule: string; uncertainties: string }>(
+      `SELECT confidence, governing_rule, uncertainties FROM c2c_rule_packs WHERE doc_type = $1 AND agency = 'fda' AND version = $2`,
+      [docType, version],
+    )).rows[0];
+    const sr = await row('ind_safety_report', 'fda-ind-safety-report-v1.0');
+    expect(sr.confidence).toBe('low');
+    expect(sr.governing_rule).not.toMatch(/checked against the regulator's text/);
+    expect(sr.uncertainties).toContain('Superseded by fda-ind-safety-report-v1.1 on 2026-10-18');
+    const ar = await row('annual_report', 'fda-annual-report-lifecycle-v1.0');
+    expect(ar.governing_rule).not.toMatch(/601\.12\(a\) and 601\.28 \(annual/);
+    expect(ar.governing_rule).toContain('601.12(d)');
+    for (const spec of FILING_CLASS_PACKS.filter((p) => p.supersedes && p.changeNote)) {
+      const { rows } = await pg.query<{ uncertainties: string | null }>(
+        `SELECT uncertainties FROM c2c_rule_packs WHERE doc_type = $1 AND agency = $2 AND version = $3`,
+        [spec.docType, spec.agency, spec.supersedes],
+      );
+      // The five 20261018 superseded before provenance existed on them stay as they were.
+      if (spec.supersedes && ['ich-m4-v2.0', 'fda-meeting-2024', 'ich-e2c-r2'].includes(spec.supersedes)) continue;
+      expect(rows[0]?.uncertainties, `${spec.docType} ${spec.supersedes}`).toContain(`Superseded by ${spec.version}`);
+    }
+  }, 60_000);
+});
+
 describe('the contract is falsifiable', () => {
   it('without the migration, a supplement has no outline to scaffold', async () => {
     await boot(false);
@@ -295,5 +329,22 @@ describe('the contract is falsifiable', () => {
        VALUES ('pas', 'fda', 'fda-pas-lifecycle-v1.0', 'tampered', '[{"key":"X","parent_key":null,"label":"X","mandatory":true,"path_order":1}]'::jsonb, now())`,
     );
     await expect(pg.exec(read(FILE))).rejects.toThrow(/pas:fda fda-pas-lifecycle-v1\.0 must hold this file's 11 nodes/);
+  }, 60_000);
+
+  // Second review, 2026-10-18: the corrections file's own assertion was never
+  // exercised. A row holding the v1.1 key with the right node count and one
+  // flag flipped is kept by ON CONFLICT DO NOTHING; only the tree check refuses it.
+  it('a v1.1 row with the right node count and one flag flipped stops the corrections file', async () => {
+    await boot('before-corrections');
+    const tree = await filingClassPackSections('pas');
+    const flipped = tree.map((r, i) => (i === 0 ? { ...r, mandatory: !r.mandatory } : r));
+    await pg.query(
+      `INSERT INTO c2c_rule_packs (doc_type, agency, version, label, required_sections, effective_from)
+       VALUES ('pas', 'fda', 'fda-pas-lifecycle-v1.1', 'tampered', $1::jsonb, now())`,
+      [JSON.stringify(flipped)],
+    );
+    await expect(pg.exec(read(CORRECTIONS))).rejects.toThrow(
+      new RegExp(`pas:fda fda-pas-lifecycle-v1\\.1 must hold this file's ${tree.length} nodes; found ${tree.length} \\(tree matches: false\\)`),
+    );
   }, 60_000);
 });

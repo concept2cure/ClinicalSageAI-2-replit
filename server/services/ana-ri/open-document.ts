@@ -131,8 +131,24 @@ async function fromSavedRecord(
   const registryId = registryIdForTemplateEntry(source.entryId, source.filingContext?.registryId);
   if (!registryId) return noRegistryType;
   const document = await describe(registryId, 'saved-template');
-  const current = await getBuiltinAuthoringTemplate(source.id);
-  return { document: current && builtinTemplateSnapshot(current) !== source.sha256 ? { ...document, builtFromEarlierOutline: true } : document };
+  const current = await currentTemplateSnapshot(source.id);
+  return { document: current && current !== source.sha256 ? { ...document, builtFromEarlierOutline: true } : document };
+}
+
+/**
+ * A builtin template's current snapshot, built once per process: the outlines
+ * are deterministic code, so the snapshot only changes with a deploy. Building
+ * it on every turn with a saved document open cost 50–140 ms of blocking CPU
+ * (review finding, 2026-10-18). Null for an id that is not a builtin template.
+ */
+const SNAPSHOTS = new Map<string, Promise<string | null>>();
+function currentTemplateSnapshot(templateId: string): Promise<string | null> {
+  let snapshot = SNAPSHOTS.get(templateId);
+  if (!snapshot) {
+    snapshot = getBuiltinAuthoringTemplate(templateId).then((t) => (t ? builtinTemplateSnapshot(t) : null));
+    SNAPSHOTS.set(templateId, snapshot);
+  }
+  return snapshot;
 }
 
 async function describe(registryId: string, source: OpenDocumentSource): Promise<OpenDocument> {

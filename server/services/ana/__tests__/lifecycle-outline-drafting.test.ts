@@ -50,10 +50,31 @@ describe('a lifecycle-record outline is drafted from its own record', () => {
     expect(r.requirementsSource).toMatch(/^record:ctd-section:3\.2\.P/);
   });
 
-  it('a section the outline does not hold is named, never left to memory', () => {
-    const r = resolveDraftingRequirements('US_TYPE_B_MEETING', '2.4 Nonclinical Overview');
+  it('a section neither the outline nor the earlier blueprint holds is named, never left to memory', () => {
+    const r = resolveDraftingRequirements('US_TYPE_B_MEETING', 'Totally Invented Section');
     expect(r.requirementsSource).toBe('record:lifecycle:not-in-outline');
     expect(r.requirements).toContain('do not supply its requirements from memory');
+  });
+
+  // Second review, 2026-10-18: a final miss refused what the earlier path answered.
+  it('a section bound to the earlier blueprint still resolves the way it did', () => {
+    // A project bootstrapped from the blueprint keeps its numeric codes.
+    expect(resolveDraftingRequirements('US_IND_ANNUAL', '3 Summary of Clinical Safety Information').requirements).toBeTruthy();
+    // A Module 1 code the supplement's record does not hold as a part.
+    expect(resolveDraftingRequirements('US_NDA_SUPP', '1.3').requirementsSource).not.toMatch(/not-in-outline|none/);
+    // A meeting package section the old outline (the pre-IND rows) had.
+    expect(resolveDraftingRequirements('US_TYPE_B_MEETING', '4 Proposed Nonclinical Program Summary').requirementsSource).toBe('blueprint');
+  });
+
+  it('a CTD section the outline holds, asked with another title, is the CTD record\'s', () => {
+    expect(resolveDraftingRequirements('US_CBE', '3.2.P Drug Product (name, manufacturer)').requirementsSource).toMatch(/^record:ctd-section:3\.2\.P/);
+  });
+
+  it('an sBLA section says which BLA rule to cite, and names the record it is read from', () => {
+    const r = resolveDraftingRequirements('US_BLA_SUPP', 'PAS-COVER Cover Letter').requirements ?? '';
+    expect(r).toContain('cite 21 CFR 601.12(b) (a manufacturing change) or 601.12(f)(1)');
+    expect(r).toContain('lifecycle record LIFECYCLE_DOCUMENT_TYPES:nda_pas');
+    expect(resolveDraftingRequirements('US_NDA_SUPP', 'PAS-COVER Cover Letter').requirements).not.toContain('601.12(b) (a manufacturing');
   });
 
   // Review critic, 2026-10-18.
@@ -90,6 +111,24 @@ describe('a component document is drafted to its whole outline, not its first le
     const r = resolveDraftingRequirements('ICH_CSR', '9.4.1 Treatments Administered');
     expect(r.requirementsSource).toBe('record:outline:csr-e3:9.4.1:exact');
     expect(r.requirements).toContain('ICH E3 record');
+  });
+
+  it('a CSR title that starts with a number is a title, not that E3 section', () => {
+    const r = resolveDraftingRequirements('ICH_CSR', '12-Week Efficacy Results');
+    expect(r.requirementsSource).toBe('record:outline:csr-e3:not-indexed');
+    expect(resolveDraftingRequirements('ICH_CSR', '12 Week Results').requirementsSource).toBe('record:outline:csr-e3:not-indexed');
+    expect(resolveDraftingRequirements('ICH_CSR', '12 Safety Evaluation').requirementsSource).toBe('record:outline:csr-e3:12:exact');
+  });
+
+  it('a CSR title E3 holds twice is listed, never resolved to the first', () => {
+    const r = resolveDraftingRequirements('ICH_CSR', 'Protocol Deviations');
+    expect(r.requirementsSource).toBe('record:outline:csr-e3:candidates');
+    expect(r.requirements).toContain('10.2 and 16.2.2');
+  });
+
+  it('a retitled row still answers to its former title', () => {
+    expect(resolveDraftingRequirements('US_FAST_TRACK', 'Unmet Medical Need Analysis').requirementsSource).toBe('blueprint');
+    expect(resolveDraftingRequirements('US_PADER', 'FDA Form 3500A Reports (Non-Expedited Cases)').requirementsSource).toBe('blueprint');
   });
 
   it('a section a component record does not hold is named, never left to memory', () => {

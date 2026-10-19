@@ -568,8 +568,10 @@ export async function registryDocumentTemplateCoverage(): Promise<RegistryDocume
     // The row names the outline actually served: a filing whose outline is a
     // lifecycle record no longer reports the blueprint it was once read from
     // (review nit, 2026-10-18: US_TYPE_B_MEETING reported us_type_b_meeting_sections).
+    // A blueprint id is reported only when that blueprint is what is served: a
+    // component template or a record is not a blueprint (review nit, 2026-10-18).
     const source = outline?.outlineSource;
-    const blueprint = source && !('blueprintId' in source) ? undefined : await getDedicatedSectionBlueprint(entry.id) ?? exactBlueprint(entry);
+    const blueprint = source && 'blueprintId' in source ? { id: source.blueprintId } : undefined;
     return {
       registryId: entry.id,
       displayName: entry.displayName,

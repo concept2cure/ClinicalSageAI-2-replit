@@ -28,6 +28,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   FILING_CLASS_PACKS,
+  filingClassPackMinted,
   filingClassPackGoverningRule,
   filingClassPackSections,
   filingClassPackUncertainties,
@@ -76,6 +77,14 @@ async function render(file: string, specs: FilingClassPackSpec[], admitted: Set<
   const m = /^(\d{4})(\d{2})(\d{2})[a-z]?_/.exec(path.basename(file));
   if (!m) throw new Error(`${path.basename(file)}: a migration file name starts with its date, YYYYMMDD.`);
   const date = `${m[1]}-${m[2]}-${m[3]}`;
+  for (const spec of specs) {
+    if (filingClassPackMinted(spec) !== date) {
+      throw new Error(`${spec.docType}:${spec.agency} ${spec.version} states it was minted ${filingClassPackMinted(spec)}; this file is dated ${date}. Set the spec's \`minted\`, or date the file for it.`);
+    }
+    if (spec.supersedes && !spec.changeNote) {
+      throw new Error(`${spec.docType}:${spec.agency} ${spec.version} supersedes ${spec.supersedes} and says nothing of what it changes: give it a changeNote.`);
+    }
+  }
   const packs = await Promise.all(specs.map(async (spec) => ({
     spec,
     sections: await filingClassPackSections(spec.docType),
@@ -155,6 +164,21 @@ ${docTypes.map((t) => `         AND pg_get_constraintdef(oid) LIKE '%''${t}''%'`
    WHERE doc_type = ${lit(spec.docType)} AND agency = ${lit(spec.agency)} AND version = ${lit(spec.supersedes as string)}
      AND superseded_by IS NULL;`,
   ).join('\n');
+  // A document bound to a superseded version keeps its outline, so the version
+  // says what superseded it and why; a provenance claim the review found false
+  // is corrected, never left standing. The file that seeded it re-asserts its
+  // own literal on every deploy and this file runs after it, so the corrected
+  // text is what every deploy ends with (review finding, 2026-10-18).
+  const superseded = packs.filter(({ spec }) => spec.supersedes).map(({ spec, governingRule }) => {
+    const note = ` Superseded by ${spec.version} on ${date}: ${spec.changeNote}`;
+    const corrected = spec.correctsSupersededProvenance
+      ? `\n      governing_rule = ${lit(governingRule)},\n      confidence     = ${lit(spec.confidence)},`
+      : '';
+    return `    UPDATE c2c_rule_packs SET${corrected}
+      uncertainties  = coalesce(uncertainties, '') || ${lit(note)}
+    WHERE doc_type = ${lit(spec.docType)} AND agency = ${lit(spec.agency)} AND version = ${lit(spec.supersedes as string)}
+      AND position(${lit(`Superseded by ${spec.version}`)} in coalesce(uncertainties, '')) = 0;`;
+  }).join('\n');
   const trees = packs.map(({ spec, sections }) =>
     `    WHEN ${lit(`${spec.docType}:${spec.agency}:${spec.version}`)} THEN $pack$${JSON.stringify(sections)}$pack$::jsonb`,
   ).join('\n');
@@ -189,8 +213,12 @@ ${values}
 ${provenance}
   END IF;
 
-  -- 4 ── Supersede exactly the version each pack replaces.
+  -- 4 ── Supersede exactly the version each pack replaces, and say so on it.
 ${supersede || '  -- (none: every pack here is its class\'s first)'}
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'c2c_rule_packs' AND column_name = 'source_basis') THEN
+${superseded || '    NULL;'}
+  END IF;
 
   -- 5 ── Assertions (CLAUDE.md Rule 1, seed corollary). A tree the CASE does not
   --      name is refused, never read as a match.

@@ -29,21 +29,22 @@ The canonical records were corrected first; the packs were then minted from them
   designation and orphan arrays;
 - `document-template-library.ts`: the PBRER.
 
-`migrations/20261018c_filing_class_packs_review_corrections.sql` (generated, sha256
-`fec44c79…`) seeds ten new versions. Each supersedes exactly the version `20261018` seeded.
-`20261018` itself is not touched.
+`migrations/20261018c_filing_class_packs_review_corrections.sql` (generated) seeds twelve
+versions: ten supersede exactly the version `20261018` seeded, and two (`fast_track`, `rmat`)
+are the first packs of new classes. `20261018` itself is not touched. The file's sha is in
+`emitter-refuses-rewrite.txt`, recorded against the committed file.
 
 | Pack | What the correction changes |
 |---|---|
-| `pas:fda` v1.1 (19 nodes) | Adds an efficacy supplement's clinical and nonclinical data: `PAS-CLINICAL`, plus 2.3–2.7, 4.2 and 5.3 under Updated CTD Sections, all optional (v1.0 held Module 3 only). The fee part is optional, since PDUFA VI removed supplement fees. 601.12(b) and (f)(1) are cited for a BLA. |
+| `pas:fda` v1.1 (20 nodes) | Adds an efficacy supplement's clinical and nonclinical data: `PAS-CLINICAL`, plus 2.3–2.7, 4.2 and 5.3 under Updated CTD Sections, all optional (v1.0 held Module 3 only). Adds its PREA part (`PAS-PEDIATRIC`, FD&C Act 505B). The fee part is optional, since PDUFA VI removed supplement fees. 601.12(b) and (f)(1) are cited for a BLA. |
 | `cbe:fda` v1.1 | The change description (314.70(c)(3)–(4)) and the environmental claim (21 CFR 25.15(a)) are now parts of the CBE-0 record too, so both are required. |
 | `annual_report:fda` v1.1 | The BLA citation is corrected: v1.0 cited 601.12(a), the general provisions. The label names the NDA rule the parts follow, and the BLA's 601.12(d), 601.70, 601.28 and 600.81 reports are cited, not modelled. |
 | `pader:fda` v1.1 | The first part is now the non-expedited ICSRs, sent electronically under 314.80(g), not Form 3500A reports embedded in the report. |
 | `ind_safety_report:fda` v1.1 | The 312.32(c)(1) analysis of previously submitted similar reports is its own required part. Confidence is now `low`, and the basis says the route facts were checked, not the outline. |
 | `ind_annual_report:fda` v1.1 | Adds a required 312.33(b)(5) part: information pertinent to the drug's actions. |
-| `orphan:fda` v1.1 | 316.20(b)(7) is required; (b)(5) and (b)(6) are added, each conditional. |
-| `designation:fda` v1.1 | One part per FD&C Act 506 criterion. A Breakthrough request is no longer required to argue unmet need. |
-| `icf:ich` v1.1 | Adds the 50.25(c) ClinicalTrials.gov statement and the 50.25(b) additional elements, each conditional. |
+| `orphan:fda` v1.1 | 316.20(b)(7) is required. (b)(5) is added, and so is (b)(6) in its 2013 form (an orphan subset: use outside it would be inappropriate). Both are conditional. |
+| `designation:fda` v1.1 (Breakthrough) and `fast_track:fda` / `rmat:fda` v1.0 | One outline per FD&C Act 506 designation. Each requires its own criteria: 506(a)(1) for Breakthrough, 506(b)(1) for Fast Track, 506(g)(1) and (g)(8) for RMAT. `designation` keeps its doc_type for the Breakthrough request. Fast Track and RMAT are now their own classes. |
+| `icf:ich` v1.1 | Adds the 50.25(c) ClinicalTrials.gov statement and the 50.25(b) additional elements, each conditional. Both are read from the one consent record (`informed-consent-elements.ts`), never copied. |
 | `psur:ema` v2.1 (42 nodes) | Adds the title page, the executive summary and §20. §8–§12 are now required. The E2C(R2) subsections of §5–§7 and §16–§18 are listed. |
 
 ### How a pack is changed now
@@ -81,6 +82,28 @@ byte-identical to HEAD (`tests/regulatory/filing-class-corrections-scope.test.ts
 The IND safety report outline's basis said "checked against the regulator's text", so the
 governed pack carried that claim too. The basis is now `platform-convention`, and it says the
 subtypes, formats and routes were checked against FDA's page, not the outline.
+
+## e. Second review, of 55ca92c3 before it was pushed
+
+A second four-lens review (regulatory, AnA drafting, blast radius, migration) ran over the commit
+as built. Every finding verified so far was confirmed by both of its skeptics. `20261018c` had not
+been pushed, so it was regenerated rather than superseded.
+
+| Finding | Fix | Red → green |
+|---|---|---|
+| The orphan (b)(6) node stated the "medically plausible subset" standard, which the 2013 final rule replaced. | It now states the 2013 "orphan subset" standard. | — (content) |
+| One designation outline could not require each designation's own criterion. A Fast Track request had no required criterion at all. | Three outlines and three classes. | `second-review-red-on-55ca92c3.txt` |
+| The PAS efficacy supplement had no PREA part. | `PAS-PEDIATRIC`. | — (content) |
+| The ICF nodes copied the 50.25 elements. | They read `INFORMED_CONSENT_ELEMENTS`. | — |
+| A lifecycle miss was final. It refused Module 1 codes, legacy blueprint codes and bootstrapped project sections. A CTD node asked with another title was refused. | A miss goes the way it went before. Only a miss on that path too is named. A CTD node or its descendant goes to the CTD record. | `second-review-red-on-55ca92c3.txt` |
+| The sBLA brief told the author to cite 314.70(b). | The brief names the record it is read from and tells a BLA supplement to cite 601.12(b) or (f)(1). | same |
+| CSR: "12-Week Efficacy Results" was read as §12, and a title E3 holds twice resolved to the first. | An E3 number counts only alone or with its own title. A duplicate title lists both. | same |
+| Retitled rows lost their former titles. | `formerTitles` on a blueprint row. | same |
+| open-document rebuilt the builtin templates every turn (50–140 ms). | One snapshot per template per process. | — |
+| The picker's document dropped front matter and subsections the pack holds. A coverage row named a blueprint that was not served. | The picker carries the whole outline. A blueprint id is reported only when it is served. | `picker-and-coverage-red-on-55ca92c3.txt` (5/5 red → 5/5) |
+| Superseded v1.0 rows kept the claims the corrections withdraw, and 20261018 re-asserts them on every deploy. | 20261018c, which runs after it, notes "Superseded by … : why" on each row. It corrects the IND safety report's and the annual report's false governing rule and confidence. A replay ends where the last deploy did. | `second-review-contract-red-on-55ca92c3.txt` |
+| 20261018c's own tree assertion was never exercised. | A tampered v1.1 row with the right node count stops the file. Removing the check makes the test red. | `corrections-tree-check-red-when-removed.txt` |
+| The mint date was hard-coded. | A spec's `minted` date. The emitter refuses a spec whose date is not the file's, and a supersede with no change note. | — |
 
 ## Tests the corrections move on purpose
 

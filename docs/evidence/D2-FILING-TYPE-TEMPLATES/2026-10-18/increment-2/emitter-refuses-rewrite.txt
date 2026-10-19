@@ -1,3 +1,4 @@
+before: c3b62de7d2d9af1de4bb1bd9ff14bd9672c9e790513f1b0e3ed1c0b2236406b4  migrations/20261018c_filing_class_packs_review_corrections.sql
 REFUSED: migrations/20261018c_filing_class_packs_review_corrections.sql exists and is not what FILING_CLASS_PACKS now produces. A pack file on the applier is never rewritten: mint the changed pack as a new version, and write it to a NEW migration file.
 exit 1
-651f0649fdd7732dbf73e93b952829445ebc551a3b029fa57b4ecb8800a0b7fe  migrations/20261018c_filing_class_packs_review_corrections.sql
+after:  c3b62de7d2d9af1de4bb1bd9ff14bd9672c9e790513f1b0e3ed1c0b2236406b4  migrations/20261018c_filing_class_packs_review_corrections.sql

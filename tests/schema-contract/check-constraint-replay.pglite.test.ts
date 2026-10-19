@@ -115,13 +115,14 @@ const CASES: ReplayCase[] = [
     count: `SELECT COUNT(*)::int AS n FROM document_span_lineage WHERE provenance_kind = 'machine_draft'`,
   },
   {
-    name: 'c2c_documents doc types (20260528 → 20260806b → 20260810b → 20261018)',
+    name: 'c2c_documents doc types (20260528 → 20260806b → 20260810b → 20261018 → 20261018c)',
     table: 'public.c2c_documents',
     constraints: ['c2c_documents_doc_type_check'],
     files: inSetOrder([
       '20260806b_anda_ide_filing_types.sql',
       '20260810b_eu_mdr_ivdr_outlines.sql',
       '20261018_filing_class_rule_packs.sql',
+      '20261018c_filing_class_packs_review_corrections.sql',
     ]),
     setup: async d => {
       // The creator (20260528_phase9_document_schema) needs half the AnA schema
@@ -143,10 +144,11 @@ const CASES: ReplayCase[] = [
         )});`
       );
     },
-    // A Prior Approval Supplement: a filing document class 20261018 adds.
-    newestOnly: `INSERT INTO c2c_documents (doc_type) VALUES ('pas')`,
+    // An RMAT request: a filing document class 20261018c adds. Replaying
+    // 20261018 after it must not re-narrow the CHECK to 20261018's own list.
+    newestOnly: `INSERT INTO c2c_documents (doc_type) VALUES ('rmat')`,
     refused: `INSERT INTO c2c_documents (doc_type) VALUES ('not-a-filing')`,
-    count: `SELECT COUNT(*)::int AS n FROM c2c_documents WHERE doc_type = 'pas'`,
+    count: `SELECT COUNT(*)::int AS n FROM c2c_documents WHERE doc_type = 'rmat'`,
   },
   {
     name: 'submission_orchestrator_runs status (store port → e-sig gate port)',

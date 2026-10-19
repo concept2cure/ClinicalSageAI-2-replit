@@ -2735,6 +2735,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "FDA Guidance: CMC Postapproval Manufacturing Changes To Be Documented in Annual Reports (Mar 2014)",
       "ICH Q12: Technical and Regulatory Considerations for Pharmaceutical Product Lifecycle Management",
       "ICH Q8(R2)/Q9(R1)/Q10/Q11",
+      "FD&C Act sec. 505B (PREA: pediatric assessment, waiver or deferral for a supplement that triggers it)",
       "FD&C Act sec. 736 (PDUFA fees; no supplement fee since PDUFA VI, FY2018)"
     ],
     "components": [
@@ -2830,6 +2831,21 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Financial certification or disclosure (Form FDA 3454/3455) for the clinical studies relied on"
         ],
         "generationPrompt": "Outline the clinical and nonclinical data section of an efficacy Prior Approval Supplement for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}. Name the efficacy change, the Module 2.5, 2.7 and 5.3 sections it updates, and map each proposed labeling change to the study that supports it. Do not fabricate study results; use bracketed placeholders for study identifiers, populations and outcomes."
+      },
+      {
+        "code": "PAS-PEDIATRIC",
+        "title": "Pediatric Assessment, or Waiver or Deferral Request (PREA)",
+        "required": false,
+        "contentType": "mixed",
+        "guidance": "FD&C Act 505B (PREA): a supplement for a new indication, new dosage form, new dosing regimen, new route of administration or new active ingredient contains a pediatric assessment, unless the requirement is waived or deferred, with reference to the agreed initial pediatric study plan (505B(e)). Not part of a CMC-only supplement. Added 2026-10-18 (review finding): v1.1's efficacy supplement had no PREA part.",
+        "authoringGuidance": "Include this component when the supplement adds a new indication, dosage form, dosing regimen, route of administration or active ingredient. State whether the pediatric assessment is provided, deferred or waived, and for which age groups; for a deferral, give the justification and the timeline, and for a waiver, the statutory ground. Reference the agreed initial pediatric study plan and any amendments to it. An orphan-designated indication is exempt from PREA; say so where it applies. Do not assert an agreed iPSP, a waiver or a deferral the material provided does not establish.",
+        "keyContentElements": [
+          "Whether the supplement triggers PREA (new indication, dosage form, dosing regimen, route or active ingredient)",
+          "The pediatric assessment, or the deferral request with justification and timeline, or the waiver request with its ground, by age group",
+          "Reference to the agreed initial pediatric study plan (505B(e)) and its amendments",
+          "The orphan-designation exemption, where it applies"
+        ],
+        "generationPrompt": "Outline the PREA section of an efficacy Prior Approval Supplement for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: whether PREA applies, and the pediatric assessment, deferral or waiver by age group with reference to the agreed iPSP. Use bracketed placeholders; do not assert an agreed plan, waiver or deferral the material does not establish."
       },
       {
         "code": "PAS-ENV",

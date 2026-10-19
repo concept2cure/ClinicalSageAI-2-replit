@@ -48,7 +48,7 @@ import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
 import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
 import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type DocumentTemplateStructure, type TemplateSection } from '../market-specs/document-template-library.js';
-import { lifecycleOutlineParts, lifecycleRecordOutlineFor } from '../market-specs/lifecycle-record-outlines.js';
+import { lifecycleOutlineParts, lifecycleRecordOutlineFor, type LifecycleOutlinePart } from '../market-specs/lifecycle-record-outlines.js';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
 import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
 import { ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
@@ -384,12 +384,24 @@ function componentRequirements(entry: RegulatoryApplicationType, sectionType: st
   };
 }
 
-/** A CSR section by its E3 number (alone or with its title) or its E3 title: the E3 brief, or a named miss. */
+/**
+ * A CSR section by its E3 number (alone, or with its own E3 title) or its E3
+ * title: the E3 brief, or a named miss. "12-Week Efficacy Results" is a title,
+ * not §12; a title E3 holds twice is listed, never resolved to the first
+ * (review findings, 2026-10-18).
+ */
 function csrRequirements(requested: string): DraftingRequirements {
-  const lead = /^(\d+(?:\.\d+)*)\b/.exec(requested.trim())?.[1];
-  const byTitle = ICH_E3_GUIDANCE.find((s) => normTitle(s.title) === normTitle(requested));
-  const number = lead ?? byTitle?.number;
-  const answer = number ? resolveRequirements({ document: 'csr', section: number }) : null;
+  const m = /^(\d+(?:\.\d+)*)(?:\s+(.+))?$/.exec(requested.trim());
+  const byNumber = m ? ICH_E3_GUIDANCE.find((s) => s.number === m[1]) : undefined;
+  const numbered = byNumber && (!m?.[2] || normTitle(m[2]) === normTitle(byNumber.title)) ? byNumber : undefined;
+  const titled = numbered ? [numbered] : ICH_E3_GUIDANCE.filter((s) => normTitle(s.title) === normTitle(m?.[2] ?? requested));
+  if (titled.length > 1) {
+    return {
+      requirements: `SECTION REQUIREMENTS: ICH E3 holds "${requested.trim()}" at ${titled.map((s) => s.number).join(' and ')}. Ask which section is meant; do not merge their requirements or pick one from memory.`,
+      requirementsSource: 'record:outline:csr-e3:candidates',
+    };
+  }
+  const answer = titled[0] ? resolveRequirements({ document: 'csr', section: titled[0].number }) : null;
   if (!answer || answer.kind !== 'answer') {
     return {
       requirements: `SECTION REQUIREMENTS: "${requested.trim()}" is not an ICH E3 heading the platform holds; do not supply its requirements from memory.`,
@@ -398,7 +410,7 @@ function csrRequirements(requested: string): DraftingRequirements {
   }
   return {
     requirements: `SECTION REQUIREMENTS (from the platform's ICH E3 record — draft to these; do not add requirements from memory):\n${answer.requirements}`,
-    requirementsSource: `record:outline:csr-e3:${number}:${answer.match}`,
+    requirementsSource: `record:outline:csr-e3:${titled[0].number}:${answer.match}`,
   };
 }
 
@@ -558,13 +570,29 @@ export function resolveDraftingRequirements(
   }
   const norm = (s: string) => s.trim().toLowerCase();
   const target = norm(sectionType);
-  const matchRow = (s: BlueprintRow) =>
-    norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target;
+  // A row a correction retitled still answers to its former title, so a
+  // document bound to the earlier outline resolves (2026-10-18).
+  const matchRow = (s: BlueprintRow) => norm(s.code) === target ||
+    [s.title, ...(s.formerTitles ?? [])].some((t) => norm(t) === target || norm(`${s.code} ${t}`) === target);
 
   if (entry.id === 'US_IND_SR') return indSafetyRequirements(sectionType, blueprint, matchRow);
+  // A lifecycle-record outline answers what it holds; anything else goes the
+  // way it went before that outline existed (a document or project section
+  // bound to the earlier blueprint), and only a miss there too is named
+  // (review findings, 2026-10-18: a final miss here refused Module 1 codes,
+  // legacy blueprint codes and bootstrapped project sections).
   const lifecycle = lifecycleOutlineRequirements(entry, sectionType);
   if (lifecycle) return lifecycle;
+  const answered = blueprintRequirements(entry, blueprint, sectionType, matchRow);
+  const outline = answered.requirements ? undefined : lifecycleRecordOutlineFor(entry.id);
+  return outline ? lifecycleOutlineMiss(outline, sectionType) : answered;
+}
 
+/** The blueprint or CTD-record answer for a section, as resolveDraftingRequirements gave it before the lifecycle outlines. */
+function blueprintRequirements(
+  entry: RegulatoryApplicationType, blueprint: SectionBlueprint, sectionType: string, matchRow: (s: BlueprintRow) => boolean,
+): DraftingRequirements {
+  const none: DraftingRequirements = { requirements: null, requirementsSource: 'none' };
   if (!isCtdFramework(entry, blueprint)) {
     const component = componentRequirements(entry, sectionType);
     if (component) return component;
@@ -606,7 +634,16 @@ function lifecycleOutlineRequirements(entry: RegulatoryApplicationType, requeste
   const flat = flattenSections([...(outline.frontMatter ?? []), ...outline.sections]);
   const section = flat.find((s) => [s.number, s.heading, `${s.number} ${s.heading}`].some((v) => normTitle(v) === target));
   const record = outline.outlineSource && 'record' in outline.outlineSource ? outline.outlineSource.record : outline.id;
-  if (!section) return lifecycleOutlineMiss(entry, outline, flat, requested, record);
+  if (!section) {
+    // A CTD code the outline holds, asked with any title ("3.2.P Drug Product
+    // (name, manufacturer)"), or a code below one it holds (3.2.P.5.1 under a
+    // supplement's 3.2.P) is the content the change updates: the CTD record
+    // answers it (review findings, 2026-10-18).
+    const lead = leadingSectionCode(requested);
+    const code = lead ? normalizeCtdCode(lead.code) : null;
+    const ctd = flat.map((s) => normalizeCtdCode(s.number)).filter((c): c is string => !!c);
+    return code && ctd.some((c) => code === c || code.startsWith(`${c}.`)) ? recordRequirements(entry, code, true) : null;
+  }
   if (normalizeCtdCode(section.number)) return recordRequirements(entry, section.number, true);
   if (section.subsections?.length) {
     return {
@@ -625,19 +662,9 @@ function flattenSections(list: TemplateSection[], out: TemplateSection[] = []): 
   return out;
 }
 
-/**
- * A request the lifecycle outline does not name. A CTD section below one the
- * outline holds (3.2.P.5.1 under a supplement's 3.2.P, 5.3.5.1 under its 5.3)
- * is the content the change actually updates: the CTD record answers it
- * (review critic, 2026-10-18). Anything else is named, never left to memory.
- */
-function lifecycleOutlineMiss(
-  entry: RegulatoryApplicationType, outline: DocumentTemplateStructure, flat: TemplateSection[], requested: string, record: string,
-): DraftingRequirements {
-  const lead = leadingSectionCode(requested);
-  const code = lead ? normalizeCtdCode(lead.code) : null;
-  const ctd = flat.map((s) => normalizeCtdCode(s.number)).filter((c): c is string => !!c);
-  if (code && ctd.some((c) => code.startsWith(`${c}.`))) return recordRequirements(entry, code, true);
+/** A request neither the lifecycle outline nor the earlier blueprint holds: named, never left to memory. */
+function lifecycleOutlineMiss(outline: DocumentTemplateStructure, requested: string): DraftingRequirements {
+  const record = outline.outlineSource && 'record' in outline.outlineSource ? outline.outlineSource.record : outline.id;
   return {
     requirements:
       `SECTION REQUIREMENTS: "${requested.trim()}" is not a section of the ${outline.title} outline (${record}). ` +
@@ -660,22 +687,34 @@ function lifecyclePartBrief(
   const first = all.find((p) => p.code === section.number);
   const parts = first ? all.filter((p) => p === first || p.title === first.title) : [];
   const shared = parts.length > 1;
-  const briefs = shared
-    ? parts.flatMap((p) => [`- For a ${p.variant}: ${p.guidance}`, ...p.keyContentElements.map((k) => `  - Key content (${p.variant}): ${k}`)])
-    : [`- ${first?.guidance ?? section.purpose}`, ...(first?.keyContentElements ?? []).map((k) => `- Key content: ${k}`)];
+  const source = shared || !first ? record : first.record;
   const lines = [
-    `SECTION AUTHORING GUIDANCE (the platform's ${outline.title} record — draft to it; do not add requirements from memory):`,
+    `SECTION AUTHORING GUIDANCE (the platform's lifecycle record ${source}, served as the ${outline.title} outline — draft to it; do not add requirements from memory):`,
+    ...blaSupplementLine(entry),
     `- Section: ${section.number} — ${section.heading}`,
     `- ${section.required ? 'Required in this outline' : 'Conditional in this outline: applicability is unresolved, not waived'}`,
     ...(shared ? [`- Which variant applies is the filer's classification of the change (${parts.map((p) => p.variant).join(' or ')}); draft to that variant's brief.`] : []),
-    ...briefs,
+    ...partBriefs(parts, section),
     `- Recorded basis: ${outline.regulatoryBasis}`,
     ...(outline.outlineLimitations ?? []).map((l) => `- Scope limitation: ${l}`),
   ];
-  return {
-    requirements: lines.join('\n'),
-    requirementsSource: `record:lifecycle:${shared ? record : first?.record ?? record}:${section.number}`,
-  };
+  return { requirements: lines.join('\n'), requirementsSource: `record:lifecycle:${source}:${section.number}` };
+}
+
+/** The sBLA's outline is the NDA PAS record: say which BLA rule it cites (review finding, 2026-10-18). */
+function blaSupplementLine(entry: RegulatoryApplicationType): string[] {
+  return entry.id === 'US_BLA_SUPP'
+    ? ['- For a BLA supplement: cite 21 CFR 601.12(b) (a manufacturing change) or 601.12(f)(1) (a labeling change) wherever this NDA record cites 21 CFR 314.70(b); the parts are the same.']
+    : [];
+}
+
+/** Each record's brief for a part, named by variant when two records share it; the outline's own purpose when no record part matches. */
+function partBriefs(parts: LifecycleOutlinePart[], section: TemplateSection): string[] {
+  if (parts.length > 1) {
+    return parts.flatMap((p) => [`- For a ${p.variant}: ${p.guidance}`, ...p.keyContentElements.map((k) => `  - Key content (${p.variant}): ${k}`)]);
+  }
+  const [part] = parts;
+  return [`- ${part?.guidance ?? section.purpose}`, ...(part?.keyContentElements ?? []).map((k) => `- Key content: ${k}`)];
 }
 
 /** Safety report subtype and sponsor status decide delivery; a narrative is

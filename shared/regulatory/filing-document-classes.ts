@@ -77,7 +77,13 @@ export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   // (filing-catalog.ts PATHWAY_BY_ID us_pre_ind → 'ind').
   { docType: 'briefing', packAgency: 'fda', label: 'FDA formal meeting package', registryIds: ['US_TYPE_A_MEETING', 'US_TYPE_B_MEETING', 'US_TYPE_C_MEETING'] },
   { docType: 'orphan', packAgency: 'fda', label: 'orphan drug designation request', registryIds: ['US_ORPHAN'] },
-  { docType: 'designation', packAgency: 'fda', label: 'expedited program designation request', registryIds: ['US_BTD', 'US_FAST_TRACK', 'US_RMAT'] },
+  // One class per FD&C Act 506 designation, so each request's own statutory
+  // criterion is required of it (review finding, 2026-10-18). 'designation'
+  // keeps its doc_type for the Breakthrough request; its v1.0 pack served all
+  // three, and a document bound to it keeps that outline.
+  { docType: 'designation', packAgency: 'fda', label: 'breakthrough therapy designation request', registryIds: ['US_BTD'] },
+  { docType: 'fast_track', packAgency: 'fda', label: 'fast track designation request', registryIds: ['US_FAST_TRACK'] },
+  { docType: 'rmat', packAgency: 'fda', label: 'RMAT designation request', registryIds: ['US_RMAT'] },
   { docType: 'psp', packAgency: 'fda', label: 'pediatric study plan', registryIds: ['US_PSP'] },
   // ── Harmonised clinical and safety documents (ICH) ──
   { docType: 'csr', packAgency: 'ich', label: 'clinical study report', registryIds: ['ICH_CSR'] },
@@ -116,7 +122,7 @@ export function productTypeFixedByFiling(registryId: string | null | undefined):
 /** A class or application type as a sentence names it: "An IND safety report", "A PAS"; mid-sentence, "an IND safety report". */
 export function filingTypeInSentence(programType: string, midSentence = false): string {
   const label = filingDocumentClassOf(programType)?.label ?? String(programType).toUpperCase().replace(/_/g, ' ');
-  const word = /^[aeiou]/i.test(label) || /^(FDA|NDA|NDS|MAA|IND|ANDA|EU|RMP|HDE|IDE|IVD|MDR|IVDR)\b/.test(label) ? 'An' : 'A';
+  const word = /^[aeiou]/i.test(label) || /^(FDA|NDA|NDS|MAA|IND|ANDA|EU|RMP|RMAT|HDE|IDE|IVD|MDR|IVDR)\b/.test(label) ? 'An' : 'A';
   return `${midSentence ? word.toLowerCase() : word} ${label}`;
 }
 
