@@ -1,0 +1,470 @@
+# Gates, 2026-10-19T04:01:13Z. Tree: HEAD ae287394 plus this slice's uncommitted change.
+# Each gate's last 40 lines and its exit code. Summary at the end.
+
+## A. Every npm script .husky/pre-push runs, in its order
+===== npm run ci:ectd-stubs
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+exit 0 (npm run ci:ectd-stubs)
+===== npm run ci:risk-codes
+OK: Generated risk code types are up to date.
+exit 0 (npm run ci:risk-codes)
+===== npm run ci:migration-set-order
+[ci:migration-set-order] OK — 411 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit 0 (npm run ci:migration-set-order)
+===== npm run ci:migration-guard-order:selftest
+[ci:migration-guard-order] selftest OK — reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it.
+exit 0 (npm run ci:migration-guard-order:selftest)
+===== npm run ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+exit 0 (npm run ci:migration-guard-order)
+===== npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 411 migrations, 38 DROP(s), none re-created by the set; 5 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit 0 (npm run ci:migration-drop-safety)
+===== npm run ci:migration-drop-safety:selftest
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+exit 0 (npm run ci:migration-drop-safety:selftest)
+===== npm run ci:class-vocabulary
+[ci:class-vocabulary] OK — 5228 file(s) scanned, no restated class vocabulary.
+exit 0 (npm run ci:class-vocabulary)
+===== npm run ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 106 baselined file(s) on no deploy path, none new.
+exit 0 (npm run ci:migration-deploy-path)
+===== npm run ci:column-reachability
+[ci:column-reachability] OK — 3154 column add(s) on no applier, 0 queried by the server.
+exit 0 (npm run ci:column-reachability)
+===== npm run ci:runtime-ddl
+[ci:runtime-ddl] 83 DDL statement(s) in 12 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+exit 0 (npm run ci:runtime-ddl)
+===== npm run ci:json-operator-types
+[ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3287 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+exit 0 (npm run ci:json-operator-types)
+===== npm run db:sync-manifest:check
+Manifest is in sync.
+exit 0 (npm run db:sync-manifest:check)
+===== npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 101 site(s), all baselined; 26 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 26 fix(es).
+exit 0 (npm run ci:drizzle-tenant-scope)
+===== npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0 (npm run ci:undefined-css-classes)
+===== npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+exit 0 (npm run ci:unauthenticated-fetch)
+===== npm run ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 4 baselined occurrence(s) remain in 1 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+exit 0 (npm run ci:session-scoped-rls-bypass)
+===== npm run ci:sql-interpolation
+[ci:sql-interpolation] 16 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:46:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:102:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:561:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:201:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:452:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:452:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1078 baselined interpolation(s) in 226 file(s); the baseline may only shrink.
+exit 0 (npm run ci:sql-interpolation)
+===== node scripts/ops/ledger-check.mjs
+
+ledger-check — docs/GA_COMPLETION_LEDGER_2026-08.md
+
+  rows parsed:       202
+  pending targets:   2
+    · L2 → docs/ANA_PERFORMANCE_ASSESSMENT_2026-08.md (not created yet)
+    · L223 → server/routes/haq-manager.ts (not created yet)
+  failures:          0
+
+  Ledger is internally consistent.
+
+exit 0 (node scripts/ops/ledger-check.mjs)
+===== npm run check:catalog-copy
+[ci:catalog-copy] OK — 120 catalog description(s) across 3 migration(s) read as product copy.
+exit 0 (npm run check:catalog-copy)
+===== npm run ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit 0 (npm run ci:fixture-fallback)
+===== npm run ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit 0 (npm run ci:no-mock-in-prod-routes)
+===== npm run ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+exit 0 (npm run ci:fabricated-identity)
+===== npm run ci:program-ownership-single-source:selftest
+[self-test] OK — 10 copies found, 6 reads passed.
+exit 0 (npm run ci:program-ownership-single-source:selftest)
+===== npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+exit 0 (npm run ci:program-ownership-single-source)
+===== npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+exit 0 (npm run ci:discarded-audit-write)
+===== npm run ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+exit 0 (npm run ci:client-ip-single-source)
+===== npm run ci:filing-exit-agreement:selftest
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest.
+exit 0 (npm run ci:filing-exit-agreement:selftest)
+===== npm run ci:filing-exit-agreement
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 6 baselined site(s) in 3 file(s), exactly as baselined.
+exit 0 (npm run ci:filing-exit-agreement)
+===== npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit 0 (npm run ci:sign-ceremony)
+===== npm run ci:upload-guards
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+exit 0 (npm run ci:upload-guards)
+===== npm run ci:trivyignore-hygiene
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+exit 0 (npm run ci:trivyignore-hygiene)
+===== npm run audit:repo-health:ceiling
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 236   [reported, not gated]
+- files over byte threshold: 57
+- files over line threshold: 112
+
+✅ repo health strict gate passed.
+exit 0 (npm run audit:repo-health:ceiling)
+===== npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit 0 (npm run ci:server-error-leaks)
+===== npm run ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+exit 0 (npm run ci:untracked-imports)
+===== npm run ci:pushed-lint-errors
+[ci:pushed-lint-errors] no lintable files changed against origin/concept2cure-v2.
+exit 0 (npm run ci:pushed-lint-errors)
+===== npm run ci:pushed-lint-warnings
+[ci:eslint-warning-ratchet] --since ae2873948d6ebd8fc5a2b4db8dea7bed764824d8 (ae2873948) -- 22 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since ae2873948d6ebd8fc5a2b4db8dea7bed764824d8.
+exit 0 (npm run ci:pushed-lint-warnings)
+===== npm run ci:pushed-typecheck
+[ci:pushed-typecheck] skipped — none of the 0 file(s) changed against origin/concept2cure-v2 can change a type.
+exit 0 (npm run ci:pushed-typecheck)
+
+## B. The slice's extra gates
+===== npm run ci:purge-coverage
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+   records with explicit retention policy (regulated content can block erasure): 3
+     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+✅ purge-coverage: 604 org-keyed tables outside the purge reach (baseline 612, new 0, 8 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     commitment_milestones
+     csr_extraction_log
+     document_audit_log
+     mdx_notifications
+     qmp_audit_trail
+     regulatory_commitments
+exit 0 (npm run ci:purge-coverage)
+===== npm run ci:launch-scope
+[ci:launch-scope] 7 apps · 33 surfaces · 13 modules · 28 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit 0 (npm run ci:launch-scope)
+===== npm run ci:launch-scope-api
+ci:launch-scope-api: 416 API paths named by launch and shell screens; none refused. {"launch":365,"infrastructure":2,"never-gated":49}
+exit 0 (npm run ci:launch-scope-api)
+===== npm run check:microcopy
+[ci:microcopy] OK — scanned 594 customer-facing files, no exclamations or pictographs.
+exit 0 (npm run check:microcopy)
+===== npm run check:compliance-claims
+[ci:compliance-claims] OK — scanned 1529 customer-facing files, no unsupported claims.
+exit 0 (npm run check:compliance-claims)
+===== npm run ci:empty-state-honesty
+check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s).
+exit 0 (npm run ci:empty-state-honesty)
+===== npm run ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+exit 0 (npm run ci:internals-in-copy)
+===== npm run ci:check-chip-tones
+[chip-tones] OK — 170 literal tone use(s), all 28 resolve to a CSS rule.
+exit 0 (npm run ci:check-chip-tones)
+===== npm run ci:check-phantom-tokens
+[ci:phantom-tokens] 9 phantom token(s) across 55 site(s) (baseline 9).
+[ci:phantom-tokens] OK — no new phantom tokens.
+exit 0 (npm run ci:check-phantom-tokens)
+===== npm run ci:token-cascade
+  ok   client/src/concept2cure/mdx/app.css                                              73/73    
+  ok   client/src/concept2cure/mdx/drafter.css                                          31/31    
+  ok   client/src/concept2cure/mdx/files-tree.css                                       24/24    
+  ok   client/src/concept2cure/mdx/pathway-tabs.css                                     35/35    
+  ok   client/src/concept2cure/pdev/app.css                                             51/51    
+  ok   client/src/concept2cure/quality/app.css                                          38/38    
+  ok   client/src/concept2cure/v2/styles/admin-access.css                               38/38    
+  ok   client/src/concept2cure/v2/styles/ana-v2.css                                     26/26    
+  ok   client/src/concept2cure/v2/styles/app-v2.css                                     57/57    
+  ok   client/src/concept2cure/v2/styles/auth-entry.css                                 32/32    
+  ok   client/src/concept2cure/v2/styles/authoring-v2.css                               52/52    
+  ok   client/src/concept2cure/v2/styles/commcenter-v2.css                              27/27    
+  ok   client/src/concept2cure/v2/styles/company-documents.css                          12/12    
+  ok   client/src/concept2cure/v2/styles/coverage-v2.css                                42/42    
+  ok   client/src/concept2cure/v2/styles/device-v2.css                                  36/36    
+  ok   client/src/concept2cure/v2/styles/discovery-onboarding.css                       7/7      
+  ok   client/src/concept2cure/v2/styles/ectd-v2.css                                    34/34    
+  ok   client/src/concept2cure/v2/styles/insights-v2.css                                29/29    
+  ok   client/src/concept2cure/v2/styles/intelligence-v2.css                            29/29    
+  ok   client/src/concept2cure/v2/styles/journey-v2.css                                 39/39    
+  ok   client/src/concept2cure/v2/styles/licensing-access-requests.css                  7/7      
+  ok   client/src/concept2cure/v2/styles/licensing-enforcement.css                      7/7      
+  ok   client/src/concept2cure/v2/styles/licensing-history.css                          5/5      
+  ok   client/src/concept2cure/v2/styles/misc-surfaces-v2.css                           38/38    
+  ok   client/src/concept2cure/v2/styles/onboarding-review.css                          22/22    
+  ok   client/src/concept2cure/v2/styles/project-home-v2.css                            34/34    
+  ok   client/src/concept2cure/v2/styles/protocol-dev-editing.css                       17/17    
+  ok   client/src/concept2cure/v2/styles/pyramid-v2.css                                 33/33    
+  ok   client/src/concept2cure/v2/styles/rbm-v2.css                                     36/36    
+  ok   client/src/concept2cure/v2/styles/redline.css                                    3/3      
+  ok   client/src/concept2cure/v2/styles/research-v2.css                                44/44    
+  ok   client/src/concept2cure/v2/styles/review-decision.css                            7/7      
+  ok   client/src/concept2cure/v2/styles/rich-section-editor.css                        18/18    
+  ok   client/src/concept2cure/v2/styles/submission-v2.css                              13/13    
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css                                41/41    
+  ok   client/src/concept2cure/v2/styles/translation-v2.css                             39/39    
+  ok   client/src/concept2cure/v2/styles/vault-picker.css                               7/7      
+  ok   client/src/styles/projects-prototype.css                                         24/24    
+
+[token-cascade] PASS — all 43 stylesheets resolve cleanly.
+exit 0 (npm run ci:token-cascade)
+===== npm run ci:validation-traceability
+✓ validation traceability: every file cited by 7 URS document(s) resolves; every OQ step carries its protocol's kind
+exit 0 (npm run ci:validation-traceability)
+===== npm run ci:migration-prefix-collisions
+[ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+exit 0 (npm run ci:migration-prefix-collisions)
+===== npm run ci:sql-interpolation:selftest
+  ✓ RED — a new route interpolates a request value into SQL text
+  ✓ RED — sql.raw in a new service
+  ✓ RED — a baselined file gains one
+  ✓ RED — a typed .query<T>( call is counted
+  ✓ RED — a file fixed but its baseline not lowered
+  ✓ quiet — bind parameters, drizzle sql`` (which parameterizes), and the same text in a comment
+  ✓ quiet — test files and __tests__ are not scanned; code outside server/ is not scanned
+  ✓ quiet — today's shape: a baselined file at its exact count
+  ✓ quiet — all three exact canonical predicates in the reviewed source caller
+  ✓ quiet — the second reviewed caller uses the same canonical binding
+  ✓ RED — a same-named helper imported from another module receives no proof
+  ✓ RED — a request value beside the approved helper remains counted
+  ✓ RED — a request-controlled helper argument receives no proof
+  ✓ RED — a SQL-bearing literal alias receives no proof
+  ✓ RED — a parameter shadowing the canonical import receives no proof
+  ✓ RED — a block-local replacement of the imported name receives no proof
+  ✓ RED — a destructured parameter replacing the helper receives no proof
+  ✓ RED — a property call is not the canonical imported binding
+  ✓ RED — wrapping the helper result in another call receives no proof
+  ✓ RED — another caller does not inherit the reviewed caller allowance
+  ✓ RED — a type-only import cannot prove a runtime builder
+  ✓ RED — sql.raw still counts even when passed a canonical predicate
+  ✓ RED — conditional SQL strings are not approved canonical calls
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+  ! KNOWN GAP 2 — string concatenation
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+
+[ci:sql-interpolation:selftest] 2 known gap(s), NOT counted below.
+[ci:sql-interpolation:selftest] 23 passed — the gate fails on what it exists to catch.
+exit 0 (npm run ci:sql-interpolation:selftest)
+
+## C. The push-range gates over this uncommitted change
+# ci:untracked-imports, ci:pushed-lint-errors, ci:pushed-lint-warnings and ci:pushed-typecheck read the commits a
+# push carries (lib/push-range.mjs: base...HEAD). Nothing here is committed, so in A they check nothing. Here each
+# runs over the change as it will be committed: a throwaway index (GIT_INDEX_FILE, a copy of .git/index) with every
+# file of this slice added. The repository's own index, HEAD and refs are not touched.
+# files the throwaway index adds or changes against HEAD: 66
+===== untracked imports, every source file, real index (baseline)
+
+[ci:untracked-imports] FAIL — 9 import(s) resolve to a file that is on disk but NOT in git:
+  client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx:49  →  ./CommitmentFulfilment
+  client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx:50  →  ./CommitmentRow
+  client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx:16  →  ../styles/vault-picker.css
+  server/__tests__/security/auth-invalid-expired-jwt.test.ts:22  →  ../../middleware/
+  server/routes/c2c/agency-responses.ts:89  →  ../commitment-fulfil-route
+  server/routes/ha-interactions.ts:43  →  ./commitment-fulfil-route
+  server/services/part11/governed-target-binders.ts:23  →  ../ha-interactions/fulfilment-record.js
+  server/services/submission-service/submission-service.ts:52  →  ./filed-dispatch
+  server/services/vault/vault-relationships.ts:30  →  ./vault-version-lock
+
+  This builds for you and for nobody else. The usual cause is a .gitignore
+  pattern matching a source directory — check `git check-ignore -v <path>`,
+  and anchor the pattern with a leading slash if it names a root directory.
+
+  Also 20 import(s) resolve to nothing at all:
+  db/migrations/_consolidated/0001_tenant_isolation.ts:6  →  ../server/db/tenantRls
+  db/migrations/_consolidated/0001_tenant_isolation.ts:72  →  ../server/db
+  db/migrations/_consolidated/0002_add_org_id_column.ts:158  →  ../server/db
+  db/migrations/_consolidated/0002_add_organization_id.ts:113  →  ../server/db
+  db/migrations/_consolidated/0003_setup_user_roles.ts:144  →  ../server/db
+  db/migrations/_consolidated/0004_add_tenant_indexes.ts:148  →  ../server/db
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff.ts:1  →  ./old.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff.ts:2  →  ./new.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff2.ts:1  →  ./old.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff2.ts:2  →  ./new.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff3.ts:1  →  ./old.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff3.ts:2  →  ./new.ts
+  scripts/backfill-document-aliases.mjs:31  →  ../server/db/index.ts
+  scripts/create_cer_approvals_table.js:7  →  ../server/db/index.js
+  scripts/optimized-start.js:5  →  ./optimize-performance.js
+  scripts/run_migrations.js:6  →  ../server/migrations/runMigrations
+  scripts/setup-protection.js:17  →  ./ai-agent-protection.js
+  scripts/setup-protection.js:100  →  ./development-best-practices-audit.js
+  server/scripts/verify-api-routes.js:29  →  ../routes/advisor.js
+  tests/unit/validate-ich-structure.js:4  →  ../server/utils/validateZip.js
+exit 1 (untracked imports, every source file, real index (baseline))
+===== untracked imports, every source file, with this slice added
+
+[ci:untracked-imports] FAIL — 1 import(s) resolve to a file that is on disk but NOT in git:
+  server/__tests__/security/auth-invalid-expired-jwt.test.ts:22  →  ../../middleware/
+
+  This builds for you and for nobody else. The usual cause is a .gitignore
+  pattern matching a source directory — check `git check-ignore -v <path>`,
+  and anchor the pattern with a leading slash if it names a root directory.
+
+  Also 20 import(s) resolve to nothing at all:
+  db/migrations/_consolidated/0001_tenant_isolation.ts:6  →  ../server/db/tenantRls
+  db/migrations/_consolidated/0001_tenant_isolation.ts:72  →  ../server/db
+  db/migrations/_consolidated/0002_add_org_id_column.ts:158  →  ../server/db
+  db/migrations/_consolidated/0002_add_organization_id.ts:113  →  ../server/db
+  db/migrations/_consolidated/0003_setup_user_roles.ts:144  →  ../server/db
+  db/migrations/_consolidated/0004_add_tenant_indexes.ts:148  →  ../server/db
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff.ts:1  →  ./old.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff.ts:2  →  ./new.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff2.ts:1  →  ./old.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff2.ts:2  →  ./new.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff3.ts:1  →  ./old.ts
+  docs/evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/equivalence/diff3.ts:2  →  ./new.ts
+  scripts/backfill-document-aliases.mjs:31  →  ../server/db/index.ts
+  scripts/create_cer_approvals_table.js:7  →  ../server/db/index.js
+  scripts/optimized-start.js:5  →  ./optimize-performance.js
+  scripts/run_migrations.js:6  →  ../server/migrations/runMigrations
+  scripts/setup-protection.js:17  →  ./ai-agent-protection.js
+  scripts/setup-protection.js:100  →  ./development-best-practices-audit.js
+  server/scripts/verify-api-routes.js:29  →  ../routes/advisor.js
+  tests/unit/validate-ich-structure.js:4  →  ../server/utils/validateZip.js
+exit 1 (untracked imports, every source file, with this slice added)
+===== ESLint warning ratchet --since HEAD --gate, with this slice added (new files count from zero)
+[ci:eslint-warning-ratchet] --since HEAD (ae2873948) -- 36 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+exit 0 (ESLint warning ratchet --since HEAD --gate, with this slice added (new files count from zero))
+===== ESLint errors on every changed and new source file (--quiet)
+exit 0 (ESLint errors on every changed and new source file (--quiet))
+
+# Reading section C.
+# - The two untracked-imports runs use --all: every tracked source file in the repository, not only this change's.
+#   The pre-push gate checks only the files a push changes. --all fails on 21 findings that predate this change
+#   (auth-invalid-expired-jwt.test.ts importing a directory, and 20 imports in legacy scripts, migrations/_consolidated
+#   and an older evidence folder that resolve to nothing). Those 21 are identical in both runs.
+# - The baseline run, against the real index, also lists 8 imports of this slice's new, still-untracked files.
+#   That is this gate catching the case it exists for. With the slice added to the throwaway index, all 8 are gone
+#   and nothing new appears. So the commit must add every new file listed by `git status`, vault-picker.css included.
+# - Ratchet: 36 lintable files changed, new files counted from zero warnings; no file's warning count grew.
+# - ESLint --quiet over the same files: no errors.
+
+## Summary (exit code, gate)
+0  npm run ci:ectd-stubs
+0  npm run ci:risk-codes
+0  npm run ci:migration-set-order
+0  npm run ci:migration-guard-order:selftest
+0  npm run ci:migration-guard-order
+0  npm run ci:migration-drop-safety
+0  npm run ci:migration-drop-safety:selftest
+0  npm run ci:class-vocabulary
+0  npm run ci:migration-deploy-path
+0  npm run ci:column-reachability
+0  npm run ci:runtime-ddl
+0  npm run ci:json-operator-types
+0  npm run db:sync-manifest:check
+0  npm run ci:drizzle-tenant-scope
+0  npm run ci:undefined-css-classes
+0  npm run ci:unauthenticated-fetch
+0  npm run ci:session-scoped-rls-bypass
+0  npm run ci:sql-interpolation
+0  node scripts/ops/ledger-check.mjs
+0  npm run check:catalog-copy
+0  npm run ci:fixture-fallback
+0  npm run ci:no-mock-in-prod-routes
+0  npm run ci:fabricated-identity
+0  npm run ci:program-ownership-single-source:selftest
+0  npm run ci:program-ownership-single-source
+0  npm run ci:discarded-audit-write
+0  npm run ci:client-ip-single-source
+0  npm run ci:filing-exit-agreement:selftest
+0  npm run ci:filing-exit-agreement
+0  npm run ci:sign-ceremony
+0  npm run ci:upload-guards
+0  npm run ci:trivyignore-hygiene
+0  npm run audit:repo-health:ceiling
+0  npm run ci:server-error-leaks
+0  npm run ci:untracked-imports
+0  npm run ci:pushed-lint-errors
+0  npm run ci:pushed-lint-warnings
+0  npm run ci:pushed-typecheck
+0  npm run ci:purge-coverage
+0  npm run ci:launch-scope
+0  npm run ci:launch-scope-api
+0  npm run check:microcopy
+0  npm run check:compliance-claims
+0  npm run ci:empty-state-honesty
+0  npm run ci:internals-in-copy
+0  npm run ci:check-chip-tones
+0  npm run ci:check-phantom-tokens
+0  npm run ci:token-cascade
+0  npm run ci:validation-traceability
+0  npm run ci:migration-prefix-collisions
+0  npm run ci:sql-interpolation:selftest
+1  untracked imports, every source file, real index (baseline)
+1  untracked imports, every source file, with this slice added
+0  ESLint warning ratchet --since HEAD --gate, with this slice added (new files count from zero)
+0  ESLint errors on every changed and new source file (--quiet)

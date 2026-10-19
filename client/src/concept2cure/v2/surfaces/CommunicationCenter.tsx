@@ -14,6 +14,9 @@
  *                   the organisation's own) and, with a project open,
  *                   GET /api/concept2cure/projects/:pid/commitments (those made
  *                   in answers to its agency letters, behind project admission).
+ *                   A row is CommitmentRow.tsx, its fulfilment dialog CommitmentFulfilment.tsx:
+ *                   a PMR, PMC or REMS is fulfilled by a Part 11 signature that
+ *                   names what met it (P-40, 2026-10-19).
  *   Authority     → GET /api/concept2cure/projects/:pid/authority-profiles
  *   profiles        REAL (server routes/concept2cure.ts → concept2cure_authority_profiles).
  *   FDA loop      → GET /api/concept2cure/projects/:pid/submission-center/items
@@ -43,6 +46,8 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { ApiRequestError, apiRequest } from '@/lib/queryClient';
+import { CommitmentFulfilDialog } from './CommitmentFulfilment';
+import { CommitmentRowView, isCommitmentsPayload, type CommitmentRow, type CommitmentsPayload } from './CommitmentRow';
 
 /* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
@@ -66,42 +71,9 @@ interface InteractionRow {
   held_date: string | null;
 }
 
-/**
- * GET /api/ha-interactions/commitments and GET
- * /api/concept2cure/projects/:pid/commitments return { commitments, summary }.
- * effectiveStatus is derived server-side; the rest are snake_case + nullable.
- */
-interface CommitmentRow {
-  id: number;
-  commitment_type: string;
-  description: string;
-  regulatory_basis: string | null;
-  /** yyyy-mm-dd, as the register stores it. */
-  due_date: string | null;
-  status: string;
-  fulfilled_date: string | null;
-  /** open | in_progress | submitted | overdue (past due, not met) | fulfilled | waived | released. */
-  effectiveStatus: string;
-  /** Set when the commitment was made in an answer to an agency letter (2026-10-18). */
-  project_id?: number | null;
-  source_communication_event_id?: string | null;
-  source_question_id?: number | null;
-  /** The letter and question it came from, read by the server (project door only). */
-  source_communication_type?: string | null;
-  source_question_ref?: string | null;
-}
-
-/** A commitment's chip tone. Overdue is the one warning sign; an open commitment is not an error. */
-export function commitmentTone(effectiveStatus: string): 'ok' | 'err' | 'idle' {
-  if (effectiveStatus === 'overdue') return 'err';
-  if (effectiveStatus === 'fulfilled' || effectiveStatus === 'waived' || effectiveStatus === 'released') return 'ok';
-  return 'idle';
-}
-
-const COMMITMENT_TERMINAL = new Set(['fulfilled', 'waived', 'released']);
-interface CommitmentsPayload {
-  commitments: CommitmentRow[];
-}
+/* The commitment row, its shape guard and its chip tone live in
+   CommitmentRow.tsx, its fulfilment dialog in CommitmentFulfilment.tsx
+   (2026-10-19). */
 
 /**
  * GET authority-profiles row (concept2cure_authority_profiles), aligned to
@@ -236,37 +208,19 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
      in an answer to a project's agency letter belongs to that project and is
      read, and fulfilled, behind its project admission. Either read failing
      shows the error, never a shorter list. */
-  const orgCommitState = useLiveData<CommitmentsPayload>('/api/ha-interactions/commitments', [commitVersion]);
+  const orgCommitState = useLiveData<CommitmentsPayload>('/api/ha-interactions/commitments', [commitVersion], isCommitmentsPayload);
   const projectCommitPath = projectId ? `/api/concept2cure/projects/${encodeURIComponent(projectId)}/commitments` : null;
-  const projectCommitState = useLiveData<CommitmentsPayload>(projectCommitPath, [projectCommitPath, commitVersion]);
+  const projectCommitState = useLiveData<CommitmentsPayload>(projectCommitPath, [projectCommitPath, commitVersion], isCommitmentsPayload);
   const commitState = {
     loading: orgCommitState.loading || (projectCommitPath !== null && projectCommitState.loading),
     error: orgCommitState.error || (projectCommitPath !== null ? projectCommitState.error : undefined),
   };
-  const [fulfilling, setFulfilling] = React.useState<CommitmentRow | null>(null);
+  /* The commitment being recorded as fulfilled, and its door: a project's own
+     commitment through the project's routes, the organisation's through
+     /api/ha-interactions. What it takes (a signature naming what met it, or a
+     reason) is the server's rule, read by the dialog. */
+  const [fulfilling, setFulfilling] = React.useState<{ row: CommitmentRow; door: 'org' | 'project' } | null>(null);
   const [recordingCommitment, setRecordingCommitment] = React.useState(false);
-  /* The one commitments register (C2C-03). Fulfilling one states that it was
-     met, on a date that has happened, with a reason; the server refuses a
-     viewer and a future date. A commitment made in an answer is recorded from
-     that answer (AgencyResponses), so it names its letter and question. */
-  const fulfilCommitment = async (v: Record<string, string>) => {
-    if (!fulfilling) return;
-    try {
-      const door =
-        fulfilling.project_id != null && projectId
-          ? `/api/concept2cure/projects/${encodeURIComponent(projectId)}/commitments/${fulfilling.id}/fulfill`
-          : `/api/ha-interactions/commitments/${fulfilling.id}/fulfill`;
-      await apiRequest('POST', door, {
-        reason: v.reason,
-        ...(v.fulfilledDate ? { fulfilledDate: v.fulfilledDate } : {}),
-      });
-      fire('Commitment recorded as fulfilled, with an audit entry.');
-      setFulfilling(null);
-      setCommitVersion((n) => n + 1);
-    } catch (e) {
-      fire('Not recorded as fulfilled: ' + (e instanceof ApiRequestError && e.message ? e.message : 'the service could not be reached') + '. Nothing was stored.', 'error');
-    }
-  };
   const recordCommitment = async (v: Record<string, string>) => {
     try {
       await apiRequest('POST', '/api/ha-interactions/commitments', {
@@ -377,6 +331,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               id: c.id, type: c.commitment_type, description: c.description,
               regulatoryBasis: c.regulatory_basis, due: c.due_date,
               status: c.status, effectiveStatus: c.effectiveStatus, fulfilled: c.fulfilled_date,
+              // What met it, as the reader may see it, and the server's verdict on its signature.
+              fulfilment: c.status === 'fulfilled' ? c.fulfilment.state : null,
+              metBy: [
+                c.fulfilment.sequence?.readable ? `sequence ${c.fulfilment.sequence.sequenceNumber}` : c.fulfilment.sequence ? 'a sequence in a project the reader cannot open' : null,
+                c.fulfilment.vaultVersion?.readable ? `${c.fulfilment.vaultVersion.title ?? 'a Vault document'} v${c.fulfilment.vaultVersion.version ?? '?'}` : c.fulfilment.vaultVersion ? 'a Vault document in a project the reader cannot open' : null,
+              ].filter(Boolean),
             })),
         authorityProfiles: profState.loading || profState.error
           ? null
@@ -749,51 +709,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
           >
             <div className="cc-list">
               {commitments.map((c) => (
-                <div key={c.id} className="cc-row">
-                  <span className="cc-row-tag" data-kind={c.commitment_type}>
-                    {c.commitment_type ? c.commitment_type.toUpperCase() : '—'}
-                  </span>
-                  <div className="cc-row-b">
-                    <div className="cc-row-t">{c.description}</div>
-                    <div className="cc-row-s mono">
-                      {[
-                        c.regulatory_basis,
-                        c.due_date ? 'due ' + c.due_date : null,
-                        c.fulfilled_date ? 'fulfilled ' + c.fulfilled_date : null,
-                        c.source_question_id != null
-                          ? `made in the answer to ${c.source_question_ref ?? 'a question'}${c.source_communication_type ? ` of ${c.source_communication_type}` : ''}`
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ') || '—'}
-                    </div>
-                  </div>
-                  {/* Overdue was the only state shown as an error before
-                      2026-10-18 in name only: the chip read 'on_track' and
-                      'due_soon', which the register never returns, so every
-                      open commitment was painted as an error. */}
-                  <span className={'rd-chip tone-' + commitmentTone(c.effectiveStatus || c.status)}>
-                    {(c.effectiveStatus || c.status || 'unknown').replace(/_/g, ' ')}
-                  </span>
-                  {!COMMITMENT_TERMINAL.has(c.effectiveStatus || c.status) && (
-                    <button className="cc-btn sm" onClick={() => setFulfilling(c)}>
-                      Mark fulfilled
-                    </button>
-                  )}
-                  <button
-                    className="cc-btn sm"
-                    aria-label="Ask AnA about this commitment"
-                    onClick={() =>
-                      onAsk(
-                        'What is needed to fulfill this ' +
-                          (c.commitment_type ? c.commitment_type.toUpperCase() : 'commitment') +
-                          ' on time?',
-                      )
-                    }
-                  >
-                    {I.sparkles}
-                  </button>
-                </div>
+                <CommitmentRowView
+                  key={`${c.project_id ?? 'org'}-${c.id}`}
+                  c={c}
+                  onNav={nav}
+                  onAsk={onAsk}
+                  onFulfil={() => setFulfilling({ row: c, door: c.project_id != null && projectId ? 'project' : 'org' })}
+                />
               ))}
             </div>
           </StateGuard>
@@ -861,20 +783,16 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       {fulfilling && (
-        <C2CForm
-          config={{
-            eyebrow: 'Regulatory commitments',
-            title: 'Record a commitment as fulfilled',
-            sub: `${fulfilling.commitment_type.toUpperCase()}: ${fulfilling.description}`,
-            governed: 'Recorded with your reason in the audit trail. A fulfilment date cannot be in the future.',
-            submitLabel: 'Record as fulfilled',
-            fields: [
-              { key: 'fulfilledDate', label: 'Date fulfilled', type: 'date', desc: 'Leave empty for today.' },
-              { key: 'reason', label: 'How it was met', type: 'text', placeholder: 'e.g. Final study report submitted in sequence 0042', required: true },
-            ],
+        <CommitmentFulfilDialog
+          row={fulfilling.row}
+          door={fulfilling.door}
+          projectId={projectId}
+          fire={fire}
+          onClose={() => setFulfilling(null)}
+          onDone={() => {
+            setFulfilling(null);
+            setCommitVersion((n) => n + 1);
           }}
-          onCancel={() => setFulfilling(null)}
-          onSubmit={(v) => void fulfilCommitment(v)}
         />
       )}
 

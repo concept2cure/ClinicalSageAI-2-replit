@@ -6,6 +6,11 @@
  * → COMMIT, org-scoped from the verified request context. Commitments thread onto
  * the provenance spine in the service. Mounted at /api/ha-interactions.
  *
+ * A commitment's fulfilment (2026-10-19, P-40) and its options read are
+ * commitment-fulfil-route.ts, mounted here for the organisation's own
+ * commitments: a PMR, PMC or REMS is fulfilled by a Part 11 signature naming
+ * the sequence or Vault version that met it.
+ *
  * @module server/routes/ha-interactions
  */
 
@@ -18,15 +23,23 @@ import {
   updateInteractionStatusTx,
   addQuestionTx,
   createCommitmentTx,
-  fulfillCommitmentTx,
   addMilestoneTx,
   listInteractions,
   listCommitments,
   getInteractionReadinessInput,
   ORG_LEVEL,
 } from '../services/ha-interactions/ha-service';
-import { evaluateMeetingReadiness, deriveCommitmentStatus, summarizeCommitmentPortfolio } from '../services/ha-interactions/ha-logic';
-import { recordHaInteractionCreated, recordHaCommitmentCreated, recordHaCommitmentFulfilled } from '../services/ha-metrics';
+import { evaluateMeetingReadiness } from '../services/ha-interactions/ha-logic';
+import { recordHaInteractionCreated, recordHaCommitmentCreated } from '../services/ha-metrics';
+import { requestPgClient } from '../db/requestDb';
+import {
+  answerFulfilmentFailure,
+  commitmentsForRequest,
+  fulfilCommitmentRoute,
+  fulfilmentOptionsRoute,
+  organisationViewerCapabilities,
+  type CommitmentDoor,
+} from './commitment-fulfil-route';
 import { serverError } from '../lib/api-response';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
@@ -60,9 +73,6 @@ function fail(res: Response, err: unknown): void {
     return;
   }
   serverError(res, log, 'handling the health-authority interaction request', err);
-}
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 /** A refused body, said as a sentence naming the field, so the person reads what to fix. */
@@ -220,38 +230,31 @@ router.get('/commitments', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const submissionId = req.query.submissionId ? Number(req.query.submissionId) : undefined;
   try {
-    const rows = await listCommitments(orgId, Number.isFinite(submissionId) ? submissionId : undefined);
-    const t = today();
-    const commitments = rows.map((r) => ({
-      ...r,
-      effectiveStatus: deriveCommitmentStatus({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date }, t),
-    }));
-    const summary = summarizeCommitmentPortfolio(rows.map((r) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), t);
-    res.json({ commitments, summary });
+    // On the request's tenant-pinned connection, projected per reader
+    // (2026-10-19): evidence in a program this person cannot open is said to
+    // exist and not named, and no raw fulfilment column is sent.
+    const rows = await listCommitments(orgId, Number.isFinite(submissionId) ? submissionId : undefined, ORG_LEVEL, requestPgClient(req) as never);
+    res.json(await commitmentsForRequest(req, orgId, rows));
   } catch (err) {
-    fail(res, err);
+    answerFulfilmentFailure(res, err);
   }
 });
 
-/* A fulfilment date is a fact about the past. The rule (a real yyyy-mm-dd, not
-   after today allowing for time zones) is the service's, fulfilmentDateRefusal,
-   so every door that fulfils a commitment applies it: this route, the
-   project's route and AnA's tool. */
-const fulfillSchema = z.object({ fulfilledDate: z.string().optional(), reason });
+/* The organisation's door onto a commitment's fulfilment (P-40, 2026-10-19):
+   its own commitments only (project_id IS NULL). A PMR, PMC or REMS is
+   fulfilled by a signature naming what met it; anything else with a reason.
+   The rules, the order of refusals and the body are commitment-fulfil-route.ts,
+   shared with the project's door. requireEditorAccessForWrites above still
+   gates the POST. */
+const ORG_DOOR: CommitmentDoor = {
+  scope: ORG_LEVEL,
+  idParam: 'id',
+  visible: () => true,
+  viewer: organisationViewerCapabilities,
+};
 
-router.post('/commitments/:id/fulfill', async (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = fulfillSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return validationRefusal(res, parsed.error);
-  await governedMutation(req, res, 'resolve', parsed.data.reason, async (client, orgId) => {
-    // The organisation's commitments only: one made in a project's agency
-    // letter is fulfilled from that project (CommitmentScope).
-    await fulfillCommitmentTx(client, orgId, id, parsed.data.fulfilledDate ?? null, ORG_LEVEL, today());
-    recordHaCommitmentFulfilled();
-    return { target: `regulatory-commitment:${id}`, payload: { status: 'fulfilled' }, body: { id, status: 'fulfilled' } };
-  });
-});
+router.post('/commitments/:id/fulfill', (req, res) => fulfilCommitmentRoute(req, res, ORG_DOOR));
+router.get('/commitments/:id/fulfilment-options', (req, res) => fulfilmentOptionsRoute(req, res, ORG_DOOR));
 
 const milestoneSchema = z.object({ title: z.string().min(1).max(500), dueDate: z.string().optional(), reason });
 

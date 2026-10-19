@@ -612,6 +612,27 @@ deletion record the working agreement requires:
 4. **`haq_session`**, **`lifecycle_obligations`** and the **`c2c_agency_meetings`** minutes, onto the inbox,
    `regulatory_commitments` and `ha_interactions` respectively.
 
+### P-40 — A PMR, PMC or REMS is recorded fulfilled by a signature that names what met it
+
+Decided 2026-10-19 under the founder's delegation of 2026-10-18. Recording a postmarketing requirement, a
+postmarketing commitment or a REMS as fulfilled takes the obligation off the overdue register and out of the annual
+status report (21 CFR 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1). It is an attestation, so it is a Part 11
+signed act, as the platform's comparable acts are (label approval, a QMS document becoming effective, the Shadow
+dispositions of P-34 and P-35, an agency response's approval under P-32): meaning approval or responsibility, the
+signer's reason, password and second factor, through the one ceremony (`server/routes/governed-signed-act.ts`
+signGovernedAct). The signature names the dispatched sequence the agency received (sent or acknowledged), or the
+Vault version that met it at its sha256, or both, and the date, and binds them
+(`BINDING_BASIS.COMMITMENT_FULFILMENT_CONTENT`). The database holds it: a fulfilled PMR, PMC or REMS commits only with
+such a signature written by the same transaction, by the person recorded, over the same evidence and date; a
+commitment's type never changes, so a PMR cannot be retyped out of its signature; and a recorded fulfilment cannot
+change or be hidden by an UPDATE (`migrations/20261019_commitment_fulfilment_evidence.sql`). It does not hold the
+record against a hard DELETE by the runtime role, which the tenant purge needs; a delete guard needs a purge door
+with it.
+A meeting commitment or other is fulfilled by a governed write with a reason; what met it may be named. AnA cannot
+sign, so its fulfil tool refuses a PMR, PMC or REMS and points to Communication, Meetings & commitments. There is no
+separation of duties: the signer attests to the record, not to another person's work. Correcting a fulfilment
+signed in error (§11.70 supersession, or a reopen) is owed. Evidence: `docs/evidence/D2-COMMITMENT-FULFILMENT/2026-10-19/`.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

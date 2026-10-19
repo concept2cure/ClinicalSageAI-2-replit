@@ -1,0 +1,28 @@
+# Review mutation 1 — a commitment's type is fixed on every row, not only once terminal (findings 1 and 5)
+#
+# Replaced in public.regulatory_commitments_fulfilment_record_guard() (as migrations/20261019_commitment_fulfilment_evidence.sql defines it), applied to the test database with psql:
+#   -   IF NEW.commitment_type IS DISTINCT FROM OLD.commitment_type THEN
+# with:
+#   +   IF OLD.status = ANY (terminal) AND NEW.commitment_type IS DISTINCT FROM OLD.commitment_type THEN
+#
+# Test selection: tests/db/commitment-fulfilment-database.dbtest.ts (-t "retyped out of its signature|cannot be retyped into a PMR|cannot be changed, cleared"), run as the runtime role app_service with RLS on.
+# Function definition md5: before 7faff05f705eb70e3380d0f413b4f2a4, mutated caf9bd1a949b3314d780ba8b38193da3, restored 7faff05f705eb70e3380d0f413b4f2a4 (identical to before)
+# Restored by re-applying migrations/20261019_commitment_fulfilment_evidence.sql with psql, as deploy-migrate does on every deploy.
+
+## Control: the same selection on the unmutated database
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role 23ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > an open PMR cannot be retyped out of its signature: not in the update that fulfils it, nor before it 48ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR 49ms
+ Test Files  1 passed (1)
+      Tests  3 passed | 22 skipped (25)
+
+## With the mutation in place
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role 20ms
+ × tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > an open PMR cannot be retyped out of its signature: not in the update that fulfils it, nor before it 34ms
+   → an open PMR was retyped to other and fulfilled unsigned in one UPDATE: expected true to be false // Object.is equality
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR 46ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > an open PMR cannot be retyped out of its signature: not in the update that fulfils it, nor before it
+AssertionError: an open PMR was retyped to other and fulfilled unsigned in one UPDATE: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 22 skipped (25)

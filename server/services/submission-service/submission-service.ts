@@ -49,6 +49,7 @@ import {
   VOIDED_VERIFICATION_STATUS,
 } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
+import { isFiledDispatchStatus } from './filed-dispatch';
 import { canMutateProgram, programInOrganization } from '../c2c/program-access';
 import {
   assertSignerIsNotAuthor,
@@ -1420,7 +1421,7 @@ async function filingOrderRefusal(
     const shared = sharedLifecycleKeys(mine, leavesOf.get(Number(r.id)) ?? [], leafSourceKey);
     if (shared) dependent.push({ ...r, shared_sections: shared });
   }
-  const isFiled = (r: Other) => r.dispatch_status === 'sent' || r.dispatch_status === 'acknowledged';
+  const isFiled = (r: Other) => isFiledDispatchStatus(r.dispatch_status);
   // Zero-padded fixed-width sequence numbers: lexical order is filing order,
   // the same assumption the prior-sequence loaders rely on.
   const lower = dependent.filter((r) => String(r.sequence_number) < seq.sequenceNumber && !isFiled(r));

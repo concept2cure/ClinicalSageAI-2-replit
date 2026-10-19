@@ -1,0 +1,45 @@
+# Review mutation 13 — the signing budget is spent only by a request that passed every refusal needing no password (finding 9)
+#
+# File mutated: server/routes/commitment-fulfil-route.ts
+# Test selection (unit): server/routes/__tests__/commitment-fulfil-route.test.ts (-t "signing budget")
+# Restored afterwards: sha256 before e0d3fcd7aa3e5b4c37fcc767c746299fe7eb6e4572dd63682d0d3232c3a33ff7, after e0d3fcd7aa3e5b4c37fcc767c746299fe7eb6e4572dd63682d0d3232c3a33ff7 (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/server/routes/commitment-fulfil-route.ts
++++ b/server/routes/commitment-fulfil-route.ts (mutated)
+@@ -352,11 +352,6 @@
+ 
+ /** Step 7: a PMR, PMC or REMS, through the one ceremony. */
+ async function signFulfilment(req: Request, res: Response, door: CommitmentDoor, f: FulfilRequest): Promise<void> {
+-  try {
+-    if (!(await spendSigningAttempt(req, res))) return;
+-  } catch (err) {
+-    return answerFulfilmentFailure(res, err);
+-  }
+   const target = `regulatory-commitment:${f.id}`;
+   await signGovernedAct(req, res, {
+     domain: 'ha',
+@@ -393,6 +388,7 @@
+ 
+ /** POST …/fulfill on either door. Answers the request itself. */
+ export async function fulfilCommitmentRoute(req: Request, res: Response, door: CommitmentDoor): Promise<void> {
++  if (!(await spendSigningAttempt(req, res))) return;
+   const f = parseFulfilRequest(req, res, door);
+   if (!f) return;
+   let signed: boolean;
+
+## Control: the same selection on the unmutated tree
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > fulfilments refused before the password spend none of it: twelve refusals, then the signature still goes through 141ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > a request that reaches the password still spends it: the eleventh within the window is refused before any credential check 29ms
+ Test Files  1 passed (1)
+      Tests  2 passed | 10 skipped (12)
+
+## With the mutation in place
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > fulfilments refused before the password spend none of it: twelve refusals, then the signature still goes through 80ms
+   → refusal 11: {"error":{"code":"TOO_MANY_ATTEMPTS","message":"Too many signing attempts. Wait a few minutes and try again. Nothing was signed."}}: expected 429 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > a request that reaches the password still spends it: the eleventh within the window is refused before any credential check 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > fulfilments refused before the password spend none of it: twelve refusals, then the signature still goes through
+AssertionError: refusal 11: {"error":{"code":"TOO_MANY_ATTEMPTS","message":"Too many signing attempts. Wait a few minutes and try again. Nothing was signed."}}: expected 429 to be 409 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 10 skipped (12)

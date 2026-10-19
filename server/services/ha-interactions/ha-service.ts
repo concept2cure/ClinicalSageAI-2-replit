@@ -16,6 +16,7 @@
 
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
+import { fulfilmentEvidenceRefusal, fulfilmentRule } from './ha-logic';
 import type {
   CommitmentType,
   HaAgency,
@@ -26,8 +27,20 @@ interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
+/**
+ * A coded refusal, said as a sentence for the person. The fulfilment codes
+ * (2026-10-19) are answered with their statuses by FULFILMENT_CODE_STATUS
+ * (commitment-fulfilment.ts) on both doors.
+ */
+export type HaErrorCode =
+  | 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT'
+  | 'EVIDENCE_REQUIRED' | 'FULFILMENT_DATE_REQUIRED' | 'SIGNATURE_NOT_TAKEN'
+  | 'SEQUENCE_NOT_FOUND' | 'SEQUENCE_NOT_FILED' | 'SEQUENCE_OTHER_SUBMISSION'
+  | 'VAULT_VERSION_NOT_FOUND' | 'VAULT_VERSION_UNHASHED' | 'VAULT_VERSION_WITHDRAWN' | 'VAULT_TENANT_RECONCILIATION_REQUIRED'
+  | 'PROJECT_NOT_LINKED' | 'EVIDENCE_ACCESS_UNAVAILABLE';
+
 export class HaError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT', message: string) {
+  constructor(public code: HaErrorCode, message: string) {
     super(message);
     this.name = 'HaError';
   }
@@ -180,32 +193,126 @@ export function fulfilmentDateRefusal(fulfilledDate: string | null, today: strin
   return null;
 }
 
+/** A commitment as a fulfilment reads it: enough to apply the door's visibility and the type's rule. */
+export interface CommitmentForFulfilment {
+  id: number;
+  commitmentType: string;
+  status: string;
+  submissionId: number | null;
+  projectId: number | null;
+  description: string;
+  sourceCommunicationEventId: string | null;
+  /** The visibility tier of the letter it was made in, when it was made in one. */
+  visibilityTier: string | null;
+}
+
+export const TERMINAL_COMMITMENT_STATUSES: readonly string[] = Object.freeze(['fulfilled', 'waived', 'released']);
+
+function toCommitmentForFulfilment(r: any): CommitmentForFulfilment {
+  return {
+    id: Number(r.id),
+    commitmentType: String(r.commitment_type),
+    status: String(r.status),
+    submissionId: r.submission_id == null ? null : Number(r.submission_id),
+    projectId: r.project_id == null ? null : Number(r.project_id),
+    description: String(r.description ?? ''),
+    sourceCommunicationEventId: r.source_communication_event_id == null ? null : String(r.source_communication_event_id),
+    visibilityTier: r.visibility_tier == null ? null : String(r.visibility_tier),
+  };
+}
+
+/**
+ * One commitment in one scope (CommitmentScope), or null. With `lock`, the row
+ * is held FOR UPDATE to the end of the caller's transaction: the fulfilment is
+ * decided on the row as it stands. Two literal statements: no SQL text is
+ * assembled at run time.
+ */
+export async function readCommitmentForFulfilment(
+  client: Queryable,
+  orgId: number,
+  id: number,
+  scope: CommitmentScope,
+  options: { lock: boolean },
+): Promise<CommitmentForFulfilment | null> {
+  const { rows } = options.lock
+    ? await client.query(
+        `SELECT rc.id, rc.commitment_type, rc.status, rc.submission_id, rc.project_id, rc.description,
+                rc.source_communication_event_id, c.audit_metadata->>'visibilityTier' AS visibility_tier
+           FROM regulatory_commitments rc
+           LEFT JOIN concept2cure_agency_communications c
+             ON c.event_id = rc.source_communication_event_id AND c.organization_id = rc.organization_id
+          WHERE rc.id = $1 AND rc.organization_id = $2 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $3
+          LIMIT 1
+          FOR UPDATE OF rc`,
+        [id, orgId, scope.projectId],
+      )
+    : await client.query(
+        `SELECT rc.id, rc.commitment_type, rc.status, rc.submission_id, rc.project_id, rc.description,
+                rc.source_communication_event_id, c.audit_metadata->>'visibilityTier' AS visibility_tier
+           FROM regulatory_commitments rc
+           LEFT JOIN concept2cure_agency_communications c
+             ON c.event_id = rc.source_communication_event_id AND c.organization_id = rc.organization_id
+          WHERE rc.id = $1 AND rc.organization_id = $2 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $3
+          LIMIT 1`,
+        [id, orgId, scope.projectId],
+      );
+  return rows[0] ? toCommitmentForFulfilment(rows[0]) : null;
+}
+
+/** What met a commitment, as resolveFulfilmentEvidenceTx found it under lock. */
+export interface FulfilmentEvidenceIds {
+  sequenceId: number | null;
+  vaultDocumentId: string | null;
+  /** The Vault version's content_hash, read under lock, lower-case hex. */
+  vaultSha256: string | null;
+}
+
+/**
+ * Record a commitment as fulfilled (C2C-03; P-40, 2026-10-19). The caller has
+ * resolved the evidence in this transaction (commitment-fulfilment.ts) and,
+ * for a PMR, PMC or REMS, is inside the signing ceremony. Here, on the row
+ * locked FOR UPDATE: the date rule, the terminal check, and the type's rule
+ * again (a signed type names what met it and its date). The UPDATE writes the
+ * evidence, the recorder and the time with the status, in one statement, which
+ * is the only update the database lets evidence be written in
+ * (regulatory_commitments_fulfilment_record_guard).
+ *
+ * The date: a signed fulfilment's date is the one the signer was shown, never
+ * the server's; CURRENT_DATE stands in only for an unsigned type sent without
+ * one.
+ */
 export async function fulfillCommitmentTx(
   client: Queryable,
   orgId: number,
   id: number,
-  fulfilledDate: string | null,
+  input: { fulfilledDate: string | null; evidence: FulfilmentEvidenceIds | null; userId: number },
   scope: CommitmentScope = ORG_LEVEL,
   today: string = new Date().toISOString().slice(0, 10),
-): Promise<void> {
-  const refused = fulfilmentDateRefusal(fulfilledDate, today);
+): Promise<{ fulfilledDate: string }> {
+  const refused = fulfilmentDateRefusal(input.fulfilledDate, today);
   if (refused) throw new HaError('BAD_INPUT', refused);
-  const found = await client.query(
-    `SELECT status FROM regulatory_commitments
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND project_id IS NOT DISTINCT FROM $3
-      LIMIT 1 FOR UPDATE`,
-    [id, orgId, scope.projectId],
-  );
-  if (found.rows.length === 0) throw new HaError('NOT_FOUND', 'Commitment not found here.');
-  if (['fulfilled', 'waived', 'released'].includes(String(found.rows[0].status))) {
-    throw new HaError('INVALID_STATE', 'That commitment is already fulfilled, waived or released.');
+  const found = await readCommitmentForFulfilment(client, orgId, id, scope, { lock: true });
+  if (!found) throw new HaError('NOT_FOUND', 'Commitment not found here.');
+  if (TERMINAL_COMMITMENT_STATUSES.includes(found.status)) {
+    throw new HaError('INVALID_STATE', 'That commitment is already fulfilled, waived or released; there is nothing to fulfil.');
   }
-  await client.query(
+  const rule = fulfilmentRule(found.commitmentType);
+  const evidence = input.evidence ?? { sequenceId: null, vaultDocumentId: null, vaultSha256: null };
+  const evidenceRefused = fulfilmentEvidenceRefusal(found.commitmentType, evidence);
+  if (evidenceRefused) throw new HaError('EVIDENCE_REQUIRED', evidenceRefused);
+  if (rule.dateRequired && input.fulfilledDate == null) {
+    throw new HaError('FULFILMENT_DATE_REQUIRED', 'A signed fulfilment names the date the commitment was met. Nothing was recorded.');
+  }
+  const { rows } = await client.query(
     `UPDATE regulatory_commitments
-        SET status = 'fulfilled', fulfilled_date = COALESCE($3::date, CURRENT_DATE), updated_at = now()
-      WHERE id = $1 AND organization_id = $2 AND project_id IS NOT DISTINCT FROM $4`,
-    [id, orgId, fulfilledDate, scope.projectId],
+        SET status = 'fulfilled', fulfilled_date = COALESCE($3::date, CURRENT_DATE),
+            fulfilment_sequence_id = $5, fulfilment_vault_document_id = $6::uuid, fulfilment_vault_sha256 = $7,
+            fulfilment_recorded_by = $8, fulfilment_recorded_at = now(), updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND project_id IS NOT DISTINCT FROM $4
+      RETURNING to_char(fulfilled_date, 'YYYY-MM-DD') AS fulfilled_date`,
+    [id, orgId, input.fulfilledDate, scope.projectId, evidence.sequenceId, evidence.vaultDocumentId, evidence.vaultSha256, input.userId],
   );
+  return { fulfilledDate: String(rows[0]?.fulfilled_date ?? input.fulfilledDate ?? today) };
 }
 
 export interface MilestoneInput {
@@ -252,6 +359,12 @@ export async function listInteractions(orgId: number, submissionId?: number): Pr
  * (project_id IS NULL) by default, or one project's. Each names the letter and
  * question it was made in, and that letter's visibility tier, which the
  * project route applies before anything is shown.
+ *
+ * Since 2026-10-19 each row also carries its raw fulfilment columns and the
+ * recorder's name (public.actor_name, which answers for a former member the
+ * users RLS would hide). They are inputs to commitmentsForViewer
+ * (commitment-fulfilment.ts), which projects them per reader; no route sends
+ * these rows as they are.
  */
 export async function listCommitments(
   orgId: number,
@@ -272,12 +385,16 @@ export async function listCommitments(
             rc.project_id, rc.source_communication_event_id, rc.source_question_id,
             c.communication_type AS source_communication_type,
             c.audit_metadata->>'visibilityTier' AS source_visibility_tier,
-            q.question_ref AS source_question_ref
+            q.question_ref AS source_question_ref,
+            rc.fulfilment_sequence_id, rc.fulfilment_vault_document_id::text AS fulfilment_vault_document_id,
+            rc.fulfilment_vault_sha256, rc.fulfilment_recorded_by, rc.fulfilment_recorded_at,
+            recorder.name AS fulfilment_recorded_by_name
        FROM regulatory_commitments rc
        LEFT JOIN concept2cure_agency_communications c
          ON c.event_id = rc.source_communication_event_id AND c.organization_id = rc.organization_id
        LEFT JOIN agency_communication_questions q
          ON q.id = rc.source_question_id AND q.organization_id = rc.organization_id
+       LEFT JOIN LATERAL public.actor_name(rc.fulfilment_recorded_by) recorder ON TRUE
       WHERE rc.organization_id = $1 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $2
          AND rc.submission_id = $3
        ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
@@ -290,12 +407,16 @@ export async function listCommitments(
             rc.project_id, rc.source_communication_event_id, rc.source_question_id,
             c.communication_type AS source_communication_type,
             c.audit_metadata->>'visibilityTier' AS source_visibility_tier,
-            q.question_ref AS source_question_ref
+            q.question_ref AS source_question_ref,
+            rc.fulfilment_sequence_id, rc.fulfilment_vault_document_id::text AS fulfilment_vault_document_id,
+            rc.fulfilment_vault_sha256, rc.fulfilment_recorded_by, rc.fulfilment_recorded_at,
+            recorder.name AS fulfilment_recorded_by_name
        FROM regulatory_commitments rc
        LEFT JOIN concept2cure_agency_communications c
          ON c.event_id = rc.source_communication_event_id AND c.organization_id = rc.organization_id
        LEFT JOIN agency_communication_questions q
          ON q.id = rc.source_question_id AND q.organization_id = rc.organization_id
+       LEFT JOIN LATERAL public.actor_name(rc.fulfilment_recorded_by) recorder ON TRUE
       WHERE rc.organization_id = $1 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $2
        ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
         [orgId, scope.projectId],

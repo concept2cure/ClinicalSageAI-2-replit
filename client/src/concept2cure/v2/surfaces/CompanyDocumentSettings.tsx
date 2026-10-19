@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { COMPANY_LEGAL_KINDS, type CompanyDocumentProfile, type CompanyLegalDocument, type CompanyLegalKind } from '@shared/company-documents';
-import { useLiveData } from '../dataConnect';
-import type { LibraryHit, LibraryShape } from './VaultLibraryResults';
+import { VaultVersionPicker } from './VaultLibraryResults';
 import { COMPANY_DOCUMENTS_PATH as PATH, useCompanyDocumentSettings, type CompanyDocumentSettingsModel } from './useCompanyDocumentSettings';
 import '../styles/company-documents.css';
 
@@ -53,28 +52,6 @@ function LetterheadPreviewFooter({ profile }: { profile: CompanyDocumentProfile 
         <div>{s.brand.confidentialityNotice}</div><div>{s.footer?.text}</div>
         {s.footer?.showPageNumbers && <div>{(s.footer.pageNumberFormat || 'Page {PAGE} of {PAGES}').replaceAll('{PAGE}', '1').replaceAll('{PAGES}', '1')}</div>}
       </footer>);
-}
-
-function VaultDocumentPicker({ onChoose, disabled }: { onChoose: (hit: LibraryHit) => void; disabled: boolean }) {
-  const [text, setText] = useState('');
-  const [query, setQuery] = useState('');
-  const path = query ? `/api/c2c/project-vault/search?q=${encodeURIComponent(query)}&limit=25` : null;
-  const state = useLiveData<LibraryShape>(path, [path], (v): v is LibraryShape => {
-    const d = v as LibraryShape | null;
-    return !!d && d.scope === 'verified-accessible-programs' && Array.isArray(d.results) &&
-      d.results.every(h => typeof h.id === 'string' && typeof h.title === 'string' && typeof h.program?.id === 'string');
-  });
-  return <div className="company-vault-search">
-    <div className="company-actions"><Field label="Search your accessible Vaults"><input value={text} onChange={e => setText(e.target.value)} placeholder="Document title or keyword" /></Field>
-      <button className="btn ghost small" type="button" disabled={disabled || !text.trim() || state.loading} onClick={() => setQuery(text.trim())}>Search Vault</button></div>
-    {state.loading && <p role="status">Searching accessible project Vaults…</p>}
-    {state.error && <p role="alert">The Vault search could not be read. Try another search or open Vault.</p>}
-    {!state.loading && state.data && <div className="company-search-results">
-      {state.data.results.length === 0 && <p>No matching documents in your accessible projects.</p>}
-      {state.data.results.map(hit => <div className="company-search-hit" key={hit.id}><span><strong>{hit.title}</strong><small>{hit.program.name || 'Project'} · version {hit.version || 'not recorded'}{hit.current ? '' : ' · earlier version'}</small></span>
-        <button type="button" className="btn ghost small" disabled={disabled || !hit.current} onClick={() => onChoose(hit)}>Select document</button></div>)}
-    </div>}
-  </div>;
 }
 
 type DesignProps = { model: CompanyDocumentSettingsModel; draft: CompanyDocumentProfile };
@@ -184,7 +161,7 @@ function CompanyLegalRegistration({ model, saved }: { model: CompanyDocumentSett
   const { busy, loading, conflict, setLegal, legal, legalReason, setLegalReason, mutation } = model;
   return <details className="company-register"><summary>Register a legal document from Vault</summary>
           <fieldset disabled={busy || loading || conflict} className="company-editor">
-            <VaultDocumentPicker disabled={busy || loading || conflict} onChoose={hit => setLegal(p => ({ ...p, title: hit.title, programId: hit.program.id, vaultDocumentId: hit.id }))} />
+            <VaultVersionPicker disabled={busy || loading || conflict} onChoose={hit => setLegal(p => ({ ...p, title: hit.title, programId: hit.programId, vaultDocumentId: hit.id }))} />
             <div className="company-fields">
               <Field label="Legal document title" wide><input value={legal.title} onChange={e => setLegal(p => ({ ...p, title: e.target.value }))} /></Field>
               <Field label="Document kind"><select value={legal.kind} onChange={e => setLegal(p => ({ ...p, kind: e.target.value as CompanyLegalKind }))}>{COMPANY_LEGAL_KINDS.map(k => <option key={k} value={k}>{titleOf(k)}</option>)}</select></Field>

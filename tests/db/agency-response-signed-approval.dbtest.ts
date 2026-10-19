@@ -465,16 +465,20 @@ describe('the commitments register (Communication, Commitments tab)', () => {
     expect(st.rows[0].status).toBe('open');
   });
 
-  it('an editor fulfils it from its project under RLS, with its ledger row', async () => {
+  /* Until 2026-10-19 this case fulfilled the PMR here with a date and a
+     reason, unsigned. P-40 made that a signed act naming what met it; the
+     positive case is tests/db/commitment-fulfilment-evidence.dbtest.ts. */
+  it('an unsigned PMR fulfilment that names nothing is refused, and nothing changes', async () => {
     const res = await request(app)
       .post(`${projectCommitments()}/${commitmentId}/fulfill`)
       .set(as('author'))
       .send({ fulfilledDate: '2026-10-01', reason: 'Final study report submitted in sequence 0042.' });
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    const st = await owner.query(`SELECT status, to_char(fulfilled_date, 'YYYY-MM-DD') AS d FROM regulatory_commitments WHERE id = $1`, [commitmentId]);
-    expect(st.rows[0]).toEqual({ status: 'fulfilled', d: '2026-10-01' });
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(res.body.error.code).toBe('EVIDENCE_REQUIRED');
+    const st = await owner.query(`SELECT status, fulfilled_date FROM regulatory_commitments WHERE id = $1`, [commitmentId]);
+    expect(st.rows[0]).toEqual({ status: 'open', fulfilled_date: null });
     const ledger = await owner.query(`SELECT command FROM c2c_ana_actions WHERE org_id = $1 AND target = $2 ORDER BY proposed_at`, [orgId, `regulatory-commitment:${commitmentId}`]);
-    expect(ledger.rows.map((r) => r.command)).toEqual(['create', 'resolve']);
+    expect(ledger.rows.map((r) => r.command)).toEqual(['create']);
   });
 
   it("a commitment from a letter the person may not see is not listed to them", async () => {

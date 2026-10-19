@@ -16,7 +16,13 @@
  *   POST /projects/:projectId/agency-communications/:eventId/no-response-required
  *   POST /projects/:projectId/agency-communications/:eventId/response-package
  *   GET  /projects/:projectId/commitments
+ *   GET  /projects/:projectId/commitments/:commitmentId/fulfilment-options
  *   POST /projects/:projectId/commitments/:commitmentId/fulfill
+ *
+ * The two commitment fulfilment routes are commitment-fulfil-route.ts, shared
+ * with the organisation's door (2026-10-19, P-40): a PMR, PMC or REMS is
+ * fulfilled by a Part 11 signature naming the sequence or Vault version that
+ * met it, here constrained to this project's program.
  *
  * ── Why (rows D2 and D5, 2026-10-18) ────────────────────────────────────────
  * The inbox kept a letter's questions as strings and closed a letter nobody
@@ -45,9 +51,8 @@ import { z } from 'zod';
 import { requestPgClient } from '../../db/requestDb';
 import { serverError } from '../../lib/api-response';
 import { governedActorId } from '../../middleware/orgMembership';
-import { createCommitmentTx, fulfillCommitmentTx, HaError, listCommitments } from '../../services/ha-interactions/ha-service';
-import { deriveCommitmentStatus, summarizeCommitmentPortfolio } from '../../services/ha-interactions/ha-logic';
-import { recordHaCommitmentCreated, recordHaCommitmentFulfilled } from '../../services/ha-metrics';
+import { createCommitmentTx, HaError, listCommitments } from '../../services/ha-interactions/ha-service';
+import { recordHaCommitmentCreated } from '../../services/ha-metrics';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { DECISION_ACT_MEANINGS } from '../../services/part11/signature-meanings';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context';
@@ -72,8 +77,15 @@ import {
 } from '../../services/agency-responses/response-service';
 import { createScopedLogger } from '../../utils/logger';
 import { governedReason } from '../governed-reason';
-import { recordGovernedAction } from './actions';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act';
+import {
+  answerFulfilmentFailure,
+  commitmentsForRequest,
+  fulfilCommitmentRoute,
+  fulfilmentOptionsRoute,
+  governedRequestWrite,
+  type CommitmentDoor,
+} from '../commitment-fulfil-route';
 import { requireProjectAdmission, ProjectAdmissionRefusal } from './project-access';
 import { getOrganizationId, sendError, sendSuccess } from './shared';
 
@@ -118,7 +130,6 @@ const commitmentBody = z.object({
 });
 
 const packageBody = z.object({ format: z.enum(['md', 'docx']).default('md') });
-const fulfilBody = z.object({ fulfilledDate: z.string().optional(), reason: governedReason });
 
 /** Who may see a letter of a visibility tier (communication-center.ts canViewVisibilityTier). */
 export type VisibilityCheck = (tier: any, role?: string) => boolean;
@@ -205,7 +216,10 @@ async function visibleLetter(client: Queryable, scope: Scope, req: Request, canV
 /**
  * A governed write that is not a signature: the change and its ledger pair
  * (audit_logs + c2c_ana_actions, with the person's reason) on one transaction
- * on the request's tenant-pinned connection, or neither.
+ * on the request's tenant-pinned connection, or neither. The transaction is
+ * governedRequestWrite (commitment-fulfil-route.ts, shared with a commitment's
+ * unsigned fulfilment since 2026-10-19); this answers in this router's
+ * envelope and refusals.
  */
 async function governedWrite(
   req: Request,
@@ -214,29 +228,14 @@ async function governedWrite(
   run: (client: Queryable) => Promise<{ target: string; payload: Record<string, unknown>; body: unknown }>,
 ): Promise<void> {
   const { scope, command, reason, domain } = write;
-  const client = requestPgClient(req) as unknown as Queryable;
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, scope.orgId);
-    const { target, payload, body } = await run(client);
-    const gov = await recordGovernedAction(client, {
-      orgId: scope.orgId,
-      userId: scope.userId,
-      command,
-      target,
-      reason,
-      payload,
-      domain,
-      surface: 'communication-center',
-    });
-    await client.query('COMMIT');
-    res.status(command === 'update' ? 200 : 201).json({
-      success: true,
-      data: body,
-      governance: { actionId: gov.actionId, auditId: gov.auditId, sha256Chain: gov.sha256Chain },
-    });
+    const { body, governance } = await governedRequestWrite(
+      req,
+      { orgId: scope.orgId, userId: scope.userId, command, reason, domain, surface: 'communication-center' },
+      (client) => run(client as unknown as Queryable),
+    );
+    res.status(command === 'update' ? 200 : 201).json({ success: true, data: body, governance });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
     refusal(res, err, `${command} on an agency question`);
   }
 }
@@ -468,7 +467,17 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
      the project. It is listed and fulfilled here, behind this router's project
      admission, and only when the letter it came from is one this person may
      see; /api/ha-interactions reaches only the organisation's own (project_id
-     IS NULL). One implementation (ha-service), scoped per door. */
+     IS NULL). One implementation (ha-service, commitment-fulfil-route), scoped
+     per door. Since 2026-10-19 (P-40) what met a commitment is named, and may
+     only be of this project's program. */
+  const projectDoor = (req: Request): CommitmentDoor => ({
+    scope: { projectId: Number(req.params.projectId) },
+    idParam: 'commitmentId',
+    visible: (row) => row.sourceCommunicationEventId == null || canView(row.visibilityTier, req.userRole),
+    viewer: async (r, client, orgId, userId) =>
+      viewerCapabilities(r, { orgId, userId, projectId: Number(r.params.projectId), eventId: '' }, client as unknown as Queryable),
+  });
+
   router.get('/projects/:projectId/commitments', async (req, res) => {
     const projectId = Number(req.params.projectId);
     let orgId: number;
@@ -482,44 +491,17 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
       const rows = (await listCommitments(orgId, undefined, { projectId }, client)).filter(
         (r) => r.source_communication_event_id == null || canView(r.source_visibility_tier, req.userRole),
       );
-      const t = today();
-      const commitments = rows.map((r) => ({
-        ...r,
-        effectiveStatus: deriveCommitmentStatus({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date }, t),
-      }));
-      const summary = summarizeCommitmentPortfolio(rows.map((r) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), t);
-      return sendSuccess(res, { commitments, summary });
+      return sendSuccess(res, await commitmentsForRequest(req, orgId, rows));
     } catch (err) {
-      return refusal(res, err, "reading a project's commitments");
+      return answerFulfilmentFailure(res, err);
     }
   });
 
-  router.post('/projects/:projectId/commitments/:commitmentId/fulfill', async (req, res) => {
-    const projectId = Number(req.params.projectId);
-    const userId = governedActorId(req);
-    let orgId: number;
-    try {
-      orgId = getOrganizationId(req);
-    } catch {
-      return sendError(res, 401, 'Organization context required.', undefined, 'AUTH_REQUIRED');
-    }
-    if (userId === null) return sendError(res, 401, 'A signed-in user is required.', undefined, 'AUTH_REQUIRED');
-    const raw = String(req.params.commitmentId ?? '');
-    const id = /^\d{1,10}$/.test(raw) ? Number(raw) : NaN;
-    if (!Number.isInteger(id) || id <= 0 || id > MAX_INT) return sendError(res, 404, 'Commitment not found here.', undefined, 'NOT_FOUND');
-    const parsed = fulfilBody.safeParse(req.body ?? {});
-    if (!parsed.success) return validation(res, parsed.error);
-    const scope: Scope = { orgId, userId, projectId, eventId: '' };
-    await governedWrite(req, res, { scope, command: 'resolve', reason: parsed.data.reason, domain: 'ha' }, async (client) => {
-      const visible = (await listCommitments(orgId, undefined, { projectId }, client)).find((r) => Number(r.id) === id);
-      if (!visible || (visible.source_communication_event_id != null && !canView(visible.source_visibility_tier, req.userRole))) {
-        throw new HaError('NOT_FOUND', 'Commitment not found here.');
-      }
-      await fulfillCommitmentTx(client, orgId, id, parsed.data.fulfilledDate ?? null, { projectId }, today());
-      recordHaCommitmentFulfilled();
-      return { target: `regulatory-commitment:${id}`, payload: { status: 'fulfilled', projectId }, body: { id, status: 'fulfilled' } };
-    });
-  });
+  router.get('/projects/:projectId/commitments/:commitmentId/fulfilment-options', (req, res) =>
+    fulfilmentOptionsRoute(req, res, projectDoor(req)));
+
+  router.post('/projects/:projectId/commitments/:commitmentId/fulfill', (req, res) =>
+    fulfilCommitmentRoute(req, res, projectDoor(req)));
 
   router.post(`${BASE}/response-package`, async (req, res) => {
     const scope = scopeOf(req, res);

@@ -1,0 +1,38 @@
+# Review mutation 32 — focus returns to Sign when the signature dialog is cancelled; the signing-start half of the effect is kept (finding 17)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "focus: to Remove")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -454,10 +454,10 @@
+   const signRef = React.useRef<HTMLButtonElement>(null);
+   const wasSigning = React.useRef(false);
+   React.useEffect(() => {
+-    if (signing) wasSigning.current = true;
+-    else if (!wasSigning.current) return;
+-    else wasSigning.current = false;
+-    signRef.current?.focus();
++    if (signing) {
++      wasSigning.current = true;
++      signRef.current?.focus();
++    }
+   }, [signing]);
+   React.useEffect(() => () => {
+     if (opener?.isConnected) opener.focus();
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > focus: to Remove once a document is chosen, back to the search when removed, to Sign when the signature dialog is cancelled, and to the row when the dialog closes 582ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > focus: to Remove once a document is chosen, back to the search when removed, to Sign when the signature dialog is cancelled, and to the row when the dialog closes 5563ms
+   → expected <div class="de" role="dialog" …(3)>…(3)</div> to be <button class="de-btn primary">…(1)</button> // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > focus: to Remove once a document is chosen, back to the search when removed, to Sign when the signature dialog is cancelled, and to the row when the dialog closes
+AssertionError: expected <div class="de" role="dialog" …(3)>…(3)</div> to be <button class="de-btn primary">…(1)</button> // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

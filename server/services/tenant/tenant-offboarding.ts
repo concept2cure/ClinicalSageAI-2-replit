@@ -1071,7 +1071,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      before the questions they cite; the questions then take their response
      history with them (ON DELETE CASCADE, run as the owner through the
      append-only ceiling). A response's signatures and ledger rows are the audit
-     trail and stay. */
+     trail and stay. Since 2026-10-19 a fulfilled commitment also names the
+     sequence and the Vault version that met it (NO ACTION keys,
+     migrations/20261019_commitment_fulfilment_evidence.sql), so it goes before
+     vault.documents below too; sequences are not purged. Its fulfilment
+     signature stays with the others. */
   'commitment_milestones',
   'regulatory_commitments',
   'agency_communication_questions',

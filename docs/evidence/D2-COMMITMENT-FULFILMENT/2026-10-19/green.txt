@@ -1,0 +1,579 @@
+# GREEN — the new and affected tests on the final tree, 2026-10-19 (re-run after the last code change)
+# PostgreSQL 16 + pgvector at 127.0.0.1:55432/c2c_test after deploy-migrate (the new file applied, sha256 ab97ff77f110c640);
+# DB suites as the runtime role app_service through APP_DATABASE_URL, RLS_ENFORCE=on, AUDIT_HMAC_KEY set. ANSI colours stripped.
+
+## 1. Unit, route and client: 21 files
+# npx vitest run client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx server/middleware/__tests__/launch-scope-api-gate.test.ts server/routes/__tests__/commitment-fulfil-route.test.ts server/routes/__tests__/ha-interactions-error-containment.test.ts server/services/ana/__tests__/addons-tools.test.ts server/services/ana/__tests__/ana-cannot-sign.test.ts server/services/ana/__tests__/tool-selection-routing.test.ts server/services/ha-interactions/__tests__/fulfilment-logic.test.ts server/services/ha-interactions/__tests__/ha-logic.test.ts server/services/ha-interactions/__tests__/meeting-package.test.ts server/services/part11/__tests__/commitment-fulfilment-binder.test.ts 
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a future date, before the commitment is even read 29ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR that names neither a sequence nor a document 6ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR with no date: the signer is shown the date the signature binds, so the server never picks it 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > evidence the server refuses, answered with its own code and no credential check 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > access that could not be verified is a 503, not a 500 or a 404 5ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a password sent for a meeting commitment, which takes none 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > a PMR with evidence and no password is refused by the ceremony as a missing component 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > signs, re-checks the evidence under lock, and answers with the signature 6ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > counts nothing as fulfilled when the ceremony refuses the password 5ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the unsigned fulfilment > a meeting commitment with no evidence is a governed resolve with the same body shape 4ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > is registered, so a fulfilment signature never falls back to the ledger basis 2ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > digests the commitment, its date and what met it, with the shared recipe 2ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > binds the Vault version’s sha256: a different pin is a different digest 1ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > falls back when the commitment is not readable, or carries no recorded fulfilment 1ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > refuses a malformed pointer rather than querying for it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > offers the three steps, and no longer names question-by-question tracking as coming later 281ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > "Start a response sequence" opens that market's Sequences tab with the follow-up type response 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > with no market yet, says so instead of offering a sequence nothing can hold 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > One agency inbox: Respond logs into Communication's store and shows it (2026-10-17) > a letter uploaded in Respond is logged as an agency communication of this project, linked to its data-room source 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > One agency inbox: Respond logs into Communication's store and shows it (2026-10-17) > when the log is refused, says the letter is in the data room but not in the agency inbox 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > One agency inbox: Respond logs into Communication's store and shows it (2026-10-17) > shows the project's agency inbox from Communication's store, with triage, and drafts from a letter with that letter pinned 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > One agency inbox: Respond logs into Communication's store and shows it (2026-10-17) > a communication with no linked document is drafted without a pin, and the request says no letter is attached 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Submission Center opened for a response (F15) > opens the market's Sequences tab with the next sequence typed response 924ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > offers Sign only once a sequence or document is named, and says so 338ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > signs through the project's door with the date, the evidence and the signature components 255ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > does not report a signature the server did not confirm 138ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says the submissions could not be read, distinct from there being none, and keeps the Vault usable 63ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says plainly when no sequence the agency received is on file 82ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > shows a viewer why they cannot sign, before anything is typed 137ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a meeting commitment is recorded with a reason > posts through the organisation's door, without the signature dialog 134ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > names the sequence and the version, who signed, and opens each where it lives 73ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > says evidence is in a project the reader cannot open, legacy rows, and a signature that no longer holds 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > lists both directions in their own words, with the project and a later version named 146ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents 178ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it 155ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a refused relate says so and claims nothing 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an empty related list makes no claim about inaccessible documents 52ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an empty search is limited to other accessible documents 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > a successful search with no results field reports failure instead of no matches 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope undefined offers no empty finding or candidate 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope organization-wide offers no empty finding or candidate 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > governed relationship removal > removing one needs a reason of the required length, sends it, and then re-reads the list 66ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > is reachable inside the existing Admin Settings tab 162ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > saves the exact revision and audited reason, then reads the stored profile 198ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a refused draft and does not announce it saved 77ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a conflicting draft and requires deliberate reload before retry 90ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > disables management for a reader and shows a failed read as unavailable 33ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > imports canonical formatting into a draft and displays extraction warnings 91ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > rejects an SVG logo before reading or uploading it 19ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > registers the selected immutable Vault version without inventing approval 166ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > does not turn a Vault search outage into an empty library 61ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > shows a superseded-source refusal without claiming another administrator changed the profile 100ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > clears unsaved reasons, extraction warnings and archived selection when the signed-in session changes 140ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > lists the project's commitments, naming the letter and question, beside the organisation's own 309ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > signs a project's PMC through the project's door, and the organisation's PMR through its own 404ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > records a meeting commitment with a reason through the organisation's door, with no signature 110ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > shows an error, not the organisation's list alone, when the project's read fails 47ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > says what the empty register will show, without a status the register never returns 47ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > tells the author, before any dialog, that they cannot approve their own answer 232ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > approves through the Part 11 dialog, forwarding meaning, reason, password and the revision read 147ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > says when a response changed after approval, and names the earlier approval 12ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > offers the package only when the server says every response is approved 31ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > says so when the questions cannot be read, rather than showing none 8ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > offers a viewer no write or sign control, and says why once 19ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > tells an editor without signing authority why they cannot approve, before the dialog 34ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > a second Save after a refusal still sends the revision the edit started from 93ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > a refused signature reloads the record when the dialog closes 115ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > reads back the approved text of an edited response in its history 17ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > withdraws a question with a reason, and shows it withdrawn 85ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > a letter that requires a response and records no question says why it cannot close, and can be marked as asking nothing 40ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > shows a commitment's status as the register reads it: past due reads overdue 13ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" links a letter already in the data room > offers this project's sources, marks one already in the inbox, and writes the upload path's reference 437ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" links a letter already in the data room > links nothing when no letter is chosen 211ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" links a letter already in the data room > says the data room could not be read rather than that it holds no letters 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project 319ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search leaves its result unverified 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project 88ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim 76ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches 71ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx > Communication's draft buttons carry the letter > every draft button is labelled "Draft response with AnA" and pins the letter of its communication 256ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the workflow runner AnA Command used, now that AnA Command is locked 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 7ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > the gate production builds refuses them 403 LAUNCH_SCOPE, and serves what the CMC screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims no /api/cmc prefix the CMC screens do not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims nothing, and no surface claims the retired store 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > answers launch for the agency-response paths Communication and Respond call 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan writes nothing and hands the act to the person 6ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_assessment writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_plan writes nothing, even on a confirmation 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > transmit_submission writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > transmit_submission points to the sequence, not the retired package transmit (audit 2026-10-17) 2ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > retire_qms_document refuses as a signature and points to the Retire action 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > every handler-refused tool in the register is pinned here or named 2ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmr: writes nothing, says AnA cannot sign, and points to Meetings & commitments 23ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmc: writes nothing, says AnA cannot sign, and points to Meetings & commitments 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a rems: writes nothing, says AnA cannot sign, and points to Meetings & commitments 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a meeting commitment is still fulfilled from chat, as a governed resolve 3ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > is described as handing a PMR, PMC or REMS to the person 0ms
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 26ms
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 7ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > create_effort_certification is registered and defined 2ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > add_effort_line is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > create_coi_disclosure is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > search_grants_gov is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > screen_restricted_party is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > research_compliance_briefing is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > fulfill_regulatory_commitment is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > review_ha_interaction is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > register_controlled_substance is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Add-on AnA tools — registration > prepare_meeting_package is registered and defined 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Effort + COI tools — context + validation guards > create_effort_certification refuses without tenant/user context 1ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Effort + COI tools — context + validation guards > create_effort_certification requires period fields 3ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Effort + COI tools — context + validation guards > add_effort_line requires the numeric percentages 1ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Effort + COI tools — context + validation guards > create_coi_disclosure rejects an invalid disclosure_type 1ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Sponsored-programs connector tools — context + input guards > search_grants_gov requires tenant context 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Sponsored-programs connector tools — context + input guards > search_grants_gov requires a non-empty query 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Sponsored-programs connector tools — context + input guards > screen_restricted_party requires tenant context 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Sponsored-programs connector tools — context + input guards > screen_restricted_party requires a party_name 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Briefing + coverage-gap tools — context + input guards > research_compliance_briefing requires tenant context 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Briefing + coverage-gap tools — context + input guards > triage_compliance_attention requires tenant + user context 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Briefing + coverage-gap tools — context + input guards > fulfill_regulatory_commitment requires a commitment_id 1ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Briefing + coverage-gap tools — context + input guards > review_ha_interaction requires an interaction_id 0ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Briefing + coverage-gap tools — context + input guards > register_controlled_substance rejects an invalid schedule 1ms
+ ✓ server/services/ana/__tests__/addons-tools.test.ts > Briefing + coverage-gap tools — context + input guards > prepare_meeting_package requires an interaction_id 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a PMR, PMC or REMS needs a signature, what met it, and its date 2ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a meeting commitment or other is a governed write: no signature, what met it optional 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > an unknown type is held to the signed rule, never the looser one 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > the signed list is the three postmarketing obligations 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > accepts a sequence alone, a document alone, or both 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > a meeting commitment needs none 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > is stable, hex sha256, and tagged with its recipe 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > changes with every one of its eleven fields 2ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > does not depend on the order the fields were given in 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a commitment not fulfilled has no fulfilment to read 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > fulfilled before fulfilments were recorded is legacy, keyed on the record, not on what is missing 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a signed type with a live signature that binds the record is signed; one that does not, is a mismatch 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a recorded signed type whose signature was withdrawn says so, and one with none says that 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > an unsigned type that was recorded is recorded 0ms
+ ✓ server/services/ha-interactions/__tests__/meeting-package.test.ts > assembleMeetingPackage > is ready with a briefing book + questions, and lists open questions 4ms
+ ✓ server/services/ha-interactions/__tests__/meeting-package.test.ts > assembleMeetingPackage > is NOT ready (critical) when a scheduled meeting has no briefing book 1ms
+ ✓ server/services/ha-interactions/__tests__/meeting-package.test.ts > assembleMeetingPackage > counts overdue interaction-sourced commitments and flags them 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > deriveCommitmentStatus > marks a past-due, non-terminal commitment overdue 2ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > deriveCommitmentStatus > preserves terminal states regardless of due date 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > deriveCommitmentStatus > leaves a future-dated open commitment as open 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > commitmentUrgency > buckets correctly 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > summarizeCommitmentPortfolio > counts every commitment into exactly one bucket 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > flags a scheduled meeting with no briefing book as not ready 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a held meeting with no questions is not ready: a major gap is a gap 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a planned meeting is not assessed yet, not "ready" 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a requested meeting is not assessed yet, not "ready" 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a closed interaction has no meeting to be ready for 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a cancelled interaction has no meeting to be ready for 0ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > is recognised only for an unentitled launch-scope verdict 2ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > names the reason in the accessible short form 0ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > offers no plan, no toggle and no request — for admins and members alike 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > the RBM attention context declares its cap > publishes the total and the shown count beside the capped list 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > the RBM attention context declares its cap > states the ordering, so "the most severe" is not an assumption the model makes 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > the RBM attention context declares its cap > names the cap once instead of repeating a literal 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > a governed report renders every section > has no truncating branch left to switch on 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > a governed report renders every section > takes the sections as they are 0ms
+ Test Files  21 passed (21)
+      Tests  265 passed (265)
+
+## 2. DB: the fulfilment routes, what the database holds, and the agency-response suite (its unsigned PMR case now a refusal)
+# npx vitest run --config vitest.db.config.ts tests/db/commitment-fulfilment-evidence.dbtest.ts tests/db/commitment-fulfilment-database.dbtest.ts tests/db/agency-response-signed-approval.dbtest.ts
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged 0ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault 57ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign 54ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 32ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date 24ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component 25ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 34ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 33ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 31ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 39ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing 35ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing 45ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing 34ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing 26ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing 42ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door 26ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 79ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 49ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused 28ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes 32ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row 61ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none 42ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said 27ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open 129ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > another organisation's admin reaches neither the options nor the fulfilment 66ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 2ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 8ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > records a question on a letter, with its ledger row, as unanswered 230ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > refuses a second question with the same agency number on one letter 113ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > a viewer can read the questions and write none 112ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > tells the author, before they try, that they cannot approve their own answer 82ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses an approval with no password, and writes nothing 29ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a meaning an approval cannot carry 32ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses the author, with the right password, and writes nothing 46ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a viewer: identity is not authority 15ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a signature over a revision the signer did not see 34ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > signs: one electronic_signatures row binding the exact response text 78ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a second approval of the same text 39ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses the package while one response is unsigned, naming it 36ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses to close the letter while a response is unsigned 53ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > records a commitment made in a response, naming the project, letter and question 71ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > once every response is signed: the package assembles, recorded with the bytes delivered 83ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again 78ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes 80ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a closed letter takes no new question and no edited response 41ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > lists the commitment under its project, with the letter and question it was made in 27ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation-wide register does not list a project's commitment (project admission applies) 13ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it, through either door 21ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation's door does not reach a project's commitment, even for an editor 14ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future, and a date that does not exist, with a sentence 42ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an unsigned PMR fulfilment that names nothing is refused, and nothing changes 22ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a commitment from a letter the person may not see is not listed to them 103ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > keeps every text: after an edit, the earlier approved text is in the history, with its signature 180ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > the history is append-only for the runtime role 14ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver 225ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a withdrawn question needs no answer, takes no edit, and is left out of the package 282ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does 134ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter with questions recorded cannot be marked as asking nothing 104ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response cannot be logged as already closed 27ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a close and a new question cannot both land: the close is checked under the letter lock 1024ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the screen is told what this person may do > a viewer may write nothing and sign nothing; an editor with signing authority may 114ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the Word package reproduces the signed text line for line > each line of a response is its own paragraph, and no Markdown marks are printed 225ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history and the commitments from them; the signatures stay 325ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions 80ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 3ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 6ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer 240ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role 22ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a removal is written once: deleted_at, once set, is not cleared 128ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT 26ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR that names nothing fails at COMMIT 25ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a move into fulfilled must say who recorded it 43ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a signature by someone else, or over other evidence, does not count (M5) 74ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > names only a version of this organisation, at its own sha256 47ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > names only a sequence the agency received 26ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > evidence is attached only in the update that records the fulfilment, never to a legacy row afterwards 35ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR 51ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a tenant whose commitments name evidence can still be erased > purge removes the commitments before the Vault versions they name, with no 23503; the signature stays 230ms
+ Test Files  3 passed (3)
+      Tests  79 passed (79)
+
+## 3. DB: the tenant purge suites and the QMS signature guard (the purge order and a sibling DB-held signature)
+# npx vitest run --config vitest.db.config.ts tests/db/tenant-purge.dbtest.ts tests/db/tenant-purge-audit.dbtest.ts tests/db/tenant-purge-artifact-records.dbtest.ts tests/db/qms-document-signature-required.dbtest.ts
+# The one failure is section 4's: identical on the trunk code.
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 113ms
+   → SOURCE_READ_RECEIPT_PURGE_REFUSED: an identified platform purge scope and positive target are required.
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner 89ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing 20ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 6ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 12ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 16ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 12ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 11ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 52ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 296ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 65ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 127ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 216ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 31ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 12ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 14ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 65ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 68ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 22ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 23ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 28ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 16ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 14ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 14ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 53ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07) 70ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 55ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 33ms
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted 139ms
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it 127ms
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 30 passed (31)
+
+## 4. Not this slice: failures identical on the trunk code (a git-archive export of HEAD ae287394 with this tree's
+##    node_modules, run against the same database)
+== server/routes/__tests__/report-os-report-pack-export.test.ts, report-os-audit-recording.test.ts with the trunk code (also in the section 6 sweep)
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > brands all retained packet pages with the tenant profile and audits the exact presentation snapshot 102ms
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > exports both complete bodies in saved runIds order, with sealed content, actual page ranges and the exact-byte event 52ms
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > keeps explicit manifest mode reachable without embedding bodies 9ms
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=manifest) 8ms
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an observed plan withdrawal during rendering 30ms
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes 35ms
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses an observed retained-body change after rendering 29ms
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > qualifies the reconstructed legacy final and retains its actual signature facts 30ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 21ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 246ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > uses the tenant company profile on actual PDF bytes and records its revision/hash separately from the seal 20ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 10ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 5ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 4ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > includes the enabled tenant company header in a manifest and records the presentation revision 3ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 4ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  16 failed | 34 passed (50)
+
+== refused-step-voids-signature.pglite.test.ts, ana-launch-scope-execution.test.ts, ana-launch-scope.test.ts with the trunk code.
+== The same 10 fail on this tree (re-run 2026-10-19 on the final tree: 10 failed | 11 passed (21))
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits 52ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > the precheck refuses a number that contradicts the record, before anyone signs 16ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits 1ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > the package sent names the organisation as the applicant, never a placeholder 1ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 64, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 2ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 65, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 2ms
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs 11ms
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it 3ms
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 8ms
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 4ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  10 failed | 11 passed (21)
+
+== tests/db/tenant-purge-artifact-records.dbtest.ts with the trunk code (HEAD export), same database
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 235ms
+   → SOURCE_READ_RECEIPT_PURGE_REFUSED: an identified platform purge scope and positive target are required.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+
+
+## 5. The moved Vault lock: see vault-relationships-lock-move.txt
+
+## 6. The affected sweep: every unit suite whose import graph reaches a changed module (95 files), on the final tree
+# npx vitest run <the 95 files below>. Only the 16 report-os failures of section 4 fail, identically on the trunk code.
+# Files:
+#   server/__tests__/migrations/gcc-seeds-no-invented-figures.pglite.test.ts
+#   server/__tests__/routes/ana-tool-policy.test.ts
+#   server/__tests__/routes/q-sub.test.ts
+#   server/__tests__/routes/smoke.test.ts
+#   server/__tests__/security/audit-trail-contract.test.ts
+#   server/__tests__/security/tenant-isolation-q-sub.contract.test.ts
+#   server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+#   server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+#   server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts
+#   server/middleware/__tests__/launch-scope-api-gate.test.ts
+#   server/routes/__tests__/commitment-fulfil-route.test.ts
+#   server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+#   server/routes/__tests__/financial-disclosure-certify-meaning.test.ts
+#   server/routes/__tests__/governed-ledger-gap-surfaced.test.ts
+#   server/routes/__tests__/governed-signed-act.request-context.test.ts
+#   server/routes/__tests__/ha-interactions-error-containment.test.ts
+#   server/routes/__tests__/manufacturing.no-seed-plant.test.ts
+#   server/routes/__tests__/mdx-qms-retire.test.ts
+#   server/routes/__tests__/part11-signature-post-removed.test.ts
+#   server/routes/__tests__/protocol-signatures.routes.test.ts
+#   server/routes/__tests__/qms-change-approval-signature.test.ts
+#   server/routes/__tests__/qms-document-approval-signature.test.ts
+#   server/routes/__tests__/report-os-audit-recording.test.ts
+#   server/routes/__tests__/report-os-finalize-signature.test.ts
+#   server/routes/__tests__/report-os-regional-context.test.ts
+#   server/routes/__tests__/report-os-report-pack-export.test.ts
+#   server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+#   server/routes/c2c/__tests__/communication-advance.pglite.test.ts
+#   server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+#   server/services/__tests__/DocumentOrchestrationService.drafts-forms-with-FDAFormGenerator.test.ts
+#   server/services/__tests__/adaptive-decision-is-governed.test.ts
+#   server/services/__tests__/operating-system.test.ts
+#   server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts
+#   server/services/__tests__/signature-content-verification.test.ts
+#   server/services/__tests__/signature-write-path-single.test.ts
+#   server/services/agency-responses/__tests__/response-logic.test.ts
+#   server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts
+#   server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts
+#   server/services/ana-ri/__tests__/mdx-command-handlers.test.ts
+#   server/services/ana-ri/__tests__/mdx-context-resolver.test.ts
+#   server/services/ana-ri/__tests__/mdx-explain-audit-row.test.ts
+#   server/services/ana-ri/__tests__/mdx-tool-policy-loader.test.ts
+#   server/services/ana-ri/__tests__/mdx-tool-policy-multi-turn.test.ts
+#   server/services/ana/__tests__/addons-tools.test.ts
+#   server/services/ana/__tests__/ana-cannot-sign.test.ts
+#   server/services/ana/__tests__/deadline-radar-block.test.ts
+#   server/services/ana/__tests__/deadline-radar.test.ts
+#   server/services/ana/__tests__/document-template-description.test.ts
+#   server/services/ana/__tests__/ha-tools.test.ts
+#   server/services/ana/__tests__/session-briefing.test.ts
+#   server/services/ana/__tests__/since-last-visit.test.ts
+#   server/services/ana/__tests__/tool-selection-routing.test.ts
+#   server/services/commitments/__tests__/commitments-service.test.ts
+#   server/services/commitments/__tests__/extraction-unavailable.test.ts
+#   server/services/cover-letter/__tests__/section-pull.test.ts
+#   server/services/digest/__tests__/proactive-digest.test.ts
+#   server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts
+#   server/services/ectd/__tests__/filed-sequence-rejection.test.ts
+#   server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts
+#   server/services/ectd/__tests__/sequence-release-signature.test.ts
+#   server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+#   server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+#   server/services/grants/__tests__/closeout-readiness.test.ts
+#   server/services/grants/__tests__/grants-logic.test.ts
+#   server/services/ha-interactions/__tests__/fulfilment-logic.test.ts
+#   server/services/ha-interactions/__tests__/ha-logic.test.ts
+#   server/services/ha-interactions/__tests__/meeting-package.test.ts
+#   server/services/market-specs/__tests__/document-preparation.test.ts
+#   server/services/other-support/__tests__/other-support-logic.test.ts
+#   server/services/part11/__tests__/commitment-fulfilment-binder.test.ts
+#   server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts
+#   server/services/part11/__tests__/electronic-signature-meaning-required.test.ts
+#   server/services/part11/__tests__/governed-sign-meaning.test.ts
+#   server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts
+#   server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts
+#   server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts
+#   server/services/part11/__tests__/signer-org-scope.test.ts
+#   server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+#   server/services/pdev/__tests__/pdev-fda-feedback-rollup.test.ts
+#   server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+#   server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+#   server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+#   server/services/q-sub/__tests__/q-sub.service.test.ts
+#   server/services/qms/__tests__/controlled-document-content.test.ts
+#   server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+#   server/services/qms/__tests__/qms-send-for-review-respects-the-seal.pglite.test.ts
+#   server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts
+#   server/services/rbm/__tests__/rbm-actuator.test.ts
+#   server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+#   server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts
+#   server/services/submission-service/__tests__/gateway-selection.test.ts
+#   server/services/submission-service/__tests__/packageability-dry-run.test.ts
+#   server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+#   tests/routes/c2c-commitments.test.ts
+#   tests/unit/charters-routes.test.ts
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > brands all retained packet pages with the tenant profile and audits the exact presentation snapshot 88ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > exports both complete bodies in saved runIds order, with sealed content, actual page ranges and the exact-byte event 45ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > keeps explicit manifest mode reachable without embedding bodies 6ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=manifest) 10ms
+   → expected { success: false, error: { …(2) } } to match object { Object (error) }
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an observed plan withdrawal during rendering 36ms
+   → expected 503 to be 403 // Object.is equality
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes 37ms
+   → expected { success: false, error: { …(2) } } to match object { Object (error) }
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses an observed retained-body change after rendering 43ms
+   → expected 503 to be 409 // Object.is equality
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > qualifies the reconstructed legacy final and retains its actual signature facts 31ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 18ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 182ms
+   → Invalid PDF structure.
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > uses the tenant company profile on actual PDF bytes and records its revision/hash separately from the seal 38ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 13ms
+   → expected { success: false, error: { …(2) } } to match object { success: false, …(1) }
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 6ms
+   → expected 503 to be 403 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 5ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > includes the enabled tenant company header in a manifest and records the presentation revision 4ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 7ms
+   → expected { success: false, error: { …(2) } } to match object { success: false, …(1) }
+ Test Files  2 failed | 92 passed | 1 skipped (95)
+      Tests  16 failed | 1437 passed | 2 skipped (1455)

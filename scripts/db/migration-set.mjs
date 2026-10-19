@@ -3357,6 +3357,16 @@ export const C2C_MIGRATION_FILES = [
   // file above). Public, integer organization_id, so the sweeps below policy
   // the new table. Additive and IF NOT EXISTS throughout; drops nothing.
   'migrations/20261018b_agency_response_questions.sql',
+  // A commitment's fulfilment names what met it (2026-10-19, rows D2 and D5;
+  // decision P-40): five nullable columns on regulatory_commitments (the
+  // sequence, the Vault version and its sha256, who recorded it and when), a
+  // same-organisation key on ectd_sequences for the composite FK, and the
+  // guards that hold a fulfilled PMR/PMC/REMS to its signature at COMMIT and a
+  // recorded fulfilment to what it recorded. After every parent: the two
+  // files above, the submission core (ectd_sequences, line ~154) and the Vault
+  // shape (~1859). Creates no table; adds columns to one the sweeps already
+  // policy. Additive, guarded, drops nothing another file creates.
+  'migrations/20261019_commitment_fulfilment_evidence.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

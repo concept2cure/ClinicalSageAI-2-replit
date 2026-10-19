@@ -1550,3 +1550,18 @@ Prepared by the W3 Claude session (drafting and execution only; cannot sign).
 No result was edited after execution, except the one absolute path removed
 from the first attempt's OQ-001 record (`first-attempt/README.md`). The runners
 wrote every record, and the matrix builder regenerated TM-001.
+
+## 19. Addendum 2026-10-19 — a new Part 11 control with no OQ step yet (D2 session)
+
+URS-001 v0.7 adds URS-PROJ-014: a PMR, PMC or REMS is recorded fulfilled only by an electronic signature naming
+what met it, held by the database at commit (decision P-40, `docs/LAUNCH_DEFINITION_OF_DONE.md`). VMP-001 §3.1
+requires scripted testing for every Part 11 control. The control is proven by automated tests on real PostgreSQL as
+the runtime role, each shown to catch its own removal (`docs/evidence/D2-COMMITMENT-FULFILMENT/2026-10-19/`,
+`mutation-*.txt` and the review's `mutation-review-*.txt`), but no OQ-001 step executes it. RA-001 v0.22 assesses it
+(high, scripted). Owed before row D4 counts it: a credentialed OQ-PROJ step that records a fulfilment through the
+signing dialog's API and recomputes the bound digest from the stored record (the OQ-006 QMS pattern). TM-001 has not
+been regenerated for it: the committed matrix (generated 2026-10-01) predates URS-PROJ-014 and has no row for it, and
+the matrix builder (`scripts/validation/build-traceability.mjs`) still stops on the 24 URS-CMC rows that have no
+RA-001 row, as it did before this change. When the matrix is regenerated, URS-PROJ-014 will read "uncovered" until
+the OQ step executes. This package claims nothing for it.
+
