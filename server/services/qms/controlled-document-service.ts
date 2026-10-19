@@ -8,6 +8,7 @@ import { recordGovernedAction } from '../../routes/c2c/actions';
 import { captureQmsAuthoringContent, QmsContentRefusedError } from './controlled-document-content';
 import { getSopTemplate, STANDARD_SECTIONS } from './sopTemplates';
 import { resolveAuthoringDocumentScope, decideAuthoringPermission, grantAuthoringPermission } from '../authoring/authoring-permissions';
+import { checkDocumentWritable } from '../authoring/document-lock';
 import { resolveSignerOrgRole } from '../part11/resolve-signer-role';
 import { qmsTrainingSections } from './training-content';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from './document-approval-signature';
@@ -54,6 +55,18 @@ async function requireContentAccess(ctx: QmsReadContext, docId: string, action: 
   const role = await resolveSignerOrgRole(Number(ctx.actor.id), ctx.tenantId, ctx.pool);
   const access = await decideAuthoringPermission({ pool: ctx.pool, scope,
     principal: { id: ctx.actor.id, email: ctx.actor.email, roles: role ? [role.toUpperCase()] : [] }, action });
+  /* P-40: say which refusal this is. `decideAuthoringPermission` refuses an
+     edit of a FROZEN or APPROVED document before it looks at any grant, so
+     collapsing every outcome into the permission sentence told the owner of a
+     sealed document that they lacked permission on it — false, and it named no
+     remedy. The decider already distinguishes them; this stopped discarding
+     it. The remedy is performable: a controlled revision copies the sealed
+     text onto a new version and leaves the signed one intact. */
+  if (access.reason === 'document-immutable') {
+    throw new QmsContentRefusedError(409, 'QMS_DOCUMENT_SEALED',
+      "This document's text is sealed: it was frozen or approved, and sealed text is part of the signed record. "
+      + 'Open a controlled revision to continue — it copies this text into a new version and leaves the signed one intact.');
+  }
   if (!access.allowed) throw new QmsContentRefusedError(403, 'QMS_DOCUMENT_PERMISSION_DENIED', 'You do not have permission to read or change this authored document.');
 }
 
@@ -182,8 +195,20 @@ export async function reviseControlledQmsDocument(ctx: CreateContext, id: number
     await ownedProgram({ ...ctx, pool: tx },copy.programId);
     const locked = await tx.query(`SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [id, ctx.tenantId]);
     const live = locked.rows[0];
-    if (!live || live.version !== row.version || live.authoring_document_id !== copy.documentId || !['effective','retired','superseded','in_review'].includes(live.status))
-      throw new QmsContentRefusedError(409, 'QMS_INVALID_STATE', 'The controlled document changed or is already a draft. Reopen it before revising.');
+    /* P-40: a `draft` whose editing copy is SEALED is revisable, and nothing
+       else about `draft` is. Such an entry could otherwise go nowhere — it
+       cannot be sent for review (the seal, correctly) and there is no unfreeze
+       and no new-version route on the authoring side, so the frozen message's
+       own "create a new version" had nothing behind it. A revision is exactly
+       that: the sealed text is copied onto a new editing copy, the version is
+       bumped, the old document id is retained and the seal and its signatures
+       are untouched. The condition is the seal, because without it this would
+       be a free version bump on any draft — a new door, not a remedy. */
+    const sealedCopy = (await checkDocumentWritable(tx, copy.documentId, ctx.tenantId)).code === 'DOCUMENT_FROZEN';
+    const revisableState = ['effective','retired','superseded','in_review'].includes(live?.status)
+      || (live?.status === 'draft' && sealedCopy);
+    if (!live || live.version !== row.version || live.authoring_document_id !== copy.documentId || !revisableState)
+      throw new QmsContentRefusedError(409, 'QMS_INVALID_STATE', 'The controlled document changed, or is a draft whose text is not sealed. Reopen it before revising.');
     // Re-read under the governing lock so a concurrent review edit cannot be copied from an earlier state.
     const latest = await captureQmsAuthoringContent(tx, live, false);
     if (JSON.stringify(latest) !== JSON.stringify(copy)) throw new QmsContentRefusedError(409, 'QMS_CONTENT_CHANGED', 'The saved content changed. Reopen this document before revising.');
