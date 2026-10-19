@@ -1,0 +1,31 @@
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 47ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written 7ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written 7ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written 9ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row 37ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused 30ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned 24ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back 30ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it 29ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: changed, with one provenance event naming it 11ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: changed, with one provenance event naming it 10ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: a provenance event that cannot be written takes the change back 16ms
+   → answered 500 over a committed status change with no provenance: expected { status: 'draft', …(2) } to match object { status: 'review' }
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: a provenance event that cannot be written takes the change back 14ms
+   → answered 500 over a committed status change with no provenance: expected { status: 'review', …(2) } to match object { status: 'approved' }
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 9ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row 23ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 8ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 8ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > the harness metadata the route republishes is written by the act, through the route 21ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > an extra column is a contract error, never "the document changed", and nothing is written 7ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > a column it must write, removed is a contract error, never "the document changed", and nothing is written 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: answered 500 over a committed status change with no provenance: expected { status: 'draft', …(2) } to match object { status: 'review' }
+    379|     expect(await artifactRow(), 'answered 500 over a committed status …
+AssertionError: answered 500 over a committed status change with no provenance: expected { status: 'review', …(2) } to match object { status: 'approved' }
+    379|     expect(await artifactRow(), 'answered 500 over a committed status …
+ Test Files  1 failed (1)
+      Tests  2 failed | 20 passed (22)

@@ -12,6 +12,10 @@ import {
   checkQ1E, monthsIn, latestTimePoint, longTermCoverage, statedClaim, q1eCeiling,
   isLongTerm, isAccelerated, scopeOf, studyCoverage,
 } from '../ich-compliance-q1e';
+/* The canonical readers for the same fields, asserted to AGREE: a second
+   parser that disagrees with them is the defect this file's last section
+   exists to pin. */
+import { numericSeries, readRecordedStabilityResults, parseMonthTime } from '../recorded-stability';
 import type { ProgramStage, ProjectInputs } from '../ich-compliance-rules';
 
 const EMPTY: ProjectInputs = {
@@ -248,6 +252,71 @@ describe('the seven defects the first version had', () => {
     expect(monthsIn('900 months')).toBeNull();
     expect(monthsIn('0 months')).toBeNull();
     expect(monthsIn('600 months')).toBe(600);
+  });
+});
+
+/**
+ * One parser per field, and the pull point's time is NOT the claim's parser.
+ *
+ * `studyCoverage` first read each pull point's `timePoint` with `monthsIn` —
+ * the parser written for the claim's free text ("24 months at 25C/60%RH"). The
+ * canonical parser of that field is `parseMonthTime` in `recorded-stability.ts`,
+ * which `numericSeries` uses and therefore the Q1E estimator, the poolability
+ * assessment, the trending engine and the composed §3.2.P.8. They disagree on
+ * the register's own labels, and the disagreement failed a compliant dossier.
+ */
+describe('the recorded time points are read by the canonical parser', () => {
+  const labelled = {
+    studyName: 'DP-LT-24', studyType: 'long-term', storageCondition: '25C/60%RH',
+    duration: '24', timePoints: '0,6,12,24', shelfLifeClaim: '24 months',
+    results: [
+      { timePoint: 'Month 0', parameter: 'assay', result: '99.4' },
+      { timePoint: 'Month 6', parameter: 'assay', result: '98.2' },
+      { timePoint: 'Month 12', parameter: 'assay', result: '97.5' },
+      { timePoint: 'Month 24', parameter: 'assay', result: '96.6' },
+    ],
+  };
+
+  it('reads a complete study labelled "Month N" as the months it covers', () => {
+    /* It read 0, and an NDA then got TWO fails stating "0 months of long-term
+       data" — a figure its own data contradicts. */
+    expect(studyCoverage(labelled)).toEqual({ recorded: 24, planned: 24, unreadable: false });
+    expect(ruleIds(checkQ1E(of([labelled], NDA)))).toEqual(['Q1E_CLAIM_WITHIN_DATA']);
+  });
+
+  it('agrees with numericSeries about how far the same points reach', () => {
+    /* The two must not diverge: one feeds the verdict, the other feeds the
+       estimator and the composed section. */
+    const series = numericSeries(readRecordedStabilityResults(labelled.results).points);
+    expect(series.ok).toBe(true);
+    const furthest = Math.max(...(series as { points: Array<{ time: number }> }).points.map((p) => p.time));
+    expect(studyCoverage(labelled).recorded).toBe(furthest);
+  });
+
+  it('counts a pull point at time zero as data', () => {
+    /* `monthsIn('0')` is null, because a shelf life of zero months is not a
+       period. A pull point at t=0 is the release result. */
+    expect(parseMonthTime('0')).toBe(0);
+    expect(monthsIn('0')).toBeNull();
+    const onlyZero = { ...labelled, results: [{ timePoint: '0', parameter: 'assay', result: '99.9' }] };
+    expect(studyCoverage(onlyZero).recorded).toBe(0);
+  });
+
+  it('reads the register\u2019s label forms, and refuses a unit it must not convert', () => {
+    expect(parseMonthTime('Month 24')).toBe(24);
+    expect(parseMonthTime('24m')).toBe(24);
+    expect(parseMonthTime('24')).toBe(24);
+    /* The canonical parser deliberately does not convert units: a pull point
+       labelled in years is not a month figure it may invent. */
+    expect(parseMonthTime('2 years')).toBeNull();
+    /* ...while the CLAIM's parser must convert, because a claim says "2 years". */
+    expect(monthsIn('2 years')).toBe(24);
+  });
+
+  it('still reads a planned schedule written as a JSON-shaped list', () => {
+    expect(latestTimePoint('[0,3,6,12,24]')).toBe(24);
+    expect(latestTimePoint('"0","6","12"')).toBe(12);
+    expect(latestTimePoint('Month 0, Month 12')).toBe(12);
   });
 });
 

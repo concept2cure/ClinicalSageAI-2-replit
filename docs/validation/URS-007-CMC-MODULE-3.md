@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-007 |
-| Version | 0.5 |
+| Version | 0.7 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-008 — **owed**: neither the protocol nor its runner exists yet. `ci:validation-traceability` refuses a protocol that names no runner, which is why no OQ-008 document is filed ahead of one. Decision P-28 states that CMC is not described as validated until OQ-008 executes in the W3 posture beside IQ-001 and OQ-001…007, with a named expert's signature on the reference-record verification. |
@@ -15,6 +15,8 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-10-12 | Claude | Drafted from the shipped code as the catalog flip landed: the register writers, the one compile, the contradiction lifecycle, the final-export gate, the placement path and the composition boundary. |
+| 0.7 | 2026-10-18 | Claude | URS-CMC-026 added: the reading half of §11.10(e). The before-values were on the chain and no working route returned them — the tenant ledger carries the act and the actor with no changed fields, and the per-entity Part 11 route is deliberately disconnected, so a reviewer could not see what a record said before it was changed (`docs/evidence/CMC-M3-GA/2026-10-18/09-register-record-history/`). |
+| 0.6 | 2026-10-18 | Claude | URS-CMC-025 added: the §11.10(e) operator on every register *edit*, not only on the create. 223 register rows on the development deployment carried an edit and none of those edits was on the audit chain, so the platform recorded who entered a value and not who changed it (`docs/evidence/CMC-M3-GA/2026-10-18/08-register-edit-audit/`). |
 | 0.5 | 2026-10-18 | Claude | URS-CMC-024 added: the ICH Q1E verdict. The engine computed a real Q1E evaluation (the ANCOVA combinability test) and reported no Q1E row, so a shelf-life claim beyond what the recorded data supports raised no finding while the composed §3.2.P.8 printed it (`docs/evidence/CMC-M3-GA/2026-10-18/06-ich-q1e-verdict/`). |
 | 0.4 | 2026-10-18 | Claude | URS-CMC-023 added: the signing ceremony generalised to every register that has a signed state. Four registers — analytical methods, process validation, QC testing and comparability — had the signature columns and no signature: the status word, the signer and the date were all request-body fields (`docs/evidence/CMC-M3-GA/2026-10-18/05-ungoverned-signed-states/`). |
 | 0.3 | 2026-10-18 | Claude | URS-CMC-022 added: a section approval is independent of whoever entered the records it cites, and an authorship meaning is refused (`docs/evidence/CMC-M3-GA/2026-10-18/03-section-approval-four-eyes/`). |
@@ -75,6 +77,8 @@ verdict.
 | URS-CMC-022 | A section approval is independent of the people who entered the records the section was composed from: the operator of a cited record cannot approve it, a cited record with no recorded operator refuses the approval and is named, and an authorship-meaning signature is not accepted at all. A failed check refuses; it never reads as no conflict. | §11.10(g) §11.50(a)(3) | high | `server/services/cmc/register-operators.ts`, `server/services/governance/separation-of-duties.ts`, `server/api/cmc/module3OperatingSystemRoutes.ts` |
 | URS-CMC-023 | A register's signed state — a method *validated*, a process-validation record or a comparability assessment *approved*, a QC result *reviewed* — is reached only under a signature with a reason and re-authentication, never by a create or an ordinary edit, and the record names the person who signed it. A record already in that state is closed to content edits and is retired rather than reversed. The signature is refused when the thing it would accept is not recorded. | §11.10(a) §11.50 §11.70 §11.200 | high | `server/services/cmc/signed-record.ts`, `server/services/cmc/register-writes.ts`, `server/api/cmc/routes.ts`, `client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts` |
 | URS-CMC-024 | A shelf-life claim is judged against the data the programme's own stability studies cover: a claim within the coverage passes, one beyond it is reported, and one beyond the ICH Q1E extrapolation ceiling fails for a marketing application. The verdict is reported at the programme's stage, because Q1E governs a registration application's proposed shelf life and a clinical-trial application answers 21 CFR 312.23(a)(7)(ii) instead. A claim or a coverage the register states in text the rule cannot read unambiguously is reported *not evaluated*, never as a pass. | none | high | `server/services/cmc/ich-compliance-q1e.ts`, `server/services/cmc/stability-source.ts`, `server/services/cmc/ich-compliance-rules.ts` |
+| URS-CMC-025 | Every register edit records the person who changed the record, which fields moved and both values, on the tenant's audit chain and in the same transaction as the row itself. An edit that moves nothing is not recorded; an edit of a record that does not exist records nothing. No register edit reaches a table by any other path. | §11.10(e) | high | `server/services/cmc/register-edit-audit.ts`, `server/api/cmc/routes.ts` |
+| URS-CMC-026 | A register record's chained history is readable in the product, against the record it is about: every act, oldest first, with the person, the fields that moved and both values, and the §11.50 signature where one is bound to the act. A read that fails is reported as a failure and never as a record with no changes; a record with no chained act says so and why. The history of another organisation's record is not readable. | §11.10(e) | high | `server/services/cmc/register-history.ts`, `server/api/cmc/routes.ts`, `client/src/concept2cure/v2/surfaces/cmcRecordHistory.tsx`, `shared/constants/cmc-register-history.ts` |
 
 ## 3. Assumptions and constraints
 
@@ -91,6 +95,18 @@ verdict.
   attributes (row D7).
 - **"Fileable, DTD-valid eCTD Module 3 sequence" is not claimed** until D7
   lands (decision P-28).
+- **The history names the stored column** (URS-CMC-026). For the fifteen
+  Drizzle registers that is the field name the form uses; for the
+  comparability register, whose write path is raw SQL, it is the database
+  column — so an outcome recorded through the Outcome box reads as
+  `justification`, which is the column §3.2.P.2 prints from. A per-register
+  label map is not claimed.
+- **A register edit is attributable from 2026-10-18** (URS-CMC-025). Register
+  rows edited before that date carry an `updated_at` and no record of who
+  moved what; 213 such rows exist on the development deployment and none on a
+  tenant deployment, because the registers were not in commercial use. The
+  claim is that every edit **from** that date is attributable, not that the
+  development history is.
 - **A section approval is independent of the data entry** (URS-CMC-022,
   2026-10-18). The approver may not be one of the operators the chain records
   for the registers the section cites, and a cited record entered before the
