@@ -323,5 +323,227 @@ await step(
   },
 );
 
+
+/**
+ * The §11.10(e) edit half (OQ-CMC-37) and the reading of it (OQ-CMC-38).
+ *
+ * URS-CMC-021 put the operator on every register CREATE. Every register EDIT
+ * was a bare `db.update` with no audit row until 2026-10-18 — 223 register
+ * rows on the development deployment carried an edit and none of those edits
+ * was on the chain — and once the rows existed, no working route returned them
+ * against the record they were about
+ * (docs/evidence/CMC-M3-GA/2026-10-18/08-register-edit-audit/,
+ * .../09-register-record-history/).
+ */
+
+/** The three registers these two steps move, one way each. */
+const EDITED_REGISTERS = [
+  {
+    noun: 'analytical method',
+    path: 'analytical-methods',
+    ordinary: (s) => ({
+      methodCode: `OQE-${s}`, title: 'OQ edit probe', purpose: 'Assay', analyte: 'API',
+      matrix: 'Drug substance', technique: 'HPLC', status: 'development',
+    }),
+    /* Two fields at once: a diff that reports only the last one written, or
+       only the field name without its values, passes a one-field check. */
+    edit: { title: 'OQ edit probe (rev 2)', purpose: 'Assay and related substances' },
+    moved: { title: ['OQ edit probe', 'OQ edit probe (rev 2)'], purpose: ['Assay', 'Assay and related substances'] },
+  },
+  {
+    noun: 'stability study',
+    path: 'stability-studies',
+    ordinary: (s) => ({
+      productName: `OQE-${s}`, batchNumber: 'B-1', dosageForm: 'tablet', scope: 'DP', climaticZone: 'II',
+      studyType: 'long_term', storageConditions: ['25C/60%RH'], duration: 24, testParameters: ['assay'],
+      timePoints: ['0', '12'], status: 'ACTIVE', startDate: '2026-01-01T00:00:00.000Z',
+    }),
+    edit: { status: 'PAUSED' },
+    moved: { status: ['ACTIVE', 'PAUSED'] },
+  },
+  {
+    /* uuid-keyed, and its write path is raw SQL rather than Drizzle — the two
+       doors are separate implementations, so one of them passing says nothing
+       about the other. */
+    noun: 'comparability assessment',
+    path: 'comparability-studies',
+    ordinary: () => ({ title: 'OQ edit probe comparability', type: 'process', product: 'Scale' }),
+    edit: { outcome: 'Comparable on every attribute against the pre-change criteria.' },
+    moved: { justification: [null, 'Comparable on every attribute against the pre-change criteria.'] },
+  },
+];
+
+const historyOf = async (api, register, id) => {
+  const r = await api('GET', `/api/cmc/register-history/${register}/${id}`);
+  const data = dataOf(r);
+  return { status: r.status, entries: Array.isArray(data.entries) ? data.entries : [], note: data.note ?? null, json: r.json };
+};
+
+/**
+ * Both values of every field the edit moved — the half of §11.10(e) an
+ * inspector reads for a changed record. Compared as text, because the register
+ * decides the stored type and this step is asking what the trail SAYS.
+ */
+function expectMovedFields(expect, r, recorded) {
+  for (const [field, [from, to]] of Object.entries(r.moved)) {
+    const move = recorded.changed[field];
+    expect(move != null, `${r.noun}: the recorded edit does not name ${field}`, recorded.changed);
+    expect(
+      String(move.from ?? '') === String(from ?? '') && String(move.to ?? '') === String(to ?? ''),
+      `${r.noun}: ${field} recorded as ${JSON.stringify(move)}, expected ${JSON.stringify({ from, to })}`,
+      move,
+    );
+  }
+}
+
+/**
+ * One register, edited once and then sent the same body again, with the
+ * recorded act read back and checked field by field. Its own function because a
+ * step that does this three times inline is one function with every branch of
+ * all three in it.
+ */
+async function recordsOneEdit(ctx, r) {
+  const { api, expect } = ctx;
+  const made = await api('POST', `/api/cmc/${r.path}`, { projectId: state.projectId, ...r.ordinary(stamp) });
+  expect(made.status === 200 || made.status === 201, `an ordinary ${r.noun} expected 200, got ${made.status}`, made.json);
+  const id = dataOf(made).id;
+
+  const edited = await api('PUT', `/api/cmc/${r.path}/${id}`, r.edit);
+  expect(edited.status === 200, `editing the ${r.noun} expected 200, got ${edited.status}`, edited.json);
+
+  const after = await historyOf(api, r.path, id);
+  expect(after.status === 200, `${r.noun}: the history read expected 200, got ${after.status}`, after.json);
+  const updates = after.entries.filter((e) => e.act === 'cmc.register.update');
+  expect(updates.length === 1, `${r.noun}: expected one recorded edit, got ${updates.length}`, after.entries);
+  const [recorded] = updates;
+  expect(recorded.actorRef != null, `${r.noun}: the recorded edit names no actor`, recorded);
+  expect(recorded.sealed === true, `${r.noun}: the recorded edit is not sealed into the chain`, recorded);
+  expectMovedFields(expect, r, recorded);
+
+  /* The same body again. §11.10(e) asks for changes to be recorded; a ledger
+     that also holds every no-op PUT buries them. */
+  const again = await api('PUT', `/api/cmc/${r.path}/${id}`, r.edit);
+  expect(again.status === 200, `${r.noun}: the repeat edit expected 200, got ${again.status}`, again.json);
+  const repeated = await historyOf(api, r.path, id);
+  expect(
+    repeated.entries.filter((e) => e.act === 'cmc.register.update').length === 1,
+    `${r.noun}: a repeat body that moved nothing added an act`,
+    repeated.entries,
+  );
+  return {
+    register: r.path, id, acts: after.entries.map((e) => e.act),
+    changedFields: recorded.changedFields, sealed: recorded.sealed,
+  };
+}
+
+await step(
+  {
+    id: 'OQ-CMC-37',
+    urs: ['URS-CMC-025'],
+    title: 'An ordinary register edit records who changed it, and what moved',
+    action:
+      'edit one record in each of three registers — a serial one, a uuid one, and one moved by two fields at once — ' +
+      'then send the same body again; then edit a record that does not exist; read each record’s chained history back',
+    expected:
+      'one act per edit that moved something, each naming the actor, the fields that moved and both values; the repeat ' +
+      'body adds no act; the unknown record is a 404 that adds none; every act is sealed into the tenant chain',
+    dependsOn: ['OQ-CMC-03'],
+  },
+  async (ctx) => {
+    const { api, expect, attach } = ctx;
+    const observed = [];
+    for (const r of EDITED_REGISTERS) {
+      observed.push(await recordsOneEdit(ctx, r));
+      state.editedRegisterRecords = observed.map((o) => ({ register: o.register, id: o.id }));
+    }
+
+    /* A record that does not exist: a 404, and nothing recorded for it. */
+    const ghost = await api('PUT', '/api/cmc/analytical-methods/99999999', { title: 'nothing to change' });
+    expect(ghost.status === 404, `editing a record that does not exist expected 404, got ${ghost.status}`, ghost.json);
+    const ghostHistory = await historyOf(api, 'analytical-methods', '99999999');
+    expect(ghostHistory.status === 404, `the ghost record's history expected 404, got ${ghostHistory.status}`, ghostHistory.json);
+
+    /* And the chain the acts are sealed into, as the ledger's own verifier
+       reports it — not as this step recomputes it. */
+    const ledger = await api('GET', '/api/audit-trail/ledger?limit=200');
+    expect(ledger.status === 200, `the ledger read expected 200, got ${ledger.status}`, ledger.json);
+    const chain = ledger.json?.meta?.chain ?? null;
+    expect(chain?.ok === true, 'the tenant chain is not reported ok by the ledger', chain);
+    attach('recorded-edits.json', { observed, ghost: ghost.status, chain });
+    return `3 registers record an edit with both values; a repeat body records none; chain ok over ${chain?.rowsChecked ?? '?'} row(s)`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-CMC-38',
+    urs: ['URS-CMC-026'],
+    title: 'A record’s change history is readable against the record it is about',
+    action:
+      'read the change history through the product’s own route for each edited record, then ask it for a record that ' +
+      'does not exist and for a register that keeps no history; read the specifications register’s own history route',
+    expected:
+      'the create and each edit in order with the person, the fields and both values; 404 for the unknown record; 404 ' +
+      'naming the registers that do keep one — never an empty history; the specifications route still answers 200',
+    dependsOn: ['OQ-CMC-37'],
+  },
+  async ({ api, expect, attach, deviation }) => {
+    const records = state.editedRegisterRecords ?? [];
+    if (records.length === 0) {
+      deviation('not executed — no record survived OQ-CMC-37 to read a history for.', { records });
+      return 'not executed';
+    }
+    const read = [];
+    for (const rec of records) {
+      const h = await historyOf(api, rec.register, rec.id);
+      expect(h.status === 200, `${rec.register}: the history read expected 200, got ${h.status}`, h.json);
+      /* Oldest first, and the create is the first act: a history that starts
+         at the edit has lost the record's beginning. */
+      expect(h.entries[0]?.act === 'cmc.register.create', `${rec.register}: the history does not begin with the create`, h.entries);
+      const order = h.entries.map((e) => e.at);
+      expect(
+        order.every((at, i) => i === 0 || at >= order[i - 1]),
+        `${rec.register}: the history is not in order`,
+        order,
+      );
+      expect(h.entries.every((e) => e.actorRef != null), `${rec.register}: an act names no account`, h.entries);
+      read.push({ register: rec.register, id: rec.id, acts: h.entries.map((e) => e.label) });
+    }
+
+    /* A register that keeps no history says so, and names the ones that do —
+       never an empty history, which reads as a record nobody has touched. */
+    const unserved = await historyOf(api, 'qbd-elements', '3');
+    expect(unserved.status === 404, `a register with no history expected 404, got ${unserved.status}`, unserved.json);
+    expect(
+      /analytical-methods/.test(errDetail({ json: unserved.json })),
+      'the refusal does not name the registers that do keep a history',
+      unserved.json,
+    );
+
+    /* The specifications register keeps its own history over its own store.
+       Two routes answering one question is the duplication the repo forbids,
+       so this one must not have swallowed it. The id is the specification
+       OQ-CMC-03 recorded — `GET /api/cmc/specifications` is not a list route
+       (the register's list is `/:projectId`), and a step that read the wrong
+       path recorded a deviation saying this organisation holds no
+       specification, which was not true. */
+    const specId = state.records?.specification ?? null;
+    let specStatus = null;
+    if (specId) {
+      const specHistory = await api('GET', `/api/cmc/specifications/${specId}/history`);
+      specStatus = specHistory.status;
+      expect(specStatus === 200, `the specifications history expected 200, got ${specStatus}`, specHistory.json);
+    } else {
+      deviation(
+        'partly executed — every register history above was read, but OQ-CMC-03 recorded no specification for this ' +
+          'run, so the specifications register’s own history route was not exercised.',
+        { read },
+      );
+    }
+    attach('histories.json', { read, unserved: unserved.status, specificationsHistory: specStatus });
+    return `${read.length} record histories read in order; an unserved register names the served ones; specifications ${specStatus ?? 'not exercised'}`;
+  },
+);
+
 /** @see SURFACE_STEPS — the chain that serialises these modules. */
 export const REGISTER_STEPS = `${SURFACE_STEPS} → steps-registers.mjs`;

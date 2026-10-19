@@ -51,6 +51,8 @@ import {
 import { CHARACTERIZATION_TYPE_LABEL, characterizationTypeSection, normalizeCharacterizationType } from '@shared/cmc/characterization-type';
 import { useAuth } from '@/services/portal/authService';
 import { reportCmcLinkage } from './CmcRegisterLinks';
+import { RecordHistoryPanel } from './cmcRecordHistory';
+import { keepsRegisterHistory } from '@shared/constants/cmc-register-history';
 
 /* ═══════════════════════════════════════════════════════════════════
    CMC registers — real org-scoped data, read AND written honestly.
@@ -282,6 +284,106 @@ function RegisterScopeNote({ scope, hasProgram }: { scope: RegisterScope; hasPro
   return <span className="s" data-testid={note.testId} title={note.title}>{note.text}</span>;
 }
 
+/**
+ * The register's own path segment — `/api/cmc/analytical-methods` →
+ * `analytical-methods`. The card's `path` is the one the register already
+ * reads, so the history action needs no second spelling of it.
+ */
+function registerSegment(path: string): string {
+  return path.split('?')[0].replace(/\/+$/, '').split('/').pop() ?? '';
+}
+
+/** The register's title when the server keeps a change history for it, else null. */
+function historyTitleFor(path: string, title: string): string | null {
+  return keepsRegisterHistory(registerSegment(path)) ? title : null;
+}
+
+/** Is there anything in the Action column for any row on screen? */
+function actionColumnShown<T>(
+  rows: T[],
+  visible: (row: T) => unknown[],
+  keepsHistory: boolean,
+): boolean {
+  if (rows.some((r) => visible(r).length > 0)) return true;
+  return keepsHistory && rows.some((r) => recordIdOf(r) !== null);
+}
+
+/** The open record's history, or nothing. A component, so the card's render
+ *  carries no branch for it. */
+function RecordHistorySlot({
+  target, registerPath, onClose,
+}: {
+  target: { id: string | number; subject: string } | null;
+  registerPath: string;
+  onClose: () => void;
+}) {
+  if (!target) return null;
+  return (
+    <RecordHistoryPanel
+      registerPath={registerPath}
+      recordId={target.id}
+      subject={target.subject}
+      onClose={onClose}
+    />
+  );
+}
+
+/** A row's own primary key, or null when the projection does not carry one. */
+function recordIdOf(row: unknown): string | number | null {
+  const id = (row as { id?: unknown } | null)?.id;
+  return typeof id === 'string' || typeof id === 'number' ? id : null;
+}
+
+/**
+ * A row's Action cell: the register's own actions, and — for a register the
+ * server keeps a change history for — the History button in front of them.
+ *
+ * Its own component because `RegisterCard` is already at the complexity cap,
+ * and because a cell that decides which buttons a row gets is the kind of
+ * thing worth reading on its own.
+ */
+function RegisterRowActionCell<T>({
+  row, actions, historyFor, onAct, onHistory,
+}: {
+  row: T;
+  actions: RegisterRowAction<T>[];
+  /** The register's title when it keeps a history, null when it does not. */
+  historyFor: string | null;
+  onAct: (action: RegisterRowAction<T>) => void;
+  onHistory: (target: { id: string | number; subject: string }) => void;
+}) {
+  const recordId = recordIdOf(row);
+  const showHistory = historyFor !== null && recordId !== null;
+  return (
+    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+      {showHistory && (
+        <button
+          className="nda-open"
+          title="Who recorded this, who changed it, and what each change moved"
+          onClick={() => onHistory({ id: recordId, subject: `${historyFor} · ${String(recordId)}` })}
+        >
+          {I.history} History
+        </button>
+      )}
+      {actions.map((a, k) => {
+        const blocked = a.disabledReason ? a.disabledReason(row) : null;
+        return (
+          <button
+            key={k}
+            className="nda-open"
+            style={k || showHistory ? { marginLeft: 6 } : undefined}
+            disabled={Boolean(blocked)}
+            title={blocked ?? ''}
+            onClick={() => onAct(a)}
+          >
+            {a.icon ?? I.penLine} {a.label}
+          </button>
+        );
+      })}
+    </td>
+  );
+}
+
 export function RegisterCard<T>({
   path, title, meta, icon, loadingTitle, emptyTitle, emptyHint,
   errorTitle, errorHint, columns, rowKey, style, create, rowActions, onWrite,
@@ -297,6 +399,12 @@ export function RegisterCard<T>({
   const [creating, setCreating] = React.useState(false);
   const [linkageWarning, setLinkageWarning] = React.useState<string | null>(null);
   const [acting, setActing] = React.useState<{ action: RegisterRowAction<T>; row: T } | null>(null);
+  /* The §11.10(e) change history of ONE row, open at a time. Only for a
+     register the server serves a history for (shared/constants/
+     cmc-register-history.ts) — an action that 404s is worse than none. */
+  const historySegment = registerSegment(path);
+  const historyTitle = historyTitleFor(path, title);
+  const [historyFor, setHistoryFor] = React.useState<{ id: string | number; subject: string } | null>(null);
 
   /* The live file seeds a local working set so a write shows immediately
      without a refetch. `live.rows` is a stable reference between renders (it
@@ -373,7 +481,7 @@ export function RegisterCard<T>({
   };
 
   const visibleActions = (row: T) => (rowActions ?? []).filter((a) => !a.when || a.when(row));
-  const hasActions = rows.some((r) => visibleActions(r).length > 0);
+  const hasActions = actionColumnShown(rows, visibleActions, historyTitle !== null);
 
   return (
     <div className="pj-card" style={style ?? { marginTop: 16 }}>
@@ -421,23 +529,13 @@ export function RegisterCard<T>({
                     </td>
                   ))}
                   {hasActions && (
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {visibleActions(r).map((a, k) => {
-                        const blocked = a.disabledReason ? a.disabledReason(r) : null;
-                        return (
-                          <button
-                            key={k}
-                            className="nda-open"
-                            style={k ? { marginLeft: 6 } : undefined}
-                            disabled={Boolean(blocked)}
-                            title={blocked ?? ''}
-                            onClick={() => setActing({ action: a, row: r })}
-                          >
-                            {a.icon ?? I.penLine} {a.label}
-                          </button>
-                        );
-                      })}
-                    </td>
+                    <RegisterRowActionCell
+                      row={r}
+                      actions={visibleActions(r)}
+                      historyFor={historyTitle}
+                      onAct={(action) => setActing({ action, row: r })}
+                      onHistory={setHistoryFor}
+                    />
                   )}
                 </tr>
               ))}
@@ -451,6 +549,7 @@ export function RegisterCard<T>({
       {acting && (
         <C2CForm config={acting.action.form(acting.row)} onCancel={() => setActing(null)} onSubmit={submitAction} />
       )}
+      <RecordHistorySlot target={historyFor} registerPath={historySegment} onClose={() => setHistoryFor(null)} />
       <C2CToast msg={toast} />
     </div>
   );
