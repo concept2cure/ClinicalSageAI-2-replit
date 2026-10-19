@@ -1989,6 +1989,13 @@ router.post('/comparability-studies', async (req, res) => {
        request-body fields: an ordinary create could file an approved assessment
        naming any reviewer, with no signature and no reason. */
     if (refusesUngovernedQualification(res, req.body?.status, 'comparability-studies')) return;
+    /* And the program it is filed under must be this organisation's. The raw
+       INSERT below wrote req.body.projectId straight into the column, so a
+       typo filed an assessment under a programme that does not exist and
+       another organisation's id filed one under a dossier this tenant does not
+       hold — while the fifteen Drizzle creates beside it refused the same body
+       (docs/evidence/CMC-M3-GA/2026-10-19/10-unverified-programme/). */
+    const filedProject = await filedProjectOnCreate(orgId, req.body?.projectId);
     const created = await createOnConnection(
       getPool(),
       {
@@ -2008,7 +2015,7 @@ router.post('/comparability-studies', async (req, res) => {
                      justification as outcome, reviewed_by as owner`,
           [
             orgId,
-            req.body.projectId,
+            filedProject,
             req.body.title || '',
             req.body.type || '',
             req.body.product || '',
@@ -2030,8 +2037,13 @@ router.post('/comparability-studies', async (req, res) => {
     const linkage = await linkToModule3('write_through_comparability', orgId, created as LinkableRow, writeThroughComparability);
     res.json({ success: true, data: created, ...linkage });
   } catch (error) {
-    console.error('Error creating comparability study:', error);
-    res.status(500).json({ success: false, error: 'Failed to create comparability study' });
+    /* Through the same reader as every other register create: a refusal the
+       caller can act on — a programme that is not this organisation's, a
+       governed status claimed on a create — is a 409 naming it, not a 500.
+       It answered 500 'Failed to create comparability study' for an unknown
+       programme until 2026-10-19, which reads as a server fault for what is a
+       bad request (docs/evidence/CMC-M3-GA/2026-10-19/10-unverified-programme/). */
+    return respondWriteError(res, error, 'Failed to create comparability study');
   }
 });
 
@@ -2163,6 +2175,33 @@ router.put('/comparability-studies/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Is this programme one the organisation holds? Every route below derives,
+ * judges or projects over ONE programme's records, and until 2026-10-19 none of
+ * them asked.
+ *
+ * `POST /api/cmc/ich-compliance` answered **200 with a complete
+ * eleven-guideline verdict and nine findings** for a programme that does not
+ * exist, for another organisation's programme, and for the string
+ * `not-a-uuid`. The findings were the "nothing is recorded" ones, so a mistyped
+ * id read as a confident compliance report about an empty register — which is
+ * what the process-capability route's own docstring, three screens down, calls
+ * the one thing it must never produce.
+ *
+ * A 404, not a 403: that a programme exists in another organisation is not this
+ * caller's to learn. Returns true when the caller may proceed; the refusal is
+ * already written when it returns false.
+ */
+async function answeredUnknownProgram(res: express.Response, orgId: number, projectId: string): Promise<boolean> {
+  const { projectBelongsToTenant } = await import('../../services/cmc/project-membership');
+  if (await projectBelongsToTenant({ organizationId: orgId, projectId })) return false;
+  res.status(404).json({
+    success: false,
+    error: 'No such program in this organization — nothing was assessed.',
+  });
+  return true;
+}
+
+/**
  * GET /api/cmc/quality/qbd/:projectId
  * Derive CQAs and CPPs from the project's actual stored data
  * (specifications, methods, stability, processes, source objects).
@@ -2174,6 +2213,7 @@ router.get('/quality/qbd/:projectId', async (req, res) => {
     if (!projectId) {
       return res.status(400).json({ success: false, error: 'projectId is required' });
     }
+    if (await answeredUnknownProgram(res, orgId, projectId)) return;
     const { analyzeQbdFromSources } = await import('../../services/cmc/qbd-analyzer');
     const result = await analyzeQbdFromSources(orgId, projectId);
     res.json({ success: true, data: result });
@@ -2196,6 +2236,7 @@ router.post('/ich-compliance', async (req, res) => {
     if (!projectId || typeof projectId !== 'string') {
       return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
     }
+    if (await answeredUnknownProgram(res, orgId, projectId)) return;
     const { runIchComplianceCheck } = await import('../../services/cmc/ich-compliance-checker');
     const report = await runIchComplianceCheck(orgId, projectId);
     res.json({ success: true, data: report });
@@ -2258,6 +2299,7 @@ router.post('/control-strategy', async (req, res) => {
         error: 'scope must be one of drug_substance | drug_product | both',
       });
     }
+    if (await answeredUnknownProgram(res, orgId, projectId)) return;
     const { generateControlStrategy } = await import('../../services/cmc/control-strategy-generator');
     const strategy = await generateControlStrategy(orgId, projectId, scope);
     res.json({ success: true, data: strategy });
