@@ -128,3 +128,37 @@ gate.
   get no context. They are reported as unavailable, not approximated.
 - Compressed content (`compressedContent`) is model output and unchanged.
 - `rag_chunks` expansion is unchanged.
+
+## Amendment A — after the security audit (2026-10-19)
+
+The audit found no tenant, actor, withdrawal or save-path defect. It did find
+a functional one. `capToolResultForModel` cuts any tool result over 8,000
+characters, keeping the head and tail. A hit now carries its chunk (up to
+4,000) plus `context.text` (up to about 6,000) that repeats the chunk, and the
+default `limit` is 8. The model would have seen about one hit, cut mid-text.
+At baseline the tool already overran the cap (8 chunks of up to 4,000). The
+repo's P-24 rule is that a handler fits its own result instead of letting the
+cap cut it.
+
+`search_document_passages` (model-facing rendering only; `PassageHit` and
+`searchDocumentPassages` are unchanged):
+
+- **Budget.** `export const PASSAGE_RESULT_BUDGET = 7500`: the serialized
+  result stays under the cap, so the cap never cuts it.
+- **No duplicate text.** Each passage is rendered in rank order. When the
+  context is available, the passage omits `text`, because the hit is inside
+  `context.text`, and `context.hitWithinText` gives `{ start, end }` relative
+  to `context.text`.
+- **Fitting.** Deterministic, lowest rank first, each pass completing before
+  the next begins, and re-serializing after each change:
+  1. Drop `context.text` (keep `reference`, `chunkRange`, `clipped`; set
+     `textOmitted: true`) and restore the hit's `text`.
+  2. Drop the hit's `text` (`textOmitted: true`). Locators, `hitSpan` and
+     `context.reference` stay.
+  3. Drop whole passages from the end, counted in `omittedPassages`. At least
+     one passage is always kept.
+- **Message.** It says how many passages lost their surrounding text or their
+  text, and that the exact text can be read with `read_project_document`
+  (`offset = context.reference.span.start`, `max_chars = span.end − start`).
+  When passages were omitted, it says to ask again with a smaller `limit` or a
+  narrower query.
