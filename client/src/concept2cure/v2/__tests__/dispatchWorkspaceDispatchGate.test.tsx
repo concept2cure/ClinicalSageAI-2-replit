@@ -132,20 +132,25 @@ describe('DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b)',
   it('HIDES Dispatch on a payload with no dispatchGateOnSigning — fail closed, and not by crashing', async () => {
     // As with freezeGate: absence must hide the button because the guard
     // refused it, not because the render died on the way to it — which also
-    // leaves no button, and which vitest reports only as an unhandled error.
+    // leaves no button. React 19 reports such a crash as a window 'error' event
+    // and empties the root; it no longer reaches console.error, which this test
+    // listened to until 2026-10-19. mount() waits for the gate header, which an
+    // emptied root never shows, and the window event is checked as well.
     const errors: string[] = [];
-    const spy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
-      errors.push(args.map(String).join(' '));
-    });
+    const onError = (e: ErrorEvent) => { errors.push(String(e.message)); e.preventDefault(); };
+    window.addEventListener('error', onError);
     try {
-      const { dispatchGateOnSigning: _omitted, ...without } = assessmentAt('frozen');
+      // A copy without the field, rather than a destructured binding left unused
+      // (it counted against trunk's ESLint warning ratchet).
+      const without: Record<string, unknown> = { ...assessmentAt('frozen') };
+      delete without.dispatchGateOnSigning;
       await mount('frozen', without);
       expect(dispatchButton()).toBeFalsy();
       expect(errors.join('\n')).not.toMatch(/Cannot read propert|TypeError/);
       // And it never falls back to `gate`, which is the defect.
       expect(text()).toMatch(/Dispatch blocked/);
     } finally {
-      spy.mockRestore();
+      window.removeEventListener('error', onError);
     }
   });
 });
