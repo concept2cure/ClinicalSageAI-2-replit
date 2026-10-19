@@ -90,6 +90,16 @@ const ROWS: readonly Row[] = [
   // ── Module 2 ────────────────────────────────────────────────────────────────
   ['2', 'Common Technical Document Summaries', M4_ORG()],
   ['2.1', 'Common Technical Document Table of Contents (Modules 2–5)', M4_ORG()],
+  /* The Nonclinical Overview's own subsections. Found missing on 2026-10-13 by the repo-wide
+     Module 1 scan, which reported all six as "not an ICH M4 heading" against
+     server/services/market-specs/document-template-library.ts — where they are stated correctly.
+     The record was the half that was wrong. */
+  ['2.4.1', 'Overview of the Nonclinical Testing Strategy', M4S('2.4.1')],
+  ['2.4.2', 'Pharmacology', M4S('2.4.2')],
+  ['2.4.3', 'Pharmacokinetics', M4S('2.4.3')],
+  ['2.4.4', 'Toxicology', M4S('2.4.4')],
+  ['2.4.5', 'Integrated Overview and Conclusions', M4S('2.4.5')],
+  ['2.4.6', 'List of Literature References', M4S('2.4.6')],
   ['2.5.7', 'Literature References', M4E_R2],
   ['2.6', 'Nonclinical Written and Tabulated Summaries', M4_ORG()],
   ['2.6.4.1', 'Brief Summary', M4S('2.6.4.1')],

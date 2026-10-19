@@ -18829,16 +18829,22 @@ registerToolHandler('compose_e2b_icsr', async (input: Record<string, unknown>, c
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {
   try {
-    const { reconcileDossierNumbers } = await import('./dossierReconciliation.js');
-    const result = reconcileDossierNumbers((input.documents as any) ?? []);
+    const { reconcileMinedFigures } = await import('../reconciliation/mined-figure-reconciler.js');
+    const result = reconcileMinedFigures((input.documents as any) ?? []);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       result,
+      /* The verdict is the engine's, which has distinguished "nothing compared" from "clean"
+         since 2026-09-28 (row 74). The deleted second implementation could not: it listed
+         every label it saw once as consistent, so a figure compared against nothing read as
+         agreeing. */
       instruction:
-        result.discrepancies.length > 0
-          ? 'Surface each discrepancy with its label, the conflicting values, and the snippet from each document so the user can resolve the source of truth. Do not guess which value is correct.'
-          : 'No cross-document numerical conflicts were found among the labeled figures scanned. State which labels were checked and found consistent.',
+        result.verdict === 'not_assessed'
+          ? `NOTHING was compared across documents (reason: ${result.notAssessedReason}). Say that plainly and do not report it as consistency: no conclusion about agreement is available. State how many figures were read (${result.figuresReconciled}) and that no quantity appeared in two places.`
+          : result.conflictCount > 0
+            ? 'Surface each conflict with its quantity, the distinct values and the documents that report each, so the user can resolve the source of truth. Do not guess which value is correct; where a consensus value is given, say it is the most-reported value, not the correct one.'
+            : `No cross-document conflict was found among the ${result.quantitiesCompared} quantity/quantities actually compared across two places. Name them, and do not imply anything about figures stated in only one document.`,
     });
   } catch (err: any) {
     const message = err?.message || 'unknown error';

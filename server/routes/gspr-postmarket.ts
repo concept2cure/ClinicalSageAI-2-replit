@@ -59,6 +59,12 @@ import {
 } from '../services/gspr-postmarket/post-market-authoring';
 import { getPostMarketDocStatus } from '../services/gspr-postmarket/post-market-readiness';
 import {
+  euDeviceClassFrom,
+  euPostMarketFactsFrom,
+  euRegulationFrom,
+  loadProgrammeEuDeviceRow,
+} from '../services/gspr-postmarket/programme-eu-device-record';
+import {
   isPmcfEnrollmentStoreAbsent,
   listPmcfEnrollmentRecords,
   summariseRecords,
@@ -384,13 +390,19 @@ postMarketRouter.post(
     }
     const createdBy = userIdFromReq(req) ?? 'system';
     try {
+      const programId = String(req.params.programId);
+      const euRow = await loadProgrammeEuDeviceRow(orgId, programId);
+      if (!euRow) return res.status(404).json({ error: 'Program not found' });
+      const regulation: 'MDR' | 'IVDR' = body.regulation ?? euRegulationFrom(euRow);
       const result = await generatePmcfPlan({
         organizationId: orgId,
-        programId: String(req.params.programId),
+        programId,
         createdBy,
         deviceName: typeof body.deviceName === 'string' ? body.deviceName : '',
-        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
-        regulation: body.regulation,
+        // The record's class, as on the sibling generate route: a drafted PMCF
+        // plan cites the class, and `body.deviceClass` was the surface's own.
+        deviceClass: euDeviceClassFrom(euRow, regulation),
+        regulation,
         relatedCerReportId,
         title: typeof body.title === 'string' ? body.title : undefined,
       });
@@ -461,14 +473,28 @@ postMarketRouter.post(
     };
     const createdBy = userIdFromReq(req) ?? 'system';
     try {
+      const programId = String(req.params.programId);
+      const euRow = await loadProgrammeEuDeviceRow(orgId, programId);
+      if (!euRow) return res.status(404).json({ error: 'Program not found' });
+      // The caller may say which regulation it is drafting under; otherwise the
+      // record's product type decides. It used to fall to MDR whenever the
+      // class string held no "ivd", so an IVD programme drafted an MDR-shaped
+      // PMS report — and with the class now canonical ('A'..'D') that sniff
+      // could never fire again.
+      const regulation: 'MDR' | 'IVDR' = body.regulation ?? euRegulationFrom(euRow);
       const result = await authorPostMarketDocument({
         organizationId: orgId,
-        programId: String(req.params.programId),
+        programId,
         createdBy,
         documentType,
         deviceName: typeof body.deviceName === 'string' ? body.deviceName : undefined,
-        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
-        regulation: body.regulation,
+        // The class the record states, never the caller's: a drafted PMS plan
+        // or PSUR prints the class into governed content, and `body.deviceClass`
+        // was whatever the surface happened to hold — the US class, for the CER
+        // surface. A programme that states none drafts with no class, which the
+        // builders render as "unspecified class" rather than a guess.
+        deviceClass: euDeviceClassFrom(euRow, regulation),
+        regulation,
         relatedCerReportId,
         title: typeof body.title === 'string' ? body.title : undefined,
         reportingPeriodStart: parseDate(body.reportingPeriodStart),
@@ -506,45 +532,43 @@ postMarketRouter.post(
   }
 );
 
-/**
- * An optional boolean query fact: 'true' / 'false', absent = not stated (null).
- * Any other value is refused rather than read as false.
- */
-function booleanFact(value: unknown): boolean | null | 'invalid' {
-  if (value === undefined) return null;
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  return 'invalid';
-}
-
 // Honest post-market documentation status for a program: per-type presence,
 // lifecycle status and validation-gate result, with what the device owes
 // decided by EU_POSTMARKET_OBLIGATIONS from the regulation, the class and the
 // stated implantable / customMade facts. An unstated fact is passed as unknown,
 // never as false. Not a readiness score.
+//
+// 2026-10-19: the class and those facts came in as query parameters, so the
+// obligation set was computed from whatever the caller sent — and the CER
+// surface sent `device_class`, the US 21 CFR 860 class, into an MDR
+// assessment, which answered `"class II" is not an MDR device class` for a
+// European programme whose MDR class sat unread in `eu_mdr_class`. They now
+// come from the programme record (programme-eu-device-record.ts) and from
+// nowhere else; `regulation` stays the caller's, because both reports are
+// meaningful and the record decides which class answers for it.
 postMarketRouter.get(
   '/programs/:programId/documentation-status',
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
-    const deviceClass = typeof req.query.deviceClass === 'string' ? req.query.deviceClass : null;
     const rawRegulation = req.query.regulation;
     if (rawRegulation !== undefined && rawRegulation !== 'MDR' && rawRegulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
     }
     const regulation: 'MDR' | 'IVDR' = rawRegulation === 'IVDR' ? 'IVDR' : 'MDR';
-    const implantable = booleanFact(req.query.implantable);
-    const customMade = booleanFact(req.query.customMade);
-    if (implantable === 'invalid' || customMade === 'invalid') {
-      return res.status(422).json({ error: 'implantable and customMade must be true or false when given' });
-    }
     try {
+      const programId = String(req.params.programId);
+      const row = await loadProgrammeEuDeviceRow(orgId, programId);
+      // requireProgramAccess has already established the programme is in the
+      // organization, so a missing row here is the record having gone between
+      // the two reads. Refused rather than reported as a device with no class.
+      if (!row) return res.status(404).json({ error: 'Program not found' });
       const report = await getPostMarketDocStatus(
         orgId,
-        String(req.params.programId),
-        deviceClass,
+        programId,
+        euDeviceClassFrom(row, regulation),
         regulation,
-        { implantable, customMade }
+        euPostMarketFactsFrom(row)
       );
       res.json(report);
     } catch (err: any) {
