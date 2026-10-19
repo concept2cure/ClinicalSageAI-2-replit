@@ -36,6 +36,25 @@ reports "no response" even though the server is fine — use TCP.
 | `ANTHROPIC_API_KEY` | **empty** | **AI features are unavailable.** The interview engine is deterministic — the questions, positions, cautions and the Annex VIII verdicts all work without it — but anything that asks the model to narrate will not. Set it if you want AnA's conversational side |
 | `REDIS_URL` | unset | scheduled jobs disabled; the digest heartbeat fallback runs instead |
 
+### Why CI did not catch the two deploy defects (corrected 2026-10-19)
+
+I first suggested the repo needed a CI lane that applies the whole set to a
+blank database. **It already has one**, and it is required: `ci.yml`'s
+`blank-db-provisioning`, `production-boot-smoke` and `production-image-boot`
+are all in the gate job's `needs:`. That suggestion was redundant.
+
+The actual gap is narrower and worth knowing. In every lane `deploy-migrate`
+runs as `postgresql://postgres@localhost` — **the superuser**. The
+"non-superuser role" in `production-boot-smoke`'s name is the *runtime* role
+(`app_service`), which that job correctly asserts is NOSUPERUSER and
+NOBYPASSRLS. So CI proves the set applies **as a superuser applier**, while
+`deploy-migrate` also supports a plain non-superuser owner
+(`DATABASE_OWNER_URL` split-role mode) — and applier-privilege defects are
+invisible in that configuration. All three problems hit on this container were
+of exactly that kind: `CREATEROLE`, `GRANT SET ON PARAMETER`, and the
+`shared_preload_libraries` read. An RDS master is in `rds_superuser` and has
+those privileges, so RDS is unaffected; a plain owner is not.
+
 ### A fresh container needs three things this one did not have
 
 Found by applying the migration set here. Without them the deploy stops:
