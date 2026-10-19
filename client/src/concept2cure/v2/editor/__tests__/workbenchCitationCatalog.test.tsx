@@ -4,7 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
+vi.mock('@/services/portal/authService', () => ({
+  // authService too: useAuthoringAssemblyBuild's actor() reads the singleton.
+  authService: { getUser: () => ({ id: 1, organizationId: 1 }) }, useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
 vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));

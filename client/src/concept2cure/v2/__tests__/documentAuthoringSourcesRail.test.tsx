@@ -33,6 +33,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // The surface itself now reads the auth identity too (suggestion attribution),
 // so the auth service is mocked the way the sibling tests mock it.
 vi.mock('@/services/portal/authService', () => ({
+  // authService too: useAuthoringAssemblyBuild's actor() reads the singleton.
+  authService: { getUser: () => ({ id: 1, organizationId: 1 }) },
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
