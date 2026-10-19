@@ -156,7 +156,9 @@ async function handleSearchDocumentPassages(
       message:
         result.hits.length === 0
           ? `No passage matched "${query}". ${note}`
-          : `${result.hits.length} passage(s).${ranked} ${note} Quote them with their document title and locator; ` +
+          : `${result.hits.length} passage(s).${ranked} ${note} Quote them with their document title and locator. ` +
+            'Where a passage has context.status "available", context.text is the exact surrounding source text: quote ' +
+            'surrounding wording only from it, never by joining passages yourself. Where it is "unavailable", ' +
             'open the whole file with read_project_document when the answer needs the surrounding context.',
     });
   } catch (err) {
