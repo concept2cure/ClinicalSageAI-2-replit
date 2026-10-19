@@ -162,3 +162,17 @@ cap cut it.
   (`offset = context.reference.span.start`, `max_chars = span.end − start`).
   When passages were omitted, it says to ask again with a smaller `limit` or a
   narrower query.
+
+## Amendment B — after the correctness review (2026-10-19)
+
+The review fuzzed about 57,000 hits from real chunker output (astral text,
+CRLF, unspaced runs, shuffled order) with zero failures. It found one gap:
+check 4 never required a chunk's end to advance, so a chunk nested inside the
+previous one could make the window end before the hit. The real chunker never
+nests chunks (each end is at least start + max/2), but the builder must not
+trust that.
+
+- Check 4 also requires `end > previous end`; otherwise `not_contiguous`.
+- As a final guard, an available context must contain the whole hit chunk;
+  otherwise `not_contiguous` with `hitSpan` set.
+- The hit id is `chunkId ?? id`, as elsewhere in the pipeline.

@@ -61,11 +61,16 @@ function verifiedSpans(text: string, chunks: ChunkCoordinate[]): Span[] | null {
   return spans;
 }
 
-/** Consecutive indices, strictly advancing starts, no gap between neighbours. */
+/**
+ * Consecutive indices, strictly advancing starts and ends, no gap between
+ * neighbours. Advancing ends keep a chunk from nesting inside the previous
+ * one, which would let the window end before the hit does.
+ */
 function contiguous(chunks: ChunkCoordinate[], spans: Span[]): boolean {
   for (let i = 1; i < chunks.length; i++) {
     if (chunks[i].chunkIndex !== chunks[i - 1].chunkIndex + 1) return false;
     if (spans[i].start <= spans[i - 1].start || spans[i].start > spans[i - 1].end) return false;
+    if (spans[i].end <= spans[i - 1].end) return false;
   }
   return true;
 }
@@ -118,6 +123,8 @@ export function buildPassageContext(input: {
   const window = { start: spans[0].start, end: spans[spans.length - 1].end };
   const span = intactEdges(text, contextSpan(hitSpan, window), window);
   if (!span) return unavailable('encoding', hitSpan);
+  // The context always holds the whole hit; a span that does not is never offered.
+  if (span.start > hitSpan.start || span.end < hitSpan.end) return unavailable('not_contiguous', hitSpan);
   let identity: ReturnType<typeof draftSourceIdentityForText>;
   try {
     identity = draftSourceIdentityForText(text, { ...span, totalChars: text.length });

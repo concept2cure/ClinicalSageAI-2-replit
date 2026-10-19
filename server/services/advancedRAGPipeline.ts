@@ -439,7 +439,7 @@ function withVaultSpan(doc: RetrievedDocument, rows: Record<string, unknown>[]):
     documentId: doc.documentId ?? '',
     contentHash: doc.contentHash ?? '',
     extractedText: textRow ? vaultText(textRow.extracted_text) : null,
-    hit: { chunkId: String(doc.chunkId ?? ''), chunkIndex: doc.chunkIndex ?? -1 },
+    hit: { chunkId: String(doc.chunkId ?? doc.id ?? ''), chunkIndex: doc.chunkIndex ?? -1 },
     chunks,
   });
   const hit: RetrievedDocument = { ...doc };
@@ -1240,7 +1240,7 @@ export class AdvancedRAGPipeline {
           let texts: string[];
           if (doc.atomType === 'vault_chunk') {
             return await this.withVaultReadExecutor(organizationUuid, vaultRead, sourceReadScope, async client => {
-              const params: unknown[] = [doc.documentId, lo, hi, organizationUuid ?? null, doc.chunkId ?? null];
+              const params: unknown[] = [doc.documentId, lo, hi, organizationUuid ?? null, doc.chunkId ?? doc.id ?? null];
               const filter = buildDocFilterClause(filters, params, VAULT_FILTER_COLUMNS, vaultRead?.verifiedScope.programIds);
               const identity = sourceReadScope || doc.contentHash
                 ? `AND d.content_hash = $${params.push(doc.contentHash ?? '')}` : '';
