@@ -10,7 +10,10 @@
  *                   project home's Respond tab — one inbox per project)
  *                   REAL (server routes/concept2cure.ts → concept2cure_agency_communications).
  *   Meetings      → GET /api/ha-interactions/interactions   REAL (listInteractions).
- *   Commitments   → GET /api/ha-interactions/commitments     REAL (listCommitments).
+ *   Commitments   → GET /api/ha-interactions/commitments     REAL (listCommitments,
+ *                   the organisation's own) and, with a project open,
+ *                   GET /api/concept2cure/projects/:pid/commitments (those made
+ *                   in answers to its agency letters, behind project admission).
  *   Authority     → GET /api/concept2cure/projects/:pid/authority-profiles
  *   profiles        REAL (server routes/concept2cure.ts → concept2cure_authority_profiles).
  *   FDA loop      → GET /api/concept2cure/projects/:pid/submission-center/items
@@ -64,7 +67,8 @@ interface InteractionRow {
 }
 
 /**
- * GET /api/ha-interactions/commitments returns { commitments, summary }.
+ * GET /api/ha-interactions/commitments and GET
+ * /api/concept2cure/projects/:pid/commitments return { commitments, summary }.
  * effectiveStatus is derived server-side; the rest are snake_case + nullable.
  */
 interface CommitmentRow {
@@ -82,6 +86,9 @@ interface CommitmentRow {
   project_id?: number | null;
   source_communication_event_id?: string | null;
   source_question_id?: number | null;
+  /** The letter and question it came from, read by the server (project door only). */
+  source_communication_type?: string | null;
+  source_question_ref?: string | null;
 }
 
 /** A commitment's chip tone. Overdue is the one warning sign; an open commitment is not an error. */
@@ -221,10 +228,21 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     .filter((c) => c.dueDate)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())[0];
 
-  // ── Meetings & commitments — REAL, org-scoped (no project id required) ──
+  // ── Meetings & commitments — REAL ──
   const interState = useLiveRows<InteractionRow>('/api/ha-interactions/interactions');
   const [commitVersion, setCommitVersion] = React.useState(0);
-  const commitState = useLiveData<CommitmentsPayload>('/api/ha-interactions/commitments', [commitVersion]);
+  /* Two doors onto the one register (2026-10-18). The organisation's own
+     commitments (no project) come from /api/ha-interactions; a commitment made
+     in an answer to a project's agency letter belongs to that project and is
+     read, and fulfilled, behind its project admission. Either read failing
+     shows the error, never a shorter list. */
+  const orgCommitState = useLiveData<CommitmentsPayload>('/api/ha-interactions/commitments', [commitVersion]);
+  const projectCommitPath = projectId ? `/api/concept2cure/projects/${encodeURIComponent(projectId)}/commitments` : null;
+  const projectCommitState = useLiveData<CommitmentsPayload>(projectCommitPath, [projectCommitPath, commitVersion]);
+  const commitState = {
+    loading: orgCommitState.loading || (projectCommitPath !== null && projectCommitState.loading),
+    error: orgCommitState.error || (projectCommitPath !== null ? projectCommitState.error : undefined),
+  };
   const [fulfilling, setFulfilling] = React.useState<CommitmentRow | null>(null);
   const [recordingCommitment, setRecordingCommitment] = React.useState(false);
   /* The one commitments register (C2C-03). Fulfilling one states that it was
@@ -234,7 +252,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const fulfilCommitment = async (v: Record<string, string>) => {
     if (!fulfilling) return;
     try {
-      await apiRequest('POST', `/api/ha-interactions/commitments/${fulfilling.id}/fulfill`, {
+      const door =
+        fulfilling.project_id != null && projectId
+          ? `/api/concept2cure/projects/${encodeURIComponent(projectId)}/commitments/${fulfilling.id}/fulfill`
+          : `/api/ha-interactions/commitments/${fulfilling.id}/fulfill`;
+      await apiRequest('POST', door, {
         reason: v.reason,
         ...(v.fulfilledDate ? { fulfilledDate: v.fulfilledDate } : {}),
       });
@@ -261,9 +283,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       fire('Commitment not recorded: ' + (e instanceof ApiRequestError && e.message ? e.message : 'the service could not be reached') + '. Nothing was stored.', 'error');
     }
   };
-  const commitments = Array.isArray(commitState.data?.commitments)
-    ? commitState.data!.commitments
-    : [];
+  // One list, project rows first; memoised so the AnA context below is rebuilt only when a read changes.
+  const commitments = React.useMemo(() => {
+    const rowsOf = (d: CommitmentsPayload | null | undefined): CommitmentRow[] => (Array.isArray(d?.commitments) ? d!.commitments : []);
+    return [...(projectCommitPath ? rowsOf(projectCommitState.data) : []), ...rowsOf(orgCommitState.data)];
+  }, [projectCommitPath, projectCommitState.data, orgCommitState.data]);
   const commitEmpty = !commitState.loading && !commitState.error && commitments.length === 0;
 
   // ── Authority profiles — REAL, project-scoped ──
@@ -719,7 +743,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             error={commitState.error}
             empty={commitEmpty}
             emptyTitle="No regulatory commitments yet"
-            emptyHint="PMR / PMC / REMS commitments tracked for your organization appear here, with their derived on-track / due-soon status."
+            emptyHint="PMR, PMC and REMS commitments recorded for your organization, and those made in answers to this project's agency letters, appear here with their status. A commitment past its due date and not met reads overdue."
             errorTitle="Couldn't load regulatory commitments"
             errorHint="The HA commitments service didn't respond. Sign in and retry, or check the service is reachable."
           >
@@ -736,7 +760,9 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                         c.regulatory_basis,
                         c.due_date ? 'due ' + c.due_date : null,
                         c.fulfilled_date ? 'fulfilled ' + c.fulfilled_date : null,
-                        c.source_question_id != null ? 'made in an answer to an agency letter' : null,
+                        c.source_question_id != null
+                          ? `made in the answer to ${c.source_question_ref ?? 'a question'}${c.source_communication_type ? ` of ${c.source_communication_type}` : ''}`
+                          : null,
                       ]
                         .filter(Boolean)
                         .join(' · ') || '—'}

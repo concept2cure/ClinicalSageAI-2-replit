@@ -173,21 +173,26 @@ describe('add a market (F22)', () => {
   });
 
   it.each([
-    ['a UK IND (the UK has no IND)', IND, 'MHRA', 'ind'],
-    ['Health Canada (no outline)', NDA, 'Health_Canada', 'nds'],
-    ['a device project', DEVICE, 'FDA', 'k510'],
+    ['a UK IND (the UK has no IND)', IND, 'MHRA', 'ind', /Nothing was added/],
+    ['Health Canada (no outline)', NDA, 'Health_Canada', 'nds', /Nothing was added/],
+    ['a device project', DEVICE, 'FDA', 'k510', /Nothing was added/],
     // A filing document class is authored, never sequenced: no spine (2026-10-18).
-    ['a supplement (a document, not an application)', NDA, 'FDA', 'pas'],
-    ['a clinical study report', NDA, 'ICH / Global', 'csr'],
+    // The message names what was asked for, and on an NDA project never calls
+    // the project's own filing a document (review finding, 2026-10-18).
+    ['a supplement market on an NDA project', NDA, 'FDA', 'pas',
+      /^A Prior Approval Supplement is authored as its own project, not added to another as a market\. An FDA supplement is not built as a sequence yet, so this platform sends nothing for the Prior Approval Supplement\. Nothing was added\.$/],
+    ['a clinical study report market on an NDA project', NDA, 'ICH / Global', 'csr',
+      /^A clinical study report is authored as its own project, not added to another as a market\. The clinical study report is a harmonised \(ICH\) document placed into an application's sequence; this platform sends nothing for it on its own\. Nothing was added\.$/],
     // Review finding, 2026-10-18: the project's own class is read, not only the
     // market's — a PAS project asked for an NDA market was given an NDA spine.
-    ['an application market on a project that is a document class (a PAS)', PAS, 'FDA', 'nda'],
-  ])('refuses %s with 422, and writes nothing', async (_label, id, agency, type) => {
+    ['an application market on a project that is a document class (a PAS)', PAS, 'FDA', 'nda',
+      /^No market is added to this project: it is a Prior Approval Supplement\. An FDA supplement is not built as a sequence yet, so this platform sends nothing for the Prior Approval Supplement\. Nothing was added\.$/],
+  ])('refuses %s with 422, says why, and writes nothing', async (_label, id, agency, type, message) => {
     const before = await count(`SELECT count(*) AS n FROM c2c_documents`);
     const err = await add(id, agency, type).catch((e) => e);
     expect(err).toBeInstanceOf(AddMarketRefusal);
     expect(err.status).toBe(422);
-    expect(err.message).toMatch(/Nothing was added/);
+    expect(err.message).toMatch(message);
     expect(await count(`SELECT count(*) AS n FROM c2c_documents`)).toBe(before);
     expect(await count(`SELECT count(*) AS n FROM submissions`)).toBe(0);
   });

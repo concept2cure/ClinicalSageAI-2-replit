@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T21:10:36.163Z",
+  "generatedAt": "2026-10-19T02:24:20.275Z",
   "git": {
-    "sha": "5e4c29bc84405573397232f1b5676098649be2dc",
+    "sha": "cc7d8c4e5d1d1d9beb1f22599f912deb9e214640",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2296,12 +2296,12 @@
         "bytes": 141216
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "bytes": 138809
+        "file": "server/routes/report-os.ts",
+        "bytes": 140721
       },
       {
-        "file": "server/routes/report-os.ts",
-        "bytes": 137941
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "bytes": 138809
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2365,7 +2365,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 116822
+        "bytes": 116840
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2421,7 +2421,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 102506
+        "bytes": 103131
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2523,7 +2523,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 3051
+        "lines": 3106
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2695,7 +2695,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2021
+        "lines": 2028
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
@@ -2875,7 +2875,7 @@
       },
       {
         "file": "server/routes/mdx-qms.ts",
-        "lines": 1560
+        "lines": 1562
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",

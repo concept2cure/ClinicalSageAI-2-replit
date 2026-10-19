@@ -1,0 +1,135 @@
+# mutation C7-project-read-failure-hidden
+# file: client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx
+# replaced: '    error: orgCommitState.error || (projectCommitPath !== null ? projectCommitState.error : undefined),'
+# with: '    error: orgCommitState.error,'
+# test filter: read fails
+# exit: 1
+
+9m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-seclbl"[39m
+          [33mstyle[39m=[32m"margin: 0px;"[39m
+        [36m>[39m
+          [0mRegulatory commitments[0m
+          [0m [0m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m· PMR / PMC / REMS[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"cc-btn sm"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Record commitment[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cc-list"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cc-row"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"cc-row-tag"[39m
+            [33mdata-kind[39m=[32m"pmr"[39m
+          [36m>[39m
+            [0mPMR[0m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cc-row-b"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"cc-row-t"[39m
+            [36m>[39m
+              [0mPediatric study (PREA)[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"cc-row-s mono"[39m
+            [36m>[39m
+              [0mdue 2027-06-30[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rd-chip tone-idle"[39m
+          [36m>[39m
+            [0mopen[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"cc-btn sm"[39m
+          [36m>[39m
+            [0mMark fulfilled[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Ask AnA about this commitment"[39m
+            [33mclass[39m=[32m"cc-btn sm"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:98:25
+     96|     projectAnswer = failed;
+     97|     await openCommitments();
+     98|     expect(await screen.findByText("Couldn't load regulatory commitmen…
+       |                         ^
+     99|     expect(screen.queryByText('Pediatric study (PREA)')).toBeNull();
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

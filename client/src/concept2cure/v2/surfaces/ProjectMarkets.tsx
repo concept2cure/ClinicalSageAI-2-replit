@@ -32,6 +32,7 @@ import { EmptyState, type DataState } from '../dataConnect';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { stashNavParamsForTarget } from '../navParams';
 import { SC_REGIONS, SC_SEQ_STATUS } from '../fixtures/submission';
+import { classNotSequencedReason, type FilingDocumentClass } from '@shared/regulatory/filing-document-classes';
 import type { ReviewItem } from '../fixtures/review-data';
 import {
   programTypeLabel,
@@ -313,7 +314,7 @@ function MarketsBody({ markets, onOpen, center }: {
 /** The Submit tab's market list. "Open Submission Center" opens the open
  *  project's submission list, where New submission takes the project from
  *  the shell (NewSubmissionForm, F20). */
-export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChange }: {
+export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChange, documentClass = null }: {
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   available: (id: string) => boolean;
@@ -321,7 +322,23 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChang
   ectdFiling: boolean;
   /** Whether the caller may change the project (the detail read's canChange); undefined when not read. */
   canChange?: boolean;
+  /** The project is a filing document class (a PAS, a CSR, a meeting package): null for an application. */
+  documentClass?: FilingDocumentClass | null;
 }) {
+  /* A filing document class has no market: it is authored here and this
+     platform builds no sequence for it, so Add a market (refused,
+     NOT_AN_APPLICATION), Compile (a CTD backbone) and readiness (an
+     application's sequence) are not offered beside it (review finding,
+     2026-10-18). */
+  if (documentClass) {
+    return (
+      <section className="pj-sec" aria-labelledby="pj-markets-h" data-testid="pj-markets">
+        <div className="pj-sec-h"><h2 id="pj-markets-h">Markets</h2></div>
+        <EmptyState icon={I.rocket} title="No market: this project is authored, not sequenced"
+          hint={classNotSequencedReason(documentClass)} />
+      </section>
+    );
+  }
   const center = available('submission-center');
   return (
     <section className="pj-sec" aria-labelledby="pj-markets-h" data-testid="pj-markets">
@@ -406,7 +423,11 @@ function reviewWords(r: ReviewCountRead, retry: (fn: () => void) => () => void):
 /** The line under the project header: each market's verdict and the number
  *  of documents in review, from the same reads the Submit and Review tabs
  *  show. Nothing in it is computed beyond counting rows the server returned. */
-export function ProjectStatusLine({ markets, reviews }: { markets: ProgramMarkets; reviews: ReviewCountRead }) {
+export function ProjectStatusLine({ markets, reviews, documentClass = null }: {
+  markets: ProgramMarkets; reviews: ReviewCountRead;
+  /** A filing document class has no market to wait for: "No market yet" would promise one. */
+  documentClass?: FilingDocumentClass | null;
+}) {
   const { list } = markets;
   const lineRef = React.useRef<HTMLDivElement>(null);
   /* A Retry unmounts itself while its read runs; focus stays on the line. */
@@ -428,7 +449,7 @@ export function ProjectStatusLine({ markets, reviews }: { markets: ProgramMarket
       </span>
     );
   } else if (markets.markets.length === 0) {
-    marketItems = <span className="pj-status-item" data-tone="idle">No market yet</span>;
+    marketItems = <span className="pj-status-item" data-tone="idle">{documentClass ? 'Authored here, not sequenced' : 'No market yet'}</span>;
   } else {
     marketItems = markets.markets.map((m) => {
       const v = marketVerdict(m.read);

@@ -1,0 +1,64 @@
+# mutation R5-org-register-lists-project-commitments
+# file: server/services/ha-interactions/ha-service.ts
+# replaced: 'rc.project_id IS NOT DISTINCT FROM $2\n'
+# with: 'rc.project_id IS NOT DISTINCT FROM COALESCE($2::int, rc.project_id)\n'
+# command: npx vitest run --config vitest.db.config.ts tests/db/agency-response-signed-approval.dbtest.ts -t organisation-wide register does not list
+# exit: 1
+
+ag > once every response is signed: the package assembles, recorded with the bytes delivered
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a closed letter takes no new question and no edited response
+{"level":20,"time":"2026-10-18T21:48:28.783Z","pid":24967,"hostname":"vm","context":{"auditId":"audit_1792360108778_c1737401eee0ef07","action":"CREATE","entityType":"project","entityId":"proj_44"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > lists the commitment under its project, with the letter and question it was made in
+ × tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation-wide register does not list a project's commitment (project admission applies) 26ms
+   → expected true to be false // Object.is equality
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it, through either door
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation's door does not reach a project's commitment, even for an editor
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future, and a date that does not exist, with a sentence
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an editor fulfils it from its project under RLS, with its ledger row
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a commitment from a letter the person may not see is not listed to them
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > keeps every text: after an edit, the earlier approved text is in the history, with its signature
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > the history is append-only for the runtime role
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a withdrawn question needs no answer, takes no edit, and is left out of the package
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter with questions recorded cannot be marked as asking nothing
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response cannot be logged as already closed
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a close and a new question cannot both land: the close is checked under the letter lock
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the screen is told what this person may do > a viewer may write nothing and sign nothing; an editor with signing authority may
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the Word package reproduces the signed text line for line > each line of a response is its own paragraph, and no Markdown marks are printed
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history and the commitments from them; the signatures stay
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  21:48:22
+   Duration  6.42s (transform 3.27s, setup 98ms, import 369ms, tests 5.54s, environment 0ms)
+
+stderr | tests/db/agency-response-signed-approval.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation-wide register does not list a project's commitment (project admission applies)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/agency-response-signed-approval.dbtest.ts:435:85
+    433|     const res = await request(app).get('/api/ha-interactions/commitmen…
+    434|     expect(res.status).toBe(200);
+    435|     expect(res.body.commitments.some((c: { id: number }) => c.id === c…
+       |                                                                                     ^
+    436|   });
+    437|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
