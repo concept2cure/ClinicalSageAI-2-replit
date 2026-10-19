@@ -517,5 +517,143 @@ await step(
   },
 );
 
+/**
+ * OQ-CMC-41: URS-CMC-029, the provenance of the shelf life the dossier prints.
+ *
+ * The governed close-out (slice 11) created a distinction the composed section
+ * could not express: one sentence printed both a period a signer had accepted
+ * and one typed onto a study still running
+ * (docs/evidence/CMC-M3-GA/2026-10-19/12-shelf-life-provenance/).
+ */
+const PROVENANCE_RESULTS = [
+  { timePoint: '0', parameter: 'assay', result: '99.8' },
+  { timePoint: '12', parameter: 'assay', result: '99.4' },
+  { timePoint: '24', parameter: 'assay', result: '99.1' },
+];
+
+/** The §3.2.P.8 narrative a compile produced, or '' when it composed none. */
+function productStabilityNarrative(compile) {
+  const data = dataOf(compile);
+  const sections = data.sections ?? data.compiled ?? [];
+  const section = (Array.isArray(sections) ? sections : []).find(
+    (s) => String(s.sectionKey ?? s.section_key) === '3.2.P.8',
+  );
+  return String(section?.narrativeDraft ?? section?.narrative_draft ?? '');
+}
+
+await step(
+  {
+    id: 'OQ-CMC-41',
+    urs: ['URS-CMC-029'],
+    title: 'The composed section says whether its shelf-life claim was signed for',
+    action:
+      'record the same shelf-life claim, the same three pull-point results and the same condition on two programmes, ' +
+      'close one out under a signature, and compose §3.2.P.8 for each',
+    expected:
+      'both sections state the period and the data it is subject to review of; the signed one reads "accepted on a ' +
+      'signed study close-out" and the running one "recorded on a study that has not been closed out under ' +
+      'signature" — the only difference between the two sections',
+    dependsOn: ['OQ-CMC-40'],
+  },
+  async ({ api, expect, attach, deviation }) => {
+    const password = process.env.OQ_RUN_PASSWORD;
+    /* A programme of its own for each case, because the section composes over
+       the whole programme: two studies in one programme would make the
+       sentence depend on which of them the composer read first, which is a
+       different question from the one this step asks. */
+    const programme = async (label, n) => {
+      const made = await api('POST', '/api/c2c/projects', {
+        name: `OQ-008 provenance ${label} ${stamp}`,
+        productName: `PRV-${label}`,
+        programType: 'ind',
+        productType: 'drug',
+        applicationNumber: `33${String(stamp).slice(-4)}${n}`,
+        primaryAgency: 'FDA',
+        priority: 'high',
+        indication: 'Shelf-life provenance',
+      });
+      expect(made.status === 201 || made.status === 200, `the ${label} programme expected 201, got ${made.status}`, made.json);
+      const projectId = dataOf(made).id;
+      /* Module 3 composes only for a programme that records the material it is
+         about: without these the compile refuses, and says so, rather than
+         composing a section over a product it has no record of. */
+      const ds = await api('POST', '/api/cmc/drug-substances', {
+        projectId, substanceName: `PRV-${label}-${stamp}`, status: 'development',
+        developmentPhase: 'phase1', modality: 'small_molecule',
+      });
+      expect(ds.status === 200 || ds.status === 201, `the ${label} drug substance expected 200, got ${ds.status}`, ds.json);
+      const dp = await api('POST', '/api/cmc/drug-products', {
+        projectId, productName: `PRV-${label} 5 mg tablet`, dosageForm: 'Film-coated tablet',
+        strength: '5 mg', routeOfAdministration: 'oral', status: 'development',
+      });
+      expect(dp.status === 200 || dp.status === 201, `the ${label} drug product expected 200, got ${dp.status}`, dp.json);
+
+      const study = await api('POST', '/api/cmc/stability-studies', {
+        projectId, productName: `PRV-${label}`, batchNumber: 'B-1', dosageForm: 'tablet', scope: 'DP',
+        climaticZone: 'II', studyType: 'long_term', storageConditions: ['25C/60%RH'], duration: 24,
+        testParameters: ['assay'], timePoints: ['0', '12', '24'], status: 'ACTIVE',
+        startDate: '2026-01-01T00:00:00.000Z', stabilityData: PROVENANCE_RESULTS,
+      });
+      expect(study.status === 200 || study.status === 201, `the ${label} study expected 200, got ${study.status}`, study.json);
+      const id = dataOf(study).id;
+      const claim = await api('PUT', `/api/cmc/stability-studies/${id}`, { shelfLife: '24 months at 25C/60%RH' });
+      expect(claim.status === 200, `recording the ${label} claim expected 200, got ${claim.status}`, claim.json);
+      return { projectId, id };
+    };
+
+    const running = await programme('running', 1);
+    const signed = await programme('signed', 2);
+
+    if (!password) {
+      deviation(
+        'not executed — OQ_RUN_PASSWORD was not supplied, so no close-out could be signed and the two cases this ' +
+          'step compares would be identical. Nothing is asserted about the composed provenance.',
+        { running, signed },
+      );
+      return 'not executed — credential not supplied';
+    }
+    const act = await api('POST', `/api/cmc/stability-studies/${signed.id}/close-out`, {
+      reason: 'The 24-month long-term data support a 24-month shelf life at the labelled condition.',
+      meaning: 'approval',
+      reauth: { password },
+    });
+    expect(act.status === 200, `the close-out expected 200, got ${act.status}`, act.json);
+
+    const texts = {};
+    for (const [label, programmeUnderTest] of [['running', running], ['signed', signed]]) {
+      const compile = await api('POST', `/api/cmc/module3-os/compile/${programmeUnderTest.projectId}`, {});
+      expect(compile.status === 200, `the ${label} compile expected 200, got ${compile.status}`, compile.json);
+      const text = productStabilityNarrative(compile);
+      expect(text.length > 0, `the ${label} programme composed no §3.2.P.8`, dataOf(compile));
+      /* The claim and its basis are stated in both: the provenance is added to
+         the sentence, it does not replace what the section already said. */
+      expect(/A shelf life of 24 months at 25C\/60%RH is proposed/.test(text), `the ${label} section does not state the period`, text.slice(0, 400));
+      expect(/subject to review of the 3 recorded result\(s\)/.test(text), `the ${label} section does not name the data`, text.slice(0, 400));
+      texts[label] = text;
+    }
+
+    expect(
+      /accepted on a signed study close-out/.test(texts.signed),
+      'the signed programme’s section does not say the claim was accepted on a signed close-out',
+      texts.signed.slice(0, 400),
+    );
+    expect(
+      /recorded on a study that has not been closed out under signature/.test(texts.running),
+      'the running programme’s section does not say the claim is unsigned',
+      texts.running.slice(0, 400),
+    );
+    expect(
+      !/accepted on a signed study close-out/.test(texts.running),
+      'the running programme’s section claims a signature it does not have',
+      texts.running.slice(0, 400),
+    );
+    attach('provenance.json', {
+      signed: /accepted on a signed study close-out/.exec(texts.signed)?.[0] ?? null,
+      running: /recorded on a study that has not been closed out under signature/.exec(texts.running)?.[0] ?? null,
+    });
+    return 'two programmes identical but for the signature compose two different §3.2.P.8 provenance statements';
+  },
+);
+
 /** @see REGISTER_STEPS — the chain that serialises these modules. */
 export const ATTRIBUTION_STEPS = `${REGISTER_STEPS} → steps-attribution.mjs`;

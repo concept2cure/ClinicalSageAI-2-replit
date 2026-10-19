@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-008 |
-| Version | 0.7 |
+| Version | 0.8 |
 | Status | **DRAFT — UNSIGNED, NOT EXECUTED** |
 | Parent | VMP-001 §5; requirements URS-007 |
 | Runner (the executable protocol) | `tests/validation/oq/cmc/run.mjs` (steps 19–33 in `tests/validation/oq/cmc/steps-filing.mjs`; 34–36 in `steps-registers.mjs`; 37–40 in `steps-attribution.mjs`) |
@@ -13,6 +13,7 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.8 | 2026-10-19 | Claude | OQ-CMC-41 added for URS-CMC-029 (the composed section states whether its shelf-life claim was signed for). |
 | 0.7 | 2026-10-19 | Claude | OQ-CMC-40 added for URS-CMC-028 (the stability close-out under a signature). Steps 37–40 moved into `steps-attribution.mjs` as `steps-registers.mjs` passed the 500-line cap. |
 | 0.6 | 2026-10-19 | Claude | OQ-CMC-39 added for URS-CMC-027 (no verdict and no filing for a programme the organisation does not hold). |
 | 0.5 | 2026-10-18 | Claude | OQ-CMC-37 and OQ-CMC-38 added for URS-CMC-025 and URS-CMC-026 (every register edit records who changed it; the record's history is readable against the record). |
@@ -89,6 +90,7 @@ recomputed from the stored section record and compared with the
 | OQ-CMC-38 | URS-CMC-026 | scripted | read the change history through the product's own route for each edited record, then ask it for a record that does not exist and for a register that keeps no history; read the specifications register's own history route | the create and each edit in order with the person, the fields and both values; 404 for the unknown record; 404 naming the registers that do keep one — never an empty history; the specifications route still answers 200. Cross-tenant refusal is evidenced outside this run (no second organisation is provisioned for an OQ run) |
 | OQ-CMC-39 | URS-CMC-027 | scripted | ask for an ICH compliance verdict, a QbD derivation and a control strategy, and file a container closure, a comparability assessment and a material specification, under three programme ids the organisation does not hold — one well-formed uuid naming nothing, one malformed id, and (when supplied) one of a second tenant — then the same six under the run's own programme; and one create with no programme at all | each read 404 stating nothing was assessed and each create 409 naming the programme as not this organisation's, with nothing written; the same six succeed under the run's own programme; the create with no programme is accepted as an organisation-wide record |
 | OQ-CMC-40 | URS-CMC-028 | scripted | create a study already COMPLETED with a shelf life, then close an ordinary study out by PUT; then sign the close-out with no reason, with a reason but no re-authentication, with both but no shelf life recorded, with a shelf life but no results pulled, and with everything; then edit the closed-out study and close it out again | the create and the PUT each refused 409 naming POST /api/cmc/stability-studies/:id/close-out with nothing stored; then 400, then 401, then 409 naming the missing shelf life, then 409 naming the absent results; then 200 with COMPLETED, the signer and the date set and one `electronic_signatures` row; the edit after is 409 and a second close-out is 409 already COMPLETED |
+| OQ-CMC-41 | URS-CMC-029 | scripted | record the same shelf-life claim, the same three pull-point results and the same condition on two programmes, close one out under a signature, and compose §3.2.P.8 for each | both sections state the period and the data it is subject to review of; the signed one reads *accepted on a signed study close-out* and the running one *recorded on a study that has not been closed out under signature* — the only difference between the two sections |
 | OQ-CMC-31 | URS-CMC-001, URS-CMC-022 | ad-hoc | the tester records anything observed that no step above covers | reviewer judgment |
 
 ## 3. Execution record
