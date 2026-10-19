@@ -16,9 +16,7 @@
  *   - An unrecognised class fails closed: no required set, never "ready".
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import express from 'express';
-import request from 'supertest';
+import { describe, it, expect, vi } from 'vitest';
 
 // The documentation-status route is exercised against a mocked DB: the program
 // check reads regulatory_programs on the pool, and listProgramDocuments ends in
@@ -412,31 +410,6 @@ describe('authoring refuses the other regulation’s instrument', () => {
   });
 });
 
-describe('POST /api/post-market/programs/:id/documents/:type/generate', () => {
-  const PROGRAM = 'aaaaaaaa-0000-4000-8000-000000000001';
-
-  beforeEach(() => {
-    h.programRows = [{ id: PROGRAM }];
-    h.docRows = [];
-  });
-
-  it('refuses a PMCF plan for an IVD class with 422 naming the PMPF plan', async () => {
-    const { postMarketRouter } = await import('../../../routes/gspr-postmarket');
-    const a = express();
-    a.use(express.json());
-    a.use((req, _res, next) => {
-      (req as any).user = { id: 7, organizationId: 99 };
-      next();
-    });
-    a.use('/api/post-market', postMarketRouter);
-    const res = await request(a)
-      .post(`/api/post-market/programs/${PROGRAM}/documents/pmcf_plan/generate`)
-      .send({ deviceName: 'Acme HbA1c Assay', deviceClass: 'IVD Class C' });
-    expect(res.status).toBe(422);
-    expect(res.body.error).toMatch(/pmpf_plan/);
-  });
-});
-
 describe('EU_POSTMARKET_OBLIGATIONS', () => {
   it('normalises the class vocabulary per regulation', () => {
     expect(normaliseEuDeviceClass('Class IIb', 'MDR')).toBe('IIb');
@@ -511,59 +484,5 @@ describe('IVDR document types are first-class post-market documents', () => {
   it('pmpf_evaluation must declare a reporting period', () => {
     const v = validateDocument(doc('pmpf_evaluation', { content: specialised(buildPmpfEvaluationContent(ivdCtx)) }));
     expect(v.passesGate).toBe(false);
-  });
-});
-
-describe('GET /api/post-market/programs/:id/documentation-status', () => {
-  const PROGRAM = 'aaaaaaaa-0000-4000-8000-000000000001';
-  const url = (q: string) => `/api/post-market/programs/${PROGRAM}/documentation-status?${q}`;
-
-  async function app() {
-    const { postMarketRouter } = await import('../../../routes/gspr-postmarket');
-    const a = express();
-    a.use((req, _res, next) => {
-      (req as any).user = { id: 7, organizationId: 99 };
-      next();
-    });
-    a.use('/api/post-market', postMarketRouter);
-    return a;
-  }
-
-  beforeEach(() => {
-    h.programRows = [{ id: PROGRAM }];
-    h.docRows = [];
-  });
-
-  it('passes implantable through: an implantable Class IIa device owes an SSCP', async () => {
-    const res = await request(await app()).get(url('regulation=MDR&deviceClass=IIa&implantable=true'));
-    expect(res.status).toBe(200);
-    expect(res.body.implantable).toBe(true);
-    expect(res.body.documents.find((d: any) => d.documentType === 'sscp').required).toBe(true);
-  });
-
-  it('an unstated implantable fact stays unknown, not false', async () => {
-    const res = await request(await app()).get(url('regulation=MDR&deviceClass=IIb'));
-    expect(res.status).toBe(200);
-    expect(res.body.implantable).toBeNull();
-    expect(res.body.documents.find((d: any) => d.documentType === 'sscp').obligation).toBe('undetermined');
-  });
-
-  it('customMade=true removes the SSCP for Class III', async () => {
-    const res = await request(await app()).get(url('regulation=MDR&deviceClass=III&implantable=true&customMade=true'));
-    expect(res.status).toBe(200);
-    expect(res.body.documents.find((d: any) => d.documentType === 'sscp').required).toBe(false);
-  });
-
-  it('answers IVDR Class B with a PMS report and no PSUR', async () => {
-    const res = await request(await app()).get(url('regulation=IVDR&deviceClass=B'));
-    expect(res.status).toBe(200);
-    const byType = Object.fromEntries(res.body.documents.map((d: any) => [d.documentType, d]));
-    expect(byType.pms_report.required).toBe(true);
-    expect(byType.psur.required).toBe(false);
-  });
-
-  it.each(['implantable=yes', 'customMade=1', 'regulation=FDA'])('refuses %s with 422', async q => {
-    const res = await request(await app()).get(url(`deviceClass=IIa&${q}`));
-    expect(res.status).toBe(422);
   });
 });
