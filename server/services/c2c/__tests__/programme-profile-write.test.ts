@@ -28,6 +28,8 @@ import {
   type ProfileWriteDb,
   applyProgrammeProfilePatch,
   deviceProfilePatchSchema,
+  programmePredicateDevicesColumn,
+  programmeTeamMembersColumn,
   programmeProfileFields,
   programmeProfilePatchSchema,
 } from '../programme-profile-write';
@@ -350,5 +352,47 @@ describe('the device-profile endpoint’s reach', () => {
     expect(deviceProfilePatchSchema.safeParse({ targetAgencies: ['EMA'] }).success).toBe(false);
     expect(deviceProfilePatchSchema.safeParse({ productCode: 'QAS' }).success).toBe(true);
     expect(deviceProfilePatchSchema.safeParse({ commonName: '' }).success).toBe(true);
+  });
+});
+
+/**
+ * The two json columns, for the writer that is not this one.
+ *
+ * `POST /api/c2c/projects` builds its own raw INSERT. Until 2026-10-19 it wrote
+ * `team_members` as a bare string array and `predicate_devices` as
+ * `[{ kNumber }]` — no id, no name — so the same column meant different things
+ * depending on which path created the row, and a row the create made could not
+ * round-trip through the write that owns the column. The route now shapes both
+ * through these schemas, and this is the pin that the old shapes stay refused.
+ */
+describe('the json columns a second writer must shape alike', () => {
+  it('refuses the bare string array the create route used to write', () => {
+    expect(programmeTeamMembersColumn.safeParse(['Alice', 'Bob']).success).toBe(false);
+    /* A name with no stated role is the canonical shape: `role` is optional, so
+       the create route asserts a name and nothing more. */
+    const parsed = programmeTeamMembersColumn.parse([{ name: 'Alice' }, { name: 'Bob' }]);
+    expect(parsed).toEqual([{ name: 'Alice' }, { name: 'Bob' }]);
+  });
+
+  it('refuses a predicate with a number and no trade name', () => {
+    /* The exact value the create route wrote. The official eSTAR fills the
+       predicate submission number from `kNumber` and the TRADE NAME from
+       `name`, so this row files half a claim of substantial equivalence. */
+    expect(programmePredicateDevicesColumn.safeParse([{ kNumber: 'K181234' }]).success).toBe(false);
+    expect(programmePredicateDevicesColumn.safeParse([{ id: 'K181234' }]).success).toBe(false);
+    expect(programmePredicateDevicesColumn.safeParse([{ name: 'AeroCheck PF Meter' }]).success).toBe(false);
+  });
+
+  it('takes the complete claim, keyed by the submission number', () => {
+    expect(
+      programmePredicateDevicesColumn.parse([
+        { id: 'K181234', name: 'AeroCheck PF Meter', kNumber: 'K181234' },
+      ]),
+    ).toEqual([{ id: 'K181234', name: 'AeroCheck PF Meter', kNumber: 'K181234' }]);
+  });
+
+  it('takes an empty list, because a programme with no predicate states none', () => {
+    expect(programmePredicateDevicesColumn.parse([])).toEqual([]);
+    expect(programmeTeamMembersColumn.parse([])).toEqual([]);
   });
 });
