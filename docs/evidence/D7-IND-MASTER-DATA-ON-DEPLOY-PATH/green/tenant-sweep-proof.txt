@@ -1,0 +1,9 @@
+### The tenant sweep gives each of the three tables a policy
+
+$ psql -d replayproof -f db/migrations/20260801_tenant_isolation_sweep.sql   (abridged)
+psql:/tmp/sweep.sql:422: NOTICE:  [rls-sweep] tenant_isolation_policy applied to 3 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+
+$ select relname, relrowsecurity, policy count
+ind_investigators | rls=true | policies=1
+ind_regulatory_agents | rls=true | policies=1
+ind_sponsors | rls=true | policies=1
