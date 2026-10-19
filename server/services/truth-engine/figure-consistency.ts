@@ -5,9 +5,17 @@
  * runConsistencyCheck asked a model to label each claim/source pair `match` or
  * `conflict` and persisted its JSON as findings (CLAUDE.md Rule 2: a verdict
  * comes from an engine; the model narrates). This compares the labelled
- * figures reconcileDossierNumbers extracts — enrolled N, sample size, sites,
- * events, alpha, power, hazard ratio, primary p-value — between the claim and
+ * figures the one extractor reads — sample size, sites, events, alpha, power,
+ * hazard ratio, p-value and the rest of the lexicon — between the claim and
  * each source.
+ *
+ * 2026-10-19: the figures come from extractNumericalFacts
+ * (intelligence/cross-artifact-consistency), which is the platform's one
+ * labelled-figure lexicon. They used to come from ana/dossierReconciliation,
+ * a second implementation of the same extraction over a second copy of the
+ * lexicon; it is deleted and its five labels were folded into the canonical
+ * one. The verdict rules below are this module's and are unchanged — they are
+ * the part no other comparator had.
  *
  * A verdict needs one value on each side, read as written:
  * - a text that states a figure more than once (two p-values, PFS and OS
@@ -23,7 +31,11 @@
  * @module server/services/truth-engine/figure-consistency
  */
 
-import { reconcileDossierNumbers, type ExtractedFact } from '../ana/dossierReconciliation';
+import {
+  extractNumericalFacts,
+  numericValueOf,
+  type NumericalFact,
+} from '../intelligence/cross-artifact-consistency';
 
 export interface FigureFinding {
   leftRef: string;
@@ -51,15 +63,21 @@ interface Reading {
   bound: boolean;
 }
 
+/** The canonical lexicon's label for a primary p-value. */
+const P_LABEL = 'p_value';
+
 const P_VALUE_AT = /p\s*(?:-?\s*value)?\s*([=<])\s*(0?\.\d{1,5})/gi;
 const ARM_LEVEL = /(?:patients|subjects|participants)\s+(?:to|in|per)\b/i;
 
-function readingOf(fact: ExtractedFact): Reading {
-  if (fact.label !== 'primary_p_value') return { value: fact.value, bound: false };
-  for (const m of fact.snippet.matchAll(P_VALUE_AT)) {
-    if (Number(m[2]) === fact.value) return { value: fact.value, bound: m[1] === '<' };
+/** A fact as a reading, or null when its value is not a number (a K-number, say). */
+function readingOf(fact: NumericalFact): Reading | null {
+  const value = numericValueOf(fact);
+  if (value === null) return null;
+  if (fact.label !== P_LABEL) return { value, bound: false };
+  for (const m of fact.context.matchAll(P_VALUE_AT)) {
+    if (Number(m[2]) === value) return { value, bound: m[1] === '<' };
   }
-  return { value: fact.value, bound: false };
+  return { value, bound: false };
 }
 
 function distinct(readings: Reading[]): Reading[] {
@@ -88,17 +106,27 @@ function verdict(label: string, l: Reading, r: Reading): 'match' | 'conflict' | 
   if (label === 'alpha' && l.value !== r.value && Math.max(l.value, r.value) === 2 * Math.min(l.value, r.value)) {
     return { reason: 'the two alphas may differ only by one- versus two-sided testing' };
   }
+  /* Compared at the coarser precision of the two readings (0.71 ≡ 0.712).
+     Clamping this to the label's own comparison precision was tried and removed: at
+     hazard_ratio's three places it made 0.7104 and 0.7096 agree, losing a conflict that
+     figure-consistency.test.ts already pinned, and it bought nothing — the coarser of the
+     two readings already handles a power normalised from "90%" against a written 0.900,
+     because 0.9 carries one decimal. */
   const dp = Math.min(decimals(l.value), decimals(r.value));
   const round = (n: number) => Math.round(n * 10 ** dp) / 10 ** dp;
   return round(l.value) === round(r.value) ? 'match' : 'conflict';
 }
 
 /** The one reading a side states for a label, or why there is none to compare. */
-function sideReading(facts: ExtractedFact[]): Reading | { reason: string } {
-  if (facts.some((f) => f.label === 'enrolled_n' && ARM_LEVEL.test(f.snippet))) {
+function sideReading(facts: NumericalFact[]): Reading | { reason: string } {
+  /* "randomized 120 patients to drug" is one arm, not the total. The guard used to run
+     only on the deleted module's `enrolled_n`; on the canonical lexicon the same quantity
+     is `sample_size`, so it now covers the `N=` form as well as the prose one. */
+  if (facts.some((f) => f.label === 'sample_size' && ARM_LEVEL.test(f.context))) {
     return { reason: 'an arm-level count, not the total' };
   }
-  const readings = distinct(facts.map(readingOf));
+  const readings = distinct(facts.map(readingOf).filter((r): r is Reading => r !== null));
+  if (readings.length === 0) return { reason: 'no numeric value was read for it' };
   return readings.length === 1 ? readings[0] : { reason: 'a text states more than one value for it' };
 }
 
@@ -109,19 +137,18 @@ export function compareLabelledFigures(
   const findings: FigureFinding[] = [];
   const notCompared: FigureNotCompared[] = [];
 
+  const leftFacts = extractNumericalFacts(left.text);
+  const claimLabels = [...new Set(leftFacts.map((f) => f.label))].sort();
+
   for (const source of right) {
-    const { facts } = reconcileDossierNumbers([
-      { id: 'left', title: left.ref, text: left.text },
-      { id: 'right', title: source.ref, text: source.text },
-    ]);
-    const claimLabels = [...new Set(facts.filter((f) => f.docId === 'left').map((f) => f.label))].sort();
+    const rightFacts = extractNumericalFacts(source.text);
     for (const label of claimLabels) {
-      const sourceFacts = facts.filter((f) => f.docId === 'right' && f.label === label);
+      const sourceFacts = rightFacts.filter((f) => f.label === label);
       if (sourceFacts.length === 0) {
         notCompared.push({ rightRef: source.ref, label, reason: 'not stated in the source' });
         continue;
       }
-      const l = sideReading(facts.filter((f) => f.docId === 'left' && f.label === label));
+      const l = sideReading(leftFacts.filter((f) => f.label === label));
       const r = sideReading(sourceFacts);
       if ('reason' in l || 'reason' in r) {
         notCompared.push({ rightRef: source.ref, label, reason: ('reason' in l ? l : (r as { reason: string })).reason });
