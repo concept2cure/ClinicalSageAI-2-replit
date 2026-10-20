@@ -25,7 +25,7 @@ app.use('/api/submissions', submissionsRouter);
 const EDIT = { leafId: 99, sectionCode: '5.3.5.1', title: 'Study report', studyId: 'STUDY-101', stfFileTag: 'study-report-body',
   studyTaggingEdit: { expectedStudyId: null, expectedStfFileTag: null, expectedUpdatedAt: '2026-10-20T00:00:00.000Z' },
   reason: 'Sponsor confirmed study classification' };
-const put = (body: unknown) => request(app).put('/api/submissions/sequences/11/leaves').send(body);
+const put = (body: Record<string, unknown>) => request(app).put('/api/submissions/sequences/11/leaves').send(body);
 beforeEach(() => { svc.upsertLeaf.mockReset(); svc.upsertLeaf.mockResolvedValue({ id: 99, sequenceId: 11, studyId: 'STUDY-101',
   stfFileTag: 'study-report-body', auditTrail: { persisted: true } }); });
 

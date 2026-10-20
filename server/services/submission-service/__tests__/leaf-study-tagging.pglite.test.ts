@@ -102,6 +102,19 @@ describe('canonical study metadata writes', () => {
 });
 
 describe('study metadata edit guards and outcomes', () => {
+  it('refuses a null revision without auditing or demoting validation', async () => {
+    const leaf = await upsertLeaf(placement(), CTX);
+    await q('UPDATE submission_leaves SET updated_at=NULL WHERE id=$1', [leaf.id]);
+    await q("UPDATE ectd_sequences SET status='validated', validation_status='passed' WHERE id=$1", [sequenceId]);
+    logAction.mockClear();
+    await expect(upsertLeaf(edit({ ...leaf, updatedAt: null }), CTX)).rejects.toMatchObject({ code: 'STALE_LEAF' });
+    expect(logAction).not.toHaveBeenCalled();
+    expect((await q('SELECT study_id, stf_file_tag, updated_at FROM submission_leaves WHERE id=$1', [leaf.id]))[0])
+      .toEqual({ study_id: null, stf_file_tag: null, updated_at: null });
+    expect((await q('SELECT status, validation_status FROM ectd_sequences WHERE id=$1', [sequenceId]))[0])
+      .toEqual({ status: 'validated', validation_status: 'passed' });
+  });
+
   it.each([
     { expectedStudyId: 'other' }, { expectedStfFileTag: 'other' }, { expectedUpdatedAt: '2000-01-01T00:00:00.000Z' },
   ])('refuses a stale expected snapshot: %j', async (different) => {

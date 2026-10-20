@@ -3423,7 +3423,7 @@ async function editLeafStudyTagging(input: UpsertLeafInput, ctx: { organizationI
     if (!previous) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
     if (previous.sectionCode !== input.sectionCode || previous.title !== input.title ||
         (previous.studyId ?? null) !== expected.expectedStudyId || (previous.stfFileTag ?? null) !== expected.expectedStfFileTag ||
-        new Date(previous.updatedAt).getTime() !== Date.parse(expected.expectedUpdatedAt)) {
+        previous.updatedAt?.getTime() !== Date.parse(expected.expectedUpdatedAt)) {
       throw new SubmissionError('STALE_LEAF', 'This leaf changed after it was read. Read the current leaf before saving study metadata again. Nothing was written.');
     }
     if ((previous.studyId ?? null) === input.studyId && (previous.stfFileTag ?? null) === input.stfFileTag) {

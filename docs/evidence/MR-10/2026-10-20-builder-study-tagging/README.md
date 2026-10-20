@@ -63,12 +63,13 @@ No new dependency, schema, baseline change, live provider or agency call.
 | `logs/ui-red.log` | Before implementation:14 failed, missing metadata controls/display |
 | `logs/ui-recovery-red.log` / `ui-transition-audit-red.log` | Recovery/selection and independent transition-audit regressions fail before their fixes |
 | `logs/backend-regression.log` | 150 passed /13 files; existing placement/source-pin/parent/tenant/section/state/audit controls |
-| `logs/backend-final.log` | Final frozen metadata source:45 passed /3 files |
-| `logs/route-packager-final.log` | Final frozen source:54 passed /5 files, including real PUT→SQL→existing projection/packager; exact `m5/.../stf-study-101.xml` emitted |
+| `logs/backend-final.log` | Earlier metadata source:45 passed /3 files |
+| `logs/backend-null-revision-red.log` / `backend-compiler-fix-green.log` | Null revision refusal fails before fix; corrected final metadata46 passed /3 files |
+| `logs/route-packager-qualified.log` | Corrected final source:54 passed /5 files, including real PUT→SQL→existing projection/packager; exact `m5/.../stf-study-101.xml` emitted |
 | `logs/ui-regression-refactored.log` | Initial refactored source:80 passed /7 files |
 | `logs/ui-bodyless-red.log` / `ui-bodyless-green.log` | PUT204 red,200null control green; after fix both pass,19 unrelated cases skipped |
 | `logs/ui-bodyless-final-regression.log` | Corrected final UI:82 passed /7 files,21 study-tagging cases and61 existing cases |
-| `browser/result/result.json` | Fresh Vite process, actual Builder/real auth client with synthetic intercepted API:7 stages,4 deliberate PUTs, explicit read without replay, late receipt fenced, frozen display;20 source pins unchanged,0 page errors |
+| `browser/result/result.json` | Corrected final source, fresh Vite process, actual Builder/real auth client with synthetic intercepted API:7 stages,4 deliberate PUTs, explicit read without replay, late receipt fenced, frozen display;20 source pins unchanged,0 page errors |
 
 Cohorts overlap; these counts must not be added as distinct cases. Final scoped
 lint has no errors; backend warnings11→11 and new metadata helpers/tests have
@@ -85,3 +86,9 @@ The initial production client, server and audit-chain verifier build passed at
 in `qualification.json`. Existing bundle-size warnings remain. The evidence
 directory secret scan reports 0 leaks with the unchanged repository config.
 The normal compiler and pushed-files warning ratchet must pass before publication.
+
+The initial full compiler rejected publication with two diagnostics (nullable
+revision timestamp and a Supertest helper argument). Both were corrected without
+a baseline change. The new null-revision regression refuses unverifiable rows
+without write, audit or demotion. The initial rejected push is retained in
+`logs/initial-compiler-rejected-push.log`; final compiler/push evidence is pending.
