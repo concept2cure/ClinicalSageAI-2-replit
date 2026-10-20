@@ -33,6 +33,7 @@ import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
+import { AGENCY_LABEL } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
@@ -1670,6 +1671,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
      Supplement"), never its key ("pas"). */
   const submissionType = sel?.code || prog?.code || filingDocumentClassOf(prog?.program_type)?.label || prog?.program_type || null;
   const region = prog?.primary_agency ?? null;
+  const regionLabel = region && Object.hasOwn(AGENCY_LABEL, region) ? AGENCY_LABEL[region as keyof typeof AGENCY_LABEL] : region;
   const indication = prog?.indication ?? null;
   // Program identity facts (WO-9 Click 1). Read from the row only — never from
   // the navigation handoff, never derived from the title — so what the screen
@@ -1859,7 +1861,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           <div className="pj-tags">
             {clientType && <span className="rd-chip tone-ai">{clientType}</span>}
             {submissionType && <span className="rd-chip tone-idle">{submissionType}</span>}
-            {region && <span className="rd-chip tone-idle">{region}</span>}
+            {region && <span className="rd-chip tone-idle">{regionLabel}</span>}
             {indication && <span className="rd-chip tone-idle">{indication}</span>}
             {status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[status] ?? 'tone-idle'}`}>{status}</span>}
             {priority && <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>priority: {priority}</span>}

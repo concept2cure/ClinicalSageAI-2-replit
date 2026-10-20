@@ -7,7 +7,7 @@
  * CONFIRMED filing (a suggestion is the classifier's guess, and unfiled is
  * nothing), and is never a percentage or a readiness figure.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { coverageOf, readVaultCoverage } from '../vault-coverage';
@@ -101,6 +101,14 @@ describe('readVaultCoverage', () => {
       expect(c.state, view).toBe('not_applicable');
       expect(JSON.stringify(c), view).not.toMatch(/"required"|"covered"/);
     }
+  });
+
+  it.each(['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'])('%s counts no medicinal CTD requirement even in a pharma view', async programType => {
+    const query = vi.fn(async () => ({ rows: [] }));
+    const result = await readVaultCoverage({ query } as never, { ...INPUT, programType });
+    expect(result).toMatchObject({ state: 'not_applicable', reason: expect.stringMatching(/not a CTD dossier/) });
+    expect(query).not.toHaveBeenCalled();
+    expect(JSON.stringify(result)).not.toMatch(/"required"|"covered"/);
   });
 
   it('counts from the live pack when one applies, and names it', async () => {

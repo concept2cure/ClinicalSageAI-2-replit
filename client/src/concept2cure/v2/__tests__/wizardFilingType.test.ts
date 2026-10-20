@@ -138,19 +138,27 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
    * approval, not one enumerated dossier structure — unlike MDR Annex II, there
    * is no single shape to seed. They decline visibly rather than borrowing one.
    */
-  it.each(['uk_ukca', 'pmda_shonin', 'nmpa_device', 'tga_device', 'hc_mdl', 'br_device'])(
+  it.each(['uk_ukca', 'nmpa_device', 'tga_device', 'br_device'])(
     '%s is a device filing with no defined pack and fails closed',
     (id) => {
       expect(programTypeFor(selFor(id), 'biotech')).toBe('device');
     },
   );
 
-  it.each(['pmda_ivd', 'nmpa_ivd', 'tga_ivd', 'hc_ivd', 'ivd_vigilance'])(
+  it.each(['nmpa_ivd', 'tga_ivd', 'ivd_vigilance'])(
     '%s is an IVD filing with no defined pack and fails closed',
     (id) => {
       expect(programTypeFor(selFor(id), 'biotech')).toBe('ivd');
     },
   );
+
+  it.each([
+    ['fda_hde', 'hde'], ['hc_mdl', 'mdl'], ['hc_ivd', 'ivd_licence'],
+    ['pmda_shonin', 'shonin'], ['pmda_nintei', 'ninsho'], ['jp_todokede', 'todokede'],
+    ['pmda_ivd', 'ivd_approval'], ['cdx_pmda', 'jp_cdx'],
+  ])('%s reaches its exact regional application class %s', (id, type) => {
+    expect(programTypeFor(selFor(id), 'biotech')).toBe(type);
+  });
 
   it('no device or IVD filing resolves to a drug marketing application', () => {
     /*

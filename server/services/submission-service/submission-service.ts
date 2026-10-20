@@ -97,6 +97,7 @@ import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readin
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
+import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
 import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import {
@@ -122,6 +123,7 @@ export type SubmissionErrorCode =
   | 'UNANCHORED_SUBMISSION'
   | 'APPLICATION_NUMBER_MISMATCH'
   | 'APPLICATION_TYPE_MISMATCH'
+  | 'DEVICE_PREPARATION_ONLY'
   | 'PACKAGE_IDENTITY_MISSING'
   | 'SHADOW_WAIVER_NOT_ELIGIBLE'
   | 'SHADOW_FINDING_NOT_DISPOSABLE';
@@ -155,6 +157,7 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   CROSS_PROJECT: 409,
   ALREADY_PLACED: 409,
   VALIDATION_FAILED: 422,
+  DEVICE_PREPARATION_ONLY: 422,
   UNANCHORED_SUBMISSION: 409,
   // The status the eCTD export answers for the same contradiction (ectd-export.ts).
   APPLICATION_NUMBER_MISMATCH: 409,
@@ -225,6 +228,10 @@ async function insertSubmissionRow(
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
+  if (regionalDeviceApplicationClassOf(input.applicationType)) {
+    throw new SubmissionError('DEVICE_PREPARATION_ONLY',
+      'Start this filing as an authoring project. Its preparation outline does not support canonical submission creation yet. Nothing was created.');
+  }
   const [row] = await executor
     .insert(submissions)
     .values({

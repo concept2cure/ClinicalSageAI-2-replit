@@ -48,7 +48,7 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
 import { workstreamSqlCase, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
-import { resolveFilingCatalogEntry, deviceClassScopeForFiling } from '../../../shared/regulatory/filing-catalog.js';
+import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
@@ -705,8 +705,11 @@ router.post('/', async (req: Request, res: Response) => {
   const name = str(body.name);
   const productName = str(body.productName) || name;
   const programType = str(body.programType).toLowerCase().replace(/[\s-]+/g, '_');
-  const primaryAgency = str(body.primaryAgency) || 'FDA';
-  const submissionTypeId = str(body.submissionTypeId) || null;
+  const requestedAgency = str(body.primaryAgency) || 'FDA';
+  const primaryAgency = regionalDeviceApplicationClassOf(programType)
+    ? documentAgencyFor({ applicationType: programType, market: requestedAgency }) ?? requestedAgency
+    : requestedAgency;
+  const submissionTypeId = str(body.submissionTypeId) || regionalDeviceApplicationClassOf(programType)?.registryId || null;
   const indication = str(body.indication) || null;
   // Agency-assigned application number (IND / NDA / BLA / MAA). Optional: a
   // program has none until the agency assigns one, and it is never invented.

@@ -25,9 +25,10 @@
  * @module server/services/ectd/required-sections
  */
 
-import { AGENCY_FALLBACKS, resolveDocumentClass } from '../c2c/document-class';
+import { documentAgencyCandidates, resolveDocumentClass } from '../c2c/document-class';
 import { requiredModule1CodesForRegion } from '../region-profiles/region-profile-service';
 import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes';
+import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
 
 export type CtdModuleCode = 'm1' | 'm2' | 'm3' | 'm4' | 'm5';
 
@@ -39,7 +40,7 @@ export interface RequiredModule {
 }
 
 export interface RequiredSectionProvenance {
-  source: 'rule_pack' | 'fallback';
+  source: 'rule_pack' | 'fallback' | 'not_applicable';
   /** Present when source === 'rule_pack'. */
   docType?: string;
   agency?: string;
@@ -193,6 +194,16 @@ export async function resolveRequiredSections(
   if (!programType) {
     return fallbackSet('The program type is unknown, so no rule pack applies; the ICH CTD marketing-application baseline is in force.');
   }
+  const regional = regionalDeviceApplicationClassOf(programType);
+  if (regional) {
+    return {
+      modules: [],
+      provenance: {
+        source: 'not_applicable', docType: regional.docType,
+        reason: 'A regional device preparation outline is not a CTD dossier. Applicable device requirements remain unassessed; use the regional working outline and accountable review.',
+      },
+    };
+  }
   // A filing document class (a supplement, a CSR, a meeting package — shared/
   // regulatory/filing-document-classes.ts) is not a CTD dossier. Its pack keys
   // are its own numbering: a CSR's E3 §5.1 or a protocol's M11 §5.2 would read
@@ -211,7 +222,7 @@ export async function resolveRequiredSections(
   if (!klass) {
     return fallbackSet(`No governed document class is mapped for program type '${programType}'; the ICH CTD marketing-application baseline is in force.`);
   }
-  const candidates = [klass.agency, ...AGENCY_FALLBACKS.filter((a) => a !== klass.agency)];
+  const candidates = [...new Set(documentAgencyCandidates(klass.docType, klass.agency))];
   try {
     for (const agency of candidates) {
       const { rows } = await client.query<RulePackRow>(

@@ -28,6 +28,7 @@ import { programTypeFor } from '../surfaces/Projects';
 import { marketSupport, type ActiveRulePacks } from '../../../../../server/services/regulatory/market-support';
 import { REGION_IDENTITY } from '@shared/regulatory/region-identity';
 import { FILING_CLASS_PACKS } from '../../../../../server/services/c2c/filing-class-packs';
+import { REGIONAL_DEVICE_APPLICATION_CLASSES } from '@shared/regulatory/filing-catalog';
 
 /** The packs live on trunk, as server/services/regulatory/__tests__/market-support.test.ts lists them, plus mod3:ich
  *  and one per filing document class (migrations/20261018, read from the module that mints them). */
@@ -35,6 +36,7 @@ const LIVE_PACKS = new Set([
   'ind:fda', 'nda:fda', 'bla:fda', 'anda:fda', 'ide:fda', 'k510:fda', 'pma:fda', 'denovo:fda',
   'cta:ema', 'maa:ema', 'mdr:ema', 'ivdr:ema', 'cer:ema', 'jnda:pmda', 'ind:mhra', 'mod3:ich',
   ...FILING_CLASS_PACKS.map((p) => `${p.docType}:${p.agency}`),
+  ...REGIONAL_DEVICE_APPLICATION_CLASSES.map(c => `${c.docType}:${c.packAgency}`),
 ]);
 const packs: ActiveRulePacks = {
   find: (d, a) => (LIVE_PACKS.has(`${d}:${a}`) ? { version: 'v-test', label: `${d}:${a}` } : null),
@@ -92,11 +94,12 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     expect(seen).toBe(GLOBAL_REGISTRY.length);
   });
 
-  it('offers no Health Canada filing, and a search for one says why, in the server\'s words', async () => {
+  it('offers exact Canada device authoring while medicinal applications retain their refusal', async () => {
     renderPicker();
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
-    expect(tiles().some((t) => /Health Canada/.test(t.agency))).toBe(false);
     fireEvent.change(screen.getByRole('textbox', { name: /search filing types/i }), { target: { value: 'Health Canada' } });
+    await waitFor(() => expect(tiles().filter(t => /Health Canada/.test(t.agency))).toHaveLength(2));
+    expect(tiles().filter(t => /Health Canada/.test(t.agency)).every(t => t.authorOnly)).toBe(true);
     const section = screen.getByTestId('rpk-not-offered');
     expect(within(section).getAllByText(/Health Canada has no governed [A-Z]+ outline here, so a project would have nothing to author/).length).toBeGreaterThan(0);
     expect(screen.getByText(/not offered, listed below with the reason/)).toBeTruthy();

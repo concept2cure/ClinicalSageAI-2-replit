@@ -123,6 +123,9 @@ export async function readVaultCoverage(
     },
   };
   const set = await resolveRequiredSections(watched, { programType: input.programType, primaryAgency: input.primaryAgency });
+  if (set.provenance.source === 'not_applicable') {
+    return { state: 'not_applicable', reason: set.provenance.reason! };
+  }
   if (readFailed) {
     return { state: 'unavailable', reason: set.provenance.reason ?? 'The rule-pack store could not be read.' };
   }

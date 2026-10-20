@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-set-order"
+  ],
+  "at": "2026-10-20T22:44:07.056929+00:00",
+  "elapsedSeconds": 0.731,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "stdout": "[ci:migration-set-order] OK \u2014 417 migrations, sweep last, tail uuid step \u2192 child scope \u2192 sweep, all present, no duplicates.\n",
+  "stderr": ""
+}

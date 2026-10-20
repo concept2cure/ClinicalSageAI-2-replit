@@ -28,7 +28,7 @@
  * Pure apart from `readMarketSupport`, which reads the active packs once.
  */
 import {
-  AGENCY_FALLBACKS,
+  documentAgencyCandidates,
   AGENCY_TO_CODE,
   PROGRAM_TO_DOC_TYPE,
   describeUnmappedClass,
@@ -58,6 +58,7 @@ import { getApplicationType, getByAgency } from '../../../shared/regulatory/glob
 import { classNotSequencedReason, filingDocumentClassOf, type FilingDocumentClass } from '../../../shared/regulatory/filing-document-classes.js';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
+import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 
 /** The active rule packs, by (doc_type, agency code). Injected so the composition stays pure. */
 export interface ActiveRulePacks {
@@ -370,10 +371,30 @@ const NOTIFIED_BODY = {
 
 const marketKey = (market: string) => market.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
+/** The existing regional application identifies both its jurisdiction and recipient. */
+function regionalIdentity(applicationType: string, market: string): ReturnType<typeof identify> | null {
+  const regional = regionalDeviceApplicationClassOf(applicationType);
+  if (regional) {
+    const entry = getApplicationType(regional.registryId)!;
+    const registeredBody = new Set(['registered_certification_body', 'jp_rcb']).has(marketKey(market));
+    const matches = entry.agency === 'Registered_Certification_Body'
+      ? registeredBody : !registeredBody && regionOfMarket(market) === entry.region;
+    const region = matches ? entry.region as CanonicalRegion : regionOfMarket(market);
+    const identity = region ? REGION_IDENTITY[region] : null;
+    return {
+      base: { applicationType, market, region, agency: matches ? entry.agency : identity?.agency ?? null },
+      identity, agencyCode: matches ? regional.packAgency : null,
+    };
+  }
+  return null;
+}
+
 /** The market's region, identity and agency code, from whatever the caller named it. */
 function identify(input: MarketInput): { base: Base; identity: Identity | null; agencyCode: string | null } {
   const applicationType = String(input.applicationType ?? '').trim();
   const market = String(input.market ?? '').trim();
+  const regional = regionalIdentity(applicationType, market);
+  if (regional) return regional;
   if (NOTIFIED_BODY.keys.has(marketKey(market))) {
     const docType = PROGRAM_TO_DOC_TYPE[applicationType.toLowerCase()] ?? null;
     const agencyCode = docType && NOTIFIED_BODY.docTypes.has(docType)
@@ -405,7 +426,7 @@ export function documentAgencyFor(input: MarketInput): string | null {
   }
   const { base, identity, agencyCode } = identify(input);
   if (!identity || !agencyCode) return null;
-  return base.agency === NOTIFIED_BODY.agency ? NOTIFIED_BODY.documentAgency : identity.agency;
+  return base.agency === NOTIFIED_BODY.agency ? NOTIFIED_BODY.documentAgency : base.agency;
 }
 
 /**
@@ -457,7 +478,7 @@ function unmappedSupport(base: Base, identity: Identity | null): MarketSupport {
  */
 function outlineFor(docType: string | null, agencyCode: string, applicationType: string, packs: ActiveRulePacks): MarketSupport['outline'] {
   let pack: { version: string; label: string } | null = null;
-  for (const candidate of docType ? [agencyCode, ...AGENCY_FALLBACKS] : []) {
+  for (const candidate of docType ? documentAgencyCandidates(docType, agencyCode) : []) {
     pack = packs.find(docType as string, candidate);
     if (pack) break;
   }
@@ -572,6 +593,11 @@ function harmonisedSupport(input: MarketInput, packs: ActiveRulePacks): MarketSu
 
 /** The registered filing a document class was created from, when it is registered at this agency. */
 function classEntryFor(applicationType: string, agency: string): RegulatoryApplicationType | null {
+  const regional = regionalDeviceApplicationClassOf(applicationType);
+  if (regional) {
+    const entry = getApplicationType(regional.registryId);
+    return entry?.agency === agency ? entry : null;
+  }
   const documentClass = filingDocumentClassOf(applicationType);
   if (!documentClass) return null;
   const entry = getApplicationType(documentClass.registryIds[0]);

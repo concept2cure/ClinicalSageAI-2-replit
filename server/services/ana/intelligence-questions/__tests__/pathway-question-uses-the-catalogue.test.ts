@@ -581,6 +581,12 @@ describe('the client segment an interview runs under', () => {
     // A submission type implies the segment that files it.
     expect(interviewClientType('510k')).toBe('medtech');
     expect(interviewClientType('PMA')).toBe('medtech');
+    for (const type of ['hde', 'mdl', 'shonin', 'ninsho', 'todokede']) {
+      expect(interviewClientType(type), type).toBe('medtech');
+    }
+    for (const type of ['ivd_licence', 'ivd_approval', 'jp_cdx']) {
+      expect(interviewClientType(type), type).toBe('ivd');
+    }
     expect(interviewClientType('IND')).toBe('pharma');
     expect(interviewClientType('bla')).toBe('pharma');
     // And where it says nothing, it says nothing — rather than 'pharma'.

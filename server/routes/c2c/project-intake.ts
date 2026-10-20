@@ -12,6 +12,7 @@
  */
 
 import type { PoolClient } from 'pg';
+import { regionalDeviceApplicationClassTypes, regionalDeviceApplicationClassOf, regionalDeviceApplicationClassForFiling } from '../../../shared/regulatory/filing-catalog.js';
 import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
 import {
   listProductTypes,
@@ -30,6 +31,7 @@ import {
  *  types line up with WS_CASE in projects.ts; product types match the store's
  *  CHECK-free but conventional set (drug/biologic/device/ivd). */
 export const VALID_PROGRAM_TYPES = new Set([
+  ...regionalDeviceApplicationClassTypes(),
   '510k', 'de_novo', 'pma', 'ivd', 'device', 'cer', 'ide',
   // 'cta' was mapped in PROGRAM_TO_DOC_TYPE and backed by a rule pack, but was
   // missing here — so the API rejected the one European filing a biotech running
@@ -178,6 +180,20 @@ export async function ensureSubmissionSpine(params: {
   return { id: Number(row.id), created: true };
 }
 
+/** Exact regional identities fix a bounded device family, independently of lane. */
+function regionalIntakeDecision(programType: string, stated: string, submissionTypeId?: string | null): { productType: string } | { refusal: string } | null {
+  const regional = regionalDeviceApplicationClassOf(programType);
+  const selectedRegional = regionalDeviceApplicationClassForFiling(submissionTypeId);
+  if ((regional && submissionTypeId && regional !== selectedRegional) || (selectedRegional && !regional)) {
+    return { refusal: 'The selected regional filing must match the project application type.' };
+  }
+  if (!regional) return null;
+  if (stated && !regional.productTypes.includes(stated as never)) {
+    return { refusal: 'The product family must match the selected regional device or diagnostic filing.' };
+  }
+  return { productType: stated || regional.defaultProductType };
+}
+
 /**
  * The product class a create records, or why it is refused (400). Pure.
  *
@@ -195,6 +211,13 @@ export function productTypeForIntake(
   programType: string,
   stated: string,
   submissionTypeId?: string | null,
+): { productType: string } | { refusal: string } {
+  return regionalIntakeDecision(programType, stated, submissionTypeId)
+    ?? nonRegionalProductTypeForIntake(programType, stated, submissionTypeId);
+}
+
+function nonRegionalProductTypeForIntake(
+  programType: string, stated: string, submissionTypeId?: string | null,
 ): { productType: string } | { refusal: string } {
   // A filing document class fixes no class, unless the filing names it: an
   // sBLA is a biologics licence supplement (filing-document-classes.ts).

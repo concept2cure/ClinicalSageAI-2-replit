@@ -13,6 +13,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { addProjectMarket, AddMarketRefusal, marketSubtree } from '../add-project-market';
 import { resolveGovernedDocument } from '../governed-document-binding';
+import { REGIONAL_DEVICE_APPLICATION_CLASSES, resolveFilingCatalogEntry } from '../../../../shared/regulatory/filing-catalog';
 
 vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
 
@@ -25,6 +26,7 @@ const PAS = '44444444-4444-4444-8444-444444444444';
 const REASON = 'The EU filing starts this quarter';
 
 let jdb: JourneyDb;
+const writes: string[] = [];
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
@@ -43,6 +45,7 @@ beforeAll(async () => {
       'migrations/20261015e_c2c_documents_filing_scope.sql',
       // The filing document class packs, so a PAS project has its real home filing.
       'migrations/20261018_filing_class_rule_packs.sql',
+      'migrations/20261020_regional_device_application_packs.sql',
     ],
   });
   await jdb.pool.query(`INSERT INTO organizations (id, name, slug, tier, max_projects) VALUES (${ORG}, 'Org', 'org', 'standard', 10)`);
@@ -59,6 +62,7 @@ async function program(id: string, type: string, agency: string, productType: st
 }
 
 beforeEach(async () => {
+  writes.length = 0;
   await jdb.pool.query('DELETE FROM c2c_document_sections');
   await jdb.pool.query('DELETE FROM c2c_documents');
   await jdb.pool.query('DELETE FROM submissions');
@@ -87,7 +91,11 @@ async function add(programId: string, agency: string, applicationType: string) {
   const client = await jdb.pool.connect();
   try {
     await client.query('BEGIN');
-    const out = await addProjectMarket({ client: client as never, orgId: ORG, userId: USER, programId, agency, applicationType, reason: REASON });
+    const observed = { query: (sql: string, params?: unknown[]) => {
+      if (/^\s*(INSERT|UPDATE|DELETE)\b/i.test(sql)) writes.push(sql);
+      return client.query(sql, params);
+    } };
+    const out = await addProjectMarket({ client: observed as never, orgId: ORG, userId: USER, programId, agency, applicationType, reason: REASON });
     await client.query('COMMIT');
     return out;
   } catch (e) {
@@ -103,7 +111,33 @@ const rows = async (sql: string, params: unknown[] = []) => (await jdb.pool.quer
 const one = async (sql: string, params: unknown[] = []) => (await rows(sql, params))[0];
 const count = async (sql: string, params: unknown[] = []) => Number((await one(sql, params)).n);
 
+async function marketState() {
+  return {
+    documents: await rows('SELECT * FROM c2c_documents ORDER BY id'),
+    sections: await rows('SELECT * FROM c2c_document_sections ORDER BY id'),
+    submissions: await rows('SELECT * FROM submissions ORDER BY id'),
+    audit: await rows('SELECT * FROM audit_logs ORDER BY id'),
+    programs: await rows('SELECT * FROM regulatory_programs ORDER BY id'),
+  };
+}
+
 describe('add a market (F22)', () => {
+  it.each(REGIONAL_DEVICE_APPLICATION_CLASSES)('refuses $docType as a medicinal added market before any write', async regional => {
+    expect(await count('SELECT count(*) AS n FROM c2c_rule_packs WHERE doc_type=$1 AND agency=$2', [regional.docType, regional.packAgency])).toBe(1);
+    const before = await marketState();
+    const agency = resolveFilingCatalogEntry(regional.registryId)!.agency;
+    await expect(add(NDA, agency, regional.docType)).rejects.toMatchObject({ status: 422, code: 'DEVICE_APPLICATION' });
+    expect(writes).toEqual([]);
+    expect(await marketState()).toEqual(before);
+  });
+
+  it.each(REGIONAL_DEVICE_APPLICATION_CLASSES)('refuses an inconsistent saved $docType home class before any write', async regional => {
+    await jdb.pool.query('UPDATE regulatory_programs SET program_type=$1 WHERE id=$2', [regional.docType, NDA]);
+    const before = await marketState();
+    await expect(add(NDA, 'EMA', 'maa')).rejects.toMatchObject({ status: 422, code: 'DEVICE_PROGRAM' });
+    expect(writes).toEqual([]);
+    expect(await marketState()).toEqual(before);
+  });
   it("adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action", async () => {
     const pack = (await one(
       `SELECT required_sections FROM c2c_rule_packs WHERE doc_type = 'maa' AND agency = 'ema' AND superseded_by IS NULL LIMIT 1`,

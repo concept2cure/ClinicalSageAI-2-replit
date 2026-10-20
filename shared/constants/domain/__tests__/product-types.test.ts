@@ -22,6 +22,22 @@ import {
   PRODUCT_TYPES,
 } from '../product-types.js';
 
+describe('regional device application product identity', () => {
+  it.each([
+    ['mdl', 'device'], ['shonin', 'device'], ['ninsho', 'device'], ['todokede', 'device'],
+    ['ivd_licence', 'ivd'], ['ivd_approval', 'ivd'], ['jp_cdx', 'cdx'],
+  ])('%s preserves its filing family across arrival lanes', (filing, product) => {
+    for (const lane of ['diagnostics', 'medtech', 'biotech', 'pharma']) {
+      expect(productTypeForFilingType(filing, lane)).toBe(product);
+      expect(workstreamForFilingType(filing, product)).toBe('MDX');
+    }
+  });
+  it('retains HDE diagnostic refinement without refining device-only regional filings', () => {
+    expect(productTypeForFilingType('hde', 'diagnostics')).toBe('ivd');
+    expect(productTypeForFilingType('hde', 'medtech')).toBe('device');
+  });
+});
+
 describe('a device filing is never a medicinal product', () => {
   // The invariant, stated once and checked over every device instrument this
   // vocabulary knows.
@@ -215,5 +231,14 @@ describe('workstream bucketing', () => {
                           'ind', 'bla', 'biologic', 'nda', 'maa', 'jnda', 'anda', 'cta']) {
       expect(sql).toContain(`'${filing}'`);
     }
+  });
+});
+
+
+describe('product descriptions preserve conditional diagnostic classification', () => {
+  it('does not assign an EU risk class from the companion-diagnostic label', () => {
+    const description = PRODUCT_TYPES.find(entry => entry.value === 'cdx')!.description;
+    expect(description).toMatch(/classification.*intended use.*(applicable|regional)/i);
+    expect(description).not.toMatch(/Class D under the IVDR/i);
   });
 });

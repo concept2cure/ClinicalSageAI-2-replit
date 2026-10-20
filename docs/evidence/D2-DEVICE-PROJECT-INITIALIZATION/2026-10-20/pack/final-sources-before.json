@@ -1,0 +1,21 @@
+{
+  "server/services/c2c/filing-class-packs.ts": "99216ade203146030899197c1f649e9cac31ecf079aa8356f011398de6af6aa6",
+  "server/services/regulatory/readinessEvaluator.ts": "78985b95f9ed002b911d4f73a0380e713c3900170bccb0a24b894cc7e3dc8b66",
+  "scripts/db/emit-filing-class-packs.ts": "5c5ffb61757656ddbb89b6b0d9a74fe676abdb36a543b30de79d718f0182eb6b",
+  "scripts/db/migration-set.mjs": "aa6eb15c023aa819778d1c0f25c8417e3d18dafeb7d5dbeda11a5d376d09d5b5",
+  "migrations/20261020_regional_device_application_packs.sql": "cce555240ce810bd3bcb91b9f44514aa8ac236d0fbd5d393bb0c6ab451aecce5",
+  "tests/schema-contract/c2c-filing-class-packs.contract.test.ts": "b090d5ac05cbef16c1d752572c098240441d4c706b021b47520a4229411cd8d0",
+  "tests/schema-contract/c2c-regional-device-packs.contract.test.ts": "b49e14b061b470c59c07573daa8ff0aa22f7be74fa24206504923370f4de6e58",
+  "server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts": "510af1f81b2fdf65d9660315ddc632c746a7862416bf7fd845589f463c73bc1d",
+  "shared/regulatory/filing-catalog.ts": "5f6f35c7b9144f4ba3f62088ca690152c7267d34b840699035192dcc135f26fa",
+  "shared/regulatory/filing-document-classes.ts": "35e631e0d20e716fb03b7d35807e04c832b7697f6e88da6cae5ab76f9808202d",
+  "shared/regulatory/global-document-registry.ts": "2ec8929bfad2ce60ff9934b97200d270cb3fa52d110f88b7011e7f45f4c7f80d",
+  "shared/regulatory/device-authoring-sections.ts": "3e32bf73ba586af0460a98eeac64f7372babb637749565792948e7aaf3d43bc0",
+  "shared/regulatory/project-bootstrap.ts": "90529809f94961cd6993b79dd98da5964c75ecd116557a11117ab6900e245e15",
+  "server/services/market-specs/document-template-library.ts": "ab1d491af23a3d5f30852e2682035bb40e994d5ab061fab212348d975379b6f3",
+  "server/services/regulatory/sectionBlueprintCatalog.ts": "f80ee806ca902bc313ac5dc231d53174ff7b2e65568b5cf8abd85ffadce3edda",
+  "server/services/regulatory/requiredArtifactMatrix.ts": "95625951030eec5630dfb0f2663ec58a73fedbeec4f169954d8c8ad1e63b9301",
+  "server/services/c2c/document-class.ts": "1b34cf602402480d49f79a52517e5c186369ffa8b33276e7d90ab6b517e19c63",
+  "server/services/c2c/rule-pack-lookup.ts": "0d36b93cb6b05fb8723c754351fcebe4c1ea03c927b63c0bb22e86ac3e97af49",
+  "server/services/c2c/scaffold-project-documents.ts": "fa194bcf468a260fa9a1e6b24f211234ba2f685cde088f9a1b18b0a94588dd56"
+}

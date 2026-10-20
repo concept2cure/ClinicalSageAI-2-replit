@@ -44,6 +44,7 @@
 import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 import type { QuestionOption } from '../../types/intelligence-questions.js';
 import { filingDocumentClassOf, filingDocumentClassTypes } from '../../regulatory/filing-document-classes.js';
+import { regionalDeviceApplicationClassOf, regionalDeviceApplicationClassTypes } from '../../regulatory/filing-catalog.js';
 
 // ─── Vocabulary ─────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ export const PRODUCT_TYPES: DomainEntry<ProductType>[] = [
     value: 'cdx',
     label: 'Companion diagnostic',
     description:
-      'In-vitro diagnostic essential to the safe and effective use of a paired therapeutic product. Regulated AS an IVD — usually a Class III PMA in the US and Class D under the IVDR — with an additional co-development obligation to the paired drug.',
+      'In-vitro diagnostic essential to the safe and effective use of a paired therapeutic product. Regulated as an IVD, with classification determined by intended use and applicable regional rules, and an additional co-development obligation to the paired therapy.',
     regulatoryRefs: ['21 CFR 809', 'EU IVDR 2017/746', 'IVDR Annex I'],
   },
   {
@@ -148,7 +149,6 @@ const FILING_TYPE_PRODUCT_CLASS: Record<string, ProductType> = {
   '510k': 'device',
   de_novo: 'device',
   pma: 'device',
-  hde: 'device',
   ide: 'device',
   device: 'device',
   // ── Device, EU ──
@@ -202,7 +202,9 @@ export function productTypeForFilingType(
   lane?: string | null,
 ): ProductType | null {
   const key = String(filingType ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
-  const base = FILING_TYPE_PRODUCT_CLASS[key];
+  const regional = regionalDeviceApplicationClassOf(key);
+  if (regional && !regional.refineFromIvdLane) return regional.defaultProductType;
+  const base = regional?.defaultProductType ?? FILING_TYPE_PRODUCT_CLASS[key];
   if (!base) return null;
   // MDR and CER are device-only instruments; their IVD counterpart is IVDR/PER.
   if (base === 'device' && key !== 'mdr' && key !== 'cer' && IVD_LANES.has(String(lane ?? '').trim().toLowerCase())) return 'ivd';
@@ -211,7 +213,7 @@ export function productTypeForFilingType(
 
 /** Every filing type this vocabulary can classify. */
 export function listClassifiableFilingTypes(): string[] {
-  return Object.keys(FILING_TYPE_PRODUCT_CLASS);
+  return [...new Set([...Object.keys(FILING_TYPE_PRODUCT_CLASS), ...regionalDeviceApplicationClassTypes()])];
 }
 
 // ─── Workstream ─────────────────────────────────────────────────────────────
@@ -231,7 +233,7 @@ export const WORKSTREAM_FILING_TYPES: Record<Workstream, readonly string[]> = {
   // from the server's bucketing and fell through to a title-cased echo of the
   // filing type — an EU MDR programme listed under a "Mdr" workstream, which
   // matches none of the grid's filter tabs, so it was invisible in the MDX view.
-  MDX: ['510k', 'de_novo', 'pma', 'hde', 'ide', 'device', 'ivd', 'cer', 'mdr', 'ivdr'],
+  MDX: ['510k', 'de_novo', 'pma', 'ide', 'device', 'ivd', 'cer', 'mdr', 'ivdr', ...regionalDeviceApplicationClassTypes()],
   Biotech: ['ind', 'bla', 'biologic'],
   Pharma: ['nda', 'maa', 'jnda', 'anda', 'cta'],
 };

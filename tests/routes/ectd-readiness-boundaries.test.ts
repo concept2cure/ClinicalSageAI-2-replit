@@ -19,6 +19,7 @@ async function call(method = 'get') {
 beforeEach(() => {
   h.sections = []; h.failure = false;
   h.query.mockReset().mockImplementation(async (sql: string) => {
+    if (/FROM projects p/.test(sql)) return { rows: [{ regulatory_program_id: null, linked_program_id: null, program_type: null, primary_agency: null }] };
     if (/FROM project_sections/.test(sql)) {
       if (h.failure) throw new Error('SENTINEL private database failure');
       return { rows: h.sections };

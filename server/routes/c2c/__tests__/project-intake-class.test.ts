@@ -52,3 +52,32 @@ describe('a filing document class records the product class the filing fixes', (
     expect((productTypeForIntake('ind', '') as { refusal: string }).refusal).toMatch(/: an IND filing covers both/);
   });
 });
+
+
+describe('regional device intake preserves exact application and product family', () => {
+  const classes = [
+    ['hde', 'device', 'US_HDE'], ['mdl', 'device', 'CA_MDL'], ['ivd_licence', 'ivd', 'CA_IVD_LICENCE'],
+    ['shonin', 'device', 'JP_SHONIN'], ['ninsho', 'device', 'JP_NINTEI'], ['todokede', 'device', 'JP_TODOKEDE'],
+    ['ivd_approval', 'ivd', 'JP_IVD_APPROVAL'], ['jp_cdx', 'cdx', 'JP_CDX'],
+  ] as const;
+  it.each(classes)('%s fixes its default family without a redundant selection', (type, product, filing) => {
+    expect(productTypeForIntake(type, '')).toEqual({ productType: product });
+    expect(productTypeForIntake(type, product, filing)).toEqual({ productType: product });
+    expect(productTypeForIntake(type, 'drug', filing)).toHaveProperty('refusal');
+    expect(productTypeForIntake(type, product, 'unknown_filing')).toHaveProperty('refusal');
+    expect(productTypeForIntake(type, product, 'US_NDA')).toHaveProperty('refusal');
+  });
+  it.each([
+    ['mdl', 'ivd', 'CA_MDL'], ['shonin', 'cdx', 'JP_SHONIN'], ['ninsho', 'ivd', 'JP_NINTEI'],
+    ['todokede', 'cdx', 'JP_TODOKEDE'], ['ivd_licence', 'device', 'CA_IVD_LICENCE'],
+    ['ivd_approval', 'samd', 'JP_IVD_APPROVAL'], ['jp_cdx', 'ivd', 'JP_CDX'],
+  ])('%s refuses a contradictory %s product', (type, product, filing) => {
+    expect(productTypeForIntake(type, product, filing)).toHaveProperty('refusal');
+  });
+  it.each([
+    ['mdl', 'samd', 'CA_MDL'], ['ivd_licence', 'cdx', 'CA_IVD_LICENCE'],
+    ['ivd_approval', 'cdx', 'JP_IVD_APPROVAL'], ['hde', 'ivd', 'US_HDE'],
+  ])('%s permits its compatible %s product', (type, product, filing) => {
+    expect(productTypeForIntake(type, product, filing)).toEqual({ productType: product });
+  });
+});

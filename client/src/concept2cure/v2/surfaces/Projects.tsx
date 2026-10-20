@@ -42,7 +42,7 @@ import {
   usesDeviceClassification, type DeviceFlagId,
 } from '../../../../../shared/constants/domain/device-classification';
 import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-class';
-import { deviceClassScopeForFiling } from '@shared/regulatory/filing-catalog';
+import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling } from '@shared/regulatory/filing-catalog';
 import '../styles/project-home-v2.css';
 
 /* ── Window global owned by this surface (the app shell sets it to auto-open
@@ -116,6 +116,7 @@ const SEG_LABELS: Record<string, string> = {
 export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   const id = (sel?.id ?? '').toLowerCase();
   const pw = (sel?.pathway ?? '').toLowerCase();
+  const regional = regionalDeviceApplicationClassForFiling(id); if (regional) return regional.docType;
   // A filing that is a document, not an application — a supplement, an annual
   // report, an IND amendment, a meeting package, a designation request, a CSR —
   // is its own class, decided before any pathway rule below. Every one of them

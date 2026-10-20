@@ -3152,6 +3152,16 @@ export const C2C_MIGRATION_FILES = [
   // NOTHING, guarded supersede, exact-tree / one-live-pack RAISE; no DROP.
   'migrations/20261019b_filing_class_packs_v1_2_critic_followups.sql',
 
+  // W1/D2: eight exact regional device application preparation packs, projected
+  // from the existing editor outlines by emit-filing-class-packs.ts. Distinct
+  // HDE, Canada MDL/IVD licence and Japan approval/certification/notification
+  // identities; jp_rcb is a registered certification body, never PMDA. Widen
+  // doc_type/agency CHECKs only while needed, preserving later supersets.
+  // Immutable literal trees, unreviewed low-confidence provenance, no transmit
+  // channel, exact-tree/one-live assertions. Runs after prior pack/provenance
+  // files; replay retains documents bound to every previous version.
+  'migrations/20261020_regional_device_application_packs.sql',
+
   // W2/D2 + D5: append-only typed logical file/extracted-data dispositions.
   // Source/Vault/lineage rows and physical retention remain intact. Before the
   // final RLS sweeps because this is public + organization_id INTEGER.

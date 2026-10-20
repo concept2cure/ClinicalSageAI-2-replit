@@ -27,6 +27,7 @@
  */
 
 import { FILING_DOCUMENT_CLASSES } from '../../../shared/regulatory/filing-document-classes.js';
+import { REGIONAL_DEVICE_APPLICATION_CLASSES, regionalDeviceApplicationClassOf, resolveFilingCatalogEntry } from '../../../shared/regulatory/filing-catalog.js';
 
 /**
  * program_type (lowercase, as projects.ts normalises it) → c2c_documents.doc_type.
@@ -44,6 +45,7 @@ import { FILING_DOCUMENT_CLASSES } from '../../../shared/regulatory/filing-docum
  * migrations/20260806b supplies both, so they are mapped here.
  */
 export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(REGIONAL_DEVICE_APPLICATION_CLASSES.map(c => [c.docType, c.docType])),
   ind: 'ind', cta: 'cta', nda: 'nda', anda: 'anda', bla: 'bla', maa: 'maa', jnda: 'jnda',
   '510k': 'k510', de_novo: 'denovo', pma: 'pma', ide: 'ide', cer: 'cer',
   // EU MDR / IVDR technical documentation. Mapped for the same reason anda and
@@ -79,6 +81,7 @@ export const AGENCY_TO_CODE: Readonly<Record<string, string>> = {
   // AGENCY_LABEL), which the wizard sends as the program's agency for a CSR,
   // protocol or IB (2026-10-18).
   ICH_GLOBAL: 'ich',
+  REGISTERED_CERTIFICATION_BODY: 'jp_rcb', JP_RCB: 'jp_rcb',
 };
 
 /** 'Health Canada', 'health-canada', 'HEALTH_CANADA' and 'ICH / Global' → the AGENCY_TO_CODE key. */
@@ -114,6 +117,12 @@ function agencyKey(primaryAgency: string): string {
  */
 export const AGENCY_FALLBACKS = ['ich'] as const;
 
+/** Regional application identities cannot borrow a harmonised outline or binding. */
+export function documentAgencyCandidates(docType: string, agency: string): readonly string[] {
+  const regional = regionalDeviceApplicationClassOf(docType);
+  return regional ? regional.packAgency === agency ? [agency] : [] : [agency, ...AGENCY_FALLBACKS];
+}
+
 export interface DocumentClass {
   docType: string;
   agency: string;
@@ -137,6 +146,7 @@ export function resolveDocumentClass(
   const agency = AGENCY_TO_CODE[agencyKey(primaryAgency)];
 
   if (!docType || !agency) return null;
+  if (!documentAgencyCandidates(docType, agency).length) return null;
   return { docType, agency };
 }
 
@@ -150,5 +160,8 @@ export function describeUnmappedClass(
   if (!PROGRAM_TO_DOC_TYPE[String(programType).trim().toLowerCase()]) {
     return `No document class is defined for program type '${programType}'.`;
   }
+  const regional = regionalDeviceApplicationClassOf(programType);
+  const filing = regional ? resolveFilingCatalogEntry(regional.registryId) : null;
+  if (filing) return `Choose ${filing.agency} for ${filing.displayName}. The selected authority '${primaryAgency}' does not match this filing.`;
   return `No document agency is defined for '${primaryAgency}'.`;
 }

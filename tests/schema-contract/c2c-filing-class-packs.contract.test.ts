@@ -32,6 +32,7 @@ import { fileURLToPath } from 'node:url';
 import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 import { scaffoldProjectDocuments } from '../../server/services/c2c/scaffold-project-documents';
 import { FILING_DOCUMENT_CLASSES } from '../../shared/regulatory/filing-document-classes';
+import { REGIONAL_DEVICE_APPLICATION_CLASSES } from '../../shared/regulatory/filing-catalog';
 import {
   FILING_CLASS_PACKS,
   filingClassPackGoverningRule,
@@ -46,7 +47,8 @@ const FILE = 'migrations/20261018_filing_class_rule_packs.sql';
 const CORRECTIONS = 'migrations/20261018c_filing_class_packs_review_corrections.sql';
 /** The critic's follow-ups to CORRECTIONS, minted after it was on the applier. */
 const FOLLOWUPS = 'migrations/20261019b_filing_class_packs_v1_2_critic_followups.sql';
-const CLASS_FILES = [FILE, CORRECTIONS, FOLLOWUPS];
+const REGIONAL = 'migrations/20261020_regional_device_application_packs.sql';
+const CLASS_FILES = [FILE, CORRECTIONS, FOLLOWUPS, REGIONAL];
 
 /** The rule-pack files, in the order the applier runs them — never a hand-kept order. */
 const PACK_FILES = [
@@ -67,12 +69,13 @@ const PACK_FILES = [
   '20261018_filing_class_rule_packs.sql',
   '20261018c_filing_class_packs_review_corrections.sql',
   '20261019b_filing_class_packs_v1_2_critic_followups.sql',
+  '20261020_regional_device_application_packs.sql',
 ];
 /** The set in applier order; without the class files, or stopping before the corrections. */
 const inSetOrder = (withClasses: boolean | 'before-corrections') => {
   const files = (C2C_MIGRATION_FILES as string[]).filter((f) => PACK_FILES.some((b) => f.endsWith(`/${b}`)));
   expect(files, 'every rule-pack file is on the applier').toHaveLength(PACK_FILES.length);
-  if (withClasses === 'before-corrections') return files.filter((f) => !f.endsWith(CORRECTIONS) && !f.endsWith(FOLLOWUPS));
+  if (withClasses === 'before-corrections') return files.filter((f) => !f.endsWith(CORRECTIONS) && !f.endsWith(FOLLOWUPS) && !f.endsWith(REGIONAL));
   return withClasses ? files : files.filter((f) => !CLASS_FILES.some((c) => f.endsWith(c)));
 };
 
@@ -115,9 +118,10 @@ describe('every filing document class has its own governed outline', () => {
   beforeEach(() => boot());
 
   it('every class has a pack spec, and every spec names a class', () => {
+    const classes = [...FILING_DOCUMENT_CLASSES, ...REGIONAL_DEVICE_APPLICATION_CLASSES];
     expect(FILING_CLASS_PACKS.map((p) => p.docType).sort())
-      .toEqual(FILING_DOCUMENT_CLASSES.map((c) => c.docType).sort());
-    for (const c of FILING_DOCUMENT_CLASSES) {
+      .toEqual(classes.map((c) => c.docType).sort());
+    for (const c of classes) {
       expect(FILING_CLASS_PACKS.find((p) => p.docType === c.docType)?.agency, c.docType).toBe(c.packAgency);
     }
   });

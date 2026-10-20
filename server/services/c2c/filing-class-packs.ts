@@ -1,9 +1,10 @@
 /**
- * The governed rule pack each filing document class is scaffolded from.
+ * The governed rule pack each filing class is scaffolded from.
  *
  * shared/regulatory/filing-document-classes.ts says which filings are a
- * document rather than an application. This module says what each one's pack
- * holds, and from where:
+ * document rather than an application. filing-catalog.ts separately identifies
+ * exact regional device applications. This module projects both through the
+ * same pack machinery, without treating applications as documentary classes:
  *
  *   • the outline is `getRegistryDocumentTemplate` for the class's first
  *     registry id — the outline AnA and the Authoring template picker already
@@ -30,6 +31,8 @@
  */
 
 import { FILING_DOCUMENT_CLASSES } from '../../../shared/regulatory/filing-document-classes.js';
+import { REGIONAL_DEVICE_APPLICATION_CLASSES, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
+import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import {
   getRegistryDocumentTemplate,
   type DocumentTemplateStructure,
@@ -50,7 +53,7 @@ export type PackSourceBasis = 'statutory_transcription' | 'harmonised_standard' 
 
 export interface FilingClassPackSpec {
   docType: string;
-  agency: 'fda' | 'ema' | 'ich';
+  agency: 'fda' | 'ema' | 'ich' | 'hc' | 'pmda' | 'jp_rcb';
   version: string;
   label: string;
   sourceBasis: PackSourceBasis;
@@ -105,6 +108,15 @@ export const FILING_CLASS_PACKS: readonly FilingClassPackSpec[] = [
   { docType: 'icf', agency: 'ich', version: 'c2c-icf-v1.2', label: 'Informed Consent Form × 21 CFR 50.25 / ICH E6(R3)', sourceBasis: 'reasoned_construction', confidence: 'low', supersedes: 'c2c-icf-v1.1', basisNote: BLUEPRINT, changeNote: "The 50.25(c) and 50.25(b) parts (11, 12) move after the signatures (10), where their codes sort. A reader that orders sections by code had already put them there.", minted: '2026-10-19' },
   { docType: 'dsur', agency: 'ich', version: 'ich-e2f-v1.0', label: 'DSUR × ICH E2F', sourceBasis: 'harmonised_standard', confidence: 'medium', supersedes: null, basisNote: 'ICH E2F section headings, recalled from the guideline; not re-read against its text.' },
   { docType: 'psur', agency: 'ema', version: 'ich-e2c-r2-v2.1', label: 'PSUR / PBRER × EMA · ICH E2C(R2)', sourceBasis: 'harmonised_standard', confidence: 'medium', supersedes: 'ich-e2c-r2-v2.0', basisNote: 'ICH E2C(R2) title page, executive summary, §1–§20 and the numbered subsections of §5–§7 and §16–§18 (EU GVP Module VII), recalled; not re-read against the guideline text.', changeNote: 'The title page, executive summary and §20 appendices are added. §8-§12 are now required (state none if none), because GVP Module VII asks for every section. The numbered subsections of §5, §6, §7, §16, §17 and §18 are listed.' },
+  ...REGIONAL_DEVICE_APPLICATION_CLASSES.map((c): FilingClassPackSpec => ({
+    docType: c.docType,
+    agency: c.packAgency,
+    version: `${c.packAgency}-${c.docType.replace(/_/g, '-')}-preparation-v1.0`,
+    label: `${getApplicationType(c.registryId)!.displayName} · working outline`,
+    sourceBasis: 'reasoned_construction', confidence: 'low', supersedes: null,
+    minted: '2026-10-20',
+    basisNote: 'Platform working authoring groups, not a verified current agency form or a complete legal requirement set. All headings remain optional; applicability, evidence and current recipient instructions require assessment.',
+  })),
 ];
 
 const SPEC_BY_DOC_TYPE: ReadonlyMap<string, FilingClassPackSpec> = new Map(FILING_CLASS_PACKS.map((p) => [p.docType, p]));
@@ -116,8 +128,9 @@ export function filingClassPackSpec(docType: string): FilingClassPackSpec | unde
 /** The template whose outline a class's pack holds; the CSR is read from the E3 tree instead. */
 async function sourceTemplate(docType: string): Promise<DocumentTemplateStructure> {
   const documentClass = FILING_DOCUMENT_CLASSES.find((c) => c.docType === docType);
-  if (!documentClass) throw new Error(`No filing document class '${docType}'.`);
-  const registryId = documentClass.registryIds[0];
+  const applicationClass = regionalDeviceApplicationClassOf(docType);
+  const registryId = documentClass?.registryIds[0] ?? applicationClass?.registryId;
+  if (!registryId) throw new Error(`No filing class '${docType}'.`);
   const template = await getRegistryDocumentTemplate(registryId);
   if (!template) throw new Error(`${registryId} has no outline, so the '${docType}' pack cannot be minted.`);
   return template;
@@ -151,6 +164,7 @@ export async function filingClassPackSections(docType: string): Promise<PackSect
     }
   }
   const keys = new Set<string>();
+  if (rows.length === 0) throw new Error(`The '${docType}' outline has no sections.`);
   for (const r of rows) {
     if (!r.key || !r.label) throw new Error(`The '${docType}' outline has a section with no key or label.`);
     if (keys.has(r.key)) throw new Error(`The '${docType}' outline repeats the key '${r.key}'.`);
@@ -177,6 +191,8 @@ export async function filingClassPackSource(docType: string): Promise<string> {
 /** The pack's uncertainties: its basis, where it was minted from, and what was not done. */
 export async function filingClassPackUncertainties(spec: FilingClassPackSpec): Promise<string> {
   return `${spec.basisNote} Minted ${filingClassPackMinted(spec)} from ${await filingClassPackSource(spec.docType)}. ` +
-    'The regulator\'s text was not re-read for this pack (regulator hosts are unreachable from the build environment). ' +
+    (regionalDeviceApplicationClassOf(spec.docType)
+      ? 'The outline was not independently checked against current regulator or certification-body requirements. This pack creates no submission package or transport. '
+      : 'The regulator\'s text was not re-read for this pack (regulator hosts are unreachable from the build environment). ') +
     'Not reviewed by a regulatory professional.';
 }

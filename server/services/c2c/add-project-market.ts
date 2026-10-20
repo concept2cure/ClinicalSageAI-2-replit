@@ -37,10 +37,11 @@ import { findActiveRulePack } from './rule-pack-lookup.js';
 import { readMarketSupport, documentAgencyFor } from '../regulatory/market-support.js';
 import { regionalSubtree, type PackSectionLike } from '../../../shared/regulatory/filing-scope.js';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '../../../shared/constants/domain/product-types.js';
+import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 
 export type AddMarketRefusalCode =
   | 'PROJECT_NOT_FOUND' | 'DEVICE_PROGRAM' | 'MARKET_NOT_OFFERED' | 'UNMAPPED_PROGRAM_TYPE'
-  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING' | 'NOT_AN_APPLICATION';
+  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING' | 'NOT_AN_APPLICATION' | 'DEVICE_APPLICATION';
 
 export class AddMarketRefusal extends Error {
   constructor(readonly status: 404 | 409 | 422, readonly code: AddMarketRefusalCode, message: string) {
@@ -98,9 +99,14 @@ async function readProgram(client: PoolClient, programId: string, orgId: number)
 
 /** The market's class, pack and agency key, or the refusal that names what is missing. */
 async function resolveMarket(client: PoolClient, input: AddMarketInput, program: ProgramRow) {
-  if (DEVICE_FAMILY_PRODUCT_TYPES.includes((program.product_type ?? '') as never)) {
+  if (DEVICE_FAMILY_PRODUCT_TYPES.includes((program.product_type ?? '') as never)
+    || regionalDeviceApplicationClassOf(program.program_type)) {
     throw new AddMarketRefusal(422, 'DEVICE_PROGRAM',
       'A device or diagnostic project files on its own pathway, not as an eCTD market. Nothing was added.');
+  }
+  if (regionalDeviceApplicationClassOf(input.applicationType)) {
+    throw new AddMarketRefusal(422, 'DEVICE_APPLICATION',
+      'Start this regional device or diagnostic filing as its own authoring project. It cannot be added as an eCTD market. Nothing was added.');
   }
   // A filing document class (a supplement, a CSR, a meeting package) is
   // authored, never sequenced here: adding a "market" to one, or an
