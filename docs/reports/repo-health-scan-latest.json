@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-20T02:46:21.901Z",
+  "generatedAt": "2026-10-20T19:52:29.692Z",
   "git": {
-    "sha": "dd83686326df207df423a07a3b2dc3c20fb25d1c",
+    "sha": "668fbcb7c25229875f06a6e0967b1b33fbb29ce1",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -276,7 +276,7 @@
       },
       {
         "basename": "probe",
-        "count": 10,
+        "count": 11,
         "paths": [
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
@@ -287,6 +287,7 @@
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx"
         ]
       },
@@ -2421,7 +2422,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 102117
+        "bytes": 101536
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2658,12 +2659,12 @@
         "lines": 2124
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2122
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 2120
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2115
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2897,7 +2898,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 165,
+      "duplicateGroups": 166,
       "largeByBytes": 0,
       "largeByLines": 5
     },
