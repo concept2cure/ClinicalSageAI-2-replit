@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "ci",
+    "--ignore-scripts",
+    "--no-audit",
+    "--no-fund"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "reason": "Incoming canonical lockfile updated Vite and follow-redirects; qualify merged checkout against its installed lockfile. Lifecycle scripts are not needed by this targeted unit cohort.",
+  "startedAt": "2026-10-20T23:46:37.210700+00:00",
+  "lockSha256Before": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+  "exitCode": 0,
+  "lockSha256After": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+  "completedAt": "2026-10-20T23:47:06.974872+00:00"
+}
