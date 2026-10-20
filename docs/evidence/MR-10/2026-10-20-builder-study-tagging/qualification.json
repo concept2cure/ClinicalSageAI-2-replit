@@ -1,25 +1,47 @@
 {
   "implementationCommit": "db0d0a21877cde6a2bef994039edd18548b02986",
-  "buildAnchor": "5d60f2b8085969bcf67cb9e459a9bec44638fa27",
+  "bodylessReceiptCorrection": "b97d28acb3576bc3cf9616e10492be0c45620e69",
+  "nullRevisionCorrection": "cf9a57ec1f0c5efb73ada50d2805786d87aefe11",
+  "buildAnchor": "cf9a57ec1f0c5efb73ada50d2805786d87aefe11",
   "executionPinsVerifiedAgainstBuildAnchor": 34,
+  "finalTests": {
+    "metadata": {
+      "passed": 46,
+      "files": 3
+    },
+    "ui": {
+      "passed": 82,
+      "files": 7
+    },
+    "packager": {
+      "passed": 54,
+      "files": 5
+    },
+    "browser": {
+      "stages": 7,
+      "deliberatePuts": 4,
+      "bodylessReceiptStatus": 204,
+      "sourcePinsUnchanged": 20,
+      "pageErrors": 0
+    }
+  },
+  "earlierBroaderBackendCohort": {
+    "passed": 150,
+    "files": 13,
+    "note": "Precedes final null-revision refusal; retained as historical coverage, not replayed or added to overlapping cohorts."
+  },
   "build": {
     "command": "PATH=<Node22> NODE_OPTIONS=--max-old-space-size=8192 npm run build",
     "exit": 0,
     "clientAndServerEmbedAnchor": true,
     "auditChainVerifierBuilt": true,
     "artifacts": {
-      "dist/public/assets/index-C5roaxAy.js": "1f7a25fb3783e9c2a2836b5522cf5e24908b1731369103fb3f84f3cf9a5ef8f3",
-      "dist/index.js": "756c45701dd60e671e954c3cd0d6cc71c76ca01d281b5fe636da8da1ede04c11",
+      "dist/public/assets/index-Br6mVdBf.js": "ca958336b6a7d1b97203537585b10d81fcc5c6b913b9322dc2d6a22a814306d2",
+      "dist/index.js": "fbf42a2902ee73df01e2b96b2ebbec16663aeb3e75d07458a5be9f24d372b3f8",
       "dist/ops/verify-audit-chain.mjs": "fcd682e198d1a83380a50414ee90642f9538589d2e650e00a7a94300d0faa791"
     }
   },
-  "evidenceSecretScan": {
-    "command": "gitleaks dir <evidence-directory> --config .gitleaks.toml --redact",
-    "exit": 0,
-    "leaks": 0
-  },
-  "independentReview": "Read-only worker reviewed existing contract, backend and final refactored UI; reported no blocking issue. No independent runtime tests claimed.",
   "humanWitnessed": false,
-  "normalPushGates": "held before publication for bodyless response regression; final corrected gate required",
-  "checkpoint": "initial build before bodyless-response correction; final rebuild pending"
+  "normalPushGates": "pending corrected source push",
+  "baselinesChanged": false
 }
