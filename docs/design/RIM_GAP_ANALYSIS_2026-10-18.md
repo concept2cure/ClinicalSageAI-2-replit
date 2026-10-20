@@ -52,8 +52,10 @@ Recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md`:
 
 ## Next in-catalog work, in order
 
-1. eCTD viewer: reopen any past sequence's tree, link each leaf to its Vault
-   document, and give the sequence diff a caller under Submission Center's claims.
+1. Complete the eCTD viewer Submission Center already has (`EctdCompile.tsx`: the leaf
+   hierarchy, lifecycle acts and compilation history; the Builder's leaf table): reopen a
+   past compile's tree, link each leaf to its Vault document, and give the existing
+   sequence diff a caller or delete it. Completion, not a new viewer (CLAUDE.md RULE 3).
 2. Extract a letter's questions from its file into the question list for a person
    to confirm (deterministic parser; the existing `issue-parser` is the candidate).
 3. ~~Fulfilment of a commitment names the sequence or document that met it.~~ Done 2026-10-19 (P-41;

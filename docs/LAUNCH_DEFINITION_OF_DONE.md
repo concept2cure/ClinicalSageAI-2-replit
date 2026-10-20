@@ -579,7 +579,8 @@ customer files (P-28: a sponsor composing small-molecule Module 3 for a US IND) 
 
 In the launch catalog, and finished in this order (gap analysis, "Next in-catalog work"): correspondence with the
 agency and the signed answer to each question (P-32), the commitments made in those answers and their fulfilment,
-submission assembly and the eCTD viewer in Submission Center, and the dossier templates the project wizard
+submission assembly and the eCTD viewer Submission Center already has (`EctdCompile.tsx`, completed, not
+rebuilt: CLAUDE.md RULE 3), and the dossier templates the project wizard
 scaffolds.
 
 **Not in the launch catalog: registrations and labels** (`server/routes/rim.ts`, `rim_*`). A launch customer holds
