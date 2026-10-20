@@ -622,17 +622,21 @@ export async function deriveGovernedTargetBinding(
            content", as with the 2026-09-21 amendment. */
         const leaves = await client.query(
           `SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
-                  document_content_sha256, checksum, title
+                  document_content_sha256, checksum, title, study_id, stf_file_tag
              FROM submission_leaves
             WHERE sequence_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
             ORDER BY section_code, id`,
           [rest, orgId],
         );
-        const payload = canonicalJson({ sequence: seq.rows[0], leaves: leaves.rows });
+        // Preserve pre-existing untagged signatures. Once either field exists,
+        // bind both so changing STF content requires a fresh signature/waiver.
+        const boundLeaves = leaves.rows.map(({ study_id, stf_file_tag, ...leaf }) =>
+          study_id == null && stf_file_tag == null ? leaf : { ...leaf, study_id: study_id ?? null, stf_file_tag: stf_file_tag ?? null });
+        const payload = canonicalJson({ sequence: seq.rows[0], leaves: boundLeaves });
         return {
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid and content pin) at signing time.`,
+          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid, content pin and non-null study metadata) at signing time.`,
         };
       }
       case 'document': {

@@ -909,6 +909,9 @@ export interface SubmissionLeaf {
   documentType?: string | null; // classifier hint for pathway leaf→slot matching
   leafGuid?: string | null;
   parentLeafId?: number | null;
+  /** Existing nullable study metadata carried by submission_leaves into STF packaging. */
+  studyId?: string | null;
+  stfFileTag?: string | null;
   checksum?: string | null;
   // The source-content pin (migrations/20260814e_submission_leaf_source_pin.sql,
   // written by submission-service.upsertLeaf). Absent from this interface, the
