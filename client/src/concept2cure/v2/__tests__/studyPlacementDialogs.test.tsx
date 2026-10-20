@@ -190,8 +190,8 @@ describe('authoring snapshot outcome reconciliation', () => {
     putResponse = () => new Response(null, { status: 204 });
     await open('authoring'); values(); fireEvent.click(placeButton('authoring'));
     await screen.findByText(/cannot confirm whether/i);
-    fireEvent.click(screen.getByRole('button', { name: 'Close', exact: true }));
-    fireEvent.click(screen.getByRole('button', { name: 'Place into filing', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Place into filing' }));
     expect(screen.getByRole('button', { name: 'Check filing status' })).toBeTruthy();
     expect(screen.getByLabelText(/^Study id/)).toHaveProperty('value', VALUES.studyId);
     expect(screen.getByLabelText('Sequence')).toHaveProperty('value', '31');
