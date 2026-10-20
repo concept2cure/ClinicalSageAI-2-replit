@@ -855,11 +855,11 @@ function AddLeafPlacementFields({ seq, section, onSection, op, onOp, study, onSt
       <select id="sc-leaf-op" className="sc-subpick" value={op} disabled={disabled} onChange={event => onOp(event.target.value)} aria-describedby="sc-leaf-op-note">
         {opsOffered.map(([v, m]) => <option key={v} value={v}>{m.l}</option>)}
       </select><span id="sc-leaf-op-note" className="sp-row-s">{lifecycleOpNote(seq, op)}</span></div>
-    {tagging.show && <>
-      <p className="scaf-note">Record the study identity and STF file-tag reviewed by your team. Values are not inferred; recording them does not establish filing readiness.{!tagging.required && ' These values are advisory for this region.'}</p>
+    {tagging.show && <div className="sc-leafform" role="group" aria-label="Study tagging for placement" style={{ flexBasis: '100%' }}>
+      <p className="scaf-note" style={{ flexBasis: '100%' }}>Record the study identity and STF file-tag reviewed by your team. Values are not inferred; recording them does not establish filing readiness.{!tagging.required && ' These values are advisory for this region.'}</p>
       <StudyTaggingInputFields value={study} onChange={onStudy} idPrefix="sc-placement-study" required={tagging.required} disabled={disabled} />
-      {tagging.problem && <p role="status" className="scaf-note">{tagging.problem}</p>}
-    </>}
+      {tagging.problem && <p role="status" className="scaf-note" style={{ flexBasis: '100%' }}>{tagging.problem}</p>}
+    </div>}
     <PlacementReasonField value={reason} onChange={onReason} idPrefix="sc-leaf" disabled={disabled} variant="inline" />
   </>;
 }
