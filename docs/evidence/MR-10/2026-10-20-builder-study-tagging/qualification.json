@@ -1,0 +1,24 @@
+{
+  "implementationCommit": "db0d0a21877cde6a2bef994039edd18548b02986",
+  "buildAnchor": "5d60f2b8085969bcf67cb9e459a9bec44638fa27",
+  "executionPinsVerifiedAgainstBuildAnchor": 34,
+  "build": {
+    "command": "PATH=<Node22> NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exit": 0,
+    "clientAndServerEmbedAnchor": true,
+    "auditChainVerifierBuilt": true,
+    "artifacts": {
+      "dist/public/assets/index-C5roaxAy.js": "1f7a25fb3783e9c2a2836b5522cf5e24908b1731369103fb3f84f3cf9a5ef8f3",
+      "dist/index.js": "756c45701dd60e671e954c3cd0d6cc71c76ca01d281b5fe636da8da1ede04c11",
+      "dist/ops/verify-audit-chain.mjs": "fcd682e198d1a83380a50414ee90642f9538589d2e650e00a7a94300d0faa791"
+    }
+  },
+  "evidenceSecretScan": {
+    "command": "gitleaks dir <evidence-directory> --config .gitleaks.toml --redact",
+    "exit": 0,
+    "leaks": 0
+  },
+  "independentReview": "Read-only worker reviewed existing contract, backend and final refactored UI; reported no blocking issue. No independent runtime tests claimed.",
+  "humanWitnessed": false,
+  "normalPushGates": "pending"
+}

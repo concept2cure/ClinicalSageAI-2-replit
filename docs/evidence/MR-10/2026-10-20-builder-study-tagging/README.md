@@ -2,9 +2,11 @@
 
 Starting source: `e79626c0849f0f8c2338b32f85d4bc69bccef8f5`.
 Contract: [design](../../../design/BUILDER_STUDY_TAGGING_COMPLETION_2026-10-20.md).
-Execution inputs are pinned in `source-inputs.json`; final publication will
-verify those bytes against the published source. Build and normal push gates
-are pending at this implementation checkpoint.
+Implementation commit: `db0d0a218`. Canonical merge/build anchor:
+`5d60f2b8085969bcf67cb9e459a9bec44638fa27`. All34 execution source pins
+(14 implementation/test +20 browser) match that Git tree. See
+`source-inputs.json`, `browser/result/result.json` and `qualification.json`.
+Normal push/typecheck gates are pending at this verification checkpoint.
 
 ## What already exists
 
@@ -73,3 +75,9 @@ This is an automated browser fixture, not a native database browser execution
 or human witnessing. Server behavior is separately tested on real PGlite SQL.
 The packager run uses staging mode and does not establish DTD conformance.
 See [HUMAN_CHECK.md](HUMAN_CHECK.md) for the unexecuted human scenario.
+
+Production client, server and audit-chain verifier build passed at the canonical
+merge anchor. Both client/server embed that anchor; output hashes are recorded
+in `qualification.json`. Existing bundle-size warnings remain. The evidence
+directory secret scan reports0 leaks with the unchanged repository config.
+The normal compiler and pushed-files warning ratchet must pass before publication.
