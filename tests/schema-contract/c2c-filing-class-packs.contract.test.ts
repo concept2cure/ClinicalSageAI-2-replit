@@ -44,7 +44,9 @@ const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const FILE = 'migrations/20261018_filing_class_rule_packs.sql';
 /** The review corrections: ten new versions superseding exactly the ones FILE seeded. */
 const CORRECTIONS = 'migrations/20261018c_filing_class_packs_review_corrections.sql';
-const CLASS_FILES = [FILE, CORRECTIONS];
+/** The critic's follow-ups to CORRECTIONS, minted after it was on the applier. */
+const FOLLOWUPS = 'migrations/20261019b_filing_class_packs_v1_2_critic_followups.sql';
+const CLASS_FILES = [FILE, CORRECTIONS, FOLLOWUPS];
 
 /** The rule-pack files, in the order the applier runs them — never a hand-kept order. */
 const PACK_FILES = [
@@ -64,12 +66,13 @@ const PACK_FILES = [
   '20261005c_k510_denovo_estar_outline_v1_1.sql',
   '20261018_filing_class_rule_packs.sql',
   '20261018c_filing_class_packs_review_corrections.sql',
+  '20261019b_filing_class_packs_v1_2_critic_followups.sql',
 ];
 /** The set in applier order; without the class files, or stopping before the corrections. */
 const inSetOrder = (withClasses: boolean | 'before-corrections') => {
   const files = (C2C_MIGRATION_FILES as string[]).filter((f) => PACK_FILES.some((b) => f.endsWith(`/${b}`)));
   expect(files, 'every rule-pack file is on the applier').toHaveLength(PACK_FILES.length);
-  if (withClasses === 'before-corrections') return files.filter((f) => !f.endsWith(CORRECTIONS));
+  if (withClasses === 'before-corrections') return files.filter((f) => !f.endsWith(CORRECTIONS) && !f.endsWith(FOLLOWUPS));
   return withClasses ? files : files.filter((f) => !CLASS_FILES.some((c) => f.endsWith(c)));
 };
 
@@ -187,6 +190,9 @@ describe('the packs carry what their filings need', () => {
     expect(pas.find((s) => s.key === 'PAS-CLINICAL')?.mandatory).toBe(false);
     // PDUFA VI removed supplement fees: the fee part is no longer required.
     expect(pas.find((s) => s.key === 'PAS-FEE')?.mandatory).toBe(false);
+    // An efficacy supplement's PREA and patent parts (505B; 314.53(d)(2)), each conditional.
+    expect(pas.find((s) => s.key === 'PAS-PEDIATRIC')?.mandatory).toBe(false);
+    expect(pas.find((s) => s.key === 'PAS-PATENT')?.mandatory).toBe(false);
   });
 
   it('a CBE-0 needs its change description and environmental claim as much as a CBE-30 does', async () => {
@@ -334,17 +340,19 @@ describe('the contract is falsifiable', () => {
   // Second review, 2026-10-18: the corrections file's own assertion was never
   // exercised. A row holding the v1.1 key with the right node count and one
   // flag flipped is kept by ON CONFLICT DO NOTHING; only the tree check refuses it.
-  it('a v1.1 row with the right node count and one flag flipped stops the corrections file', async () => {
+  it('a live-version row with the right node count and one flag flipped stops the file that seeds it', async () => {
     await boot('before-corrections');
+    await pg.exec(read(CORRECTIONS));
+    const spec = FILING_CLASS_PACKS.find((p) => p.docType === 'pas')!;
     const tree = await filingClassPackSections('pas');
     const flipped = tree.map((r, i) => (i === 0 ? { ...r, mandatory: !r.mandatory } : r));
     await pg.query(
       `INSERT INTO c2c_rule_packs (doc_type, agency, version, label, required_sections, effective_from)
-       VALUES ('pas', 'fda', 'fda-pas-lifecycle-v1.1', 'tampered', $1::jsonb, now())`,
-      [JSON.stringify(flipped)],
+       VALUES ('pas', 'fda', $1, 'tampered', $2::jsonb, now())`,
+      [spec.version, JSON.stringify(flipped)],
     );
-    await expect(pg.exec(read(CORRECTIONS))).rejects.toThrow(
-      new RegExp(`pas:fda fda-pas-lifecycle-v1\\.1 must hold this file's ${tree.length} nodes; found ${tree.length} \\(tree matches: false\\)`),
+    await expect(pg.exec(read(FOLLOWUPS))).rejects.toThrow(
+      new RegExp(`pas:fda ${spec.version.replace(/\./g, '\\.')} must hold this file's ${tree.length} nodes; found ${tree.length} \\(tree matches: false\\)`),
     );
   }, 60_000);
 });

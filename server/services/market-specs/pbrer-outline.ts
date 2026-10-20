@@ -35,7 +35,7 @@ export const PBRER_TEMPLATE: DocumentTemplateStructure = {
   sections: [
     { number: '1', heading: 'Introduction', purpose: 'Reporting interval, product(s), and scope.', required: true },
     { number: '2', heading: 'Worldwide Marketing Authorisation Status', purpose: 'Authorisation dates and indications by country.', required: true },
-    { number: '3', heading: 'Actions Taken in the Reporting Interval for Safety Reasons', purpose: 'Significant safety-related actions in the interval.', required: true },
+    { number: '3', heading: 'Actions Taken in the Reporting Interval for Safety Reasons', purpose: 'Significant safety-related actions in the interval.', required: true, formerTitles: ['Actions Taken for Safety Reasons'] },
     { number: '4', heading: 'Changes to Reference Safety Information', purpose: 'Changes to the RSI in the interval.', required: true },
     {
       number: '5', heading: 'Estimated Exposure and Use Patterns', purpose: 'Cumulative and interval patient exposure.', required: true,
@@ -54,6 +54,7 @@ export const PBRER_TEMPLATE: DocumentTemplateStructure = {
     },
     {
       number: '7', heading: 'Summaries of Significant Findings from Clinical Trials during the Reporting Interval', purpose: 'Completed/ongoing trial safety findings.', required: true,
+    formerTitles: ['Summaries of Significant Findings from Clinical Trials'],
       subsections: [
         { number: '7.1', heading: 'Completed Clinical Trials', purpose: 'Significant safety findings from trials completed in the interval.', required: true },
         { number: '7.2', heading: 'Ongoing Clinical Trials', purpose: 'Significant safety findings from ongoing trials.', required: true },

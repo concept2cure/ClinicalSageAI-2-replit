@@ -200,11 +200,13 @@ const IND_SAFETY_REPORT_SECTIONS: SectionDefinition[] = [
   { code: '2', title: 'Individual Case Safety Report (Applicable Case Reporting Route)', module: 0, required: false, contentType: 'mixed', guidance: 'Conditional case-based group: applicability depends on the confirmed report subtype and route; not evidence that an ICSR is always required. An unresolved branch is not waived.' },
   { code: '3', title: 'Causality Assessment (Reasonable Possibility Determination)', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional case-assessment group: use the sponsor-approved reporting determination and applicable report subtype; assess content applicability before omission.' },
   { code: '4', title: 'Expectedness Assessment Against the Investigator Brochure / Protocol', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional expectedness group: assess applicability to the report subtype using the controlling source records; no waiver inferred from this flag.' },
-  // Added 2026-10-18 (review finding): 312.32(c)(1) asks it of every report; it sat inside the conditional aggregate group.
-  // Placed where the lifecycle record places it, so a row's index still names its record part (indSafetyRequirements).
-  { code: '7', title: 'Previously Submitted Similar Reports and Significance Analysis', module: 0, required: true, contentType: 'mixed', guidance: '21 CFR 312.32(c)(1): identify all previously submitted IND safety reports on a similar suspected adverse reaction and analyze the significance of this one in light of them.' },
   { code: '5', title: 'Aggregate / Similar-Events and Increased-Rate Analysis', module: 0, required: false, contentType: 'mixed', guidance: 'Conditional aggregate-analysis group: confirm reporting subtype and applicable analysis; aggregate content alone does not establish the transmission route.' },
-  { code: '6', title: 'Follow-Up Report', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional follow-up group: confirm initial/follow-up status and relevant new information; use current reporting obligations and controlled prior-report linkage.' },
+  { code: '6', title: 'Follow-Up Report', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional follow-up group: confirm initial/follow-up status and relevant new information; use current reporting obligations and controlled prior-report linkage.' },  // Added 2026-10-18 (review finding): 312.32(c)(1) asks it of every report; it
+  // sat inside the conditional aggregate group. Last, where its code sorts: a
+  // reader that orders project sections by code put it after 6 anyway (critic,
+  // 2026-10-19). The lifecycle record places it last too, so a row's index
+  // still names its record part (indSafetyRequirements).
+  { code: '7', title: 'Previously Submitted Similar Reports and Significance Analysis', module: 0, required: true, contentType: 'mixed', guidance: '21 CFR 312.32(c)(1): identify all previously submitted IND safety reports on a similar suspected adverse reaction and analyze the significance of this one in light of them.' },
 ];
 
 /** IND Annual Report — 21 CFR 312.33. */
@@ -307,7 +309,8 @@ const US_BTD_SECTIONS: SectionDefinition[] = [
   US_DESIGNATION_COMMON.request, US_DESIGNATION_COMMON.product,
   { ...US_DESIGNATION_COMMON.serious, guidance: 'FD&C Act 506(a)(1): a serious condition.' },
   { code: '5', title: 'Preliminary Clinical Evidence', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(a)(1): the preliminary clinical evidence the request rests on.', formerTitles: ['Preliminary Clinical Evidence (Breakthrough/RMAT)'] },
-  { code: '7', title: 'Substantial Improvement over Available Therapy on a Clinically Significant Endpoint', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(a)(1): the evidence indicates the drug may demonstrate substantial improvement over existing therapies on one or more clinically significant endpoints.' },
+  // 5.1, under the evidence it is shown from, so code order is document order (critic, 2026-10-19; it was '7').
+  { code: '5.1', title: 'Substantial Improvement over Available Therapy on a Clinically Significant Endpoint', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(a)(1): the evidence indicates the drug may demonstrate substantial improvement over existing therapies on one or more clinically significant endpoints.' },
   US_DESIGNATION_COMMON.plan,
 ];
 
@@ -322,10 +325,11 @@ const US_FAST_TRACK_SECTIONS: SectionDefinition[] = [
 /** RMAT, 506(g)(1): a regenerative medicine therapy, for a serious condition, with preliminary clinical evidence of the potential to address unmet medical needs. */
 const US_RMAT_SECTIONS: SectionDefinition[] = [
   US_DESIGNATION_COMMON.request, US_DESIGNATION_COMMON.product,
-  { code: '8', title: 'Regenerative Medicine Therapy Eligibility', module: 1, required: true, contentType: 'narrative', guidance: 'FD&C Act 506(g)(1)(A) and (g)(8): a cell therapy, therapeutic tissue engineering product, human cell and tissue product, or a combination product using any of them, other than one regulated solely under PHS Act 361.' },
+  // 2.1, under the product it describes, so code order is document order (critic, 2026-10-19; it was '8').
+  { code: '2.1', title: 'Regenerative Medicine Therapy Eligibility', module: 1, required: true, contentType: 'narrative', guidance: 'FD&C Act 506(g)(1)(A) and (g)(8): a cell therapy, therapeutic tissue engineering product, human cell and tissue product, or a combination product using any of them, other than one regulated solely under PHS Act 361.' },
   { ...US_DESIGNATION_COMMON.serious, guidance: 'FD&C Act 506(g)(1)(B): intended to treat, modify, reverse or cure a serious condition.' },
-  { code: '5', title: 'Preliminary Clinical Evidence', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(g)(1)(C): the preliminary clinical evidence the request rests on.', formerTitles: ['Preliminary Clinical Evidence (Breakthrough/RMAT)'] },
   { code: '4', title: 'Potential to Address an Unmet Medical Need', module: 1, required: true, contentType: 'narrative', guidance: 'FD&C Act 506(g)(1)(C): the preliminary clinical evidence indicates the potential to address unmet medical needs for the condition.', formerTitles: ['Unmet Medical Need Analysis'] },
+  { code: '5', title: 'Preliminary Clinical Evidence', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(g)(1)(C): the preliminary clinical evidence the request rests on.', formerTitles: ['Preliminary Clinical Evidence (Breakthrough/RMAT)'] },
   US_DESIGNATION_COMMON.plan,
 ];
 
@@ -349,12 +353,13 @@ const US_ORPHAN_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Administrative Information and Sponsor', module: 1, required: true, contentType: 'form' },
   { code: '2', title: 'Rare Disease/Condition and Proposed Use', module: 1, required: true, contentType: 'narrative' },
   { code: '3', title: 'Scientific Rationale (Drug Description, Mechanism)', module: 1, required: true, contentType: 'mixed' },
+  // 3.1 and 4.1: each beside the part it qualifies, so code order is document order (critic, 2026-10-19; they were '7' and '8').
+  { code: '3.1', title: 'Clinical Superiority Hypothesis (Same Drug Already Approved for the Same Rare Disease)', module: 1, required: false, contentType: 'narrative', guidance: '21 CFR 316.20(b)(5): where the drug is otherwise the same drug as one already approved for the same rare disease or condition, why it may be clinically superior.' },
   { code: '4', title: 'Prevalence Estimate with Supporting References', module: 1, required: true, contentType: 'mixed' },
-  { code: '5', title: 'Regulatory Status and Marketing History', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 316.20(b)(7): US and foreign regulatory status and marketing history, including adverse regulatory actions.' },
-  { code: '7', title: 'Clinical Superiority Hypothesis (Same Drug Already Approved for the Same Rare Disease)', module: 1, required: false, contentType: 'narrative', guidance: '21 CFR 316.20(b)(5): where the drug is otherwise the same drug as one already approved for the same rare disease or condition, why it may be clinically superior.' },
   // 316.20(b)(6) as amended by the 2013 orphan drug final rule, which replaced
   // the "medically plausible subset" standard (review finding, 2026-10-18).
-  { code: '8', title: 'Orphan Subset (Designation for a Subset of Persons with a Disease or Condition)', module: 1, required: false, contentType: 'narrative', guidance: '21 CFR 316.20(b)(6) (as amended in 2013): where designation is requested for a subset of persons with a disease or condition (an orphan subset), a demonstration that use of the drug outside that subset would be inappropriate owing to some property of the drug, such as its toxicity, mechanism of action or prior clinical experience.' },
+  { code: '4.1', title: 'Orphan Subset (Designation for a Subset of Persons with a Disease or Condition)', module: 1, required: false, contentType: 'narrative', guidance: '21 CFR 316.20(b)(6) (as amended in 2013): where designation is requested for a subset of persons with a disease or condition (an orphan subset), a demonstration that use of the drug outside that subset would be inappropriate owing to some property of the drug, such as its toxicity, mechanism of action or prior clinical experience.' },
+  { code: '5', title: 'Regulatory Status and Marketing History', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 316.20(b)(7): US and foreign regulatory status and marketing history, including adverse regulatory actions.' },
   { code: '6', title: 'Scientific Literature and References', module: 1, required: true, contentType: 'list' },
 ];
 
@@ -418,10 +423,10 @@ const ICF_SECTIONS: SectionDefinition[] = [
   { code: '7', title: 'Compensation and Treatment for Injury', module: 5, required: true, contentType: 'narrative' },
   { code: '8', title: 'Voluntary Participation and Right to Withdraw', module: 5, required: true, contentType: 'narrative' },
   { code: '9', title: 'Contacts for Questions', module: 5, required: true, contentType: 'narrative' },
-  // Read from the one consent record, never copied (review finding, 2026-10-18).
+  { code: '10', title: 'Signatures (Subject / Legal Representative / Investigator)', module: 5, required: true, contentType: 'form' },
+  // Read from the one consent record, never copied (review finding, 2026-10-18). Last, where their codes sort (critic, 2026-10-19).
   { code: '11', title: 'ClinicalTrials.gov Statement (Applicable Clinical Trials)', module: 5, required: false, contentType: 'narrative', guidance: consentGuidance(['applicable_clinical_trial']) },
   { code: '12', title: 'Additional Elements of Informed Consent (When Appropriate)', module: 5, required: false, contentType: 'narrative', guidance: consentGuidance(['when_appropriate']) },
-  { code: '10', title: 'Signatures (Subject / Legal Representative / Investigator)', module: 5, required: true, contentType: 'form' },
 ];
 
 /** Individual Case Safety Report — ICH E2B(R3). */

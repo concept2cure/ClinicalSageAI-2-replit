@@ -355,14 +355,15 @@ describe('document template library — subtype-scoped IND safety scaffold', () 
     const blueprint = getSectionBlueprintForEntry(entry);
     const components = getLifecycleDocumentType('ind_safety_report')!.components;
     // 2026-10-18 (review finding): 312.32(c)(1)'s previous-similar-reports
-    // analysis is its own required group, code 7, placed where the lifecycle
-    // record places it, so each row's index still names its record part.
-    expect(blueprint.sections.map(s => s.code)).toEqual(['1', '2', '3', '4', '7', '5', '6']);
+    // analysis is its own required group, code 7, last, where its code sorts
+    // (critic, 2026-10-19), and last in the lifecycle record too, so each
+    // row's index still names its record part.
+    expect(blueprint.sections.map(s => s.code)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
     expect(blueprint.sections.every(s => s.module === 0)).toBe(true);
     expect(blueprint.sections.map(s => s.title)).toEqual(components.map(c => c.title));
-    expect(blueprint.sections.map(s => s.required)).toEqual([true, false, false, false, true, false, false]);
+    expect(blueprint.sections.map(s => s.required)).toEqual([true, false, false, false, false, false, true]);
     const outline = await getRegistryDocumentTemplate(entry.id);
-    expect(outline?.sections.map(s => s.required)).toEqual([true, false, false, false, true, false, false]);
+    expect(outline?.sections.map(s => s.required)).toEqual([true, false, false, false, false, false, true]);
     expect(outline?.sections[0].purpose).toContain('not a universal cover-letter');
     expect(outline?.sections[1].purpose).toContain('not evidence that an ICSR is always required');
     expect(outline?.outlineLimitations?.join(' ')).toMatch(/subtype/i);

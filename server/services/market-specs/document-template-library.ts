@@ -49,6 +49,8 @@ export interface TemplateSection {
   required: boolean;
   /** Sub-sections, where the record names them (e.g. the IB's 4.1–4.3). */
   subsections?: TemplateSection[];
+  /** Headings a correction replaced, so a document bound to an earlier outline still resolves to this section (2026-10-19). */
+  formerTitles?: string[];
 }
 
 export interface DocumentTemplateStructure {

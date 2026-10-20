@@ -35,9 +35,10 @@ describe('the designation and orphan corrections stay with the US requests', () 
   // (second review, 2026-10-18: one shared outline left a Fast Track request
   // with no required criterion).
   it.each([
-    ['US_BTD', ['1', '2', '3', '5', '7', '6'], ['5', '7']],
+    // Codes sort in document order (critic, 2026-10-19): 5.1 under the evidence, 2.1 under the product.
+    ['US_BTD', ['1', '2', '3', '5', '5.1', '6'], ['5', '5.1']],
     ['US_FAST_TRACK', ['1', '2', '3', '4', '6'], ['4']],
-    ['US_RMAT', ['1', '2', '8', '3', '5', '4', '6'], ['8', '5', '4']],
+    ['US_RMAT', ['1', '2', '2.1', '3', '4', '5', '6'], ['2.1', '5', '4']],
   ])('%s requires its own statutory criteria', async (id, numbers, criteria) => {
     const s = await outline(id as string);
     expect(s.map((x) => x.number)).toEqual(numbers);
@@ -51,6 +52,6 @@ describe('the designation and orphan corrections stay with the US requests', () 
     expect(JSON.stringify(eu)).not.toMatch(/316\.20/);
     const us = await outline('US_ORPHAN');
     expect(us.find((x) => x.number === '5')?.required).toBe(true);
-    expect(us.map((x) => x.number)).toEqual(['1', '2', '3', '4', '5', '7', '8', '6']);
+    expect(us.map((x) => x.number)).toEqual(['1', '2', '3', '3.1', '4', '4.1', '5', '6']);
   });
 });

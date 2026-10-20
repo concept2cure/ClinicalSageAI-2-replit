@@ -367,7 +367,7 @@ function componentRequirements(entry: RegulatoryApplicationType, sectionType: st
   // IB's title page, are nodes of the governed pack a class project scaffolds
   // (review critic, 2026-10-18: only top-level sections were read).
   const section = flattenSections([...(template.frontMatter ?? []), ...template.sections])
-    .find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
+    .find(s => sectionNames(s).some(v => normTitle(v) === target));
   if (entry.id === 'ICH_PROTOCOL') return protocolRequirements(section, sectionType);
   // The CSR template shows E3's sixteen headings; its pack is E3 to full depth
   // (119 nodes), so a section is answered from the E3 tree itself.
@@ -632,7 +632,7 @@ function lifecycleOutlineRequirements(entry: RegulatoryApplicationType, requeste
   if (!outline) return null;
   const target = normTitle(requested);
   const flat = flattenSections([...(outline.frontMatter ?? []), ...outline.sections]);
-  const section = flat.find((s) => [s.number, s.heading, `${s.number} ${s.heading}`].some((v) => normTitle(v) === target));
+  const section = flat.find((s) => sectionNames(s).some((v) => normTitle(v) === target));
   const record = outline.outlineSource && 'record' in outline.outlineSource ? outline.outlineSource.record : outline.id;
   if (!section) {
     // A CTD code the outline holds, asked with any title ("3.2.P Drug Product
@@ -654,6 +654,16 @@ function lifecycleOutlineRequirements(entry: RegulatoryApplicationType, requeste
     };
   }
   return lifecyclePartBrief(entry, outline, section, record);
+}
+
+/**
+ * The names a section answers to: its number, its heading, both, and the same
+ * for each heading a correction replaced, so a document bound to an earlier
+ * outline ("…(CBE-30)", the PBRER's §3 before E2C(R2) wording) still resolves
+ * (review critic, 2026-10-19).
+ */
+function sectionNames(s: TemplateSection): string[] {
+  return [s.heading, ...(s.formerTitles ?? [])].flatMap((h) => [h, `${s.number} ${h}`]).concat(s.number);
 }
 
 /** Every section of an outline, depth first: front matter, sections and their subsections. */
@@ -687,9 +697,13 @@ function lifecyclePartBrief(
   const first = all.find((p) => p.code === section.number);
   const parts = first ? all.filter((p) => p === first || p.title === first.title) : [];
   const shared = parts.length > 1;
-  const source = shared || !first ? record : first.record;
+  // A node no record part backs (a meeting package's MTG-SUPPORT) is the
+  // outline's own, and is named so, never attributed to the record (critic, 2026-10-19).
+  const source = shared ? record : first ? first.record : `outline:lifecycle-record:${entry.id}`;
   const lines = [
-    `SECTION AUTHORING GUIDANCE (the platform's lifecycle record ${source}, served as the ${outline.title} outline — draft to it; do not add requirements from memory):`,
+    first
+      ? `SECTION AUTHORING GUIDANCE (the platform's lifecycle record ${source}, served as the ${outline.title} outline — draft to it; do not add requirements from memory):`
+      : `SECTION AUTHORING GUIDANCE (the ${outline.title} outline's own section; no record part backs it — draft to it; do not add requirements from memory):`,
     ...blaSupplementLine(entry),
     `- Section: ${section.number} — ${section.heading}`,
     `- ${section.required ? 'Required in this outline' : 'Conditional in this outline: applicability is unresolved, not waived'}`,

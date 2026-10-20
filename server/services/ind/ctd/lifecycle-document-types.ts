@@ -1779,21 +1779,6 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft the expectedness assessment for an adverse event in {{SPONSOR}}'s development of {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Identify the controlling Investigator Brochure edition/date as Reference Safety Information, compare the MedDRA-coded event term against the specific IB-listed reactions, and apply the specificity-and-severity test to conclude expected vs unexpected. Quote bracketed placeholders for the IB language and event term. Flag whether an IB update is pending.`
       },
       {
-        "code": "safety.similar_reports",
-        "title": "Previously Submitted Similar Reports and Significance Analysis",
-        "required": true,
-        "contentType": "mixed",
-        "guidance": "21 CFR 312.32(c)(1) (in each IND safety report, identify all IND safety reports previously submitted concerning a similar suspected adverse reaction, and analyze the significance of the suspected adverse reaction in light of them or of any other relevant information). Split out 2026-10-18 (review finding): it sat inside the conditional aggregate analysis, so a report built to the required parts could omit it.",
-        "authoringGuidance": "Every IND safety report, of any subtype, identifies the IND safety reports already submitted on a similar suspected adverse reaction and analyzes what this report means in light of them. List each prior report by its identifier and date, state how the reactions are similar, and give the significance analysis the sponsor's reviewers reached: whether the new case changes the frequency, severity or understanding of the risk. Where no similar report was previously submitted, say so explicitly. This is distinct from the aggregate or increased-rate analysis, which applies only to the (c)(1)(i)(C) and (c)(1)(iv) subtypes. Do not invent prior report identifiers or counts.",
-        "keyContentElements": [
-          "Each previously submitted IND safety report on a similar suspected adverse reaction, with identifier and date",
-          "How the previous reactions are similar to this one",
-          "Analysis of the significance of this reaction in light of the previous reports or other relevant information",
-          "Explicit statement where no similar report was previously submitted"
-        ],
-        "generationPrompt": "Draft the 21 CFR 312.32(c)(1) previous-similar-reports section of an IND safety report for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}): list the IND safety reports previously submitted on a similar suspected adverse reaction and analyze the significance of this one in light of them. Use bracketed placeholders for report identifiers and dates; do not fabricate prior reports."
-      },
-      {
         "code": "safety.aggregate",
         "title": "Aggregate / Similar-Events and Increased-Rate Analysis",
         "required": false,
@@ -1830,6 +1815,21 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Confirmation of investigator/IRB notification of the updated information where warranted"
         ],
         "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft a source-grounded follow-up narrative linked to the prior IND safety report. Identify what changed and when relevant new information became available; apply prompt follow-up under 312.32(d)(2), without a blanket 15-day allowance. Distinguish a new reportability determination under (d)(3) using sponsor-approved dates and decisions. Confirm subtype and applicable route before placement. Do not invent case facts, due dates, completed transmissions or notification status.`
+      },
+      {
+        "code": "safety.similar_reports",
+        "title": "Previously Submitted Similar Reports and Significance Analysis",
+        "required": true,
+        "contentType": "mixed",
+        "guidance": "21 CFR 312.32(c)(1) (in each IND safety report, identify all IND safety reports previously submitted concerning a similar suspected adverse reaction, and analyze the significance of the suspected adverse reaction in light of them or of any other relevant information). Split out 2026-10-18 (review finding): it sat inside the conditional aggregate analysis, so a report built to the required parts could omit it.",
+        "authoringGuidance": "Every IND safety report, of any subtype, identifies the IND safety reports already submitted on a similar suspected adverse reaction and analyzes what this report means in light of them. List each prior report by its identifier and date, state how the reactions are similar, and give the significance analysis the sponsor's reviewers reached: whether the new case changes the frequency, severity or understanding of the risk. Where no similar report was previously submitted, say so explicitly. This is distinct from the aggregate or increased-rate analysis, which applies only to the (c)(1)(i)(C) and (c)(1)(iv) subtypes. Do not invent prior report identifiers or counts.",
+        "keyContentElements": [
+          "Each previously submitted IND safety report on a similar suspected adverse reaction, with identifier and date",
+          "How the previous reactions are similar to this one",
+          "Analysis of the significance of this reaction in light of the previous reports or other relevant information",
+          "Explicit statement where no similar report was previously submitted"
+        ],
+        "generationPrompt": "Draft the 21 CFR 312.32(c)(1) previous-similar-reports section of an IND safety report for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}): list the IND safety reports previously submitted on a similar suspected adverse reaction and analyze the significance of this one in light of them. Use bracketed placeholders for report identifiers and dates; do not fabricate prior reports."
       }
     ],
     "registryId": "US_IND_SR",
@@ -2736,6 +2736,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "ICH Q12: Technical and Regulatory Considerations for Pharmaceutical Product Lifecycle Management",
       "ICH Q8(R2)/Q9(R1)/Q10/Q11",
       "FD&C Act sec. 505B (PREA: pediatric assessment, waiver or deferral for a supplement that triggers it)",
+      "21 CFR 314.53(d)(2) and 314.50(j) (patent information and exclusivity claims in a supplement)",
       "FD&C Act sec. 736 (PDUFA fees; no supplement fee since PDUFA VI, FY2018)"
     ],
     "components": [
@@ -2848,6 +2849,20 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Outline the PREA section of an efficacy Prior Approval Supplement for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: whether PREA applies, and the pediatric assessment, deferral or waiver by age group with reference to the agreed iPSP. Use bracketed placeholders; do not assert an agreed plan, waiver or deferral the material does not establish."
       },
       {
+        "code": "PAS-PATENT",
+        "title": "Patent Information and Exclusivity Claim (Changed Formulation, Indication or Strength)",
+        "required": false,
+        "contentType": "form",
+        "guidance": "21 CFR 314.53(d)(2): a supplement that changes the formulation, adds an indication or other condition of use, or changes the strength includes the patent information for each patent that claims the changed product (Form FDA 3542a), or a statement that no relevant patent claims it; and any claim of exclusivity under 21 CFR 314.50(j) is made in the supplement. Added 2026-10-19 (review critic): v1.1's efficacy supplement had no patent part.",
+        "authoringGuidance": "Include this component when the supplement changes the formulation, adds an indication or other condition of use, or changes the strength. List each patent that claims the drug substance, the drug product (formulation or composition) or a method of use as changed, on Form FDA 3542a, or state that no relevant patent claims the change. Where the applicant claims three-year exclusivity for new clinical investigations essential to the change, make the claim under 314.50(j) with the investigations it rests on. Do not list a patent, a patent claim or an exclusivity entitlement the material provided does not establish.",
+        "keyContentElements": [
+          "Whether the supplement changes the formulation, an indication or other condition of use, or the strength",
+          "Patent information for each patent claiming the changed product (Form FDA 3542a), or the no-relevant-patent statement",
+          "Any 314.50(j) exclusivity claim, with the new clinical investigations it rests on"
+        ],
+        "generationPrompt": "Outline the patent and exclusivity section of a Prior Approval Supplement for {{SPONSOR}}'s {{PRODUCT_NAME}}: whether 21 CFR 314.53(d)(2) applies, the Form FDA 3542a patent information or the no-relevant-patent statement, and any 314.50(j) exclusivity claim. Use bracketed placeholders; do not assert a patent or exclusivity the material does not establish."
+      },
+      {
         "code": "PAS-ENV",
         "title": "Environmental Assessment or Categorical Exclusion Claim",
         "required": true,
@@ -2866,6 +2881,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       {
         "code": "PAS-FEE",
         "title": "User Fee Determination and Field Copy Certification",
+        "formerTitles": ["Program/User Fee Cover Sheet and Field Copy Certification"],
         "required": false,
         "contentType": "form",
         "guidance": "A supplement carries no PDUFA application fee: PDUFA VI (FY2018 onward) removed supplement fees, and PDUFA VII kept that. A field copy certification applies only where the submission's format calls for one. Corrected 2026-10-18: the record had required a Form FDA 3397 cover sheet for a supplement fee that no longer exists.",
@@ -2954,6 +2970,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       {
         "code": "CBE30-CHANGE",
         "title": "Description and Justification of the Change",
+        "formerTitles": ["Description and Justification of the Change (CBE-30)"],
         "required": true,
         "contentType": "mixed",
         "guidance": "Before/after description of the moderate change with the supporting data (validation, comparability, dissolution, stability) and an explicit justification that the change meets the criteria for a moderate (CBE-30) rather than major (PAS) change.",
@@ -2990,6 +3007,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       {
         "code": "CBE30-ENV",
         "title": "Categorical Exclusion Claim or Environmental Assessment",
+        "formerTitles": ["Categorical Exclusion Claim or Environmental Assessment (CBE-30)"],
         "required": true,
         "contentType": "narrative",
         "guidance": "Claim of categorical exclusion under 21 CFR 25.31 with a no-extraordinary-circumstances statement, or a full Environmental Assessment under 25.40 where an exclusion does not apply.",

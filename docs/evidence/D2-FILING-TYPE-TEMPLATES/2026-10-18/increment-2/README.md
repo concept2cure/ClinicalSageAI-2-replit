@@ -105,6 +105,44 @@ been pushed, so it was regenerated rather than superseded.
 | 20261018c's own tree assertion was never exercised. | A tampered v1.1 row with the right node count stops the file. Removing the check makes the test red. | `corrections-tree-check-red-when-removed.txt` |
 | The mint date was hard-coded. | A spec's `minted` date. The emitter refuses a spec whose date is not the file's, and a supersede with no change note. | — |
 
+## f. The completeness critic's follow-ups (2026-10-19), minted as v1.2
+
+The critic reported after `20261018c` had reached the applier, so its pack findings are new
+versions in a new file. `migrations/20261019b_filing_class_packs_v1_2_critic_followups.sql`
+(generated, minted 2026-10-19) seeds six packs, each superseding exactly the version 20261018c
+seeded. It says on that version why it was superseded.
+
+| Finding | Fix |
+|---|---|
+| An efficacy supplement had no patent part: 314.53(d)(2) (Form FDA 3542a), or the no-relevant-patent statement, and 314.50(j) exclusivity. | `PAS-PATENT`, conditional (`pas` v1.2). |
+| New nodes' codes sorted out of document order. Project sections, exports and AnA's outline order by code. | IND safety report: 7 moves to the end, in the record too, so the legacy index mapping holds. Breakthrough: 5.1 under the evidence. RMAT: 2.1 under the product. Orphan: 3.1 and 4.1. ICF: 11 and 12 after 10. |
+| A document bound to an earlier outline was refused by its own headings: the CBE's "(CBE-30)" headings, the PAS fee part, the PBRER's §3 and §7. | `formerTitles` on lifecycle components and template sections, and AnA matches them. |
+| AnA's chat PBRER template listed §1–§20 only. | Front matter and every subsection, in order. |
+| MTG-SUPPORT was attributed to a record that has no such part. | It is named as the outline's own section. |
+
+Red on the committed code: `critic-followups-red-on-ac1fcf70.txt` (7 of 78). The pack contract
+checks the PREA and patent parts. Its tampered-row case now targets the newest file.
+
+## What already exists (CLAUDE.md Rule 3)
+
+Every change in this increment completes, corrects or reaches a record the platform holds. None
+builds a second one:
+
+- The outlines are `LIFECYCLE_DOCUMENT_TYPES` (`server/services/ind/ctd/lifecycle-document-types.ts`),
+  the project blueprints (`shared/regulatory/project-bootstrap.ts`), the template library
+  (`server/services/market-specs/document-template-library.ts`, `pbrer-outline.ts`) and the one
+  consent record (`shared/regulatory/informed-consent-elements.ts`, which the ICF nodes now read
+  rather than copy).
+- The packs are the existing `c2c_rule_packs` store and its supersede pattern (20261005b).
+- AnA drafting is the existing `resolveDraftingRequirements` path. The lifecycle branch reads the
+  same records `getRegistryDocumentTemplate` serves.
+- open-document is the existing `resolveOpenDocument`.
+- The chat PBRER is the existing `psur_pbrer` template, now read from the library's outline.
+
+Searches run: `lifecycleRecordOutlineFor`, `componentRequirements`, `pbrerTemplateSections`,
+`INFORMED_CONSENT_ELEMENTS`, `builtinTemplateSnapshot`, `formerTitles` (none existed), and
+`git log --all --diff-filter=D -- '*pbrer*' '*filing-class*'` (nothing deleted).
+
 ## Tests the corrections move on purpose
 
 - `document-template-library.test.ts`: the IND safety report gains code 7.

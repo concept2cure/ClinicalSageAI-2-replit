@@ -90,12 +90,19 @@ function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]
   });
   const variants = records.length > 1;
   // A part is keyed by its title: the CBE-30 and CBE-0 cover letters are one part.
-  const parts = new Map<string, { code: string; heading: string; purpose: string; requiredIn: number; in: string[] }>();
+  const parts = new Map<string, { code: string; heading: string; purpose: string; requiredIn: number; in: string[]; formerTitles: string[] }>();
   for (const record of records) {
     for (const c of record.components) {
       const seen = parts.get(c.title);
-      if (seen) { seen.in.push(recordShortName(record.label)); if (c.required) seen.requiredIn += 1; continue; }
-      parts.set(c.title, { code: c.code, heading: c.title, purpose: c.authoringGuidance, requiredIn: c.required ? 1 : 0, in: [recordShortName(record.label)] });
+      if (seen) {
+        seen.in.push(recordShortName(record.label)); if (c.required) seen.requiredIn += 1;
+        seen.formerTitles.push(...(c.formerTitles ?? []));
+        continue;
+      }
+      parts.set(c.title, {
+        code: c.code, heading: c.title, purpose: c.authoringGuidance, requiredIn: c.required ? 1 : 0,
+        in: [recordShortName(record.label)], formerTitles: [...(c.formerTitles ?? [])],
+      });
     }
   }
   const sections: TemplateSection[] = [...parts.values()].map((p) => ({
@@ -103,6 +110,8 @@ function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]
     heading: variants && p.in.length < records.length ? `${p.heading} (${p.in.join(', ')})` : p.heading,
     purpose: p.purpose,
     required: p.requiredIn === records.length,
+    // A heading a correction replaced still names this part (2026-10-19).
+    ...(p.formerTitles.length ? { formerTitles: [...new Set(p.formerTitles)] } : {}),
   }));
   // The record's Module 1 codes name where its own parts file (1.2 the cover
   // letter, 1.14.1 the labeling); Modules 2–5 are the content the change updates.

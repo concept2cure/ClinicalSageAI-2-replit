@@ -131,6 +131,24 @@ describe('a component document is drafted to its whole outline, not its first le
     expect(resolveDraftingRequirements('US_PADER', 'FDA Form 3500A Reports (Non-Expedited Cases)').requirementsSource).toBe('blueprint');
   });
 
+  // Completeness critic, 2026-10-19.
+  it('a section bound to an earlier outline answers to the heading it had there', () => {
+    // A CBE bound to fda-cbe-lifecycle-v1.0 holds the CBE-30-suffixed headings.
+    const cbe = resolveDraftingRequirements('US_CBE', 'Description and Justification of the Change (CBE-30)');
+    expect(cbe.requirementsSource).toBe('record:lifecycle:LIFECYCLE_DOCUMENT_TYPES:cbe_30+LIFECYCLE_DOCUMENT_TYPES:cbe_0:CBE30-CHANGE');
+    expect(resolveDraftingRequirements('US_NDA_SUPP', 'Program/User Fee Cover Sheet and Field Copy Certification').requirementsSource)
+      .toBe('record:lifecycle:LIFECYCLE_DOCUMENT_TYPES:nda_pas:PAS-FEE');
+    // A PSUR bound to ich-e2c-r2-v2.0 holds the earlier §3 and §7 wording.
+    expect(resolveDraftingRequirements('EU_PSUR', 'Actions Taken for Safety Reasons').requirementsSource).not.toMatch(/not-indexed|none/);
+    expect(resolveDraftingRequirements('EU_PSUR', '7 Summaries of Significant Findings from Clinical Trials').requirementsSource).not.toMatch(/not-indexed|none/);
+  });
+
+  it('a meeting section no record part backs is the outline\'s own, never attributed to the record', () => {
+    const r = resolveDraftingRequirements('US_TYPE_A_MEETING', 'MTG-SUPPORT');
+    expect(r.requirementsSource).toBe('record:lifecycle:outline:lifecycle-record:US_TYPE_A_MEETING:MTG-SUPPORT');
+    expect(r.requirements).toContain("outline's own section; no record part backs it");
+  });
+
   it('a section a component record does not hold is named, never left to memory', () => {
     const r = resolveDraftingRequirements('EU_PSUR', '99 Invented Section');
     expect(r.requirements).toContain('do not supply its requirements from memory');
