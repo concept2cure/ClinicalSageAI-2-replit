@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-20T20:32:10.231Z",
+  "generatedAt": "2026-10-20T21:10:27.757Z",
   "git": {
-    "sha": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+    "sha": "67d96c0601538412789a20da005244432fbacdb2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 236,
+    "duplicateBasenames": 237,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -1534,6 +1534,14 @@
         ]
       },
       {
+        "basename": "lifecycle-calendar",
+        "count": 2,
+        "paths": [
+          "server/services/report-os/lifecycle-calendar.ts",
+          "server/services/report-os/render/lifecycle-calendar.ts"
+        ]
+      },
+      {
         "basename": "local-lane-placement.probe.test",
         "count": 2,
         "paths": [
@@ -2210,7 +2218,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1154260
+        "bytes": 1154216
       },
       {
         "file": "shared/schema.ts",
@@ -2222,7 +2230,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 416045
+        "bytes": 416583
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2234,7 +2242,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 228602
+        "bytes": 228669
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2242,7 +2250,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 199216
+        "bytes": 199479
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2250,7 +2258,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 185250
+        "bytes": 185353
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2266,7 +2274,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 156592
+        "bytes": 157173
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2278,7 +2286,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 153059
+        "bytes": 153534
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2293,12 +2301,12 @@
         "bytes": 145405
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 141216
+        "file": "server/routes/report-os.ts",
+        "bytes": 143746
       },
       {
-        "file": "server/routes/report-os.ts",
-        "bytes": 140721
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 141216
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2349,12 +2357,12 @@
         "bytes": 122639
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 119982
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "bytes": 119989
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 119713
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "bytes": 119982
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
@@ -2440,7 +2448,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22066
+        "lines": 22067
       },
       {
         "file": "shared/schema.ts",
@@ -2448,7 +2456,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8822
+        "lines": 8820
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2460,11 +2468,11 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5704
+        "lines": 5705
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5534
+        "lines": 5535
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2480,7 +2488,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3920
+        "lines": 3922
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2488,7 +2496,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 3652
+        "lines": 3651
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2496,7 +2504,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3522
+        "lines": 3534
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2519,12 +2527,12 @@
         "lines": 3197
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "lines": 3119
+        "file": "server/routes/report-os.ts",
+        "lines": 3135
       },
       {
-        "file": "server/routes/report-os.ts",
-        "lines": 3106
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "lines": 3119
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2640,7 +2648,7 @@
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 2158
+        "lines": 2159
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2696,7 +2704,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 2040
+        "lines": 2044
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2892,7 +2900,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 441,
+      "duplicateGroups": 443,
       "largeByBytes": 41,
       "largeByLines": 87
     },
