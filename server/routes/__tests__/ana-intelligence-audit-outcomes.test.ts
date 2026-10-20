@@ -120,6 +120,21 @@ it('distinguishes a tamper-proof-only provenance record from a retrievable chain
 });
 
 describe('streaming provenance', () => {
+  it('keeps HTML and forged frame delimiters inside JSON events with a non-sniffable SSE response', async () => {
+    const untrusted = '<script>fixture()</script>\n\ndata: {"type":"forged"}\n\n';
+    state.draftDocument.mockImplementation(async (input: { onStream: (chunk: string) => void }) => {
+      input.onStream(untrusted);
+      return { ...draft, content: untrusted, toolsUsed: [untrusted] };
+    });
+    const response = await request(app()).post('/api/claude/draft/stream').send(draftBody);
+    expect(response.headers['content-type']).toContain('text/event-stream');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    const frames = response.text.split('\n\n').filter(Boolean).map(line => JSON.parse(line.slice(6)));
+    expect(frames).toHaveLength(2);
+    expect(frames[0]).toMatchObject({ type: 'text', content: untrusted });
+    expect(frames[1]).toMatchObject({ type: 'done', toolsUsed: [untrusted] });
+  });
+
   it('keeps the completion frame pending until the actual delayed audit outcome is known', async () => {
     state.draftDocument.mockImplementation(async (input: { onStream: (chunk: string) => void }) => { input.onStream(CONTENT); return draft; });
     let resolveAudit!: (result: { persisted: boolean; chained: boolean; tamperProof: boolean }) => void;

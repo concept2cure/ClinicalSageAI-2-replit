@@ -38,6 +38,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { apiRequest } from '@/lib/queryClient';
+import { captureDocumentRecordReadOwner } from '../editor/documentRecordRead';
 import { DocumentWorkbench, type AuthDoc } from '../editor/DocumentWorkbench';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { clearEditorTarget } from '../editorTarget';
@@ -71,19 +72,23 @@ function useScopedDocuments(programId: string | null, status: string) {
   const readDocs = useCallback(async (readStatus: string, recovery = false) => {
     const scope = currentContext.current;
     if (scope.key !== context) return false;
+    const owner = recovery ? captureDocumentRecordReadOwner() : null;
+    if (recovery && !owner) return false;
     const generation = ++sequence.current;
+    const currentRead = () => alive.current && generation === sequence.current && currentContext.current === scope
+      && owner?.current() !== false;
     setDocsState('loading');
     let body: WorkingDocumentRead | null = null;
     let ok = false;
     try {
-      const res = await apiRequest('GET', `/api/authoring/docs?status=${encodeURIComponent(readStatus)}`
-        + (programId ? `&programId=${encodeURIComponent(programId)}` : ''));
+      const path = `/api/authoring/docs?status=${encodeURIComponent(readStatus)}` + (programId ? `&programId=${encodeURIComponent(programId)}` : '');
+      const res = owner ? await apiRequest('GET', path, undefined, owner.headers) : await apiRequest('GET', path);
       body = await res.json().catch(() => null);
       ok = res.ok;
     } catch { /* A failed read is reported below, without stale list fallback. */ }
-    if (!alive.current || generation !== sequence.current || currentContext.current !== scope) return false;
+    if (!currentRead()) return false;
     const verified = ok && verifiedWorkingDocuments(body, programId);
-    const usable = ok && body && (!recovery || verified);
+    const usable = recovery ? verified : ok && Boolean(body);
     setLoadedScope(programId);
     setDocs(usable ? workingDocumentRows(body) : []);
     setDocsState(usable ? 'ready' : 'error');

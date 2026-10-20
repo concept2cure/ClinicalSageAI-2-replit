@@ -1,6 +1,25 @@
 /** The canvas's single metadata/sections reader, for normal and verified recovery refresh. */
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { capturedActorHeaders, getAuthToken } from '@/utils/authToken';
+import { taskActorScope } from '../taskTarget';
 import type { AuthDoc } from './DocumentWorkbench';
+
+/** Authority of this exact read, not of a later same-account token refresh. */
+export function captureDocumentRecordReadOwner() {
+  const session = authService.captureSessionReadGuard();
+  const actor = taskActorScope(authService.getUser());
+  if (!actor) return null;
+  try {
+    const headers = capturedActorHeaders({ userId: Number(actor.userId), organizationId: Number(actor.organizationId) });
+    const current = () => {
+      const currentActor = taskActorScope(authService.getUser());
+      return session.current() && headers.Authorization === `Bearer ${getAuthToken()}`
+        && currentActor?.userId === actor.userId && currentActor?.organizationId === actor.organizationId;
+    };
+    return current() ? { headers, current } : null;
+  } catch { return null; }
+}
 
 /** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
 /* c2c_document_id: the filing this is the editing copy of, or null (F4). */
@@ -66,11 +85,13 @@ type RecordRead =
  * never an empty document: a missing row, a row whose sections did not read,
  * or a store that could not be reached each say which.
  */
-export async function readDocumentRecord(docId: string, recovery = false, programId: string | null = null): Promise<RecordRead> {
+export async function readDocumentRecord(docId: string, recovery = false, programId: string | null = null,
+  headers?: Record<string, string>): Promise<RecordRead> {
   try {
+    const read = (path: string) => headers ? apiRequest('GET', path, undefined, headers) : apiRequest('GET', path);
     const [d, s] = await Promise.all([
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}`),
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
+      read(`/api/authoring/docs/${encodeURIComponent(docId)}`),
+      read(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
     ]);
     const dj = (await d.json().catch(() => null)) as DocumentReply | null;
     const sj = (await s.json().catch(() => null)) as SectionReply | null;
@@ -93,4 +114,3 @@ export async function readDocumentRecord(docId: string, recovery = false, progra
     return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
   }
 }
-

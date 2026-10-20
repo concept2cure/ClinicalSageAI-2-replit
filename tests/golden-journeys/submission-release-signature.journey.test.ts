@@ -67,6 +67,7 @@ const SUBMISSION_ID = '4001';
 const DOC_ID = 4001; // run.submission_id_fk → the signature's §11.70 document anchor
 const RUN_ID = '5b1c2a10-0000-4000-8000-000000000001'; // run_id is UUID in the real DDL
 const OTHER_RUN_ID = '5b1c2a10-0000-4000-8000-000000000002';
+const RETRY_RUN_ID = '5b1c2a10-0000-4000-8000-000000000003';
 const PROGRAM_ID = '5b1c2a10-0000-4000-8000-00000000000a'; // regulatory_programs.id is UUID
 /**
  * The frozen release record a suspended run actually carries.
@@ -130,7 +131,7 @@ function digestFor(snap: ReturnType<typeof snapshotFor>): string {
 }
 
 const SNAPSHOT = snapshotFor(ORG);
-const PAYLOAD_DIGEST = digestFor(SNAPSHOT);
+const payloadDigest = digestFor(SNAPSHOT);
 const PASSWORD = 'Correct-Horse-Battery-42';
 
 /** approver → authorized to sign; member → not (§11.10(g) policy default). */
@@ -319,15 +320,21 @@ beforeAll(async () => {
     [DOC_ID, 'Release package manifest content', APPROVER.id],
   );
 
-  const stepsFor = (snap: ReturnType<typeof snapshotFor>) =>
-    JSON.stringify([
-      { key: 'package.validate', status: 'complete' },
+  // Synthetic release content qualifies this signing/continuation gate, not
+  // package validity. Derive its digest and server seal with the real writers;
+  // retain the frozen dependency graph and immutable continuation inputs.
+  const { sealSignPayloadDigest } = await import('../../server/services/ectd/sign-payload-seal');
+  const { captureOrchestratorInputs } = await import('../../server/services/submission-orchestrator-inputs');
+  const stepsFor = (snap: ReturnType<typeof snapshotFor>) => {
+    const digest = digestFor(snap);
+    return JSON.stringify([
+      { key: 'package.validate', status: 'complete', inputHash: 'fixture-validation', dependsOn: [] },
       {
-        key: 'package.sign',
-        status: 'awaiting-signature',
-        outputRef: JSON.stringify({ payloadDigest: digestFor(snap), signedSnapshot: snap }),
+        key: 'package.sign', status: 'awaiting-signature', inputHash: 'fixture-signing', dependsOn: ['package.validate'],
+        outputRef: JSON.stringify({ payloadDigest: digest, payloadSeal: sealSignPayloadDigest(digest, snap.organizationId), signedSnapshot: snap }),
       },
     ]);
+  };
   const steps = stepsFor(SNAPSHOT);
   await jdb.pool.query(
     `INSERT INTO submission_orchestrator_runs
@@ -347,6 +354,22 @@ beforeAll(async () => {
     // failed identity anyway.
     [OTHER_RUN_ID, OTHER_ORG, SUBMISSION_ID, DOC_ID, 'NDA210001', stepsFor(snapshotFor(OTHER_ORG))],
   );
+  // A second pending run contains the same frozen package. Its active-signature
+  // hit must still require current credentials; completing the first run does
+  // not authorize another request and no prior history is reset or deleted.
+  await jdb.pool.query(`INSERT INTO submission_orchestrator_runs
+    (run_id, organization_id, submission_id, submission_id_fk, application_number,
+     region, submission_type, started_at, status, steps)
+    VALUES ($1,$2,$3,$4,'NDA210001','US','original',NOW(),'awaiting-signature',$5::jsonb)`,
+  [RETRY_RUN_ID, ORG, SUBMISSION_ID, DOC_ID, steps]);
+  for (const runId of [RUN_ID, RETRY_RUN_ID]) {
+    await captureOrchestratorInputs(runId, {
+      organizationId: ORG, programId: PROGRAM_ID, userId: APPROVER.id,
+      submissionId: SUBMISSION_ID, submissionFk: DOC_ID, applicationNumber: 'NDA210001',
+      sequenceNumber: '0000', region: 'US', submissionType: 'original',
+      cmcSources: [], csrInputs: [], clinicalStudyData: [], nonclinicalStudies: [],
+    });
+  }
 
   const { default: signReleaseRouter } = await import('../../server/routes/submission-sign-release');
   app = express();
@@ -542,7 +565,7 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
         blocked: res.status === 401,
         status: res.status,
         // The response must not echo the password or the bound digest.
-        leaksNothing: !leaked.includes('not-the-password') && !leaked.includes(PAYLOAD_DIGEST),
+        leaksNothing: !leaked.includes('not-the-password') && !leaked.includes(payloadDigest),
       };
     });
 
@@ -553,6 +576,8 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
       ).send(signBody());
       expect(res.status).toBe(200);
       expect(res.body.signatureId).toBeTruthy();
+      expect(res.body.continuation).toBe('advanced');
+      expect(res.body.runStatus).toBe('complete');
       return { status: res.status, signatureId: res.body.signatureId, signedAt: res.body.signedAt };
     });
 
@@ -571,7 +596,7 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
       // These three columns exist ONLY because of the C-17 port; before it the
       // route's binding UPDATE threw and returned 500 signature_binding_failed.
       expect(rec.organization_id).toBe(ORG);
-      expect(rec.bound_payload_digest).toBe(PAYLOAD_DIGEST);
+      expect(rec.bound_payload_digest).toBe(payloadDigest);
       expect(rec.superseded_by).toBeNull();
       // §11.70 record link: bound to the document AND the specific version.
       expect(rec.document_id).toBe(DOC_ID);
@@ -579,24 +604,67 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
       expect(rec.signer_id).toBe(APPROVER.id);
       return {
         organizationId: rec.organization_id,
-        boundToDigest: rec.bound_payload_digest === PAYLOAD_DIGEST,
+        boundToDigest: rec.bound_payload_digest === payloadDigest,
         documentId: rec.document_id,
         versionId: rec.version_id,
       };
     });
 
+    // An existing signature cannot authorize a freshly locked/inactive actor
+    // to continue another pending run. Keep both evidence stores unchanged.
+    const priorSignatures = await jdb.pool.query('SELECT * FROM electronic_signatures ORDER BY id');
+    const priorAudit = await jdb.pool.query('SELECT * FROM audit_logs ORDER BY id');
+    const priorSteps = await jdb.pool.query('SELECT * FROM submission_orchestrator_steps ORDER BY id');
+    for (const state of ['locked', 'inactive', 'wrong-password'] as const) {
+      await R.expectBlocked(`already-signed-release-refuses-${state}-actor`, async () => {
+        if (state === 'locked') await jdb.pool.query(`UPDATE users SET locked_until=NOW()+interval '1 hour' WHERE id=$1`, [APPROVER.id]);
+        if (state === 'inactive') await jdb.pool.query(`UPDATE users SET status='suspended' WHERE id=$1`, [APPROVER.id]);
+        try {
+          const res = await asUser(APPROVER)(request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`))
+            .send(signBody({ runId: RETRY_RUN_ID, ...(state === 'wrong-password' ? { password: 'not-the-password' } : {}) }));
+          expect((await jdb.pool.query('SELECT * FROM electronic_signatures ORDER BY id')).rows).toEqual(priorSignatures.rows);
+          expect((await jdb.pool.query('SELECT * FROM audit_logs ORDER BY id')).rows).toEqual(priorAudit.rows);
+          expect((await jdb.pool.query('SELECT * FROM submission_orchestrator_steps ORDER BY id')).rows).toEqual(priorSteps.rows);
+          expect(res.body.signatureId).toBeUndefined();
+          const code = state === 'locked' ? 'ACCOUNT_LOCKED' : state === 'inactive' ? 'ACCOUNT_INACTIVE' : 'PASSWORD_VERIFICATION_FAILED';
+          return { blocked: res.status === (state === 'locked' ? 423 : 401) && res.body.code === code, status: res.status, code: res.body.code, priorHistoryPreserved: true };
+        } finally {
+          if (state === 'locked') await jdb.pool.query('UPDATE users SET locked_until=NULL WHERE id=$1', [APPROVER.id]);
+          if (state === 'inactive') await jdb.pool.query(`UPDATE users SET status='active' WHERE id=$1`, [APPROVER.id]);
+        }
+      });
+    }
+
     // ── 3. One active signature per release (OQ-3 / OQ-4) ───────────────────
     await R.step('re-signing-is-idempotent-not-duplicated', async () => {
       const res = await asUser(APPROVER)(
         request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`),
-      ).send(signBody());
+      ).send(signBody({ runId: RETRY_RUN_ID }));
       expect(res.status).toBe(200);
       expect(res.body.already_signed).toBe(true);
       expect(res.body.signatureId).toBe(signed.signatureId);
+      expect(res.body.continuation).toBe('advanced');
+      expect(res.body.runStatus).toBe('complete');
 
       const count = await jdb.pool.query(`SELECT count(*)::int AS n FROM electronic_signatures`);
       expect((count.rows[0] as { n: number }).n).toBe(1);
       return { alreadySigned: res.body.already_signed, rows: 1 };
+    });
+
+    await R.step('completed-runs-retain-parseable-timestamps-and-step-history', async () => {
+      const { getRun, getRunAudit } = await import('../../server/services/submission-package-orchestrator');
+      for (const runId of [RUN_ID, RETRY_RUN_ID]) {
+        const run = await getRun(runId, ORG);
+        expect(run?.status).toBe('complete');
+        expect(run?.startedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+        expect(run?.completedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+        const audit = await getRunAudit(runId, ORG);
+        expect(audit).toHaveLength(1);
+        expect(audit[0]).toMatchObject({ stepKey: 'package.sign', eventType: 'complete' });
+      }
+      expect((await jdb.pool.query('SELECT * FROM electronic_signatures ORDER BY id')).rows).toEqual(priorSignatures.rows);
+      expect((await jdb.pool.query('SELECT * FROM audit_logs ORDER BY id')).rows).toEqual(priorAudit.rows);
+      return { completedRuns: 2, signatureRows: 1, completedStepEvents: 2, priorSignatureAndAuditPreserved: true };
     });
 
     // ── 4. The resume-path lookup finds it, scoped to the tenant ────────────
@@ -605,7 +673,7 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
         `SELECT id FROM electronic_signatures
           WHERE organization_id = $1 AND bound_payload_digest = $2 AND superseded_by IS NULL
           ORDER BY created_at DESC LIMIT 1`,
-        [ORG, PAYLOAD_DIGEST],
+        [ORG, payloadDigest],
       );
       expect(mine.rows).toHaveLength(1);
 
@@ -613,7 +681,7 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
       const theirs = await jdb.pool.query(
         `SELECT id FROM electronic_signatures
           WHERE organization_id = $1 AND bound_payload_digest = $2 AND superseded_by IS NULL`,
-        [OTHER_ORG, PAYLOAD_DIGEST],
+        [OTHER_ORG, payloadDigest],
       );
       expect(theirs.rows).toHaveLength(0);
       return { foundForOwner: 1, foundForOtherTenant: 0 };
@@ -627,7 +695,7 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
     R.limitations.push(
       'Schema comes from extractTableDdl against the real migrations (0000_sweet_joseph for the baseline tables, 0018_submission_orchestrator for the run store) plus the C-17 port. FK constraints, which that baseline applies via separate ALTER statements, are not extracted — this journey seeds only the tables it needs.',
       'run.submission_id_fk is seeded to the documents.id used as the §11.70 anchor, which is what the route consumes. The loadSubmissionFkBySubmissionIdText fallback path (and the public.submissions table) is therefore not exercised here.',
-      'The orchestrator RESUME path after signing — which re-derives the digest and drift-checks it — is out of scope; this journey ends at a durable, payload-bound signature.',
+      'The frozen release record is synthetic; this proves signing and real continuation of that record, not scientific validity, export delivery, or agency acceptance.',
       'No journey account has an authenticator enrolled, so the second factor the route now requires of one (the platform signing ceremony, services/part11/reverify-signer.ts) is exercised by tests/unit/submission-sign-release-route.test.ts, not here.',
     );
 

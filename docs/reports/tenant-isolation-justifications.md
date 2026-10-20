@@ -61,15 +61,26 @@ author documented it; none has been re-argued from scratch here, and each is
 listed with its owner so it can be. The value delivered today is that no NEW
 escape can be added silently.
 
-| File | Entries | What the null case means, per the code | Disposition |
-|---|---|---|---|
-**None. The baseline reached zero on 2026-10-14 (`docs/reports/tenant-isolation-baseline.json`, `fingerprints: []`), and the five rows that stood here are retired below.**
+No files remain in the raw-SQL baseline. The historical five-file table below
+was retired on 2026-10-17 after current source and the zero-entry baseline were checked.
 
 Every previously-justified entry from before this date is dispositioned inline
 (grep `tenant-isolation-safe:`) or via the file allowlist; see the 2026-08-07
 Resolved subsection for the per-file mapping.
 
 ## Resolved (no longer in baseline)
+
+### 2026-10-17 — retire five stale file justifications from the empty baseline
+
+The optional-tenant-predicate entries below no longer appear in the current
+baseline. Their historical reasons remain here for traceability; they grant
+no active exemption. Current suppression decisions are at the actual query
+site and remain subject to the raw-SQL gate.
+
+| File | Entries | What the null case means, per the code | Disposition |
+|---|---|---|---|
+**None. The baseline reached zero on 2026-10-14 (`docs/reports/tenant-isolation-baseline.json`, `fingerprints: []`), and the five rows that stood here are retired below.**
+
 
 ### 2026-10-18 — the last five frozen entries retired; the baseline is zero
 

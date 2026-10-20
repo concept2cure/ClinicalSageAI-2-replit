@@ -2682,6 +2682,7 @@ registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
       error: 'An active organization and project are required to generate a schedule.',
     });
   }
+  const reason = gatedReason(input);
   try {
     const { generateProjectSchedule } = await import('../projects/schedule-of-events');
     const projectType =
@@ -2702,7 +2703,7 @@ registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
       baselineDate: parseScheduleDate(input.baseline_date),
       targetDate: parseScheduleDate(input.target_date),
       goals,
-      reason: typeof input.reason === 'string' ? input.reason.trim() || undefined : undefined,
+      reason,
       triggeredBy: 'ana_user',
       createdByAna: true,
     });

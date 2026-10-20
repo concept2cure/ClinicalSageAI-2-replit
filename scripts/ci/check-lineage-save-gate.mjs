@@ -58,6 +58,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { stripComments } from './lib/strip-comments.mjs';
 import { PROTOCOL_REQUEST_TRANSACTION, requestScopedTransactionFindings } from './lib/lineage-request-transaction.mjs';
+import { AUTHORING_TRANSACTION, authoringTransactionFindings } from './lib/lineage-authoring-transaction.mjs';
 
 const ROOT = process.cwd();
 
@@ -171,6 +172,7 @@ const GUARDED = [
   {
     file: 'server/services/authoring/authoring-documents.ts',
     why: 'createSection (POST /sections) and insertDocumentTx (POST /docs template seeding, POST /docs/from-draft and the draft_authoring_document tool) create authoring_sections rows with their content — each in its own BEGIN/COMMIT with the lineage gate enlisted',
+    canonicalSectionSeeds: true,
   },
   {
     file: 'server/services/protocol-development/protocol-development-service.ts',
@@ -359,7 +361,7 @@ const HELPER = {
 function helperEnforcesGate() {
   const abs = path.join(ROOT, HELPER.file);
   if (!fs.existsSync(abs)) return false;
-  const src = fs.readFileSync(abs, 'utf8');
+  const src = stripComments(fs.readFileSync(abs, 'utf8'));
   return (
     /replaceAuthorSpans\s*\(/.test(src) &&
     passesLastArg(src, 'replaceAuthorSpans', 'exec') &&
@@ -471,7 +473,13 @@ for (const target of GUARDED) {
     txFindings.push(TRANSACTION);
   }
 
-  const missing = [...txFindings, ...gateFindings(src)];
+  const missing = target.canonicalSectionSeeds
+    ? [...authoringTransactionFindings(Object.fromEntries(Object.entries(AUTHORING_TRANSACTION).map(([name, file]) => {
+      const helperPath = path.join(ROOT, file);
+      return [name, fs.existsSync(helperPath) ? fs.readFileSync(helperPath, 'utf8') : undefined];
+    }))), ...(helperEnforcesGate() ? [] : ['canonical author-lineage primitive is hollowed out'])]
+      .map(message => ({ id: 'authoring-transaction-lineage', message }))
+    : [...txFindings, ...gateFindings(src)];
 
   if (missing.length === 0) {
     console.log(`[ci:lineage-save-gate] ok  ${target.file}`);

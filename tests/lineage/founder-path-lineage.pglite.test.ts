@@ -60,6 +60,8 @@
  * founder-path-lineage.hops-filing.ts (7–8 and the walks).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { createHash } from 'node:crypto';
+import { receiptReport } from '../../server/services/submission-gateways/__tests__/support/as2-cms-fixture';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
 import { T, buildWorld, baselineProblems, type World } from './founder-path-lineage.world';
 import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault, hopAdopt } from './founder-path-lineage.hops-authoring';
@@ -72,6 +74,7 @@ const h = vi.hoisted(() => ({
   objects: new Map<string, { bytes: Buffer; mime: string; filename: string; orgId: number }>(),
   /** Every byte string that left for the agency. */
   wire: [] as Buffer[],
+  mic: '',
 }));
 
 vi.mock('../../server/db', () => ({
@@ -161,18 +164,28 @@ vi.mock('../../server/services/enhancedEmbeddingService', async (importOriginal)
   };
 });
 /* The agency wire, and only the wire: the real FDA ESG gateway, its guard and
-   its transmittal ledger run; the AS2 POST, the MDN verdict and the body
-   signature (which needs the sponsor's real key) are stubbed. */
+   its transmittal ledger run; the AS2 POST and CMS envelope/receipt signature
+   primitives (which need the parties' real keys) are stubbed. The envelope
+   preserves package bytes so the walk checks their hash through the ledger. */
+vi.mock('../../server/services/submission-gateways/as2-cms', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../server/services/submission-gateways/as2-cms')>();
+  return {
+    ...actual,
+    buildAs2CmsEnvelope: async ({ body, contentType, filename }: { body: Buffer; contentType: string; filename: string }) => {
+      h.mic = createHash('sha256').update(actual.as2PayloadEntity(body, contentType, filename)).digest('base64');
+      return { body, contentType, mic: h.mic, micAlgorithm: 'sha-256' as const };
+    },
+    verifyAs2CmsReceipt: async (body: Buffer) => body,
+  };
+});
 vi.mock('../../server/services/submission-gateways/as2-transport', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../server/services/submission-gateways/as2-transport')>();
   return {
     ...actual,
-    signAs2Body: () => 'stub-signature',
-    postAs2: async (opts: { body: Buffer }) => {
+    postAs2: async (opts: { body: Buffer; headers: Record<string, string> }) => {
       h.wire.push(Buffer.from(opts.body));
-      return { httpStatus: 200, headers: { 'message-id': '<stub-mdn@fda.example>' }, body: Buffer.from('stub MDN: processed') };
+      return { httpStatus: 200, headers: { 'message-id': '<stub-mdn@fda.example>', 'content-type': 'application/pkcs7-mime' }, body: receiptReport(opts.headers['Message-ID'], h.mic) };
     },
-    classifyAs2Delivery: () => ({ kind: 'RECEIVED', httpStatus: 200, responseRaw: 'stub MDN: processed', receiptId: '<stub-mdn@fda.example>' }),
   };
 });
 

@@ -5,6 +5,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import type { DocumentWorkbenchProps } from '../editor/DocumentWorkbench';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const host = vi.hoisted(() => ({ current: null as DocumentWorkbenchProps | null }));
@@ -24,6 +26,8 @@ const PID = 'bbbbbbbb-0000-4000-8000-000000000001';
 const OTHER = 'bbbbbbbb-0000-4000-8000-000000000002';
 const DOC = 'dddddddd-0000-4000-8000-000000000001';
 const NEXT = 'dddddddd-0000-4000-8000-000000000002';
+const actor = (id = 7, organizationId = 12) => ({ id: String(id), organizationId: String(organizationId), roles: ['admin'], permissions: ['governed:write'] });
+const bearer = (userId = 7, organizationId = 12, visit = 'original') => `fixture.${btoa(JSON.stringify({ userId, organizationId, visit }))}.synthetic`;
 const row = (id = DOC) => ({ id, title: 'Saved working document',
   module: 'M3', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1 });
 const documentRow = (id = DOC, programId = PID) => ({ ...row(id), client_program_id: programId });
@@ -52,10 +56,76 @@ async function canvas() {
 }
 beforeEach(() => {
   host.current = null; localStorage.clear(); sessionStorage.clear();
+  clearAuthToken();
+  authService.setToken(bearer(), actor(), 'fixture-refresh', 3600);
   publishShellProject({ id: PID });
   apiRequest.mockReset().mockImplementation(normal);
 });
-afterEach(() => { cleanup(); delete window.C2C_PROJECT; localStorage.clear(); sessionStorage.clear(); });
+afterEach(() => {
+  cleanup(); authService.endSession(null); clearAuthToken(); delete window.C2C_PROJECT;
+  localStorage.clear(); sessionStorage.clear(); vi.unstubAllGlobals();
+});
+
+async function replaceHostCredentials(transition: string) {
+  if (transition === 'account') authService.setToken(bearer(8), actor(8), 'fixture-refresh-8', 3600);
+  else if (transition === 'organization') authService.setToken(bearer(7, 13), actor(7, 13), 'fixture-refresh-13', 3600);
+  else if (transition === 'session') authService.setToken(bearer(7, 12, 'replacement'), actor(), 'fixture-refresh-new', 3600);
+  else if (transition === 'bearer') setAuthToken(bearer(8));
+  else if (transition === 'in-place account') (authService.getUser() as { id: string }).id = '8';
+  else if (transition === 'in-place organization') (authService.getUser() as { organizationId: string }).organizationId = '13';
+  else {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ accessToken: bearer(7, 12, 'refreshed'), refreshToken: 'fixture-refresh-next', expiresIn: 3600 }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } })));
+    expect(await authService.refreshToken()).toBe(true);
+  }
+}
+
+describe.each(['canvas', 'working list'] as const)('the actual %s host retains its read owner', kind => {
+  it('accepts a fresh verified read after a genuine same-session refresh with exact current headers', async () => {
+    if (kind === 'canvas') await canvas();
+    else {
+      render(<DocumentAuthoring onNav={vi.fn()} surface={{ id: 'document-authoring' } as never} segment="biotech" />);
+      await waitFor(() => expect(host.current?.docsState).toBe('ready'));
+    }
+    const session = authService.captureSessionReadGuard();
+    await act(async () => { await replaceHostCredentials('same-session refresh'); });
+    expect(session.sameRevision()).toBe(true);
+    expect(session.credentialsCurrent()).toBe(false);
+    const before = apiRequest.mock.calls.length;
+    let confirmed: unknown;
+    await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
+    expect(confirmed).toBe(true);
+    const reads = apiRequest.mock.calls.slice(before).filter(([, path]) => path.startsWith('/api/authoring/docs'));
+    expect(reads).toHaveLength(kind === 'canvas' ? 2 : 1);
+    for (const [method, , body, headers] of reads) {
+      expect(method).toBe('GET');
+      expect(body).toBeUndefined();
+      expect(headers).toEqual({ Authorization: `Bearer ${bearer(7, 12, 'refreshed')}`, 'x-organization-id': '12' });
+    }
+  });
+
+  it.each(['account', 'organization', 'session', 'bearer', 'same-session refresh', 'in-place account', 'in-place organization'])('refuses a delayed verified refresh after %s changes', async transition => {
+    if (kind === 'canvas') await canvas();
+    else {
+      render(<DocumentAuthoring onNav={vi.fn()} surface={{ id: 'document-authoring' } as never} segment="biotech" />);
+      await waitFor(() => expect(host.current?.docsState).toBe('ready'));
+    }
+    const previousTitle = host.current!.docs[0].title;
+    const pending = deferred<Response>();
+    apiRequest.mockImplementationOnce(() => pending.promise);
+    let checking!: Promise<boolean>;
+    act(() => { checking = host.current!.refreshCreationContext!(); });
+    await act(async () => { await replaceHostCredentials(transition); });
+    const stale = kind === 'canvas'
+      ? { success: true, document: { ...documentRow(), title: 'Private response from the previous read owner' } }
+      : { success: true, documents: [{ ...workingRow(), title: 'Private response from the previous read owner' }] };
+    let confirmed: unknown;
+    await act(async () => { pending.resolve(ok(stale)); confirmed = await checking; });
+    expect(confirmed).toBe(false);
+    expect(host.current!.docs[0].title).toBe(previousTitle);
+    expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+});
 
 describe('pinned canvas recovery confirms only the current actual record read', () => {
   it.each([

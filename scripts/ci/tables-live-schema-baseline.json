@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
   "referencedCount": 752,
-  "count": 36,
+  "count": 33,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -13,9 +13,6 @@
     ],
     "agent_runtime.threads": [
       "server/services/cognitive-ecosystem/langgraph-orchestrator.service.ts"
-    ],
-    "ai_feedback": [
-      "server/routes/c2c/context-intelligence.ts"
     ],
     "assembly_audit_logs": [
       "server/services/AssemblyLine.ts"
@@ -30,14 +27,8 @@
     "compliance.check_access": [
       "server/services/cortexComplianceService.ts"
     ],
-    "correspondences": [
-      "server/services/ana-ri/mdx-proactive-signals.ts"
-    ],
     "ectd_v4.submissions": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
-    ],
-    "enterprise_integration_credentials": [
-      "server/services/integrations/credentialVault.ts"
     ],
     "external_evidence_documents": [
       "server/routes/external-evidence.ts",

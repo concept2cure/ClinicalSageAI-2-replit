@@ -1837,6 +1837,7 @@ export class AdvancedRAGPipeline {
          AND project_id = $3
          ${profileClause}
          AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND embedding IS NOT NULL
          AND 1 - (embedding <=> $1::vector) >= $${thresholdIdx}
          ${categoryClause}

@@ -49,7 +49,7 @@
  */
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { readDocumentRecord, type DocRow, type SectionRow } from './documentRecordRead';
+import { captureDocumentRecordReadOwner, readDocumentRecord, type DocRow, type SectionRow } from './documentRecordRead';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
@@ -228,13 +228,17 @@ export function DocumentCanvas({
   const load = useCallback(async (quiet = false, recovery = false) => {
     const scope = loadScope.current;
     if (scope.key !== `${docId}:${programId}`) return false;
+    const owner = recovery ? captureDocumentRecordReadOwner() : null;
+    if (recovery && !owner) return false;
     const sequence = ++loadSequence.current;
+    const currentRead = () => alive.current && loadScope.current === scope && loadSequence.current === sequence
+      && owner?.current() !== false;
     if (!quiet) {
       setState('loading');
       setError(null);
     }
-    const read = await readDocumentRecord(docId, recovery, programId);
-    if (!alive.current || loadScope.current !== scope || loadSequence.current !== sequence) return false;
+    const read = await readDocumentRecord(docId, recovery, programId, owner?.headers);
+    if (!currentRead()) return false;
     if (!read.ok) {
       /* A refresh that failed is not an empty document: keep the record on
          screen and say the refresh did not land. */

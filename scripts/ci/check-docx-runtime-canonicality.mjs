@@ -26,6 +26,7 @@
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { assertAllowlistPathsExist } from './lib/allowlist-paths.mjs';
+import { isReviewedDocumentationRenderer } from './lib/reviewed-documentation-renderers.mjs';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '../..');
 
@@ -231,8 +232,9 @@ console.log(`\n── Python \`python-docx\` imports (${pyImports.length} found)
 for (const hit of pyImports) {
   // Only check .py files
   if (!hit.file.endsWith('.py')) continue;
-  const approved = APPROVED_PYTHON.has(hit.file) || isTestFile(hit.file);
-  const tag = approved ? '✓ approved' : '✗ VIOLATION';
+  const documentationOnly = isReviewedDocumentationRenderer(ROOT, hit.file);
+  const approved = APPROVED_PYTHON.has(hit.file) || isTestFile(hit.file) || documentationOnly;
+  const tag = documentationOnly ? '✓ reviewed documentation bytes' : approved ? '✓ approved' : '✗ VIOLATION';
   console.log(`  [${tag}] ${hit.file}:${hit.lineNo}`);
   if (!approved) {
     violations.push({
@@ -248,7 +250,7 @@ for (const hit of pyImports) {
 
 console.log('\n══════════════════════════════════════════════════════════════');
 if (violations.length === 0) {
-  console.log('Result: PASS — all DOCX generation is within approved runtimes.\n');
+  console.log('Result: PASS — no unreviewed DOCX entry points; fixed-byte study tools are classified separately.\n');
   console.log('Approved runtimes:');
   console.log('  1. JS docx    → server/services/docx/docxFactory.ts');
   console.log('                  server/services/docxGenerator.ts');

@@ -76,6 +76,7 @@ export function productionBuilds(outDir = path.join(root, 'dist')) {
       options: {
         ...SERVER_BUILD_OPTIONS,
         entryPoints: [path.join(root, 'server/index.ts')],
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- outDir is operator/test build configuration; this CLI and the production-bundle test are its only callers, and the output entry name is fixed.
         outfile: path.join(outDir, 'index.js'),
         define: {
           'process.env.NODE_ENV': '"production"',
@@ -91,6 +92,7 @@ export function productionBuilds(outDir = path.join(root, 'dist')) {
       options: {
         ...SERVER_BUILD_OPTIONS,
         entryPoints: [path.join(root, 'scripts/ops/verify-audit-chain.mjs')],
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- outDir is the same operator/test build configuration; this fixed verifier entry must ship beside the API bundle and receives no application/request input.
         outfile: path.join(outDir, 'ops/verify-audit-chain.mjs'),
       },
     },
@@ -105,7 +107,7 @@ if (isMain) {
       await build(options);
       console.log(`✅ ${label} build complete → ${path.relative(root, options.outfile)}`);
     } catch (err) {
-      console.error(`❌ ${label} build failed:`, err.message);
+      console.error('❌ %s build failed: %s', label, err.message);
       process.exit(1);
     }
   }

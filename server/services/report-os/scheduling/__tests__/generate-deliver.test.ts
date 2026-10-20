@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ validate: vi.fn(), compute: vi.fn(), persist: vi.fn(), notification: vi.fn(), audit: vi.fn(), query: vi.fn() }));
-vi.mock('../configuration', () => ({ validateSubscriptionConfiguration: mocks.validate }));
+vi.mock('../configuration', async original => ({ ...await original<typeof import('../configuration')>(), validateSubscriptionConfiguration: mocks.validate }));
+vi.mock('../../../../db', () => ({ pool: { query: mocks.query }, getPool: () => ({ query: mocks.query }), db: {} }));
 vi.mock('../../compute-run', () => ({ computeRunForType: mocks.compute }));
 vi.mock('../../persistence', () => ({ persistReportRun: mocks.persist }));
 vi.mock('../../../notifications/notification-service', () => ({ createNotification: mocks.notification }));
@@ -66,4 +67,14 @@ describe('governed scheduled output', () => {
     await expect(generateAndDeliver(sub, now)).rejects.toThrow('not authorized');
     expect(mocks.persist).not.toHaveBeenCalled(); expect(mocks.notification).not.toHaveBeenCalled();
   });
+});
+
+
+it('supplies the real scheduled creator and explicit worker executor to the same calendar dispatcher', async () => {
+  mocks.query.mockImplementation(async (sql: string) => ({ rows: sql.includes('SELECT ou.role') ? [{ role: 'manager' }] : sql.includes('FROM projects p LEFT JOIN') ? [{ id: 100, owner_id: 42, created_by_id: 42, settings: {}, visibility: 'private', members: [], review_assigned: false }] : [{ id: sub.id }] }));
+  mocks.validate.mockResolvedValueOnce({ reportType: { label: 'Lifecycle Obligation Calendar' }, availability: { engine: 'domain', computedScope: 'organization' }, recipientUserIds: [42] });
+  await generateAndDeliver({ ...sub, reportTypeId: 'lifecycle.obligation_calendar' }, now);
+  const asked = mocks.compute.mock.calls[0][0];
+  expect(asked.engine).toBe('domain'); expect(asked.typeId).toBe('lifecycle.obligation_calendar');
+  expect(asked.recordContext).toEqual({ userId: 42, executor: { query: mocks.query } });
 });

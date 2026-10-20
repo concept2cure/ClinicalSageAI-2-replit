@@ -256,6 +256,65 @@ function realNetwork(doc, key) {
   return `project:${key}`;
 }
 
+// /init rewrites these image-supplied configs. An empty tmpfs would hide them;
+// Docker's anonymous volume copy-up keeps the exact pinned image defaults.
+function copiedWritableVolume(volume) {
+  return Boolean(volume) && volume.type === 'volume'
+    && (volume.read_only ?? false) === false
+    && (volume.volume?.nocopy ?? false) === false;
+}
+
+function scannerVolumeProblems(doc, scanner) {
+  const problems = [];
+  const volumes = Array.isArray(scanner.volumes) ? scanner.volumes : [];
+  const config = volumes.filter(v => v?.target === '/etc/clamav');
+  if (config.length !== 1 || !copiedWritableVolume(config[0]) || config[0].source !== undefined) {
+    problems.push('scanner needs an anonymous copy-up config volume at /etc/clamav for the pinned /init');
+  }
+  const database = volumes.filter(v => v?.target === '/var/lib/clamav');
+  const db = database[0];
+  if (database.length !== 1 || !copiedWritableVolume(db) || typeof db.source !== 'string'
+    || !Object.hasOwn(doc.volumes ?? {}, db.source)) {
+    problems.push('scanner needs a declared named signature database volume at /var/lib/clamav');
+  }
+  if (volumes.some(v => !['/etc/clamav', '/var/lib/clamav'].includes(v?.target))) {
+    problems.push('scanner has an unexpected writable mount outside config and signature database paths');
+  }
+  return problems;
+}
+
+function scannerTmpfsProblems(scanner) {
+  const required = {
+    '/run': ['rw', 'noexec', 'nosuid', 'size=16m', 'mode=0755'],
+    '/tmp': ['rw', 'noexec', 'nosuid', 'size=1g', 'mode=1777'],
+    '/var/log/clamav': ['rw', 'noexec', 'nosuid', 'size=16m', 'mode=0770', 'uid=100', 'gid=101'],
+  };
+  const mounts = Array.isArray(scanner.tmpfs) ? scanner.tmpfs.map(String) : [];
+  const problems = [];
+  for (const [target, options] of Object.entries(required)) {
+    const matching = mounts.filter(m => m.split(':')[0] === target);
+    const actual = new Set((matching[0] ?? '').split(':').slice(1).join(':').split(','));
+    if (matching.length !== 1 || actual.size !== options.length || !options.every(option => actual.has(option))) {
+      problems.push(`scanner required tmpfs ${target} must retain the pinned image's bounded writable runtime path`);
+    }
+  }
+  if (mounts.some(m => !Object.hasOwn(required, m.split(':')[0]))) {
+    problems.push('scanner has an unexpected writable tmpfs outside runtime, temporary and log paths');
+  }
+  return problems;
+}
+
+function scannerHardeningProblems(doc, scanner) {
+  const problems = [...scannerVolumeProblems(doc, scanner), ...scannerTmpfsProblems(scanner)];
+  if (scanner.read_only !== true) problems.push('scanner read_only must be true');
+  const privilegeOptions = Array.isArray(scanner.security_opt)
+    ? scanner.security_opt.filter(option => String(option).startsWith('no-new-privileges')) : [];
+  if (privilegeOptions.length !== 1 || privilegeOptions[0] !== 'no-new-privileges:true') {
+    problems.push('scanner security_opt must include no-new-privileges:true');
+  }
+  return problems;
+}
+
 /**
  * The virus scanner a production app service needs. Production refuses every
  * upload when it cannot scan (server/middleware/uploadSafety.ts) and, since
@@ -282,6 +341,7 @@ export function checkScanner(doc, serviceName, expect) {
   if (!scanner || scannerName === serviceName) {
     return [`CLAMAV_HOST "${scannerName}" names no service in this file`];
   }
+  problems.push(...scannerHardeningProblems(doc, scanner));
   // `extends` pulls keys from another file this gate does not read, so what it
   // checks would not be what Compose runs.
   for (const [role, name, svc] of [['app', serviceName, app], ['scanner', scannerName, scanner]]) {
@@ -496,6 +556,17 @@ function selfTest(required) {
       services: {
         clamav: {
           image: expectScanner.image,
+          read_only: true,
+          security_opt: ['no-new-privileges:true'],
+          volumes: [
+            { type: 'volume', target: '/etc/clamav' },
+            { type: 'volume', source: 'clamav-db', target: '/var/lib/clamav' },
+          ],
+          tmpfs: [
+            '/run:rw,noexec,nosuid,size=16m,mode=0755',
+            '/tmp:rw,noexec,nosuid,size=1g,mode=1777',
+            '/var/log/clamav:rw,noexec,nosuid,size=16m,mode=0770,uid=100,gid=101',
+          ],
           environment: {
             CLAMD_CONF_StreamMaxLength: expectScanner.streamMaxLength,
             CLAMD_CONF_AlertExceedsMax: 'yes',
@@ -511,12 +582,27 @@ function selfTest(required) {
         litellm: { image: 'ghcr.io/berriai/litellm:main-stable', profiles: ['llm'], networks: ['main'] },
       },
       networks: { main: { driver: 'bridge' }, scan: { driver: 'bridge' } },
+      volumes: { 'clamav-db': {} },
     };
     edit(doc.services, doc);
     return YAML.stringify(doc);
   };
   const scannerCases = [
     ['a stack with its scanner passes', stack(), []],
+    ['a scanner without a read-only root', stack(s => { delete s.clamav.read_only; }), ['read_only must be true']],
+    ['a scanner with a string instead of read-only true', stack(s => { s.clamav.read_only = 'true'; }), ['read_only must be true']],
+    ['a scanner without no-new-privileges', stack(s => { delete s.clamav.security_opt; }), ['no-new-privileges:true']],
+    ['a scanner that disables no-new-privileges', stack(s => { s.clamav.security_opt = ['no-new-privileges:false']; }), ['no-new-privileges:true']],
+    ['contradictory no-new-privileges options', stack(s => { s.clamav.security_opt.push('no-new-privileges:false'); }), ['no-new-privileges:true']],
+    ['an empty config mount that hides image defaults', stack(s => { s.clamav.volumes[0].volume = { nocopy: true }; }), ['copy-up config volume']],
+    ['a config mount reused across image recreation', stack(s => { s.clamav.volumes[0].source = 'old-config'; }), ['copy-up config volume']],
+    ['a missing database volume', stack(s => { s.clamav.volumes.pop(); }), ['named signature database volume']],
+    ['an undeclared database volume', stack((s, d) => { delete d.volumes; }), ['named signature database volume']],
+    ['a scanner with an extra writable root mount', stack(s => { s.clamav.volumes.push({ type: 'volume', target: '/' }); }), ['unexpected writable mount']],
+    ['missing runtime tmpfs mounts', stack(s => { delete s.clamav.tmpfs; }), ['required tmpfs']],
+    ['an incorrectly owned log tmpfs', stack(s => { s.clamav.tmpfs[2] = '/var/log/clamav:rw,size=16m'; }), ['required tmpfs']],
+    ['contradictory temporary filesystem options', stack(s => { s.clamav.tmpfs[1] += ',ro'; }), ['required tmpfs']],
+    ['an extra writable tmpfs', stack(s => { s.clamav.tmpfs.push('/usr:rw'); }), ['unexpected writable tmpfs']],
     [
       'no clamav service',
       stack(s => {
@@ -677,7 +763,7 @@ function selfTest(required) {
     [
       'a scanner whose host port arrives through a merge key',
       stack().replace(
-        /^services:\n  clamav:\n/m,
+        /^services:\n {2}clamav:\n/m,
         'x-scanner: &scanner\n  ports:\n    - 127.0.0.1:3310:3310\nservices:\n  clamav:\n    <<: *scanner\n'
       ),
       ['must publish no ports'],

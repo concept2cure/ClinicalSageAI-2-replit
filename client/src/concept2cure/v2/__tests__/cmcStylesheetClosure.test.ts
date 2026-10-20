@@ -87,9 +87,22 @@ function classTokens(src: string): Set<string> {
   return out;
 }
 
-const defines = (css: string, token: string) => new RegExp(`\\.${token.replace(/[-]/g, '\\-')}(?![\\w-])`).test(css);
+function defines(css: string, token: string): boolean {
+  const selector = `.${token}`;
+  for (let at = css.indexOf(selector); at !== -1; at = css.indexOf(selector, at + 1)) {
+    if (!/[\w-]/.test(css.charAt(at + selector.length))) return true;
+  }
+  return false;
+}
 
 describe('the CMC chunk loads the stylesheets its agency-question view draws with', () => {
+  it('requires the complete class token rather than an extended identifier', () => {
+    expect(defines('.cc-comm-issues-extra {} .cc-comm-issues2 {}', 'cc-comm-issues')).toBe(false);
+    expect(defines('.cc-comm-issues_2 {}', 'cc-comm-issues')).toBe(false);
+    expect(defines('.cc-comm-issues:hover {}', 'cc-comm-issues')).toBe(true);
+    expect(defines('.cc-comm-issues', 'cc-comm-issues')).toBe(true);
+  });
+
   it('every class cmcAgencyQuestions.tsx names is defined by a stylesheet CMC or the shell loads', () => {
     const view = path.join(V2, 'surfaces', 'cmcAgencyQuestions.tsx');
     const loaded = closure([path.join(V2, 'surfaces', 'CmcModule.tsx'), path.join(V2, 'V2App.tsx'), path.join(CLIENT, 'main.tsx')]);

@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { z } from 'zod';
 import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import { governedActorId } from '../middleware/orgMembership';
@@ -8,23 +8,29 @@ import type { CompanyDocumentProfile } from '../../shared/company-documents';
 import { renderDocxWithTemplate } from '../services/templates';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
 import { archiveCompanyLegalDocument, companyDocumentsFailure, companyProfileHash, companyLetterheadForPurpose, readCompanyDocumentProfile,
-  registerCompanyLegalDocument, updateCompanyDocumentProfile } from '../services/company-documents/profile';
+  registerCompanyLegalDocument, updateCompanyDocumentProfile, requireCompanyDocumentManager } from '../services/company-documents/profile';
 import { parseCompanyInput } from '../services/company-documents/validation';
 import companyDocumentActions from './company-document-actions';
+import { receiveTemplateFile, extractTemplatePreview } from './c2c/template-upload';
 
 const router = Router();
 router.use((req, res, next) => {
   if (!usableOrgId(authedOrgId(req)) || !governedActorId(req)) return res.status(403).json({ error: 'AUTH_REQUIRED', message: 'An authenticated organization member is required.' });
   next();
 });
-const handle = (work: (req: Request, res: Response) => Promise<unknown>) => async (req: Request, res: Response) => {
-  try { await work(req, res); } catch (error) {
+const handle = (work: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) => async (req: Request, res: Response, next: NextFunction) => {
+  try { await work(req, res, next); } catch (error) {
     if (isUnauditedExportRefusal(error)) return res.status(503).json({ error: 'UNAUDITED_EXPORT_REFUSED', message: 'The document was not delivered because its export record could not be saved.' });
     const failure = companyDocumentsFailure(error);
     if (failure.status === 500) console.error('[company-documents]', error instanceof Error ? error.message : 'operation failed');
     return res.status(failure.status).json({ error: failure.code, message: failure.message });
   }
 };
+
+router.post('/letterhead/extract', handle(async (req, _res, next) => {
+  await requireCompanyDocumentManager(req);
+  next();
+}), receiveTemplateFile, handle(extractTemplatePreview));
 
 router.get('/', handle(async (req, res) => { res.json(await readCompanyDocumentProfile(req)); }));
 router.put('/', handle(async (req, res) => { res.json(await updateCompanyDocumentProfile(req, req.body)); }));

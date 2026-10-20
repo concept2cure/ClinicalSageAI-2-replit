@@ -77,11 +77,23 @@ const sqlIn = (dir) => {
 
 /** A named JS array literal of string entries, read out of the installer. */
 function arrayFrom(src, name) {
+  const declarations = [...src.matchAll(/\bconst[ \t]+([A-Za-z_$][\w$]*)[ \t]*=[ \t]*\[/g)]
+    .filter(match => match[1] === name);
+  if (declarations.length !== 1) throw new Error(`${TAG} expected one literal ${name} declaration in ${INSTALLER}`);
   // Both lists are indented inside the installer (one at module scope, one
-  // inside the step-3 block), so the close is matched with its indentation.
-  const m = src.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\n\\s*\\];`));
-  if (!m) throw new Error(`${TAG} ${name} not found in ${INSTALLER} — this gate models that list and must be updated with it`);
-  return [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  // inside the step-3 block). Read only the named list's literal body, rather
+  // than treating its name as a regular expression or ignoring computed entries.
+  const declaration = declarations[0];
+  const tail = src.slice(declaration.index + declaration[0].length);
+  const close = /\n[ \t]*\];/.exec(tail);
+  if (!close) throw new Error(`${TAG} ${name} has no literal array terminator in ${INSTALLER}`);
+  const entries = [];
+  const remainder = tail.slice(0, close.index).replace(/'([^'\\\r\n]+)'/g, (_literal, entry) => {
+    entries.push(entry);
+    return '';
+  });
+  if (/[^\s,]/.test(remainder)) throw new Error(`${TAG} ${name} must contain only quoted literal filenames in ${INSTALLER}`);
+  return entries;
 }
 
 // Comments are stripped FIRST: both lists carry explanatory comments between
@@ -226,6 +238,24 @@ if (process.argv.includes('--selftest')) {
       'CREATE TABLE comms (event_id text PRIMARY KEY);\nCREATE TABLE q2 (e text REFERENCES public.comms(event_id));'],
   ];
   let bad = 0;
+  const arrayCases = [
+    ['the exact named literal array, beside an unrelated inline array',
+      "const OTHER = ['unrelated.sql'];\nconst EXPECTED = [\n  'db/migrations/one.sql',\n  'db/migrations/two.sql',\n];", ['db/migrations/one.sql', 'db/migrations/two.sql']],
+    ['a computed filename must not be mistaken for its literal prefix',
+      "const EXPECTED = [\n  'db/migrations/one.sql' + suffix,\n];", null],
+    ['a spread must not silently hide creator entries',
+      "const EXPECTED = [\n  ...otherCreators,\n];", null],
+    ['duplicate declarations cannot choose a convenient first list',
+      "const EXPECTED = [\n  'one.sql',\n];\nconst EXPECTED = [\n  'two.sql',\n];", null],
+  ];
+  for (const [name, source, expected] of arrayCases) {
+    let got;
+    let refused = false;
+    try { got = arrayFrom(source, 'EXPECTED'); } catch { refused = true; }
+    const ok = expected === null ? refused : !refused && JSON.stringify(got) === JSON.stringify(expected);
+    if (!ok) bad++;
+    console.log(`  ${ok ? '✓' : '✗'} ${name}`);
+  }
   for (const [name, expected, sql] of cases) {
     const reachable = new Set(name.includes('step 2 pushed') ? ['auth_docs'] : []);
     const got = unreachableDeps({ file: 'migrations/probe.sql', sql, reachable, dbTreeCreators: dbTree }).length;

@@ -37,7 +37,7 @@ const manifestFor = (sources: AssemblySourceSelector[]): AssemblySourceManifest 
   entries: sources.map(source => ({ source, title: 'Exact retained Vault report', contentHash: HASH, extractedTextSha256: 'd'.repeat(64), version: '2',
     originalFileAvailable: false, disposition: 'keep_data', span: { start: 11, end: 111, totalChars: 400, sha256: 'e'.repeat(64) } })) });
 const manifest = manifestFor([selector]);
-const currentDoc = { id: CURRENT, title: 'Current working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1 };
+const currentDoc = { id: CURRENT, client_program_id: PROGRAM, title: 'Current working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1 };
 const targetDoc = { ...currentDoc, id: TARGET, title: 'Vault assembly target' };
 const currentSection: AssemblySection = { id: SECTION, doc_id: CURRENT, code: '3.2.S.1', title: 'Current general information', content: '<p>Existing saved current work.</p>', order_index: 0, updated_at: AT };
 const targetSection: AssemblySection = { id: NEXT, doc_id: TARGET, code: '3.2.S.1', title: 'Target general information', content: '', order_index: 0, updated_at: AT };
@@ -62,11 +62,13 @@ for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as 
   prototype.getClientRects ??= () => [];
   prototype.getBoundingClientRect ??= () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 });
 }
+const bearer = `fixture.${btoa(JSON.stringify({ userId: 381, organizationId: 38 }))}.synthetic`;
+const headers = { Authorization: `Bearer ${bearer}`, 'x-organization-id': '38' };
 const user = { id: '381', organizationId: '38', organizationName: null, email: 'project-files@example.test', firstName: 'Project', lastName: 'Author', displayName: 'Project file author', roles: ['author'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false };
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
-  await authService.adoptSession('synthetic-project-files-session'); publishShellProject({ id: PROGRAM, title: 'Source program' });
+  await authService.adoptSession(bearer); publishShellProject({ id: PROGRAM, title: 'Source program' });
   apiRequest.mockReset().mockImplementation(async (method: string, path: string, input?: AssemblyPreviewInput) => {
     if (readBodies.has(path)) return ok(readBodies.get(path));
     if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources?`)) return ok({ sources: [], projectId: PROGRAM, total: 0, currentTotal: 0 });
@@ -78,7 +80,7 @@ beforeEach(async () => {
     return ok({ success: true, sources: [], revisions: [], events: [], comments: [] });
   });
 });
-afterEach(() => { cleanup(); __resetCeremonies(); clearEditorTarget(); localStorage.clear(); sessionStorage.clear(); publishShellProject({ id: '' }); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); authService.endSession(null); __resetCeremonies(); clearEditorTarget(); localStorage.clear(); sessionStorage.clear(); publishShellProject({ id: '' }); vi.unstubAllGlobals(); });
 function editor() { return document.querySelector('.tiptap') as HTMLElement & { editor: Editor }; }
 function postCalls(suffix: string) { return apiRequest.mock.calls.filter(([method, path]) => method === 'POST' && String(path).endsWith(suffix)); }
 function deferred<T>() { let resolve!: (value: T) => void; return { promise: new Promise<T>(done => { resolve = done; }), resolve }; }
@@ -137,8 +139,11 @@ describe('Project files source assembly reaches the one editor', () => {
     expect(screen.getByTestId('assembly-selected-sources').textContent).not.toContain(`up-${VAULT}`);
     expect(props.onNav).not.toHaveBeenCalled(); expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
     await explicitBuild(withAna);
-    for (const call of postCalls('/assembly/preview')) expect(call[2].sources).toEqual([selector]);
+    for (const call of postCalls('/assembly/preview')) {
+      expect(call[2].sources).toEqual([selector]); expect(call[3]).toEqual(headers);
+    }
     expect(postCalls('/assembly/commit')[0][2].sources).toEqual([selector]);
+    expect(postCalls('/assembly/commit')[0][3]).toEqual(headers);
     expect(postCalls('/ai/draft')).toHaveLength(withAna ? 1 : 0);
     if (withAna) {
       expect(postCalls('/ai/draft')[0][2].sources).toEqual(manifest);

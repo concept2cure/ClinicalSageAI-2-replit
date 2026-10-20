@@ -32,6 +32,16 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const GATE = path.join(repoRoot, 'scripts', 'ci', 'check-unkeyed-request-tables.mjs');
 
+// The modeled deploy generator must retain its negative controls in the same
+// CI command as the end-to-end missing-column probes below.
+const parentPolicies = spawnSync(process.execPath, ['--test',
+  path.join(repoRoot, 'scripts/ci/__tests__/chained-parent-policy.test.mjs')],
+{ cwd: repoRoot, encoding: 'utf8' });
+if (parentPolicies.status !== 0) {
+  console.error((parentPolicies.stdout || '') + (parentPolicies.stderr || ''));
+  process.exit(1);
+}
+
 // Written into the real trees the gate walks, then removed. The names are
 // deliberately absurd so a leftover file after a crash is obviously debris.
 const SQL = path.join(repoRoot, 'db', 'migrations', '29990101_selftest_unkeyed_probe.sql');

@@ -7,7 +7,7 @@ import addFormats from 'ajv-formats';
 import { DRAFT_AUTHORING_DOCUMENT } from '../document-surface-tool-defs';
 import { batchDraftReceipt } from '../batch-draft-result';
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+const ajv = new Ajv({ strict: false });
 addFormats(ajv);
 const validate = ajv.compile(DRAFT_AUTHORING_DOCUMENT.input_schema);
 const fullText = 'x'.repeat(80_017) + 'Observed result: 12 of 30 💊 participants.' + 'z'.repeat(23);

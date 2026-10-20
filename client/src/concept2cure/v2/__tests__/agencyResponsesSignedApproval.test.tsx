@@ -110,6 +110,66 @@ beforeEach(() => {
   apiRequest.mockReset();
   fire.mockReset();
 });
+
+describe('a returned session refusal is never a recorded action', () => {
+  const reason = 'Record this from the agency letter.';
+  const message = 'Your session ended. Sign in again before recording this change.';
+  const actions = [
+    { open: 'Record question', title: 'Record a question', submit: 'Record question', suffix: '/questions',
+      fields: [[/^Question number/, 'Q3'], [/^Question text/, 'Provide the method validation.']] },
+    { open: 'Record commitment', title: 'Record a commitment', submit: 'Record commitment', suffix: '/questions/7/commitments',
+      fields: [[/^Type/, 'pmc'], [/^What was committed/, 'Provide stability follow-up.']] },
+    { open: 'Withdraw question', title: 'Withdraw this question', submit: 'Withdraw question', suffix: '/questions/7/withdraw', fields: [] },
+    { open: 'Record section', title: 'Record the section', submit: 'Record section', suffix: '/questions/7',
+      fields: [[/^CTD section/, '3.2.P.5.1']] },
+    { open: 'Set owner', title: 'Set the owner', submit: 'Record owner', suffix: '/questions/7/owner', fields: [[/^Owner/, '41']] },
+    { open: 'Mark as needing no response', title: 'Mark as needing no response', submit: 'Mark as needing no response', suffix: '/no-response-required', fields: [] },
+  ] as const;
+
+  it.each(actions)('keeps the $open form and its reason when the server returns 401', async action => {
+    const mutations: string[] = [];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method !== 'GET') {
+        mutations.push(url);
+        return new Response(JSON.stringify({ error: { code: 'SESSION_IDLE', message } }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (url === `/api/concept2cure/projects/${PID}/team`) return ok({ success: true, data: [{ userId: 41, name: 'Ines Okafor', role: 'member' }] });
+      return url === `${BASE}/questions` ? ok(payload(action.suffix === '/no-response-required' ? [] : [question()])) : ok({});
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: action.open }));
+    const dialog = await screen.findByRole('dialog', { name: action.title });
+    if (action.open === 'Set owner') await within(dialog).findByRole('option', { name: 'Ines Okafor (member)' });
+    for (const [label, value] of action.fields) fireEvent.change(within(dialog).getByLabelText(label), { target: { value } });
+    fireEvent.change(within(dialog).getByLabelText(/^Reason/), { target: { value: reason } });
+    fireEvent.click(within(dialog).getByRole('button', { name: action.submit }));
+    await waitFor(() => expect(fire).toHaveBeenCalledWith(expect.stringContaining(message), 'error'));
+    expect(mutations).toEqual([`${BASE}${action.suffix}`]);
+    expect((within(screen.getByRole('dialog', { name: action.title })).getByLabelText(/^Reason/) as HTMLInputElement).value).toBe(reason);
+    expect(fire.mock.calls.every(([, tone]) => tone === 'error')).toBe(true);
+  });
+
+  it('keeps the exact response edit and base revision after a returned 401', async () => {
+    const writes: unknown[] = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PUT') {
+        writes.push(body);
+        return new Response(JSON.stringify({ error: { code: 'SESSION_IDLE', message } }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+      return url === `${BASE}/questions` ? ok(payload([question()])) : ok({});
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit response' }));
+    fireEvent.change(screen.getByLabelText('Response'), { target: { value: 'Keep this exact response text.' } });
+    fireEvent.change(screen.getByLabelText('Reason for this change'), { target: { value: reason } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save response' }));
+    await waitFor(() => expect(fire).toHaveBeenCalledWith(expect.stringContaining(message), 'error'));
+    expect(writes).toEqual([{ responseText: 'Keep this exact response text.', expectedRevision: 2, reason }]);
+    expect((screen.getByLabelText('Response') as HTMLTextAreaElement).value).toBe('Keep this exact response text.');
+    expect((screen.getByLabelText('Reason for this change') as HTMLInputElement).value).toBe(reason);
+    expect(fire.mock.calls.every(([, tone]) => tone === 'error')).toBe(true);
+  });
+});
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 /** The password pre-check the dialog runs (POST /api/esignature/verify-password). */

@@ -99,6 +99,12 @@ const EXTRACTORS: { reportTypeId: string; extract: (s: Record<string, unknown> |
   },
 ];
 
+/** The cross-domain briefing retains its aggregate-only lifecycle dependency;
+ * detailed report requests continue through the actor-bound calendar provider. */
+function computeBriefingDomainReport(reportTypeId: string, orgId: number) {
+  return computeDomainReport(reportTypeId, orgId, reportTypeId === 'lifecycle.obligation_calendar' ? { aggregateOnly: true } : undefined);
+}
+
 /**
  * Build the prioritized briefing for an organization. Items are ordered
  * critical → warning → info, then by count descending.
@@ -108,7 +114,7 @@ export async function buildComplianceBriefing(orgId: number, options?: { strict?
   for (const { reportTypeId, extract } of EXTRACTORS) {
     let summary: Record<string, unknown> | undefined;
     try {
-      const report = await computeDomainReport(reportTypeId, orgId);
+      const report = await computeBriefingDomainReport(reportTypeId, orgId);
       if (!report && options?.strict) throw new Error(`No provider computes ${reportTypeId}.`);
       if (report) options?.onReport?.(report);
       summary = report?.summary;

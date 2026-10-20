@@ -102,7 +102,8 @@ import {
 // always were.
 import { createDocument, createSection } from '../services/authoring/authoring-documents';
 import { importSourceDocument } from '../services/authoring/authoring-source-import';
-import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload } from '../services/authoring/authoring-create-outcome';
+import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload, rollbackAuthoringTransaction, settleAuthoringTransactionFailure, type AuthoringTransactionState } from '../services/authoring/authoring-create-outcome';
+import { AuthoringSectionWriteOutcomeError, authoringSectionRecoveryPayload } from '../services/authoring/authoring-section-outcome';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
 import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
@@ -1964,6 +1965,7 @@ router.post('/sections', async (req: Request, res: Response) => {
       message: 'Section created successfully',
     });
   } catch (error) {
+    if (error instanceof AuthoringSectionWriteOutcomeError) return res.status(503).json(authoringSectionRecoveryPayload(error));
     console.error('Error creating section:', error);
     return serverError(res, logger, 'saving sections', error);
   }
@@ -4220,17 +4222,17 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     /* Whether the accepted content reached the bound filing, and when it did
        not, why — surfaced on the response exactly as the manual save does. */
     let governedCommit: CommitSectionResult | null = null;
+    const transaction: AuthoringTransactionState = { began: false, commitAttempted: false };
+    let acceptedDraftId: string | undefined;
     let acceptedAssemblySources: AssemblySourceManifest | undefined;
-    let commitAttempted = false;
-    let commitConfirmed = false;
-    let discardConnection: Error | undefined;
     try {
+      transaction.began = true;
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
 
       const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client, true);
       if (!candidate) {
-        await client.query('ROLLBACK').catch(() => {});
+        await rollbackAuthoringTransaction(client, transaction);
         return res.status(410).json({
           success: false,
           error: {
@@ -4240,6 +4242,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
           },
         });
       }
+      acceptedDraftId = candidate.id;
       generator = candidate.generator as Record<string, unknown> | null;
       assertEditorDraftNotTruncated(candidate.generator);
       const { reserveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
@@ -4362,21 +4365,16 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         client,
       );
 
-      commitAttempted = true;
+      transaction.commitAttempted = true;
       await client.query('COMMIT');
-      commitConfirmed = true;
-    } catch (err) {
-      if (commitAttempted && !commitConfirmed) {
-        discardConnection = new Error('Authoring draft acceptance commit is unconfirmed');
-        logger.error('AI draft accept outcome unconfirmed; discarding its connection', { sectionId, tenantId });
-        return draftAcceptUnconfirmed(res);
-      }
-      try { await client.query('ROLLBACK'); }
-      catch {
-        discardConnection = new Error('Authoring draft acceptance rollback is unconfirmed');
-        logger.error('AI draft accept rollback unconfirmed; discarding its connection', { sectionId, tenantId });
-        return draftAcceptUnconfirmed(res);
-      }
+      transaction.began = false;
+    } catch (caught) {
+      const recovery = { organizationId: tenantId, documentId: String(sectionResult.rows[0].doc_id), sectionId: String(sectionId), draftId: acceptedDraftId };
+      const err = await settleAuthoringTransactionFailure(client, transaction, caught, new AuthoringSectionWriteOutcomeError('ai-accept', recovery));
+      if (err instanceof AuthoringSectionWriteOutcomeError) return res.status(503).json(authoringSectionRecoveryPayload(err));
+      // Preserve the selected-source flow's conservative hold when its
+      // pre-COMMIT rollback failed; the shared lifecycle already marks eviction.
+      if (transaction.discardConnection) return draftAcceptUnconfirmed(res);
       const sourceFailure = assemblySourceErrorDetails(err);
       if (sourceFailure) return res.status(sourceFailure.status).json({ success: false, error: { code: sourceFailure.code, message: sourceFailure.message } });
       if (err instanceof DraftTruncatedError) {
@@ -4404,7 +4402,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         },
       });
     } finally {
-      client.release(discardConnection);
+      client.release(transaction.discardConnection);
     }
 
     res.json({

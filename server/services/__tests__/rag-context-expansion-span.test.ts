@@ -72,8 +72,7 @@ function outputName(item: string): string {
   return /(\w+)(?:::\w+)?$/.exec(item)?.[1] ?? item;
 }
 function selectedName(sql: string, column: string): string | null {
-  const re = new RegExp(`^${column.replace('.', '\\.')}(?:::\\w+)?$`, 'i');
-  const item = selectItems(sql).find(i => re.test(expressionOf(i)));
+  const item = selectItems(sql).find(i => expressionOf(i).replace(/::\w+$/, '').toLowerCase() === column.toLowerCase());
   return item ? outputName(item) : null;
 }
 const HIT_CASE = /^CASE\s+WHEN\s+c\.id(?:::\w+)?\s*=\s*\$(\d+)(?:::\w+)?\s+THEN\s+d\.extracted_text(?:\s+ELSE\s+NULL)?\s+END$/i;
@@ -122,6 +121,18 @@ function neighbourStatement(query: ReturnType<typeof pipeline>['query']): [strin
 }
 
 const occurrences = (haystack: string, needle: string) => haystack.split(needle).length - 1;
+
+describe('the SELECT fixture maps complete literal columns', () => {
+  it('retains a terminal cast, case-insensitive column name and output alias', () => {
+    expect(selectedName('SELECT C.ID::TEXT AS "hit_id" FROM vault.document_chunks c', 'c.id')).toBe('hit_id');
+    expect(selectedName('SELECT c.id::text FROM vault.document_chunks c', 'c.id')).toBe('id');
+  });
+
+  it('does not treat a longer column or computed expression as the selected column', () => {
+    const sql = 'SELECT c.identity AS other_id, COALESCE(c.id, NULL) AS computed_id FROM vault.document_chunks c';
+    expect(selectedName(sql, 'c.id')).toBeNull();
+  });
+});
 
 describe('expandContext vault branch: the statement', () => {
   it('selects chunk ids, indices and offsets, and the extracted text on the hit row only', async () => {

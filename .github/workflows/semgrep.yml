@@ -44,6 +44,10 @@ jobs:
     # push — then a red commit becomes the next push's baseline and its finding
     # is waved through. A finding stays red until it is fixed, or marked inline
     # as a reviewed false positive with `nosemgrep: <rule-id>` and a reason.
+    # Fixed-byte historical evidence has a separate reviewed manifest: it is
+    # excluded only from this runtime diff, never from the full Security scan.
+    # Changing a reviewed byte, adding a path or approving application source
+    # cannot silently inherit the exception.
     #
     # Pinned by tests/ci/ci-honesty.contract.test.ts;
     # evidence docs/evidence/D6/2026-10-01-tranche-4/P1-12/.
@@ -149,10 +153,15 @@ jobs:
             exit 1
           fi
           echo "Findings this commit adds over $BASELINE:"
+          python3 scripts/ci/review-semgrep-evidence.py --write-excludes "$RUNNER_TEMP/semgrep-reviewed-evidence.txt"
+          set --
+          while IFS= read -r evidence_path; do
+            set -- "$@" "--exclude=$evidence_path"
+          done < "$RUNNER_TEMP/semgrep-reviewed-evidence.txt"
           status=0
           # SEMGREP_CONFIGS is a list of --config flags and is split on purpose.
           # shellcheck disable=SC2086
-          semgrep scan $SEMGREP_CONFIGS --metrics=off --error \
+          semgrep scan $SEMGREP_CONFIGS "$@" --metrics=off --error \
             --baseline-commit "$BASELINE" \
             --sarif-output="$RUNNER_TEMP/semgrep-new.sarif" || status=$?
           case "$status" in
@@ -191,5 +200,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: semgrep-sarif
-          path: semgrep.sarif
+          path: |
+            semgrep.sarif
+            ${{ runner.temp }}/semgrep-new.sarif
           if-no-files-found: warn

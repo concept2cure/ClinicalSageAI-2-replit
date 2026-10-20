@@ -50,7 +50,7 @@ function panel(onNav?: (id: string) => void) {
       extractionStatus: 'extracted', textAvailable: true, isCurrent: true, dataEligible: true, originalFileAvailable: false }]} />);
 }
 async function selectSource(title = source.title) {
-  fireEvent.click(await screen.findByRole('button', { name: new RegExp(title) }));
+  fireEvent.click(await screen.findByRole('button', { name: name => name.includes(title) }));
   return within(await screen.findByTestId('pf-selected'));
 }
 async function chooseTarget() {

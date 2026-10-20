@@ -296,6 +296,7 @@ describe('the real input guard audit outcome on the actual SSE route', () => {
     const response = await turn(injection);
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('text/event-stream');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
     const frames = events(response.body);
     expect(frames[0]).toEqual({ type: 'warning', code: 'AUDIT_ROW_NOT_PERSISTED',
       message: 'The input safety check completed, but its audit entry could not be confirmed. Review the audit history before retrying.',

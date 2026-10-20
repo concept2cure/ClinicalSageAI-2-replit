@@ -46,7 +46,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
-import { ApiRequestError, apiRequest } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { CommitmentFulfilDialog } from './CommitmentFulfilment';
 import { CommitmentRowView, isCommitmentsPayload, type CommitmentRow, type CommitmentsPayload } from './CommitmentRow';
 
@@ -260,13 +260,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const [recordingCommitment, setRecordingCommitment] = React.useState(false);
   const recordCommitment = async (v: Record<string, string>) => {
     try {
-      await apiRequest('POST', '/api/ha-interactions/commitments', {
+      const res = await apiRequest('POST', '/api/ha-interactions/commitments', {
         commitmentType: v.commitmentType,
         description: v.description,
         ...(v.dueDate ? { dueDate: v.dueDate } : {}),
         ...(v.regulatoryBasis ? { regulatoryBasis: v.regulatoryBasis } : {}),
         reason: v.reason,
       });
+      if (!res.ok) await assertApiResponseOk(res);
       fire('Commitment recorded, with an audit entry.');
       setRecordingCommitment(false);
       setCommitVersion((n) => n + 1);

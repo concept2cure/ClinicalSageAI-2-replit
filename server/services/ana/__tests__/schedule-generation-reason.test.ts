@@ -13,6 +13,7 @@ vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole: H.
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor';
 import { GENERATE_SCHEDULE_OF_EVENTS } from '../discovery-cheminformatics-tool-defs';
 import { SchedulePreservationConflict } from '../../projects/schedule-of-events/preservation';
+import { STATED_REASON_INPUT } from '../stated-reason-input';
 
 const context: ToolContext = { organizationId: 3, userId: 7, projectId: 12, projectType: 'IND', humanConfirmed: true };
 const view = { plan: { id: 5, version: 2 }, milestones: [{ id: 9, key: 'kickoff' }], goals: [], health: {} };
@@ -27,9 +28,9 @@ beforeEach(() => {
 });
 
 describe('schedule generation caller reason', () => {
-  it('offers an optional string reason in the actual tool definition', () => {
-    expect(GENERATE_SCHEDULE_OF_EVENTS.input_schema.properties?.reason).toMatchObject({ type: 'string' });
-    expect(GENERATE_SCHEDULE_OF_EVENTS.input_schema.required ?? []).not.toContain('reason');
+  it('asks for the person\'s stated reason in the actual tool definition', () => {
+    expect(GENERATE_SCHEDULE_OF_EVENTS.input_schema.properties?.reason).toEqual(STATED_REASON_INPUT);
+    expect(GENERATE_SCHEDULE_OF_EVENTS.input_schema.required).toContain('reason');
   });
 
   it('passes the stated reason trimmed and keeps trusted project context', async () => {
@@ -42,11 +43,19 @@ describe('schedule generation caller reason', () => {
     });
   });
 
-  it.each([undefined, null, '', '   ', 42, { approved: true }])('does not synthesize a reason from %j', async reason => {
+  it.each([undefined, null, '', '   ', 42, { approved: true }, 'short', '   ok     '])('refuses an unstated or insufficient reason %j before the service call', async reason => {
     const result = await run({ reason });
-    expect(result.plan).toEqual(view.plan);
-    expect(H.generate).toHaveBeenCalledOnce();
-    expect(H.generate.mock.calls[0][0].reason).toBeUndefined();
+    expect(result).toMatchObject({ ok: false, code: 'REASON_REQUIRED', reasonRequired: true, tool: 'generate_schedule_of_events' });
+    expect(result.error).toContain('Do not write a reason they did not give.');
+    expect(result).not.toHaveProperty('plan');
+    expect(H.generate).not.toHaveBeenCalled();
+  });
+
+  it('asks for the missing reason before asking for confirmation', async () => {
+    const result = await run({}, { ...context, humanConfirmed: false });
+    expect(result).toMatchObject({ code: 'REASON_REQUIRED', reasonRequired: true });
+    expect(H.resolveSignerOrgRole).not.toHaveBeenCalled();
+    expect(H.generate).not.toHaveBeenCalled();
   });
 
   it('retains the useful no-change message from a preservation conflict', async () => {
@@ -62,6 +71,7 @@ describe('schedule generation caller reason', () => {
   it('a supplied reason does not replace the existing human confirmation gate', async () => {
     const result = await run({ reason: 'The sponsor requested a new target.', humanConfirmed: true }, { ...context, humanConfirmed: false });
     expect(result.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+    expect(result.data).toMatchObject({ tier: 'reason', reasonRequired: true });
     expect(H.resolveSignerOrgRole).not.toHaveBeenCalled();
     expect(H.generate).not.toHaveBeenCalled();
   });

@@ -95,6 +95,23 @@ services:
     # slower, and nothing else changes.
     platform: linux/amd64
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    volumes:
+      # /init edits image-supplied config. Docker copy-up seeds this anonymous
+      # volume; an empty tmpfs would hide both .conf files. Renew anonymous
+      # volumes when changing the image pin so its defaults are re-seeded.
+      - type: volume
+        target: /etc/clamav
+      - type: volume
+        source: clamav-db
+        target: /var/lib/clamav
+    tmpfs:
+      - /run:rw,noexec,nosuid,size=16m,mode=0755
+      - /tmp:rw,noexec,nosuid,size=1g,mode=1777
+      # UID/GID are from the pinned image; /init keeps its original log paths.
+      - /var/log/clamav:rw,noexec,nosuid,size=16m,mode=0770,uid=100,gid=101
     environment:
       CLAMD_CONF_StreamMaxLength: 100M # = FILE_LIMITS.maxUploadBytes (server/config/platform-limits.ts)
       CLAMD_CONF_AlertExceedsMax: 'yes' # quoted: YAML 1.1 reads a bare yes as a boolean
@@ -394,6 +411,8 @@ services:
       - c2c
 
 volumes:
+  clamav-db:
+    driver: local
   vaultdata:
     driver: local
   pgdata:

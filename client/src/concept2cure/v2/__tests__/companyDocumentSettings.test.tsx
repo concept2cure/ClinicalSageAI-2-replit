@@ -116,6 +116,7 @@ describe('Company letterhead and legal library', () => {
     expect(await screen.findByText('PDF fonts were approximated.')).toBeTruthy();
     expect((screen.getByLabelText('Page size') as HTMLSelectElement).value).toBe('a4');
     expect(screen.getByLabelText('Letterhead preview').textContent).toContain('Imported legal header');
+    expect(apiUpload).toHaveBeenCalledWith('POST', `${PATH}/letterhead/extract`, expect.any(FormData));
     expect(apiRequest.mock.calls.filter(([m]) => m === 'PUT')).toHaveLength(0);
   });
 

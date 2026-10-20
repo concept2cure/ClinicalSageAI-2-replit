@@ -1,0 +1,220 @@
+{
+  "scope": "Bounded structural guard recognition and exact baseline pruning. These do not establish complete runtime correctness.",
+  "receipts": [
+    {
+      "file": "oct18-lineage-authoring-guard-acceptance.json",
+      "sha256": "59da78d079c6853edce23841917cbf4e4ee6b96cb8a70fb033adee1bf55a8145",
+      "bytes": 3339,
+      "receipt": {
+        "assembledUtc": "2026-10-18T00:13:57.170481+00:00",
+        "status": "source_frozen_independently_reviewed",
+        "productionChanged": false,
+        "sourceFiles": [
+          {
+            "file": "scripts/ci/check-lineage-save-gate.mjs",
+            "sha256": "b7752d712ccf9ecff44f4de1b419c3fefcbec6e83409999514830ae20a989118"
+          },
+          {
+            "file": "scripts/ci/lib/lineage-authoring-transaction.mjs",
+            "sha256": "81b7f8d698669b00805ad9f4aab1f0bbf5546adf99fa54041c0e096dc7123c2f"
+          },
+          {
+            "file": "scripts/ci/__tests__/lineage-authoring-transaction.test.mjs",
+            "sha256": "79330ff592b9e76e52cf5d2cd9bd8b8a9c5a5f397f7f0820795f6a59cda9dec1"
+          }
+        ],
+        "baseline": {
+          "receipt": "oct18-lineage-authoring-guard-red-tests.log",
+          "passed": 25,
+          "failed": 1,
+          "detail": "Actual owner positive fails on old guard; missing other fixture writers cannot mask exact owner verdict."
+        },
+        "qualification": {
+          "receipt": "oct18-lineage-authoring-guard-final-qualified-tests.log",
+          "passed": 64,
+          "failed": 0,
+          "testFiles": 3,
+          "newControls": 38,
+          "detail": "One actual-source positive plus37 real-source mutation controls; prior26 Protocol request-transaction/discovery controls retained. Counts are a static guard cohort, not runtime integration."
+        },
+        "command": {
+          "receipt": "oct18-lineage-authoring-guard-final-qualified-command.log",
+          "exitCode": 0,
+          "guardedPaths": 21
+        },
+        "lint": {
+          "receipt": "oct18-lineage-authoring-guard-lint.json",
+          "detail": "All3 mjs files ignored by existing ESLint configuration; Node parser/test/actual command qualify this change. No ESLint coverage claimed."
+        },
+        "behavior": [
+          "Existing authoring-documents guarded entry remains protected; bounded AST recognition checks both actual async transaction owners, canonical imports, same awaited seed client, actual BEGIN/COMMIT fence, same-client failure helpers and unconditional release(discardConnection).",
+          "Canonical shared seed binds inserted seed.content to awaited real lineage helper; conditional disabled lineage, detached transaction, changed client, missing await and hollowed primitives refuse.",
+          "Actual lifecycle helper must await ROLLBACK on the same client/state before a commit attempt, preserve failed-rollback eviction, and discard/return typed unconfirmed COMMIT without rollback after the attempt.",
+          "All six independently discovered false approvals have exact controls: discarded settled error, missing typed document recovery, conditional release, empty-content lineage, missing typed section recovery and disabled early typed section recovery throw."
+        ],
+        "limits": [
+          "Static bounded recognition of canonical current source plus real-source mutations, not complete TypeScript semantic or runtime proof. No production code changes; runtime source qualification remains in prior separate manifests.",
+          "No perimeter/baseline/dependency/suppression changes. Newly added recognition does not exempt arbitrary transaction/helper names."
+        ],
+        "independentReview": {
+          "receipt": "review-lineage-authoring-independent-final-probes.json",
+          "detail": "Independent reviewer confirmed all six discovered false approvals now reject and actual unchanged production accepts, with matching final helper/test hashes. No remaining blocker in bounded reviewed contract."
+        }
+      }
+    },
+    {
+      "file": "review-lineage-authoring-independent-final-probes.json",
+      "sha256": "661eb4d0fdc24b5acf05f6eebcfe4b444541c54dcf7fa58292c9ca4136a3296a",
+      "bytes": 2005,
+      "receipt": {
+        "observedAt": "2026-10-18T00:13:38.349Z",
+        "scope": "Six independent in-memory adversarial probes; actual source positive; no repository/index edits",
+        "hashes": {
+          "scripts/ci/lib/lineage-authoring-transaction.mjs": "81b7f8d698669b00805ad9f4aab1f0bbf5546adf99fa54041c0e096dc7123c2f",
+          "scripts/ci/check-lineage-save-gate.mjs": "b7752d712ccf9ecff44f4de1b419c3fefcbec6e83409999514830ae20a989118",
+          "scripts/ci/__tests__/lineage-authoring-transaction.test.mjs": "79330ff592b9e76e52cf5d2cd9bd8b8a9c5a5f397f7f0820795f6a59cda9dec1"
+        },
+        "results": [
+          {
+            "name": "actual",
+            "findings": []
+          },
+          {
+            "name": "section discards settlement result",
+            "findings": [
+              "createSection: catch must use the settled error and duplicate refusal must await same-client rollback"
+            ]
+          },
+          {
+            "name": "document substitutes original error for unconfirmed outcome",
+            "findings": [
+              "document failure must throw the awaited canonical same-client settlement"
+            ]
+          },
+          {
+            "name": "finally conditional never releases",
+            "findings": [
+              "insertDocumentTx: finally must release this client with the recorded discard outcome"
+            ]
+          },
+          {
+            "name": "section seed does not pass content to lineage",
+            "findings": [
+              "authored seed must await the real lineage gate on the insert client"
+            ]
+          },
+          {
+            "name": "section substitutes original error for unconfirmed outcome",
+            "findings": [
+              "createSection: unknown COMMIT must retain and throw the exact typed section recovery before ordinary refusals"
+            ]
+          },
+          {
+            "name": "section disables typed unconfirmed propagation",
+            "findings": [
+              "createSection: unknown COMMIT must retain and throw the exact typed section recovery before ordinary refusals"
+            ]
+          }
+        ],
+        "acceptedActual": true,
+        "rejectedMutations": 6,
+        "limits": "Bounded static recognition, not full TypeScript semantic or runtime proof."
+      }
+    },
+    {
+      "file": "resume-rpi-baseline-cleanup-freeze.json",
+      "sha256": "52329ff105bd4e0819e6f90162b672f7a84dc698b3c0827bc43aea98243f14a9",
+      "bytes": 3222,
+      "receipt": {
+        "scope": "Remove retired rpi.ts exact suppressions and3 independently proven stale live-schema buckets; preserve other metadata/history notes",
+        "files": [
+          {
+            "file": "scripts/ci/unbacked-tables-baseline.json",
+            "sha256": "10034538013349caa242044ae0c6b429ce8e964099e3edc01a7827f89cf069f2",
+            "old_tables": 19,
+            "new_tables": 17,
+            "removed_paths": [
+              {
+                "table": "reg_changes",
+                "path": "server/src/services/reg/rpi.ts",
+                "reason": "Deleted unreachable reader"
+              },
+              {
+                "table": "reg_m3_sections",
+                "path": "server/src/services/reg/rpi.ts",
+                "reason": "Deleted unreachable reader"
+              },
+              {
+                "table": "reg_submissions",
+                "path": "server/src/services/reg/rpi.ts",
+                "reason": "Deleted unreachable reader"
+              }
+            ],
+            "only_authorized_downward_removal": true,
+            "all_other_metadata_and_history_notes_preserved": true
+          },
+          {
+            "file": "scripts/ci/tables-live-schema-baseline.json",
+            "sha256": "be1e91845fccf154b557f2629eea36be8ea86dee8cb015b5e942858b1c344f75",
+            "old_tables": 39,
+            "new_tables": 34,
+            "removed_paths": [
+              {
+                "table": "reg_changes",
+                "path": "server/src/services/reg/rpi.ts",
+                "reason": "Deleted unreachable reader"
+              },
+              {
+                "table": "reg_m3_sections",
+                "path": "server/src/services/reg/rpi.ts",
+                "reason": "Deleted unreachable reader"
+              },
+              {
+                "table": "reg_submissions",
+                "path": "server/src/services/reg/rpi.ts",
+                "reason": "Deleted unreachable reader"
+              },
+              {
+                "table": "ai_feedback",
+                "path": "server/routes/c2c/context-intelligence.ts",
+                "reason": "Relation verified present"
+              },
+              {
+                "table": "correspondences",
+                "path": "server/services/ana-ri/mdx-proactive-signals.ts",
+                "reason": "No current server SQL reference"
+              },
+              {
+                "table": "enterprise_integration_credentials",
+                "path": "server/services/integrations/credentialVault.ts",
+                "reason": "No current server SQL reference"
+              }
+            ],
+            "only_authorized_downward_removal": true,
+            "all_other_metadata_and_history_notes_preserved": true
+          }
+        ],
+        "guards": [
+          {
+            "command": "npm run ci:unbacked-tables",
+            "exit_code": 0,
+            "receipt": "/workspace/audit/resume-rpi-unbacked-guard.log"
+          },
+          {
+            "command": "npm run ci:tables-live-schema",
+            "exit_code": 0,
+            "receipt": "/workspace/audit/resume-rpi-live-schema-guard-provisioned-final.log",
+            "database": "Root-supplied isolated current408 PostgreSQL; verify-full TLS and retained CA trust."
+          }
+        ],
+        "helper_controls": {
+          "passed": 5,
+          "failed": 0,
+          "receipt": "/workspace/audit/resume-rpi-baseline-helper-controls.json"
+        },
+        "stale_relation_and_reader_proof": "/workspace/audit/resume-rpi-live-stale-census-proof.json",
+        "qualification": "Local provisioned live-schema existence guard passed; not a remote/deployed production qualification. No source, Git/index, history, or unrelated baseline edits."
+      }
+    }
+  ]
+}

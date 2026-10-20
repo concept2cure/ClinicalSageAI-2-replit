@@ -58,7 +58,7 @@ const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/commonjs-require-baseline.json');
 
 /** `x = require('y')`, `require('y').z`, `await require(...)` — any call form. */
-const REQUIRE_CALL = /(?<![.\w$])require\s*\(/;
+const REQUIRE_CALL = /(?<![.\w$])require\s*\(/g;
 
 /**
  * Legitimate uses that are NOT the defect:
@@ -66,7 +66,97 @@ const REQUIRE_CALL = /(?<![.\w$])require\s*\(/;
  *   - require.resolve / require.cache on a createRequire handle.
  *   - .cjs files, which are CommonJS by extension and where require is defined.
  */
-const ALLOWED = [/createRequire/, /\brequire\.resolve\b/, /\brequire\.cache\b/];
+const ALLOWED = [/\bcreateRequire\s*\(/];
+
+/** Blank literal text while retaining executable template interpolations and source positions. */
+function executableText(src) {
+  const out = src.split('');
+  const blank = (from, to) => {
+    for (let k = from; k < to; k++) if (src[k] !== '\n') out[k] = ' ';
+  };
+  const quoted = (start, quote) => {
+    let end = start + 1;
+    while (end < src.length) {
+      if (src[end] === '\\') { end += 2; continue; }
+      if (src[end++] === quote) break;
+      if (src[end - 1] === '\n') break;
+    }
+    blank(start, Math.min(end, src.length));
+    return end;
+  };
+  const regexMayStart = (at) => {
+    let k = at - 1;
+    while (k >= 0 && /\s/.test(src[k])) k--;
+    if (k < 0) return true;
+    if ('(,=:[!&|?{;+-*%~^<>'.includes(src[k])) return true;
+    const word = src.slice(0, k + 1).match(/[A-Za-z_$][\w$]*$/)?.[0];
+    return /^(?:return|typeof|instanceof|in|of|new|delete|void|throw|case|do|else|yield|await)$/.test(word ?? '');
+  };
+  const regexEnd = (start) => {
+    let inClass = false;
+    for (let k = start + 1; k < src.length; k++) {
+      if (src[k] === '\n' || src[k] === '\r') return -1;
+      if (src[k] === '\\') { k++; continue; }
+      if (src[k] === '[') inClass = true;
+      else if (src[k] === ']') inClass = false;
+      else if (!inClass && src[k] === '/') {
+        k++;
+        while (/[a-z]/i.test(src[k] ?? '') && k < src.length) k++;
+        return k;
+      }
+    }
+    return -1;
+  };
+  const template = (start) => {
+    blank(start, start + 1);
+    let k = start + 1;
+    while (k < src.length) {
+      if (src[k] === '\\') { blank(k, Math.min(k + 2, src.length)); k += 2; continue; }
+      if (src[k] === '`') { blank(k, k + 1); return k + 1; }
+      if (src[k] === '$' && src[k + 1] === '{') {
+        blank(k, k + 2);
+        k = code(k + 2, true);
+        continue;
+      }
+      blank(k, k + 1);
+      k++;
+    }
+    return k;
+  };
+  const comment = (start) => {
+    if (src[start] !== '/') return start;
+    const marker = src[start + 1];
+    if (marker !== '/' && marker !== '*') return start;
+    const close = src.indexOf(marker === '/' ? '\n' : '*/', start + 2);
+    const end = close < 0 ? src.length : close + (marker === '*' ? 2 : 0);
+    blank(start, end);
+    return end;
+  };
+  const code = (start, interpolation = false) => {
+    let depth = 0;
+    let k = start;
+    while (k < src.length) {
+      const c = src[k];
+      if (c === "'" || c === '"') { k = quoted(k, c); continue; }
+      if (c === '`') { k = template(k); continue; }
+      const afterComment = comment(k);
+      if (afterComment > k) { k = afterComment; continue; }
+      if (c === '/' && regexMayStart(k)) {
+        const end = regexEnd(k);
+        if (end >= 0) { blank(k, end); k = end; continue; }
+      }
+      if (c === '{') depth++;
+      if (c === '}') {
+        if (interpolation && depth === 0) { blank(k, k + 1); return k + 1; }
+        depth--;
+      }
+      k++;
+    }
+    return k;
+  };
+  code(0);
+  return out.join('');
+}
 
 function sourceFiles() {
   const out = execSync(
@@ -86,23 +176,25 @@ function findings() {
   const hits = [];
   for (const file of sourceFiles()) {
     const text = readFileSync(path.join(ROOT, file), 'utf8');
-    if (!REQUIRE_CALL.test(text)) continue;
+    if (!/\brequire\b/.test(text)) continue;
     /* Strip comments before matching. Prose ABOUT this defect — including the
        explanation sitting above the fixed docx import — otherwise reports as the
        defect, and a gate that flags its own documentation trains people to
        ignore it. The shared stripper (lib/strip-comments.mjs) is string-aware
        and blanks comments in place, so line i of `stripped` is line i of the
-       source. String contents are left alone, since a `require(` inside a
-       string literal in server source is worth a look either way. This gate's
+       source. Literal prose is then blanked, while executable expressions
+       inside template strings remain visible. This gate's
        former regex stripper was not string-aware: a '/api/x/*' literal hid
        every line up to the next real comment closer, and an 'https://…'
        literal hid the rest of its own line. */
-    const stripped = stripComments(text);
-    stripped.split('\n').forEach((code, i) => {
-      if (!REQUIRE_CALL.test(code)) return;
-      if (ALLOWED.some((re) => re.test(code))) return;
-      hits.push({ file, line: i + 1, text: text.split('\n')[i].trim().slice(0, 120) });
-    });
+    const stripped = executableText(stripComments(text));
+    const sourceLines = text.split('\n');
+    const codeLines = stripped.split('\n');
+    for (const match of stripped.matchAll(REQUIRE_CALL)) {
+      const i = stripped.slice(0, match.index).split('\n').length - 1;
+      if (ALLOWED.some((re) => re.test(codeLines[i]))) continue;
+      hits.push({ file, line: i + 1, text: sourceLines[i].trim().slice(0, 120) });
+    }
   }
   return hits;
 }

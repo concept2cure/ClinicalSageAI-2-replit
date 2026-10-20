@@ -160,8 +160,9 @@ describe('GET /docs/:docId — the caller’s access', () => {
   });
 
   it('the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign', async () => {
-    const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+    const res = await author(request(gatedApp).get(`/api/authoring/docs/${docId}`));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.document.client_program_id).toBe(PROGRAM);
     const { access } = res.body;
     expect(access.edit).toEqual({ allowed: true, reason: null });
     /* DP-35 (2026-10-01): a freeze is a signature, so it meets the same

@@ -89,10 +89,32 @@ const sources = serverSources().map((file) => ({
   src: code(fs.readFileSync(path.join(repoRoot, file), 'utf8')),
 }));
 
+const insertsDrizzleTable = (src: string, table: string) =>
+  [...src.matchAll(/\.insert\(\s*([A-Za-z_$][\w$]*)\s*\)/g)].some(match => match[1] === table);
+// Preserve the existing conservative prefix check: a suffixed SQL table name
+// still needs review against the register's one recorded owner.
+const insertsRawTable = (src: string, table: string) =>
+  [...src.matchAll(/INSERT\s+INTO\s+"?([a-z_][a-z0-9_]*)"?/gi)]
+    .some(match => match[1].toLowerCase().startsWith(table.toLowerCase()));
+
+describe('the recorded-create source matchers retain their boundaries', () => {
+  it('matches only the exact Drizzle register handle', () => {
+    expect(insertsDrizzleTable('tx.insert( stabilityStudies )', 'stabilityStudies')).toBe(true);
+    expect(insertsDrizzleTable('tx.insert(stabilityStudiesArchive)', 'stabilityStudies')).toBe(false);
+    expect(insertsDrizzleTable('tx.insert(otherRegister)', 'stabilityStudies')).toBe(false);
+  });
+
+  it('retains the raw SQL case-insensitive prefix rather than weakening it to full-name equality', () => {
+    expect(insertsRawTable('INSERT INTO "CMC_BATCH_RECORDS" (id) VALUES ($1)', 'cmc_batch_records')).toBe(true);
+    expect(insertsRawTable('insert into cmc_batch_records_archive (id) values ($1)', 'cmc_batch_records')).toBe(true);
+    expect(insertsRawTable('INSERT INTO other_cmc_batch_records (id) VALUES ($1)', 'cmc_batch_records')).toBe(false);
+    expect(insertsRawTable('UPDATE cmc_batch_records SET id = $1', 'cmc_batch_records')).toBe(false);
+  });
+});
+
 describe('no register row is inserted outside the recorded path', () => {
   it.each(DRIZZLE_REGISTERS)('%s has no insert of its own', (table) => {
-    const pattern = new RegExp(`\\.insert\\(\\s*${table}\\s*\\)`);
-    const offenders = sources.filter((s) => pattern.test(s.src)).map((s) => s.file);
+    const offenders = sources.filter((s) => insertsDrizzleTable(s.src, table)).map((s) => s.file);
     expect(
       offenders,
       `${table} is inserted directly in ${offenders.join(', ')}. A register create goes through ` +
@@ -102,8 +124,7 @@ describe('no register row is inserted outside the recorded path', () => {
   });
 
   it.each(RAW_SQL_REGISTERS)('%s is inserted only by %s', (table, owner) => {
-    const pattern = new RegExp(`INSERT\\s+INTO\\s+"?${table}"?`, 'i');
-    const offenders = sources.filter((s) => pattern.test(s.src)).map((s) => s.file);
+    const offenders = sources.filter((s) => insertsRawTable(s.src, table)).map((s) => s.file);
     expect(offenders, `an INSERT INTO ${table} appeared outside ${owner}`).toEqual([owner]);
   });
 

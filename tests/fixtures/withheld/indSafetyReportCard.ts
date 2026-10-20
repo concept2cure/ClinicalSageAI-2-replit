@@ -2,6 +2,9 @@
  * The IND safety-report card (21 CFR 312.32) — WITHHELD from this release by
  * decision P-32, 2026-10-15 (docs/LAUNCH_DEFINITION_OF_DONE.md, "### P-32").
  *
+ * Retained source location: tests/fixtures/withheld/indSafetyReportCard.ts.
+ * Runtime and qualification code is preserved; only the test harness imports it.
+ *
  * ── Why this file exists and nothing on screen imports it ────────────────────
  * P-32 made the IND lifecycle a feature of the Submission Center launch app
  * and kept 15-day safety reporting and ICSR transmission shut. The routes this
@@ -29,7 +32,7 @@
  *      to the `wired` map.
  *   4. Turn the "not offered" tests back into rendered-card tests.
  */
-import { NOT_STATED, OPTS, sectionsText, type DelivView, type WiredDeliverable } from './IndLifecycle';
+import { NOT_STATED, OPTS, sectionsText, type DelivView, type WiredDeliverable } from '../../../client/src/concept2cure/v2/surfaces/IndLifecycle';
 
 /** The server's expedited verdict, in words (ind-safety-report-service). */
 export const SAFETY_VERDICT: Record<string, string> = {

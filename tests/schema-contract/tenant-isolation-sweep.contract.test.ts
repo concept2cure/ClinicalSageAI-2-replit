@@ -37,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
 import { immutableReportRecords, reportDomainEnum, sealStatusEnum, regulatoryBodyEnum } from '../../shared/schema';
+import { extractTableDdl } from '../golden-journeys/harness';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 // Imported, not re-typed: the same string used to be hardcoded in four places,
@@ -154,6 +155,20 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // set order.
   await safe(readMig('migrations/20260527_mutation_primitives.sql'));
   await safe(readMig('migrations/20260528_phase9_document_schema.sql'));
+  // Fresh installs create the notification base before the batch's Oct 14
+  // recipient receipt FK/index. The old journal omits both base tables; use
+  // their actual creator DDL rather than placeholder notification columns.
+  await pg.exec(extractTableDdl('migrations/20260510_notifications_and_clinical.sql', [
+    'mdx_notifications', 'mdx_notification_subscriptions',
+  ]));
+  // The real deploy applies the canonical authoring subsystem before the C2C
+  // batch. Its original loop tables are the parent of the controlled-QMS
+  // binding migration in this batch; the old base journal omits that lineage.
+  await pg.exec(readMig('db/migrations/20260725_authoring_document_loop_tables.sql'));
+  // Keep the deployed authoring lineage closed: router columns and immutable
+  // revision-ledger ALTERs follow the loop creator on every real deployment.
+  await pg.exec(readMig('db/migrations/20260730_authoring_comments_router_columns.sql'));
+  await pg.exec(readMig('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
   // The Part 11 port precedes this batch on real deployments. Its status
   // widening needs the REAL orchestrator store port, which itself needs the
   // canonical submissions store above. This fixture omitted both pre-batch

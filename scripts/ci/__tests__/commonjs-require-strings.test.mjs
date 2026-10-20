@@ -70,3 +70,38 @@ test('control: require() only inside real comments, below the same glob and besi
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /no new occurrences\. 0 baselined across 0 file\(s\)/);
 });
+
+for (const [name, src] of [
+  ['single-quoted prose', "export const text = 'the agents require (BMBL)';\n"],
+  ['double-quoted prose and escaped quotes', 'export const text = "a \\"quoted\\" requirement: require (BMBL)";\n'],
+  ['template prose', 'export const text = `the agents require (BMBL)\nhttps://example.invalid/*`;\n'],
+  ['a regular expression', 'export const pattern = /require(BMBL)/;\n'],
+  ['comments inside template interpolation', 'export const text = `${1 /* require(BMBL) */}`;\n'],
+  ['a supported createRequire handle', "import { createRequire } from 'node:module';\nconst require = createRequire(import.meta.url); require('legacy');\n"],
+  ['an object method', "export const x = client.require('legacy');\n"],
+]) {
+  test(`control: ${name} does not execute CommonJS`, () => {
+    const r = run({ 'server/services/prose.ts': src });
+    assert.equal(r.code, 0, r.out);
+  });
+}
+
+for (const [name, src] of [
+  ['a same-line prose string', `const text = 'agents require (BMBL)'; export const x = ${REQ}'legacy');\n`],
+  ['an escaped quote and comment markers', `const text = 'can\\'t hide /* //'; export const x = ${REQ}'legacy');\n`],
+  ['a multiline call', "export const x = require\n  ('legacy');\n"],
+  ['a template interpolation', "export const x = `before ${require('legacy')} after`;\n"],
+  ['a nested template interpolation', "export const x = `before ${`inner ${require('legacy')}`} after`;\n"],
+  ['an interpolation containing comment delimiters', "export const x = `${'/*'} ${require('legacy')}`;\n"],
+  ['a string naming createRequire', `const note = 'createRequire'; export const x = ${REQ}'legacy');\n`],
+  ['a neighboring require.resolve', `require.resolve('existing'); export const x = ${REQ}'legacy');\n`],
+  ['division after a string', `export const x = 'value' / ${REQ}'legacy') / 2;\n`],
+  ['division after an object', `export const x = { value: 1 } / ${REQ}'legacy') / 2;\n`],
+  ['a regex with quote characters', `const pattern = /['"\u0060]/; export const x = ${REQ}'legacy');\n`],
+]) {
+  test(`rejects executable require after or inside ${name}`, () => {
+    const r = run({ 'server/services/executable.ts': src });
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /server\/services\/executable\.ts:1\b/);
+  });
+}

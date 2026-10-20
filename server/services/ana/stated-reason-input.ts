@@ -159,6 +159,7 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'create_tmf',
   'establish_governed_fact',
   'fulfill_regulatory_commitment',
+  'generate_schedule_of_events',
   'import_citi_records',
   'log_cs_transaction',
   'log_inspection_finding',

@@ -11,17 +11,22 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const listTemplates = vi.fn();
+const preview = vi.fn();
+const save = vi.fn();
 // Stub the whole service module; the list route only needs listTemplates.
 vi.mock('../../../services/templates', () => ({
   listTemplates: (...a: unknown[]) => listTemplates(...a),
-  extractTemplateFromFile: vi.fn(),
+  extractTemplateFromFile: (...a: unknown[]) => preview(...a),
   renderDocxWithTemplate: vi.fn(),
   templateSpecToHtml: vi.fn(),
   normalizeTemplateSpec: (s: unknown) => s,
-  createTemplate: vi.fn(),
+  createTemplate: (...a: unknown[]) => save(...a),
   getTemplate: vi.fn(),
   updateTemplate: vi.fn(),
   deactivateTemplate: vi.fn(),
+}));
+vi.mock('../../../middleware/uploadSafety', async original => ({
+  ...(await original<typeof import('../../../middleware/uploadSafety')>()), assertUploadSafe: vi.fn(async () => undefined),
 }));
 
 import templatesRouter from '../templates';
@@ -36,7 +41,26 @@ function appWith(org: number | null) {
   return app;
 }
 
-beforeEach(() => listTemplates.mockReset());
+beforeEach(() => { listTemplates.mockReset(); preview.mockReset(); save.mockReset(); });
+
+describe('existing template formatting preview after shared handler extraction', () => {
+  const bytes = Buffer.from('%PDF-1.7 original formatting');
+  it('retains the organization requirement without extracting or saving', async () => {
+    const res = await request(appWith(null)).post('/api/c2c/templates/extract').attach('file', bytes, 'original.pdf');
+    expect(res.status).toBe(401);
+    expect(preview).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+  });
+  it('delegates to the same extractor and returns its preview without saving a template', async () => {
+    const result = { spec: { version: 1 }, confidence: .7, warnings: ['Review formatting.'] };
+    preview.mockResolvedValue(result);
+    const res = await request(appWith(7)).post('/api/c2c/templates/extract').attach('file', bytes, { filename: 'original.pdf', contentType: 'application/pdf' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(result);
+    expect(preview).toHaveBeenCalledWith(bytes, 'original.pdf', 'application/pdf');
+    expect(save).not.toHaveBeenCalled();
+  });
+});
 
 describe('GET /api/c2c/templates', () => {
   it('401 without org context', async () => {

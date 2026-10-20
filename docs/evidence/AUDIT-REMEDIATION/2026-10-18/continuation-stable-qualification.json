@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "checkedAtUtc": "2026-10-18T00:40:33.185529+00:00",
+  "sourceHead": "c83a252c8c1add58d5d9eaf19c4c8bc3f443dfed",
+  "sourceTree": "4d515cd2fb1bf57c91f56540879fd8fff5d432ff",
+  "execution": "Stable committed source; no Semgrep baseline checkout or repository-writing validation overlapped the rerun. All earlier source tree bytes are preserved. This record itself and its linked narrative are subsequent documentation changes only.",
+  "combined": {
+    "artifact": "oct18-stable-final-cohort.json",
+    "sha256": "acef8944a0be8253bf64434f6e5bb95e973640ca053867d3e746660bddad47be",
+    "passed": 771,
+    "failed": 0,
+    "skipped": 0,
+    "files": [
+      {
+        "file": "tests/ci/ci-honesty.contract.test.ts",
+        "passed": 53
+      },
+      {
+        "file": "tests/golden-journeys/submission-release-signature.journey.test.ts",
+        "passed": 1
+      },
+      {
+        "file": "tests/unit/submission-package-orchestrator-uncovered.test.ts",
+        "passed": 17
+      },
+      {
+        "file": "tests/unit/submission-sign-release-route.test.ts",
+        "passed": 25
+      },
+      {
+        "file": "server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts",
+        "passed": 29
+      },
+      {
+        "file": "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts",
+        "passed": 15
+      },
+      {
+        "file": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+        "passed": 48
+      },
+      {
+        "file": "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+        "passed": 10
+      },
+      {
+        "file": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+        "passed": 11
+      },
+      {
+        "file": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+        "passed": 19
+      },
+      {
+        "file": "server/routes/__tests__/authoringSelectedSources.pglite.test.ts",
+        "passed": 14
+      },
+      {
+        "file": "server/routes/__tests__/company-documents.test.ts",
+        "passed": 39
+      },
+      {
+        "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
+        "passed": 21
+      },
+      {
+        "file": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+        "passed": 29
+      },
+      {
+        "file": "server/routes/__tests__/report-os-run-engine.test.ts",
+        "passed": 29
+      },
+      {
+        "file": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+        "passed": 25
+      },
+      {
+        "file": "server/services/__tests__/report-state-memory-isolation.pglite.test.ts",
+        "passed": 6
+      },
+      {
+        "file": "server/routes/c2c/__tests__/templates-list.test.ts",
+        "passed": 4
+      },
+      {
+        "file": "server/services/ana/__tests__/batch-draft-concurrency.test.ts",
+        "passed": 18
+      },
+      {
+        "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+        "passed": 31
+      },
+      {
+        "file": "server/services/authoring/__tests__/assembly-plan.test.ts",
+        "passed": 2
+      },
+      {
+        "file": "server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts",
+        "passed": 3
+      },
+      {
+        "file": "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+        "passed": 8
+      },
+      {
+        "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+        "passed": 14
+      },
+      {
+        "file": "server/services/authoring/__tests__/authoring-section-outcome.test.ts",
+        "passed": 10
+      },
+      {
+        "file": "server/services/authoring/__tests__/create-section-placement.pglite.test.ts",
+        "passed": 8
+      },
+      {
+        "file": "server/services/company-documents/__tests__/profile.test.ts",
+        "passed": 41
+      },
+      {
+        "file": "server/services/docx/__tests__/company-letterhead-layout.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "server/services/entitlements/__tests__/company-documents-launch-claim.test.ts",
+        "passed": 10
+      },
+      {
+        "file": "server/services/report-os/__tests__/capability-inventory.test.ts",
+        "passed": 2
+      },
+      {
+        "file": "server/services/report-os/__tests__/compute-run-regional.test.ts",
+        "passed": 4
+      },
+      {
+        "file": "server/services/report-os/__tests__/domain-project-sql.test.ts",
+        "passed": 2
+      },
+      {
+        "file": "server/services/report-os/__tests__/domain-provenance.test.ts",
+        "passed": 4
+      },
+      {
+        "file": "server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts",
+        "passed": 13
+      },
+      {
+        "file": "server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts",
+        "passed": 8
+      },
+      {
+        "file": "server/services/report-os/__tests__/project-access-integration.test.ts",
+        "passed": 13
+      },
+      {
+        "file": "server/services/report-os/__tests__/report-engine.test.ts",
+        "passed": 18
+      },
+      {
+        "file": "server/services/report-os/__tests__/run-history.test.ts",
+        "passed": 12
+      },
+      {
+        "file": "server/services/report-os/__tests__/scope-ownership.test.ts",
+        "passed": 14
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+        "passed": 11
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+        "passed": 1
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx",
+        "passed": 1
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
+        "passed": 4
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/company-branding.test.ts",
+        "passed": 5
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
+        "passed": 5
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+        "passed": 15
+      },
+      {
+        "file": "server/services/report-os/render/__tests__/render-market-assessment.test.ts",
+        "passed": 10
+      },
+      {
+        "file": "server/services/report-os/render/__tests__/render-one-readiness.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "server/services/report-os/render/__tests__/render.test.ts",
+        "passed": 15
+      },
+      {
+        "file": "server/services/report-os/scheduling/__tests__/configuration.test.ts",
+        "passed": 13
+      },
+      {
+        "file": "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+        "passed": 3
+      },
+      {
+        "file": "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+        "passed": 9
+      },
+      {
+        "file": "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+        "passed": 14
+      }
+    ]
+  },
+  "native": {
+    "artifact": "oct18-stable-final-native.json",
+    "sha256": "d78829ca5d30810d6a95400757094edab807bb82e1142576b3931f7cb1371738",
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "files": [
+      {
+        "file": "tests/db/report-state-memory-isolation.dbtest.ts",
+        "passed": 10
+      },
+      {
+        "file": "tests/db/submission-digest-access.dbtest.ts",
+        "passed": 11
+      }
+    ],
+    "scope": "Two actual PostgreSQL fixtures, current 408-migration isolated database, verified TLS wrapper, real JWT/current membership/application-role RLS. Embedding provider boundary remains local and deterministic; histories retained."
+  },
+  "ciScriptTests": {
+    "passed": 421,
+    "failed": 0,
+    "skipped": 0,
+    "artifact": "oct18-stable-final-ci-selftests.log",
+    "sha256": "da62acc3648deae472998b97a6ead3d93d4613598592144a01278d12d37b3124"
+  },
+  "security": {
+    "version": "1.177.0",
+    "baseline": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+    "scope": "Final changed-path closure after the broad runtime differential scan; 285 paths, four helper extractions and 33 incoming paths. Original broad scan notices included partial parsing and three timeouts; no complete static-analysis coverage is claimed. The remaining upstream DOCX test finding was corrected by a literal regex and its seven rendering tests passed.",
+    "scans": [
+      {
+        "artifact": "oct18-final-security-delta-private.json",
+        "sha256": "677169010ac5c02a0dc84e4cc404fce21e9af7ccae09f239e53bad1ad4d53cac",
+        "findings": 0,
+        "notices": [
+          {
+            "level": "warn",
+            "kind": "PartialParsing",
+            "count": 9
+          }
+        ]
+      },
+      {
+        "artifact": "oct18-final-readability-security-private.json",
+        "sha256": "37746bc89ad46a8730305f4e69d1534386fb61832b28047369bbf9aa1bfedfcc",
+        "findings": 0,
+        "notices": [
+          {
+            "level": "warn",
+            "kind": "PartialParsing",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "artifact": "oct18-final-concurrency-security-private.json",
+        "sha256": "feb3a09869b5c7ec95290b43e7b5404b96e43aa0ae83dae86016545690aeb8d4",
+        "findings": 0,
+        "notices": []
+      }
+    ],
+    "historySecrets": {
+      "artifact": "oct18-stable-final-gitleaks-private.json",
+      "findings": 0
+    }
+  },
+  "counting": "These are separate execution cohorts. Do not add overlapping earlier acceptance snapshots.",
+  "limits": [
+    "Not production deployment, human UAT or provider/agency acceptance.",
+    "33 uncomputed report types, five unavailable prediction types, digest generation and governed offboarding coverage remain unfinished.",
+    "Credential dispositions do not revoke or rotate the three previously identified live external credentials."
+  ]
+}

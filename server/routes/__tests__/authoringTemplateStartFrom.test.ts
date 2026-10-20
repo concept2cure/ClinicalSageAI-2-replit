@@ -357,7 +357,7 @@ describe('POST /docs — create-with-seed is one transaction', () => {
       if (sql.includes('INSERT INTO authoring_sections')) {
         sectionInserts += 1;
         if (sectionInserts === 2) throw new Error('audit store unavailable');
-        return { rowCount: 1, rows: [{ id: 'sec-1', code: (params as unknown[])[1], content: (params as unknown[])[3] }] };
+        return savedSectionInsert(params);
       }
       return { rowCount: 0, rows: [] };
     });
@@ -368,6 +368,7 @@ describe('POST /docs — create-with-seed is one transaction', () => {
       .send({ title: 'Doomed halfway', module: 'M3', template_id: GLOBAL_TPL_ID, client_program_id: PROJECT_ID });
 
     expect(res.status).toBe(500);
+    expect(sectionInserts).toBe(2);
     const sqls = mockQuery.mock.calls.map((c) => String(c[0]));
     expect(sqls).toContain('BEGIN');
     expect(sqls).toContain('ROLLBACK');

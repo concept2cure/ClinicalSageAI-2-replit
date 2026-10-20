@@ -123,6 +123,31 @@ async function signFulfil(description: string) {
 }
 
 describe('Meetings & commitments, through both doors of the one register', () => {
+  it('keeps a commitment and reason in the form when recording returns 401', async () => {
+    const original = apiRequest.getMockImplementation()!;
+    const message = 'Sign in again before recording the commitment.';
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'POST' && url === ORG_URL) {
+        posts.push({ url, body });
+        return new Response(JSON.stringify({ error: { code: 'SESSION_IDLE', message } }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+      return original(method, url, body);
+    });
+    await openCommitments();
+    await screen.findByText('Pediatric study (PREA)');
+    fireEvent.click(screen.getByRole('button', { name: 'Record commitment' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Record a commitment' });
+    fireEvent.change(within(dialog).getByLabelText(/^Type/), { target: { value: 'pmc' } });
+    fireEvent.change(within(dialog).getByLabelText(/^What was committed/), { target: { value: 'Provide stability follow-up.' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Reason/), { target: { value: 'Recorded from the official letter.' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Record commitment' }));
+    expect(await screen.findByText(`Commitment not recorded: ${message}. Nothing was stored.`)).toBeTruthy();
+    expect(posts).toHaveLength(1);
+    expect((within(screen.getByRole('dialog', { name: 'Record a commitment' })).getByLabelText(/^What was committed/) as HTMLTextAreaElement).value).toBe('Provide stability follow-up.');
+    expect((within(dialog).getByLabelText(/^Reason/) as HTMLInputElement).value).toBe('Recorded from the official letter.');
+    expect(screen.queryByText('Commitment recorded, with an audit entry.')).toBeNull();
+  });
+
   it("lists the project's commitments, naming the letter and question, beside the organisation's own", async () => {
     await openCommitments();
     expect(await screen.findByText('Submit 24-month stability data')).toBeTruthy();

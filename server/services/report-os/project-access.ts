@@ -53,14 +53,18 @@ export async function canAccessReportProject(organizationId: number, actor: Repo
 
 export interface ReportAccessScope {
   scopeType: string; scopeId: string; organizationId?: number;
-  /** Saved program output is bound to the projects actually computed then. */
+  /** Saved output is bound to the source projects actually computed then. */
   recorded?: boolean; dependencySummary?: unknown; accessProjectIds?: readonly number[];
 }
 
-export function recordedReportProjectIds(scope: ReportAccessScope): readonly number[] | null {
+function recordedProjectEvidence(scope: ReportAccessScope): { present: boolean; value: unknown } {
   const dependencies = scope.dependencySummary && typeof scope.dependencySummary === 'object' ? scope.dependencySummary as Record<string, unknown> : {};
   const summary = dependencies.summary && typeof dependencies.summary === 'object' ? dependencies.summary as Record<string, unknown> : {};
-  const ids = scope.accessProjectIds ?? summary.accessProjectIds;
+  if (Object.prototype.hasOwnProperty.call(scope, 'accessProjectIds')) return { present: true, value: scope.accessProjectIds };
+  return { present: Object.prototype.hasOwnProperty.call(summary, 'accessProjectIds'), value: summary.accessProjectIds };
+}
+export function recordedReportProjectIds(scope: ReportAccessScope): readonly number[] | null {
+  const ids = recordedProjectEvidence(scope).value;
   return Array.isArray(ids) && ids.every(id => typeof id === 'number' && Number.isSafeInteger(id) && id > 0) ? ids : null;
 }
 
@@ -80,8 +84,18 @@ async function canAccessProgramScope(organizationId: number, actor: ReportProjec
  * audit. Scope existence and project permission are different checks. */
 export async function canAccessReportScope(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, client: RequestSqlClient = getPool(), accessibleIds?: readonly number[]): Promise<boolean> {
   if (scope.organizationId !== undefined && scope.organizationId !== organizationId) return false;
-  if (scope.scopeType === 'account') return scope.scopeId === String(organizationId);
+  const sourceIds = recordedReportProjectIds(scope);
+  if (recordedProjectEvidence(scope).present && sourceIds === null) return false;
+  if (scope.scopeType === 'account' && !sourceIds?.length) return scope.scopeId === String(organizationId);
   const allowed = new Set(accessibleIds ?? await getAccessibleReportProjectIds(organizationId, actor, client));
+  if (sourceIds && !sourceIds.every(id => allowed.has(id))) return false;
+  return canAccessAdmittedReportScope(organizationId, actor, scope, allowed, client);
+}
+
+/** Scope-specific parents are checked only after saved source admission. The
+ * same caller-owned executor and evaluated project set reach every branch. */
+async function canAccessAdmittedReportScope(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, allowed: Set<number>, client: RequestSqlClient): Promise<boolean> {
+  if (scope.scopeType === 'account') return scope.scopeId === String(organizationId);
   if (scope.scopeType === 'project') return allowed.has(Number(scope.scopeId));
   if (scope.scopeType === 'document' || scope.scopeType === 'submission') {
     const document = scope.scopeType === 'document';

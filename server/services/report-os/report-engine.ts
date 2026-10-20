@@ -40,6 +40,7 @@
 import { REGIONAL_FILING_TYPES } from './regional/filing-types';
 import { filterTypesForSegment, type ReportSegment } from './segment';
 import type { RunComputationResult } from './orchestrator';
+import type { ReportRecordContext } from './lifecycle-calendar';
 
 export type ReportEngine = 'readiness' | 'domain' | 'lineage' | 'regional';
 
@@ -146,7 +147,7 @@ export async function computeDomainRun(
   organizationId: number,
   scopeType: string,
   scopeId: string,
-  options?: { clientWorkspaceId?: number | null },
+  options?: { clientWorkspaceId?: number | null; recordContext?: ReportRecordContext },
 ): Promise<RunComputationResult> {
   const { computeDomainReport } = await import('./research-compliance-report-providers');
   const domain = await computeDomainReport(typeId, organizationId, { scopeType, scopeId, ...options });
@@ -157,7 +158,7 @@ export async function computeDomainRun(
     confidence: null,
     blockers,
     criticalBlockers: domain.criticalBlockers ?? [],
-    summary: { scopeType, scopeId, domain: domain.summary, domainScope: domain.computedScope ?? 'organization', computedScope: domain.computedScope ?? 'organization', provenance: domain.provenance },
+    summary: { scopeType, scopeId, ...(domain.accessProjectIds ? { accessProjectIds: domain.accessProjectIds } : {}), domain: domain.summary, domainScope: domain.computedScope ?? 'organization', computedScope: domain.computedScope ?? 'organization', provenance: domain.provenance },
   };
 }
 

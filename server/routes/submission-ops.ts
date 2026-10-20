@@ -37,7 +37,6 @@ import {
   c2cBlockers,
   c2cAutomationRuns,
   c2cAutomationActions,
-  c2cDigests,
   concept2cureArtifacts,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
@@ -119,6 +118,12 @@ import {
 } from '../services/submission-gateways/validator-registry';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { requestConnectable, requestPgClient } from '../db/requestDb';
+import { resolveOrgId, resolveUserId } from '../types/auth-request';
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
+import {
+  DIGEST_GENERATION_AVAILABILITY, DigestAccessError, listRecipientDigests, markRecipientDigestRead,
+} from '../services/submission-ops/digest-access';
 
 /*
  * Every mutating route in this file was gated by nothing but `getOrgId(req)`,
@@ -1602,43 +1607,37 @@ router.get('/due-soon', async (req: Request, res: Response) => {
 // DIGESTS
 // ============================================================
 
+function digestActorOf(req:Request) {
+  const organizationId=resolveOrgId(req),userId=resolveUserId(req);
+  if (!organizationId || !userId) throw new DigestAccessError(403,'DIGEST_ACTOR_REQUIRED','A current organization member is required to read this digest.');
+  return {organizationId,userId};
+}
+function digestFailure(res:Response,error:unknown,operation:string) {
+  if (error instanceof DigestAccessError) return res.status(error.status).json({
+    error:error.message,code:error.code,...(error.recovery ? {recovery:error.recovery} : {}),
+  });
+  return serverError(res,logger,operation,error);
+}
+
 router.get('/digests', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    const userId = getUserId(req);
-    const { projectId, digestType } = req.query;
-
-    const conditions = [eq(c2cDigests.orgId, orgId)];
-    if (projectId) conditions.push(eq(c2cDigests.projectId, Number(projectId)));
-    if (digestType) conditions.push(eq(c2cDigests.digestType, digestType as string));
-    if (userId) conditions.push(eq(c2cDigests.recipientUserId, userId));
-
-    const digests = await db
-      .select()
-      .from(c2cDigests)
-      .where(and(...conditions))
-      .orderBy(desc(c2cDigests.generatedAt))
-      .limit(20);
-
-    res.json({ data: digests });
+    const actor=digestActorOf(req);
+    const digests=await listRecipientDigests(requestPgClient(req),actor,req.query);
+    res.json({data:digests,meta:{digestGeneration:DIGEST_GENERATION_AVAILABILITY}});
   } catch (e) {
-    return serverError(res, logger, 'loading digests', e);
+    return digestFailure(res,e,'loading digests');
   }
 });
 
 router.post('/digests/:digestId/read', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    const [updated] = await db
-      .update(c2cDigests)
-      .set({ status: 'read', readAt: new Date() })
-      .where(and(eq(c2cDigests.digestId, String(req.params.digestId)), eq(c2cDigests.orgId, orgId)))
-      .returning();
-
-    if (!updated) return res.status(404).json({ error: 'Digest not found' });
-    res.json({ data: updated });
+    const actor=digestActorOf(req);
+    const receipt=await markRecipientDigestRead(requestConnectable(req),actor,req.params.digestId,req.ip ?? null);
+    if (receipt.auditTrail) setAuditRowHeaders(res,receipt.auditTrail);
+    res.json({data:receipt.digest,meta:{digestGeneration:DIGEST_GENERATION_AVAILABILITY,
+      readReceipt:receipt.outcome,...(receipt.auditTrail ? {auditTrail:receipt.auditTrail} : {})}});
   } catch (e) {
-    return serverError(res, logger, 'marking read digests', e);
+    return digestFailure(res,e,'marking read digests');
   }
 });
 

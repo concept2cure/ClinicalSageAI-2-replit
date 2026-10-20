@@ -8,6 +8,7 @@ import { clearAuthToken } from '@/utils/authToken';
 import { ApiRequestError } from '@/lib/queryClient';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import { publishShellProject } from '../shellProject';
+import { surfaceLeaveRefusal } from '../navParams';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
@@ -57,6 +58,7 @@ describe('native creation recovery from the actual backend identity contract', (
     expect(screen.queryByRole('button', { name: 'Open identified document' })).toBeNull();
     expect(newButton('document').disabled).toBe(true); expect(postCalls()).toHaveLength(1);
     expect(p.onDocCreated).not.toHaveBeenCalled();
+    expect(surfaceLeaveRefusal()).toMatch(/unconfirmed/i);
   });
   it.each(['unconfirmed', 'committed'] as const)('holds %s creation and opens only after an explicit exact scoped read', async creationOutcome => {
     const p = props();
@@ -69,14 +71,18 @@ describe('native creation recovery from the actual backend identity contract', (
     render(<AuthoringCreateExport {...p} />); await open('document'); fill('document'); submit('document');
     expect((await screen.findByRole('alert')).textContent).toContain(id);
     expect(newButton('document').disabled).toBe(true); expect(p.onDocCreated).not.toHaveBeenCalled();
+    expect(surfaceLeaveRefusal()).toMatch(/unconfirmed/i);
     fireEvent.click(screen.getByRole('button', { name: 'Check working documents' }));
     const openIdentified = await screen.findByRole('button', { name: 'Open identified document' });
     expect(newButton('document').disabled).toBe(true); expect(p.onDocCreated).not.toHaveBeenCalled();
+    expect(surfaceLeaveRefusal()).toBeNull();
     expect(postCalls()).toHaveLength(1);
     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${id}`, undefined,
       { Authorization: `Bearer ${BEARER}`, 'x-organization-id': '12' });
     fireEvent.click(openIdentified);
     expect(p.onDocCreated).toHaveBeenCalledWith({ id, title: 'Existing exact document' });
+    expect(surfaceLeaveRefusal()).toBeNull();
+    expect(newButton('document').disabled).toBe(true); expect(postCalls()).toHaveLength(1);
   });
   it('a readable but empty inventory cannot release an identified unconfirmed creation', async () => {
     wire(async () => response({ success: false, ok: false, retryAllowed: false, creationOutcome: 'unconfirmed',
@@ -86,5 +92,6 @@ describe('native creation recovery from the actual backend identity contract', (
     await screen.findByText(/Creation is still unconfirmed/);
     expect(newButton('document').disabled).toBe(true); expect(postCalls()).toHaveLength(1);
     expect(screen.queryByRole('button', { name: 'Open identified document' })).toBeNull();
+    expect(surfaceLeaveRefusal()).toMatch(/unconfirmed/i);
   });
 });

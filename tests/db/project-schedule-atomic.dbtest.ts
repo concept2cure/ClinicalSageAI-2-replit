@@ -341,6 +341,8 @@ describe('PM-02 refuses conflicts and rolls back failed replanning', () => {
     { label: 'category', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{category}','\"internal\"')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'regulatory basis', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{regulatoryBasis}','\"Different basis\"')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'dependencies', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{dependsOn}','[]')::json WHERE metadata->>'key'='nonclinical'" },
+    { label: 'criticality false to true', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{isCritical}','false')::json WHERE metadata->>'key'='kickoff'" },
+    { label: 'criticality true to false', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{isCritical}','true')::json WHERE metadata->>'key'='fda_forms'" },
     { label: 'removed key', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{key}','\"removed-key\"')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'missing key', sql: "UPDATE project_workflow_stages SET metadata=(metadata::jsonb-'key')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'duplicate key', sql: "INSERT INTO project_workflow_stages (organization_id,project_id,name,\"order\",status,metadata) SELECT organization_id,project_id,name,\"order\",status,metadata FROM project_workflow_stages WHERE metadata->>'key'='nonclinical'" },

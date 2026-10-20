@@ -44,7 +44,7 @@
  */
 import React from 'react';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
-import { ApiRequestError, apiRequest } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { useAuthUser, type AuthUser } from '@/services/portal/authService';
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
@@ -437,7 +437,7 @@ export function AgencyResponses({
   const addQuestion = async (v: Record<string, string>) => {
     setBusy(true);
     try {
-      await apiRequest('POST', `${base}/questions`, {
+      const res = await apiRequest('POST', `${base}/questions`, {
         questionRef: v.questionRef,
         questionText: v.questionText,
         discipline: v.discipline || undefined,
@@ -445,6 +445,7 @@ export function AgencyResponses({
         severity: v.severity || 'major',
         reason: v.reason,
       });
+      if (!res.ok) await assertApiResponseOk(res);
       setAdding(false);
       fire(`Question ${v.questionRef} recorded, with an audit entry.`);
       reload();
@@ -459,7 +460,8 @@ export function AgencyResponses({
     setBusy(true);
     try {
       // The revision the writer started from, never the one on screen now.
-      await apiRequest('PUT', `${base}/questions/${q.id}/response`, { responseText: text, expectedRevision: baseRevision, reason });
+      const res = await apiRequest('PUT', `${base}/questions/${q.id}/response`, { responseText: text, expectedRevision: baseRevision, reason });
+      if (!res.ok) await assertApiResponseOk(res);
       fire(`Response to ${q.questionRef} saved, with an audit entry.`);
       reload();
       return true;
@@ -476,13 +478,14 @@ export function AgencyResponses({
     if (!committing) return;
     setBusy(true);
     try {
-      await apiRequest('POST', `${base}/questions/${committing.id}/commitments`, {
+      const res = await apiRequest('POST', `${base}/questions/${committing.id}/commitments`, {
         commitmentType: v.commitmentType,
         description: v.description,
         dueDate: v.dueDate || undefined,
         regulatoryBasis: v.regulatoryBasis || undefined,
         reason: v.reason,
       });
+      if (!res.ok) await assertApiResponseOk(res);
       fire(`Commitment recorded from ${committing.questionRef}. It is listed under Meetings & commitments.`);
       setCommitting(null);
       reload();
@@ -497,7 +500,8 @@ export function AgencyResponses({
     if (!withdrawing) return;
     setBusy(true);
     try {
-      await apiRequest('POST', `${base}/questions/${withdrawing.id}/withdraw`, { reason: v.reason });
+      const res = await apiRequest('POST', `${base}/questions/${withdrawing.id}/withdraw`, { reason: v.reason });
+      if (!res.ok) await assertApiResponseOk(res);
       fire(`Question ${withdrawing.questionRef} withdrawn, with an audit entry. It stays in the record.`);
       setWithdrawing(null);
       reload();
@@ -516,7 +520,8 @@ export function AgencyResponses({
     if (!classifying) return;
     setBusy(true);
     try {
-      await apiRequest('PATCH', `${base}/questions/${classifying.id}`, { ctdSection: v.ctdSection?.trim() || null, reason: v.reason });
+      const res = await apiRequest('PATCH', `${base}/questions/${classifying.id}`, { ctdSection: v.ctdSection?.trim() || null, reason: v.reason });
+      if (!res.ok) await assertApiResponseOk(res);
       fire(`Section of ${classifying.questionRef} recorded, with an audit entry.`);
       setClassifying(null);
       reload();
@@ -534,7 +539,8 @@ export function AgencyResponses({
     const ownerUserId = v.owner === NO_OWNER ? null : Number(v.owner);
     setBusy(true);
     try {
-      await apiRequest('PATCH', `${base}/questions/${assigning.id}/owner`, { ownerUserId, reason: v.reason });
+      const res = await apiRequest('PATCH', `${base}/questions/${assigning.id}/owner`, { ownerUserId, reason: v.reason });
+      if (!res.ok) await assertApiResponseOk(res);
       fire(
         ownerUserId === null
           ? `Owner of ${assigning.questionRef} cleared, with an audit entry.`
@@ -553,7 +559,8 @@ export function AgencyResponses({
   const markNoResponseRequired = async (v: Record<string, string>) => {
     setBusy(true);
     try {
-      await apiRequest('POST', `${base}/no-response-required`, { reason: v.reason });
+      const res = await apiRequest('POST', `${base}/no-response-required`, { reason: v.reason });
+      if (!res.ok) await assertApiResponseOk(res);
       fire('Letter marked as needing no response, with an audit entry. It can now be closed.');
       setAskingNothing(false);
       reload();

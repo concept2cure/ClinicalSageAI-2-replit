@@ -557,7 +557,7 @@ export function separationOfDutiesRefusal(
     // The error's own message carries the failed lookup's cause, which is
     // internal; it goes to the log, and the caller gets an authored
     // sentence (ci:server-error-leaks, 2026-09-23).
-    console.error(`[${label}]`, err.message);
+    console.error('[%s] %s', label, err.message);
     return {
       status: 503,
       body: {

@@ -57,7 +57,7 @@ import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { PoolClient } from 'pg';
 import { requireRole } from '../middleware/auth';
-import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { requireEditorAccessForWrites, GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import {
   GovernedSignatureRefusal,
@@ -86,7 +86,7 @@ import { listReportRunHistory } from '../services/report-os/run-history';
 import { ReportRegistryError, explicitReportRegistry } from '../services/report-os/registry-context';
 import { UnsupportedReportClientScope } from '../services/report-os/client-scope';
 import { resolveOwnedReportScope, ReportScopeOwnershipError, type OwnedReportScopeInput } from '../services/report-os/scope-ownership';
-import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { requestDb, requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { getAccessibleReportProjectIds, canAccessReportScope, recordedReportProjectIds, type ReportProjectActor, type ReportAccessScope } from '../services/report-os/project-access';
 import { hasOrganizationProjectManagementRole } from '../services/project-sharing-access';
 import { persistReportRun, ReportRunRecordingError } from '../services/report-os/persistence';
@@ -108,15 +108,22 @@ async function accessibleProjectIds(req: Request, organizationId: number): Promi
   return cached.reportAccessibleProjects;
 }
 
-async function canReadReportScope(req: Request, organizationId: number, scope: ReportAccessScope): Promise<boolean> {
-  if (scope.scopeType === 'account') return canAccessReportScope(organizationId, reportActor(req), scope);
-  return canAccessReportScope(organizationId, reportActor(req), scope, undefined, await accessibleProjectIds(req, organizationId));
+interface ReportReadContext {
+  actor: ReportProjectActor;
+  client: RequestSqlClient;
+  projectIds: readonly number[];
 }
 
-async function canReadBundle(req: Request, bundle: ReportBundleRecord): Promise<boolean> {
-  const ids = new Set(await accessibleProjectIds(req, bundle.organizationId));
+async function canReadReportScope(req: Request, organizationId: number, scope: ReportAccessScope, context?: ReportReadContext): Promise<boolean> {
+  const actor = context?.actor ?? reportActor(req);
+  if (scope.scopeType === 'account') return canAccessReportScope(organizationId, actor, scope, context?.client, context?.projectIds);
+  return canAccessReportScope(organizationId, actor, scope, context?.client, context?.projectIds ?? await accessibleProjectIds(req, organizationId));
+}
+
+async function canReadBundle(req: Request, bundle: ReportBundleRecord, context?: ReportReadContext): Promise<boolean> {
+  const ids = new Set(context?.projectIds ?? await accessibleProjectIds(req, bundle.organizationId));
   if (!(bundle.projectIds ?? []).every(id => ids.has(id))) return false;
-  for (const item of bundle.items) if (!(await canReadReportScope(req, bundle.organizationId, { ...item, recorded: true }))) return false;
+  for (const item of bundle.items) if (!(await canReadReportScope(req, bundle.organizationId, { ...item, recorded: true }, context))) return false;
   return true;
 }
 router.use(authMiddleware);
@@ -488,7 +495,12 @@ async function createRunOnChain(
   try {
     return await persistReportRun(rows, {
       userId: getUserId(req), ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined,
-    });
+    }, rows.run.reportTypeId === 'lifecycle.obligation_calendar' ? async client => {
+      const actor = await readCurrentProgramActor(client, { organizationId: rows.run.organizationId, userId: getUserId(req), forShare: true });
+      if (!GOVERNED_WRITE_ROLES.has(actor.role) || !await canAccessReportScope(rows.run.organizationId, actor, rows.run, client)) {
+        throw new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Current report source access and writing permission are required. Nothing was saved.');
+      }
+    } : undefined);
   } catch (error) {
     if (!(error instanceof ReportRunRecordingError)) throw error;
     logger.error('report run not recorded on the audit chain; rolled back', { error: (error as Error)?.message });
@@ -851,6 +863,7 @@ function resolveProjectsForBundleRuns(runs: Array<{ scopeType: string; scopeId: 
   for (const run of runs) {
     const projectId = resolveProjectIdForRun(run);
     if (projectId) ids.add(projectId);
+    for (const sourceId of recordedReportProjectIds(run) ?? []) ids.add(sourceId);
   }
   return [...ids];
 }
@@ -895,83 +908,101 @@ async function persistBundleRecord(req: Request, bundle: ReportBundleRecord) {
   }
 }
 
-/**
- * The most `project_memory_entries` ROWS one register read scans.
- *
- * It was 1000, bare, and the unit is as much of a problem as the number: a
- * bundle is stored once PER COVERED PROJECT (see persistBundleRecord), so 1000
- * rows is 1000 bundles only when every bundle covers exactly one project, and
- * about 333 when they cover three. The register then returned an unpredictable
- * number of packs with the oldest missing and nothing saying so — a silent cap
- * on a governed register, the same failure as the run-history window (C-1) and
- * the capped portfolio rollup (C-12).
- *
- * The bound stays, because an unbounded register read is how one organisation's
- * history becomes everyone's latency. It is raised, and `registerTotal` below
- * counts the distinct bundles in SQL so a truncated read is always reportable
- * rather than invisible.
- */
+/** Bounded SQL pages; the result limit counts admitted distinct packs, never
+ * the memory rows copied to each source project. */
 const BUNDLE_ROW_SCAN = 5000;
+const BUNDLE_REGISTER_LIMIT = 5000;
+type BundleCursor = { id: number; createdAt: string };
+type BundleRegisterRead = { bundles: ReportBundleRecord[]; moreBundle?: ReportBundleRecord };
 
-/** What a register read covered, so a truncated answer can say so. */
-interface BundleRegisterRead {
-  bundles: ReportBundleRecord[];
-  /** Distinct bundles in the register, counted in SQL — never from the rows
-   *  the scan returned, which would agree with a truncated scan by
-   *  construction and could never reveal one. */
-  registerTotal: number;
-  /** Fewer bundles were decoded than the register holds, so older packs are
-   *  missing from `bundles`. */
-  truncated: boolean;
-}
-
-async function loadBundleRegister(
-  organizationId: number,
-  bundleId?: string,
-  executor: ReportDb = db,
-): Promise<BundleRegisterRead> {
-  const where = and(
+function bundleRecordWhere(organizationId: number, bundleId?: string) {
+  return and(
     eq(projectMemoryEntries.organizationId, organizationId),
     eq(projectMemoryEntries.category, 'regulatory'),
     eq(projectMemoryEntries.subcategory, REPORT_OS_BUNDLE_SUBCATEGORY),
     eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE),
     ...(bundleId ? [eq(projectMemoryEntries.title, `bundle:${bundleId}`)] : []),
   );
-  const [counted] = await executor
-    .select({ n: sql<number>`count(distinct ${projectMemoryEntries.title})::int` })
-    .from(projectMemoryEntries)
-    .where(where);
-  const rows = await executor
-    .select({
-      title: projectMemoryEntries.title,
-      content: projectMemoryEntries.content,
-      createdAt: projectMemoryEntries.createdAt,
-    })
-    .from(projectMemoryEntries)
-    .where(where)
-    /* `id` is the tiebreaker. Every row of one bundle is written in a single
-       transaction, so a multi-project bundle's rows share a created_at to the
-       microsecond; without it the rows that fall off the scan could differ
-       between two identical reads. */
-    .orderBy(desc(projectMemoryEntries.createdAt), desc(projectMemoryEntries.id))
-    .limit(BUNDLE_ROW_SCAN);
-
-  const normalized = rows
-    .map(row => {
-      const parsed = decodeRecordPayload(row.content, 'bundleRecord', reportBundleRecordSchema);
-      if (!parsed || parsed.organizationId !== organizationId) throw new ReportBundleError('A saved report pack is incomplete or invalid. The register could not be read.', 'REPORT_BUNDLE_CORRUPT');
-      return { id: parsed.bundleId, ...parsed };
-    })
-    .filter((row): row is ReportBundleRecord & { id: string } => !!row);
-
-  const deduped = dedupeByLatest(normalized).map(({ id: _id, ...rest }) => rest);
-  const registerTotal = Number(counted?.n ?? deduped.length);
-  return { bundles: deduped, registerTotal, truncated: deduped.length < registerTotal };
 }
 
-/** The bundles alone, for the callers that need no coverage statement. */
+async function loadBundleRows(organizationId: number, executor: ReportDb, bundleId?: string, cursor?: BundleCursor) {
+  return executor.select({
+    id: projectMemoryEntries.id,
+    title: projectMemoryEntries.title,
+    content: projectMemoryEntries.content,
+    // Retain PostgreSQL's microseconds: a driver Date would truncate the keyset.
+    createdAt: sql<string>`${projectMemoryEntries.createdAt}::text`,
+  }).from(projectMemoryEntries).where(and(
+    bundleRecordWhere(organizationId, bundleId),
+    ...(cursor ? [sql`(${projectMemoryEntries.createdAt}, ${projectMemoryEntries.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::integer)`] : []),
+  )).orderBy(desc(projectMemoryEntries.createdAt), desc(projectMemoryEntries.id)).limit(BUNDLE_ROW_SCAN);
+}
+
+function decodeBundleRow(organizationId: number, content: string): ReportBundleRecord {
+  const parsed = decodeRecordPayload(content, 'bundleRecord', reportBundleRecordSchema);
+  if (!parsed || parsed.organizationId !== organizationId) {
+    throw new ReportBundleError('A saved report pack is incomplete or invalid. The register could not be read.', 'REPORT_BUNDLE_CORRUPT');
+  }
+  return parsed;
+}
+
+async function loadBundleRegister(organizationId: number, executor: ReportDb, admit: (bundle: ReportBundleRecord) => Promise<boolean>): Promise<BundleRegisterRead> {
+  const bundles: ReportBundleRecord[] = [];
+  const seen = new Set<string>();
+  let cursor: BundleCursor | undefined;
+  for (;;) {
+    const rows = await loadBundleRows(organizationId, executor, undefined, cursor);
+    for (const row of rows) {
+      const bundle = decodeBundleRow(organizationId, row.content);
+      // Newest row wins BEFORE admission. An older public copy must never
+      // surface behind a newer private copy of the same recorded pack.
+      if (seen.has(bundle.bundleId)) continue;
+      seen.add(bundle.bundleId);
+      if (!await admit(bundle)) continue;
+      if (bundles.length === BUNDLE_REGISTER_LIMIT) return { bundles, moreBundle: bundle };
+      bundles.push(bundle);
+    }
+    if (rows.length < BUNDLE_ROW_SCAN) return { bundles };
+    const last = rows.at(-1)!;
+    if (!Number.isSafeInteger(last.id) || last.id < 1 || typeof last.createdAt !== 'string' || !last.createdAt.trim()) {
+      throw new ReportBundleError('The report register could not be read completely.', 'REPORT_BUNDLE_REGISTER_UNAVAILABLE');
+    }
+    cursor = { id: last.id, createdAt: last.createdAt };
+  }
+}
+
+async function currentBundleReadContext(req: Request, organizationId: number): Promise<ReportReadContext> {
+  const client = requestPgClient(req);
+  const actor = await readCurrentProgramActor(client, { organizationId, userId: getUserId(req) });
+  return { client, actor, projectIds: await getAccessibleReportProjectIds(organizationId, actor, client) };
+}
+
+async function assertBundleRegisterStillCurrent(req: Request, organizationId: number, before: ReportReadContext, register: BundleRegisterRead): Promise<void> {
+  const current = await currentBundleReadContext(req, organizationId);
+  const same = current.actor.userId === before.actor.userId && current.actor.role === before.actor.role
+    && current.projectIds.length === before.projectIds.length && current.projectIds.every((id, index) => id === before.projectIds[index]);
+  if (!same) throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+  // Scope parents can change without changing the actor's project allowlist.
+  // Recheck every returned pack AND the admitted extra pack behind the count.
+  const checked = register.moreBundle ? [...register.bundles, register.moreBundle] : register.bundles;
+  for (const bundle of checked) {
+    if (!await canReadBundle(req, bundle, current)) {
+      throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+    }
+  }
+}
+
+/** Exact-ID readers retain the same newest-copy behavior and their existing
+ * caller's admission; a register count is neither needed nor disclosed. */
 async function loadBundlesForOrg(organizationId: number, bundleId?: string, executor: ReportDb = db): Promise<ReportBundleRecord[]> {
-  return (await loadBundleRegister(organizationId, bundleId, executor)).bundles;
+  const rows = await executor.select({
+    title: projectMemoryEntries.title, content: projectMemoryEntries.content, createdAt: projectMemoryEntries.createdAt,
+  }).from(projectMemoryEntries).where(bundleRecordWhere(organizationId, bundleId))
+    .orderBy(desc(projectMemoryEntries.createdAt), desc(projectMemoryEntries.id)).limit(BUNDLE_ROW_SCAN);
+  return dedupeByLatest(rows.map(row => {
+    const bundle = decodeBundleRow(organizationId, row.content);
+    return { id: bundle.bundleId, ...bundle };
+  })).map(({ id: _id, ...bundle }) => bundle);
 }
 
 async function loadBundleById(
@@ -1677,6 +1708,7 @@ router.post('/runs', async (req: Request, res: Response) => {
         scopeType,
         scopeId,
         clientWorkspaceId,
+        ...(reportTypeId === 'lifecycle.obligation_calendar' ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
         declared: {
           label: type[0].label,
           region: typeof governance.region === 'string' ? governance.region : null,
@@ -1769,6 +1801,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     if (error instanceof ReportRegistryError) return res.status(400).json({ error: error.message, code: error.code });
     if (error instanceof ReportScopeOwnershipError) return res.status(error.status).json({ error: error.message, code: error.code });
     if (error instanceof UnsupportedReportClientScope) return res.status(422).json({ error: error.message, code: error.code });
+    if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ error: error.message, code: error.code });
     return serverError(res, logger, 'saving runs', error);
   }
 });
@@ -2300,7 +2333,7 @@ router.post('/bundles', async (req: Request, res: Response) => {
       confidence: run.confidence ?? null,
       blockers: toBlockerArray(run.blockers),
       createdAt: safeIso(run.createdAt),
-      ...(run.scopeType === 'program' && recordedReportProjectIds(run) ? { accessProjectIds: [...recordedReportProjectIds(run)!] } : {}),
+      ...(recordedReportProjectIds(run) ? { accessProjectIds: [...recordedReportProjectIds(run)!] } : {}),
     }));
     // A bundle is stored as a memory entry on each project its runs cover.
     // This list was never filled in, so persistBundleRecord wrote nothing and
@@ -2344,20 +2377,16 @@ router.get('/bundles', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
-    const register = await loadBundleRegister(organizationId);
-    const allowed = [];
-    for (const bundle of register.bundles) if (await canReadBundle(req, bundle)) allowed.push(bundle);
-    /* `registerTotal` is the register's own count, BEFORE the per-project read
-       check above — so it is deliberately not offered as "how many you may
-       see", which would need every bundle loaded to know. It is sent only
-       alongside `truncated`, where the one honest statement is "this register
-       holds more than are shown here". */
+    const context = await currentBundleReadContext(req, organizationId);
+    const register = await loadBundleRegister(organizationId, requestDb(req), bundle => canReadBundle(req, bundle, context));
+    await assertBundleRegisterStillCurrent(req, organizationId, context, register);
     return res.json({
-      data: allowed,
-      ...(register.truncated ? { meta: { truncated: true, registerTotal: register.registerTotal } } : {}),
+      data: register.bundles,
+      ...(register.moreBundle ? { meta: { truncated: true, registerTotalAtLeast: register.bundles.length + 1 } } : {}),
     });
   } catch (error: any) {
     if (error instanceof ReportBundleError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+    if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     return serverError(res, logger, 'loading bundles', error);
   }
 });
