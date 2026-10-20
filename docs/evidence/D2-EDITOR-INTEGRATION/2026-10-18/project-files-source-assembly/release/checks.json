@@ -181,7 +181,7 @@
     "fixtureLintFiles": 6,
     "nodeSyntaxChecksPassed": 4,
     "originalQualificationIndex": "first-qualification-checks.json",
-    "priorBrowserCapture": "../browser/pre-deduplication/README.md",
+    "priorBrowserCapture": "../browser/pre-deduplication/source-and-readme-storage.json",
     "productTestConfigurationPinsUnchanged": true,
     "broadCheckRerunAfterFixtureReuse": false,
     "qualification": "The compiler, production build and 228-test receipts remain bound to the same 55 source/configuration bytes. Only browser evidence fixture wiring changed; the six affected browser cases, strict fixture lint, syntax, warning comparison and repo-health gate were rerun."
