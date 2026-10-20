@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-20T22:42:43.580Z",
+  "generatedAt": "2026-10-20T23:16:19.617Z",
   "git": {
-    "sha": "1a1683ece52898a06d0fb525866914843786627d",
+    "sha": "7b87ad1a4088f04d91e9cb3869781c604170c9e5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2255,7 +2255,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 195740
+        "bytes": 196172
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2363,7 +2363,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 120633
+        "bytes": 120925
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2431,7 +2431,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 103131
+        "bytes": 103332
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2489,7 +2489,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 3956
+        "lines": 3963
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2605,7 +2605,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2350
+        "lines": 2353
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2708,16 +2708,20 @@
         "lines": 2044
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2030
+      },
+      {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2028
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
+      },
+      {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2016
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2726,10 +2730,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1984
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
