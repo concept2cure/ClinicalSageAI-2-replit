@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/ana/__tests__/draft-project-sources.test.ts"
+  ],
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "testSha256": "038050c181347aa4cef241eb7f0f569e900d3ea3714391f03409730189c550c6"
+}

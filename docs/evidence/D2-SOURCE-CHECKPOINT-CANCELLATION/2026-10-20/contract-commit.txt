@@ -1,0 +1,6 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 6ec38926c] docs: define existing source cancellation completion contract
+ 1 file changed, 78 insertions(+)
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/CONTRACT.md

@@ -25,6 +25,15 @@ reported in `cancelledIndices` rather than offered for automatic retry. It does
 not un-spend an in-flight provider call, tie the HTTP batch route to client
 disconnect, or cover non-batch drafting entrances.
 
+Delivery completion, 2026-10-20: Stop is also checked between the existing
+selected-document metadata/body/current-source and actor/program operations,
+including the service's entry, dispatch and response source checkpoints. Typed
+cancellation is kept out of failed retry slots; genuine source rejections retain
+their classification. See
+[source-operation cancellation qualification](../../evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/README.md).
+An already-started catalog operation and its internal SQL may still finish;
+native SQL cancellation and HTTP disconnect wiring remain outside this increment.
+
 Delivery update, 2026-10-18: the first half of priority 3 is delivered. The
 deterministic source-window selector shared by AnA batch drafting and editor
 assembly now selects Japanese passages; see
