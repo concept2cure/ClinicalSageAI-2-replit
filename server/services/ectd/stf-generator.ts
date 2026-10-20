@@ -37,7 +37,8 @@
  *   - That a deleted leaf is not tagged (it ships no file).
  *   - The document file-tag list STF_DOCUMENT_FILE_TAGS. It only warns.
  *   - The eCTD file-name character rule is the platform's one copy of it,
- *     FILENAME_PATTERN in ectd-regional-rules.ts.
+ *     FILENAME_PATTERN in shared/regulatory/ectd-leaf-rules.ts (re-exported
+ *     through ectd-regional-rules.ts for existing server callers).
  *
  * Until 2026-10-05 every file was named 'stf.xml', file-tags were free text,
  * each tag wrapped <leaf> elements pointing at the PDFs, and a default
@@ -47,7 +48,8 @@
  * @module server/services/ectd/stf-generator
  */
 
-import { FILENAME_PATTERN } from './ectd-regional-rules';
+import { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
+export { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
 import { FDA_STUDY_DATA_TRC, recall } from '../ind/ctd/regulatory-basis';
 import type { RegulatoryBasis } from '../ind/ctd/types';
 
@@ -157,24 +159,6 @@ function escapeXml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
-}
-
-/**
- * The STF file name for a study: "stf-" + study-id + ".xml", case-folded because
- * eCTD file names are lower case. Throws when the result breaks the eCTD
- * file-name rule (FILENAME_PATTERN) — a study id with a space, '&', '_' or '/',
- * or one too long — rather than inventing a different name for the study.
- */
-export function stfFileName(studyId: string): string {
-  const name = `stf-${studyId.toLowerCase()}.xml`;
-  if (!FILENAME_PATTERN.test(name)) {
-    throw new Error(
-      `Study id "${studyId}" cannot form its Study Tagging File name: "${name}" breaks the eCTD file-name rule ` +
-        `(lower case a-z, 0-9, '.', '-'; at most 64 characters). The STF is named "stf-" + study-id + ".xml" ` +
-        `(ICH STF v2.6.1); give the study an id that fits rather than have the platform rename it.`,
-    );
-  }
-  return name;
 }
 
 /** The file-tag a dataset or define.xml leaf must carry, or null for a document leaf. */

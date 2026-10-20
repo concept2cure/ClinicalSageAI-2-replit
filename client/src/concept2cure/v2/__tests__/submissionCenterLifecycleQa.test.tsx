@@ -336,7 +336,7 @@ describe('the Builder says what the server knows about each leaf', () => {
     mockApi((method, url) => {
       if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') return ok([]);
       if (method === 'GET' && url === '/api/coauthor/documents') return ok({ documents: [{ id: 5, title: 'Cover Letter', moduleNumber: '1.2', status: 'approved' }] });
-      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') return ok({ id: 62, sectionCode: '1.2', unchanged: true, auditTrail: null });
+      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') return ok({ id: 62, sequenceId: 21, sectionCode: '1.2', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5, unchanged: true, auditTrail: null });
       return undefined;
     });
     await ready();

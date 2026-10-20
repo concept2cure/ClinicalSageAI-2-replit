@@ -38,7 +38,9 @@ import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyStat
 import { RecordHistory } from '../RecordHistory';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
-import { PlacementReasonField, placementReasonOk } from './filingTarget';
+import { PlacementReasonField, placementReasonOk, matchingLeafReceipt, placementAuditWarning, type FilingLeafReceipt } from './filingTarget';
+import { StudyTaggingInputFields, studyTaggingPlacement, type StudyTaggingValues } from './StudyTaggingInputFields';
+import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { downloadBlob } from '../download';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
@@ -207,7 +209,7 @@ async function confirmedResult<T>(res: Response): Promise<MutateResult<T>> {
 }
 
 /** Only a definite refusal can justify saying that a write did not occur. */
-function mutationUnconfirmed(status?: number, code?: string): boolean {
+export function mutationUnconfirmed(status?: number, code?: string): boolean {
   if (code === 'OUTCOME_UNKNOWN') return true;
   return typeof status !== 'number' || ![400, 401, 403, 404, 409, 422, 429].includes(status);
 }
@@ -371,10 +373,8 @@ function StudyTaggingFields({ leaf, baseline, notice, studyId, fileTag, reason, 
     <VerdictNote notice={notice} />
     <p className="scaf-note">Record the study identity and STF file-tag reviewed by your team. Values are not inferred; recording them does not establish filing readiness.</p>
     {baseline && <p className="scaf-note">Current leaf: {baseline.sectionCode} “{baseline.title}”. Current recorded study id: {storedStudyValue(baseline.studyId)}. Current recorded STF file-tag: {storedStudyValue(baseline.stfFileTag)}.</p>}
-    <div className="sc-field"><label htmlFor={`${prefix}-id`}>Study id</label>
-      <input id={`${prefix}-id`} className="sc-subpick" value={studyId} disabled={disabled} onChange={event => onStudyId(event.target.value)} /></div>
-    <div className="sc-field"><label htmlFor={`${prefix}-tag`}>STF file-tag</label>
-      <input id={`${prefix}-tag`} className="sc-subpick" value={fileTag} maxLength={128} disabled={disabled} onChange={event => onFileTag(event.target.value)} /></div>
+    <StudyTaggingInputFields value={{ studyId, stfFileTag: fileTag }} idPrefix={prefix} disabled={disabled}
+      onChange={value => { onStudyId(value.studyId); onFileTag(value.stfFileTag); }} />
     <p className="scaf-note">Leave a value empty to clear it. Study reports requiring an STF must have both values before packaging.</p>
     <PlacementReasonField value={reason} onChange={onReason} idPrefix={prefix} label="Reason for this study tagging edit" disabled={disabled} variant="inline" />
     {needsRead && !notice && <p role="status" className="scaf-note">Reread the current leaf before saving; its recorded metadata and revision are not yet verified.</p>}
@@ -612,14 +612,6 @@ function docCoverage(shown: number, total: number | null, query: string): string
     : `All ${total} documents shown.`;
 }
 
-/** What a leaf write answers beyond the row: a no-op, or a status it moved. */
-interface LeafWriteAnswer {
-  id: number;
-  sectionCode?: string;
-  unchanged?: true;
-  sequenceStatusChanged?: { from: string; to: string };
-}
-
 /** What a leaf write did, for the Builder to re-read what changed. */
 export interface LeafWriteEffect {
   /** A leaf was written or removed (the list must be re-read). */
@@ -643,23 +635,26 @@ function revertedSentence(seq: SeqRow, change: { from: string; to: string } | un
 const isOriginalSequence = (seq: SeqRow) => seq.type === 'original' || seq.sequenceNumber === '0000';
 
 /** What a placement answered, as the notice and the re-reads it calls for. */
-function placementAnswer(seq: SeqRow, title: string, r: MutateResult<LeafWriteAnswer>): { notice: Notice; effect: LeafWriteEffect } {
-  if (!r.data || typeof r.data.id !== 'number') {
-    return { notice: { tone: 'err', text: `The leaf was not placed — ${clause(r.error ?? 'the request failed')}.` }, effect: { changed: false, sequenceChanged: false } };
+function placementAnswer(seq: SeqRow, title: string, r: MutateResult<FilingLeafReceipt>, expected: Parameters<typeof matchingLeafReceipt>[1]): {
+  notice: Notice; effect: LeafWriteEffect; confirmed: boolean; unconfirmed: boolean;
+} {
+  const effect = { changed: false, sequenceChanged: false };
+  if (r.unconfirmed || (!r.error && !matchingLeafReceipt(r.data, expected))) {
+    return { notice: { tone: 'warn', text: 'We cannot confirm whether the leaf was placed. Your entered values are retained. Check sequence leaves and audit history before trying another placement.' },
+      effect, confirmed: false, unconfirmed: true };
   }
-  const at = typeof r.data.sectionCode === 'string' ? r.data.sectionCode : '(section code not returned)';
-  /* QA 2026-10-08 (j6): the same document placed into the same section again
-     came back as the existing leaf, marked `unchanged`, and this read
-     "placed … server-confirmed" — a placement that did not happen. */
+  if (!matchingLeafReceipt(r.data, expected)) {
+    return { notice: { tone: 'err', text: `The leaf was not placed — ${clause(r.error ?? 'the request failed')}.` }, effect, confirmed: false, unconfirmed: false };
+  }
+  const at = r.data.sectionCode;
   if (r.data.unchanged) {
-    return {
-      notice: { tone: 'warn', text: `“${title}” is already leaf #${r.data.id} at ${at} in this sequence, with the same operation. Nothing was placed, so nothing was recorded.` },
-      effect: { changed: false, sequenceChanged: false },
-    };
+    return { notice: { tone: 'warn', text: `“${title}” is already leaf #${r.data.id} at ${at} in this sequence, with the same operation. Nothing was placed, so nothing was recorded.` },
+      effect, confirmed: true, unconfirmed: false };
   }
+  const warning = placementAuditWarning(r.data);
   return {
-    notice: { tone: 'ok', text: `Leaf ${at} placed from “${title}” — server-confirmed (leaf #${r.data.id}).${revertedSentence(seq, r.data.sequenceStatusChanged)}` },
-    effect: { changed: true, sequenceChanged: Boolean(r.data.sequenceStatusChanged) },
+    notice: { tone: warning ? 'warn' : 'ok', text: `Leaf ${at} placed from “${title}” — server-confirmed (leaf #${r.data.id}).${warning}${revertedSentence(seq, r.data.sequenceStatusChanged)}` },
+    effect: { changed: true, sequenceChanged: Boolean(r.data.sequenceStatusChanged) }, confirmed: true, unconfirmed: false,
   };
 }
 
@@ -717,7 +712,7 @@ function useCoauthorDocList(open: boolean) {
 type CoauthorDocList = ReturnType<typeof useCoauthorDocList>;
 
 /** The search box, the document select, and how much of the list it shows — never a silent cut-off. */
-function CoauthorDocField({ list, doc, onChoose }: { list: CoauthorDocList; doc: CoauthorDocRow | null; onChoose: (d: CoauthorDocRow | null) => void }) {
+function CoauthorDocField({ list, doc, onChoose, disabled }: { list: CoauthorDocList; doc: CoauthorDocRow | null; onChoose: (d: CoauthorDocRow | null) => void; disabled?: boolean }) {
   const { rows, total, query, docs, more } = list;
   // The chosen document stays offered when a later search no longer lists it.
   const options = doc && !rows.some((d) => d.id === doc.id) ? [doc, ...rows] : rows;
@@ -731,6 +726,7 @@ function CoauthorDocField({ list, doc, onChoose }: { list: CoauthorDocList; doc:
           type="search"
           placeholder="Title or module number, e.g. 4.2.2"
           value={list.search}
+          disabled={disabled}
           onChange={(e) => list.setSearch(e.target.value)}
         />
       </div>
@@ -745,6 +741,7 @@ function CoauthorDocField({ list, doc, onChoose }: { list: CoauthorDocList; doc:
             id="sc-leaf-doc"
             className="sc-subpick"
             value={doc?.id ?? ''}
+            disabled={disabled}
             aria-describedby="sc-leaf-doc-coverage"
             onChange={(e) => onChoose(options.find((x) => x.id === Number(e.target.value)) ?? null)}
           >
@@ -765,7 +762,7 @@ function CoauthorDocField({ list, doc, onChoose }: { list: CoauthorDocList; doc:
           </span>
         )}
         {total !== null && rows.length < total && (
-          <button type="button" className="sc-trans-b" disabled={more.loading} onClick={() => void list.showMore()}>
+          <button type="button" className="sc-trans-b" disabled={disabled || more.loading} onClick={() => void list.showMore()}>
             {more.loading ? 'Reading…' : `Show ${Math.min(DOC_PAGE, total - rows.length)} more`}
           </button>
         )}
@@ -777,121 +774,94 @@ function CoauthorDocField({ list, doc, onChoose }: { list: CoauthorDocList; doc:
 /** Place a Co-Author document into the sequence as a leaf — a REAL persisted
  *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
  *  document, no leaf: the picker never invents a document to place. */
-function AddLeafForm({ seq, onDone }: { seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void }) {
-  const seqId = seq.id;
-  const original = isOriginalSequence(seq);
-  const opsOffered = Object.entries(SC_LIFECYCLE_OPS).filter(([v]) => !original || v === 'new');
+function AddLeafForm({ seq, onDone, isCurrent }: {
+  seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void; isCurrent: () => boolean;
+}) {
   const [open, setOpen] = React.useState(false);
   const list = useCoauthorDocList(open);
-  const { docs } = list;
-  // The chosen document, kept when a later search no longer lists it.
   const [doc, setDoc] = React.useState<CoauthorDocRow | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
   const [reason, setReason] = React.useState('');
+  const [study, setStudy] = React.useState<StudyTaggingValues>({ studyId: '', stfFileTag: '' });
   const [saving, setSaving] = React.useState(false);
-  const effectiveOp = original ? 'new' : op;
-
-  if (!open) {
-    return (
-      <div className="cm-pushbar sc-mt">
-        <button type="button" className="sc-trans-b" onClick={() => setOpen(true)}>
-          {I.plus} Place a Co-Author document as a leaf
-        </button>
-      </div>
-    );
-  }
-
+  const [unconfirmed, setUnconfirmed] = React.useState(false);
+  const pending = React.useRef(false);
+  const live = React.useRef(true);
+  React.useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  const effectiveOp = isOriginalSequence(seq) ? 'new' : op;
+  const tagging = studyTaggingPlacement(section, effectiveOp, seq.region, study);
+  const disabled = saving || unconfirmed;
+  const clearStudy = () => setStudy({ studyId: '', stfFileTag: '' });
+  const choose = (value: CoauthorDocRow | null) => {
+    if (value?.id !== doc?.id) clearStudy();
+    setDoc(value);
+    if (value?.moduleNumber && !section.trim()) setSection(value.moduleNumber);
+  };
+  const changeSection = (value: string) => {
+    if ((normalizeCtdCode(value) ?? value.trim()) !== (normalizeCtdCode(section) ?? section.trim())) clearStudy();
+    setSection(value);
+  };
   const place = async () => {
-    if (!doc || !section.trim() || !placementReasonOk(reason) || saving) return;
+    if (!isCurrent() || !live.current || pending.current || disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid) return;
+    pending.current = true;
     setSaving(true);
-    const r = await mutateVerbatim<LeafWriteAnswer>('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
-      sectionCode: section.trim(),
-      title: doc.title,
-      lifecycleOp: effectiveOp,
-      documentTable: 'coauthor_documents',
-      documentId: doc.id,
-      reason: reason.trim(),
+    const expected = { sequenceId: seq.id, sectionCode: section.trim(), lifecycleOp: effectiveOp,
+      documentTable: 'coauthor_documents' as const, documentId: doc.id, ...tagging.payload };
+    const r = await mutateVerbatim<FilingLeafReceipt>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
+      sectionCode: expected.sectionCode, title: doc.title, lifecycleOp: effectiveOp,
+      documentTable: expected.documentTable, documentId: doc.id, reason: reason.trim(), ...tagging.payload,
     });
+    if (!live.current || !isCurrent()) return;
+    pending.current = false;
     setSaving(false);
-    const answer = placementAnswer(seq, doc.title, r);
+    const answer = placementAnswer(seq, doc.title, r, expected);
+    setUnconfirmed(answer.unconfirmed);
     onDone(answer.notice, answer.effect);
-    if (r.data && typeof r.data.id === 'number') {
-      setDoc(null);
-      setSection('');
-      setReason('');
+    if (answer.confirmed) {
+      setDoc(null); setSection(''); setReason(''); clearStudy(); setOpen(false);
     }
   };
+  if (!open) return <div className="cm-pushbar sc-mt">
+    <button type="button" className="sc-trans-b" onClick={() => setOpen(true)}>{I.plus} Place a Co-Author document as a leaf</button>
+  </div>;
+  return <div className="sc-mt">
+    {list.docs.loading && list.docs.data === null ? <div role="status" className="scaf-note">Loading the Co-Author documents…</div>
+      : list.docs.error ? <div className="sc-verdict tone-err" role="status">Couldn&#39;t load the Co-Author documents — {redactInternals(list.docs.error, 'the read did not settle')}. Nothing to place.</div>
+      : list.noneAtAll ? <div className="scaf-note">No Co-Author documents in this organization. Place a document from the editor or the Vault instead (below).</div>
+      : <div className="sc-leafform">
+        <CoauthorDocField list={list} doc={doc} onChoose={choose} disabled={disabled} />
+        <AddLeafPlacementFields seq={seq} section={section} onSection={changeSection} op={effectiveOp} onOp={setOp}
+          study={study} onStudy={setStudy} tagging={tagging} reason={reason} onReason={setReason} disabled={disabled} />
+        <button type="button" className="sp-primary sc-btn" disabled={disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid} onClick={place}>
+          {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
+        </button>
+        {unconfirmed && <button type="button" className="sc-trans-b" onClick={() => onDone({ tone: 'warn', text: 'Checking the current sequence leaves and audit history. Review them before another placement; this read does not confirm the earlier write or its audit.' }, { changed: false, sequenceChanged: false, reconcile: true })}>Check sequence leaves</button>}
+        <button type="button" className="sc-trans-b" onClick={() => setOpen(false)} disabled={disabled}>Cancel</button>
+      </div>}
+  </div>;
+}
 
-  return (
-    <div className="sc-mt">
-      {docs.loading && docs.data === null ? (
-        <div role="status" className="scaf-note">Loading the Co-Author documents…</div>
-      ) : docs.error ? (
-        <div className="sc-verdict tone-err" role="status">
-          Couldn&#39;t load the Co-Author documents — {redactInternals(docs.error, 'the read did not settle')}. Nothing to place.
-        </div>
-      ) : list.noneAtAll ? (
-        <div className="scaf-note">
-          No Co-Author documents in this organization. Place a document from the
-          editor or the Vault instead (below).
-        </div>
-      ) : (
-        <div className="sc-leafform">
-          <CoauthorDocField
-            list={list}
-            doc={doc}
-            onChoose={(d) => {
-              setDoc(d);
-              if (d?.moduleNumber && !section.trim()) setSection(d.moduleNumber);
-            }}
-          />
-          <div className="sc-field">
-            <label htmlFor="sc-leaf-section">Section code</label>
-            <input
-              id="sc-leaf-section"
-              className="sc-subpick"
-              type="text"
-              placeholder="e.g. 2.5 or m1/us/1.1"
-              value={section}
-              onChange={(e) => setSection(e.target.value)}
-            />
-          </div>
-          <div className="sc-field">
-            <label htmlFor="sc-leaf-op">Lifecycle operation</label>
-            <select
-              id="sc-leaf-op"
-              className="sc-subpick"
-              value={effectiveOp}
-              onChange={(e) => setOp(e.target.value)}
-              aria-describedby="sc-leaf-op-note"
-            >
-              {opsOffered.map(([v, m]) => (
-                <option key={v} value={v}>
-                  {m.l}
-                </option>
-              ))}
-            </select>
-            <span id="sc-leaf-op-note" className="sp-row-s">
-              {lifecycleOpNote(seq, effectiveOp)}
-            </span>
-          </div>
-          <PlacementReasonField value={reason} onChange={setReason} idPrefix="sc-leaf" disabled={saving} variant="inline" />
-          <button
-            type="button"
-            className="sp-primary sc-btn"
-            disabled={!doc || !section.trim() || !placementReasonOk(reason) || saving}
-            onClick={place}
-          >
-            {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
-          </button>
-          <button type="button" className="sc-trans-b" onClick={() => setOpen(false)} disabled={saving}>
-            Cancel
-          </button>
-        </div>
-      )}
-    </div>
-  );
+function AddLeafPlacementFields({ seq, section, onSection, op, onOp, study, onStudy, tagging, reason, onReason, disabled }: {
+  seq: SeqRow; section: string; onSection: (value: string) => void; op: string; onOp: (value: string) => void;
+  study: StudyTaggingValues; onStudy: (value: StudyTaggingValues) => void; tagging: ReturnType<typeof studyTaggingPlacement>;
+  reason: string; onReason: (value: string) => void; disabled: boolean;
+}) {
+  const opsOffered = Object.entries(SC_LIFECYCLE_OPS).filter(([v]) => !isOriginalSequence(seq) || v === 'new');
+  return <>
+    <div className="sc-field"><label htmlFor="sc-leaf-section">Section code</label>
+      <input id="sc-leaf-section" className="sc-subpick" type="text" placeholder="e.g. 2.5 or m1.1" value={section} disabled={disabled} onChange={event => onSection(event.target.value)} /></div>
+    <div className="sc-field"><label htmlFor="sc-leaf-op">Lifecycle operation</label>
+      <select id="sc-leaf-op" className="sc-subpick" value={op} disabled={disabled} onChange={event => onOp(event.target.value)} aria-describedby="sc-leaf-op-note">
+        {opsOffered.map(([v, m]) => <option key={v} value={v}>{m.l}</option>)}
+      </select><span id="sc-leaf-op-note" className="sp-row-s">{lifecycleOpNote(seq, op)}</span></div>
+    {tagging.show && <>
+      <p className="scaf-note">Record the study identity and STF file-tag reviewed by your team. Values are not inferred; recording them does not establish filing readiness.{!tagging.required && ' These values are advisory for this region.'}</p>
+      <StudyTaggingInputFields value={study} onChange={onStudy} idPrefix="sc-placement-study" required={tagging.required} disabled={disabled} />
+      {tagging.problem && <p role="status" className="scaf-note">{tagging.problem}</p>}
+    </>}
+    <PlacementReasonField value={reason} onChange={onReason} idPrefix="sc-leaf" disabled={disabled} variant="inline" />
+  </>;
 }
 
 /**
@@ -1112,7 +1082,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           </div>
         ) : !leaves.loading && !leaves.error ? (
           <>
-            <AddLeafForm seq={seq} onDone={afterWrite} />
+            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} />
             <BuilderSources onNav={onNav} />
           </>
         ) : null}

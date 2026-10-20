@@ -66,6 +66,9 @@ import {
   type FilingLeafReceipt as PlacedLeaf,
 } from './filingTarget';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
+import { StudyTaggingInputFields, studyTaggingPlacement, type StudyTaggingValues } from './StudyTaggingInputFields';
+import { useSubmissionReadSession, type SubmissionReadSession } from './submissionScopedRead';
+import { authService } from '@/services/portal/authService';
 import { takeFilingCopy, leafFailure, type Verdict } from './placeIntoFilingCopy';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
@@ -192,7 +195,8 @@ function AuthoringPlaceIntoFilingForDocument({
   onNav,
   fireToast,
   refusal = null,
-}: AuthoringPlaceIntoFilingProps) {
+  session,
+}: AuthoringPlaceIntoFilingProps & { session: SubmissionReadSession }) {
   const [open, setOpen] = React.useState(false);
   const refusalId = React.useId();
   /* The code a whole-document leaf is filed at, when the sections give one. */
@@ -205,7 +209,9 @@ function AuthoringPlaceIntoFilingForDocument({
   // Where to file. Shared with the Vault's own place-into-submission dialog
   // (./filingTarget), so the rule that a frozen or dispatched sequence cannot
   // take a leaf is stated in ONE place rather than two that can drift.
-  const target = useFilingTarget(() => setVerdict(null));
+  const [studyValues, setStudyValues] = React.useState<StudyTaggingValues>({ studyId: '', stfFileTag: '' });
+  const resetStudyValues = () => setStudyValues({ studyId: '', stfFileTag: '' });
+  const target = useFilingTarget(() => { setVerdict(null); resetStudyValues(); });
   /* Only `seq` is read here — the submission/sequence pickers and their locked
      set are rendered by FilingTargetFields from the same hook. */
   const { seq } = target;
@@ -213,19 +219,23 @@ function AuthoringPlaceIntoFilingForDocument({
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
   const [reason, setReason] = React.useState('');
+  React.useEffect(() => { setStudyValues({ studyId: '', stfFileTag: '' }); }, [ownCode, activeSectionCode]);
   const [placing, setPlacing] = React.useState(false);
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const [placement, setPlacement] = React.useState<Placement | null>(null);
   const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
   const generation = React.useRef(0);
   const pending = React.useRef(false);
-  React.useEffect(() => () => { generation.current += 1; }, []);
+  const active = React.useRef(true);
+  React.useEffect(() => { active.current = true; return () => { active.current = false; generation.current += 1; }; }, []);
 
   const openDialog = () => {
     setOpen(true);
+    if (needsReconciliation) return;
     setVerdict(null);
     setPlacement(null);
     setNeedsReconciliation(false);
+    resetStudyValues();
     setSection(ownCode ?? activeSectionCode ?? '');
     setOp('new');
     target.load();
@@ -245,6 +255,7 @@ function AuthoringPlaceIntoFilingForDocument({
     : codeJudged;
   const sectionIsPlaceable = sectionJudged.placeable;
   const sectionNote = sectionJudged.note;
+  const studyTagging = studyTaggingPlacement(sectionJudged.canonical ?? '', op, seq?.region, studyValues);
 
   const reasonOk = placementReasonOk(reason);
   const canPlace =
@@ -256,7 +267,7 @@ function AuthoringPlaceIntoFilingForDocument({
     !isLocked(seq.status) &&
     section.trim() !== '' &&
     sectionIsPlaceable &&
-    reasonOk;
+    reasonOk && studyTagging.valid;
   /* Where a placement goes, or null when one cannot be made. It files at the
      code the note announces ("Files as 3.2.S.4.2"), not at the keystrokes:
      upsertLeaf stores a section code as sent, and the Vault filing dialog,
@@ -264,9 +275,10 @@ function AuthoringPlaceIntoFilingForDocument({
   const filing = canPlace && seq && sectionJudged.canonical ? { seq, sectionCode: sectionJudged.canonical, subId: target.subId } : null;
 
   const place = async () => {
-    if (!filing || pending.current) return;
+    if (!filing || pending.current || !active.current || !session.sameRevision()) return;
     const started = generation.current;
-    const current = () => started === generation.current;
+    const sessionGuard = authService.captureSessionReadGuard();
+    const current = () => active.current && started === generation.current && session.sameRevision() && sessionGuard.sameRevision();
     pending.current = true;
     const { sectionCode } = filing;
     setPlacing(true);
@@ -290,9 +302,10 @@ function AuthoringPlaceIntoFilingForDocument({
         documentTable: 'coauthor_documents',
         documentId: snapshotId,
         reason: reason.trim(),
+        ...studyTagging.payload,
       });
       if (!current()) return;
-      if (!matchingLeafReceipt(put.data, { sequenceId: filing.seq.id, sectionCode, documentTable: 'coauthor_documents', documentId: snapshotId, lifecycleOp: op })) {
+      if (!matchingLeafReceipt(put.data, { sequenceId: filing.seq.id, sectionCode, documentTable: 'coauthor_documents', documentId: snapshotId, lifecycleOp: op, ...studyTagging.payload })) {
         const failure = leafFailure(put, snapshotId, filing.seq.sequenceNumber, sectionCode);
         setNeedsReconciliation(failure.unconfirmed);
         setVerdict(failure.verdict);
@@ -391,7 +404,7 @@ function AuthoringPlaceIntoFilingForDocument({
 
             <div className="de-body">
               <fieldset disabled={placing || needsReconciliation || !!placement} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-              <FilingTargetFields target={target} idPrefix="apf" />
+              <FilingTargetFields target={{ ...target, setSeqId: id => { resetStudyValues(); setVerdict(null); target.setSeqId(id); } }} idPrefix="apf" />
 
               {/* ── Section code + lifecycle operation ── */}
               <div className="de-field half">
@@ -410,7 +423,10 @@ function AuthoringPlaceIntoFilingForDocument({
                   type="text"
                   placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
                   value={section}
-                  onChange={(e) => setSection(e.target.value)}
+                  onChange={(e) => {
+                    if (judgeSectionCode(e.target.value).canonical !== sectionJudged.canonical) resetStudyValues();
+                    setSection(e.target.value);
+                  }}
                   aria-describedby={sectionNote ? 'apf-section-note' : undefined}
                   aria-invalid={sectionNote?.tone === 'err' ? true : undefined}
                 />
@@ -434,6 +450,9 @@ function AuthoringPlaceIntoFilingForDocument({
                 </select>
               </div>
 
+              {studyTagging.show && <StudyTaggingInputFields value={studyValues} onChange={setStudyValues} idPrefix="apf-study"
+                required={studyTagging.required} variant="dialog" disabled={placing || needsReconciliation || Boolean(placement)} />}
+              {studyTagging.problem && <div className="de-err" role="status">{studyTagging.problem}</div>}
               <PlacementReasonField value={reason} onChange={setReason} idPrefix="apf" disabled={placing} />
               </fieldset>
 
@@ -527,7 +546,8 @@ function AuthoringPlaceIntoFilingForDocument({
 /** Changing document/project resets the dialog and invalidates its old chain. */
 export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
   const project = shellProgramId(useShellProject());
-  return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
+  const session = useSubmissionReadSession();
+  return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project, session.key])} {...props} session={session} />;
 }
 
 /**
