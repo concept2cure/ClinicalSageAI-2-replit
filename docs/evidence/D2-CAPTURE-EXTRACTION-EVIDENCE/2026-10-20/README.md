@@ -64,6 +64,15 @@ raw baseline output, exact command/environment, before/after input pins and
 boundaries: `extractor/`, `persistence/`, `cache/`. Initial fixture/lint-only
 diagnostics are retained separately, not substituted for final baseline runs.
 
+The first normal pre-push compiler gate caught an unknown-typed receipt in the
+unauthorized-write fixture. An explicit erased cast fixed that test boundary;
+production and assertions were unchanged. `test-type-correction.json` binds the
+original frozen and final test hashes and verifies identical emitted JavaScript.
+`initial-*` records retain the first green run and refused hook honestly. The
+final cohort and lint below were repeated after this annotation-only correction.
+Historical initial manifests refer to the original paths in Git `7efdd69d4`;
+the final manifests bind current paths/bytes.
+
 Final Node 22.23.3, canonical `vitest.config.ts`, one worker, 4 GiB heap:
 
 | Check | Result | Evidence |

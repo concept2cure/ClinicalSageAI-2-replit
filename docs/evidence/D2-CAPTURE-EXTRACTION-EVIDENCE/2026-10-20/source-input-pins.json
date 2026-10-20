@@ -1,5 +1,5 @@
 {
-  "scope": "Selected code/test/configuration inputs, not exhaustive transitive dependencies",
+  "scope": "Final selected code/test/configuration inputs after erased fixture annotation correction; not exhaustive transitive dependencies",
   "files": {
     ".husky/pre-commit": "4d8cde3b21f91140935b021db7861221633d6feb8641fde6f884bae7cd834f40",
     ".husky/pre-push": "6e06c1338bebc01155c20eebcf2ebb2bfe474b1656ec920e7c6e7952a23bd053",
@@ -12,7 +12,7 @@
     "server/routes/chat/upload.ts": "a523c8143edaf3c1a24cb8e4621e7b8b5a5c852f86c874dd17e5e84437a7da94",
     "server/services/ana/uploaded-file-access.ts": "3ac943d1f9d2dbe589b9ca7c87715c4ad5961086f4912abef9f7d32b00a4efce",
     "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts": "8750e336d0f9004938fb9614b4833fd0d31442b32d88ca1de693797a6d30d5d6",
-    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts": "0b446d881656065f8f17d817fd18149762cf3b4202e87888e9275bc13c45644b",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts": "1dc05c4615e2307a182add0da0c74b17444d1647699cebbab443e6cd19e59f54",
     "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts": "9544137f904f4170f2ba8e23d087d38a640ee7fca28ab89028e88f038410032a",
     "server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts": "96cc7cabec00fd7f4b2724eebd692f8ca29d70dcfe81dd244f661fb1c9af3376",
     "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.fixture.ts": "03e05b08d9367e797b308ce83fabab24b510b821ebf4c8848daed00a15f52cb8",

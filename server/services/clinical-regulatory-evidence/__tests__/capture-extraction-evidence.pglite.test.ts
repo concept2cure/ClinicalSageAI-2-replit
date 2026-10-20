@@ -17,7 +17,7 @@ vi.mock('../../vault/vault-filing.service.js', () => ({
     confidence: 0, needsReview: true, rationale: 'synthetic classification seam' }),
 }));
 
-import { processCapturedSource, recordSourceProcessing } from '../data-room-processing';
+import { processCapturedSource, recordSourceProcessing, type ExtractedCapture } from '../data-room-processing';
 import { bootstrapRecoverySchema } from './data-room-processing-recovery.fixture';
 
 const ORIGINAL = Buffer.from('Original synthetic capture bytes, distinct from the extracted text.');
@@ -179,7 +179,7 @@ describe('existing capture authority and lifecycle remain the write boundary', (
   it('refuses a receipt-bearing derived write without a genuine processing authorization', async () => {
     const id = await seed();
     expect(await recordSourceProcessing(exec, organization, id, {
-      extracted: cached(), processedBy: 'unauthorized-probe',
+      extracted: cached() as unknown as ExtractedCapture, processedBy: 'unauthorized-probe',
     })).toBe(false);
     expect((await state(id)).extracted_text).toBeNull();
     expect((await state(id)).provenance).not.toHaveProperty('extractionEvidence');

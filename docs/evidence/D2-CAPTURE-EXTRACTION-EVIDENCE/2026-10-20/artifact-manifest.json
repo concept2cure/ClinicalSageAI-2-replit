@@ -1,8 +1,8 @@
 {
-  "scope": "Implementation evidence before publication logs, excluding this manifest itself",
+  "scope": "Final implementation evidence after fixture type correction; includes retained original logs/manifests as historical artifacts, excludes this manifest itself",
   "files": {
     "CONTRACT.md": "902b84d007d824430e74f17124073e3899d8a07793e2d45b7ce6b5bb13fb6137",
-    "README.md": "27c94cc77ae777bfb924bde8f822a844f07a0d0a9d3c4b6fca71f42a82b12768",
+    "README.md": "6c445becd191079fb343505128f1cb892ac5b091793c5ede0d19dac611002c36",
     "baseline-inputs.json": "9ad0eefe0b19317eedddf3b7eeb51a8d70e223234d7bdf122b865d255159621d",
     "cache/README.md": "d9a31e54663e466e7a4083bd005e9a98e6bc27b3bdd955856f535410ca01bc1d",
     "cache/baseline-command.json": "2317aef1d54336eb073e2177002df551f02b4a477cfae54ef8e4bc34d9b9860e",
@@ -22,10 +22,21 @@
     "extractor/lint-command.json": "18c2dbe9f79ae74e11a6f878ffd372e0ca7de228b8267796565f9df389bf9f4d",
     "extractor/lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "frozen-tests.json": "eedd2105cae0f0a06f35005b4822bd3eee3d67b5f8d522adcf46e32fb8015e43",
-    "green-command.json": "46c0139621d52ea95fd5def6fc3cd405b0061fefa4e7b8013c8cb17927ca873e",
+    "green-command.json": "b84cbf63f5ca9205fa1fd8a5ae0b0a1c711f23fea0c67b6318d8e8723d7b98ea",
     "green-result.json": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
-    "green-tests.txt": "205e57b22f73e4a93a6e7e11665b88635d7baf94e5dcd56999678d854094ca2b",
+    "green-tests.txt": "6964b1ba3ae377c42c644502214f4533c8836766f69ddddb06fa3cc168f0d46a",
+    "implementation-commit.txt": "da625e54bc18402ba39e6758e5e40846e7adc031ee01db62624ce6e46c4b30c7",
     "independent-review.json": "ee1dc97efb8f4177728795ba061d9446664e5a7fa3633d2bae1dedfa2be23aec",
+    "initial-artifact-manifest.json": "cae0276554af8c6f64382b23cdd4cd8736d77692806473597107e7f5dd1e3599",
+    "initial-green-command.json": "46c0139621d52ea95fd5def6fc3cd405b0061fefa4e7b8013c8cb17927ca873e",
+    "initial-green-result.json": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+    "initial-green-tests.txt": "205e57b22f73e4a93a6e7e11665b88635d7baf94e5dcd56999678d854094ca2b",
+    "initial-implementation-push-result.json": "e153f5bd2ee7416d77570b30ba1de5bb9196c55f8d145e34df9dab12190ffe43",
+    "initial-implementation-push.txt": "ac3ebab7ef950b25715fedfe989de006d7e47d40d4b2009054050c7063318383",
+    "initial-lint-final-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "initial-lint-final.json": "cd00a67d908dd6735532e259eb08b14ee14cafa604e7231220e7e374e5ec818c",
+    "initial-publication-command.json": "e0343e61fb22040a29e66e9fa930860fd706b4acc2437db24edb522d345d4cca",
+    "initial-source-input-pins.json": "d830f5745c6bf8c134481f56724f6683326c163ee14bbecb17349142b6156770",
     "lint-baseline-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "lint-baseline.json": "1ea355a5582586c0e9ad8fe0f29137bb1701b21b15a4cf7412e96d566b15d6eb",
     "lint-final-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -38,6 +49,7 @@
     "persistence/initial-baseline-red.txt": "78cef7896ffa1833f034ff40eed0c4afae75264249932f369f0d61a322d6cb29",
     "persistence/lint-command.json": "8af41c91ad7b781f7e4235a49fa3f5dcdb93f0a2fc0617163ca15f4083cb4431",
     "persistence/lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "source-input-pins.json": "d830f5745c6bf8c134481f56724f6683326c163ee14bbecb17349142b6156770"
+    "source-input-pins.json": "f91cbe3b5870302cd05f222ab3fa9525f1ad191cb812b53f95d4ba6ba91833e2",
+    "test-type-correction.json": "a16d1f0c2d83450bb71a4e909679c343fb2d6dce4dc5170fa64dc750e241b972"
   }
 }
