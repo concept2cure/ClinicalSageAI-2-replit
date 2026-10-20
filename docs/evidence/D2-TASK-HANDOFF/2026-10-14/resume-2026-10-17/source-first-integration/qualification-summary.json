@@ -58,7 +58,7 @@
     "evidence": "browser/browser-summary.json",
     "boundary": "Actual Workbench/Back/RTE with synthetic HTTP/account fixture; not a live provider or human witness."
   },
-  "publication": "all656gatespassed;CASrejectedafter61a14c5d9disjointbatchconcurrencylanded;normalmerge+focused33pending",
+  "publication": "Historical656 all-gates-pass/CAS-rejected receipt; later accepted publication is recorded in ../canonical-2026-10-20/publication.json.",
   "historicalCheckpoint": "../assembly-integration/README.md",
   "historicalSummary": "../pre-assembly-summary.json",
   "humanChecklist": "../../../../../testing/HUMAN_BETA_CHECKLIST_V1.md",

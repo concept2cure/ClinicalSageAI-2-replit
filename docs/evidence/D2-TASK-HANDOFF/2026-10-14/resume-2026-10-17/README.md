@@ -1,5 +1,5 @@
 <!-- current-assembly-qualification -->
-Current continuation: [editor assembly and canonical integration evidence](source-first-integration/README.md). Earlier execution counts below retain their original source boundaries; they are not relabeled as one new full-suite run. Human witness remains unexecuted.
+Current continuation: [published canonical integration and source-bound qualification](canonical-2026-10-20/README.md). Earlier execution counts retain their original source boundaries. Human witness remains unexecuted.
 
 # Resumed human-beta integration — 2026-10-17
 

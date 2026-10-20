@@ -1,12 +1,16 @@
 {
   "baseline": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
   "branch": "concept2cure-v2",
-  "currentSourceCommit": "22b1f50b964162664791c74638ca2aaedc94e0db",
-  "integratedCanonical": "61a14c5d9406501dcc05c188e3975dcce59317f0",
+  "currentSourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+  "integratedCanonical": "14d8c9efe8df9b545e72ebfba446473040cb9b0e",
   "files": [
     {
+      "path": "client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx",
+      "sha256": "0a406af010cbd99ce44164c713e6591c086736f9b9a1023621efa227758ea8d1"
+    },
+    {
       "path": "client/src/concept2cure/quality/app.css",
-      "sha256": "817dd4f1fcd3b6036ee51867804970305c7acb7154fb97ce80ae07a5d4afefbc"
+      "sha256": "e02436a811dcfec788845a6c9eee132491b6a40a02770ac268e0a82c9ccd289a"
     },
     {
       "path": "client/src/concept2cure/v2/NotificationOpenButton.tsx",
@@ -33,12 +37,24 @@
       "sha256": "7b7b30933a81f1a412ecb78cfde3d49833c97d5b6f7750344a5e1326b7ba03c9"
     },
     {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx",
+      "sha256": "7a99b62fc36f21eb5e567250e2436e34d0af612f801351b1622d9a84f58259d6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx",
+      "sha256": "7fd16a4f8b3ed8dad4633af7ed0b22c74c517ef986ec3741a6f2d2b1115bbb04"
+    },
+    {
       "path": "client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx",
       "sha256": "eca046ce84a22fbcf7a851c35f79f4115936040fe57ad91e5acd3d1219f3b08a"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringClaimSurvivesRefusedSave.test.tsx",
       "sha256": "05eecd0697659f492326ea2c236746fad64c36432950891c18219af6f8a77c08"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx",
+      "sha256": "8e4a10eb0d86c98b4894b9704b451252af2ba8755c66fb33298c916636d856d9"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx",
@@ -57,6 +73,10 @@
       "sha256": "025e054d6838ae46e5a446c35f04602aad70611a13e83df954684a6db245dcc5"
     },
     {
+      "path": "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+      "sha256": "cdc2dca6300ef8dd27bc5693ffcd82ea6ec85d8b3e1b7e61192cf6c76cd584cf"
+    },
+    {
       "path": "client/src/concept2cure/v2/__tests__/authoringIdentifiedCreationRecovery.test.tsx",
       "sha256": "568809fc0b87ae8af71cf28aeca306741aeff54c2b5dcb25cd34bac145d78c8a"
     },
@@ -66,7 +86,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx",
-      "sha256": "c23a93a3117338ab66eaa21889a8e79e16f73c809b03569f3499812b91159604"
+      "sha256": "d9db3823ea38ae7480ae6d701cd7e592e047ae88b923136e8c29986e092c33f8"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx",
@@ -74,11 +94,11 @@
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
-      "sha256": "b5758c96fca3caa2e4891262fa9721fa3b5af96480d4c674cf35f57cd4c33e84"
+      "sha256": "7bc71bd3825f1cbc874066d1807e55097c7f2ab6c847914665e4e68af3305d26"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx",
-      "sha256": "355c1564685880b6773cbe5bdadd40a87e3ab7af84d4cfee34cd25654d9476f5"
+      "sha256": "1376dade64ec8af667bcf8f67484fdc1a87998e30f29a4a9c00ff30ddb2d5052"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
@@ -89,12 +109,24 @@
       "sha256": "3eef06dff99fecd2b0ee395a010d5c634984c83db281e08e882e85e6aefdad6c"
     },
     {
+      "path": "client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx",
+      "sha256": "56764366d5b5f3b64606eefec84a43c7ef387417c03b980dfcce3e95c3150af9"
+    },
+    {
       "path": "client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx",
       "sha256": "1bef38636fc0fa4004bcee90f3d57f90abf01fe2d8c75a9f6d84386969f642b9"
     },
     {
+      "path": "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx",
+      "sha256": "c40b947135688548297b467d21c43fad820d8215f51a000cefb7d6d57a48f99d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx",
+      "sha256": "7ab523c1d435f6babe47f04db7d119bb732e30c8e6f1135bbc0355d2d4dc950b"
+    },
+    {
       "path": "client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx",
-      "sha256": "b972588d90a4dd641f60dfe2d3c729697b490a4102afd69c48442330b402b781"
+      "sha256": "0488a75bf39e653ce0648a0c85eb7933f2d535d9e3f8226e8c39e4030cbbf1e4"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx",
@@ -106,7 +138,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx",
-      "sha256": "85fe6bd60fd36731d0a0e3bd80188ab96fbd2ba9813cea52b6734cf82e9f4ccc"
+      "sha256": "c1ba1e8837c5bacb1d29941352c573545ce8b06545ee2995005c5e00879eb35c"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx",
@@ -123,6 +155,10 @@
     {
       "path": "client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx",
       "sha256": "f9a13e074e88391a3b3f32e09f1589646cdb881e0226512d6b6886b23c71e56f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx",
+      "sha256": "aefc3c66666ecc2c0386f329fb5351c67152492d21d0783b80aefead9bce4efe"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx",
@@ -170,7 +206,11 @@
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx",
-      "sha256": "2175e9de7287fab948876918899fc412ec5e7927b63ae5514de42798d2e09988"
+      "sha256": "8b159eab5ea99d0a83b5929456bd51c1df576cbebfdfc7d69c633c888947b418"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardAnalyticsScope.test.tsx",
+      "sha256": "38d0413bbaf3b4ba3ee7b1585e593c965b1815ccc28bb96e4ad89f4b5370ca98"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx",
@@ -234,7 +274,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
-      "sha256": "afb63c9217e2837885c7da620385fb341b5f5dd16c21c3b074451a689b5bacba"
+      "sha256": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4"
     },
     {
       "path": "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
@@ -246,15 +286,19 @@
     },
     {
       "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-      "sha256": "9911328c07f75843091af83017e44ece4aaa08db9eb1cca3bc3438aed7132ad7"
+      "sha256": "2c6a50489735f21bd983d5de32486083fa66c9b136257d2f7c2149dc9d9e9d79"
     },
     {
       "path": "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
-      "sha256": "7395aa2058d4fd760db55f128236c2267017a441dff5600ccd2db5ad1fa866b8"
+      "sha256": "31da69bf0a1af80a7c548f4affdb841ab0bc245ab242b1e5b6c1ac248b667057"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx",
+      "sha256": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a"
     },
     {
       "path": "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
-      "sha256": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350"
+      "sha256": "3bdc2b83cb0df267ef4b4cdd4105f806a4252cecee1bcc8dc1c2ecf7b51db64e"
     },
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
@@ -267,6 +311,10 @@
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx",
       "sha256": "ff78dafc84d02481489f70aadb3d0694d4bf9d235dcf20e7537c756f2837f281"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx",
+      "sha256": "28c8f60a3b1830ece8fe818b20dc054022044fb2fa721a7f3be66d9119227e84"
     },
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx",
@@ -283,6 +331,18 @@
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx",
       "sha256": "3d0f0b19f48d5bad652c93365ca7c1dbe8db4071d5d7baa68edd68c069fec7c0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx",
+      "sha256": "c771aa68d5c64ed96fc2e995b9a37b683ec538e4b488597b334ee21592bb0068"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+      "sha256": "cc1ba192337e3349eb306a68c84fb67a7024c9ba216c78d0df894d4f7df3a0de"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+      "sha256": "27d7d56bbc43522121bc0bafc2f0247cdaf63e27b022ae1417cf72037c2b6910"
     },
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
@@ -318,7 +378,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
-      "sha256": "23ee714c23013c951486512b42326865ebb9f934be800f8929b1252607bd818b"
+      "sha256": "8ecb02f925ad5060cb38fbf7e0e16309e5ea6e060dbdb341320fe9afbd3b68b6"
     },
     {
       "path": "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts",
@@ -349,8 +409,20 @@
       "sha256": "6632346277be72d64d20c69e9819c159c2f1fb523de1bcbf148ef3f9d5130a63"
     },
     {
+      "path": "client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts",
+      "sha256": "d24d2c2cc5a47111144a17b26e92a1f00a15a546e07d1a41a76a81021061f6d9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts",
+      "sha256": "439f2c85bbba9cc8912a8e7f939f9c455af50289c8a81d0ad8638f89e39b2946"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts",
+      "sha256": "533f19b0db0e97e6f9069761b6ae3f807b84e82f178625e478676f40b53c6218"
+    },
+    {
       "path": "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
-      "sha256": "68387af8d07984a230c8499f5cfac6c3a78772775bce3c50314d7e69dd4b419e"
+      "sha256": "eddb3ce2af8a393b6fb21a069a4fbccc1acd561ddb3f5d1df683904ba9df0192"
     },
     {
       "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
@@ -402,15 +474,15 @@
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-      "sha256": "0755b932a8a8f30a4a2760c06be3a1de7d0269893a7f2c48b087ef211b265c70"
+      "sha256": "3bb37617a3a3be3ec9520fc3f3e7106e2c56156a6d5f7a0e70fb37ae729921b0"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-      "sha256": "37ee48056c06c6907ad21b24080fa369e04bf228a716ab8c3853b445f1b68853"
+      "sha256": "8c8d0109477d302ecdb35a07a9950854d0f4b8b8d7455667796beadd3359d0ce"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-      "sha256": "cb9d9aaf4870029717c5563c1f8ac66a7215738ef6fda556bdb9723c7f7c88fd"
+      "sha256": "349d394df951937e5c87a0ab34af43af4f8f01bff7734c99c6d3db002afb95b5"
     },
     {
       "path": "client/src/concept2cure/v2/taskTarget.ts",
@@ -429,16 +501,20 @@
       "sha256": "803d1643369cff05affaddb560418cd34ec52c55863ea35fcd7d0246a7510d36"
     },
     {
+      "path": "docs/design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md",
+      "sha256": "8808e6a9e9369fe32ffeeb97581bffa03a29522bad94a981588a8a4bf586f10b"
+    },
+    {
       "path": "docs/design/TASK_DRAWER_HANDOFF_2026-10-14.md",
-      "sha256": "e8e641c0b96f6becbdc1c32f0c8669507d1e462e7b5f73ad7829fbb22be2d971"
+      "sha256": "7e506778dd0a12e17ef2a911ae4c99b3d7729a6c63dcc52a42d808de16f89b54"
     },
     {
       "path": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
-      "sha256": "2c949a513d0cbb5cae9b27c8bce5ea9341f92116e2781671b5c5740e86f110f0"
+      "sha256": "690772c03b2308a48a7077016f6637d10d2fb8caed57022d62de9e23ad8271d5"
     },
     {
       "path": "docs/testing/HUMAN_BETA_CHECKLIST_V1.md",
-      "sha256": "6b0c619fc0f9de48d926a379cb0df2343de4a2e57b662f10f6e1f87248cbd702"
+      "sha256": "a8b716cba0ba86e9169d416d3257e57cbc795698c6f920cc55d40908c1a6bff0"
     },
     {
       "path": "docs/testing/HUMAN_BETA_PROGRAM_V1.md",
@@ -446,7 +522,7 @@
     },
     {
       "path": "docs/work-orders/README.md",
-      "sha256": "9000b8d73f8e4d29459cb245b23b68eb73f10b08d459be10cf044358086a3cd9"
+      "sha256": "37f6dc83d6f9f344d3a3fc95f700de1e311583aa7948f4eb2df0fd4562bd27d9"
     },
     {
       "path": "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts",
@@ -454,7 +530,7 @@
     },
     {
       "path": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
-      "sha256": "98fba3fa0a52aab8bbe8efa574520fee3fb15e0136bc7896137de782fe810bc5"
+      "sha256": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301"
     },
     {
       "path": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
@@ -489,6 +565,10 @@
       "sha256": "475ab7d3ab67de5c00ef340ac45577b058749d0748fed5700e53549be8eefbc0"
     },
     {
+      "path": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+      "sha256": "dab53058556d525c4b428ee6810eef0b1828bfe7e04812e31d513aa1e5c6b628"
+    },
+    {
       "path": "server/routes/__tests__/authoringSelectedSources.pglite.test.ts",
       "sha256": "01fdfded891ad72d3e1a70f01cbcd287cae547c69f43d6e641626107ce7951af"
     },
@@ -501,6 +581,10 @@
       "sha256": "911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437"
     },
     {
+      "path": "server/routes/__tests__/project-schedule-of-events.test.ts",
+      "sha256": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f"
+    },
+    {
       "path": "server/routes/__tests__/vault-download.test.ts",
       "sha256": "1daae000e5b5b3d25a128873b03cd5c79ac0c9972952778979e97bd6f028b6ba"
     },
@@ -510,11 +594,11 @@
     },
     {
       "path": "server/routes/authoring-assembly.ts",
-      "sha256": "f9e3fdade4c188e9ca4a5063a7f76edfcfb93ea0c6e79f02b8e17013c63aac74"
+      "sha256": "71477a587d83ee0b161b22d26648fe3d3eb8ee554f34983f162dbaf7ba1a629c"
     },
     {
       "path": "server/routes/authoring.router.ts",
-      "sha256": "4f447b6d90cfc783a2d7cca74b10115b9ecfe84c01d47f53625e14f73b5c88b3"
+      "sha256": "7cdd250d1c45e0a53f72135d37ecbf655d12dd9cb649e6b66108fb93753eaafa"
     },
     {
       "path": "server/routes/c2c/__tests__/projects-create-fixture.ts",
@@ -530,7 +614,15 @@
     },
     {
       "path": "server/routes/c2c/project-vault.ts",
-      "sha256": "168cd72d1fa20dbb98aa9c516a690448fb8bb1a1f99c24fb2467743562122759"
+      "sha256": "9fecc20e511382eed94f7c081153aa6ccd1ff2792bde5469233580c8f22d2760"
+    },
+    {
+      "path": "server/routes/project-schedule-of-events.ts",
+      "sha256": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts",
+      "sha256": "9fc869adfdd795c5bb51175a5fedeecc081d02aa9cc00964bbe4de3a3e01b14e"
     },
     {
       "path": "server/services/ai-gateway/finish-reason.ts",
@@ -538,19 +630,47 @@
     },
     {
       "path": "server/services/ana/AnaDocumentDraftingService.ts",
-      "sha256": "cc6d1db2231d4618164e5674eae84010f38578758efbef89318c6db96b98d741"
+      "sha256": "d9469ce62904f7704003901f2f465ed639fedde6f7512310c8bab2461704bfe0"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "sha256": "5b19e8975186e99092a6a863daa2a5ec8e47d81f784203ca0ad7492d34a31e88"
     },
     {
       "path": "server/services/ana/__tests__/batch-draft-concurrency.test.ts",
       "sha256": "2dcdc3dee7dafcf22b71cc68910094e0abae2740bb8cae7ed2eca1c7ecbadf71"
     },
     {
+      "path": "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+      "sha256": "d705d6ea6142a144c97ef100a2d8e6b16562be708a3a6f0c4e49d4e9aebee5e0"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+      "sha256": "fdaff67d6433e9d3dcef84a512a3aa3284b55f90ed10540aea3fb7572fee3f49"
+    },
+    {
       "path": "server/services/ana/__tests__/draft-source-context-authority.test.ts",
       "sha256": "10c10d2d6d0fe0a0ca7273bf7c9dbefae60906067a56e9f9322256193d24ebb5"
     },
     {
+      "path": "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+      "sha256": "939e4a342aef50792673f6417b9737bcc0389e01faa8bf6e81c79b0eaa32f5c9"
+    },
+    {
+      "path": "server/services/ana/__tests__/schedule-generation-reason.test.ts",
+      "sha256": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3"
+    },
+    {
       "path": "server/services/ana/batch-draft-concurrency.ts",
       "sha256": "3fdd927d9202b01019004a2167c6d0be1252c83a652c6a63c25b0810c39600d3"
+    },
+    {
+      "path": "server/services/ana/discovery-cheminformatics-tool-defs.ts",
+      "sha256": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33"
+    },
+    {
+      "path": "server/services/ana/draft-project-sources.ts",
+      "sha256": "36294c40d87b1b4adb417371efb5527e303f9f7211ad6bdd36044d5ae4c0f77e"
     },
     {
       "path": "server/services/authoring/__tests__/assembly-plan.test.ts",
@@ -585,6 +705,10 @@
       "sha256": "abc60a0fd1185b7f7e0c9f654d48c814f5aea330ba69010aa5a322a5b7554804"
     },
     {
+      "path": "server/services/authoring/authoring-saved-assembly-sources.ts",
+      "sha256": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5"
+    },
+    {
       "path": "server/services/authoring/authoring-section-seed.ts",
       "sha256": "de53688969cd09271253997928da3d37389f4a7ce440cf790cfabaa41c0e4e86"
     },
@@ -602,11 +726,31 @@
     },
     {
       "path": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
-      "sha256": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba"
+      "sha256": "c6609bb3a5ef8de40b69e656ff147820fc9a229a03064282b7742f2cd56ccad8"
     },
     {
       "path": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
       "sha256": "a8509ec4002de22309c1cad16ccdade15ef1e25fe8654229ae7af85e03b57dd1"
+    },
+    {
+      "path": "server/services/projects/schedule-of-events/__tests__/preservation.test.ts",
+      "sha256": "86490e0c29aaea68a212cfce1bcc4722fb53af4b27957d812aab8aab5131db57"
+    },
+    {
+      "path": "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts",
+      "sha256": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410"
+    },
+    {
+      "path": "server/services/projects/schedule-of-events/preservation.ts",
+      "sha256": "27f1586af92d3d0c20c31c0f76968d8de24bf674fe5a6fc3df5bea70636529f7"
+    },
+    {
+      "path": "server/services/projects/schedule-of-events/service.ts",
+      "sha256": "0102e881aa03caa386419c73c0ebb83ec8eb9070f146ffef8af3a021dd76b5ff"
+    },
+    {
+      "path": "shared/__tests__/saved-assembly-sources.test.ts",
+      "sha256": "f5a3d05d33efe8c49e28b5e2b1e84586b98411f2e8e278b31efd563ec9a8ad60"
     },
     {
       "path": "shared/ai/finish-reason.ts",
@@ -619,6 +763,10 @@
     {
       "path": "shared/authoring/assembly.ts",
       "sha256": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6"
+    },
+    {
+      "path": "shared/authoring/saved-assembly-sources.ts",
+      "sha256": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c"
     },
     {
       "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
@@ -647,6 +795,10 @@
     {
       "path": "tests/db/org-retention-period.dbtest.ts",
       "sha256": "dd2aee72a81556f0e71089532397fdd44781786465fcba423b726777b8919bbe"
+    },
+    {
+      "path": "tests/db/project-schedule-atomic.dbtest.ts",
+      "sha256": "7bce8d4a4b4150bccb7683500dcfabe2c95d1dd734d8ec4c4923bda8b5c686ca"
     },
     {
       "path": "tests/db/vault-chunking-off.dbtest.ts",
@@ -705,7 +857,7 @@
       "sha256": "37348c72fa76319164beb79b22310ed8fc86bb7c9ecda4dc229b57cab28b22f7"
     }
   ],
-  "documentationNote": "Production/test pins match frozen656 Git blobs; docpins identify the final evidence payload. Prior executions retain their own source manifests, not relabeled as a new whole-suite replay.",
-  "previousSourceCommit": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
-  "documentationOnlyMerge": "b90ad42c5"
+  "documentationNote": "Production/test pins match the published source commit. Documentation pins describe the final evidence payload updated after source publication.",
+  "previousSourceCommit": "22b1f50b964162664791c74638ca2aaedc94e0db",
+  "documentationOnlyMerge": false
 }
