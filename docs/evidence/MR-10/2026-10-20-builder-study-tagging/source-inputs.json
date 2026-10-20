@@ -1,0 +1,20 @@
+{
+  "executionBase": "e79626c0849f0f8c2338b32f85d4bc69bccef8f5",
+  "note": "Final green executions used the working-tree inputs pinned below; publication verifies these bytes against its source commit. The broader backend cohort preceded final type-only narrowing; metadata cohort45/3 and packager cohort54/5 ran after it.",
+  "sources": {
+    "client/src/concept2cure/v2/__tests__/_submission-deliverables-fixture.tsx": "d8fe032ea6255c82fc98599062bd9bdd6b137d84583e7a9669685c8743268466",
+    "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx": "7817128df6f75507bb0ddb8821e43b8467e4d83f4a53bff36382d3a8e630d8c5",
+    "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx": "86409ce5a919bf91cd9eb329aeba4c8597868e456d0160f0f4dd5dc8c7d56cbf",
+    "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx": "1c0189006fd5cb79fe1e6a047c958409df4fbe6c5dc7e518da5dc0c1aea95910",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "c56410ad55693ca4e207301b93b5e926742654ab2a4d6c410e121d6bcff9a7a1",
+    "server/routes/__tests__/submissions-leaf-study-tagging.test.ts": "76e5b9d4122f76dfeb119abace91ab34c041d5dadbe31ad3d6cb073a722d1a4d",
+    "server/routes/submissions.ts": "d20fac35c8dccd2a4a2049656b3dd22fb0047b4f3e171dd0024c93eec1a8b43b",
+    "server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts": "06fc6f4f4bb65dc89b1194b47e4bfe00e9bd9c4ac76fed58f48845466acdcf4c",
+    "server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts": "5e0ede652af63ce6198f5bf3292f094bd65e988468ba52efc6dfd9ef5a6da2c1",
+    "server/services/part11/signature-persistence.ts": "82f3a41111c1513d3b175d948b7b5ed8170a3cf52490c65bb9cfaa127e26c88c",
+    "server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts": "f48f301867f54150bd292fc21a90b793dbc7a3ddedd627ceb8af3b033c93f0bf",
+    "server/services/submission-service/submission-service.ts": "0c64931bffcb639442ff44494dfcbf90fdca4ef6ea79888e36a3160b3caa382e",
+    "shared/types/database.d.ts": "38e165080d8b8046d8f3490d67a96ab301315c3891be24fb7bf91f10449159b5"
+  }
+}

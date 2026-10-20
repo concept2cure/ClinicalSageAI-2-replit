@@ -45,6 +45,7 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import { CompanySubmissionDocuments } from './CompanySubmissionDocuments';
+import { useSubmissionReadSession, useSubmissionScopedRows, type SubmissionReadSession } from './submissionScopedRead';
 import {
   FailedRunNote,
   ShadowPresenceNote,
@@ -280,6 +281,7 @@ export function SeqPicker({
 // null-safe — never fabricated).
 interface LeafRow {
   id: number;
+  sequenceId?: number;
   sectionCode: string;
   title: string;
   granularity: string | null;
@@ -290,11 +292,200 @@ interface LeafRow {
    *  (vault_documents), where documentId is null. */
   documentUuid?: string | null;
   documentType: string | null;
+  studyId?: string | null;
+  stfFileTag?: string | null;
+  updatedAt?: string;
   /** What the leaf's pointer resolves to, computed by the server from the SAME
    *  resolver the dispatch gate uses (server/services/ectd/leaf-document-resolver).
    *  Absent on a server that predates it; the column then falls back to the
    *  pointer alone. */
   sourceDocument?: LeafSourceResolution | null;
+}
+
+type StudyLeafSnapshot = LeafRow & {
+  sequenceId: number;
+  studyId: string | null;
+  stfFileTag: string | null;
+  updatedAt: string;
+};
+type StudyAuditReceipt = { persisted?: boolean; chained?: boolean } | null | undefined;
+type StudyWriteReceipt = StudyLeafSnapshot & {
+  unchanged?: true;
+  auditTrail?: StudyAuditReceipt;
+  sequenceStatusChanged?: { from: string; to: string; auditTrail?: StudyAuditReceipt };
+};
+const nullableStudyText = (value: unknown) => value === null || typeof value === 'string';
+const nonemptyStudyText = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
+const studyRevision = (value: unknown): value is string => typeof value === 'string' && /^\d{4}-\d\d-\d\dT/.test(value) && Number.isFinite(Date.parse(value));
+
+/** Missing old fields are not evidence of null metadata or a current revision. */
+function studyLeafSnapshot(value: unknown, leaf: LeafRow, sequenceId: number): value is StudyLeafSnapshot {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Partial<StudyLeafSnapshot>;
+  return row.id === leaf.id && row.sequenceId === sequenceId && nonemptyStudyText(row.sectionCode) && nonemptyStudyText(row.title) &&
+    nullableStudyText(row.studyId) && nullableStudyText(row.stfFileTag) && studyRevision(row.updatedAt);
+}
+
+const storedStudyValue = (value: string | null | undefined) => value === null ? 'Not recorded' : value ?? 'Unavailable';
+const studyAuditConfirmed = (receipt: StudyAuditReceipt) => receipt?.persisted === true && receipt.chained === true;
+
+function studyReceiptMatches(row: StudyWriteReceipt | null, baseline: StudyLeafSnapshot, seqId: number, studyId: string | null, fileTag: string | null): row is StudyWriteReceipt {
+  return studyLeafSnapshot(row, baseline, seqId) && row.sectionCode === baseline.sectionCode && row.title === baseline.title &&
+    row.studyId === studyId && row.stfFileTag === fileTag;
+}
+
+function studyWriteRefusal(result: MutateResult<StudyWriteReceipt>) {
+  const unknown = Boolean(result.unconfirmed || result.data !== null);
+  const stale = result.code === 'STALE_LEAF';
+  const notice: Notice = { tone: 'err', text: unknown
+    ? 'We cannot confirm whether the study tagging was recorded. Reread the current leaf before saving again. Your entered values are retained.'
+    : `Study tagging was not saved — ${clause(result.error ?? 'the server did not confirm the change')}.${stale ? ' Reread the current leaf before saving again.' : ''}` };
+  return { unknown, needsRead: unknown || stale, notice };
+}
+
+function studySavedNotice(seq: SeqRow, row: StudyWriteReceipt, earlierUnknown: boolean): Notice {
+  const warnings = [
+    !studyAuditConfirmed(row.auditTrail) && 'The study tagging audit entry was not confirmed in retrievable history; check the audit history before treating this as a complete governed edit.',
+    row.sequenceStatusChanged && !studyAuditConfirmed(row.sequenceStatusChanged.auditTrail) && 'The sequence transition audit entry was not confirmed in retrievable history; review the audit history.',
+    earlierUnknown && 'The earlier write and its audit are not confirmed by this request; review the audit history.',
+  ].filter(Boolean).join(' ');
+  return { tone: warnings ? 'warn' : 'ok', text: `Study tagging saved for leaf ${row.sectionCode} — server-confirmed.${warnings ? ` ${warnings}` : ''}${revertedSentence(seq, row.sequenceStatusChanged)}` };
+}
+
+function studyUnchangedNotice(earlierUnknown: boolean): Notice {
+  return { tone: 'warn', text: `Study tagging is unchanged — server-confirmed. Nothing was recorded by this request.${earlierUnknown ? ' The earlier write and its audit are not confirmed; review the current sequence status and audit history.' : ''}` };
+}
+
+interface StudyTaggingFieldsProps {
+  leaf: LeafRow; baseline: StudyLeafSnapshot | null; notice: Notice | null;
+  studyId: string; fileTag: string; reason: string;
+  busy: boolean; reading: boolean; needsRead: boolean;
+  onStudyId: (value: string) => void; onFileTag: (value: string) => void; onReason: (value: string) => void;
+  onSave: () => void; onReread: () => void; onClose: () => void;
+}
+
+function StudyTaggingFields({ leaf, baseline, notice, studyId, fileTag, reason, busy, reading, needsRead, onStudyId, onFileTag, onReason, onSave, onReread, onClose }: StudyTaggingFieldsProps) {
+  const prefix = `sc-study-${leaf.id}`;
+  const disabled = busy || reading;
+  return <div className="sc-leafform" role="group" aria-label={`Study tagging for leaf ${leaf.sectionCode} ${leaf.title}`}>
+    <VerdictNote notice={notice} />
+    <p className="scaf-note">Record the study identity and STF file-tag reviewed by your team. Values are not inferred; recording them does not establish filing readiness.</p>
+    {baseline && <p className="scaf-note">Current leaf: {baseline.sectionCode} “{baseline.title}”. Current recorded study id: {storedStudyValue(baseline.studyId)}. Current recorded STF file-tag: {storedStudyValue(baseline.stfFileTag)}.</p>}
+    <div className="sc-field"><label htmlFor={`${prefix}-id`}>Study id</label>
+      <input id={`${prefix}-id`} className="sc-subpick" value={studyId} disabled={disabled} onChange={event => onStudyId(event.target.value)} /></div>
+    <div className="sc-field"><label htmlFor={`${prefix}-tag`}>STF file-tag</label>
+      <input id={`${prefix}-tag`} className="sc-subpick" value={fileTag} maxLength={128} disabled={disabled} onChange={event => onFileTag(event.target.value)} /></div>
+    <p className="scaf-note">Leave a value empty to clear it. Study reports requiring an STF must have both values before packaging.</p>
+    <PlacementReasonField value={reason} onChange={onReason} idPrefix={prefix} label="Reason for this study tagging edit" disabled={disabled} variant="inline" />
+    {needsRead && !notice && <p role="status" className="scaf-note">Reread the current leaf before saving; its recorded metadata and revision are not yet verified.</p>}
+    <button type="button" className="sp-primary sc-btn" disabled={disabled || needsRead || !baseline || !placementReasonOk(reason)} onClick={onSave}>{busy ? 'Saving study tagging…' : 'Save study tagging'}</button>
+    {needsRead && <button type="button" className="sc-trans-b" disabled={disabled} onClick={onReread}>{reading ? 'Rereading current leaf…' : 'Reread current leaf'}</button>}
+    <button type="button" className="sc-trans-b" disabled={disabled} onClick={onClose}>Close study tagging</button>
+  </div>;
+}
+
+/** Complete metadata on the existing leaf; never re-place or re-pin its source. */
+function StudyTaggingControl({ seq, leaf, leavesPath, session, context, isCurrent, onDone }: {
+  seq: SeqRow;
+  leaf: LeafRow;
+  leavesPath: string;
+  session: SubmissionReadSession;
+  context: string;
+  isCurrent: () => boolean;
+  onDone: (notice: Notice, effect: LeafWriteEffect) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [baseline, setBaseline] = React.useState<StudyLeafSnapshot | null>(() => studyLeafSnapshot(leaf, leaf, seq.id) ? leaf : null);
+  const [studyId, setStudyId] = React.useState(leaf.studyId ?? '');
+  const [fileTag, setFileTag] = React.useState(leaf.stfFileTag ?? '');
+  const [reason, setReason] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [needsRead, setNeedsRead] = React.useState(!baseline);
+  const [earlierUnknown, setEarlierUnknown] = React.useState(false);
+  const [reconciled, setReconciled] = React.useState(false);
+  const [notice, setNotice] = React.useState<Notice | null>(null);
+  const [readAttempt, setReadAttempt] = React.useState(0);
+  const processedRead = React.useRef(0);
+  const live = React.useRef(true);
+  const inFlight = React.useRef(false);
+  const currentOwner = React.useRef(isCurrent);
+  currentOwner.current = isCurrent;
+  React.useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  const current = React.useCallback(() => live.current && session.sameRevision() && currentOwner.current(), [session]);
+  // A separate explicit read keeps the form mounted, so uncertainty cannot
+  // discard the person's values or silently replay their write.
+  const reread = useSubmissionScopedRows<LeafRow>(
+    open && readAttempt > 0 ? leavesPath : null,
+    JSON.stringify([context, leaf.id, 'study-tagging-reconciliation']), readAttempt, session,
+    isRowsWith<LeafRow>('id', 'sectionCode'),
+  );
+  React.useEffect(() => {
+    if (!readAttempt || processedRead.current === readAttempt || reread.loading || !current()) return;
+    if (!reread.isCurrent()) return;
+    processedRead.current = readAttempt;
+    const row = reread.rows.find(value => value.id === leaf.id);
+    if (reread.error || !studyLeafSnapshot(row, leaf, seq.id)) {
+      setNeedsRead(true);
+      setNotice({ tone: 'err', text: `The current leaf could not be verified${reread.error ? ` — ${clause(reread.error)}` : ''}. Reread it before saving. Your entered values are retained.` });
+      return;
+    }
+    setBaseline(row);
+    setNeedsRead(false);
+    setReconciled(true);
+    setNotice({ tone: 'warn', text: 'Current study tagging was reread. Your entered values are retained. Review the current values below before saving; this read does not confirm the earlier write or its audit.' });
+  }, [readAttempt, reread, current, leaf, seq.id]);
+
+  if (!open) return <button type="button" className="sc-trans-b"
+    aria-label={`Edit study tagging for leaf ${leaf.sectionCode} ${leaf.title}`}
+    onClick={() => { if (current()) setOpen(true); }}>Edit study tagging</button>;
+
+  const save = async () => {
+    if (!current() || inFlight.current || needsRead || !baseline || !placementReasonOk(reason)) return;
+    const nextStudyId = studyId.trim() || null;
+    const nextFileTag = fileTag.trim() || null;
+    inFlight.current = true;
+    setBusy(true);
+    const result = await mutateVerbatim<StudyWriteReceipt>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
+      leafId: leaf.id, sectionCode: baseline.sectionCode, title: baseline.title,
+      studyId: nextStudyId, stfFileTag: nextFileTag, reason: reason.trim(),
+      studyTaggingEdit: {
+        expectedStudyId: baseline.studyId,
+        expectedStfFileTag: baseline.stfFileTag,
+        expectedUpdatedAt: baseline.updatedAt,
+      },
+    });
+    if (!current()) return;
+    inFlight.current = false;
+    setBusy(false);
+    const row = result.data;
+    if (!studyReceiptMatches(row, baseline, seq.id, nextStudyId, nextFileTag)) {
+      const refusal = studyWriteRefusal(result);
+      setEarlierUnknown(value => value || refusal.unknown);
+      setNeedsRead(refusal.needsRead);
+      setNotice(refusal.notice);
+      return;
+    }
+    setBaseline(row);
+    if (row.unchanged) {
+      const verdict = studyUnchangedNotice(earlierUnknown);
+      if (reconciled) onDone(verdict, { changed: false, sequenceChanged: false, reconcile: true });
+      else setNotice(verdict);
+      return;
+    }
+    onDone(studySavedNotice(seq, row, earlierUnknown), { changed: true, sequenceChanged: Boolean(row.sequenceStatusChanged), reconcile: reconciled });
+  };
+  const close = () => {
+    if (!current()) return;
+    if (earlierUnknown || reconciled) onDone({ tone: 'warn', text: earlierUnknown
+      ? 'Study tagging editor closed. The earlier write and its audit are not confirmed; review the current leaf, sequence status and audit history before proceeding.'
+      : 'Study tagging editor closed after rereading the current leaf. No further edit was requested; review the current sequence status and audit history.',
+    }, { changed: false, sequenceChanged: false, reconcile: true });
+    setOpen(false);
+  };
+  return <StudyTaggingFields leaf={leaf} baseline={baseline} notice={notice} studyId={studyId} fileTag={fileTag} reason={reason}
+    busy={busy} reading={readAttempt > processedRead.current && reread.loading} needsRead={needsRead}
+    onStudyId={setStudyId} onFileTag={setFileTag} onReason={setReason} onSave={save} onClose={close}
+    onReread={() => { if (current()) setReadAttempt(value => value + 1); }} />;
 }
 
 interface LeafSourceResolution {
@@ -435,6 +626,8 @@ export interface LeafWriteEffect {
   changed: boolean;
   /** The sequence's status moved (the sequence list must be re-read). */
   sequenceChanged: boolean;
+  /** Recheck leaf/history/status after reconciliation; this request need not have written anything. */
+  reconcile?: boolean;
 }
 
 /** The sentence a status the server moved adds to a leaf write's notice. */
@@ -796,26 +989,53 @@ function BuilderSources({ onNav }: { onNav?: (id: string) => void }) {
   );
 }
 
-export function BuilderWorkspace({ seq, submission, onSequenceChanged, onNav }: {
+interface BuilderWorkspaceProps {
   seq: SeqRow; onSequenceChanged?: (notice: Notice) => void;
   submission?: SubLike;
   /** Shell navigation, for the doors to where documents are placed from. */
   onNav?: (id: string) => void;
+  session?: SubmissionReadSession;
+  scopeContext?: string;
+  isScopeCurrent?: () => boolean;
+}
+
+/** Actor/selection generations remount owned state even on A → B → A. */
+export function BuilderWorkspace(props: BuilderWorkspaceProps) {
+  const ownSession = useSubmissionReadSession();
+  const session = props.session ?? ownSession;
+  const context = JSON.stringify([session.key, props.scopeContext, props.submission?.id, props.submission?.programId, props.seq.id, props.seq.status]);
+  const owner = React.useRef({ context, generation: 0 });
+  if (owner.current.context !== context) owner.current = { context, generation: owner.current.generation + 1 };
+  const generation = owner.current.generation;
+  const isScopeCurrent = () => owner.current.generation === generation && session.sameRevision() && (props.isScopeCurrent?.() ?? true);
+  return <BuilderWorkspaceForScope key={`${context}:${generation}`} {...props} session={session} scopeContext={context} isScopeCurrent={isScopeCurrent} />;
+}
+
+function builderLeafReadPath(sequenceId: number, submission?: SubLike) {
+  const selection = new URLSearchParams();
+  if (submission) selection.set('submissionId', String(submission.id));
+  if (submission?.programId) selection.set('programId', submission.programId);
+  return `/api/submissions/sequences/${sequenceId}/leaves${selection.size ? `?${selection}` : ''}`;
+}
+
+function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, session, scopeContext, isScopeCurrent }: BuilderWorkspaceProps & {
+  session: SubmissionReadSession; scopeContext: string; isScopeCurrent: () => boolean;
 }) {
   const [bump, setBump] = React.useState(0);
-  const leavesPath = `/api/submissions/sequences/${seq.id}/leaves`;
+  const leavesPath = builderLeafReadPath(seq.id, submission);
   /* The module header promises a wrong-shaped 200 reaches the error branch;
      that held for the two useLiveData reads and not for these three, which
      flattened a non-array body to zero rows and rendered "nothing here yet". */
-  const leaves = useLiveRows<LeafRow>(leavesPath, [leavesPath, bump], isRowsWith<LeafRow>('id', 'sectionCode'));
+  const leaves = useSubmissionScopedRows<LeafRow>(leavesPath, scopeContext, bump, session, isRowsWith<LeafRow>('id', 'sectionCode'));
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const locked = seq.status === 'frozen' || seq.status === 'dispatched';
   const afterWrite = (n: Notice, effect: LeafWriteEffect) => {
+    if (!isScopeCurrent() || !leaves.isCurrent()) return;
     // A sequence refresh unmounts this pane; keep its confirmed state-change
     // verdict in the existing parent notice, rather than losing it with the pane.
-    if (effect.sequenceChanged && onSequenceChanged) onSequenceChanged(n);
+    if ((effect.sequenceChanged || effect.reconcile) && onSequenceChanged) onSequenceChanged(n);
     else setNotice(n);
-    if (effect.changed) setBump((b) => b + 1);
+    if (effect.changed || effect.reconcile) setBump((b) => b + 1);
   };
 
   return (
@@ -851,6 +1071,8 @@ export function BuilderWorkspace({ seq, submission, onSequenceChanged, onNav }: 
                 <th>Title</th>
                 <th>Operation</th>
                 <th>Granularity</th>
+                <th>Study id</th>
+                <th>STF file-tag</th>
                 <th>Source document</th>
                 {!locked && <th>Actions</th>}
               </tr>
@@ -866,11 +1088,15 @@ export function BuilderWorkspace({ seq, submission, onSequenceChanged, onNav }: 
                     <Chip map={SC_LIFECYCLE_OPS} k={l.lifecycleOp} />
                   </td>
                   <td>{l.granularity ?? '—'}</td>
+                  <td>{storedStudyValue(l.studyId)}</td>
+                  <td>{storedStudyValue(l.stfFileTag)}</td>
                   <td>
                     <LeafSourceCell leaf={l} />
                   </td>
                   {!locked && (
                     <td>
+                      <StudyTaggingControl seq={seq} leaf={l} leavesPath={leavesPath} session={session} context={scopeContext}
+                        isCurrent={() => isScopeCurrent() && leaves.isCurrent()} onDone={afterWrite} />
                       <RemoveLeafControl seq={seq} leaf={l} onDone={afterWrite} />
                     </td>
                   )}

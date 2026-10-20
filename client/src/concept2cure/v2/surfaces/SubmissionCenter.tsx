@@ -676,8 +676,9 @@ export function SubmissionCenter({
   const builderGeneration = builderOwner.current.generation;
   const currentSequence = React.useRef(seq);
   currentSequence.current = seq;
+  const builderIsCurrent = () => Boolean(seq && builderOwner.current.generation === builderGeneration && currentSequence.current === seq && seqs.isCurrent() && readSession.sameRevision());
   const builderSequenceChanged = (verdict: Notice) => {
-    if (!seq || builderOwner.current.generation !== builderGeneration || currentSequence.current !== seq || !seqs.isCurrent() || !readSession.sameRevision()) return;
+    if (!seq || !builderIsCurrent()) return;
     setNotice({ ...verdict, builderGeneration, builderSequenceId: seq.id });
     setSeqBump(value => value + 1);
   };
@@ -1895,7 +1896,9 @@ export function SubmissionCenter({
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
-                <BuilderWorkspace key={seq.id} seq={seq} submission={sub} onSequenceChanged={builderSequenceChanged} onNav={onNav} />
+                <BuilderWorkspace key={`${readSession.key}:${builderGeneration}:${seq.id}`} seq={seq} submission={sub}
+                  session={readSession} scopeContext={`${builderContext}:${builderGeneration}`} isScopeCurrent={builderIsCurrent}
+                  onSequenceChanged={builderSequenceChanged} onNav={onNav} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && (
