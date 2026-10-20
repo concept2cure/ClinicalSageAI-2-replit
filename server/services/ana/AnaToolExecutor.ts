@@ -17,6 +17,10 @@ import { readOnlyToolRefusal } from './read-only-turn.js';
 
 import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
+import { ProgramReadAccessError } from '../c2c/current-program-access';
+import { SchedulePreservationConflict } from '../projects/schedule-of-events/preservation';
+import type { ScheduleExecutionContext } from '../projects/schedule-of-events';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { critiqueSavedDocument } from './saved-document-critique';
 import { frameToolOutput } from './tool-output-frame.js';
@@ -2659,13 +2663,42 @@ registerToolHandler('scan_project_risks', async (input, ctx) => {
 // kept current with amendments/health reviews, and re-baselined via goals.
 // Milestones reuse project_workflow_stages; proactive tasks reuse project_tasks;
 // alerts reuse the notification service. All operations are org+project scoped.
-function scheduleToolContext(ctx?: ToolContext): { organizationId: number; projectId: number } | null {
-  const organizationId = ctx?.organizationId ? Number(ctx.organizationId) : null;
-  const projectId = ctx?.projectId ? Number(ctx.projectId) : null;
-  if (!organizationId || Number.isNaN(organizationId) || !projectId || Number.isNaN(projectId)) {
-    return null;
+function scheduleIdentity(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+}
+
+async function scheduleToolContext(ctx?: ToolContext): Promise<{
+  organizationId: number; projectId: number; execution: ScheduleExecutionContext;
+} | null> {
+  // Capture server-authored primitives before asynchronous admission. A prompt
+  // field or mutable conversation context must not replace the admitted actor.
+  const organizationId = ctx?.organizationId;
+  const actorUserId = ctx?.userId;
+  const executor = ctx?.sqlClient;
+  const projectId = ctx?.projectId;
+  const projectRef = ctx?.projectRef;
+  if (!scheduleIdentity(organizationId) || !scheduleIdentity(actorUserId) ||
+      !executor || typeof executor.query !== 'function') return null;
+  const admitted = await admitAnaProjectScope(executor, {
+    organizationId, userId: actorUserId, projectId, projectRef,
+  });
+  if (!scheduleIdentity(admitted.projectId)) return null;
+  return { organizationId, projectId: admitted.projectId, execution: { actorUserId, executor } };
+}
+
+function scheduleToolFailure(error: unknown, operation: string): string {
+  if (error instanceof AnaProjectScopeError || error instanceof ProgramReadAccessError) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: error.message, code: error.code, status: error.status });
   }
-  return { organizationId, projectId };
+  if (error instanceof SchedulePreservationConflict) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: error.message, code: error.code, status: 409 });
+  }
+  // A failed COMMIT may have been applied. Do not assert rollback or expose SQL.
+  return JSON.stringify({ source: 'AnA Schedule of Events', error: `${operation} could not be confirmed. Refresh the schedule before making another change.` });
+}
+
+function missingScheduleContext(): string {
+  return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required, with a current actor and request database context.' });
 }
 
 function parseScheduleDate(value: unknown): Date | null {
@@ -2675,15 +2708,10 @@ function parseScheduleDate(value: unknown): Date | null {
 }
 
 registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: 'An active organization and project are required to generate a schedule.',
-    });
-  }
   const reason = gatedReason(input);
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { generateProjectSchedule } = await import('../projects/schedule-of-events');
     const projectType =
       (typeof input.project_type === 'string' && input.project_type.trim()) || ctx?.projectType || null;
@@ -2706,81 +2734,44 @@ registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
       reason,
       triggeredBy: 'ana_user',
       createdByAna: true,
-    });
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      plan: view.plan,
-      milestones: view.milestones,
-      goals: view.goals,
-      health: view.health,
-    });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Schedule generation failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+    }, scope.execution);
+    return JSON.stringify({ source: 'AnA Schedule of Events', plan: view.plan, milestones: view.milestones, goals: view.goals, health: view.health });
+  } catch (error) { return scheduleToolFailure(error, 'Schedule generation'); }
 });
 
 registerToolHandler('amend_schedule_of_events', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   const milestoneKey = typeof input.milestone_key === 'string' ? input.milestone_key.trim() : '';
-  if (!milestoneKey) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'milestone_key is required.' });
-  }
+  if (!milestoneKey) return JSON.stringify({ source: 'AnA Schedule of Events', error: 'milestone_key is required.' });
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { amendMilestone } = await import('../projects/schedule-of-events');
     const result = await amendMilestone({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      milestoneKey,
+      orgId: scope.organizationId, projectId: scope.projectId, milestoneKey,
       newTargetDate: parseScheduleDate(input.new_target_date),
       status: typeof input.status === 'string' ? (input.status as any) : undefined,
       progress: typeof input.progress === 'number' ? input.progress : undefined,
       note: typeof input.note === 'string' ? input.note : undefined,
-      triggeredBy: 'ana_user',
-      createdByAna: true,
-    });
+      triggeredBy: 'ana_user', createdByAna: true,
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Amendment failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Schedule amendment'); }
 });
 
 registerToolHandler('review_schedule_of_events_health', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { reviewScheduleHealth } = await import('../projects/schedule-of-events');
     const apply = input.apply === undefined ? true : !!input.apply;
     const result = await reviewScheduleHealth({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      apply,
-      triggeredBy: 'ana_user',
-    });
+      orgId: scope.organizationId, projectId: scope.projectId, apply, triggeredBy: 'ana_user',
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Health review failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Schedule review'); }
 });
 
 registerToolHandler('reset_project_goals', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   const rationale = typeof input.rationale === 'string' ? input.rationale.trim() : '';
   const goals = Array.isArray(input.goals)
     ? (input.goals as Array<Record<string, unknown>>).map((g) => ({
@@ -2791,26 +2782,17 @@ registerToolHandler('reset_project_goals', async (input, ctx) => {
         metric: typeof g.metric === 'string' ? g.metric : null,
       })).filter((g) => g.title)
     : [];
-  if (goals.length === 0 || !rationale) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'At least one goal and a rationale are required.' });
-  }
+  if (goals.length === 0 || !rationale) return JSON.stringify({ source: 'AnA Schedule of Events', error: 'goals and rationale are required.' });
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { resetProjectGoals } = await import('../projects/schedule-of-events');
     const result = await resetProjectGoals({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      goals,
-      rationale,
-      triggeredBy: 'ana_user',
-      createdByAna: true,
-    });
+      orgId: scope.organizationId, projectId: scope.projectId, goals, rationale,
+      triggeredBy: 'ana_user', createdByAna: true,
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Goal reset failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Goal reset'); }
 });
 
 // Session briefing — tenant-scoped reconciliation of overdue/due-soon deadlines

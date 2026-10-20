@@ -32,6 +32,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { databaseUrl } from '../setup.db';
 import { setupSchedulerDb, sleep, waitFor, type SchedulerDb } from './scheduler-harness';
+import type { RequestSqlClient } from '../../server/db/requestDb';
 
 const hoisted = vi.hoisted(() => ({
   cronCallbacks: [] as Array<() => unknown>,
@@ -74,12 +75,19 @@ vi.mock('../../server/services/digest/proactive-digest', () => ({
 }));
 
 // listActiveSchedulePlans stays REAL (it must pass the fail-closed pool under
-// the sweep's system scope). reviewScheduleHealth becomes a slow recorder: its
+// the sweep's system scope). reviewScheduleHealthForSweep becomes a slow recorder: its
 // writes — tasks, alerts, the health_review revision — happen once per call,
 // so the number of calls IS the number of duplicate side effects.
 vi.mock('../../server/services/projects/schedule-of-events', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  reviewScheduleHealth: (p: { orgId: number; projectId: number }) => hoisted.reviewImpl!(p),
+  reviewScheduleHealthForSweep: async (p: { orgId: number; projectId: number }, executor: RequestSqlClient) => {
+    expect(store.getTenantScope()).toMatchObject({
+      tenantId: String(p.orgId), role: null, source: 'job', caller: 'schedule-of-events-sweep:review',
+    });
+    const scope = await executor.query("SELECT current_setting('app.current_tenant_id') AS tenant, current_setting('app.current_user_role') AS role");
+    expect(scope.rows[0]).toEqual({ tenant: String(p.orgId), role: '' });
+    return hoisted.reviewImpl!(p);
+  },
 }));
 
 type Runtime = typeof import('../../server/db/runtime');
@@ -87,6 +95,7 @@ type Store = typeof import('../../server/db/tenantStore');
 
 const DDL = `
 CREATE TABLE organizations (id serial PRIMARY KEY, name text, status text DEFAULT 'active');
+CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, status text NOT NULL DEFAULT 'active');
 CREATE TABLE concept2cure_conversations (id serial PRIMARY KEY, project_id integer, thread_id text);
 CREATE TABLE project_intelligence_profiles (
   id serial PRIMARY KEY, project_id integer NOT NULL, organization_id integer NOT NULL
@@ -104,6 +113,7 @@ CREATE TABLE project_memory_entries (
   embedding text,
   status text DEFAULT 'active',
   extracted_by text DEFAULT 'ai',
+  source_document_type text,
   created_at timestamp DEFAULT now() NOT NULL
 );
 CREATE TABLE conversation_working_memory (
@@ -145,6 +155,7 @@ CREATE TABLE concept2cure_artifacts (
 `;
 
 const RLS_TABLES = [
+  'projects',
   'project_intelligence_profiles',
   'project_memory_entries',
   'conversation_working_memory',
@@ -390,7 +401,10 @@ describe('schedule-of-events sweep', () => {
 
   beforeEach(async () => {
     reviewed = [];
-    await env.owner.query(`TRUNCATE ${env.t('project_schedule_of_events')} RESTART IDENTITY`);
+    await env.owner.query(`TRUNCATE ${env.t('project_schedule_of_events')}, ${env.t('projects')} RESTART IDENTITY`);
+    await env.owner.query(`INSERT INTO ${env.t('organizations')} (id,name,status) VALUES (51,'schedule A','active'),(52,'schedule B','active')
+      ON CONFLICT (id) DO UPDATE SET status='active'`);
+    await env.owner.query(`INSERT INTO ${env.t('projects')} (id,organization_id,status) VALUES (510,51,'active'),(520,52,'active')`);
     await env.owner.query(
       `INSERT INTO ${env.t('project_schedule_of_events')} (organization_id, project_id) VALUES (51, 510), (52, 520)`,
     );
@@ -425,6 +439,18 @@ describe('schedule-of-events sweep', () => {
     );
     const summary = await sweep.runScheduleOfEventsSweep();
     expect(summary.reviewed).toBe(2);
+  });
+
+  it.each(['project', 'organization'])('an inactive %s parent leaves its claim timestamp untouched and is not reviewed', async parent => {
+    const table = parent === 'project' ? 'projects' : 'organizations';
+    await env.owner.query(`UPDATE ${env.t(table)} SET status='archived' WHERE id=$1`, [parent === 'project' ? 510 : 51]);
+    const stamp = async () => (await env.owner.query(`SELECT last_reviewed_by_ana_at FROM ${env.t('project_schedule_of_events')}
+      WHERE organization_id=51 AND project_id=510`)).rows[0].last_reviewed_by_ana_at;
+    expect(await stamp()).toBeNull();
+    const summary = await sweep.runScheduleOfEventsSweep();
+    expect(summary).toMatchObject({ schedules: 2, reviewed: 1, recentlyReviewed: 1, errors: 0 });
+    expect(reviewed).toEqual([{ orgId: 52, projectId: 520 }]);
+    expect(await stamp()).toBeNull();
   });
 });
 

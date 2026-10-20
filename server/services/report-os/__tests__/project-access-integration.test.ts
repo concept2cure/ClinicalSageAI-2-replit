@@ -60,6 +60,13 @@ afterAll(async () => { await database?.close(); });
 beforeEach(() => { stubs.persist.mockReset(); stubs.compute.mockReset(); });
 
 describe('reporting reuses the existing project-sharing boundary', () => {
+  it('keeps use-only, public and pending-review admission read-only in explicit edit mode', async () => {
+    expect(await canAccessReportProject(7, {userId:6,role:'member'},11,client,{forWrite:true})).toBe(false);
+    expect(await canAccessReportProject(7, {userId:8,role:'viewer'},12,client,{forWrite:true})).toBe(false);
+    expect(await canAccessReportProject(7, {userId:5,role:'member'},13,client,{forWrite:true})).toBe(false);
+    expect(await canAccessReportProject(7, {userId:99,role:'member'},11,client,{forWrite:true})).toBe(true);
+    expect(await canAccessReportProject(7, {userId:10,role:'manager'},11,client,{forWrite:true})).toBe(true);
+  });
   it('denies an unassigned same-organization member and viewer while allowing owner and explicit use members', async () => {
     expect(await canAccessReportProject(7, { userId: 5, role: 'member' }, 11, client)).toBe(false);
     expect(await canAccessReportProject(7, { userId: 8, role: 'viewer' }, 11, client)).toBe(false);

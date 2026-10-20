@@ -40,8 +40,8 @@ describe('existing registry search reaches exact regional authoring projects', (
   ])('$lane search for $id retains $type/$product/$agency', async ({ lane, id, product, type, agency }) => {
     render(<NewProjectWizard segment={lane} onClose={() => {}} onNav={() => {}} />);
     fireEvent.change(await screen.findByRole('textbox', { name: 'Search filing types' }), { target: { value: id } });
-    const title = getSubmissionTypeContext(id)!.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    fireEvent.click(await screen.findByRole('button', { name: new RegExp(`^${title}(?:\\s|$)`) }));
+    const title = getSubmissionTypeContext(id)!.displayName;
+    fireEvent.click(await screen.findByRole('button', { name: (accessibleName: string) => accessibleName === title || (accessibleName.startsWith(title) && /^\s/.test(accessibleName.slice(title.length))) }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
     fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), { target: { value: 'Regional device preparation' } });
     if (agency !== 'FDA') {

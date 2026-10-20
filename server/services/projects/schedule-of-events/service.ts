@@ -1,8 +1,7 @@
 /**
  * Schedule-of-Events service — persistence + AnA operations.
  *
- * The genuinely-new AnA layer on top of the platform's existing project
- * milestone/task tables:
+ * AnA schedule operations on the platform's existing project milestone/task tables:
  *
  *   - Plan header        → project_schedule_of_events (basis, framework,
  *                          confidence, baseline/target, AnA narrative).
@@ -14,14 +13,19 @@
  *   - Proactive tasks    → REUSE project_tasks, tagged the same way.
  *   - Alerts             → REUSE the notification service.
  *
- * Raw SQL via the shared pool (mirrors notification-service): every statement
- * is explicitly org- and project-scoped for tenant isolation.
+ * Human operations require a caller-owned executor and current actor admission.
+ * Only the audited estate listing uses the shared pool; project jobs explicitly
+ * enter a least-privilege organization scope before supplying their executor.
  *
  * @module server/services/projects/schedule-of-events/service
  */
 
-import type { PoolClient } from 'pg';
 import { pool } from '../../../db';
+import type { RequestSqlClient } from '../../../db/requestDb';
+import { getTenantScope } from '../../../db/tenantStore';
+import { GOVERNED_WRITE_ROLES } from '../../../middleware/orgMembership';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../../c2c/current-program-access';
+import { canAccessReportProject } from '../../report-os/project-access';
 import { createNotification } from '../../notifications/notification-service';
 import { generateSchedule, type GeneratedSchedule, type GeneratorGoal } from './generator';
 import {
@@ -35,13 +39,164 @@ import {
   milestoneScheduleStatus,
   planMilestonePreservation,
   scheduleMetadata as asObject,
-  SchedulePreservationConflict,
   type StoredScheduleMilestone,
-  type StoredSchedulePlan,
 } from './preservation';
 
 const SCHEDULE_SOURCE = 'ana_schedule_of_events';
-type ScheduleQuery = Pick<PoolClient, 'query'>;
+const POSTGRES_INTEGER_MAX = 2_147_483_647;
+type ScheduleQuery = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+const activeScheduleConnections = new WeakSet<RequestSqlClient>();
+
+/** Trusted identity and connection are supplied separately from browser/model parameters. */
+export interface ScheduleExecutionContext {
+  actorUserId: number;
+  executor: RequestSqlClient;
+}
+
+function requireScheduleIds(orgId: number, projectId: number): void {
+  if (![orgId, projectId].every(id => Number.isSafeInteger(id) && id > 0 && id <= POSTGRES_INTEGER_MAX)) {
+    throw new ProgramReadAccessError(403, 'SCHEDULE_SCOPE_INVALID', 'A valid organization and project are required.');
+  }
+}
+
+function suppliedExecutor(executor: RequestSqlClient | undefined): RequestSqlClient {
+  if (!executor || typeof executor.query !== 'function') {
+    throw new ProgramReadAccessError(503, 'REQUEST_DB_CONTEXT_REQUIRED', 'The caller database context is required. Nothing was read or changed.');
+  }
+  return executor;
+}
+
+function humanExecution(orgId: number, projectId: number, context: ScheduleExecutionContext) {
+  requireScheduleIds(orgId, projectId);
+  const actorUserId = context?.actorUserId;
+  if (!Number.isSafeInteger(actorUserId) || actorUserId <= 0 || actorUserId > POSTGRES_INTEGER_MAX) {
+    throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'A current organization actor is required.');
+  }
+  // Capture primitives before awaiting: mutating a context object cannot change
+  // which actor or connection owns an operation already in progress.
+  return { actorUserId, executor: suppliedExecutor(context?.executor) };
+}
+
+async function admitHumanSchedule(
+  orgId: number, projectId: number, context: ScheduleExecutionContext, forWrite = false,
+): Promise<void> {
+  try {
+    const actor = await readCurrentProgramActor(context.executor, {
+      organizationId: orgId, userId: context.actorUserId, forShare: forWrite,
+    });
+    if (forWrite && !GOVERNED_WRITE_ROLES.has(actor.role)) {
+      throw new ProgramReadAccessError(403, 'PROJECT_WRITE_ACCESS_DENIED', 'Current permissions do not permit a schedule change.');
+    }
+    const { rows } = await context.executor.query(
+      forWrite
+        ? 'SELECT id, status FROM projects WHERE organization_id = $1 AND id = $2 FOR UPDATE'
+        : 'SELECT id, status FROM projects WHERE organization_id = $1 AND id = $2',
+      [orgId, projectId],
+    );
+    if (rows.length !== 1) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    // The canonical numeric project lifecycle also includes planning, on-hold
+    // and completed. These are not archive/delete and retain schedule edits.
+    const status = rows[0].status;
+    if (forWrite && (typeof status !== 'string' || !status.trim() || ['archived', 'deleted'].includes(status))) {
+      throw new ProgramReadAccessError(409, 'PROJECT_NOT_ACTIVE', 'The project is archived or deleted. Its retained schedule can still be read.');
+    }
+    if (!await canAccessReportProject(orgId, actor, projectId, context.executor, { forWrite })) {
+      throw new ProgramReadAccessError(403, forWrite ? 'PROJECT_WRITE_ACCESS_DENIED' : 'PROJECT_PERMISSION_DENIED',
+        'Current project permissions do not permit this operation.');
+    }
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) throw error;
+    throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified.');
+  }
+}
+
+async function scheduleTransaction<T>(executor: RequestSqlClient, operation: () => Promise<T>): Promise<T> {
+  if (activeScheduleConnections.has(executor)) {
+    throw new ProgramReadAccessError(409, 'SCHEDULE_OPERATION_IN_PROGRESS', 'Another schedule operation is already using this connection.');
+  }
+  activeScheduleConnections.add(executor);
+  let began = false;
+  let commitStarted = false;
+  try {
+    await executor.query('BEGIN');
+    began = true;
+    const result = await operation();
+    commitStarted = true;
+    await executor.query('COMMIT');
+    return result;
+  } catch (error) {
+    let discard = !began || commitStarted;
+    // A rejected COMMIT may have committed. Never retry it or represent a later
+    // ROLLBACK as proof that the writes did not happen.
+    if (began && !commitStarted) {
+      try { await executor.query('ROLLBACK'); } catch { discard = true; }
+    }
+    if (discard) {
+      await executor.discard?.(error instanceof Error ? error : new Error('Schedule transaction could not be confirmed')).catch(() => undefined);
+    }
+    throw error;
+  } finally { activeScheduleConnections.delete(executor); }
+}
+
+async function withScheduleRead<T>(executor: RequestSqlClient, operation: () => Promise<T>): Promise<T> {
+  if (activeScheduleConnections.has(executor)) {
+    throw new ProgramReadAccessError(409, 'SCHEDULE_OPERATION_IN_PROGRESS', 'Another schedule operation is already using this connection.');
+  }
+  activeScheduleConnections.add(executor);
+  try { return await operation(); }
+  finally { activeScheduleConnections.delete(executor); }
+}
+
+async function withHumanScheduleWrite<T>(
+  orgId: number, projectId: number, context: ScheduleExecutionContext,
+  operation: (sql: ScheduleQuery, actorUserId: number) => Promise<T>,
+): Promise<T> {
+  const captured = humanExecution(orgId, projectId, context);
+  return scheduleTransaction(captured.executor, async () => {
+    await admitHumanSchedule(orgId, projectId, captured, true);
+    const result = await operation(captured.executor, captured.actorUserId);
+    await admitHumanSchedule(orgId, projectId, captured, true);
+    return result;
+  });
+}
+
+async function scheduleAlertCandidates(sql: ScheduleQuery, organizationId: number, projectId: number, actorUserId?: number): Promise<number[]> {
+  if (actorUserId !== undefined) return [actorUserId];
+  const { rows } = await sql.query('SELECT owner_id, created_by_id FROM projects WHERE organization_id=$1 AND id=$2', [organizationId, projectId]);
+  return [...new Set([rows[0]?.owner_id, rows[0]?.created_by_id]
+    .filter((id): id is number => typeof id === 'number' && Number.isSafeInteger(id) && id > 0))];
+}
+
+async function currentScheduleAlertRecipient(
+  sql: ScheduleQuery, organizationId: number, projectId: number, userId: number, required: boolean,
+): Promise<boolean> {
+  let actor;
+  try { actor = await readCurrentProgramActor(sql, {organizationId, userId, forShare: true}); }
+  catch (error) {
+    if (!required && error instanceof ProgramReadAccessError && error.status === 403) return false;
+    throw error;
+  }
+  const permitted = await canAccessReportProject(organizationId, actor, projectId, sql);
+  if (!permitted && required) throw new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'The schedule alert recipient no longer has project access.');
+  return permitted;
+}
+
+/** Targeted generic alerts carry no private prose or project identity. Historical
+ * alerts and recipients' later permission changes remain separate work. */
+async function notifyScheduleChange(sql: ScheduleQuery, organizationId: number, projectId: number, notice: {
+  category: string; severity: 'info' | 'warning' | 'critical'; actorUserId?: number;
+}): Promise<number> {
+  const candidates = await scheduleAlertCandidates(sql, organizationId, projectId, notice.actorUserId);
+  let delivered = 0;
+  for (const userId of candidates) {
+    if (!await currentScheduleAlertRecipient(sql, organizationId, projectId, userId, notice.actorUserId !== undefined)) continue;
+    await createNotification({ organizationId, recipientUserId: userId, category: notice.category, severity: notice.severity,
+      title: notice.severity === 'info' ? 'A project schedule changed' : 'A project schedule needs attention',
+      body: 'Open a project you can access to review its current schedule.' }, sql);
+    delivered++;
+  }
+  return delivered;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // View shapes (what the API / AnA tools return)
@@ -154,7 +309,7 @@ function toColumnStatus(s: ScheduleStatus): string {
 // Loaders
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function loadPlan(orgId: number, projectId: number, sql: ScheduleQuery = pool): Promise<SchedulePlanView | null> {
+async function loadPlan(orgId: number, projectId: number, sql: ScheduleQuery): Promise<SchedulePlanView | null> {
   const { rows } = await sql.query(
     `SELECT * FROM project_schedule_of_events
       WHERE organization_id = $1 AND project_id = $2
@@ -212,7 +367,7 @@ function milestoneFromRow(r: MilestoneRow, now: Date): ScheduleMilestoneView {
   };
 }
 
-async function loadMilestoneRows(orgId: number, projectId: number, sql: ScheduleQuery = pool, lock = false): Promise<MilestoneRow[]> {
+async function loadMilestoneRows(orgId: number, projectId: number, sql: ScheduleQuery, lock = false): Promise<MilestoneRow[]> {
   const statement = lock
     ? `SELECT *
          FROM project_workflow_stages
@@ -224,14 +379,14 @@ async function loadMilestoneRows(orgId: number, projectId: number, sql: Schedule
         WHERE organization_id = $1 AND project_id = $2
           AND metadata->>'source' = $3
         ORDER BY "order" ASC, id ASC`;
-  const { rows } = await sql.query<MilestoneRow>(
+  const { rows } = await sql.query(
     statement,
     [orgId, projectId, SCHEDULE_SOURCE],
   );
   return rows;
 }
 
-async function loadGoals(orgId: number, projectId: number, sql: ScheduleQuery = pool): Promise<ScheduleGoalView[]> {
+async function loadGoals(orgId: number, projectId: number, sql: ScheduleQuery): Promise<ScheduleGoalView[]> {
   const { rows } = await sql.query(
     `SELECT * FROM project_schedule_goals
       WHERE organization_id = $1 AND project_id = $2
@@ -257,7 +412,7 @@ async function loadRevisions(
   orgId: number,
   projectId: number,
   limit = 25,
-  sql: ScheduleQuery = pool,
+  sql: ScheduleQuery,
 ): Promise<ScheduleRevisionView[]> {
   const { rows } = await sql.query(
     `SELECT * FROM project_schedule_revisions
@@ -300,7 +455,7 @@ async function recordRevision(params: {
   detail?: unknown;
   triggeredBy?: string;
   createdByAna?: boolean;
-}, sql: ScheduleQuery = pool): Promise<void> {
+}, sql: ScheduleQuery): Promise<void> {
   await sql.query(
     `INSERT INTO project_schedule_revisions
        (organization_id, project_id, schedule_id, revision_type, summary, detail, triggered_by, created_by_ana)
@@ -331,8 +486,15 @@ async function recordRevision(params: {
 export async function getScheduleOfEvents(
   orgId: number,
   projectId: number,
+  context: ScheduleExecutionContext,
 ): Promise<ScheduleOfEventsView> {
-  return loadScheduleView(orgId, projectId, pool);
+  const captured = humanExecution(orgId, projectId, context);
+  return withScheduleRead(captured.executor, async () => {
+    await admitHumanSchedule(orgId, projectId, captured);
+    const view = await loadScheduleView(orgId, projectId, captured.executor);
+    await admitHumanSchedule(orgId, projectId, captured);
+    return view;
+  });
 }
 
 /** Generation reads its response on the writing client, before COMMIT. */
@@ -342,21 +504,11 @@ async function loadScheduleView(
   sql: ScheduleQuery,
 ): Promise<ScheduleOfEventsView> {
   const now = new Date();
-  // Independent pool reads can overlap; one checked-out transaction client
-  // must execute them serially (pg deprecates concurrent client.query calls).
-  const [plan, milestoneRows, goals, revisions] = sql === pool
-    ? await Promise.all([
-        loadPlan(orgId, projectId, sql),
-        loadMilestoneRows(orgId, projectId, sql),
-        loadGoals(orgId, projectId, sql),
-        loadRevisions(orgId, projectId, 25, sql),
-      ])
-    : [
-        await loadPlan(orgId, projectId, sql),
-        await loadMilestoneRows(orgId, projectId, sql),
-        await loadGoals(orgId, projectId, sql),
-        await loadRevisions(orgId, projectId, 25, sql),
-      ] as const;
+  // The caller owns one pinned connection, so execute serially.
+  const plan = await loadPlan(orgId, projectId, sql);
+  const milestoneRows = await loadMilestoneRows(orgId, projectId, sql);
+  const goals = await loadGoals(orgId, projectId, sql);
+  const revisions = await loadRevisions(orgId, projectId, 25, sql);
   const milestones = milestoneRows.map((r) => milestoneFromRow(r, now));
   return { plan, milestones, goals, revisions, health: healthFromMilestones(milestones, now) };
 }
@@ -435,7 +587,9 @@ async function writeGeneratedMilestones(
 
 export async function generateProjectSchedule(
   params: GenerateScheduleParams,
+  context: ScheduleExecutionContext,
 ): Promise<ScheduleOfEventsView> {
+  params = { ...params };
   const { orgId, projectId } = params;
   const gen = generateSchedule({
     projectType: params.projectType,
@@ -444,25 +598,9 @@ export async function generateProjectSchedule(
     goals: params.goals,
   });
 
-  // The instrumented checkout preserves the caller's tenant scope at BEGIN.
-  // Lock the parent before taking preservation snapshots. This also serializes
-  // first creation, when there is no schedule header to lock yet.
-  const client = await pool.connect();
-  let began = false;
-  let commitStarted = false;
-  let discard = false;
-  try {
-    await client.query('BEGIN');
-    began = true;
-
-    const ownedProject = await client.query(
-      'SELECT id FROM projects WHERE organization_id = $1 AND id = $2 FOR UPDATE',
-      [orgId, projectId],
-    );
-    if (ownedProject.rows.length !== 1) {
-      throw new SchedulePreservationConflict('the project is not available in this organization');
-    }
-    const { rows: previousPlans } = await client.query<StoredSchedulePlan>(
+  // Every schedule mutation takes the same parent lock before reading state.
+  return withHumanScheduleWrite(orgId, projectId, context, async client => {
+    const { rows: previousPlans } = await client.query(
       `SELECT * FROM project_schedule_of_events
         WHERE organization_id = $1 AND project_id = $2 FOR UPDATE`,
       [orgId, projectId],
@@ -550,24 +688,8 @@ export async function generateProjectSchedule(
     // Reading afterward could report a different regeneration, or fail after
     // committing. Include response loading in the same atomic operation.
     const view = await loadScheduleView(orgId, projectId, client);
-    commitStarted = true;
-    await client.query('COMMIT');
     return view;
-  } catch (error) {
-    // A rejected COMMIT can mean its acknowledgement was lost. Even a successful
-    // cleanup cannot prove it rolled back; never return success or reuse that
-    // connection. Preserve the original failure if ROLLBACK also fails.
-    discard = !began || commitStarted;
-    try {
-      await client.query('ROLLBACK');
-    } catch {
-      discard = true;
-    }
-    throw error;
-  } finally {
-    if (discard) client.release(true);
-    else client.release();
-  }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -588,58 +710,62 @@ export interface AmendMilestoneParams {
 
 export async function amendMilestone(
   params: AmendMilestoneParams,
+  context: ScheduleExecutionContext,
 ): Promise<{ ok: boolean; message: string }> {
-  const { orgId, projectId, milestoneKey } = params;
-  const { rows } = await pool.query<MilestoneRow & { metadata: any }>(
-    `SELECT id, name, description, "order", status, start_date, due_date, metadata
-       FROM project_workflow_stages
-      WHERE organization_id = $1 AND project_id = $2
-        AND metadata->>'source' = $3 AND metadata->>'key' = $4
-      LIMIT 1`,
-    [orgId, projectId, SCHEDULE_SOURCE, milestoneKey],
-  );
-  const row = rows[0];
-  if (!row) return { ok: false, message: `No schedule milestone with key "${milestoneKey}".` };
-
-  const md = asObject(row.metadata);
-  const nextStatus: ScheduleStatus = params.status ?? (md.scheduleStatus as ScheduleStatus) ?? 'not_started';
-  md.scheduleStatus = nextStatus;
-  if (typeof params.progress === 'number') md.progress = Math.max(0, Math.min(100, params.progress));
-  if (nextStatus === 'completed') md.completedAt = new Date().toISOString();
-  if (params.note) md.lastAmendNote = params.note;
-
-  const newDue = params.newTargetDate ?? toDate(row.due_date);
-  await pool.query(
-    `UPDATE project_workflow_stages
-        SET due_date = $1, status = $2, metadata = $3, updated_at = now()
-      WHERE id = $4 AND organization_id = $5`,
-    [newDue, toColumnStatus(nextStatus), JSON.stringify(md), row.id, orgId],
-  );
-
-  const plan = await loadPlan(orgId, projectId);
-  if (plan) {
-    await pool.query(
-      `UPDATE project_schedule_of_events SET last_amended_at = now(), updated_at = now()
-        WHERE id = $1 AND organization_id = $2`,
-      [plan.id, orgId],
+  params = { ...params };
+  return withHumanScheduleWrite(params.orgId, params.projectId, context, async sql => {
+    const { orgId, projectId, milestoneKey } = params;
+    const { rows } = await sql.query(
+      `SELECT id, name, description, "order", status, start_date, due_date, metadata
+         FROM project_workflow_stages
+        WHERE organization_id = $1 AND project_id = $2
+          AND metadata->>'source' = $3 AND metadata->>'key' = $4
+        LIMIT 1`,
+      [orgId, projectId, SCHEDULE_SOURCE, milestoneKey],
     );
-    await recordRevision({
-      orgId,
-      projectId,
-      scheduleId: plan.id,
-      revisionType: 'amended',
-      summary: `Amended milestone "${row.name}"${params.newTargetDate ? ` → ${params.newTargetDate.toISOString().slice(0, 10)}` : ''}${params.status ? ` (status: ${params.status})` : ''}.`,
-      detail: {
-        milestoneKey,
-        newTargetDate: params.newTargetDate?.toISOString() ?? null,
-        status: params.status ?? null,
-        note: params.note ?? null,
-      },
-      triggeredBy: params.triggeredBy ?? 'ana_user',
-      createdByAna: params.createdByAna,
-    });
-  }
-  return { ok: true, message: `Milestone "${row.name}" updated.` };
+    const row = rows[0];
+    if (!row) return { ok: false, message: `No schedule milestone with key "${milestoneKey}".` };
+
+    const md = asObject(row.metadata);
+    const nextStatus: ScheduleStatus = params.status ?? (md.scheduleStatus as ScheduleStatus) ?? 'not_started';
+    md.scheduleStatus = nextStatus;
+    if (typeof params.progress === 'number') md.progress = Math.max(0, Math.min(100, params.progress));
+    if (nextStatus === 'completed') md.completedAt = new Date().toISOString();
+    if (params.note) md.lastAmendNote = params.note;
+
+    const newDue = params.newTargetDate ?? toDate(row.due_date);
+    await sql.query(
+      `UPDATE project_workflow_stages
+          SET due_date = $1, status = $2, metadata = $3, updated_at = now()
+        WHERE id = $4 AND organization_id = $5`,
+      [newDue, toColumnStatus(nextStatus), JSON.stringify(md), row.id, orgId],
+    );
+
+    const plan = await loadPlan(orgId, projectId, sql);
+    if (plan) {
+      await sql.query(
+        `UPDATE project_schedule_of_events SET last_amended_at = now(), updated_at = now()
+          WHERE id = $1 AND organization_id = $2`,
+        [plan.id, orgId],
+      );
+      await recordRevision({
+        orgId,
+        projectId,
+        scheduleId: plan.id,
+        revisionType: 'amended',
+        summary: `Amended milestone "${row.name}"${params.newTargetDate ? ` → ${params.newTargetDate.toISOString().slice(0, 10)}` : ''}${params.status ? ` (status: ${params.status})` : ''}.`,
+        detail: {
+          milestoneKey,
+          newTargetDate: params.newTargetDate?.toISOString() ?? null,
+          status: params.status ?? null,
+          note: params.note ?? null,
+        },
+        triggeredBy: params.triggeredBy ?? 'ana_user',
+        createdByAna: params.createdByAna,
+      }, sql);
+    }
+    return { ok: true, message: `Milestone "${row.name}" updated.` };
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -657,7 +783,7 @@ interface ReplaceGoalsParams {
   recordRevisionEntry?: boolean;
 }
 
-async function replaceGoals(params: ReplaceGoalsParams, sql: ScheduleQuery = pool): Promise<void> {
+async function replaceGoals(params: ReplaceGoalsParams, sql: ScheduleQuery): Promise<void> {
   const { orgId, projectId } = params;
   // Retire the current active goals (kept for history as 'revised').
   await sql.query(
@@ -712,38 +838,32 @@ export interface ResetGoalsParams {
 
 export async function resetProjectGoals(
   params: ResetGoalsParams,
+  context: ScheduleExecutionContext,
 ): Promise<{ ok: boolean; message: string }> {
-  const plan = await loadPlan(params.orgId, params.projectId);
-  await replaceGoals({
-    orgId: params.orgId,
-    projectId: params.projectId,
-    scheduleId: plan?.id ?? null,
-    goals: params.goals,
-    rationale: params.rationale,
-    triggeredBy: params.triggeredBy,
-    createdByAna: params.createdByAna,
-    recordRevisionEntry: true,
+  params = { ...params };
+  return withHumanScheduleWrite(params.orgId, params.projectId, context, async (sql, actorUserId) => {
+    const plan = await loadPlan(params.orgId, params.projectId, sql);
+    await replaceGoals({
+      orgId: params.orgId,
+      projectId: params.projectId,
+      scheduleId: plan?.id ?? null,
+      goals: params.goals,
+      rationale: params.rationale,
+      triggeredBy: params.triggeredBy,
+      createdByAna: params.createdByAna,
+      recordRevisionEntry: true,
+    }, sql);
+    if (plan) {
+      await sql.query(
+        `UPDATE project_schedule_of_events
+            SET ana_summary = $1, updated_at = now()
+          WHERE id = $2 AND organization_id = $3`,
+        [`Goals re-baselined: ${params.rationale}`, plan.id, params.orgId],
+      );
+    }
+    await notifyScheduleChange(sql, params.orgId, params.projectId, {category: 'schedule_goal_reset', severity: 'info', actorUserId});
+    return { ok: true, message: `Reset ${params.goals.length} goal(s).` };
   });
-  if (plan) {
-    await pool.query(
-      `UPDATE project_schedule_of_events
-          SET ana_summary = $1, updated_at = now()
-        WHERE id = $2 AND organization_id = $3`,
-      [`Goals re-baselined: ${params.rationale}`, plan.id, params.orgId],
-    );
-  }
-  // Surface the reset as an in-app alert.
-  void createNotification({
-    organizationId: params.orgId,
-    category: 'schedule_goal_reset',
-    severity: 'info',
-    title: 'AnA re-baselined your program goals',
-    body: params.rationale,
-    resourceType: 'project',
-    resourceId: String(params.projectId),
-    actionUrl: `/projects/proj_${params.projectId}`,
-  }).catch(() => {});
-  return { ok: true, message: `Reset ${params.goals.length} goal(s).` };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -765,8 +885,9 @@ async function hasOpenScheduleTask(
   projectId: number,
   milestoneKey: string,
   kind: string,
+  sql: ScheduleQuery,
 ): Promise<boolean> {
-  const { rows } = await pool.query(
+  const { rows } = await sql.query(
     `SELECT 1 FROM project_tasks
       WHERE organization_id = $1 AND project_id = $2
         AND metadata->>'source' = $3
@@ -788,11 +909,11 @@ async function createScheduleTask(params: {
   description: string;
   priority: string;
   dueDate: Date | null;
-}): Promise<boolean> {
-  if (await hasOpenScheduleTask(params.orgId, params.projectId, params.milestoneKey, params.kind)) {
+}, sql: ScheduleQuery): Promise<boolean> {
+  if (await hasOpenScheduleTask(params.orgId, params.projectId, params.milestoneKey, params.kind, sql)) {
     return false;
   }
-  await pool.query(
+  await sql.query(
     `INSERT INTO project_tasks
        (organization_id, project_id, name, description, status, priority, module_type, due_date, metadata, created_at, updated_at)
      VALUES ($1, $2, $3, $4, 'todo', $5, 'Schedule', $6, $7, now(), now())`,
@@ -814,18 +935,63 @@ async function createScheduleTask(params: {
  * update milestone statuses, open recovery/mitigation tasks, fire alerts,
  * flag at-risk goals, refresh AnA's narrative, and audit the review.
  */
-export async function reviewScheduleHealth(params: {
+interface ScheduleReviewParams {
   orgId: number;
   projectId: number;
   apply?: boolean;
   triggeredBy?: string;
-}): Promise<HealthReviewResult> {
+}
+
+export async function reviewScheduleHealth(params: ScheduleReviewParams, context: ScheduleExecutionContext): Promise<HealthReviewResult> {
+  params = { ...params };
+  const captured = humanExecution(params.orgId, params.projectId, context);
+  if (params.apply !== false) {
+    return withHumanScheduleWrite(params.orgId, params.projectId, captured,
+      (sql, actorUserId) => reviewScheduleHealthOnExecutor(params, sql, actorUserId));
+  }
+  return withScheduleRead(captured.executor, async () => {
+    await admitHumanSchedule(params.orgId, params.projectId, captured);
+    const result = await reviewScheduleHealthOnExecutor(params, captured.executor, captured.actorUserId);
+    await admitHumanSchedule(params.orgId, params.projectId, captured);
+    return result;
+  });
+}
+
+function requireProjectJobScope(orgId: number, projectId: number): void {
+  requireScheduleIds(orgId, projectId);
+  const scope = getTenantScope();
+  if (scope?.source !== 'job' || scope.tenantId !== String(orgId) || scope.role === 'app_super_admin') {
+    throw new ProgramReadAccessError(403, 'SCHEDULE_JOB_SCOPE_REQUIRED', 'An organization-scoped schedule job is required.');
+  }
+}
+
+async function admitScheduleJob(orgId: number, projectId: number, sql: ScheduleQuery): Promise<void> {
+  requireProjectJobScope(orgId, projectId);
+  const { rows } = await sql.query(`SELECT p.id FROM projects p JOIN organizations o ON o.id=p.organization_id
+    WHERE p.organization_id=$1 AND p.id=$2 AND p.status='active' AND o.status='active' FOR UPDATE OF p FOR SHARE OF o`, [orgId, projectId]);
+  if (rows.length !== 1) throw new ProgramReadAccessError(409, 'PROJECT_NOT_ACTIVE', 'The project or organization is not active.');
+}
+
+/** Only the existing scheduler may call this, on its per-organization connection. */
+export async function reviewScheduleHealthForSweep(params: ScheduleReviewParams, executor: RequestSqlClient): Promise<HealthReviewResult> {
+  params = { ...params };
+  requireProjectJobScope(params.orgId, params.projectId);
+  const sql = suppliedExecutor(executor);
+  return scheduleTransaction(sql, async () => {
+    await admitScheduleJob(params.orgId, params.projectId, sql);
+    const result = await reviewScheduleHealthOnExecutor(params, sql);
+    await admitScheduleJob(params.orgId, params.projectId, sql);
+    return result;
+  });
+}
+
+async function reviewScheduleHealthOnExecutor(params: ScheduleReviewParams, sql: ScheduleQuery, actorUserId?: number): Promise<HealthReviewResult> {
   const { orgId, projectId } = params;
   const apply = params.apply ?? true;
   const now = new Date();
 
-  const plan = await loadPlan(orgId, projectId);
-  const milestoneRows = await loadMilestoneRows(orgId, projectId);
+  const plan = await loadPlan(orgId, projectId, sql);
+  const milestoneRows = await loadMilestoneRows(orgId, projectId, sql);
   const milestones = milestoneRows.map((r) => milestoneFromRow(r, now));
   const health = healthFromMilestones(milestones, now);
 
@@ -856,7 +1022,7 @@ export async function reviewScheduleHealth(params: {
       if (result.changed) {
         md.scheduleStatus = result.nextStatus;
         if (result.slipDays != null) md.slipDays = result.slipDays;
-        await pool.query(
+        await sql.query(
           `UPDATE project_workflow_stages
               SET status = $1, metadata = $2, updated_at = now()
             WHERE id = $3 AND organization_id = $4`,
@@ -876,20 +1042,11 @@ export async function reviewScheduleHealth(params: {
           description: result.reason + (result.isCritical ? ' This milestone is on the critical path.' : ''),
           priority: result.isCritical ? 'urgent' : 'high',
           dueDate,
-        });
+        }, sql);
         if (created) tasksCreated++;
-        await createNotification({
-          organizationId: orgId,
-          category: 'schedule_milestone_slip',
-          severity: result.isCritical ? 'critical' : 'warning',
-          title: `Milestone slipped: ${result.title}`,
-          body: result.reason,
-          resourceType: 'project',
-          resourceId: String(projectId),
-          actionUrl: `/projects/proj_${projectId}`,
-        }).then(() => { alertsCreated++; }).catch(() => {});
+        alertsCreated += await notifyScheduleChange(sql, orgId, projectId, {category: 'schedule_milestone_slip', severity: result.isCritical ? 'critical' : 'warning', actorUserId});
         md.lastNotifiedStatus = 'slipped';
-        await pool.query(
+        await sql.query(
           `UPDATE project_workflow_stages SET metadata = $1 WHERE id = $2 AND organization_id = $3`,
           [JSON.stringify(md), row.id, orgId],
         );
@@ -903,20 +1060,11 @@ export async function reviewScheduleHealth(params: {
           description: result.reason,
           priority: result.isCritical ? 'high' : 'medium',
           dueDate,
-        });
+        }, sql);
         if (created) tasksCreated++;
-        await createNotification({
-          organizationId: orgId,
-          category: 'schedule_milestone_at_risk',
-          severity: 'warning',
-          title: `Milestone at risk: ${result.title}`,
-          body: result.reason,
-          resourceType: 'project',
-          resourceId: String(projectId),
-          actionUrl: `/projects/proj_${projectId}`,
-        }).then(() => { alertsCreated++; }).catch(() => {});
+        alertsCreated += await notifyScheduleChange(sql, orgId, projectId, {category: 'schedule_milestone_at_risk', severity: 'warning', actorUserId});
         md.lastNotifiedStatus = 'at_risk';
-        await pool.query(
+        await sql.query(
           `UPDATE project_workflow_stages SET metadata = $1 WHERE id = $2 AND organization_id = $3`,
           [JSON.stringify(md), row.id, orgId],
         );
@@ -924,10 +1072,10 @@ export async function reviewScheduleHealth(params: {
     }
 
     // Flag goals whose target dates have passed without being achieved.
-    const goals = await loadGoals(orgId, projectId);
+    const goals = await loadGoals(orgId, projectId, sql);
     for (const g of goals) {
       if (g.status === 'active' && g.targetDate && new Date(g.targetDate).getTime() < now.getTime()) {
-        await pool.query(
+        await sql.query(
           `UPDATE project_schedule_goals
               SET status = 'at_risk', current_context = $1, updated_at = now()
             WHERE id = $2 AND organization_id = $3`,
@@ -937,7 +1085,7 @@ export async function reviewScheduleHealth(params: {
     }
 
     const narrative = buildAnaNarrative(health);
-    await pool.query(
+    await sql.query(
       `UPDATE project_schedule_of_events
           SET ana_summary = $1, last_reviewed_by_ana_at = now(), updated_at = now()
         WHERE id = $2 AND organization_id = $3`,
@@ -953,7 +1101,7 @@ export async function reviewScheduleHealth(params: {
       detail: { health, tasksCreated, alertsCreated },
       triggeredBy: params.triggeredBy ?? 'scheduler',
       createdByAna: true,
-    });
+    }, sql);
   }
 
   return {
@@ -993,8 +1141,16 @@ function buildAnaNarrative(health: ScheduleHealth): string {
 export async function listActiveSchedulePlans(): Promise<
   Array<{ scheduleId: number; orgId: number; projectId: number }>
 > {
+  const scope = getTenantScope();
+  if (scope?.source !== 'job' || scope.tenantId !== '0' || scope.role !== 'app_super_admin') {
+    throw new ProgramReadAccessError(403, 'SCHEDULE_SYSTEM_SCOPE_REQUIRED', 'The audited estate schedule listing scope is required.');
+  }
   const { rows } = await pool.query(
     `SELECT id, organization_id, project_id FROM project_schedule_of_events WHERE status = 'active'`,
   );
-  return rows.map((r: any) => ({ scheduleId: r.id, orgId: r.organization_id, projectId: r.project_id }));
+  return rows.map((r: any) => {
+    requireScheduleIds(r.organization_id, r.project_id);
+    if (!Number.isSafeInteger(r.id) || r.id <= 0) throw new Error('Invalid schedule listing identity');
+    return { scheduleId: r.id, orgId: r.organization_id, projectId: r.project_id };
+  });
 }
