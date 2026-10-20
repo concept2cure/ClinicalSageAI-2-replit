@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-20T20:21:51.606Z",
+  "generatedAt": "2026-10-20T20:32:10.231Z",
   "git": {
-    "sha": "3b880f96d4a79adbf14f68ce654023fc3256a0b4",
+    "sha": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2222,7 +2222,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 415981
+        "bytes": 416045
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2230,7 +2230,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 312145
+        "bytes": 317635
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2361,6 +2361,10 @@
         "bytes": 119599
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 119001
+      },
+      {
         "file": "server/routes/c2c/projects.ts",
         "bytes": 118194
       },
@@ -2381,16 +2385,12 @@
         "bytes": 115567
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 115150
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 114827
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 114189
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 111564
       },
       {
         "file": "server/routes/auth.ts",
@@ -2448,11 +2448,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8821
+        "lines": 8822
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6315
+        "lines": 6403
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2583,12 +2583,12 @@
         "lines": 2416
       },
       {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2386
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 2404
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2384
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2386
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2645,6 +2645,10 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 2149
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
@@ -2705,10 +2709,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 2015
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
