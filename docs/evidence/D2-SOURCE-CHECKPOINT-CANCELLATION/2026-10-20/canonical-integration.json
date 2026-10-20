@@ -1,0 +1,12 @@
+{
+  "localPublicationCommit": "d584343d4bda4655b195bedbb0a1075488938c28",
+  "incomingCanonicalCommit": "38822f655648d08fb99466ef606ef8a87d5d509d",
+  "incomingChangedPaths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "integration": "Normal non-fast-forward merge, no conflicts; only automated repository-health report updates incoming",
+  "qualificationInputsUnchanged": 50,
+  "testRerunDecision": "No code, test or configuration changed; verified all selected qualification hashes instead of repeating tests",
+  "unmergedPaths": []
+}
