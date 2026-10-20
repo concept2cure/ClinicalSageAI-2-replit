@@ -36,6 +36,7 @@ import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
 import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
 import { lifecycleRecordOutlineFor } from './lifecycle-record-outlines';
+import { ctdComponentTemplate } from './ctd-component-outlines';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
 import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
@@ -254,52 +255,13 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
       { number: '2.3.R', heading: 'Regional Information', purpose: 'Region-specific quality information (e.g. process validation scheme, medical devices).', required: false },
     ],
   },
-  {
-    id: 'nonclinical_overview',
-    title: 'Nonclinical Overview',
-    families: ['ectd'],
-    ctdSection: '2.4',
-    regulatoryBasis: 'ICH M4S(R2) — CTD Safety',
-    sections: [
-      { number: '2.4.1', heading: 'Overview of the Nonclinical Testing Strategy', purpose: 'Rationale and approach for the nonclinical program.', required: true },
-      { number: '2.4.2', heading: 'Pharmacology', purpose: 'Integrated overview of primary/secondary pharmacodynamics, safety pharmacology, and interactions.', required: true },
-      { number: '2.4.3', heading: 'Pharmacokinetics', purpose: 'Integrated overview of absorption, distribution, metabolism, excretion, and interactions.', required: true },
-      { number: '2.4.4', heading: 'Toxicology', purpose: 'Integrated overview of single/repeat-dose toxicity, genotoxicity, carcinogenicity, reproductive/developmental toxicity, and local tolerance.', required: true },
-      { number: '2.4.5', heading: 'Integrated Overview and Conclusions', purpose: 'Coherent risk characterisation across the nonclinical findings.', required: true },
-      { number: '2.4.6', heading: 'List of Literature References', purpose: 'References cited in the nonclinical overview.', required: false },
-    ],
-  },
-  {
-    id: 'clinical_overview',
-    title: 'Clinical Overview',
-    families: ['ectd'],
-    ctdSection: '2.5',
-    regulatoryBasis: 'ICH M4E(R2) — CTD Efficacy',
-    sections: [
-      { number: '2.5.1', heading: 'Product Development Rationale', purpose: 'Scientific rationale and the development program’s logic.', required: true },
-      { number: '2.5.2', heading: 'Overview of Biopharmaceutics', purpose: 'Critical analysis of formulation/biopharmaceutic data.', required: true },
-      { number: '2.5.3', heading: 'Overview of Clinical Pharmacology', purpose: 'PK, PD, exposure-response, and special-population pharmacology.', required: true },
-      { number: '2.5.4', heading: 'Overview of Efficacy', purpose: 'Critical analysis of efficacy across the relevant studies and endpoints.', required: true },
-      { number: '2.5.5', heading: 'Overview of Safety', purpose: 'Critical analysis of the safety database, exposure, and key risks.', required: true },
-      { number: '2.5.6', heading: 'Benefits and Risks Conclusions', purpose: 'Integrated benefit-risk assessment supporting the indication.', required: true },
-      { number: '2.5.7', heading: 'Literature References', purpose: 'The literature cited in the Clinical Overview (added 2026-10-15; M4E lists it).', required: true },
-    ],
-  },
-  {
-    id: 'clinical_summary',
-    title: 'Clinical Summary',
-    families: ['ectd'],
-    ctdSection: '2.7',
-    regulatoryBasis: 'ICH M4E(R2) — CTD Efficacy',
-    sections: [
-      { number: '2.7.1', heading: 'Summary of Biopharmaceutic Studies and Associated Analytical Methods', purpose: 'Factual summary of biopharmaceutic study results and methods.', required: true },
-      { number: '2.7.2', heading: 'Summary of Clinical Pharmacology Studies', purpose: 'Factual summary of human PK/PD and clinical pharmacology.', required: true },
-      { number: '2.7.3', heading: 'Summary of Clinical Efficacy', purpose: 'Factual summary of efficacy by indication, with pooled analyses.', required: true },
-      { number: '2.7.4', heading: 'Summary of Clinical Safety', purpose: 'Factual summary of exposure, adverse events, labs, and special populations.', required: true },
-      { number: '2.7.5', heading: 'Literature References', purpose: 'References cited in the clinical summary.', required: false },
-      { number: '2.7.6', heading: 'Synopses of Individual Studies', purpose: 'Tabular study synopses.', required: false },
-    ],
-  },
+  // The Nonclinical Overview, Clinical Overview and Clinical Summary are read
+  // from the ICH M2–M5 record to its depth (ctd-component-outlines.ts). They were
+  // hand copies of their first level until 2026-10-20: a Clinical Summary had no
+  // 2.7.4.2 Adverse Events and a Clinical Overview stopped at 2.5.6.
+  ctdComponentTemplate({ id: 'nonclinical_overview', registryId: 'ICH_NONCLIN_OVERVIEW', root: '2.4', title: 'Nonclinical Overview', guideline: 'ICH M4S(R2) — CTD Safety' }),
+  ctdComponentTemplate({ id: 'clinical_overview', registryId: 'ICH_CLIN_OVERVIEW', root: '2.5', title: 'Clinical Overview', guideline: 'ICH M4E(R2) — CTD Efficacy' }),
+  ctdComponentTemplate({ id: 'clinical_summary', registryId: 'ICH_CLIN_SUMMARY', root: '2.7', title: 'Clinical Summary', guideline: 'ICH M4E(R2) — CTD Efficacy' }),
 
   // ── Administrative ──────────────────────────────────────────────────────────
   {

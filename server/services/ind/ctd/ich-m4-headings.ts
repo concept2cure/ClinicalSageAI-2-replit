@@ -79,6 +79,12 @@ const M4S = (section: string): RegulatoryBasis => ({
   note: SEARCH_EXTRACT_NOTE,
 });
 const M4E = (section: string): RegulatoryBasis => recall(`ICH M4E(R2) ${section}`);
+// The 2.5.6 benefit-risk subdivisions, added 2026-10-20: the regulator hosts were unreachable
+// from the build environment, so the numbers and wording rest on a search extract.
+const M4E_BR = (section: string): RegulatoryBasis => ({
+  ...recall(`ICH M4E(R2) ${section}`),
+  note: 'number and wording matched against a search extract of the table of contents of the FDA-hosted copy on 2026-10-20; the document itself was not read. Verbatim re-read owed.',
+});
 const M4Q = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4Q(R1) ${section}`),
   note: 'Module 3 structure only; detailed Module 3 content is in the canonical authoring overlay',
@@ -100,6 +106,16 @@ const ROWS: readonly Row[] = [
   ['2.4.4', 'Toxicology', M4S('2.4.4')],
   ['2.4.5', 'Integrated Overview and Conclusions', M4S('2.4.5')],
   ['2.4.6', 'List of Literature References', M4S('2.4.6')],
+  /* The benefit-risk subdivisions M4E(R2) added to 2.5.6 (2016). The record's own 2.5.6 brief
+     named all seven in its key content, and no heading held them, so a Clinical Overview's
+     outline stopped at 2.5.6 (2026-10-20, D2 increment 3). */
+  ['2.5.6.1', 'Therapeutic Context', M4E_BR('2.5.6.1')],
+  ['2.5.6.1.1', 'Disease or Condition', M4E_BR('2.5.6.1.1')],
+  ['2.5.6.1.2', 'Current Therapies', M4E_BR('2.5.6.1.2')],
+  ['2.5.6.2', 'Benefits', M4E_BR('2.5.6.2')],
+  ['2.5.6.3', 'Risks', M4E_BR('2.5.6.3')],
+  ['2.5.6.4', 'Benefit-Risk Assessment', M4E_BR('2.5.6.4')],
+  ['2.5.6.5', 'Appendix', M4E_BR('2.5.6.5')],
   ['2.5.7', 'Literature References', M4E_R2],
   ['2.6', 'Nonclinical Written and Tabulated Summaries', M4_ORG()],
   ['2.6.4.1', 'Brief Summary', M4S('2.6.4.1')],

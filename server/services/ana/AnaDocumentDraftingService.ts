@@ -46,6 +46,7 @@ import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
 import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
+import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings.js';
 import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
 import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type DocumentTemplateStructure, type TemplateSection } from '../market-specs/document-template-library.js';
 import { lifecycleOutlineParts, lifecycleRecordOutlineFor, type LifecycleOutlinePart } from '../market-specs/lifecycle-record-outlines.js';
@@ -462,7 +463,7 @@ function withBlueprintRow(ctx: CtdDraftContext, code: string, rec: DraftingRequi
 function candidateRequirements(ctx: CtdDraftContext, codes: string[]): DraftingRequirements {
   const { entry, outline, sectionType } = ctx;
   if (codes.length === 1) return withBlueprintRow(ctx, codes[0], recordRequirements(entry, codes[0], false));
-  const titleOf = (c: string) => CTD_AUTHORING_GUIDANCE[c]?.title ?? outline.find((s) => s.code === c)?.title ?? '';
+  const titleOf = (c: string) => recordTitle(c) ?? outline.find((s) => s.code === c)?.title ?? '';
   const listed = codes.map((c) => `${c} ${titleOf(c)}`.trim()).join('; ');
   return {
     requirements:
@@ -470,6 +471,26 @@ function candidateRequirements(ctx: CtdDraftContext, codes: string[]): DraftingR
       `Ask which section code is meant, or draft to the code given; do not merge their requirements or pick one from memory.`,
     requirementsSource: 'record:candidates',
   };
+}
+
+/** The record's title for a code, from either half (the guidance, or the structural ICH M4 headings). */
+const recordTitle = (code: string): string | undefined => CTD_AUTHORING_GUIDANCE[code]?.title ?? ichHeadingTitle(code) ?? undefined;
+
+/**
+ * The codes a Module 2 component's served outline holds under the title asked,
+ * where that outline is read from the CTD record (ctd-component-outlines.ts:
+ * 2.4, 2.5, 2.7). Its structural headings ("Benefit-Risk Assessment",
+ * "Pharmacology") are not guidance titles, so the record-wide title index never
+ * found them, and the entry's blueprint is the whole-Module-2 project copy
+ * (2026-10-20). Empty for any other entry or title.
+ */
+function componentOutlineCodes(entry: RegulatoryApplicationType, title: string): string[] {
+  const componentId = componentTemplateIdForRegistry(entry.id);
+  const template = componentId ? getDocumentTemplate(componentId) : undefined;
+  const source = template?.outlineSource;
+  if (!template || !source || !('record' in source) || !source.record.startsWith('CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:')) return [];
+  const target = normTitle(title);
+  return flattenSections(template.sections).filter((s) => normTitle(s.heading) === target).map((s) => s.number);
 }
 
 /**
@@ -481,7 +502,9 @@ function codeRequirements(ctx: CtdDraftContext, lead: { code: string; title: str
   const rec = withBlueprintRow(ctx, lead.code, recordRequirements(ctx.entry, lead.code, true));
   const title = lead.title?.trim();
   if (!title || rec.requirementsSource.startsWith('record:module1-not-indexed')) return rec;
-  const canonical = CTD_AUTHORING_GUIDANCE[lead.code]?.title;
+  // Either half of the record titles the code: "2.7.4.2.1.2 Deaths" is the
+  // record's own heading, never a mismatch (2026-10-20).
+  const canonical = recordTitle(lead.code);
   const rowTitle = ctx.outline.find((s) => sameCode(s.code, lead.code))?.title;
   if ([canonical, rowTitle].some((t) => t && normTitle(t) === normTitle(title))) return rec;
   const elsewhere = canonicalCodesForTitle(title).filter((c) => c !== lead.code);
@@ -612,7 +635,11 @@ function blueprintRequirements(
   const lead = leadingSectionCode(sectionType);
   const scoped = scopedCtdRequirements(ctx, lead, matchRow);
   if (scoped) return scoped;
-  return lead ? codeRequirements(ctx, lead) : titleRequirements(ctx, matchRow) ?? none;
+  if (lead) return codeRequirements(ctx, lead);
+  // A component's own outline answers a title first; a title it holds twice
+  // ("Appendix" in 2.7) is listed, never resolved to the first.
+  const own = componentOutlineCodes(entry, sectionType);
+  return own.length ? candidateRequirements(ctx, own) : titleRequirements(ctx, matchRow) ?? none;
 }
 
 /**
@@ -758,7 +785,11 @@ function scopedCtdRequirements(ctx: CtdDraftContext, lead: ReturnType<typeof lea
   const { entry, blueprint, sectionType } = ctx;
   if (!['CA_CTA', 'CA_CTA_A', 'ICH_NONCLIN_SUMMARY'].includes(entry.id)) return null;
   const requestedModule = /^module\s+([1-5])$/i.exec(sectionType.trim())?.[1];
-  const codes = lead ? [lead.code] : requestedModule ? [requestedModule] : canonicalCodesForTitle(sectionType);
+  // The outline's own rows answer a title before the record-wide index: the
+  // 2.6.4/2.6.6 leaves ("Absorption") are structural headings, not guidance
+  // titles, and were refused as outside the outline (2026-10-20).
+  const rows = blueprint.sections.filter(matchRow).map((s) => s.code);
+  const codes = lead ? [lead.code] : requestedModule ? [requestedModule] : rows.length ? rows : canonicalCodesForTitle(sectionType);
   const inScope = (code: string) => blueprint.sections.some(s => sameCode(s.code, code) || code.toLowerCase().startsWith(`${s.code.toLowerCase()}.`));
   if (codes.length && !codes.some(inScope)) {
     return { requirements: `SECTION REQUIREMENTS: "${sectionType}" is outside the selected ${entry.displayName} outline. Confirm the document and applicable section; do not substitute a full marketing CTD.`, requirementsSource: 'record:outside-outline' };
