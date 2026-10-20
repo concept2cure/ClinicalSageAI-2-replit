@@ -41,6 +41,8 @@ import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
   usesDeviceClassification, type DeviceFlagId,
 } from '../../../../../shared/constants/domain/device-classification';
+import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-class';
+import { deviceClassScopeForFiling } from '@shared/regulatory/filing-catalog';
 import '../styles/project-home-v2.css';
 
 /* ── Window global owned by this surface (the app shell sets it to auto-open
@@ -158,24 +160,11 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   // scaffolds the CTR 536/2014 Annex I outline seeded by migrations/20260806
   // instead of the 71-section NDA dossier.
   //
-  // cta_hc, cta_nmpa, ctn_au and ctn_jp reach this line too. There is still no
-  // cta pack for hc / nmpa / tga / pmda, so resolveDocumentClass produces
-  // (cta, hc), no c2c_rule_packs row satisfies it, and the scaffold declines with
-  // NO_RULE_PACK. That is deliberate: declining is honest, filing a Canadian
-  // trial application as a US marketing application is not. They become sellable
-  // when those four packs exist, and nothing else has to change here.
+  // Other regional trial filings resolve to their own agency. A missing pack
+  // is refused; a US marketing outline is never substituted.
   if (id === 'eu_cta' || pw === 'cta') return 'cta';
-  // 'device' and 'ivd' are accepted by the API (projects.ts VALID_PROGRAM_TYPES)
-  // and deliberately UNMAPPED in PROGRAM_TO_DOC_TYPE, so they fail closed: the
-  // project is created and no document is scaffolded. That is the intended
-  // outcome for a filing whose pathway is genuinely ambiguous — an EU MDR Class
-  // IIb technical file is not a 510(k), a De Novo, a PMA or an IDE, and this
-  // product cannot yet tell which. 33 registry rows previously fell past these
-  // lines into `pw === 'ctd'` and were filed as US NDAs instead.
-  //
-  // Reaching here therefore produces an empty Vault, which is only honest if the
-  // customer is TOLD. The wizard surfaces meta.scaffoldSkipped for exactly that
-  // reason; the two changes are not separable.
+  // Bare device/ivd names no pathway and stays unmapped. The existing market
+  // verdict refuses it; a regional technical file reaches its exact pack below.
   // MDR/IVDR before the generic device/ivd fallbacks: an EU technical file has a
   // real pack and must reach it, while a bare 'device' still fails closed.
   if (pw === 'mdr') return 'mdr';
@@ -228,11 +217,12 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   /* The drug / biologic class, for a filing type that does not fix it. Starts
      unstated; Continue waits for it. */
   const [statedClass, setStatedClass] = useState<ProductType | ''>('');
-  /* The device taxonomy. These are the fields a device reviewer opens the file
-     to find. */
+  /* FDA taxonomy; EU classes use their existing separate columns. */
   const [productCode, setProductCode] = useState('');
   const [regulationNumber, setRegulationNumber] = useState('');
   const [deviceClass, setDeviceClass] = useState('');
+  const [euMdrClass, setEuMdrClass] = useState('');
+  const [euIvdrClass, setEuIvdrClass] = useState('');
   const [reviewPanel, setReviewPanel] = useState('');
   const [predicateK, setPredicateK] = useState('');
   /* The predicate's trade name. The official eSTAR prints it beside the
@@ -283,16 +273,26 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null;
   const programType = programTypeFor(selTpl, uiSeg);
-  /* The class the FILING TYPE fixes, or null when it does not, in which case
-     the person states it. From the filing type, not the lane: a 510(k) picked
-     from any tab is a device filing, and a pharma filing picked from the device
-     tab is not. */
+  /* The filing fixes the family when known; the person states any unresolved class. */
   // A filing document class asks, unless the filing names its class itself (an
   // sBLA is a biologics licence supplement): filing-document-classes.ts.
-  const fixedClass = productTypeForFilingType(programType, uiSeg) ?? productTypeFixedByFiling(selTpl?.id);
+  const fixedClass = productTypeForFilingType(programType, ctx?.segment === 'diagnostics_ivd' ? 'diagnostics' : uiSeg) ?? productTypeFixedByFiling(selTpl?.id);
   const asksClass = fixedClass === null;
   const recordedClass: string | null = fixedClass ?? (statedClass || null);
   const isDeviceFiling = usesDeviceClassification(fixedClass);
+  const isFdaDeviceFiling = isDeviceFiling && selTpl?.agency === 'FDA';
+  const euRegulation = isDeviceFiling && selTpl?.region === 'EU'
+    ? programType === 'ivdr' ? 'ivdr' : ['mdr', 'cer'].includes(programType) ? 'mdr' : null
+    : null;
+  const classChoices = isFdaDeviceFiling ? DEVICE_CLASSES : deviceClassScopeForFiling(selTpl?.id)?.classes ?? (euRegulation === 'mdr' ? MDR_DECLARED_CLASSES : IVDR_CLASSES);
+  const classValue = isFdaDeviceFiling ? deviceClass : euRegulation === 'mdr' ? euMdrClass : euIvdrClass;
+  // A filing change retires fields whose regulatory context may have changed.
+  // Returning to the earlier filing must not revive a hidden classification.
+  useEffect(() => {
+    setProductCode(''); setRegulationNumber(''); setDeviceClass('');
+    setReviewPanel(''); setPredicateK(''); setPredicateName('');
+    setEuMdrClass(''); setEuIvdrClass(''); setDeviceFlags([]);
+  }, [tpl, uiSeg]);
   const savedIndication = indication.trim();
 
   /* The name and product exactly as they will be saved — the review prints
@@ -325,12 +325,16 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       submissionTypeId: selTpl?.id,
       // Only what was stated: a blank indication sends none (P-21).
       indication: isDeviceFiling ? (intendedUse || undefined) : (savedIndication || undefined),
+      ...(euRegulation === 'mdr' ? { euMdrClass: euMdrClass || null } : {}),
+      ...(euRegulation === 'ivdr' ? { euIvdrClass: euIvdrClass || null } : {}),
       ...(isDeviceFiling
         ? {
             deviceClassification: {
-              productCode, regulationNumber, deviceClass,
-              reviewPanel, predicateK, predicateName, intendedUse,
-              flags: deviceFlags,
+              intendedUse,
+              ...(isFdaDeviceFiling ? {
+                productCode, regulationNumber, deviceClass,
+                reviewPanel, predicateK, predicateName, flags: deviceFlags,
+              } : {}),
             },
           }
         : {}),
@@ -587,21 +591,21 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     The pharma axis is wrong for it in both directions: there is
                     no oncology peak flow meter, and the fields a CDRH reviewer
                     actually opens the file for had nowhere to live. */}
-                {isDeviceFiling ? (
+                {isDeviceFiling ? (isFdaDeviceFiling || euRegulation ? (
                   <label className="npw-field">
-                    <span className="npw-field-l">Device class</span>
+                    <span className="npw-field-l">{euRegulation ? `EU ${euRegulation.toUpperCase()} class` : 'Device class'}</span>
                     <select
                       className="c2c-input"
-                      value={deviceClass}
-                      onChange={e => setDeviceClass(e.target.value)}
+                      value={classValue}
+                      onChange={e => isFdaDeviceFiling ? setDeviceClass(e.target.value) : euRegulation === 'mdr' ? setEuMdrClass(e.target.value) : setEuIvdrClass(e.target.value)}
                     >
                       <option value="">Not yet determined</option>
-                      {DEVICE_CLASSES.map(c => (
+                      {classChoices.map(c => (
                         <option key={c} value={c}>Class {c}</option>
                       ))}
                     </select>
                   </label>
-                ) : (
+                ) : null) : (
                   <label className="npw-field">
                     <span className="npw-field-l">Indication</span>
                     <input
@@ -643,7 +647,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                 </label>
               </div>
 
-              {isDeviceFiling && (
+              {isFdaDeviceFiling && (
                 <div className="npw-grid">
                   <label className="npw-field">
                     <span className="npw-field-l">Product code</span>
@@ -726,11 +730,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                       rows={3}
                       value={intendedUse}
                       onChange={e => setIntendedUse(e.target.value)}
-                      placeholder="The statement that will appear on FDA Form 3881."
+                      placeholder={isFdaDeviceFiling ? 'The statement that will appear on FDA Form 3881.' : 'The device’s intended purpose and intended population.'}
                     />
                   </div>
 
-                  <fieldset className="npw-field npw-field-wide npw-flags">
+                  {isFdaDeviceFiling && <fieldset className="npw-field npw-field-wide npw-flags">
                     <legend className="npw-field-l">Product characteristics</legend>
                     <span className="npw-field-help">
                       Each of these adds required content to the submission, so they are recorded
@@ -751,7 +755,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                         </label>
                       ))}
                     </div>
-                  </fieldset>
+                  </fieldset>}
                 </>
               )}
 
@@ -841,14 +845,14 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                       <dt>Classification</dt>
                       <dd>
                         {[
-                          productCode && `Product code ${productCode}`,
-                          regulationNumber && `21 CFR ${regulationNumber}`,
-                          deviceClass && `Class ${deviceClass}`,
-                          reviewPanel,
+                          isFdaDeviceFiling && productCode && `Product code ${productCode}`,
+                          isFdaDeviceFiling && regulationNumber && `21 CFR ${regulationNumber}`,
+                          classValue && `${euRegulation ? `EU ${euRegulation.toUpperCase()} ` : ''}Class ${classValue}`,
+                          isFdaDeviceFiling && reviewPanel,
                         ].filter(Boolean).join(' · ') || 'Not recorded'}
                       </dd>
                     </div>
-                    <div className="npw-review-row">
+                    {isFdaDeviceFiling && <div className="npw-review-row">
                       <dt>Predicate</dt>
                       <dd>
                         {predicateK && predicateName
@@ -857,8 +861,8 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                             ? 'Not recorded — the number and the trade name are filed together'
                             : 'Not recorded'}
                       </dd>
-                    </div>
-                    {deviceFlags.length > 0 && (
+                    </div>}
+                    {isFdaDeviceFiling && deviceFlags.length > 0 && (
                       <div className="npw-review-row">
                         <dt>Adds required content</dt>
                         <dd>

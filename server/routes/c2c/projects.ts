@@ -47,7 +47,8 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
-import { workstreamSqlCase } from '../../../shared/constants/domain/product-types.js';
+import { workstreamSqlCase, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
+import { resolveFilingCatalogEntry, deviceClassScopeForFiling } from '../../../shared/regulatory/filing-catalog.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
@@ -70,6 +71,7 @@ import {
 import {
   programmePredicateDevicesColumn,
   programmeTeamMembersColumn,
+  programmeProfilePatchSchema,
 } from '../../services/c2c/programme-profile-write.js';
 /* Every 5xx on this router goes through the canonical helper. Its job here is
    the one the MDX UAT (item A1) proved was missing: it logs the failure keyed
@@ -805,7 +807,35 @@ router.post('/', async (req: Request, res: Response) => {
      created with an oncology therapeutic area and no product code. Validated
      rather than trusted: an unparseable value is dropped and named, never
      coerced into something that reads as data. */
-  const deviceCls = normalizeDeviceClassification((req.body ?? {}).deviceClassification);
+  const documentAgency = documentAgencyFor(marketInput);
+  const euRegulation = documentAgency === 'EMA'
+    ? programType === 'ivdr' ? 'ivdr' : ['mdr', 'cer'].includes(programType) ? 'mdr' : null
+    : null;
+  const regional = programmeProfilePatchSchema.safeParse({
+    euMdrClass: body.euMdrClass ?? null, euIvdrClass: body.euIvdrClass ?? null,
+  });
+  if (!regional.success) return send400(res, 'EU device classification must use the applicable MDR or IVDR class.');
+  const { euMdrClass = null, euIvdrClass = null } = regional.data;
+  const selectedFiling = submissionTypeId ? resolveFilingCatalogEntry(submissionTypeId) : null;
+  const classScope = deviceClassScopeForFiling(submissionTypeId);
+  const declaredEuClass = euRegulation === 'mdr' ? euMdrClass : euIvdrClass;
+  if (classScope && (classScope.regulation !== euRegulation || (declaredEuClass !== null && !classScope.classes.includes(declaredEuClass)))) {
+    return send400(res, 'The stated EU class conflicts with the selected class-specific filing. Choose the matching filing or leave the class unconfirmed.');
+  }
+  if ((euMdrClass !== null && euRegulation !== 'mdr') || (euIvdrClass !== null && euRegulation !== 'ivdr')
+    || (euRegulation && (euRegulation === 'ivdr') !== isIvdFamily(productType))
+    || (euRegulation && selectedFiling && (selectedFiling.region !== 'EU'
+      || selectedFiling.pathwayKey !== programType))) {
+    return send400(res, 'The EU classification, product type and selected filing must describe the same MDR or IVDR context.');
+  }
+  const rawClassification = body.deviceClassification as Record<string, unknown> | undefined;
+  const fdaFields = ['productCode', 'regulationNumber', 'deviceClass', 'reviewPanel', 'predicateK', 'predicateName', 'flags'];
+  if (usesDeviceClassification(productType) && documentAgency !== 'FDA'
+    && rawClassification && fdaFields.some(key => {
+      const value = rawClassification[key];
+      return Array.isArray(value) ? value.length > 0 : typeof value === 'string' ? value.trim() !== '' : value != null;
+    })) return send400(res, 'FDA device classification and predicate fields apply only to an FDA filing.');
+  const deviceCls = normalizeDeviceClassification(body.deviceClassification);
   if (deviceCls.rejected.length && !usesDeviceClassification(productType)) {
     // A pharma filing sent device fields — ignore them rather than 400.
     deviceCls.rejected.length = 0;
@@ -862,11 +892,11 @@ router.post('/', async (req: Request, res: Response) => {
           target_submission_date, progress_percent, lead_user_id, team_members,
           metadata, created_by, updated_by,
           device_class, regulatory_path, product_code, intended_use, predicate_devices,
-          application_number)
+          application_number, eu_mdr_class, eu_ivdr_class)
        VALUES ($1, $2, $3, $4, $5, $6, $7::json, $8, $9, 'active', 'planning', $10,
                $11::timestamp, 0, $12, $13::json, $14::json, $15, $15,
                $16, $17, $18, $19, $20::json,
-               $21)
+               $21, $22, $23)
        RETURNING id`,
       [
         orgId, name, code, programType, productType, primaryAgency,
@@ -881,6 +911,7 @@ router.post('/', async (req: Request, res: Response) => {
         dc.intendedUse ?? null,
         JSON.stringify(predicateDevicesColumn),
         applicationNumber,
+        euMdrClass, euIvdrClass,
       ],
     );
 
@@ -997,6 +1028,8 @@ router.post('/', async (req: Request, res: Response) => {
         program_type: programType,
         product_type: productType,
         primary_agency: primaryAgency,
+        eu_mdr_class: euMdrClass,
+        eu_ivdr_class: euIvdrClass,
         created_via: 'v2-new-project-wizard',
         // The audit row covers EVERY creation this transaction performed: the
         // linked canonical submission is part of the record, whether newly

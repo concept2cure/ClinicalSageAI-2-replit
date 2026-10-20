@@ -2,7 +2,7 @@
  * proof does not qualify agency completeness, deployment RLS or transmission. */
 import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { GLOBAL_REGISTRY } from '../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 import { DOCUMENT_TEMPLATES, componentTemplateIdForRegistry, getRegistryDocumentTemplate, type DocumentTemplateStructure, type TemplateSection } from '../../services/market-specs/document-template-library';
 import * as builtinTemplates from '../../services/authoring/builtin-authoring-templates';
 import { buildDocumentPreparation } from '../../services/market-specs/document-preparation';
@@ -35,8 +35,8 @@ templateEditorFixture([
 ]);
 
 const regions = ['US', 'CA', 'EU', 'JP', 'GLOBAL'];
-const filings = GLOBAL_REGISTRY.filter(entry => entry.active && entry.segment === 'pharma_biotech' && regions.includes(entry.region));
-const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.some(family => family === 'ectd' || family === 'ctis'));
+const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)) && regions.includes(entry.region));
+const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 interface ListedTemplate extends IndAuthoringTemplate {
   category: string;
   filingContext: { registryId: string | null; region: string; agency: string };
@@ -136,7 +136,7 @@ async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStr
   return saved.length;
 }
 
-describe('every supported active biotech filing and component reaches the one editor', () => {
+describe('every supported active medicinal, device and diagnostics filing and component reaches the one editor', () => {
   it('lists exact registry and component identities with explicit regional scope, without writes', async () => {
     const before = await counts();
     const rows = await listed();
@@ -149,7 +149,7 @@ describe('every supported active biotech filing and component reaches the one ed
     expect(await counts()).toEqual(before);
   });
 
-  it('creates and reopens all registry filings and existing biotech components with exact saved evidence', async () => {
+  it('creates and reopens all registry filings and existing document components with exact saved evidence', async () => {
     const before = await counts();
     const rows = await listed();
     let sectionCount = 0;

@@ -47,7 +47,8 @@ import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
 import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
 import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings.js';
-import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
+import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation, isDeviceDocumentScope } from '../market-specs/document-preparation.js';
+import { DEVICE_DRAFTING_GUIDANCE } from '../market-specs/device-document-preparation.js';
 import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type DocumentTemplateStructure, type TemplateSection } from '../market-specs/document-template-library.js';
 import { lifecycleOutlineParts, lifecycleRecordOutlineFor, type LifecycleOutlinePart } from '../market-specs/lifecycle-record-outlines.js';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
@@ -162,7 +163,7 @@ DOCUMENT STRUCTURE:
 const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
   US_510K: 'fda_510k', '510k': 'fda_510k', '510K': 'fda_510k',
   US_PMA: 'fda_pma', pma: 'fda_pma', PMA: 'fda_pma',
-  EU_MDR_TECHDOC: 'eu_mdr', EU_IVDR_TECHDOC: 'eu_mdr',
+  EU_MDR_TECHDOC: 'eu_mdr',
   EU_CER: 'cer_clinical_evaluation', cer: 'cer_clinical_evaluation',
   US_IND: 'ich_clinical', US_NDA: 'ich_clinical', US_BLA: 'ich_clinical',
   EU_MAA: 'ich_clinical', EU_CTA: 'ich_clinical',
@@ -171,7 +172,7 @@ const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
 };
 
 function preparationRoute(entry: RegulatoryApplicationType | null) {
-  if (!entry || entry.segment !== 'pharma_biotech' || !['US', 'EU', 'CA', 'JP'].includes(entry.region)) return null;
+  if (!entry || (entry.segment !== 'pharma_biotech' && !isDeviceDocumentScope({ entry })) || !['US', 'EU', 'CA', 'JP'].includes(entry.region)) return null;
   return buildDocumentPreparation({ registryId: entry.id }).regionalRoute;
 }
 
@@ -819,15 +820,18 @@ export function resolveSystemPrompt(submissionType: string): string {
   }
   // Direct framework key (e.g. 'fda_510k', 'ich_clinical') — backward compatible.
   if (REGULATORY_SYSTEM_PROMPTS[submissionType]) {
-    return `${REGULATORY_SYSTEM_PROMPTS[submissionType]}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
+    const guidance = ['fda_510k', 'fda_pma', 'eu_mdr', 'cer_clinical_evaluation'].includes(submissionType)
+      ? DEVICE_DRAFTING_GUIDANCE : BIOTECH_DRAFTING_GUIDANCE;
+    return `${REGULATORY_SYSTEM_PROMPTS[submissionType]}\n\n${guidance}`;
   }
   const entry = resolveToRegistryEntry(submissionType);
   if (entry) {
+    const guidance = isDeviceDocumentScope({ entry }) ? DEVICE_DRAFTING_GUIDANCE : BIOTECH_DRAFTING_GUIDANCE;
     const idKey = SUBMISSION_TYPE_TO_FRAMEWORK[entry.id];
     if (idKey && REGULATORY_SYSTEM_PROMPTS[idKey]) {
-      return `${REGULATORY_SYSTEM_PROMPTS[idKey]}\n\n${buildDynamicSystemPrompt(entry.id)}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
+      return `${REGULATORY_SYSTEM_PROMPTS[idKey]}\n\n${buildDynamicSystemPrompt(entry.id)}\n\n${guidance}`;
     }
-    return `${buildDynamicSystemPrompt(entry.id)}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
+    return `${buildDynamicSystemPrompt(entry.id)}\n\n${guidance}`;
   }
   return `${REGULATORY_SYSTEM_PROMPTS.general_regulatory}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
 }

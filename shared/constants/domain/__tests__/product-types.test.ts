@@ -71,6 +71,10 @@ describe('a device filing is never a medicinal product', () => {
 });
 
 describe('the lane refines within the device family, and only there', () => {
+  it.each(['diagnostics', 'ivd', 'diagnostics_ivd'])('an %s lane cannot turn MDR or CER into an IVD instrument', lane => {
+    expect(productTypeForFilingType('mdr', lane)).toBe('device');
+    expect(productTypeForFilingType('cer', lane)).toBe('device');
+  });
   it('reads a 510(k) started from the Diagnostics lane as an IVD 510(k)', () => {
     expect(productTypeForFilingType('510k', 'medtech')).toBe('device');
     expect(productTypeForFilingType('510k', 'diagnostics')).toBe('ivd');

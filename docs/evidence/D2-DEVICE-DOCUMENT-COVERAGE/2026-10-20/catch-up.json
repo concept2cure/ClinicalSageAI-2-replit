@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-10-20T20:40:33.850282+00:00",
+  "initialBase": "0793ee48ecee5dee014b266b2def014c38ea978e",
+  "executionBase": "35f3db3469fb0c8f0236eda75bca43c2095487a2",
+  "incomingCommits": 47,
+  "incomingChangedPaths": 821,
+  "overlap": [
+    "server/services/ana/AnaDocumentDraftingService.ts"
+  ],
+  "ruleOrDependencyChanges": [],
+  "reconciliation": "Backed up all owned pending files, temporarily restored only the overlapping AnA file, fast-forwarded canonical, then applied the owned patch with git apply --3way cleanly. All other owned source/test bytes preserved; no feature branch or force push.",
+  "retainedIncomingBehavior": "assertDraftSourceContextCurrent receives req.signal; incoming editor recovery, actor-owned reads and source-operation cancellation stay canonical.",
+  "ownedFilesPreserved": 118,
+  "expectedChangedPaths": [
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/canonical-catch-up-interruption.json",
+    "server/services/ana/AnaDocumentDraftingService.ts"
+  ],
+  "qualification": "Pre-catch-up receipts remain historical. Final compiler/build/tests/gates bind the merged source bytes."
+}

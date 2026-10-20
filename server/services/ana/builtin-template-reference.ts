@@ -3,7 +3,7 @@ import { stableStringify } from '../../../shared/canonical-json';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getBuiltinAuthoringTemplate, builtinTemplateReference, builtinTemplateSnapshot,
   type BuiltinAuthoringTemplate } from '../authoring/builtin-authoring-templates';
-import { buildDocumentPreparation, resolveDocumentPreparationScope,
+import { buildDocumentPreparation, isDeviceDocumentScope, resolveDocumentPreparationScope,
   type PreparationInput, type PreparationMarket, type PreparationTopic } from '../market-specs/document-preparation';
 import { indTemplateReferencePage } from './ind-template-reference';
 
@@ -28,9 +28,9 @@ function checkedRegistry(template: BuiltinAuthoringTemplate, request: ReferenceR
   }
   const registryId = request.registryId || context.registryId || undefined;
   const entry = registryId ? getApplicationType(registryId) : undefined;
-  if (registryId && (!entry?.active || entry.segment !== 'pharma_biotech'
+  if (registryId && (!entry?.active || (entry.segment !== 'pharma_biotech' && !isDeviceDocumentScope({ entry }))
     || !['US', 'CA', 'EU', 'JP', 'GLOBAL'].includes(entry.region))) {
-    throw new Error('Use an exact active biotech registry filing in the supported markets.');
+    throw new Error('Use an exact active medicinal-product, device or diagnostics registry filing in the supported markets.');
   }
   return registryId;
 }

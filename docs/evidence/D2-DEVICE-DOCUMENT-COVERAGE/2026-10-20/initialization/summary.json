@@ -1,0 +1,97 @@
+{
+  "recordedAt": "2026-10-20T20:20:20.626858+00:00",
+  "meaningfulPreFixFailures": 18,
+  "finalTestsPassed": 101,
+  "finalSuitesPassed": 11,
+  "newWizardCases": 7,
+  "newRouteCases": 15,
+  "newRealSqlAnchorCases": 2,
+  "countsOverlap": true,
+  "sourceDependencyPinsCurrent": 18,
+  "strictTestLintFiles": 5,
+  "strictTestLintErrors": 0,
+  "strictTestLintWarnings": 0,
+  "productLintErrors": 0,
+  "canonicalProductWarningCounts": {
+    "Projects.tsx": 7,
+    "projects.ts": 5
+  },
+  "currentProductWarningCounts": {
+    "Projects.tsx": 7,
+    "projects.ts": 5
+  },
+  "baselineIncreased": false,
+  "sqlQualification": "PGlite real program INSERT/read, anchor, audit and existing digest fixtures; dossier scaffolding is mocked in route fixtures. No native PostgreSQL RLS/concurrency or agency transmission claim.",
+  "finalTestProcessExitCode": 0,
+  "captureWrapperExitCode": 1,
+  "sourceDependencyPinsStableDuringRun": false,
+  "changedDuringRun": [
+    "shared/regulatory/global-document-registry.ts"
+  ],
+  "afterRunSourceDependencyPinsCurrent": 18,
+  "ownedImplementationAndTestPinsStable": true,
+  "rootCurrentQualificationRequired": true,
+  "crossLaneCorrection": {
+    "recordedAt": "2026-10-20T20:32:26.164841+00:00",
+    "redFailures": 6,
+    "greenTestsPassed": 95,
+    "greenSuitesPassed": 6,
+    "actualRegistrySearchCases": 4,
+    "selectedPinsStable": 7,
+    "rootCombinedSupersedesPriorSourceHashes": true,
+    "wizardPhysicalLines": 1499
+  },
+  "priorRailRegression": {
+    "recordedAt": "2026-10-20T20:54:29.137828+00:00",
+    "redPassed": 21,
+    "redFailed": 5,
+    "greenPassed": 26,
+    "greenFailed": 0,
+    "greenTestExitCode": 0,
+    "suites": 2,
+    "sourcePinsStable": 10,
+    "onlyChangedDependency": "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx",
+    "productionChanges": false,
+    "negativeAssertionsChanged": false,
+    "strictLintErrors": 0,
+    "strictLintWarnings": 0
+  },
+  "classSpecificFilingCompatibility": {
+    "recordedAt": "2026-10-20T21:08:51.088562+00:00",
+    "meaningfulInitialRedFailures": 8,
+    "meaningfulWrongRegulationRedFailures": 1,
+    "greenPassed": 80,
+    "greenFailed": 0,
+    "greenSuites": 6,
+    "greenTestExitCode": 0,
+    "sourcePinsStableDuringCapture": true,
+    "sourcePinsCount": 11,
+    "sourcePinsAfterCapture": {
+      "client/src/concept2cure/v2/surfaces/Projects.tsx": "d225d7a99d6287255b18ddc305d1930929d26bfe687277a4b8bf55853f802a98",
+      "server/routes/c2c/projects.ts": "f614fccdb939ace9b55566fd9c7650376596ba2b3236ba6640e66774671e3ccd",
+      "shared/regulatory/filing-catalog.ts": "ef76155bff62ff0faf4d90f3eea979f5fc24bce42a11482f9c70c48cbed3c05f",
+      "shared/regulatory/device-class.ts": "ecd46f03488ca2474519d703f5ee1b4a601323274bf07ca297a36b6daaefda54",
+      "client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx": "7f464c892459574b220ce71a4d74bf8e28f9e6f68b30ad0801f86ee684e5e619",
+      "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts": "8d9024bb615abefd83a85995afb4f6e0ece8f6ccbbfaedf8f43d860f08f5b5c5",
+      "shared/regulatory/__tests__/filing-catalog-device-classes.test.ts": "5b5523d35b33ce81bdeeb2d2def0caefab8d3fd1d40d849b493de1d046fefa1f",
+      "shared/regulatory/global-document-registry.ts": "e02ac8e155fcb45a37afc65111c76c7aae7c329ffdfc818d0c3d0b89b647a9cd",
+      "client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx": "b7a0818a28df59160e6645b14c3124dedc4014934494a466cc5953fdfbc65964",
+      "shared/regulatory/__tests__/filing-catalog-unification.test.ts": "de5660863123c7a9211c54a987be3c99c289bbc60b64e02c602b5620f6d31633",
+      "shared/regulatory/__tests__/device-class.test.ts": "8c0a10bcb5a80ac5d52cd3319279e2cfb693603ded62d7f09a2969626c7cfd35"
+    },
+    "newCanonicalScopeHelperTests": 16,
+    "strictTestLintFiles": 3,
+    "strictTestLintErrors": 0,
+    "strictTestLintWarnings": 0,
+    "productLintErrors": 0,
+    "canonicalWarningCounts": {
+      "Projects.tsx": 7,
+      "projects.ts": 5,
+      "filing-catalog.ts": 1
+    },
+    "wizardPhysicalLines": 1497,
+    "declaredClassRemainsNullWhenUnstated": true,
+    "rootFinalCombinedQualificationSupersedesLaterMetadataChanges": true,
+    "countsOverlap": true
+  }
+}

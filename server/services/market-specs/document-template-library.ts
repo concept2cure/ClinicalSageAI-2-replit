@@ -31,7 +31,7 @@ import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/reg
 import { IB_FRONT_MATTER, IB_SUBSECTIONS } from './ib-outline-detail.js';
 import { PBRER_TEMPLATE } from './pbrer-outline.js';
 import { citeE6R3 } from '../../../shared/regulatory/ich-e6r3';
-import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry, getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
 import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
@@ -131,6 +131,8 @@ function exactBlueprint(entry: RegulatoryApplicationType): SectionBlueprint | un
 
 /** Logical authoring families only; an unmodeled regional format is never defaulted to eCTD. */
 function authoringFamilies(entry: RegulatoryApplicationType): DocumentTemplateStructure['families'] {
+  if (entry.segment === 'diagnostics_ivd' && entry.region === 'EU') return ['eu_ivdr'];
+  if (entry.segment === 'medical_devices' && entry.region === 'EU') return ['eu_mdr'];
   if (entry.submissionFormat === 'CTIS') return ['ctis'];
   if (entry.dossierStandard === 'eSTAR') return ['estar'];
   if (['eCTD', 'CTD', 'NeeS'].includes(entry.dossierStandard)) return ['ectd'];
@@ -469,6 +471,7 @@ const REGISTRY_COMPONENT_TEMPLATES: Readonly<Record<string, string>> = {
   ICH_CSR: 'clinical_study_report',
   ICH_IB: 'investigators_brochure',
   EU_RMP: 'risk_management_plan',
+  EU_PER: 'performance_evaluation_report',
   ICH_QOS: 'quality_overall_summary',
   ICH_NONCLIN_OVERVIEW: 'nonclinical_overview',
   ICH_CLIN_OVERVIEW: 'clinical_overview',
@@ -525,9 +528,9 @@ export interface RegistryDocumentTemplateCoverage {
   reason?: 'existing_blueprint_requires_regional_review' | 'no_dedicated_existing_outline';
 }
 
-/** Every active biotech type, including the gaps; no guessed universal CTD fallback. */
+/** Every active medicinal/device/IVD type, including gaps; no guessed CTD fallback. */
 export async function registryDocumentTemplateCoverage(): Promise<RegistryDocumentTemplateCoverage[]> {
-  return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map(async (entry) => {
+  return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && (e.segment === 'pharma_biotech' || isDeviceRegistryEntry(e))).map(async (entry) => {
     const outline = await getRegistryDocumentTemplate(entry.id);
     // The row names the outline actually served: a filing whose outline is a
     // lifecycle record no longer reports the blueprint it was once read from

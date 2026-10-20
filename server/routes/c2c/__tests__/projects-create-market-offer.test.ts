@@ -227,7 +227,7 @@ describe('POST /api/c2c/projects — the scaffold reads the agency the verdict j
   it.each(['mdr', 'ivdr'])('an EU %s technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline', async (programType) => {
     queueDeviceCreate();
     const res = await request(app()).post('/api/c2c/projects')
-      .send(body({ programType, productType: 'device', primaryAgency: 'EU / Notified Body' }));
+      .send(body({ programType, productType: programType === 'ivdr' ? 'ivd' : 'device', primaryAgency: 'EU / Notified Body' }));
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.meta.marketSupport).toMatchObject({ tier: 'author_only', label: 'Author documents for this market' });
     expect(res.body.meta.marketSupport.reason).toMatch(/no Notified Body sequence/);

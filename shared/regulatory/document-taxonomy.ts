@@ -23,7 +23,8 @@ export type Agency =
   // artefacts (BP-W1-3: a CEP is issued by EDQM, not EMA; a GMP certificate by
   // the national competent authority that inspected, published in EudraGMDP;
   // EU device conformity runs through a Notified Body, not EMA).
-  | 'EDQM' | 'National_Competent_Authority' | 'Notified_Body';
+  | 'EDQM' | 'National_Competent_Authority' | 'Notified_Body'
+  | 'Registered_Certification_Body' | 'EU_Reference_Laboratory';
 
 export type ApplicationFamily =
   | 'clinical_trial' | 'marketing_authorization' | 'variation' | 'renewal'

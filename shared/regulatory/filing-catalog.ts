@@ -27,6 +27,7 @@
  */
 
 import { GLOBAL_REGISTRY } from './global-document-registry';
+import { euDeviceClassOf, MDR_DECLARED_CLASSES, MDR_RULE_CLASSES, IVDR_CLASSES, mdrRuleClassOf, type MdrDeclaredClass, type IvdrClass } from './device-class';
 import type { RegulatoryApplicationType, Agency, Segment, FilingCategory } from './document-taxonomy';
 import {
   SEGMENT_METADATA,
@@ -58,6 +59,8 @@ export const AGENCY_LABEL: Record<Agency, string> = {
   EDQM: 'EDQM',
   National_Competent_Authority: 'National competent authority',
   Notified_Body: 'EU / Notified Body',
+  Registered_Certification_Body: 'Registered certification body',
+  EU_Reference_Laboratory: 'EU reference laboratory',
 };
 
 // ─── Wizard pathway keys ──────────────────────────────────────────────────────
@@ -293,6 +296,36 @@ export function resolveFilingCatalogEntry(input?: string | null): FilingCatalogE
   if (direct) return direct;
   const alias = LEGACY_FILING_ID_ALIASES[input] ?? LEGACY_FILING_ID_ALIASES[input.toLowerCase()];
   if (alias && CATALOG_INDEX[alias]) return CATALOG_INDEX[alias];
+  return null;
+}
+
+export interface EuFilingClassScope {
+  regulation: 'mdr' | 'ivdr';
+  classes: readonly (MdrDeclaredClass | IvdrClass)[];
+}
+
+/** Exact class-specific registry identity (including aliases/parents), never a declared-class default.
+ * Class I includes its sterile/metrological/reusable-instrument variants; the
+ * existing IVDR C/D row is a combined scope. Legacy CDx IDs do not imply D. */
+export function deviceClassScopeForFiling(input?: string | null): EuFilingClassScope | null {
+  let entry = resolveFilingCatalogEntry(input);
+  const visited = new Set<string>();
+  while (entry && !visited.has(entry.registryId)) {
+    visited.add(entry.registryId);
+    const match = /^EU_(MDR|IVDR)_CLASS_([A-Z]+)$/.exec(entry.registryId);
+    if (match?.[1] === 'MDR') {
+      const ruleClass = euDeviceClassOf(match[2]);
+      if (MDR_RULE_CLASSES.some(value => value === ruleClass)) {
+        return { regulation: 'mdr', classes: MDR_DECLARED_CLASSES.filter(value => mdrRuleClassOf(value) === ruleClass) };
+      }
+    }
+    if (match?.[1] === 'IVDR') {
+      const classes = IVDR_CLASSES.filter(value => match[2].includes(value));
+      if (classes.length && classes.join('') === match[2]) return { regulation: 'ivdr', classes };
+    }
+    const parent = GLOBAL_REGISTRY.find(row => row.id === entry!.registryId)?.parentApplicationType;
+    entry = resolveFilingCatalogEntry(parent);
+  }
   return null;
 }
 

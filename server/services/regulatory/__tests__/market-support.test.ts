@@ -243,3 +243,16 @@ describe('the submission resolver reads the same judgement (submission-resolver.
     }
   });
 });
+
+
+describe('FDA market support separates product copy from technical diagnostics', () => {
+  it('renders the plain FDA product line while retaining its technical diagnostic', () => {
+    const result = marketSupport({ applicationType: 'nda', market: 'FDA' }, packs);
+    expect(result.channel.state).toBe('unproven');
+    expect(result.channel.detail).toContain('AS2 CMS');
+    expect(result.line).not.toMatch(/AS2|PKCS|adapter/);
+    expect(result.line).toMatch(/onboarding/);
+    expect(result.line).toMatch(/accepted test/);
+    expect(result.buildable).toBe(true);
+  });
+});

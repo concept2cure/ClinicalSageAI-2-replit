@@ -15,7 +15,7 @@ import {
 import { getRequirements } from '../submission-requirements';
 import { LABELING_RULES_KNOWLEDGE } from '../../ivd-knowledge/regulatory/labeling-rules';
 import { assembleTechDoc } from '../../pathway-engines/mdr-ivdr/tech-doc-assembler';
-import { getApplicationType, GLOBAL_REGISTRY } from '../../../../shared/regulatory/global-document-registry';
+import { getApplicationType, GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../../shared/regulatory/project-bootstrap';
 import { ICH_E2F_DSUR_SECTIONS } from '../../ind/ctd/lifecycle-document-types';
 import { getLifecycleDocumentType } from '../../ind/ctd/index';
@@ -291,9 +291,9 @@ describe('document template library — existing biotech structures are reachabl
     });
   });
 
-  it('coverage lists every active biotech entry once and says explicitly which outlines remain unavailable', async () => {
+  it('coverage lists every active medicinal, device and diagnostics entry once and says explicitly which outlines remain unavailable', async () => {
     const coverage = await registryDocumentTemplateCoverage();
-    expect(coverage.map((r) => r.registryId)).toEqual(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map((e) => e.id));
+    expect(coverage.map((r) => r.registryId)).toEqual(GLOBAL_REGISTRY.filter((e) => e.active && (e.segment === 'pharma_biotech' || isDeviceRegistryEntry(e))).map((e) => e.id));
     expect(new Set(coverage.map((r) => r.registryId)).size).toBe(coverage.length);
     for (const row of coverage) {
       expect(row.outlineAvailable, row.registryId).toBe(Boolean(await getRegistryDocumentTemplate(row.registryId)));

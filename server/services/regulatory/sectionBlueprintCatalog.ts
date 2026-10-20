@@ -23,6 +23,7 @@
  * @module server/services/regulatory/sectionBlueprintCatalog
  */
 
+import { deviceAuthoringBlueprintContext } from '../../../shared/regulatory/device-authoring-sections.js';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
@@ -131,6 +132,8 @@ export function requiresSectionApplicabilityAssessment(registryId: string): bool
 
 /** Provenance and limitations travel with the repaired outline through all authoring paths. */
 export function getSectionBlueprintContext(registryId: string): { basis?: RegulatoryBasis; limitations: readonly string[] } {
+  const deviceContext = deviceAuthoringBlueprintContext(getApplicationType(registryId)?.defaultSectionBlueprint ?? '');
+  if (deviceContext) return deviceContext;
   if (registryId === 'ICH_PROTOCOL') return { basis: ICH_M11_PROTOCOL_BASIS, limitations: ICH_M11_PROTOCOL_LIMITATIONS };
   if (registryId === 'US_IND_SR') return {
     // The outline is the platform's authoring groups; what was checked against

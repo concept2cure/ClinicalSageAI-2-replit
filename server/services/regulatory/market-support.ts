@@ -329,7 +329,9 @@ export const NO_CHANNEL_STATES: ReadonlySet<ChannelState> = new Set(['applicant_
 
 function channelLine(channel: { state: ChannelState; detail: string; channel: string | null }): string {
   switch (channel.state) {
-    case 'unproven': return `Transmit not proven: ${channel.detail}`;
+    case 'unproven': return channel.channel === 'fda:esg'
+      ? 'Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified'
+      : `Transmit not proven: ${channel.detail}`;
     case 'applicant_uploads': return `Applicant uploads through the ${channel.channel}`;
     case 'portal': return `${(channel.channel ?? 'Portal').split(' — ')[0]} portal only`;
     case 'refused': return `Not sent: ${channel.detail}`;

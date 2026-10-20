@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { GLOBAL_REGISTRY } from '../../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../../shared/regulatory/global-document-registry';
 import {
   DOCUMENT_TEMPLATES, getRegistryDocumentTemplate, getDocumentTemplate, componentTemplateIdForRegistry,
   type DocumentTemplateStructure,
 } from '../../market-specs/document-template-library';
-import { documentComponentRegion, resolveDocumentPreparationScope } from '../../market-specs/document-preparation';
+import { documentComponentContext, documentComponentRegion, resolveDocumentPreparationScope } from '../../market-specs/document-preparation';
 import { searchTemplates } from '../../regulatory/templateCatalog';
 import { getIndAuthoringTemplates, indTemplateSnapshot } from '../ind-authoring-templates';
 import {
@@ -12,9 +12,9 @@ import {
   getBuiltinAuthoringTemplate, getBuiltinAuthoringTemplates, type BuiltinAuthoringTemplate,
 } from '../builtin-authoring-templates';
 
-const targets = GLOBAL_REGISTRY.filter(entry => entry.active && entry.segment === 'pharma_biotech'
+const targets = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry))
   && ['US', 'CA', 'EU', 'JP', 'GLOBAL'].includes(entry.region));
-const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.some(family => family === 'ectd' || family === 'ctis'));
+const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 let all: BuiltinAuthoringTemplate[];
 beforeAll(async () => { all = await getBuiltinAuthoringTemplates(); });
 
@@ -74,10 +74,9 @@ describe('one builtin authoring projection', () => {
     expect(builtinTemplateSnapshot(actual)).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it.each(components)('projects the existing $id document component without device-only templates', outline => {
+  it.each(components)('projects the existing $id document component with its source context', outline => {
     const actual = all.find(template => template.entryId === `component:${outline.id}`)!;
-    expect(actual.filingContext).toEqual({ registryId: null, region: documentComponentRegion(outline.id),
-      agency: documentComponentRegion(outline.id) === 'EU' ? 'EMA' : 'ICH' });
+    expect(actual.filingContext).toEqual({ registryId: null, ...documentComponentContext(outline.id) });
     expect(actual.families).toEqual(outline.families);
     expect(actual.name).toContain(`${documentComponentRegion(outline.id)} · `);
     expect(actual.sections.map(section => [section.code, section.title])).toEqual(everySection(outline).map(section => [section.number, section.heading]));

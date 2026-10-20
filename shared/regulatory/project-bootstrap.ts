@@ -19,6 +19,7 @@ import type {
   TaskBlueprint,
   MilestoneDefinition,
 } from './document-taxonomy';
+import { DEVICE_AUTHORING_SECTION_CORRECTIONS } from './device-authoring-sections';
 import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from './protocol-m11';
 import { consentElementCitation, INFORMED_CONSENT_ELEMENTS, type ConsentApplicability } from './informed-consent-elements';
 
@@ -48,7 +49,7 @@ const CTD_SECTIONS: SectionDefinition[] = [
   { code: '5.4', title: 'Literature References', module: 5, required: true, contentType: 'list' },
 ];
 
-/** Device submission sections (510(k), PMA) */
+/** Existing 510(k) device sections; other pathways have their own groups. */
 const DEVICE_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
   { code: '2', title: 'Indications for Use', module: 1, required: true, contentType: 'narrative' },
@@ -572,6 +573,14 @@ const DEVICE_TECHDOC_SECTIONS: SectionDefinition[] = [
   { code: '7', title: 'Post-Market Surveillance Plan', module: 1, required: true, contentType: 'narrative', guidance: 'MDR Annex III' },
 ];
 
+/** Existing technical-document groups scoped to IVDR Annex II/III, not MDR. */
+const IVDR_TECHDOC_SECTIONS: SectionDefinition[] = DEVICE_TECHDOC_SECTIONS.map(section => ({
+  ...section,
+  guidance: section.code === '5' ? 'IVDR Annex I; ISO 14971'
+    : section.code === '6' ? 'IVDR Annex II section 6; Annex XIII performance evaluation'
+    : section.guidance?.replaceAll('MDR', 'IVDR'),
+}));
+
 /** IVD analytical + clinical performance evaluation (EU IVDR Annex XIII; FDA analytical/clinical). */
 const IVD_PERFORMANCE_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Intended Use and Indications', module: 1, required: true, contentType: 'narrative' },
@@ -767,8 +776,8 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
   // US Device Applications
   us_510k_sections: { id: 'us_510k_sections', name: '510(k) Sections', sections: DEVICE_SECTIONS },
-  us_pma_sections: { id: 'us_pma_sections', name: 'PMA Sections', sections: DEVICE_SECTIONS.map(s => ({ ...s, required: true })) },
-  us_de_novo_sections: { id: 'us_de_novo_sections', name: 'De Novo Sections', sections: DEVICE_SECTIONS },
+  us_pma_sections: { id: 'us_pma_sections', name: 'PMA Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_sections },
+  us_de_novo_sections: { id: 'us_de_novo_sections', name: 'De Novo Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_de_novo_sections },
 
   // EU Applications
   eu_cta_sections: { id: 'eu_cta_sections', name: 'EU CTA Sections', sections: CTD_SECTIONS },
@@ -816,7 +825,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   us_icsr_15day_sections: { id: 'us_icsr_15day_sections', name: '15-Day Alert Report — ICSR (21 CFR 314.80(c)(1))', sections: ICSR_SECTIONS },
   us_pader_sections: { id: 'us_pader_sections', name: 'Periodic Adverse Drug Experience Report (21 CFR 314.80(c)(2))', sections: PADER_SECTIONS },
   us_ea_sections: { id: 'us_ea_sections', name: 'Environmental Assessment (21 CFR 25)', sections: ENVIRONMENTAL_ASSESSMENT_SECTIONS },
-  us_eua_sections: { id: 'us_eua_sections', name: 'Emergency Use Authorization (vaccine/biologic)', sections: CTD_SECTIONS },
+  us_eua_sections: { id: 'us_eua_sections', name: 'Emergency Use Authorization (vaccine/biologic)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_eua_sections },
 
   // UK + China post-approval lifecycle
   uk_irp_sections: { id: 'uk_irp_sections', name: 'UK International Recognition Procedure (MHRA)', sections: CTD_SECTIONS },
@@ -839,13 +848,13 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
   // ── Medical devices & IVDs ──────────────────────────────────────────────────
   // Device market submissions (510(k)/PMA/De Novo family + national licences)
-  us_hde_sections: { id: 'us_hde_sections', name: 'Humanitarian Device Exemption (HDE)', sections: DEVICE_SECTIONS },
+  us_hde_sections: { id: 'us_hde_sections', name: 'Humanitarian Device Exemption (HDE)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_hde_sections },
   us_510k_mod_sections: { id: 'us_510k_mod_sections', name: '510(k) for Device Modification', sections: DEVICE_SECTIONS },
-  us_pma_supp_sections: { id: 'us_pma_supp_sections', name: 'PMA Supplement', sections: DEVICE_SECTIONS },
-  us_cdx_pma_sections: { id: 'us_cdx_pma_sections', name: 'Companion Diagnostic PMA', sections: DEVICE_SECTIONS },
+  us_pma_supp_sections: { id: 'us_pma_supp_sections', name: 'PMA Supplement', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_supp_sections },
+  us_cdx_pma_sections: { id: 'us_cdx_pma_sections', name: 'Companion Diagnostic PMA', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_cdx_pma_sections },
   us_cdx_510k_sections: { id: 'us_cdx_510k_sections', name: 'Companion Diagnostic 510(k) Expansion', sections: DEVICE_SECTIONS },
-  ca_mdl_sections: { id: 'ca_mdl_sections', name: 'Canada Medical Device Licence (SOR/98-282)', sections: DEVICE_SECTIONS },
-  jp_shonin_sections: { id: 'jp_shonin_sections', name: 'Japan Device Approval (Shonin, Class III/IV)', sections: DEVICE_SECTIONS },
+  ca_mdl_sections: { id: 'ca_mdl_sections', name: 'Canada Medical Device Licence (SOR/98-282)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.ca_mdl_sections },
+  jp_shonin_sections: { id: 'jp_shonin_sections', name: 'Japan Device Approval (Shonin, Class III/IV)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.jp_shonin_sections },
   uk_device_reg_sections: { id: 'uk_device_reg_sections', name: 'UK Device Registration (MHRA / UKCA)', sections: DEVICE_SECTIONS },
 
   // Pre-submissions, feedback and classification requests (FDA Q-Sub family)
@@ -859,7 +868,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
   // EU MDR/IVDR technical documentation + conformity
   eu_mdr_techdoc_sections: { id: 'eu_mdr_techdoc_sections', name: 'EU MDR Technical Documentation (Annex II/III)', sections: DEVICE_TECHDOC_SECTIONS },
-  eu_ivdr_sections: { id: 'eu_ivdr_sections', name: 'EU IVDR Technical Documentation (Annex II/III)', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_ivdr_sections: { id: 'eu_ivdr_sections', name: 'EU IVDR Technical Documentation (Annex II/III)', sections: IVDR_TECHDOC_SECTIONS },
   eu_doc_sections: { id: 'eu_doc_sections', name: 'EU Declaration of Conformity', sections: DEVICE_TECHDOC_SECTIONS },
   eu_sscp_sections: { id: 'eu_sscp_sections', name: 'Summary of Safety & Clinical Performance (MDR Art. 32)', sections: CER_SECTIONS },
 
@@ -876,9 +885,9 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_ivd_reeval_sections: { id: 'eu_ivd_reeval_sections', name: 'IVD Periodic Performance Re-evaluation', sections: IVD_PERFORMANCE_SECTIONS },
   us_clia_waiver_sections: { id: 'us_clia_waiver_sections', name: 'CLIA Waiver Application', sections: IVD_PERFORMANCE_SECTIONS },
   us_510k_ivd_sections: { id: 'us_510k_ivd_sections', name: '510(k) for Class II IVD', sections: IVD_PERFORMANCE_SECTIONS },
-  us_pma_ivd_sections: { id: 'us_pma_ivd_sections', name: 'PMA for Class III IVD', sections: IVD_PERFORMANCE_SECTIONS },
-  us_de_novo_ivd_sections: { id: 'us_de_novo_ivd_sections', name: 'De Novo for Novel IVD', sections: IVD_PERFORMANCE_SECTIONS },
-  us_eua_ivd_sections: { id: 'us_eua_ivd_sections', name: 'IVD Emergency Use Authorization', sections: IVD_PERFORMANCE_SECTIONS },
+  us_pma_ivd_sections: { id: 'us_pma_ivd_sections', name: 'PMA for Class III IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_ivd_sections },
+  us_de_novo_ivd_sections: { id: 'us_de_novo_ivd_sections', name: 'De Novo for Novel IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_de_novo_ivd_sections },
+  us_eua_ivd_sections: { id: 'us_eua_ivd_sections', name: 'IVD Emergency Use Authorization', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_eua_ivd_sections },
   us_ldt_sections: { id: 'us_ldt_sections', name: 'Laboratory Developed Test (LDT)', sections: IVD_PERFORMANCE_SECTIONS },
   us_complementary_dx_sections: { id: 'us_complementary_dx_sections', name: 'Complementary Diagnostic', sections: IVD_PERFORMANCE_SECTIONS },
 
@@ -893,12 +902,12 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   iec_62304_sections: { id: 'iec_62304_sections', name: 'Software Lifecycle File (IEC 62304)', sections: DEVICE_SOFTWARE_SECTIONS },
   us_cybersecurity_sections: { id: 'us_cybersecurity_sections', name: 'Premarket Cybersecurity Documentation', sections: DEVICE_SOFTWARE_SECTIONS },
   us_pccp_sections: { id: 'us_pccp_sections', name: 'Predetermined Change Control Plan (AI/ML)', sections: DEVICE_SOFTWARE_SECTIONS },
-  qms_quality_manual_sections: { id: 'qms_quality_manual_sections', name: 'Quality Manual (ISO 13485)', sections: QMS_SECTIONS },
-  qms_design_controls_sections: { id: 'qms_design_controls_sections', name: 'Design Controls (21 CFR 820.30)', sections: QMS_SECTIONS },
-  qms_dmr_sections: { id: 'qms_dmr_sections', name: 'Device Master Record (DMR)', sections: QMS_SECTIONS },
-  qms_dhr_sections: { id: 'qms_dhr_sections', name: 'Device History Record (DHR)', sections: QMS_SECTIONS },
-  qms_mdsap_sections: { id: 'qms_mdsap_sections', name: 'MDSAP Audit File', sections: QMS_SECTIONS },
-  us_dhf_sections: { id: 'us_dhf_sections', name: 'Design History File (DHF)', sections: QMS_SECTIONS },
+  qms_quality_manual_sections: { id: 'qms_quality_manual_sections', name: 'Quality Manual (ISO 13485)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.qms_quality_manual_sections },
+  qms_design_controls_sections: { id: 'qms_design_controls_sections', name: 'Design controls and development records (QMSR)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.qms_design_controls_sections },
+  qms_dmr_sections: { id: 'qms_dmr_sections', name: 'Device Master Record (DMR)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.qms_dmr_sections },
+  qms_dhr_sections: { id: 'qms_dhr_sections', name: 'Device History Record (DHR)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.qms_dhr_sections },
+  qms_mdsap_sections: { id: 'qms_mdsap_sections', name: 'MDSAP Audit File', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.qms_mdsap_sections },
+  us_dhf_sections: { id: 'us_dhf_sections', name: 'Design History File (DHF)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_dhf_sections },
 
   // Device post-market surveillance and vigilance
   us_pma_annual_sections: { id: 'us_pma_annual_sections', name: 'PMA Annual Report (21 CFR 814.84)', sections: DEVICE_POSTMARKET_SECTIONS },
@@ -947,7 +956,8 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_mdr_class_iia_sections: { id: 'eu_mdr_class_iia_sections', name: 'EU MDR Class IIa Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
   eu_mdr_class_iib_sections: { id: 'eu_mdr_class_iib_sections', name: 'EU MDR Class IIb Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
   eu_mdr_class_iii_sections: { id: 'eu_mdr_class_iii_sections', name: 'EU MDR Class III Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
-  jp_nintei_sections: { id: 'jp_nintei_sections', name: 'Nintei Certification File (PMDA)', sections: DEVICE_TECHDOC_SECTIONS },
+  jp_nintei_sections: { id: 'jp_nintei_sections', name: 'Ninsho Certification File (Registered Certification Body)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.jp_nintei_sections },
+  jp_todokede_sections: { id: 'jp_todokede_sections', name: 'Japan Class I Device Notification (Todokede)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.jp_todokede_sections },
   cn_device_reg_sections: { id: 'cn_device_reg_sections', name: 'Device Registration File (NMPA)', sections: DEVICE_TECHDOC_SECTIONS },
   au_device_inclusion_sections: { id: 'au_device_inclusion_sections', name: 'ARTG Device Inclusion File (TGA)', sections: DEVICE_TECHDOC_SECTIONS },
   ch_device_conformity_sections: { id: 'ch_device_conformity_sections', name: 'Device Conformity File (Swissmedic)', sections: DEVICE_TECHDOC_SECTIONS },
@@ -957,17 +967,17 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_sig_change_sections: { id: 'eu_sig_change_sections', name: 'Significant Change Notification (MDR Art. 120)', sections: DEVICE_POSTMARKET_SECTIONS },
   eu_mir_sections: { id: 'eu_mir_sections', name: 'Manufacturer Incident Report (MDR Art. 87)', sections: DEVICE_POSTMARKET_SECTIONS },
   eu_trend_report_device_sections: { id: 'eu_trend_report_device_sections', name: 'Trend Report (MDR Art. 88)', sections: DEVICE_POSTMARKET_SECTIONS },
-  eu_ivdr_class_a_sections: { id: 'eu_ivdr_class_a_sections', name: 'EU IVDR Class A Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
-  eu_ivdr_class_b_sections: { id: 'eu_ivdr_class_b_sections', name: 'EU IVDR Class B Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
-  eu_ivdr_class_cd_sections: { id: 'eu_ivdr_class_cd_sections', name: 'EU IVDR Class C/D Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
-  eu_cdx_ivdr_d_sections: { id: 'eu_cdx_ivdr_d_sections', name: 'CDx IVDR Class D Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
-  jp_cdx_sections: { id: 'jp_cdx_sections', name: 'CDx Approval File (PMDA)', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_ivdr_class_a_sections: { id: 'eu_ivdr_class_a_sections', name: 'EU IVDR Class A Technical Documentation', sections: IVDR_TECHDOC_SECTIONS },
+  eu_ivdr_class_b_sections: { id: 'eu_ivdr_class_b_sections', name: 'EU IVDR Class B Technical Documentation', sections: IVDR_TECHDOC_SECTIONS },
+  eu_ivdr_class_cd_sections: { id: 'eu_ivdr_class_cd_sections', name: 'EU IVDR Class C/D Technical Documentation', sections: IVDR_TECHDOC_SECTIONS },
+  eu_cdx_ivdr_d_sections: { id: 'eu_cdx_ivdr_d_sections', name: 'CDx IVDR Technical Documentation', sections: IVDR_TECHDOC_SECTIONS },
+  jp_cdx_sections: { id: 'jp_cdx_sections', name: 'CDx Approval File (PMDA)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.jp_cdx_sections },
   eu_ivd_clin_evidence_sections: { id: 'eu_ivd_clin_evidence_sections', name: 'IVDR Clinical Evidence Summary', sections: IVD_PERFORMANCE_SECTIONS },
   us_ivd_analytical_validation_sections: { id: 'us_ivd_analytical_validation_sections', name: 'Analytical Validation Report', sections: IVD_PERFORMANCE_SECTIONS },
-  jp_ivd_approval_sections: { id: 'jp_ivd_approval_sections', name: 'IVD Approval File (PMDA)', sections: DEVICE_TECHDOC_SECTIONS },
+  jp_ivd_approval_sections: { id: 'jp_ivd_approval_sections', name: 'IVD Approval File (PMDA)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.jp_ivd_approval_sections },
   cn_ivd_reg_sections: { id: 'cn_ivd_reg_sections', name: 'IVD Registration File (NMPA)', sections: DEVICE_TECHDOC_SECTIONS },
   au_ivd_inclusion_sections: { id: 'au_ivd_inclusion_sections', name: 'ARTG IVD Inclusion File (TGA)', sections: DEVICE_TECHDOC_SECTIONS },
-  ca_ivd_licence_sections: { id: 'ca_ivd_licence_sections', name: 'IVD Licence File (Health Canada)', sections: DEVICE_TECHDOC_SECTIONS },
+  ca_ivd_licence_sections: { id: 'ca_ivd_licence_sections', name: 'IVD Licence File (Health Canada)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.ca_ivd_licence_sections },
   eu_ivd_pms_plan_sections: { id: 'eu_ivd_pms_plan_sections', name: 'IVDR Post-Market Surveillance Plan', sections: DEVICE_POSTMARKET_SECTIONS },
   eu_ivd_vigilance_sections: { id: 'eu_ivd_vigilance_sections', name: 'IVDR Vigilance Report', sections: DEVICE_POSTMARKET_SECTIONS },
   eu_psur_ivd_sections: { id: 'eu_psur_ivd_sections', name: 'IVD PSUR (IVDR Art. 81)', sections: DEVICE_POSTMARKET_SECTIONS },
@@ -984,8 +994,8 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   qms_gmp_inspection_sections: { id: 'qms_gmp_inspection_sections', name: 'GMP Inspection Readiness Package', sections: QMS_SECTIONS },
   qms_gcp_compliance_sections: { id: 'qms_gcp_compliance_sections', name: 'GCP Compliance Package', sections: QMS_SECTIONS },
   qms_glp_compliance_sections: { id: 'qms_glp_compliance_sections', name: 'GLP Compliance Package', sections: QMS_SECTIONS },
-  qms_qsr_820_sections: { id: 'qms_qsr_820_sections', name: 'QSR (21 CFR 820) File', sections: QMS_SECTIONS },
-  qms_iso_13485_sections: { id: 'qms_iso_13485_sections', name: 'ISO 13485 QMS File', sections: QMS_SECTIONS },
+  qms_qsr_820_sections: { id: 'qms_qsr_820_sections', name: 'QMSR (21 CFR 820) file', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.qms_qsr_820_sections },
+  qms_iso_13485_sections: { id: 'qms_iso_13485_sections', name: 'ISO 13485 QMS File', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.qms_iso_13485_sections },
   ri_strategy_sections: { id: 'ri_strategy_sections', name: 'Regulatory Strategy Document', sections: REGULATORY_INTELLIGENCE_SECTIONS },
   ri_gap_analysis_sections: { id: 'ri_gap_analysis_sections', name: 'Gap Analysis Report', sections: REGULATORY_INTELLIGENCE_SECTIONS },
   ri_competitive_sections: { id: 'ri_competitive_sections', name: 'Competitive Landscape Analysis', sections: REGULATORY_INTELLIGENCE_SECTIONS },

@@ -28,7 +28,7 @@
  * ── The device family, and why CDx and SaMD are listed separately ────────────
  * `cdx` and `samd` are NOT regulatory siblings of `device` and `ivd`. A
  * companion diagnostic IS an in-vitro diagnostic — in the US usually a Class III
- * PMA, under the EU IVDR usually Class D — and software as a medical device IS
+ * PMA; under EU IVDR Rule 3(f), Class C subject to other applicable rules — and software as a medical device IS
  * a device. They are stored distinctly because the platform must route them
  * differently (a CDx carries a drug-pairing obligation; SaMD carries IEC 62304
  * and FD&C §524B cybersecurity), not because they sit outside the classes they
@@ -204,7 +204,8 @@ export function productTypeForFilingType(
   const key = String(filingType ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
   const base = FILING_TYPE_PRODUCT_CLASS[key];
   if (!base) return null;
-  if (base === 'device' && IVD_LANES.has(String(lane ?? '').trim().toLowerCase())) return 'ivd';
+  // MDR and CER are device-only instruments; their IVD counterpart is IVDR/PER.
+  if (base === 'device' && key !== 'mdr' && key !== 'cer' && IVD_LANES.has(String(lane ?? '').trim().toLowerCase())) return 'ivd';
   return base;
 }
 
