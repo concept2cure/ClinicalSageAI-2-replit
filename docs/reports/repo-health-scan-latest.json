@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-20T21:10:27.757Z",
+  "generatedAt": "2026-10-20T21:27:02.251Z",
   "git": {
-    "sha": "67d96c0601538412789a20da005244432fbacdb2",
+    "sha": "352ca5aae99c7df1ad0e8f44ecb375e74ca808d5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2313,16 +2313,16 @@
         "bytes": 138809
       },
       {
+        "file": "shared/regulatory/global-document-registry.ts",
+        "bytes": 137327
+      },
+      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 137319
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "bytes": 136488
-      },
-      {
-        "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 135326
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2357,6 +2357,14 @@
         "bytes": 122639
       },
       {
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 121186
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 120633
+      },
+      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 119989
       },
@@ -2365,16 +2373,8 @@
         "bytes": 119982
       },
       {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 119599
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "bytes": 119001
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 118194
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2599,16 +2599,16 @@
         "lines": 2386
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2350
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2324
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2317
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
