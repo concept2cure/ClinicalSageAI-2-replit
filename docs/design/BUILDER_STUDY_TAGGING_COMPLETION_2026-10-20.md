@@ -66,6 +66,8 @@ services, schema/migrations, UI and AnA tools. Deleted-history searches for
 5. Display both fields in Builder and offer a reason-required editor on editable
    leaves. Use the narrow contract, exact leaf/sequence/metadata receipt checks,
    and distinguish unchanged, committed/audit-unconfirmed, refused and unknown.
+   A successful bodyless PUT (including HTTP204) lacks the required exact row
+   receipt and is unknown for this editor; the existing DELETE204 contract stays.
    Unknown writes require an explicit current-leaf reread before another save;
    no automatic retry. Preserve entered values during reconciliation.
 6. Reuse the canonical submission session guard and scope generation so old

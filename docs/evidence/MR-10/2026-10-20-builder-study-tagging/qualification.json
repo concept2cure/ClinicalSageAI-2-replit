@@ -20,5 +20,6 @@
   },
   "independentReview": "Read-only worker reviewed existing contract, backend and final refactored UI; reported no blocking issue. No independent runtime tests claimed.",
   "humanWitnessed": false,
-  "normalPushGates": "pending"
+  "normalPushGates": "held before publication for bodyless response regression; final corrected gate required",
+  "checkpoint": "initial build before bodyless-response correction; final rebuild pending"
 }

@@ -113,6 +113,19 @@ describe('Builder study tagging on the existing leaf', () => {
 });
 
 describe('Builder study tagging reconciliation', () => {
+  it.each([204, 200])('requires explicit reread after a metadata success without a receipt (HTTP %s)', async status => {
+    setup(async () => status === 204 ? new Response(null, { status }) : ok(null));
+    render(<BuilderWorkspace seq={SEQ} />); await edit(); save();
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    await screen.findByText(/cannot confirm whether the study tagging was recorded/i);
+    expect(screen.getByRole('button', { name: 'Save study tagging' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Reread current leaf' })).toBeTruthy();
+    expect(screen.getByLabelText('Study id')).toHaveProperty('value', 'STUDY-101');
+    expect(screen.getByLabelText('STF file-tag')).toHaveProperty('value', 'human-review-tag');
+    save(); expect(writes()).toHaveLength(1);
+    expect(screen.queryByText(/Study tagging saved/)).toBeNull();
+  });
+
   it('holds an unknown outcome until explicit successful reread; preserves inputs and never replays the write', async () => {
     setup(async () => { throw new TypeError('network lost'); }); render(<BuilderWorkspace seq={SEQ} />); await edit(); save();
     await screen.findByText(/cannot confirm whether the study tagging was recorded/i);

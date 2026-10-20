@@ -335,7 +335,7 @@ function studyReceiptMatches(row: StudyWriteReceipt | null, baseline: StudyLeafS
 }
 
 function studyWriteRefusal(result: MutateResult<StudyWriteReceipt>) {
-  const unknown = Boolean(result.unconfirmed || result.data !== null);
+  const unknown = Boolean(result.unconfirmed || result.data !== null || mutationUnconfirmed(result.status, result.code));
   const stale = result.code === 'STALE_LEAF';
   const notice: Notice = { tone: 'err', text: unknown
     ? 'We cannot confirm whether the study tagging was recorded. Reread the current leaf before saving again. Your entered values are retained.'

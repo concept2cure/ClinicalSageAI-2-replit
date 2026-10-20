@@ -1,8 +1,8 @@
 {
   "status": "pass",
-  "anchor": "e79626c0849f0f8c2338b32f85d4bc69bccef8f5",
+  "anchor": "3005e4f6dedcbb4cab82cb8b4d04751bc79fdf4c",
   "sources": {
-    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "c56410ad55693ca4e207301b93b5e926742654ab2a4d6c410e121d6bcff9a7a1",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "15484257b26bca750059b8506b4265d869354f7f894b57fd3a94cb497c550040",
     "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f",
     "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519",
     "client/src/concept2cure/v2/surfaces/filingTarget.tsx": "667b5c32ece7ac92fba5a6f5dd264525c921aafbf6a2a038dfeb50a133db27e6",
@@ -20,7 +20,7 @@
     "client/src/concept2cure/v2/styles/submission-v2.css": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c",
     "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/probe.tsx": "af053f4f6686fc6ce35a85ddcde742af4c3092ad73b7ac4e094b21281970c38b",
     "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/server.mjs": "cb6812e705d6abd260987d5d3cfb96d8e01a0f021a0755c8c6c1bcd80de4852a",
-    "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/check.mjs": "19f836c37f9377f688b24e4987e71e52d1de1821419367c61858190d5585b252",
+    "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/check.mjs": "eeca3e7b0aa82cb2124e1aa264c87bdb2dc1fab89522a968c8c21c8bcb3a1140",
     "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/index.html": "bbdaa0386a8a96466fed1b173508594f305787d34a2083bb3fb9448cf0e843f5"
   },
   "sourcePinsUnchanged": true,
@@ -72,6 +72,7 @@
     {
       "sequenceId": 21,
       "mode": "confirm",
+      "receiptStatus": 200,
       "body": {
         "leafId": 62,
         "sectionCode": "5.3.5.1",
@@ -89,6 +90,7 @@
     {
       "sequenceId": 21,
       "mode": "unknown",
+      "receiptStatus": 204,
       "body": {
         "leafId": 62,
         "sectionCode": "5.3.5.1",
@@ -106,6 +108,7 @@
     {
       "sequenceId": 21,
       "mode": "confirm",
+      "receiptStatus": 200,
       "body": {
         "leafId": 62,
         "sectionCode": "5.3.5.1",
@@ -123,6 +126,7 @@
     {
       "sequenceId": 21,
       "mode": "late",
+      "receiptStatus": 200,
       "body": {
         "leafId": 62,
         "sectionCode": "5.3.5.1",

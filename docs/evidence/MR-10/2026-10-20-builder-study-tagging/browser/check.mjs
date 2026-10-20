@@ -57,7 +57,7 @@ await page.route('**/api/**', async route => {
   }
   assert.equal(req.method(), 'PUT');
   const body = req.postDataJSON(), previous = leaves.get(sequenceId);
-  writes.push({ sequenceId, mode, body });
+  writes.push({ sequenceId, mode, receiptStatus: mode === 'unknown' ? 204 : 200, body });
   assert.equal(body.leafId, previous.id);
   assert.equal(body.sectionCode, previous.sectionCode);
   assert.equal(body.title, previous.title);
@@ -70,7 +70,7 @@ await page.route('**/api/**', async route => {
     updatedAt: `2026-10-20T11:00:0${writes.length}.000Z` };
   leaves.set(sequenceId, next);
   if (mode === 'late') await lateGate;
-  if (mode === 'unknown') return send(route, { error: { code: 'OUTCOME_UNKNOWN', message: 'Synthetic committed write with lost receipt.' } }, 503);
+  if (mode === 'unknown') return route.fulfill({ status: 204 });
   return send(route, { ...next, ...(unchanged ? { unchanged: true, auditTrail: null } : {
     auditTrail: { persisted: true, chained: true }, ...(writes.length === 1 ? { sequenceStatusChanged: { from: 'validated', to: 'assembling', auditTrail: { persisted: true, chained: true } } } : {}) }) });
 });
