@@ -154,7 +154,7 @@ describe('DocumentAuthoring — real editable canvas', () => {
       target: { value: 'Corrected the substance description.' },
     });
     // The header Save button enables once the dirty state propagates.
-    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const saveBtn = screen.getByRole('button', { name: /^Save$/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 
@@ -206,7 +206,7 @@ describe('DocumentAuthoring — real editable canvas', () => {
     fireEvent.change(screen.getByTestId('change-reason'), {
       target: { value: 'Reworded the opening paragraph.' },
     });
-    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const saveBtn = screen.getByRole('button', { name: /^Save$/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 

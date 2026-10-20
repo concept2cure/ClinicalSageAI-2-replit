@@ -103,7 +103,7 @@ function wireScan(recordRequirements: unknown) {
 
 async function openCheck() {
   render(<DocumentAuthoring {...props()} />);
-  fireEvent.click(await screen.findByRole('button', { name: /check/i }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Check$/i }));
   return screen.findByTestId('section-check');
 }
 

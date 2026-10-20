@@ -118,7 +118,7 @@ describe('the editor asks why, once per section', () => {
     canvasEditor().chain().focus().selectAll().insertContent(text).run();
     await waitFor(() => expect(canvasText()).toBe(text));
   }
-  const saveBtn = () => screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+  const saveBtn = () => screen.getByRole('button', { name: /^Save$/i }) as HTMLButtonElement;
   const reasonField = () => screen.getByTestId('change-reason') as HTMLInputElement;
   const patches = () => apiRequest.mock.calls.filter((c) => c[0] === 'PATCH');
 

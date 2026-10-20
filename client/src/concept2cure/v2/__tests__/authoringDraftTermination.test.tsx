@@ -58,7 +58,7 @@ function operationFor(sections: AssemblySection[]): AssemblyOperation {
   const owner: AssemblyOperation['owner'] = { options, key: 'current-editor', revision: 0,
     contextRevision: 0, savedReuseRevision: 0, alive: true, bucket, redraw: vi.fn(),
     identity, authCurrent: identity.session.sameRevision, headers: captureAssemblyHeaders, leaveRefusal: () => null };
-  return { owner, bucket, token, options, current: () => true,
+  return { owner, bucket, token, options, headers: owner.headers(), current: () => true,
     update: patch => { bucket.state = { ...bucket.state, ...patch }; } };
 }
 

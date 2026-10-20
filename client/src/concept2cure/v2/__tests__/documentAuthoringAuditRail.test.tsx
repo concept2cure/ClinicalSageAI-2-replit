@@ -159,7 +159,7 @@ describe('the heuristic section check', () => {
     });
 
     render(<DocumentAuthoring {...props()} />);
-    const btn = await screen.findByRole('button', { name: /check/i });
+    const btn = await screen.findByRole('button', { name: /^Check$/i });
     fireEvent.click(btn);
 
     await waitFor(() => expect(scan).toHaveBeenCalled());
@@ -184,7 +184,7 @@ describe('the heuristic section check', () => {
     });
 
     render(<DocumentAuthoring {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: /check/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Check$/i }));
     const panel = await screen.findByTestId('section-check');
     expect(panel.textContent).toContain('this is not a review');
     expect(panel.textContent).not.toMatch(/compliant/i);

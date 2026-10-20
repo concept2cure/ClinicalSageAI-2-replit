@@ -108,7 +108,7 @@ describe('the save confirmation carries whether the text reached the filing', ()
     canvasEditor().chain().focus().selectAll().insertContent('Revised substance description.').run();
     await waitFor(() => expect(canvasText()).toBe('Revised substance description.'));
     fireEvent.change(screen.getByTestId('change-reason'), { target: { value: 'Corrected the potency limit.' } });
-    const save = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const save = screen.getByRole('button', { name: /^Save$/i }) as HTMLButtonElement;
     await waitFor(() => expect(save.disabled).toBe(false));
     fireEvent.click(save);
     await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'PATCH')).toBe(true));
