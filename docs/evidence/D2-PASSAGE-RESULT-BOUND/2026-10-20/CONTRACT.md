@@ -22,6 +22,11 @@ have disjoint new files. No new tool, route, provider, model, dependency or sche
 - `server/services/ana/document-tools-shared.ts`: existing access and caught-error
   wrapper. Keep it and add a tool-specific final size guard after it so early,
   success and error branches all have the same serialized bound.
+- `server/services/ana/tool-outcome.ts`: existing deterministic shortfall reader
+  and adaptation note currently call every empty passage list an empty result.
+  Complete its interpretation of a successful all-omitted passage response so
+  the next model turn cannot relabel known matches as no results. Existing
+  `tests/services/tool-outcome.test.ts` covers genuine misses and other tools.
 - `server/services/ana/agentic-loop.ts`: classic per-result 8,000-character
   head/tail cap plus a separate 24,000-character aggregate-round budget.
   `tool-output-frame.ts` frames after budgeting. No global budget change here.
@@ -31,6 +36,7 @@ have disjoint new files. No new tool, route, provider, model, dependency or sche
 Root and auditors searched passage/fitting/budget/truncation/tool names, current
 handlers/schema/consumers/tests and deleted history. Targeted deleted searches
 for document-passage-tools and passage-budget replacements returned none.
+Targeted deleted searches for tool-outcome/shortfall replacements returned none.
 
 ## Approved behavior
 
@@ -38,7 +44,9 @@ for document-passage-tools and passage-budget replacements returned none.
    complete JSON of at most existing `PASSAGE_RESULT_BUDGET = 7500` UTF-16 code
    units, measured after JSON serialization, including escaping. Never slice a
    serialized JSON body or a retained title, locator, source identity or span.
-2. Ordinary responses that already fit retain exact existing behavior/output.
+2. Ordinary responses below the metadata thresholds that already fit retain
+   exact existing behavior/output. Larger echoes may be omitted even when the
+   previous response happened to fit the overall budget.
    The query sent to canonical retrieval remains the full trimmed original.
    If `JSON.stringify(query).length > 1000`, omit its response echo, add
    `queryOmitted: true` and `queryChars: query.length`, and do not repeat it in
@@ -63,12 +71,21 @@ for document-passage-tools and passage-budget replacements returned none.
 6. Original hits, source/context identities, locators, ranks, numeric spans,
    counts and trusted scope are not mutated. Kept fields remain exact; missing
    text keeps existing explicit omission flags. No persistence or approval path.
+7. Complete the existing `shortfallOf` consumer with kind `'omitted'` for an
+   otherwise-successful `ok: true`, empty `passages` list and positive safe-integer
+   `omittedPassages`, after existing refusal/declared-status/nonempty-result
+   priorities. It is not `'empty'`. The existing adaptation note names omitted
+   matches and guides narrowing/reading, explicitly not evidence absence. Keep
+   the prior note byte-identical for rounds without an omitted shortfall. All
+   real misses, outages/refusals, returned records and other tools retain their
+   classification. Invalid omission counts do not manufacture matches.
 
 ## Proof and publication
 
-Freeze three meaningful baseline suites and exact hashes before production edits:
+Freeze four meaningful baseline suites and exact hashes before production edits:
 query/diagnostic/last-hit overflows, real catch/cap/frame behavior and retained
-source/rank/coverage invariants under mixed serialization pressure. Use existing
+source/rank/coverage invariants under mixed serialization pressure, plus the
+existing consumer's all-omitted classification/adaptation guidance. Use existing
 exports/registration; no missing-module false failures. Raw logs and unchanged
 baseline input pins are retained. Root updates only the one legacy expectation
 that deliberately allowed overflow after the new tests freeze.
