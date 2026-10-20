@@ -47,6 +47,14 @@ A vault passage's surrounding text is one exact, verified source span with a
 re-verifiable reference; joined chunk text is no longer produced or quoted.
 Multilingual vector retrieval qualification remains open.
 
+Delivery completion, 2026-10-20: the existing passage-result fitter now bounds
+every registered-handler JSON body, retains complete locators for kept matches,
+and distinguishes matches omitted for space from a search with no matches in
+AnA's adaptation guidance. See
+[passage-result fitting](../../evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/README.md).
+The classic per-result cap leaves these bodies intact; aggregate round
+budgeting and multilingual retrieval qualification remain separate needs.
+
 Delivery update, 2026-10-18: the budget and coverage part of priority 4 is
 delivered; see [OCR budgets](../../evidence/D2-OCR-BUDGET/2026-10-18/README.md).
 Data Room OCR of scanned PDFs is bounded (100 pages, 10 minutes, 40 Mpx per

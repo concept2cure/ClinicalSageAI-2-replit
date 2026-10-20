@@ -1,0 +1,310 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'long plain query', hit=false omits only the response echo and remains complete JSON 7ms
+   → expected 26644 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'long plain query', hit=true omits only the response echo and remains complete JSON 2ms
+   → expected 14857 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped control query', hit=false omits only the response echo and remains complete JSON 2ms
+   → expected { ok: true, …(6) } to not have property "query"
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped control query', hit=true omits only the response echo and remains complete JSON 1ms
+   → expected { ok: true, …(6) } to not have property "query"
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped quote query', hit=false omits only the response echo and remains complete JSON 1ms
+   → expected { ok: true, …(6) } to not have property "query"
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped quote query', hit=true omits only the response echo and remains complete JSON 1ms
+   → expected { ok: true, …(6) } to not have property "query"
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'Japanese and astral query', hit=false omits only the response echo and remains complete JSON 1ms
+   → expected { ok: true, …(6) } to not have property "query"
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'Japanese and astral query', hit=true omits only the response echo and remains complete JSON 1ms
+   → expected { ok: true, …(6) } to not have property "query"
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > preserves the exact response echo at the serialized 1000-character boundary 2ms
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > omits a serialized 1001-character query instead of silently shortening the search 1ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'unknown unfiled count' 1ms
+   → expected 32750 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'bounded count with more' 1ms
+   → expected 32945 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'known no unfiled uploads' 0ms
+   → expected 32663 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > uses serialized diagnostic size so control characters do not escape the field limit 3ms
+   → expected { total: 10, indexed: 3, …(5) } to deeply equal { total: 10, indexed: 3, …(6) }
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > keeps ordinary reasons exactly at their serialized 1000-character boundary 1ms
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > omits the entire reason array one serialized character past the limit 1ms
+   → expected { total: 10, indexed: 3, …(5) } to deeply equal { total: 10, indexed: 3, …(6) }
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > retains explicitly unknown coverage instead of inventing zero or full coverage 0ms
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'title' or rerank around it 1ms
+   → expected 14601 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'locator with escaped controls' or rerank around it 1ms
+   → expected 10999 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'section title' or rerank around it 1ms
+   → expected 15989 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > combines huge query, diagnostics and metadata without losing coverage or claiming no match 2ms
+   → expected 58370 to be less than or equal to 7500
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > ordinary output and existing prefix priority controls > keeps a genuine small miss and its exact query wording distinct from omitted matches 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > ordinary output and existing prefix priority controls > keeps ordinary passage fields byte-exact and does not mutate retrieval output 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > ordinary output and existing prefix priority controls > keeps the highest-ranked text before dropping lower-ranked text 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'long plain query', hit=false omits only the response echo and remains complete JSON
+AssertionError: expected 26644 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:79:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'long plain query', hit=true omits only the response echo and remains complete JSON
+AssertionError: expected 14857 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:79:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped control query', hit=false omits only the response echo and remains complete JSON
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped control query', hit=true omits only the response echo and remains complete JSON
+AssertionError: expected { ok: true, …(6) } to not have property "query"
+
+- Expected:
+undefined
+
++ Received:
+"                                                                                                                                                                                                        "
+
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:81:23
+     79|       bounded(raw);
+     80|       expect(out.ok).toBe(true);
+     81|       expect(out).not.toHaveProperty('query');
+       |                       ^
+     82|       expect(out.queryOmitted).toBe(true);
+     83|       expect(out.queryChars).toBe(query.trim().length);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped quote query', hit=false omits only the response echo and remains complete JSON
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped quote query', hit=true omits only the response echo and remains complete JSON
+AssertionError: expected { ok: true, …(6) } to not have property "query"
+
+- Expected:
+undefined
+
++ Received:
+"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\""
+
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:81:23
+     79|       bounded(raw);
+     80|       expect(out.ok).toBe(true);
+     81|       expect(out).not.toHaveProperty('query');
+       |                       ^
+     82|       expect(out.queryOmitted).toBe(true);
+     83|       expect(out.queryChars).toBe(query.trim().length);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'Japanese and astral query', hit=false omits only the response echo and remains complete JSON
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'Japanese and astral query', hit=true omits only the response echo and remains complete JSON
+AssertionError: expected { ok: true, …(6) } to not have property "query"
+
+- Expected:
+undefined
+
++ Received:
+"診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬診断🧬"
+
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:81:23
+     79|       bounded(raw);
+     80|       expect(out.ok).toBe(true);
+     81|       expect(out).not.toHaveProperty('query');
+       |                       ^
+     82|       expect(out.queryOmitted).toBe(true);
+     83|       expect(out.queryChars).toBe(query.trim().length);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > omits a serialized 1001-character query instead of silently shortening the search
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:108:30
+    106|     fullBackendQuery(query);
+    107|     bounded(raw);
+    108|     expect(out.queryOmitted).toBe(true);
+       |                              ^
+    109|     expect(out.queryChars).toBe(999);
+    110|     expect(out).not.toHaveProperty('query');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'unknown unfiled count'
+AssertionError: expected 32750 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:125:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'bounded count with more'
+AssertionError: expected 32945 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:125:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'known no unfiled uploads'
+AssertionError: expected 32663 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:125:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > uses serialized diagnostic size so control characters do not escape the field limit
+AssertionError: expected { total: 10, indexed: 3, …(5) } to deeply equal { total: 10, indexed: 3, …(6) }
+
+- Expected
++ Received
+
+@@ -1,9 +1,10 @@
+  {
+    "failed": 3,
+-   "failureReasons": [],
+-   "failureReasonsOmitted": true,
++   "failureReasons": [
++     "                                                                                                                                                                       ",
++   ],
+    "indexed": 3,
+    "pending": 2,
+    "total": 10,
+    "unfiledUploads": null,
+    "unfiledUploadsMore": false,
+
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:140:26
+    138|     const { raw, out } = await run([hit()], QUERY, given);
+    139|     bounded(raw);
+    140|     expect(out.coverage).toEqual({ ...given, failureReasons: [], failu…
+       |                          ^
+    141|     expect(given.failureReasons).toEqual(['\u0000'.repeat(167)]);
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > omits the entire reason array one serialized character past the limit
+AssertionError: expected { total: 10, indexed: 3, …(5) } to deeply equal { total: 10, indexed: 3, …(6) }
+
+- Expected
++ Received
+
+@@ -1,9 +1,10 @@
+  {
+    "failed": 3,
+-   "failureReasons": [],
+-   "failureReasonsOmitted": true,
++   "failureReasons": [
++     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
++   ],
+    "indexed": 3,
+    "pending": 2,
+    "total": 10,
+    "unfiledUploads": null,
+    "unfiledUploadsMore": false,
+
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:159:26
+    157|     const { raw, out } = await run([], QUERY, given);
+    158|     bounded(raw);
+    159|     expect(out.coverage).toEqual({ ...given, failureReasons: [], failu…
+       |                          ^
+    160|     expect(out.message).not.toContain(given.failureReasons[0]);
+    161|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'title' or rerank around it
+AssertionError: expected 14601 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:181:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'locator with escaped controls' or rerank around it
+AssertionError: expected 10999 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:181:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'section title' or rerank around it
+AssertionError: expected 15989 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:181:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > combines huge query, diagnostics and metadata without losing coverage or claiming no match
+AssertionError: expected 58370 to be less than or equal to 7500
+ ❯ bounded server/services/ana/__tests__/document-passage-result-bound.test.ts:52:52
+     50|   return { raw, out: JSON.parse(raw) as Rendered };
+     51| }
+     52| function bounded(raw: string) { expect(raw.length).toBeLessThanOrEqual…
+       |                                                    ^
+     53| function fullBackendQuery(query: string) {
+     54|   expect(seam.search).toHaveBeenCalledExactlyOnceWith(expect.anything(…
+ ❯ server/services/ana/__tests__/document-passage-result-bound.test.ts:198:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 6 passed (24)
+   Start at  23:38:46
+   Duration  1.66s (transform 725ms, setup 78ms, import 1.27s, tests 37ms, environment 0ms)
+

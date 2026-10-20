@@ -74,7 +74,9 @@ Targeted deleted searches for tool-outcome/shortfall replacements returned none.
 7. Complete the existing `shortfallOf` consumer with kind `'omitted'` for an
    otherwise-successful `ok: true`, empty `passages` list and positive safe-integer
    `omittedPassages`, after existing refusal/declared-status/nonempty-result
-   priorities. It is not `'empty'`. The existing adaptation note names omitted
+   priorities, before the detail-only outage heuristic: an old indexing-failure
+   diagnostic must not turn known omitted matches into an unavailable service.
+   Explicit outage/refusal signals still win. It is not `'empty'`. The existing adaptation note names omitted
    matches and guides narrowing/reading, explicitly not evidence absence. Keep
    the prior note byte-identical for rounds without an omitted shortfall. All
    real misses, outages/refusals, returned records and other tools retain their
