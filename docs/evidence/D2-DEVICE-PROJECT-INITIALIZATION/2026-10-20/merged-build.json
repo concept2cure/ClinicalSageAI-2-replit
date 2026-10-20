@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-20T22:59:19.793782+00:00",
+  "elapsedSeconds": 24.666,
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": [],
+  "rawOutput": "merged-build-output.txt.gz",
+  "outputSha256": "7c6cebcf8e437c2abf5f0800c611643087ae8ea0e4f532426475ecbb7eed34ed"
+}

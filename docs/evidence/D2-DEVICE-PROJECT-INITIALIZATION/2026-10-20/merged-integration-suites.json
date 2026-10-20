@@ -1,0 +1,20 @@
+[
+  "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx",
+  "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+  "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+  "server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts",
+  "server/routes/__tests__/submissions-leaf-study-tagging.test.ts",
+  "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+  "server/services/c2c/__tests__/add-project-market.pglite.test.ts",
+  "server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts",
+  "server/services/ectd/__tests__/dispatch-gate.test.ts",
+  "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts",
+  "server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts",
+  "server/services/part11/__tests__/version-binding.test.ts",
+  "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts",
+  "server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts",
+  "server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts",
+  "server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts",
+  "server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts",
+  "tests/routes/ectd-compile-sequence.test.ts"
+]

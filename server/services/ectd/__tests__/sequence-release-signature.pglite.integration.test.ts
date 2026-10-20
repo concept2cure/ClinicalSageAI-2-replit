@@ -179,6 +179,7 @@ beforeAll(async () => {
   // pin and the uuid half of the document pointer. Both are on the applier.
   await pglite.exec(migration('migrations/20260814e_submission_leaf_source_pin.sql'));
   await pglite.exec(migration('migrations/20260917b_submission_leaf_document_uuid.sql'));
+  await pglite.exec(migration('migrations/20261012_submission_leaf_stf_study_tagging.sql'));
   await pglite.exec(ANA_ACTIONS_DDL);
   await pglite.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   // The REAL migration that adds signed_target / binding_basis.

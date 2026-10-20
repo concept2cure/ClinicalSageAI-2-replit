@@ -127,6 +127,50 @@ interaction blocker and names the combined-tree checks required after merging.
 The 85-file run is attributed to the pre-Builder source freeze; subsequent
 reconciliation checks must be reported separately without adding overlapping counts.
 
+## Final merged qualification
+
+[Builder reconciliation](canonical-builder-reconciliation.json) records the normal
+canonical merge `2b0cbe289` after regional implementation commit `33e82d847`.
+Only the shared submission-service module changed among the prior 126 pins;
+both error codes/statuses, imports and the preparation-only creation refusal
+remain present. [Independent merged review](independent-merged-review.json)
+verifies the other 13 incoming files retain their exact incoming hashes.
+
+The expanded [first merged replay](merged-integration-before-signing-fixture.json)
+records three failures / 247 passes: the existing dispatch-signing fixture
+omitted the canonical STF study metadata migration now read by the incoming
+signature manifest. [Fixture correction](signing-fixture-correction.json) applies
+that actual existing migration and retains every original assertion. The
+[corrected 18-file replay](landing-integration.json) passes **250 / 250**, with
+all 150 [landing pins](source-freeze-landing.json) stable.
+
+A targeted audit found the same omitted migration in three other existing
+signing fixtures. Their [RED](additional-signing-fixtures-red.json) records
+31 failures / 17 passes; [GREEN](additional-signing-fixtures-green.json) passes
+**48 / 48** across all three. Existing release, revocation, tenant and stale
+content assertions are unchanged. No production signing fallback was added. [Independent fixture review](independent-publication-review.json) confirms all original assertions remain.
+
+The final [publication freeze](source-freeze-publication.json) contains 153
+source/test/migration hashes and preserves all 150 prior landing pins.
+[Final compiler](publication-typecheck.json) reports zero errors at the unchanged
+zero baseline. [Fixture lint](publication-signing-fixture-lint.json) has zero
+errors and one existing warning; the [final warning ratchet](publication-warning-ratchet.json)
+checks all 48 changed lintable files against canonical `5d18c3950` and finds no
+file-level increase. No compiler, lint or migration baseline was raised.
+
+[Merged build](merged-build.json) and all [16 merged static gates](merged-static-gates.json)
+pass on [149 merged pins](source-freeze-merged.json). Subsequent edits only add
+the existing migration to four test fixtures: every production pin and every
+other original pin is unchanged, so those production build/static results remain
+applicable. The final compiler and affected fixture regressions additionally
+bind the final fixture bytes. All successful receipts record no source drift.
+Do not add counts from these overlapping qualification epochs.
+
+[Packaging checks](checks.json) validate JSON, raw output digests, links, source
+pins and the manual worksheet status. [Artifact manifest](artifact-manifest.json)
+hashes every file in this packet except the manifest itself. The latest
+[pre-push fetch](canonical-prepush-fetch.json) records no missing canonical commits.
+
 ## Human testing and remaining limits
 
 The [Codespaces guide](../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)

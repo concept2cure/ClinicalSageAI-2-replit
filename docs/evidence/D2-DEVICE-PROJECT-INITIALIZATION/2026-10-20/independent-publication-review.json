@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-20T23:06:04.308947+00:00",
+  "reviewer": "/root/regional_initialization_review",
+  "mode": "Read-only four-fixture review; no tests, edits or Git mutations",
+  "conclusion": "No blockers; every original assertion preserved; existing canonical STF migration applied through existing loaders after leaf creation",
+  "productionSourcesChangedSinceMerge": false,
+  "sourceFreeze": "source-freeze-publication.json",
+  "sourcePins": 153,
+  "observedByRoot": {
+    "changedPaths": [
+      "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts",
+      "server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts",
+      "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts",
+      "server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts"
+    ],
+    "hashes": {
+      "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts": "92a0f3453a131d67619723fe476cd50025e7151da9ef8b2ab316f9a0064512b7",
+      "server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts": "c8b8009f030eeaf7ab961019e0030099d683f3712cada54259c024d7f89eefde",
+      "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts": "370703d835f01c939a5e880ef0323dcc24473a518fc7f02f8a1981c166923723",
+      "server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts": "c8157ddca96b3706e42d5ffca4258b0b3da52735cd40ba2e62b62aaa86b19d96"
+    },
+    "prior149PinChanges": [
+      "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts"
+    ],
+    "prior150PinChanges": []
+  }
+}

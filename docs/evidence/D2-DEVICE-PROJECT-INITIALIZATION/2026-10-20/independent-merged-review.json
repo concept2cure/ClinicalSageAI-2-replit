@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-20T22:55:36.413929+00:00",
+  "reviewer": "/root/regional_initialization_review",
+  "mode": "Read-only merged-code and documentation review; no edits or tests",
+  "merge": "2b0cbe289fc322693608e9a2393271dc2c757b38",
+  "conclusion": "No blockers; both imports, statuses and regional insert refusal intact",
+  "sourcePins": 149,
+  "sourceDrift": [],
+  "incomingSourceFiles": 14,
+  "expectedCombinedDifference": [
+    "server/services/submission-service/submission-service.ts"
+  ],
+  "incomingOtherHashesPreserved": true,
+  "combinedServiceHashObservedByRoot": "75f2580166267ffcea545d07714abd0aa7c9b9074a8f24d809048fb3da4086e2",
+  "qualificationAttribution": "Prior85-suite run remains attached to its126-hash76 epoch; merged18-suites separately recorded, no overlapping count sums"
+}

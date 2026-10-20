@@ -153,3 +153,45 @@ cases, exact source trees, empty readiness, replay with bound old/new documents,
 unchanged prior provenance and template snapshots, compiler/build/design gates.
 Human cases remain explicitly not run. Current official forms, expert legal
 adequacy and agency transport acceptance remain unverified separate work.
+
+## Final canonical reconciliation
+
+A later canonical fetch found the completed Builder study-tagging work at
+`5d18c3950`. It extends the existing leaf writer, Builder controls and sequence
+signature manifest, rather than regional project creation or editor assembly.
+Root normally merged it after committing the verified regional increment
+`33e82d847`; the only changed prior frozen source is the shared submission-service
+module. Both `DEVICE_PREPARATION_ONLY: 422` and `STALE_LEAF: 409`, their imports
+and the regional insert guard remain present. Independent read-only review found
+no interaction blocker. The source freeze expands to 149 files; 18 focused
+incoming/affected Builder, route, creation, freeze, dispatch and signing suites
+qualify that combined tree, followed by compiler/build/static/warning checks.
+The earlier 85-file regression remains attributed to its original 126-hash
+source freeze, without combining overlapping test totals.
+
+### Existing signing fixture correction after reconciliation
+
+The expanded 18-file replay reproduced three failures in
+`server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts`.
+Its existing real-migration fixture applied core/source-pin/UUID migrations but
+omitted `migrations/20261012_submission_leaf_stf_study_tagging.sql`, already on
+the canonical applier. The incoming signature read now requires those existing
+nullable columns. The shared PGlite harness and incoming binding tests already
+apply them. Searches covered the binding caller, fixtures, canonical migrations,
+applier and deleted dispatch/signature history; no retired fixture is needed.
+Extend this exact fixture with the actual existing migration, preserving all
+release, freeze-versus-dispatch and stale-content assertions. Production signing
+must continue to refuse an incomplete schema rather than hide a failed read.
+The failed replay and its original source freeze remain retained; corrected
+fixture qualification uses another explicitly pinned epoch.
+
+A targeted independent audit of real `ectd-sequence` binding callers found the
+same omitted canonical migration in three existing fixtures:
+`sequence-release-signature.pglite.integration.test.ts`,
+`governed-sign-esignature.pglite.integration.test.ts` and
+`revoke-signature-by-intent.pglite.integration.test.ts`. They already have migration
+loaders (`migration`, `read`, or the existing `fs.readFileSync` pattern)
+and real signing/revocation assertions. Reuse those loaders after the existing leaf table creation; do not handcode another schema
+or weaken any signature check. The shared PGlite harness already includes both
+columns and requires no change. The three-fixture RED and GREEN are recorded
+separately from the 18-file replay, whose pinned sources remain unchanged.
