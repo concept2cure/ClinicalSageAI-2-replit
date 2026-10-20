@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-19T12:23:45.276Z",
+  "generatedAt": "2026-10-19T13:47:27.192Z",
   "git": {
-    "sha": "99acc88dcd232c18891208a992c3387d29b745c4",
+    "sha": "2dc1e396d040c5a7b14b91af6e70dab3b03c4b4f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2252,10 +2252,6 @@
         "bytes": 185250
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 174021
-      },
-      {
         "file": "server/routes/c2c/artifacts.ts",
         "bytes": 172271
       },
@@ -2282,6 +2278,10 @@
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 153059
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 151270
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2526,10 +2526,6 @@
         "lines": 3106
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3087
-      },
-      {
         "file": "server/routes/concept2cure.ts",
         "lines": 3061
       },
@@ -2572,6 +2568,10 @@
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2604
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
