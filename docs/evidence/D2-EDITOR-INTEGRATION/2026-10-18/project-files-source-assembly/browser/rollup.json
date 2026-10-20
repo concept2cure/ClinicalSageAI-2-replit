@@ -11,6 +11,8 @@
   "pageErrors": 0,
   "unexpectedHttp": 0,
   "navigation": 0,
+  "fixtureDependencyCount": 7,
+  "sharedHost": "../../saved-source-reuse/browser/probe.tsx",
   "chooserAssertionsPerAdmittedCase": {
     "exactProjectScopedReads": 2,
     "noAuthoringMutationBeforeHandoff": true,

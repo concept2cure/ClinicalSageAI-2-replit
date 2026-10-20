@@ -1,0 +1,15 @@
+{
+  "command": [
+    "node",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/browser.mjs"
+  ],
+  "startedAt": "2026-10-20T19:34:53.087003+00:00",
+  "finishedAt": "2026-10-20T19:35:33.977160+00:00",
+  "elapsedSeconds": 40.89,
+  "exitCode": 0,
+  "node": "v22.23.3",
+  "stdout": "desktop-light-deterministic: pass\ndesktop-dark-ana: pass\ntouch-light-ana: pass\ntouch-dark-deterministic: pass\ntouch-light-read-only: pass\ntouch-dark-current-eligibility: pass\n{\"status\":\"pass\",\"passed\":6,\"caseCount\":6,\"frozen\":true,\"fixtureFrozen\":true}\n",
+  "stderr": "",
+  "stdoutSha256": "6771533ab2ec6d478bf0a4b40d309a79d4b652bea6e39a64e461e384b873193f",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

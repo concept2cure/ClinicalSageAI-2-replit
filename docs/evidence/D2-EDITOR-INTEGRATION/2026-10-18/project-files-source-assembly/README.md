@@ -27,6 +27,8 @@ Client paths are under `client/src/concept2cure/v2/` (`editor/` or `surfaces/`).
 Current source-assembly/build name searches across client, routes, authoring
 services and shared contracts, plus deleted-file history for ProjectFile,
 SourceAssembly and VaultSourceBuild, found no competing rail implementation.
+The browser packet reuses the sibling saved-source fixture host, with a scoped
+mock binding; the retained historical host itself stays unchanged.
 
 ## Qualification
 
@@ -65,6 +67,17 @@ diagnostic are retained; neither is substituted for the final six-case result.
 No source reader, schema, dependency, stylesheet, provider, editor target channel
 or native editor implementation was added or replaced. Direct publication uses
 the normal commit/push gates.
+
+The [first push was refused](release/first-push-rejected.json) because this
+packet copied an existing browser host. The fixture now imports that retained
+host and binds this packet's mock explicitly. The
+[duplicate-code gate passes](release/fixture-reuse-repo-health.json) with zero
+duplicate groups and no baseline change. Earlier captures and the
+[first qualification index](release/first-qualification-checks.json) are retained
+separately. The six affected browser cases pass again with 43 product hashes
+and seven fixture dependency hashes unchanged. The compiler/build/228-test
+receipts retain the same 55 source/configuration bytes; those broad checks were
+not repeated for the fixture-only change.
 
 The [Codespaces guide](../../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)
 includes the rail handoff and live eligibility checks. Its 39 human cases remain

@@ -32,7 +32,8 @@ const sources = ['design-system/colors_and_type.css',
     .map(name => `client/src/concept2cure/v2/styles/${name}.css`)];
 const productionPins = () => Object.fromEntries(sources.map(path => [path, hash(path)]));
 const before = productionPins();
-const readFixturePins = () => Object.fromEntries(['probe.tsx', 'server.mjs', 'browser.mjs', 'mock-api.mjs', 'baseline-entry.mjs', 'index.html']
+const readFixturePins = () => Object.fromEntries(['probe.tsx', 'server.mjs', 'browser.mjs', 'mock-api.mjs', 'baseline-entry.mjs', 'index.html',
+  '../../saved-source-reuse/browser/probe.tsx']
   .map(name => [name, hash(relative(ROOT, resolve(BUNDLE, name)))]));
 const fixturePins = readFixturePins();
 const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] });

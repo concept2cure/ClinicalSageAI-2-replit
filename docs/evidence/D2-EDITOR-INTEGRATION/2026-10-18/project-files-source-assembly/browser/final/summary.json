@@ -1,6 +1,6 @@
 {
-  "testedHead": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
-  "completedAt": "2026-10-20T19:35:33.884Z",
+  "testedHead": "63374d786f8c2ab3590ec278785c62831b1907e6",
+  "completedAt": "2026-10-20T19:46:52.267Z",
   "productionSourceSha256": {
     "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
     "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c68de607c712a2d0a6b480926b0444576425386eafb256989d1f4dcc63963727",
@@ -47,12 +47,13 @@
     "client/src/concept2cure/v2/styles/surface-text-ramp.css": "22661b7cb0a4563c4dfbcf2f11e7ec04dbf85de9e3a44ce61b79d0a6418924dd"
   },
   "fixtureSourceSha256": {
-    "probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b",
-    "server.mjs": "809d4ff354058c24b2e8a08eabd5c375307e039c667203e0607464305d5de1f0",
-    "browser.mjs": "12214698e295037b885a473a82bff90ba3dcfed1cd2c151740a17d44f71f813d",
+    "probe.tsx": "7f45bb7ab9266e597d1b846160d96f09a810f4fda107e77491fb5cb678641bd3",
+    "server.mjs": "87fc881e32b7e1e7ffafcd870450ecaa7c217aca462474aced73bdc300339cdf",
+    "browser.mjs": "05c892d27d03bea6d12c02bf876652a3c1f48e7f907821a5749cb02f98611f96",
     "mock-api.mjs": "bbcb093c00b35b97618043d03b02535b61096902194f387be3a9b51cc5a122f3",
     "baseline-entry.mjs": "d10ea0cedb9ec6ffe73689e6c683fec0b270629ec4565cdd1cb75a26ea0b54bc",
-    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36"
+    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36",
+    "../../saved-source-reuse/browser/probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b"
   },
   "productionSourceSha256After": {
     "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
@@ -100,12 +101,13 @@
     "client/src/concept2cure/v2/styles/surface-text-ramp.css": "22661b7cb0a4563c4dfbcf2f11e7ec04dbf85de9e3a44ce61b79d0a6418924dd"
   },
   "fixtureSourceSha256After": {
-    "probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b",
-    "server.mjs": "809d4ff354058c24b2e8a08eabd5c375307e039c667203e0607464305d5de1f0",
-    "browser.mjs": "12214698e295037b885a473a82bff90ba3dcfed1cd2c151740a17d44f71f813d",
+    "probe.tsx": "7f45bb7ab9266e597d1b846160d96f09a810f4fda107e77491fb5cb678641bd3",
+    "server.mjs": "87fc881e32b7e1e7ffafcd870450ecaa7c217aca462474aced73bdc300339cdf",
+    "browser.mjs": "05c892d27d03bea6d12c02bf876652a3c1f48e7f907821a5749cb02f98611f96",
     "mock-api.mjs": "bbcb093c00b35b97618043d03b02535b61096902194f387be3a9b51cc5a122f3",
     "baseline-entry.mjs": "d10ea0cedb9ec6ffe73689e6c683fec0b270629ec4565cdd1cb75a26ea0b54bc",
-    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36"
+    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36",
+    "../../saved-source-reuse/browser/probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b"
   },
   "productionFrozenDuringCapture": true,
   "fixtureFrozenDuringCapture": true,

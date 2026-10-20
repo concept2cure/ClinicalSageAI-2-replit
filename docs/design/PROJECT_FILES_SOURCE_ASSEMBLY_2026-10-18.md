@@ -28,8 +28,12 @@ their original source only; final qualification must use the updated checkout.
 - `shared/authoring/assembly-sources.ts` and the existing
   `server/services/authoring/authoring-assembly-sources.ts` own source identities
   and current source verification. No parallel reader or contract is needed.
+- The retained `saved-source-reuse/browser/probe.tsx` evidence host already
+  mounts the actual editor. This packet imports that host and scopes its mock
+  module through the local fixture server, rather than copying the host.
 
-Paths above are under `client/src/concept2cure/v2/` unless otherwise named.
+Product paths above are under `client/src/concept2cure/v2/` unless otherwise named;
+the evidence host is under the sibling 2026-10-18 editor-integration packet.
 Current-branch searches covered source assembly/build names in client surfaces,
 authoring routes/services and shared contracts. Deleted-file history was checked
 with `git log --all --diff-filter=D` for ProjectFile, SourceAssembly and

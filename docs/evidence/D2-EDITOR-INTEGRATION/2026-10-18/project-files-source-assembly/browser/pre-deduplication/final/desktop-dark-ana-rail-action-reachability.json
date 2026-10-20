@@ -1,0 +1,12 @@
+{
+  "kind": "rail-action-reachability",
+  "requiredWheelSteps": 0,
+  "samples": [],
+  "action": {
+    "x": 1174.734375,
+    "y": 865.5,
+    "width": 132.140625,
+    "height": 32
+  },
+  "qualification": "No programmatic scroll to footer/action; naturally visible or reached by real mouse wheel over existing rail."
+}

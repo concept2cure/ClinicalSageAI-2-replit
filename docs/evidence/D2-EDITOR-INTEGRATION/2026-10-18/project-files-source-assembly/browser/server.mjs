@@ -3,7 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
 const root = resolve(fileURLToPath(new URL('../../../../../../', import.meta.url)));
+const sharedHost = fileURLToPath(new URL('../../saved-source-reuse/browser/probe.tsx', import.meta.url));
+const scopedMock = fileURLToPath(new URL('./mock-api.mjs', import.meta.url));
 const server = await createServer({ root, configFile: false,
+  plugins: [{ name: 'project-files-browser-shared-host', enforce: 'pre',
+    resolveId(specifier, importer) {
+      if (specifier === './mock-api.mjs' && importer?.split('?')[0] === sharedHost) return scopedMock;
+      return null;
+    } }],
   resolve: { alias: { '@': root + '/client/src', '@shared': root + '/shared', react: root + '/node_modules/react',
     'react-dom': root + '/node_modules/react-dom', '@tanstack/react-query': root + '/node_modules/@tanstack/react-query' } },
   server: { host: '127.0.0.1', port: 5192, strictPort: true, watch: null },

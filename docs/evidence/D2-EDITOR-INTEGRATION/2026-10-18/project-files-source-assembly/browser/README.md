@@ -2,9 +2,10 @@
 
 The [definitive summary](final/summary.json), [execution receipt](final-run.json)
 and [rollup](rollup.json) record **6/6 passing cases**, 31 measured stages and
-25 screenshots on 2026-10-20. The execution base was `e1c63ae9b`, including the
-pending Project files adapter changes identified by exact SHA-256 pins. All 43
-production pins and all six fixture pins stayed unchanged during capture.
+25 screenshots on 2026-10-20. The replay execution checkout was `63374d786`,
+with the completed Project files adapter identified by exact SHA-256 pins.
+All 43 production pins and all seven fixture dependency pins stayed unchanged
+during capture, including the reused browser host from the prior packet.
 
 ## What already exists
 
@@ -18,6 +19,13 @@ no product surface or stylesheet. Client paths are under
 `client/src/concept2cure/v2/` (`editor/` and `surfaces/`). The parent
 [contract](../../../../../design/PROJECT_FILES_SOURCE_ASSEMBLY_2026-10-18.md)
 records the complete inventory and existing-capability searches.
+
+This packet's one-line `probe.tsx` imports the unchanged host at
+`../../saved-source-reuse/browser/probe.tsx`. Its Vite server binds only that
+host's `./mock-api.mjs` import to this packet's existing synthetic API module.
+The [served-module receipt](shared-host-binding.json) records an actual loopback
+HTTP 200 transform with that exact resolved mock import. The shared host is
+pinned as the seventh fixture dependency; the earlier packet is not edited.
 
 ## Definitive cases
 
@@ -90,6 +98,18 @@ not establish an accessibility audit or simultaneous visibility of every field.
 
 ## Historical and preparation receipts
 
+- The initial successful six-case capture preceded the normal pre-push gate's
+  discovery of a copied browser host. The fix reuses the already existing host
+  rather than changing a baseline or excluding evidence. That first
+  [summary](pre-deduplication/final/summary.json),
+  [raw execution](pre-deduplication/final-run.json),
+  [validation](pre-deduplication/fixture-validation.json),
+  [rollup](pre-deduplication/rollup.json) and
+  [cleanup](pre-deduplication/cleanup.json) are retained separately. Exact
+  pre-deduplication fixture and README bytes are preserved as UTF-8 strings with
+  hashes in [source storage](pre-deduplication/source-and-readme-storage.json),
+  without introducing another standalone host copy. The definitive replay
+  followed the reuse change and again passed all six cases.
 - The [original missing-action RED](initial-entry-red/receipt.json) and
   [screenshot](initial-entry-red/selected-vault-before-build-entry.png) are retained
   unchanged from the interrupted 2026-10-18 work. The actual selected Vault footer
@@ -104,8 +124,9 @@ not establish an accessibility audit or simultaneous visibility of every field.
   diagnostic source/fixture pins remain in [its summary](diagnostic/summary.json).
   It is not substituted for the definitive six-case run.
 - [Final fixture validation](fixture-validation.json) records zero ESLint errors
-  and warnings across all five executable fixtures, plus four passing Node 22
-  syntax checks. No lint baseline or dependency was changed.
+  and warnings across all five local executable fixtures and the unchanged
+  shared host, plus four passing Node 22 syntax checks. No lint baseline or
+  dependency was changed.
 
 ## Reproduction and cleanup
 

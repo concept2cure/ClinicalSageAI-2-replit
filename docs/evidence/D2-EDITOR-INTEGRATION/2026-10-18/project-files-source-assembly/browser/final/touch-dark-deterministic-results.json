@@ -614,16 +614,6 @@
       "query": ""
     },
     {
-      "method": "POST",
-      "path": "/api/realtime-collab/rooms",
-      "query": "",
-      "body": {
-        "documentId": "dddddddd-0000-4000-8000-000000000181",
-        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
-        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
-      }
-    },
-    {
       "method": "GET",
       "path": "/api/data-origins/document",
       "query": "?documentTable=authoring_sections&documentId=aaaaaaaa-0000-4000-8000-000000000181"
@@ -632,6 +622,16 @@
       "method": "GET",
       "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000181/sources",
       "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "query": "",
+      "body": {
+        "documentId": "dddddddd-0000-4000-8000-000000000181",
+        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+      }
     },
     {
       "method": "GET",

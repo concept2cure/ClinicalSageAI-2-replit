@@ -1,5 +1,5 @@
 {
-  "recordedAt": "2026-10-20T19:40:35.560126+00:00",
+  "recordedAt": "2026-10-20T19:49:33.168527+00:00",
   "branch": "concept2cure-v2",
   "executionBase": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
   "initialBase": "3cae08d236ba5be6dd96284bca2c47b4605c007d",
@@ -46,7 +46,13 @@
     "sourceAndFixturePinsStillCurrent": true,
     "receipt": "../browser/final/summary.json",
     "syntheticHttpAndProvider": true,
-    "directWorkbenchBoundary": true
+    "directWorkbenchBoundary": true,
+    "testedHead": "63374d786f8c2ab3590ec278785c62831b1907e6",
+    "productionPinCount": 43,
+    "fixtureDependencyCount": 7,
+    "postFixtureReuseReplay": true,
+    "executionReceipt": "../browser/final-run.json",
+    "sharedHostBindingReceipt": "../browser/shared-host-binding.json"
   },
   "warningRatchet": {
     "exitCode": 0,
@@ -161,5 +167,23 @@
     "shared/authoring/saved-assembly-sources.ts": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
     "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "fixtureConsolidation": {
+    "reason": "Normal push gate rejected a byte-identical browser host copied from the existing saved-source packet.",
+    "firstPushReceipt": "first-push-rejected.json",
+    "repoHealthReceipt": "fixture-reuse-repo-health.json",
+    "repoHealthExitCode": 0,
+    "duplicateGroups": 0,
+    "priorHostUnchanged": true,
+    "baselineIncreased": false,
+    "affectedBrowserCasesReplayed": 6,
+    "fixtureLintExitCode": 0,
+    "fixtureLintFiles": 6,
+    "nodeSyntaxChecksPassed": 4,
+    "originalQualificationIndex": "first-qualification-checks.json",
+    "priorBrowserCapture": "../browser/pre-deduplication/README.md",
+    "productTestConfigurationPinsUnchanged": true,
+    "broadCheckRerunAfterFixtureReuse": false,
+    "qualification": "The compiler, production build and 228-test receipts remain bound to the same 55 source/configuration bytes. Only browser evidence fixture wiring changed; the six affected browser cases, strict fixture lint, syntax, warning comparison and repo-health gate were rerun."
   }
 }
