@@ -6,7 +6,10 @@ Implementation: `db0d0a218`; bodyless-receipt correction: `b97d28acb`;
 null-revision correction and final build: `cf9a57ec1f0c5efb73ada50d2805786d87aefe11`.
 All 34 execution pin checks (14 implementation/test + 20 browser) match that
 Git tree. See `source-inputs.json`, `browser/result/result.json` and
-`qualification.json`. Corrected source compiler/push gates are pending.
+`qualification.json`. Corrected source published directly as
+`1a1683ece52898a06d0fb525866914843786627d`; remote ref verified. Normal gates
+passed, full compiler zero errors/exit0/baseline0 and no warning-count growth.
+See `publication.json` and `logs/corrected-push.log`.
 
 ## What already exists
 
@@ -22,6 +25,9 @@ Git tree. See `source-inputs.json`, `browser/result/result.json` and
   `server/services/ectd/core-to-packager.ts`: reads/projection already carry metadata.
 - `server/services/ectd/{ectd4-validator,stf-generator}.ts`: existing coverage,
   filename and STF rendering rules; document tag recall remains unverified.
+- `server/services/ana/{AnaToolDefinitions,AnaToolExecutor}.ts`: existing
+  `package_ectd_for_region` accepts/projects metadata directly for packaging;
+  it does not persist human Builder edits and remains unchanged.
 - `server/services/part11/signature-persistence.ts`: existing manifest binding
   omits study fields; it is extended rather than replaced.
 - `client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx`: existing Builder
@@ -83,10 +89,12 @@ The final production client, server and audit-chain verifier build passed at
 `cf9a57ec1`. Both client/server embed that anchor; output hashes are recorded
 in `qualification.json`. The earlier build log remains historical. Existing bundle-size warnings remain. The evidence
 directory secret scan reports 0 leaks with the unchanged repository config.
-The normal compiler and pushed-files warning ratchet must pass before publication.
+The normal compiler and pushed-files warning ratchet passed before publication.
 
 The initial full compiler rejected publication with two diagnostics (nullable
 revision timestamp and a Supertest helper argument). Both were corrected without
 a baseline change. The new null-revision regression refuses unverifiable rows
 without write, audit or demotion. The initial rejected push is retained in
-`logs/initial-compiler-rejected-push.log`; the corrected build passes and final compiler/push evidence is pending.
+`logs/initial-compiler-rejected-push.log`; the corrected build and final compiler
+pass, and the accepted direct push is retained separately. No PR, force push,
+hook bypass, type/lint baseline change, or human witnessing is claimed.

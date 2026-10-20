@@ -22,6 +22,9 @@ the work order remain open for direct placement dialogs and STF conformance.
 - `server/services/ectd/ectd4-validator.ts` already owns STF coverage requirements;
   `stf-generator.ts` already checks filenames, writes STF XML and distinguishes
   verified dataset tags from advisory, unverified document-tag recall.
+- `server/services/ana/{AnaToolDefinitions,AnaToolExecutor}.ts` already accepts
+  and projects study metadata for `package_ectd_for_region`. That direct packaging
+  tool does not persist human Builder leaf metadata; it is left unchanged.
 - `server/services/part11/signature-persistence.ts` already binds sequence leaf
   manifests for signatures and waivers, but its explicit projection omits study
   metadata. Extend that digest rather than adding another binding.

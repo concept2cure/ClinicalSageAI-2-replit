@@ -42,6 +42,19 @@
     }
   },
   "humanWitnessed": false,
-  "normalPushGates": "pending corrected source push",
-  "baselinesChanged": false
+  "normalPushGates": {
+    "acceptedSource": "1a1683ece52898a06d0fb525866914843786627d",
+    "typecheckErrors": 0,
+    "tscExit": 0,
+    "typecheckBaseline": 0,
+    "eslintWarningGrowth": 0,
+    "allPrePushGatesPassed": true
+  },
+  "baselinesChanged": false,
+  "secretScans": {
+    "acceptedPushRange": "76c60846d..1a1683ece",
+    "pushRangeLeaks": 0,
+    "finalEvidenceDirectoryLeaks": 0,
+    "repositoryConfigChanged": false
+  }
 }

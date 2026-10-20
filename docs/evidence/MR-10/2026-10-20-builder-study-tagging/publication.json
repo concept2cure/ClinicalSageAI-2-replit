@@ -1,0 +1,16 @@
+{
+  "publishedSource": "1a1683ece52898a06d0fb525866914843786627d",
+  "remote": "origin",
+  "branch": "concept2cure-v2",
+  "remoteObserved": "1a1683ece52898a06d0fb525866914843786627d",
+  "verification": "Authenticated git ls-remote returned this exact ref after accepted normal push.",
+  "executionPinChecksMatched": 34,
+  "buildAnchor": "cf9a57ec1f0c5efb73ada50d2805786d87aefe11",
+  "buildSourceFilesUnchangedInPublishedTree": true,
+  "prCreated": false,
+  "forcePushed": false,
+  "hooksBypassed": false,
+  "baselinesChanged": false,
+  "humanWitnessed": false,
+  "remaining": "Direct placement metadata inputs and STF DTD conformance; remaining MR-10/CAT2-04 work remains open."
+}
