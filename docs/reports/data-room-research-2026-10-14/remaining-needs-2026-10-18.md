@@ -56,6 +56,14 @@ source listing, upload chip, recovery CLI). Other extraction callers stay
 unbounded until they can report coverage. Per-page confidence persistence and
 multilingual OCR accuracy remain open.
 
+Delivery completion, 2026-10-20: capture processing now retains already-returned
+verified page spans and actual aggregate OCR confidence in existing provenance,
+bound to original bytes, exact extracted text and method. Replacement, retained
+text and cached-extraction snapshots are qualified; see
+[capture extraction evidence](../../evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/README.md).
+This does not add public page citations or per-page scores/engine identity, and
+does not qualify multilingual OCR accuracy. Those parts of priority 4 remain open.
+
 Reconciliation, 2026-10-18 (priority 8): the
 [launch evidence reconciliation](../launch-evidence-reconciliation-2026-10-18.md)
 finds no D1–D10 row green. All evidence is local, CI or draft; the missing

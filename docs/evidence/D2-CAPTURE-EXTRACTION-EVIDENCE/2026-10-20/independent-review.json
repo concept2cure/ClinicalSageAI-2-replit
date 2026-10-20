@@ -1,0 +1,19 @@
+{
+  "type": "Read-only independent code review, no additional tests/compiler/API",
+  "reviews": [
+    {
+      "reviewer": "capture_contract_review",
+      "scope": "Contract/read model; final exact text/source identity, maps/confidence, strict malformed cache, deep snapshots, authorized claim binding and SQL retention/replacement",
+      "result": "No findings"
+    },
+    {
+      "reviewer": "ocr_evidence_audit",
+      "scope": "Independent final persistence and source projection review, unchanged current-source/tenant/identity/lease fences",
+      "result": "No findings"
+    }
+  ],
+  "reviewedProduction": {
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "2054682c485173a5cf79dd8a5d234755cd67ba83d05cc8addb612417da1c1e2a",
+    "server/services/clinical-regulatory-evidence/capture-extraction-evidence.ts": "281e3f7ddfb773f972d8fd37420d7fc4188503d6deadce035645cbaacf9f7c1b"
+  }
+}
