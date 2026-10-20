@@ -1,0 +1,247 @@
+{
+  "recordedAtUtc": "2026-10-20T20:09:36.812902+00:00",
+  "sourceCommit": "4c0c791c42aa72b49e4d23232437bc270ec592a5",
+  "executionDateUtc": "2026-10-18",
+  "result": {
+    "passed": 91,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "files": 4,
+    "reportSuccess": true,
+    "separatelyCapturedProcessExitCode": null,
+    "durationSecondsFromLog": 48.8,
+    "casesPerFile": {
+      "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx": 29,
+      "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx": 41,
+      "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx": 12,
+      "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx": 9
+    }
+  },
+  "sourceBinding": {
+    "beforePins": 42,
+    "beforePinsMatchCommittedGit": true,
+    "beforeIndexAndHeadMatchedWorktree": true,
+    "immediateAfterSnapshotPresent": false,
+    "recoveryComparison": "recovery-comparison-2026-10-20.json",
+    "lateRecoveryAll42WorktreeHashesMatchBefore": true,
+    "boundary": "The final run has a complete green raw report/log and42 pre-execution source pins independently verified against4c Git. The immediate final after-snapshot was not retained during the interrupted agent turn. TheOct20 recovery comparison is explicitly late and does not substitute for a same-execution after-snapshot."
+  },
+  "redProofs": {
+    "initialCredentialProbe": {
+      "head": "d505526f17ffee9868cee6c49abd6a80e73f9e43",
+      "mergeHead": "3cae08d236ba5be6dd96284bca2c47b4605c007d",
+      "passed": 0,
+      "failed": 5,
+      "filteredOrSkipped": 36,
+      "files": 1,
+      "boundary": "Merge worktree after hook/fixture alignment, before incoming saved-source controller/transport credential repair;10 before-hashes retained. Exact red probe command was not separately retained; raw report names thefive executed controls."
+    },
+    "firstIntegratedCohort": {
+      "sourceCommit": "aa4dd090ffe408b119bf8ed4a842f95f8df71311",
+      "passed": 90,
+      "failed": 1,
+      "files": 4,
+      "beforeAfter42PinsUnchanged": true,
+      "failure": "Late reuse after bearer mismatch retained the historical display because redraw was suppressed. The final one-line correction restores redraw-on-alive while preserving current-owner read/cache/adoption and captured-header guards."
+    }
+  },
+  "ownedFinalLint": {
+    "files": 5,
+    "errors": 0,
+    "warnings": 0
+  },
+  "reconciliationPatchBoundary": "Patch and owned-frozen pins describe the initial aa4 composition before the final one-line redraw correction, not the final4c controller.",
+  "limits": "Default Vitest synthetic UI/host/account fixtures only. This is a separate91-case execution, not a new full717 UI/native/hosted-CI/human witness run. Root owns canonical merge, overall metadata, expanded secret scan and publication status.",
+  "archives": [
+    {
+      "archive": "task-handoff-saved-source-ui-red.log.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-red.log",
+      "originalBytes": 14069,
+      "originalSha256": "7357f3ec27014cbba256c9a28fd2b95538f84e879f77ac8c0edbb0bd6641452a",
+      "gzipBytes": 2588,
+      "gzipSha256": "8e964cfde8b098a4fa41f119fd4d944fdb772d7ac2fc6ed6c32375cb1090c569",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-red.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-red.json",
+      "originalBytes": 16290,
+      "originalSha256": "3bc6af18827f557728e94fccc4658520a679e6d5ff355a5dbb22578ae87dd102",
+      "gzipBytes": 2153,
+      "gzipSha256": "5d6df123207cf2b3c622bfac186eaa5cdc22a5953577f9d4c85d258af414c16a",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-red-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-red-before-pins.json",
+      "originalBytes": 1535,
+      "originalSha256": "62a7e06f801f7dd853268f5c379be6d66a277b1702017f913848bb907066632e",
+      "gzipBytes": 695,
+      "gzipSha256": "0aaa8c98a25036680c7181b1abb1eaa5b497409bdaa31715627d7930172116c2",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-integration-red.log.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-integration-red.log",
+      "originalBytes": 21512,
+      "originalSha256": "4d4ebed0596dc7d846a960edba9e2e1da6c76ef523e7a073584240351b44c708",
+      "gzipBytes": 3879,
+      "gzipSha256": "5b99fcc7dc1a27655afa24235ddf470ccf6b5fdc22a12b38403ae299563be840",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-integration-red.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-integration-red.json",
+      "originalBytes": 35502,
+      "originalSha256": "2f95b3bd71e21c2480c4a9ff4b2ac1a1b597d2322e5590b50ef2501300b37ed9",
+      "gzipBytes": 4950,
+      "gzipSha256": "8eecbaeefb3897df75e0e26042d6e4cbd4697c15ae45721302885d557499493f",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-integration-red-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-integration-red-before-pins.json",
+      "originalBytes": 9815,
+      "originalSha256": "e8f058e32f027a271b7e3ac01475485a0ae8c1ea812cfd988065ccb82915236c",
+      "gzipBytes": 3445,
+      "gzipSha256": "06b7c5c7572017357f21a3eefe663b8baf4b669422238c8c59fe1db3564804b5",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-integration-red-after-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-integration-red-after-pins.json",
+      "originalBytes": 9840,
+      "originalSha256": "01487218c9d28c054a9f16a6ef41b8d30140c0dd03f507126f915336d565654c",
+      "gzipBytes": 3459,
+      "gzipSha256": "d54942bf341775cdaed39043437cc16bdcac952936705f9e561246f0784480d2",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-integration-red-command.txt.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-integration-red-command.txt",
+      "originalBytes": 636,
+      "originalSha256": "5953f12af5fb95f8994ecf998264c0b94c8be9981a05a31870f4792e174e6489",
+      "gzipBytes": 302,
+      "gzipSha256": "2534e009b85458652bc6958eef5106e311a8e9b26d04e38ffa8ff49660b5249d",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-integration-red-files.txt.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-integration-red-files.txt",
+      "originalBytes": 305,
+      "originalSha256": "be5f65ad8f06478996047cb804ac41de5d5e1dc635c73c43a6a23399d3c05195",
+      "gzipBytes": 127,
+      "gzipSha256": "2b1c38671c743b9a976c6f5f81d5cbc63318efc189dfcd38c23ae632c10a978d",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-final.log.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-final.log",
+      "originalBytes": 19250,
+      "originalSha256": "808aeb7a62863e7a66c7dca882bf4df965dc7fac3a300b47f0a5f6ab86c05ab3",
+      "gzipBytes": 3143,
+      "gzipSha256": "bd540db591f531d817e097410a71eead5c95e7497419d240dcc2ee066d14043d",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-final.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-final.json",
+      "originalBytes": 35215,
+      "originalSha256": "a1b03a7f1ed5baa2773ee58d875d4b3f96e5ba79f3fac85d4168310df623f0f1",
+      "gzipBytes": 4757,
+      "gzipSha256": "4f570d9aafc7cfcb0896721cbd4ba2b309b18a502c0deea924a52fbd681572ff",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-final-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-final-before-pins.json",
+      "originalBytes": 9815,
+      "originalSha256": "dddeba6e00157d22b68e44cfccc9d7b0a646535990bf64281eff5175e4a5bd37",
+      "gzipBytes": 3445,
+      "gzipSha256": "238a18d246b870fa9213568e95e7d45af30ef735d7ab377f8d58aaa5af71a1f2",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-final-command.txt.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-final-command.txt",
+      "originalBytes": 636,
+      "originalSha256": "5953f12af5fb95f8994ecf998264c0b94c8be9981a05a31870f4792e174e6489",
+      "gzipBytes": 302,
+      "gzipSha256": "2534e009b85458652bc6958eef5106e311a8e9b26d04e38ffa8ff49660b5249d",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-ui-final-files.txt.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-ui-final-files.txt",
+      "originalBytes": 305,
+      "originalSha256": "be5f65ad8f06478996047cb804ac41de5d5e1dc635c73c43a6a23399d3c05195",
+      "gzipBytes": 127,
+      "gzipSha256": "2b1c38671c743b9a976c6f5f81d5cbc63318efc189dfcd38c23ae632c10a978d",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-owned-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-owned-before-pins.json",
+      "originalBytes": 1490,
+      "originalSha256": "2342c98671b936f2f61a96556092dcd436fa0f0a2670a1c0de68809948125d15",
+      "gzipBytes": 593,
+      "gzipSha256": "67eb85706c746ba14621b6223957336a2a3a4163453197be6d83a1de45a94619",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-owned-frozen-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-owned-frozen-pins.json",
+      "originalBytes": 1301,
+      "originalSha256": "c9ededafe9349452d90373eab92b8b5563398b92fc42c227aa964951178a3716",
+      "gzipBytes": 579,
+      "gzipSha256": "cef257b6c33beba7d2d20c6903105121a9302dce7174298149b3c2d111450e0c",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-owned-lint.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-owned-lint.json",
+      "originalBytes": 1352,
+      "originalSha256": "59d644891fad375a269aa8056aa9c6fe39b0ae18d4e0fde68e54f697c2f1a7a8",
+      "gzipBytes": 241,
+      "gzipSha256": "8e835373d5ac0f13fa2dbbaa2d7ecc1cf3c14124455a0b936f2f730effbaba06",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-owned-lint.stderr.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-owned-lint.stderr",
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipBytes": 20,
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-owned-final-lint.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-owned-final-lint.json",
+      "originalBytes": 1352,
+      "originalSha256": "59d644891fad375a269aa8056aa9c6fe39b0ae18d4e0fde68e54f697c2f1a7a8",
+      "gzipBytes": 241,
+      "gzipSha256": "8e835373d5ac0f13fa2dbbaa2d7ecc1cf3c14124455a0b936f2f730effbaba06",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-owned-final-lint.stderr.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-owned-final-lint.stderr",
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipBytes": 20,
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "gzipMtime": 0
+    },
+    {
+      "archive": "task-handoff-saved-source-reconciliation.patch.gz",
+      "originalPath": "/workspace/scratch/task-handoff-saved-source-reconciliation.patch",
+      "originalBytes": 44410,
+      "originalSha256": "7218ee9705b203153a9f0b3969e91705057eb433176c8129c8441bfe363e0919",
+      "gzipBytes": 10301,
+      "gzipSha256": "74afa18380ba83bf5bbe6b326c190862a1e8b4fc573db7eb41826d2ac58de8e5",
+      "gzipMtime": 0
+    }
+  ]
+}

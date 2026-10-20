@@ -1,0 +1,393 @@
+{
+  "recordedAtUtc": "2026-10-20T20:09:36.812902+00:00",
+  "qualifiedSourceCommit": "4c0c791c42aa72b49e4d23232437bc270ec592a5",
+  "originalExecutionStartedAtUtc": "2026-10-18T00:55:46.901000+00:00",
+  "snapshotTiming": "Late recovery inspection on2026-10-20; this is not an immediate post-execution snapshot from2026-10-18.",
+  "originalImmediateAfterSnapshotPresent": false,
+  "recoveredHeadBefore": "4c0c791c42aa72b49e4d23232437bc270ec592a5",
+  "recoveredHeadAfter": "4c0c791c42aa72b49e4d23232437bc270ec592a5",
+  "recoveredHeadStableDuringInspection": true,
+  "pinnedSources": 42,
+  "allBeforePinsMatchQualifiedGit": true,
+  "allRecoveredWorktreePinsMatchBefore": true,
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx",
+      "sha256": "7b7b30933a81f1a412ecb78cfde3d49833c97d5b6f7750344a5e1326b7ba03c9",
+      "git_blob": "31c57c171c39f5d5fe86c666abfa34debf49e284",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "7b7b30933a81f1a412ecb78cfde3d49833c97d5b6f7750344a5e1326b7ba03c9",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+      "sha256": "039e7c511e2e989c7f8de9cd6fb5f65fa1ce23a573f5e364d62be0c342544950",
+      "git_blob": "dc62b43b21627b67e3ec8524a9f7e44cf6fc2b24",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "039e7c511e2e989c7f8de9cd6fb5f65fa1ce23a573f5e364d62be0c342544950",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AssemblySourcesNotice.tsx",
+      "sha256": "ad3ca3e492a9c8a07ee507308353b58c08f0073fd783244e770f7c7e9637953a",
+      "git_blob": "0b9be93e04bb00d878e908ca2dec73170aabbc08",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "ad3ca3e492a9c8a07ee507308353b58c08f0073fd783244e770f7c7e9637953a",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+      "sha256": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4",
+      "git_blob": "61f9644600c2dd0780ba71d679ff4dc6007c1185",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+      "sha256": "72795c57c0eaa9b80392944d8837f43a872ce71f6f184f79e7d8696ee80e1cc3",
+      "git_blob": "c3bf2b61f11361d62c009fb29772fafecb1a363a",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "72795c57c0eaa9b80392944d8837f43a872ce71f6f184f79e7d8696ee80e1cc3",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "2c6a50489735f21bd983d5de32486083fa66c9b136257d2f7c2149dc9d9e9d79",
+      "git_blob": "f883de41773446c2939d4dd3051b581b31a03d02",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "2c6a50489735f21bd983d5de32486083fa66c9b136257d2f7c2149dc9d9e9d79",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+      "sha256": "7395aa2058d4fd760db55f128236c2267017a441dff5600ccd2db5ad1fa866b8",
+      "git_blob": "c7fb663fbd961f79be4c06ba9a6f7289230cdf03",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "7395aa2058d4fd760db55f128236c2267017a441dff5600ccd2db5ad1fa866b8",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx",
+      "sha256": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a",
+      "git_blob": "9e9a16bbde0db09885e5bd47e5b44e00ce9e864e",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+      "sha256": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350",
+      "git_blob": "7e0fadea749b51db1f8167c2a0bef8cbbcf9fe5a",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+      "sha256": "e288e9f6fccece6fdc96358cd88802820590686cff151b9b6f1989aaea288842",
+      "git_blob": "c8b12d6c75d69471b38fa105bff1a3b2d291a61a",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "e288e9f6fccece6fdc96358cd88802820590686cff151b9b6f1989aaea288842",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx",
+      "sha256": "119215a5ab018616c608c8570eafbe9bfcbcfcd2f95177608d95eac05cd67f2e",
+      "git_blob": "77bbd2133fbc5870f7a624559e0945785a71ec20",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "119215a5ab018616c608c8570eafbe9bfcbcfcd2f95177608d95eac05cd67f2e",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+      "sha256": "cc1ba192337e3349eb306a68c84fb67a7024c9ba216c78d0df894d4f7df3a0de",
+      "git_blob": "6e265f5911888849843f872eb18e5abcfecfe0b0",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "cc1ba192337e3349eb306a68c84fb67a7024c9ba216c78d0df894d4f7df3a0de",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+      "sha256": "27d7d56bbc43522121bc0bafc2f0247cdaf63e27b022ae1417cf72037c2b6910",
+      "git_blob": "d8708949cd9b38a6feee42ed34dd3ee988212574",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "27d7d56bbc43522121bc0bafc2f0247cdaf63e27b022ae1417cf72037c2b6910",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+      "sha256": "6557bdb128b6cbb6fda61d7db6967ee144e14252fad7da169381b88e39b4334e",
+      "git_blob": "77b2334efe5cee3642c97439441e89136716e8db",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "6557bdb128b6cbb6fda61d7db6967ee144e14252fad7da169381b88e39b4334e",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+      "sha256": "552316ca06f4c81181d55ee3645dc4c27a73f396f8f538a1b04e462207b9e311",
+      "git_blob": "a1a72cf398ee88b7f6931982d5e890d35d3e386c",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "552316ca06f4c81181d55ee3645dc4c27a73f396f8f538a1b04e462207b9e311",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
+      "sha256": "8ecb02f925ad5060cb38fbf7e0e16309e5ea6e060dbdb341320fe9afbd3b68b6",
+      "git_blob": "70dad4e80c1ef0dd6974116de3d11c10fe657d03",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "8ecb02f925ad5060cb38fbf7e0e16309e5ea6e060dbdb341320fe9afbd3b68b6",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts",
+      "sha256": "418b8df36db4b6c94120810dcc6da269cd6e7101fb2349b42e9f2daa061cf348",
+      "git_blob": "4e934305a2a355d780632260b60b3c1095b8a883",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "418b8df36db4b6c94120810dcc6da269cd6e7101fb2349b42e9f2daa061cf348",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts",
+      "sha256": "770504a411960d786dcff34a318640e271e54cbdf1aae827055799358047be0e",
+      "git_blob": "f8000bc82880449eb5949d48546b8b25e8e982f0",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "770504a411960d786dcff34a318640e271e54cbdf1aae827055799358047be0e",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblySourceIntent.ts",
+      "sha256": "88d5379ed5d7c4b1c712daa439868eb49dbfed432960aef39d30a64fc1775e11",
+      "git_blob": "751d9558a7af1ef67f486916616c59c80cbe0e9b",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "88d5379ed5d7c4b1c712daa439868eb49dbfed432960aef39d30a64fc1775e11",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblySourceSelection.ts",
+      "sha256": "fd0f3b9d58d2335f59bf992248fc89ff1a14fa56c7f991e9e33fa7c417b40425",
+      "git_blob": "d03e163a7696e200da8857098c9a7ce8d9613da1",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "fd0f3b9d58d2335f59bf992248fc89ff1a14fa56c7f991e9e33fa7c417b40425",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts",
+      "sha256": "5daa5425beb20947ad71c3a1e20a8a0393e1f0befdff8e24c9a245786f4555d0",
+      "git_blob": "294f4d337dc1993483d129aa0a393e7de8e62e0c",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "5daa5425beb20947ad71c3a1e20a8a0393e1f0befdff8e24c9a245786f4555d0",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+      "sha256": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+      "git_blob": "8112ef7c09d85110290110089e9f1f4510b9df51",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts",
+      "sha256": "d24d2c2cc5a47111144a17b26e92a1f00a15a546e07d1a41a76a81021061f6d9",
+      "git_blob": "77b21daddcfc41efcda3365b41676211bd849468",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "d24d2c2cc5a47111144a17b26e92a1f00a15a546e07d1a41a76a81021061f6d9",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts",
+      "sha256": "439f2c85bbba9cc8912a8e7f939f9c455af50289c8a81d0ad8638f89e39b2946",
+      "git_blob": "14c23137d0768bff423fb289cf3347b62e6426b6",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "439f2c85bbba9cc8912a8e7f939f9c455af50289c8a81d0ad8638f89e39b2946",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts",
+      "sha256": "533f19b0db0e97e6f9069761b6ae3f807b84e82f178625e478676f40b53c6218",
+      "git_blob": "2f6eeee8782b912adff4a035087902f87ffc101b",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "533f19b0db0e97e6f9069761b6ae3f807b84e82f178625e478676f40b53c6218",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+      "sha256": "eddb3ce2af8a393b6fb21a069a4fbccc1acd561ddb3f5d1df683904ba9df0192",
+      "git_blob": "d1134f72f51b24ab61a0dfee117f4c69850207c5",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "eddb3ce2af8a393b6fb21a069a4fbccc1acd561ddb3f5d1df683904ba9df0192",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+      "sha256": "6a2672897eefc34540c22b4d5e762d5bc4bcded2f4d43765a84f2dcbf0b2d1b1",
+      "git_blob": "73f7cda11d822df63f22df511b79a9dce02b1274",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "6a2672897eefc34540c22b4d5e762d5bc4bcded2f4d43765a84f2dcbf0b2d1b1",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+      "sha256": "3795636afc671773b677e92d61b8ccba2a45476c5bf965d9733dda12119dc735",
+      "git_blob": "ab1119c33856cf8acde58e6d1210e9e11f02a43a",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "3795636afc671773b677e92d61b8ccba2a45476c5bf965d9733dda12119dc735",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts",
+      "sha256": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+      "git_blob": "2d5f18b5ed5020e84a465c79d748e5ad7b41fbbb",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+      "sha256": "698febefbfaaa683ee8cd41f877a1c846f7b538890f70377a44af9ede4161d1e",
+      "git_blob": "e0dee35a9fe3a1581b8f69a62664318ec3e5a9f3",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "698febefbfaaa683ee8cd41f877a1c846f7b538890f70377a44af9ede4161d1e",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "sha256": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+      "git_blob": "0af0638c9d1ad62cdbdaf72fdd5a11e96f7d7105",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "sha256": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c",
+      "git_blob": "1aadad3b1157abe364b59453970e0fb7b5d510f5",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "sha256": "0755b932a8a8f30a4a2760c06be3a1de7d0269893a7f2c48b087ef211b265c70",
+      "git_blob": "79dbe5ae702972ec179cfaf1b69addd555247b46",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "0755b932a8a8f30a4a2760c06be3a1de7d0269893a7f2c48b087ef211b265c70",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "sha256": "cb9d9aaf4870029717c5563c1f8ac66a7215738ef6fda556bdb9723c7f7c88fd",
+      "git_blob": "a98261a10a3c14e09576a4b18907074e2b17a451",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "cb9d9aaf4870029717c5563c1f8ac66a7215738ef6fda556bdb9723c7f7c88fd",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/taskTarget.ts",
+      "sha256": "418d356efef8e314012f6b00355b5b5008fbeea06947d68b78525cfed12e1856",
+      "git_blob": "f0f4a37a0bad76f75f21970b2c3ff494c6647916",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "418d356efef8e314012f6b00355b5b5008fbeea06947d68b78525cfed12e1856",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278",
+      "git_blob": "7365b5e3e37d7c7d01353e767e2d0f8ee5ae2191",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "package.json",
+      "sha256": "d3ca48b9ba6133e0425dffc8633bb54e3fb592daba11f4301938c32de34896bd",
+      "git_blob": "56ee999e22344df938fe7a166588e58b8b37004e",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "d3ca48b9ba6133e0425dffc8633bb54e3fb592daba11f4301938c32de34896bd",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "shared/__tests__/saved-assembly-sources.test.ts",
+      "sha256": "f5a3d05d33efe8c49e28b5e2b1e84586b98411f2e8e278b31efd563ec9a8ad60",
+      "git_blob": "408ae93dc8d912d03b799a5c1d4d85ed1f78db33",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "f5a3d05d33efe8c49e28b5e2b1e84586b98411f2e8e278b31efd563ec9a8ad60",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "shared/authoring/assembly-sources.ts",
+      "sha256": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+      "git_blob": "8b5708a316363db175605f7ac2bc8a0002947a4f",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "shared/authoring/assembly.ts",
+      "sha256": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+      "git_blob": "72513d517472a9a2858698a7f4667b45785a7b6d",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "shared/authoring/saved-assembly-sources.ts",
+      "sha256": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
+      "git_blob": "5c9e0c448eeccd5ca7f2fff4ffcfe04c57b2e074",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
+      "recoveredWorktreeMatchesBefore": true
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "git_blob": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215",
+      "gitSha256MatchesBefore": true,
+      "gitBlobMatchesBefore": true,
+      "recoveredWorktreeSha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "recoveredWorktreeMatchesBefore": true
+    }
+  ]
+}
