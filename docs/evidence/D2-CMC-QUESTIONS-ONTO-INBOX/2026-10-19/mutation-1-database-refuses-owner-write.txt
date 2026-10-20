@@ -1,0 +1,92 @@
+# MUTATION 1 the database refuses a write to reg_questions, for every role (the row trigger)
+# What was removed: the trigger migrations/20261019b_reg_questions_read_only.sql creates. A replay cannot DROP it (the file
+# uses CREATE OR REPLACE and drops nothing, Rule 1), so the database is put in the state a deploy without the file
+# would leave: DROP TRIGGER as the owner. Then the dbtest. Then ONE deploy-migrate, which re-arms it (CREATE OR REPLACE).
+# Source files untouched throughout: git diff of migrations/20261019b before/after is shown at the end.
+
+$ psql -c "DROP TRIGGER reg_questions_read_only ON public.reg_questions;"
+DROP TRIGGER
+
+$ npx vitest run --config vitest.db.config.ts tests/db/cmc-agency-questions-converged.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-19T10:32:44.534Z","pid":11537,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-19T10:32:44.535Z","pid":11537,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-19T10:32:44.535Z","pid":11537,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/cmc-agency-questions-converged.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/cmc-agency-questions-converged.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the setting > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+{"level":20,"time":"2026-10-19T10:32:47.929Z","pid":11537,"hostname":"vm","context":{"auditId":"audit_1792405967923_ad6de7d0282a608f","action":"CREATE","entityType":"project","entityId":"proj_666"},"msg":"[concept2cure-api] Audit entry persisted"}
+(node:11537) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > records a question with its section in the repository's one spelling, with the section in its ledger row 210ms
+{"level":20,"time":"2026-10-19T10:32:48.060Z","pid":11537,"hostname":"vm","context":{"auditId":"audit_1792405968056_4d5713a3394c2a9d","action":"CREATE","entityType":"project","entityId":"proj_666"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T10:32:48.121Z","pid":11537,"hostname":"vm","context":{"auditId":"audit_1792405968117_0f05f2d08e55ba53","action":"CREATE","entityType":"project","entityId":"proj_666"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > refuses a section that is not a CTD code, and records nothing 56ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > corrects a section with a reason, records from and to, and refuses what it should 383ms
+{"level":20,"time":"2026-10-19T10:32:48.506Z","pid":11537,"hostname":"vm","context":{"auditId":"audit_1792405968504_8976d4e26fc107cd","action":"CREATE","entityType":"project","entityId":"proj_666"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > lists the Module 3 questions with the server's state and overdue, and an approved answer is never overdue 247ms
+{"level":20,"time":"2026-10-19T10:32:48.792Z","pid":11537,"hostname":"vm","context":{"auditId":"audit_1792405968789_bc22a8584a0ade5b","action":"CREATE","entityType":"project","entityId":"proj_666"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > counts from every row it read, and keeps the earlier CMC file out of the count 26ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > a Module 3 question on a letter the person may not see is neither listed nor counted; the letter is counted as withheld 124ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > refuses a module that is not one of the five 13ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > another organisation's member is refused by project admission; the runtime role in their scope reads none of these rows 17ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > GET lists the organisation's rows as they are stored, with counts from the store 9ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > POST and PATCH answer 410 and change nothing 16ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the runtime role is refused INSERT, UPDATE and DELETE by the privilege, before any trigger, even WHERE false 10ms
+ × tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the owner too is refused an INSERT and an UPDATE by the guard; DELETE is left for a purge door 13ms
+   → expected { ok: true, rowCount: 1 } to match object { ok: false, code: 'P0001' }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the owner too is refused an INSERT and an UPDATE by the guard; DELETE is left for a purge door
+AssertionError: expected { ok: true, rowCount: 1 } to match object { ok: false, code: 'P0001' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "P0001",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ tests/db/cmc-agency-questions-converged.dbtest.ts:413:19
+    411|       const upd = await attempt(c, `UPDATE reg_questions SET status = …
+    412|       const del = await attempt(c, `DELETE FROM reg_questions WHERE id…
+    413|       expect(ins).toMatchObject({ ok: false, code: 'P0001' });
+       |                   ^
+    414|       expect((ins as { message: string }).message).toMatch(/read-only/…
+    415|       expect(upd).toMatchObject({ ok: false, code: 'P0001' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  10:32:42
+   Duration  6.66s (transform 2.84s, setup 84ms, import 228ms, tests 6.05s, environment 0ms)
+
+exit=1
+
+$ node scripts/db/deploy-migrate.mjs   (restores: the replay re-arms the trigger)
+  ✓ applied: migrations/20261019b_reg_questions_read_only.sql
+  ✓ 415/415 migration files applied
+✅ Schema migration complete — safe to roll services.
+
+$ psql -c "SELECT tgname, tgenabled FROM pg_trigger WHERE tgrelid = 'public.reg_questions'::regclass AND NOT tgisinternal;"
+         tgname          | tgenabled 
+-------------------------+-----------
+ reg_questions_read_only | O
+(1 row)
+
+$ git status --short migrations/20261019b_reg_questions_read_only.sql   (untracked, unmodified: the same file as before)
+?? migrations/20261019b_reg_questions_read_only.sql
+6a53dc5722ccbbc74bc1011a0fd5ecda0c0b87334eeb01132cf759f34b8c74f1  migrations/20261019b_reg_questions_read_only.sql

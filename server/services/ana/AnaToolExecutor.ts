@@ -5157,6 +5157,8 @@ registerToolHandler('ocr_document_pages', async (input, ctx) => {
       pages: r.pageDetails.map((p) => ({
         page: p.page,
         confidence: Math.round(p.confidence),
+        // Rendered dpi: lower than requested where a page exceeds the pixel cap.
+        dpi: Math.round(p.dpi),
         text: p.text,
       })),
       note:
@@ -13504,21 +13506,35 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { fulfillCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const { fulfillCommitmentTx, readCommitmentForFulfilment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
+  const { fulfilmentRule } = await import('../ha-interactions/ha-logic.js');
   const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    /* P-41 (2026-10-19): a PMR, PMC or REMS is recorded fulfilled only by a
+       Part 11 signature naming what met it, and AnA cannot sign. The type is
+       read from the record, never taken from the model; for those three the
+       tool writes nothing and hands the act to the screen. */
+    const commitment = await readCommitmentForFulfilment(client, ctx.organizationId, commitmentId, ORG_LEVEL, { lock: true });
+    if (commitment && fulfilmentRule(commitment.commitmentType).signatureRequired) {
+      await client.query('ROLLBACK');
+      return refuseSignatureInChat(
+        'fulfill_regulatory_commitment',
+        `Recording a ${commitment.commitmentType.toUpperCase()} as fulfilled`,
+        'Communication, Meetings & commitments, where you name the sequence or document that met it and sign',
+      );
+    }
     const fulfilledDate = typeof input.fulfilled_date === 'string' ? input.fulfilled_date : null;
-    await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
+    const done = await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, { fulfilledDate, evidence: null, userId: ctx.userId });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'resolve',
       target: `regulatory-commitment:${commitmentId}`, reason,
-      payload: { fulfilledDate }, domain: 'ha', surface: 'ana',
+      payload: { status: 'fulfilled', fulfilledDate: done.fulfilledDate }, domain: 'ha', surface: 'ana',
     });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled.` });
+    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled on ${done.fulfilledDate}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `fulfill_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -15821,6 +15837,63 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   });
 });
 
+/** The model-facing handling note for a batch receipt. */
+function batchDraftInstruction(receipt: { failed: number; cancelled: number }): string {
+  return (
+    'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document only with content from sections whose status is drafted, through its existing confirmation and qualification gates. Exclude cut-off sections marked DRAFT_TRUNCATED; they are failed and carry no usable draft content. Carry each drafted section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. A missing or unknown finish reason does not confirm completeness, and truncated: false is not a completeness certification. State completeness gaps honestly; do not present unknown values as established.' +
+    (receipt.failed > 0
+      ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only failed retryIndices, preserving drafted sections. A cut-off section or one refused for size needs its content shortened or split before retrying.`
+      : '') +
+    (receipt.cancelled > 0
+      ? ` ${receipt.cancelled} section(s) were stopped by the person before drafting completed (cancelledIndices). Do not retry them unless the person asks again.`
+      : '')
+  );
+}
+
+/**
+ * Apply the recorded submission context and load each section's selected
+ * sources, in order, stopping with the run. No read starts after stop; a load
+ * that settles after it is discarded, since its reads carry no signal and
+ * cannot be abandoned mid-query.
+ */
+async function prepareBatchSections(
+  requests: Array<{ requestIndex: number; sectionType: string; instructions: string; submissionType?: string;
+    sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
+  rawSections: unknown[],
+  submissionType: string | undefined,
+  ctx: ToolContext | undefined,
+  outcomes: Map<number, import('./batch-draft-result.js').BatchDraftFailure>,
+): Promise<void> {
+  const { loadDraftProjectSources } = await import('./draft-project-sources.js');
+  const { batchSectionRecord, cancelledDraft, trustedSignal } = await import('./batch-draft-result.js');
+  const signal = trustedSignal(ctx?.signal);
+  if (!signal?.aborted) {
+    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
+    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
+  }
+  for (const request of requests) {
+    if (outcomes.has(request.requestIndex)) continue;
+    let failure: import('./batch-draft-result.js').BatchDraftFailure | undefined;
+    try {
+      if (!signal?.aborted) {
+        // The section's own words choose each source's window (S5d).
+        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
+          `${request.sectionType} ${request.instructions}`);
+      }
+    } catch {
+      failure = { sectionType: request.sectionType, error: 'DRAFT_FAILED',
+        message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' };
+    }
+    // A source refusal keeps its own classification; only a load that would
+    // otherwise have succeeded is discarded as stopped.
+    if (signal?.aborted && !failure) {
+      request.sourceContext = undefined;
+      failure = cancelledDraft(request.sectionType);
+    }
+    if (failure) outcomes.set(request.requestIndex, failure);
+  }
+}
+
 registerToolHandler('batch_draft_sections', async (input, ctx) => {
   // S2 — draft many sections in ONE parallel batch instead of one section per
   // agentic turn. Reuses the existing AnaDocumentDraftingService.batchDraft
@@ -15842,7 +15915,11 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string; therapeuticArea?: string; modality?: string }
     | undefined;
 
-  const { batchDraftReceipt, batchSectionRecord } = await import('./batch-draft-result.js');
+  const { batchDraftReceipt, batchSectionRecord, cancelledDraft, trustedSignal } = await import('./batch-draft-result.js');
+  // Stop reaches the nested work, not only the outer race: no source is read
+  // and no section dispatched after it, and a read that settles after it is
+  // discarded (runOneTool documents why the race alone leaves work running).
+  const signal = trustedSignal(ctx?.signal);
   const requests = rawSections
     .map((s, requestIndex) => {
       const sec = batchSectionRecord(s);
@@ -15869,25 +15946,13 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'each section requires section_type and instructions' });
   }
 
+  const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
   try {
-    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
-    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
-    const { loadDraftProjectSources } = await import('./draft-project-sources.js');
-    const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
-    for (const request of requests) {
-      try {
-        // The section's own words choose each source's window (S5d).
-        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
-          `${request.sectionType} ${request.instructions}`);
-      } catch {
-        sourceFailures.set(request.requestIndex, { sectionType: request.sectionType, error: 'DRAFT_FAILED',
-          message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' });
-      }
-    }
+    await prepareBatchSections(requests, rawSections, submissionType, ctx, sourceFailures);
     const service = getAnaDraftingService();
     const ready = requests.filter(r => !sourceFailures.has(r.requestIndex));
-    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5 }) : [];
+    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5, signal }) : [];
     let generatedIndex = 0;
     const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? generated[generatedIndex++]);
     // A section that could not be drafted arrives as a failure result in its
@@ -15897,13 +15962,14 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({
       ...receipt,
       engine: 'framework-grade',
-      instruction:
-        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document only with content from sections whose status is drafted, through its existing confirmation and qualification gates. Exclude cut-off sections marked DRAFT_TRUNCATED; they are failed and carry no usable draft content. Carry each drafted section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. A missing or unknown finish reason does not confirm completeness, and truncated: false is not a completeness certification. State completeness gaps honestly; do not present unknown values as established.' +
-        (receipt.failed > 0
-          ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only failed retryIndices, preserving drafted sections. A cut-off section or one refused for size needs its content shortened or split before retrying.`
-          : ''),
+      instruction: batchDraftInstruction(receipt),
     });
   } catch {
+    if (signal?.aborted) {
+      // Stopped: a fault after stop is reported as the stop, keeping any source refusal already recorded.
+      const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? cancelledDraft(r.sectionType));
+      return JSON.stringify(batchDraftReceipt(rawSections, requests, results));
+    }
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'Batch drafting failed. No documents were saved; the failed sections can be retried.' });
   }
 });
@@ -18777,16 +18843,22 @@ registerToolHandler('compose_e2b_icsr', async (input: Record<string, unknown>, c
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {
   try {
-    const { reconcileDossierNumbers } = await import('./dossierReconciliation.js');
-    const result = reconcileDossierNumbers((input.documents as any) ?? []);
+    const { reconcileMinedFigures } = await import('../reconciliation/mined-figure-reconciler.js');
+    const result = reconcileMinedFigures((input.documents as any) ?? []);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       result,
+      /* The verdict is the engine's, which has distinguished "nothing compared" from "clean"
+         since 2026-09-28 (row 74). The deleted second implementation could not: it listed
+         every label it saw once as consistent, so a figure compared against nothing read as
+         agreeing. */
       instruction:
-        result.discrepancies.length > 0
-          ? 'Surface each discrepancy with its label, the conflicting values, and the snippet from each document so the user can resolve the source of truth. Do not guess which value is correct.'
-          : 'No cross-document numerical conflicts were found among the labeled figures scanned. State which labels were checked and found consistent.',
+        result.verdict === 'not_assessed'
+          ? `NOTHING was compared across documents (reason: ${result.notAssessedReason}). Say that plainly and do not report it as consistency: no conclusion about agreement is available. State how many figures were read (${result.figuresReconciled}) and that no quantity appeared in two places.`
+          : result.conflictCount > 0
+            ? 'Surface each conflict with its quantity, the distinct values and the documents that report each, so the user can resolve the source of truth. Do not guess which value is correct; where a consensus value is given, say it is the most-reported value, not the correct one.'
+            : `No cross-document conflict was found among the ${result.quantitiesCompared} quantity/quantities actually compared across two places. Name them, and do not imply anything about figures stated in only one document.`,
     });
   } catch (err: any) {
     const message = err?.message || 'unknown error';

@@ -187,7 +187,6 @@
 .qms-train-row .qms-link { grid-column: 1 / -1; justify-self: start; }
 .qms-train-unavailable { grid-column: 2 / -1; color: var(--text-300); text-align: right; }
 .qms-training-summary { color: var(--text-300); margin: 0 0 var(--space-4); }
-.qms-shell button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 /* Native controlled-text reader; shared dialog behaviour owns focus/Escape. */
 .qms-training-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: var(--space-5); background: var(--bg-200); }

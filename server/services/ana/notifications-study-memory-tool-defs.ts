@@ -1277,7 +1277,7 @@ export const TRIAGE_COMPLIANCE_ATTENTION: AnaTool = {
 export const FULFILL_REGULATORY_COMMITMENT: AnaTool = {
   name: 'fulfill_regulatory_commitment',
   description:
-    "Mark a regulatory commitment (PMR/PMC/REMS/meeting commitment) fulfilled, optionally with the date it was met. Closes the commitment lifecycle. Governed + audited, org-scoped.",
+    "Mark an organisation-level meeting commitment or other commitment fulfilled, optionally with the date it was met. Governed + audited, org-scoped. AnA cannot sign: a PMR, PMC or REMS is recorded fulfilled only by the person's Part 11 signature naming the sequence or document that met it, so for those this tool records nothing and points to Communication, Meetings & commitments.",
   input_schema: { type: 'object', properties: { commitment_id: { type: 'number' }, fulfilled_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: STATED_REASON_INPUT }, required: ['commitment_id'] },
 };
 

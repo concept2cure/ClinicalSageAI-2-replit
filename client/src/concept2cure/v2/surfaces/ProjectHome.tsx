@@ -32,6 +32,7 @@ import { ComingLater } from './ProjectComingLater';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
 import { sourceReadView } from '@shared/data-room-processing-status';
+import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
@@ -606,7 +607,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
-              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}` : ''}
+              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords, a.extractionCoverage)}` : ''}
               {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
             </span>
           ))}
@@ -1665,7 +1666,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
   const clientType = sel?.ws ?? null;
-  const submissionType = sel?.code || prog?.code || prog?.program_type || null;
+  /* A filing document class is named by its label ("Prior Approval
+     Supplement"), never its key ("pas"). */
+  const submissionType = sel?.code || prog?.code || filingDocumentClassOf(prog?.program_type)?.label || prog?.program_type || null;
   const region = prog?.primary_agency ?? null;
   const indication = prog?.indication ?? null;
   // Program identity facts (WO-9 Click 1). Read from the row only — never from
@@ -1691,7 +1694,11 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
      selection made from the MDX workspace (the old Workspace grid's medtech
      segment). Only a project that is read and is neither is an eCTD filing. */
   const deviceFiling = deviceProgram || clientType === 'MDX';
-  const ectdFiling = !!prog && !deviceFiling;
+  /* A filing document class (a PAS, a CSR, a meeting package) is authored
+     here and never built as a sequence, so it is no eCTD filing either
+     (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
+  const documentClass = filingDocumentClassOf(prog?.program_type);
+  const ectdFiling = !!prog && !deviceFiling && !documentClass;
   const predicateKs = (prog?.predicate_devices ?? [])
     .map((p) => String(p?.kNumber ?? '').trim())
     .filter(Boolean);
@@ -1906,7 +1913,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
           and the documents in review, from the reads the tabs show. */}
       {pid && !progState.error && (
-        <ProjectStatusLine markets={markets} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+        <ProjectStatusLine markets={markets} documentClass={documentClass} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
       )}
 
       {/* Before the tabs (FILING_SPINE.md §2): the start box and the
@@ -1967,7 +1974,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} documentClass={documentClass} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}

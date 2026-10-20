@@ -1,0 +1,73 @@
+# MUTATION-REVIEW 6 the earlier file's lines restored to 'Plus N … Each is recorded on its letter' and 'A question still open is recorded on its letter'
+# Finding: Findings 2, 11: the Overview and the card said the earlier file's open rows were already on their letters, and tied an organization-wide count to this program.
+# File: client/src/concept2cure/v2/surfaces/CmcModule.tsx
+# Replaced:
+#   -               The earlier CMC question file (organization-wide, read-only) holds {earlierOpen} {earlierOpen === 1 ? 'question' : 'questions'} not
+#   -               closed there. {earlierOpen === 1 ? 'It is' : 'They are'} not in this figure, and nothing moves {earlierOpen === 1 ? 'it' : 'them'} onto a
+#   -               letter: record each one still open on its letter in Communication.
+# With:
+#   +               Plus {earlierOpen} not closed in the earlier CMC file (not counted here; read-only). Each is recorded on its letter in Communication.
+# File: client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx
+# Replaced:
+#   -           Questions recorded in CMC, across the organization, before agency questions moved onto the letter (2026-10-19).
+#   -           This file is read-only. Nothing moves these onto a letter: record a question still open here on its letter in
+#   -           Communication, by hand.
+# With:
+#   +           Questions recorded in CMC before agency questions moved onto the letter (2026-10-19). This file is read-only.
+#   +           A question still open is recorded on its letter in Communication.
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored client/src/concept2cure/v2/surfaces/CmcModule.tsx: sha256 713c22b419e8f051… before = 713c22b419e8f051… after (byte-identical)
+# Restored client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx: sha256 a31ea16180b5819e… before = a31ea16180b5819e… after (byte-identical)
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a positive count is a button that opens the Module 3 questions 308ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > shows the server's figure: an approved answer on an overdue letter is not counted, a zero is a plain figure 30ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a read that failed is unknown, never zero, and the lead says so 57ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > with no program open it claims no count and issues no read 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > its action opens the overdue letter in Communication; it neither drafts nor promises sign-offs 73ms
+ × client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > says what it did not count, each as what it counts: questions as questions, letters as letters, and the earlier file as organization-wide 31ms
+   → expected 'Plus 3 not closed in the earlier CMC …' to match /The earlier CMC question file \(organ…/
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a failed read of the earlier file is said on the Overview, never taken for "nothing open" 17ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero is green only as an all-clear: never over letters withheld from this person 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero over a measured, complete figure is green 24ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > an approved Module 3 answer on a letter overdue only on a Clinical question: no Module 3 overdue, no "no question recorded" 55ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > a Module 3 letter with nothing recorded, past its date: said as that, and the action opens that letter 41ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > one question overdue on one letter, and another letter overdue only on a Clinical question: "on 1 letter" 26ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > names the section, and opens the question on its letter 121ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > counts by the server's "outstanding", and says "at least" when the server listed a page 80ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > matches whole segments: a question at 3.2.S.20 is not about 3.2.S.2 84ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > with no program open it asks for one and reads nothing 17ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > lists each question with the server's state and one door: open it on its letter 82ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > offers no working act of its own 146ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > a failed read is an error, never the empty list 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > says what it did not count, and names a Module 3 letter with no question recorded 45ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty program says where questions are recorded 28ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty list over letters withheld from this person speaks only for the letters read 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a letter overdue on its other questions is said, and its approved answer is not overdue 47ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a Module 3 letter whose only question is withdrawn is named once, and not "not counted" 42ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > renders nothing when the file holds nothing 25ms
+ × client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > says what each row holds, and nothing it does not 36ms
+   → Unable to find an element with the text: /recorded in CMC, across the organization, before agency questions moved onto the letter \(2026-10-19\)\.\s+This file is read-only\. Nothing moves these onto a letter: record a question still open here on its letter in\s+Communication, by hand\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > a failed read of the earlier file is said, not hidden 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > shows each section's completeness, names the missing inputs, and withholds approval from an incomplete one 388ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > a 409 shows the server's own reason — 409 no longer means only "contradictions" 408ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > shows the composed narrative and tables BEFORE the signature form appears 179ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature 239ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > offers NO signature when the section could not be read 175ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > warns when the section is stale or its tables are unknown 191ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > reassures when both reads are measured and nothing is open 34ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > withholds it, and says why, when the earlier file could not be read 31ms
+ × client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > withholds it while the earlier file holds questions not closed there 5017ms
+   → Unable to find an element with the text: /holds 2 questions not\s+closed there/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > sectionsUnreadable renders the failed-read copy and not "No Module 3 sections yet" 31ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > renders a null submission count as unknown even without a portfolioUnreadable flag 18ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > portfolioUnreadable renders the failed-read copy and not "No submissions yet" 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Not export ready with the gate's reasons when every section is approved but one is incomplete 31ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Export ready only when the gate does 30ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > renders a failed readiness read as a failed read, not as ready and not as not-ready 28ms
+ Test Files  2 failed (2)
+      Tests  3 failed | 39 passed (42)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Plus 3 not closed in the earlier CMC …' to match /The earlier CMC question file \(organ…/
+- Expected:
++ Received:

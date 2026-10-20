@@ -20,6 +20,7 @@ import type {
   MilestoneDefinition,
 } from './document-taxonomy';
 import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from './protocol-m11';
+import { consentElementCitation, INFORMED_CONSENT_ELEMENTS, type ConsentApplicability } from './informed-consent-elements';
 
 // ─── Section Blueprints ───────────────────────────────────────────────────────
 
@@ -200,7 +201,12 @@ const IND_SAFETY_REPORT_SECTIONS: SectionDefinition[] = [
   { code: '3', title: 'Causality Assessment (Reasonable Possibility Determination)', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional case-assessment group: use the sponsor-approved reporting determination and applicable report subtype; assess content applicability before omission.' },
   { code: '4', title: 'Expectedness Assessment Against the Investigator Brochure / Protocol', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional expectedness group: assess applicability to the report subtype using the controlling source records; no waiver inferred from this flag.' },
   { code: '5', title: 'Aggregate / Similar-Events and Increased-Rate Analysis', module: 0, required: false, contentType: 'mixed', guidance: 'Conditional aggregate-analysis group: confirm reporting subtype and applicable analysis; aggregate content alone does not establish the transmission route.' },
-  { code: '6', title: 'Follow-Up Report', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional follow-up group: confirm initial/follow-up status and relevant new information; use current reporting obligations and controlled prior-report linkage.' },
+  { code: '6', title: 'Follow-Up Report', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional follow-up group: confirm initial/follow-up status and relevant new information; use current reporting obligations and controlled prior-report linkage.' },  // Added 2026-10-18 (review finding): 312.32(c)(1) asks it of every report; it
+  // sat inside the conditional aggregate group. Last, where its code sorts: a
+  // reader that orders project sections by code put it after 6 anyway (critic,
+  // 2026-10-19). The lifecycle record places it last too, so a row's index
+  // still names its record part (indSafetyRequirements).
+  { code: '7', title: 'Previously Submitted Similar Reports and Significance Analysis', module: 0, required: true, contentType: 'mixed', guidance: '21 CFR 312.32(c)(1): identify all previously submitted IND safety reports on a similar suspected adverse reaction and analyze the significance of this one in light of them.' },
 ];
 
 /** IND Annual Report — 21 CFR 312.33. */
@@ -264,7 +270,14 @@ const RMP_SECTIONS: SectionDefinition[] = [
   { code: 'VII', title: 'Annexes', module: 1, required: false, contentType: 'mixed' },
 ];
 
-/** Expedited designation request package (Fast Track / Breakthrough / RMAT). */
+/**
+ * Expedited designation request package. Shared, jurisdiction-neutral: EU
+ * PRIME, EU accelerated assessment, Sakigake, UK ILAP, the Breakthrough Device
+ * request and the Priority Review request read it. The US Fast Track,
+ * Breakthrough Therapy and RMAT requests read US_BTD_SECTIONS, US_FAST_TRACK_SECTIONS and US_RMAT_SECTIONS
+ * below, which carries FD&C Act 506 (2026-10-18: the 506 correction was first
+ * made here, and reached every designation above — review critic).
+ */
 const DESIGNATION_REQUEST_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Cover Letter and Request Statement', module: 1, required: true, contentType: 'narrative' },
   { code: '2', title: 'Product Description and Proposed Indication', module: 1, required: true, contentType: 'narrative' },
@@ -274,13 +287,79 @@ const DESIGNATION_REQUEST_SECTIONS: SectionDefinition[] = [
   { code: '6', title: 'Development Plan and Requested Features', module: 1, required: true, contentType: 'narrative' },
 ];
 
-/** Orphan Drug Designation request. */
+/**
+ * The US expedited program designation requests, FD&C Act 506: one outline
+ * per designation, so each one's own statutory criterion is required of it
+ * (review findings, 2026-10-18). One shared array made unmet medical need
+ * required of a Breakthrough request, which 506(a)(1) does not ask; the
+ * correction that made it optional left a Fast Track request with no required
+ * criterion at all. Codes keep the meaning they had in the shared array (1–6;
+ * 7 substantial improvement, 8 regenerative medicine therapy). Citations are
+ * recall: the statute's text was not re-read here.
+ */
+const US_DESIGNATION_COMMON = {
+  request: { code: '1', title: 'Cover Letter and Request Statement', module: 1, required: true, contentType: 'narrative' },
+  product: { code: '2', title: 'Product Description and Proposed Indication', module: 1, required: true, contentType: 'narrative' },
+  serious: { code: '3', title: 'Serious or Life-Threatening Condition Justification', module: 1, required: true, contentType: 'narrative' },
+  plan: { code: '6', title: 'Development Plan and Requested Features', module: 1, required: true, contentType: 'narrative' },
+} satisfies Record<string, SectionDefinition>;
+
+/** Breakthrough Therapy, 506(a)(1): a serious condition, and preliminary clinical evidence of substantial improvement over available therapy on a clinically significant endpoint. */
+const US_BTD_SECTIONS: SectionDefinition[] = [
+  US_DESIGNATION_COMMON.request, US_DESIGNATION_COMMON.product,
+  { ...US_DESIGNATION_COMMON.serious, guidance: 'FD&C Act 506(a)(1): a serious condition.' },
+  { code: '5', title: 'Preliminary Clinical Evidence', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(a)(1): the preliminary clinical evidence the request rests on.', formerTitles: ['Preliminary Clinical Evidence (Breakthrough/RMAT)'] },
+  // 5.1, under the evidence it is shown from, so code order is document order (critic, 2026-10-19; it was '7').
+  { code: '5.1', title: 'Substantial Improvement over Available Therapy on a Clinically Significant Endpoint', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(a)(1): the evidence indicates the drug may demonstrate substantial improvement over existing therapies on one or more clinically significant endpoints.' },
+  US_DESIGNATION_COMMON.plan,
+];
+
+/** Fast Track, 506(b)(1): a serious condition, and nonclinical or clinical data showing the potential to address an unmet medical need. */
+const US_FAST_TRACK_SECTIONS: SectionDefinition[] = [
+  US_DESIGNATION_COMMON.request, US_DESIGNATION_COMMON.product,
+  { ...US_DESIGNATION_COMMON.serious, guidance: 'FD&C Act 506(b)(1): a serious condition.' },
+  { code: '4', title: 'Potential to Address an Unmet Medical Need', module: 1, required: true, contentType: 'narrative', guidance: 'FD&C Act 506(b)(1): nonclinical or clinical data demonstrating the potential to address an unmet medical need.', formerTitles: ['Unmet Medical Need Analysis'] },
+  US_DESIGNATION_COMMON.plan,
+];
+
+/** RMAT, 506(g)(1): a regenerative medicine therapy, for a serious condition, with preliminary clinical evidence of the potential to address unmet medical needs. */
+const US_RMAT_SECTIONS: SectionDefinition[] = [
+  US_DESIGNATION_COMMON.request, US_DESIGNATION_COMMON.product,
+  // 2.1, under the product it describes, so code order is document order (critic, 2026-10-19; it was '8').
+  { code: '2.1', title: 'Regenerative Medicine Therapy Eligibility', module: 1, required: true, contentType: 'narrative', guidance: 'FD&C Act 506(g)(1)(A) and (g)(8): a cell therapy, therapeutic tissue engineering product, human cell and tissue product, or a combination product using any of them, other than one regulated solely under PHS Act 361.' },
+  { ...US_DESIGNATION_COMMON.serious, guidance: 'FD&C Act 506(g)(1)(B): intended to treat, modify, reverse or cure a serious condition.' },
+  { code: '4', title: 'Potential to Address an Unmet Medical Need', module: 1, required: true, contentType: 'narrative', guidance: 'FD&C Act 506(g)(1)(C): the preliminary clinical evidence indicates the potential to address unmet medical needs for the condition.', formerTitles: ['Unmet Medical Need Analysis'] },
+  { code: '5', title: 'Preliminary Clinical Evidence', module: 1, required: true, contentType: 'mixed', guidance: 'FD&C Act 506(g)(1)(C): the preliminary clinical evidence the request rests on.', formerTitles: ['Preliminary Clinical Evidence (Breakthrough/RMAT)'] },
+  US_DESIGNATION_COMMON.plan,
+];
+
+/** Orphan designation request. Shared: the EU orphan designation request reads it; the US request reads US_ORPHAN_SECTIONS. */
 const ORPHAN_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Administrative Information and Sponsor', module: 1, required: true, contentType: 'form' },
   { code: '2', title: 'Rare Disease/Condition and Proposed Use', module: 1, required: true, contentType: 'narrative' },
   { code: '3', title: 'Scientific Rationale (Drug Description, Mechanism)', module: 1, required: true, contentType: 'mixed' },
   { code: '4', title: 'Prevalence Estimate with Supporting References', module: 1, required: true, contentType: 'mixed' },
   { code: '5', title: 'Regulatory Status and Marketing History', module: 1, required: false, contentType: 'narrative' },
+  { code: '6', title: 'Scientific Literature and References', module: 1, required: true, contentType: 'list' },
+];
+
+/**
+ * US Orphan Drug Designation request — 21 CFR 316.20(b). Corrected 2026-10-18
+ * (review finding): the regulatory status and marketing history is required of
+ * every request (316.20(b)(7)), and (b)(5) and (b)(6) had no node. Its own
+ * array, so the EU request carries no 316.20 citation (review critic).
+ */
+const US_ORPHAN_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Administrative Information and Sponsor', module: 1, required: true, contentType: 'form' },
+  { code: '2', title: 'Rare Disease/Condition and Proposed Use', module: 1, required: true, contentType: 'narrative' },
+  { code: '3', title: 'Scientific Rationale (Drug Description, Mechanism)', module: 1, required: true, contentType: 'mixed' },
+  // 3.1 and 4.1: each beside the part it qualifies, so code order is document order (critic, 2026-10-19; they were '7' and '8').
+  { code: '3.1', title: 'Clinical Superiority Hypothesis (Same Drug Already Approved for the Same Rare Disease)', module: 1, required: false, contentType: 'narrative', guidance: '21 CFR 316.20(b)(5): where the drug is otherwise the same drug as one already approved for the same rare disease or condition, why it may be clinically superior.' },
+  { code: '4', title: 'Prevalence Estimate with Supporting References', module: 1, required: true, contentType: 'mixed' },
+  // 316.20(b)(6) as amended by the 2013 orphan drug final rule, which replaced
+  // the "medically plausible subset" standard (review finding, 2026-10-18).
+  { code: '4.1', title: 'Orphan Subset (Designation for a Subset of Persons with a Disease or Condition)', module: 1, required: false, contentType: 'narrative', guidance: '21 CFR 316.20(b)(6) (as amended in 2013): where designation is requested for a subset of persons with a disease or condition (an orphan subset), a demonstration that use of the drug outside that subset would be inappropriate owing to some property of the drug, such as its toxicity, mechanism of action or prior clinical experience.' },
+  { code: '5', title: 'Regulatory Status and Marketing History', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 316.20(b)(7): US and foreign regulatory status and marketing history, including adverse regulatory actions.' },
   { code: '6', title: 'Scientific Literature and References', module: 1, required: true, contentType: 'list' },
 ];
 
@@ -323,7 +402,17 @@ const PEDIATRIC_PLAN_SECTIONS: SectionDefinition[] = [
   { code: '8', title: 'Proposed Timelines', module: 1, required: true, contentType: 'narrative' },
 ];
 
-/** Informed Consent Form (ICH E6 / 21 CFR 50). */
+/** The consent record's elements of one applicability, as a blueprint row's guidance: each statement with its citation. */
+function consentGuidance(applicability: ConsentApplicability[]): string {
+  return INFORMED_CONSENT_ELEMENTS.filter((e) => applicability.includes(e.applicability))
+    .map((e) => `${e.statement} (${consentElementCitation(e)})`).join(' ');
+}
+
+/**
+ * Informed Consent Form (ICH E6 / 21 CFR 50). Corrected 2026-10-18 (review
+ * finding): the 50.25(c) ClinicalTrials.gov statement and the 50.25(b)
+ * additional elements had no node.
+ */
 const ICF_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Study Purpose and Background', module: 5, required: true, contentType: 'narrative', guidance: '21 CFR 50.25' },
   { code: '2', title: 'Study Procedures and Duration', module: 5, required: true, contentType: 'narrative' },
@@ -335,6 +424,9 @@ const ICF_SECTIONS: SectionDefinition[] = [
   { code: '8', title: 'Voluntary Participation and Right to Withdraw', module: 5, required: true, contentType: 'narrative' },
   { code: '9', title: 'Contacts for Questions', module: 5, required: true, contentType: 'narrative' },
   { code: '10', title: 'Signatures (Subject / Legal Representative / Investigator)', module: 5, required: true, contentType: 'form' },
+  // Read from the one consent record, never copied (review finding, 2026-10-18). Last, where their codes sort (critic, 2026-10-19).
+  { code: '11', title: 'ClinicalTrials.gov Statement (Applicable Clinical Trials)', module: 5, required: false, contentType: 'narrative', guidance: consentGuidance(['applicable_clinical_trial']) },
+  { code: '12', title: 'Additional Elements of Informed Consent (When Appropriate)', module: 5, required: false, contentType: 'narrative', guidance: consentGuidance(['when_appropriate']) },
 ];
 
 /** Individual Case Safety Report — ICH E2B(R3). */
@@ -360,7 +452,10 @@ const ICSR_SECTIONS: SectionDefinition[] = [
  * produces a missed filing (BP-W1-3).
  */
 const PADER_SECTIONS: SectionDefinition[] = [
-  { code: '1', title: 'FDA Form 3500A Reports (Non-Expedited Cases)', module: 1, required: true, contentType: 'form', guidance: '21 CFR 314.80(c)(2)(i)' },
+  // Retitled 2026-10-18 (review finding): since the 2014 electronic-submission rule (effective June 2015) the
+  // non-expedited cases are ICSRs sent electronically under 314.80(g), apart from the descriptive report; a
+  // Form 3500A applies only under a waiver. The code keeps its meaning (the periodic report's case content).
+  { code: '1', title: 'Non-Expedited ICSRs (Submitted Electronically under 314.80(g); Referenced, Not Embedded)', module: 1, required: true, contentType: 'mixed', formerTitles: ['FDA Form 3500A Reports (Non-Expedited Cases)'], guidance: '21 CFR 314.80(c)(2)(ii)(B) and 314.80(g): the individual case safety reports for the interval, submitted electronically and referenced from the periodic report; Form FDA 3500A only under a waiver.' },
   { code: '2', title: 'Narrative Summary and Analysis of the Reporting Interval', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 314.80(c)(2)(ii)' },
   { code: '3', title: 'Index Line-Listing of Reports', module: 1, required: true, contentType: 'mixed' },
   { code: '4', title: 'History of Actions Taken for Safety Reasons', module: 1, required: true, contentType: 'narrative' },
@@ -657,10 +752,10 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   us_nda_annual_sections: { id: 'us_nda_annual_sections', name: 'Annual Report (NDA/BLA)', sections: IND_ANNUAL_SECTIONS },
 
   // Expedited designations
-  us_fast_track_sections: { id: 'us_fast_track_sections', name: 'Fast Track Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
-  us_btd_sections: { id: 'us_btd_sections', name: 'Breakthrough Therapy Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
-  us_rmat_sections: { id: 'us_rmat_sections', name: 'RMAT Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
-  us_orphan_sections: { id: 'us_orphan_sections', name: 'Orphan Drug Designation Request', sections: ORPHAN_SECTIONS },
+  us_fast_track_sections: { id: 'us_fast_track_sections', name: 'Fast Track Designation Request', sections: US_FAST_TRACK_SECTIONS },
+  us_btd_sections: { id: 'us_btd_sections', name: 'Breakthrough Therapy Designation Request', sections: US_BTD_SECTIONS },
+  us_rmat_sections: { id: 'us_rmat_sections', name: 'RMAT Designation Request', sections: US_RMAT_SECTIONS },
+  us_orphan_sections: { id: 'us_orphan_sections', name: 'Orphan Drug Designation Request', sections: US_ORPHAN_SECTIONS },
   eu_orphan_sections: { id: 'eu_orphan_sections', name: 'Orphan Designation Request (EU)', sections: ORPHAN_SECTIONS },
 
   // US Drug Applications

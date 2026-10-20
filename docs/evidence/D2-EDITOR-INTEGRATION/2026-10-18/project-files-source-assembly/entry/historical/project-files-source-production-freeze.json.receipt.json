@@ -1,0 +1,10 @@
+{
+  "originalPath": "/workspace/scratch/project-files-source-production-freeze.json",
+  "archivedAt": "2026-10-20T19:34:15.410049+00:00",
+  "rawBytes": 647,
+  "rawSha256": "523083dfde300cb8eb8ab9c1a3218922ca46ea194ba6eed1e3c7cc46aa5dbdbe",
+  "rawUtf8": "{\n  \"client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx\": \"661aa7bdb6f2f5794f5868d4612268d6000422f57d4b411066bb4e36888598e1\",\n  \"client/src/concept2cure/v2/editor/ProjectFileActions.tsx\": \"0168c4be4c6ff9677399bc8fe45c933de925f56509fdf9c46696419f9be0f7d6\",\n  \"client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx\": \"31da69bf0a1af80a7c548f4affdb841ab0bc245ab242b1e5b6c1ac248b667057\",\n  \"client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx\": \"3bdc2b83cb0df267ef4b4cdd4105f806a4252cecee1bcc8dc1c2ecf7b51db64e\",\n  \"client/src/concept2cure/v2/surfaces/Vault.tsx\": \"9b3bca2e7ea11fac4bda310ff6fbefac295f2fa982deb9f0228e5dec8e637f59\"\n}\n",
+  "capturedWrapperExitCode": null,
+  "qualification": "Original retained artifact has no captured shell/wrapper exit status. Test summaries and any JSON-embedded per-file lint exitCode values are retained as originally recorded; no wrapper status is inferred. Original UTF-8 bytes are preserved without normalization.",
+  "retainedSummaryLines": []
+}

@@ -40,10 +40,6 @@
 .company-register { margin: 18px 0; border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
 .company-documents summary { font-size: 12px; cursor: pointer; color: var(--text-200); }
 .company-register > summary { margin-bottom: 14px; font-weight: 600; }
-.company-vault-search { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 16px; }
-.company-search-results { max-height: 260px; overflow: auto; margin-top: 10px; }
-.company-search-hit { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-.company-search-hit small { display: block; color: var(--text-400); margin-top: 4px; }
 .company-legal-list { display: grid; gap: 12px; }
 .company-legal-card { border: 1px solid var(--border); border-radius: 9px; padding: 16px; }
 .company-legal-card h4 { margin: 0 0 6px; font-size: 14px; }

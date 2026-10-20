@@ -1,0 +1,9 @@
+# check-constraint-replay before the 20260810b amendment (2026-10-18)
+
+npx vitest run tests/schema-contract/c2c-filing-class-packs.contract.test.ts tests/schema-contract/check-constraint-replay.pglite.test.ts
+
+Serialized Error: { length: 602, severity: 'ERROR', code: '23514', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, 
+ FAIL  tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > the next deploy succeeds over a row only the newest definition admits
+Serialized Error: { length: 602, severity: 'ERROR', code: '23514', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, 
+ Test Files  2 failed (2)
+      Tests  2 failed | 14 passed (16)

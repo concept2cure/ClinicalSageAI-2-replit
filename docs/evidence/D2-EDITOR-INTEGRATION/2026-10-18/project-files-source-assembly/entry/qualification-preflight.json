@@ -1,0 +1,6 @@
+{
+  "qualification": "A receipt wrapper initially pinned the prior authService.ts path; canonical now provides authService.tsx. File-not-found happened before any test command executed. Corrected pin path only; no product/test mutation.",
+  "testExecuted": false,
+  "oldPath": "client/src/services/portal/authService.ts",
+  "currentPath": "client/src/services/portal/authService.tsx"
+}

@@ -1,0 +1,18 @@
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > freeze and dispatch refuse a signature that declares authorship > refuses a freeze signed as "review", and accepts the same freeze signed as approval 65ms
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > freeze and dispatch refuse a signature that declares authorship > refuses a dispatch signed as "review", and the release resolver does not count it 57ms
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > freeze and dispatch refuse a signature that declares authorship > a signature recording no meaning is refused — no meaning is not an approval 59ms
+ × server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > a dispatch-intent signature declaring review is not a release 11ms
+ × server/services/submission-gateways/__tests__/governed-transmit-independence.test.ts > assertTransmitterIndependent > refuses "review" and a missing meaning, before any lookup — a transmission is a release 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > a dispatch-intent signature declaring review is not a release
+AssertionError: a "review" signature was counted as the release: expected 'signed' to be 'unsigned' // Object.is equality
+ FAIL  server/services/submission-gateways/__tests__/governed-transmit-independence.test.ts > assertTransmitterIndependent > refuses "review" and a missing meaning, before any lookup — a transmission is a release
+AssertionError: transmitted on a signature declaring 'review': expected undefined to be 'MEANING_NOT_A_RELEASE' // Object.is equality
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > freeze and dispatch refuse a signature that declares authorship > refuses a freeze signed as "review", and accepts the same freeze signed as approval
+AssertionError: a freeze signed "I reviewed" was accepted as an approval: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > freeze and dispatch refuse a signature that declares authorship > refuses a dispatch signed as "review", and the release resolver does not count it
+AssertionError: a dispatch signature declaring review was counted as the §11.70 release: expected 'undetermined' to be 'unsigned' // Object.is equality
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > freeze and dispatch refuse a signature that declares authorship > a signature recording no meaning is refused — no meaning is not an approval
+AssertionError: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+ Test Files  3 failed (3)
+      Tests  5 failed | 39 passed (44)

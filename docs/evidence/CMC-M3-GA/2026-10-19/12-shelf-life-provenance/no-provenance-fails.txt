@@ -1,0 +1,14 @@
+ × server/services/__tests__/module3Composer.shelf-life-provenance.test.ts > mapStabilityPayload carries the close-out signature > reports a closed-out study’s claim as accepted 8ms
+ × server/services/__tests__/module3Composer.shelf-life-provenance.test.ts > mapStabilityPayload carries the close-out signature > reads the snake_case row the raw writers hand it 1ms
+ × server/services/__tests__/module3Composer.shelf-life-provenance.test.ts > mapStabilityPayload carries the close-out signature > reports a running study’s claim as not accepted 1ms
+ × server/services/__tests__/module3Composer.shelf-life-provenance.test.ts > the composed §3.2.P.8 states the claim’s provenance > says a claim was accepted on a signed close-out 16ms
+ × server/services/__tests__/module3Composer.shelf-life-provenance.test.ts > the composed §3.2.P.8 states the claim’s provenance > says a claim on a running study has not been signed for 2ms
+ × server/services/__tests__/module3Composer.shelf-life-provenance.test.ts > the composed §3.2.P.8 states the claim’s provenance > is not fooled by a signature on a study whose claim is blank 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be true // Object.is equality
+AssertionError: expected undefined to be true // Object.is equality
+AssertionError: expected undefined to be false // Object.is equality
+AssertionError: expected 'Stability studies for the drug produc…' to match /accepted on a signed study close-out/
+AssertionError: expected 'Stability studies for the drug produc…' to match /recorded on a study that has not been…/
+AssertionError: expected 'Stability studies for the drug produc…' to match /recorded on a study that has not been…/
+      Tests  6 failed | 4 passed (10)

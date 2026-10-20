@@ -224,6 +224,12 @@ export interface SectionDefinition {
   contentType: 'narrative' | 'table' | 'form' | 'data' | 'list' | 'mixed';
   guidance?: string;
   templateId?: string;
+  /**
+   * The titles this row carried before a correction renamed it, so a document
+   * or project section bound to an earlier outline still resolves to it by
+   * title (2026-10-18). The code is unchanged; only the wording moved.
+   */
+  formerTitles?: string[];
 }
 
 // ─── Task Blueprint ───────────────────────────────────────────────────────────

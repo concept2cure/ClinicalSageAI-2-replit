@@ -47,8 +47,17 @@ export const AGENCY_FIELDS: readonly string[] = [
   'zone_regulatory_authorities',
 ];
 
-/** Answers that name a predicate device. A non-empty one means a predicate is named. */
-export const PREDICATE_FIELDS: readonly string[] = ['predicate_device', 'predicate_device_name', 'predicate_510k_number'];
+/**
+ * Answers that name a predicate device. A non-empty one means a predicate is
+ * named.
+ *
+ * `predicate_device` was dropped on 2026-10-19 with the question: project
+ * setup's one box asking for "K123456 — Brand Name by Manufacturer" could fill
+ * neither column of the predicate of record, so it became these two — the
+ * 510(k) flow's own ids. A field no flow asks leaves every rule that reads it
+ * firing on nothing, which is what `cautioned-positions.test.ts` refuses.
+ */
+export const PREDICATE_FIELDS: readonly string[] = ['predicate_device_name', 'predicate_510k_number'];
 
 /** The answer that states the predicate strategy. */
 export const PREDICATE_STRATEGY_FIELDS: readonly string[] = ['predicate_strategy'];

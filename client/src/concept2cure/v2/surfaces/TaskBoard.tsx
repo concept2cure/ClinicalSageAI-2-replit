@@ -7,6 +7,7 @@ import type { ListState } from '../dataConnect';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
+import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { canGovernedWrite } from '@shared/constants/permissions';
@@ -808,6 +809,19 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     };
   }, [list]);
 
+  /* What the Analytics tab measured, or null when it measured every card the
+     board read. `tasks` is the board's whole read (the /board route is
+     uncapped and spans every work store); `list` is what the filters and the
+     unconditional cancelled-card exclusion leave. */
+  const analyticsScope = useMemo(
+    () => taskAnalyticsScope({
+      shown: list.length,
+      total: tasks.length,
+      filters: { project: proj, moduleType: mod, mineOnly: mine },
+    }),
+    [list.length, tasks.length, proj, mod, mine],
+  );
+
   /* What AnA can see of this screen. Until now she was told the user was on
      "task-board" and nothing more, so "what should I do next?" had to be
      answered from the message text — on the one surface whose entire purpose is
@@ -1172,6 +1186,13 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
 
       {view === 'analytics' && (
         <div>
+          {/* Every figure below is computed from `list`, the FILTERED rows, so
+              the tab says what it measured. See taskBoardAnalyticsScope. */}
+          {analyticsScope && (
+            <div className="ro-dash-note" role="status" data-testid="tb-analytics-scope">
+              {I.info} {analyticsScope}
+            </div>
+          )}
           <div className="metrics">
             {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
               <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>

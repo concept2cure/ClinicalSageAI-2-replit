@@ -1,0 +1,62 @@
+Red — written and run before the change (2026-10-19).
+
+== server/services/__tests__/contradiction-cross-artifact-coverage.test.ts ==
+
+ × the detector says what it compared and what it dropped > reports truncation rather than returning a short list silently
+   → Cannot read properties of undefined (reading 'truncated')
+ × the detector says what it compared and what it dropped > never drops a critical finding in favour of a lesser one
+   → Cannot read properties of undefined (reading 'map')
+ × the detector says what it compared and what it dropped > a project with fewer than two readable artifacts compared NOTHING, and says so
+   → expected undefined to deeply equal []
+ × the detector says what it compared and what it dropped > counts the artifacts it skipped for being too short to read
+   → Cannot read properties of undefined (reading 'sectionsSkippedShort')
+ × the detector says what it compared and what it dropped > a complete scan of two agreeing sections is complete, and reports no conflict
+   → Cannot read properties of undefined (reading 'comparedNothing')
+
+      Tests  5 failed (5)
+
+Then the three preflight/rendering cases, added after the detector was green:
+
+ × an incomplete scan never reads as "no contradictions" > the preflight context says the scan was incomplete
+   → expected undefined to be true
+ × an incomplete scan never reads as "no contradictions" > a complete scan with nothing wrong is NOT marked incomplete
+   → expected undefined to be false
+
+      Tests  2 failed | 5 passed (7)
+
+== server/services/__tests__/contradiction-aware-status-tenant.test.ts ==
+
+The file that already holds the FAILED-READ version of this sentence, extended with the
+incomplete-scan version:
+
+ × an incomplete scan is not rendered as an absence of contradictions > says the scan was incomplete instead of "no contradictions"
+   → expected undefined to be true
+ × an incomplete scan is not rendered as an absence of contradictions > a truncated scan says so, and does not read as a complete count
+   → expected undefined to be true
+ × an incomplete scan is not rendered as an absence of contradictions > a complete scan with nothing to report still says so plainly
+   → expected undefined to be false
+
+      Tests  3 failed | 4 passed (7)
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════
+A harness finding, recorded rather than worked around
+════════════════════════════════════════════════════════════════════════════════════════════════
+
+The first version of the two preflight cases drove artifacts through buildPreflightContradictionContext
+→ scanProjectFull → all six detectors. The complete-scan case failed:
+
+ × a complete scan with nothing wrong is NOT marked incomplete
+   → expected true to be false
+
+Instrumenting rather than guessing showed why:
+
+  DIRECT {"sectionsRead":2,...,"comparedNothing":false}  findMany calls 1
+  FULL   {"sectionsRead":0,...,"comparedNothing":true}   findMany calls 1
+         methods assumption_drift,decision_action_inconsistency,cross_jurisdictional_divergence,
+                 approved_vs_working_drift,status_conflict,cross_artifact_content
+
+The same mock delivered 2 sections to the detector called directly and 0 through the full scan,
+with only one findMany call across six detectors. A test written on top of that would have been
+asserting the harness, not the wiring. The three cases now stub the detector and assert the path
+from a coverage record to the rendered sentence, and the test file says so in its own comment.

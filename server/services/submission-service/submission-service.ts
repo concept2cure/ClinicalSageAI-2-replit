@@ -48,7 +48,9 @@ import {
   voidSignatureForRefusedAct,
   VOIDED_VERIFICATION_STATUS,
 } from '../part11/signature-persistence';
+import { releaseActMeaningRefusal } from '../part11/signature-meanings';
 import { createScopedLogger } from '../../utils/logger';
+import { isFiledDispatchStatus } from './filed-dispatch';
 import { canMutateProgram, programInOrganization } from '../c2c/program-access';
 import {
   assertSignerIsNotAuthor,
@@ -866,8 +868,14 @@ const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
  * The meanings an intent narrows Gate 1 to, beyond requiresIndependence. A
  * waiver (P-34) and a finding disposition (P-35) are decisions the signer
  * approves or answers for: responsibility or approval, never review or release.
+ * Freeze, dispatch and transmit are approval or release steps
+ * (RELEASE_ACT_MEANINGS). Until 2026-10-19 they had no entry here, so a
+ * signature declaring "review", or no meaning at all, authorized them.
  */
 const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: unknown) => string | null>> = {
+  freeze: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.freeze),
+  dispatch: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.dispatch),
+  transmit: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.transmit),
   [SHADOW_WAIVER_INTENT]: shadowWaiverMeaningRefusal,
   [SHADOW_FINDING_DISPOSITION_INTENT]: shadowFindingDispositionMeaningRefusal,
 };
@@ -1420,7 +1428,7 @@ async function filingOrderRefusal(
     const shared = sharedLifecycleKeys(mine, leavesOf.get(Number(r.id)) ?? [], leafSourceKey);
     if (shared) dependent.push({ ...r, shared_sections: shared });
   }
-  const isFiled = (r: Other) => r.dispatch_status === 'sent' || r.dispatch_status === 'acknowledged';
+  const isFiled = (r: Other) => isFiledDispatchStatus(r.dispatch_status);
   // Zero-padded fixed-width sequence numbers: lexical order is filing order,
   // the same assumption the prior-sequence loaders rely on.
   const lower = dependent.filter((r) => String(r.sequence_number) < seq.sequenceNumber && !isFiled(r));

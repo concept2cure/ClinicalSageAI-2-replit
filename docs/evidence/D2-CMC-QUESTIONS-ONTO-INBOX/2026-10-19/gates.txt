@@ -1,0 +1,338 @@
+# Gates on the final tree, 2026-10-19 (HEAD 99acc88d + this slice, uncommitted).
+# Every pre-push npm script plus the extra gates the task names, then the eCTD migration-header rule.
+# Result: 54 gates, every one exit=0; both new/amended migrations carry the header.
+# Not here: ci:pushed-lint-errors / ci:pushed-typecheck / ci:untracked-imports read the committed
+# range, which is empty before the orchestrator commits; ci:unkeyed-request-tables:strict exits 1 on
+# HEAD as well (see ratchets.txt).
+
+════════ npm run -s audit:repo-health:ceiling
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 236   [reported, not gated]
+- files over byte threshold: 57
+- files over line threshold: 112
+
+✅ repo health strict gate passed.
+→ exit=0
+
+════════ npm run -s check:catalog-copy
+[ci:catalog-copy] OK — 120 catalog description(s) across 3 migration(s) read as product copy.
+→ exit=0
+
+════════ npm run -s ci:class-vocabulary
+[ci:class-vocabulary] OK — 5252 file(s) scanned, no restated class vocabulary.
+→ exit=0
+
+════════ npm run -s ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+→ exit=0
+
+════════ npm run -s ci:column-reachability
+[ci:column-reachability] OK — 3154 column add(s) on no applier, 0 queried by the server.
+→ exit=0
+
+════════ npm run -s ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+→ exit=0
+
+════════ npm run -s ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 100 site(s), all baselined; 27 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 27 fix(es).
+→ exit=0
+
+════════ npm run -s ci:ectd-stubs
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+→ exit=0
+
+════════ npm run -s ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+→ exit=0
+
+════════ npm run -s ci:filing-exit-agreement
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 5 baselined site(s) in 2 file(s), exactly as baselined.
+→ exit=0
+
+════════ npm run -s ci:filing-exit-agreement:selftest
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest.
+→ exit=0
+
+════════ npm run -s ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+→ exit=0
+
+════════ npm run -s ci:install-fresh-overlay-deps
+[ci:install-fresh-overlay-deps] 346 overlay file(s) · 691 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+→ exit=0
+
+════════ npm run -s ci:install-fresh-overlay-deps:selftest
+  ✓ THE REAL CASE — an unguarded FK to a db/migrations-only table — expected 1, got 1
+  ✓ guarded — to_regclass IS NULL short-circuits, so it no-ops instead of deferring — expected 0, got 0
+  ✓ a non-public schema qualifier is not the table name — expected 0, got 0
+  ✓ reachable because step 2 pushed it — expected 0, got 0
+  ✓ a table nothing in the repo creates is another gate's question — expected 0, got 0
+  ✓ the file creating it itself is never its own missing dependency — expected 0, got 0
+
+[ci:install-fresh-overlay-deps] selftest passed: it fails on the unguarded case and only on that case.
+→ exit=0
+
+════════ npm run -s ci:json-operator-types
+[ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3294 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+→ exit=0
+
+════════ npm run -s ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new.
+→ exit=0
+
+════════ npm run -s ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 415 migrations, 39 DROP(s), none re-created by the set; 6 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+→ exit=0
+
+════════ npm run -s ci:migration-drop-safety:selftest
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+→ exit=0
+
+════════ npm run -s ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+→ exit=0
+
+════════ npm run -s ci:migration-guard-order:selftest
+[ci:migration-guard-order] selftest OK — reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it.
+→ exit=0
+
+════════ npm run -s ci:migration-set-order
+[ci:migration-set-order] OK — 415 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+→ exit=0
+
+════════ npm run -s ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+→ exit=0
+
+════════ npm run -s ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+→ exit=0
+
+════════ npm run -s ci:program-ownership-single-source:selftest
+[self-test] OK — 10 copies found, 6 reads passed.
+→ exit=0
+
+════════ npm run -s ci:pushed-lint-errors
+[ci:pushed-lint-errors] no lintable files changed against origin/concept2cure-v2.
+→ exit=0
+
+════════ npm run -s ci:pushed-lint-warnings
+[ci:eslint-warning-ratchet] --since 99acc88dcd232c18891208a992c3387d29b745c4 (99acc88dc) -- 31 lintable file(s) changed; linting both versions of each...
+
+    +1  server/services/agency-responses/response-service.ts  (0 -> 1)
+         server/services/agency-responses/response-service.ts:629:1  max-lines  File has too many lines (562). Maximum allowed is 500.
+    -1  server/routes/__tests__/cmcAgencyQuestions.test.ts  (1 -> 0)
+    -2  server/src/services/integrations/gmail.ts  (4 -> 2)
+    -3  client/src/concept2cure/v2/surfaces/CmcModule.tsx  (16 -> 13)
+    -3  server/routes/cmc-agency-questions.routes.ts  (3 -> 0)
+
+[ci:eslint-warning-ratchet] net -8 warning(s) across the files changed since 99acc88dcd232c18891208a992c3387d29b745c4.
+→ exit=0
+
+════════ npm run -s ci:pushed-typecheck
+[ci:pushed-typecheck] skipped — none of the 0 file(s) changed against origin/concept2cure-v2 can change a type.
+→ exit=0
+
+════════ npm run -s ci:risk-codes
+OK: Generated risk code types are up to date.
+→ exit=0
+
+════════ npm run -s ci:runtime-ddl
+[ci:runtime-ddl] 83 DDL statement(s) in 12 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+→ exit=0
+
+════════ npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+→ exit=0
+
+════════ npm run -s ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 4 baselined occurrence(s) remain in 1 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+→ exit=0
+
+════════ npm run -s ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+→ exit=0
+
+════════ npm run -s ci:sql-interpolation
+  server/services/csr/vault-source-input.ts:46:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:46:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:102:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:561:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1078 baselined interpolation(s) in 226 file(s); the baseline may only shrink.
+→ exit=0
+
+════════ npm run -s ci:trivyignore-hygiene
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+→ exit=0
+
+════════ npm run -s ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+→ exit=0
+
+════════ npm run -s ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+→ exit=0
+
+════════ npm run -s ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+→ exit=0
+
+════════ npm run -s ci:upload-guards
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+→ exit=0
+
+════════ npm run -s db:sync-manifest:check
+Manifest is in sync.
+→ exit=0
+
+════════ npm run -s ci:purge-coverage
+     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+✅ purge-coverage: 604 org-keyed tables outside the purge reach (baseline 612, new 0, 8 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     commitment_milestones
+     csr_extraction_log
+     document_audit_log
+     mdx_notifications
+     qmp_audit_trail
+     regulatory_commitments
+→ exit=0
+
+════════ npm run -s ci:launch-scope
+[ci:launch-scope] 7 apps · 33 surfaces · 13 modules · 28 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+→ exit=0
+
+════════ npm run -s ci:launch-scope-api
+ci:launch-scope-api: 419 API paths named by launch and shell screens; none refused. {"launch":368,"infrastructure":2,"never-gated":49}
+→ exit=0
+
+════════ npm run -s check:microcopy
+[ci:microcopy] OK — scanned 596 customer-facing files, no exclamations or pictographs.
+→ exit=0
+
+════════ npm run -s check:compliance-claims
+[ci:compliance-claims] OK — scanned 1534 customer-facing files, no unsupported claims.
+→ exit=0
+
+════════ npm run -s ci:empty-state-honesty
+check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s).
+→ exit=0
+
+════════ npm run -s ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+→ exit=0
+
+════════ npm run -s ci:check-chip-tones
+[chip-tones] OK — 172 literal tone use(s), all 28 resolve to a CSS rule.
+→ exit=0
+
+════════ npm run -s ci:check-phantom-tokens
+[ci:phantom-tokens] 9 phantom token(s) across 55 site(s) (baseline 9).
+[ci:phantom-tokens] OK — no new phantom tokens.
+→ exit=0
+
+════════ npm run -s ci:validation-traceability
+✓ validation traceability: every file cited by 7 URS document(s) resolves; every OQ step carries its protocol's kind
+→ exit=0
+
+════════ npm run -s ci:insert-columns-declared
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 703
+  static INSERTs examined      : 693
+  skipped (unjudgeable)        : 8
+  migration lineage tables     : 1428
+  tables unknown to BOTH       : 7
+  baselined (known, unfixed)   : 43
+
+✅ no new violations. 43 baselined and awaiting burn-down.
+→ exit=0
+
+════════ npm run -s ci:unkeyed-request-tables
+[ci:unkeyed-request-tables] 1091 tables created; 585 read by a per-request path; 103 of those carry NO tenant column; 103 baselined, 0 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+→ exit=0
+
+════════ npm run -s ci:unbacked-tables
+[ci:unbacked-tables] 1508 tables/views created across migrations, drizzle and runtime DDL; 725 referenced in server SQL; 16 unbacked; 16 baselined
+[ci:unbacked-tables] ✅ no new references to tables nothing creates.
+→ exit=0
+
+════════ npm run -s ci:tables-live-schema
+[ci:tables-live-schema] 1307 relations on the live database; 750 referenced by server SQL; 14 resolved as functions; 33 absent
+[ci:tables-live-schema] ✅ 1 baselined table(s) NOW EXIST on the live database — remove them from the baseline to ratchet down:
+    • ai_feedback
+[ci:tables-live-schema] ✅ 3 baselined table(s) are NO LONGER REFERENCED by server SQL — the querying code was removed, so they are out of scope. They were NOT created; remove them from the baseline to ratchet down:
+    • correspondences
+    • enterprise_integration_credentials
+    • reg_submissions
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (37 baselined)
+→ exit=0
+
+════════ npm run -s ci:tenant-resolvers
+Local tenant resolvers: 180 (baseline 184)
+
+4 baselined module(s) no longer define one — regenerate the baseline:
+  - server/api/cmc/module3BuildStateRoutes.ts
+  - server/api/cmc/module3ConvergenceRoutes.ts
+  - server/api/cmc/module3OperatingSystemRoutes.ts
+  - server/routes/regulatory-precedent-intelligence.ts
+
+OK: no new local tenant resolvers.
+→ exit=0
+
+════════ eCTD audit header (scripts/ci/require-migration-headers.sh's per-file rule: head -40 | grep 'eCTD REGULATORY AUDIT CONTEXT'), on every 2026-dated migration this change adds or amends
+  ✓ migrations/20261018b_agency_response_questions.sql
+  ✓ migrations/20261019b_reg_questions_read_only.sql

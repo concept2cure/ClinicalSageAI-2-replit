@@ -25044,7 +25044,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Mark a regulatory commitment (PMR/PMC/REMS/meeting commitment) fulfilled, optionally with the date it was met. Closes the commitment lifecycle. Governed + audited, org-scoped.",
+      "description": "Mark an organisation-level meeting commitment or other commitment fulfilled, optionally with the date it was met. Governed + audited, org-scoped. AnA cannot sign: a PMR, PMC or REMS is recorded fulfilled only by the person's Part 11 signature naming the sequence or document that met it, so for those this tool records nothing and points to Communication, Meetings & commitments.",
       "scope": "global",
       "governed": true,
       "renderer": "result-card",

@@ -18,7 +18,7 @@ import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
 import { PvCockpit } from '../surfaces/PvCockpit';
-import { CmChange, CmPathway } from '../surfaces/CmcModule';
+import { CmChange } from '../surfaces/CmcModule';
 import { CmQuality } from '../surfaces/CmcQuality';
 import { authService } from '@/services/portal/authService';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
@@ -101,7 +101,6 @@ const ENGINE_DOCUMENT = {
 let createReply: () => Response | Promise<Response>;
 let sectionReply: () => Response | Promise<Response>;
 let sectionCode: string;
-let patchReply: () => Response | Promise<Response>;
 let readReply: (url: string) => Response | Promise<Response>;
 let protocolTitle: string;
 const listReceipt = (programId = PROGRAM) => json(200, { success: true, documents: [
@@ -114,7 +113,7 @@ const sectionsReceipt = (rows: unknown[] = []) => json(200, { success: true, sec
 function authoringReads() {
   return apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && String(url).startsWith('/api/authoring/'));
 }
-function correspondencePatches() { return apiRequest.mock.calls.filter(([method]) => method === 'PATCH'); }
+function patchCalls() { return apiRequest.mock.calls.filter(([method]) => method === 'PATCH'); }
 
 const STRATEGY = {
   scope: 'both', cqas: [], cpps: [], controlElements: [], gaps: [], citations: [], generatedAt: '2026-10-16T12:00:00Z',
@@ -123,16 +122,13 @@ const STRATEGY = {
 };
 const BOARD = {
   portfolio: [], sections: null,
-  kpis: { submissions: 0, rpiAverage: null, irOverdue: 0, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
-  correspondence: [{ id: 9, question: 'Synthetic shelf-life question.', sectionRef: '3.2.P.8.1',
-    priority: 'medium', severity: 'MAJOR', status: 'OPEN', region: 'FDA', dueDate: null, overdue: false, assignedTo: null }],
+  kpis: { submissions: 0, rpiAverage: null, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
   meta: { projectId: PROGRAM, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: '2026-10-16T12:00:00Z' },
 };
 function authoringCalls() {
   return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).startsWith('/api/authoring/'));
 }
 function specialistResponse(method: string, url: string): Response | Promise<Response> {
-  if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') return patchReply();
   if (url.startsWith('/api/cmc/module3-board')) return json(200, { success: true, data: BOARD });
   if (url.startsWith('/api/cmc/quality/qbd/')) return json(200, { success: true, data: {
     cqas: [], cpps: [], inputs: {}, gaps: [], partial: false, unevaluatedInputs: [], analyzedAt: '2026-10-16T12:00:00Z',
@@ -168,7 +164,6 @@ beforeEach(async () => {
   createReply = () => docReceipt();
   sectionCode = 'recommendations';
   sectionReply = () => sectionReceipt(sectionCode);
-  patchReply = () => json(200, { success: true, data: { id: 9, status: 'DRAFTED' } });
   protocolTitle = 'Synthetic protocol';
   readReply = url => url.includes('?') ? listReceipt() : url.endsWith('/sections') ? sectionsReceipt() : detailReceipt();
   apiRequest.mockReset();
@@ -263,17 +258,14 @@ async function prepareQuality() {
   fireEvent.click(screen.getByRole('button', { name: 'Generate control strategy' }));
   return { ...view, action: await screen.findByRole('button', { name: 'Open in editor' }) };
 }
-async function prepareCorrespondence(onNav = vi.fn()) {
-  const view = render(<CmPathway ask={vi.fn()} nav={onNav} />);
-  await screen.findByText('Synthetic shelf-life question.');
-  return { ...view, onNav, action: screen.getByTitle(/Create a governed response draft/) };
-}
-
-describe('the six existing modules retain uncertain writes beside their real controls', () => {
+/* CMC correspondence left this list on 2026-10-19: CMC no longer drafts agency
+   responses into Authoring (P-38). A response is written and approved on its
+   letter, in Communication (AgencyResponses.tsx), and "Draft response with AnA"
+   pins the letter (AgencyInbox.tsx). */
+describe('the five existing modules retain uncertain writes beside their real controls', () => {
   it.each([
     ['Biostatistics', prepareBiostatistics], ['calculator', prepareCalculator],
     ['PV', preparePv], ['CMC change', prepareChange], ['CMC quality', prepareQuality],
-    ['CMC correspondence', prepareCorrespondence],
   ] as const)('%s cannot create a second document while the first identity is unknown', async (_name, prepare) => {
     createReply = () => { throw new TypeError('Synthetic transport interrupted after document request'); };
     const { action } = await prepare();
@@ -282,7 +274,7 @@ describe('the six existing modules retain uncertain writes beside their real con
     fireEvent.click(action); await settle();
     expect(authoringCalls()).toHaveLength(1);
     expect(authoringReads()).toHaveLength(0);
-    expect(correspondencePatches()).toHaveLength(0);
+    expect(patchCalls()).toHaveLength(0);
   });
 });
 
@@ -329,7 +321,7 @@ describe('read-only recovery and deliberate saved-text continuation', () => {
     await clickRecovery('Open document to review');
     expect(peekEditorTarget()).toMatchObject({ docId: DOC_ID, programId: PROGRAM });
     expect(authoringCalls()).toHaveLength(2);
-    expect(correspondencePatches()).toHaveLength(0);
+    expect(patchCalls()).toHaveLength(0);
   });
 
   it('a scoped inventory check never guesses which unknown document response belonged to this request', async () => {
@@ -358,35 +350,6 @@ describe('read-only recovery and deliberate saved-text continuation', () => {
     expect(peekEditorTarget()).toMatchObject({ docId: DOC_ID, programId: PROGRAM, sectionCode: 'recommendations' });
   });
 
-  it('a failed correspondence lifecycle PATCH leaves the saved draft inspectable without replaying that PATCH', async () => {
-    patchReply = () => json(409, { success: false, error: 'Synthetic concurrent correspondence change' });
-    const { onNav, action } = await prepareCorrespondence();
-    fireEvent.click(action); await settle();
-    expect(authoringCalls()).toHaveLength(2);
-    expect(correspondencePatches()).toHaveLength(1);
-    expect(onNav).not.toHaveBeenCalled();
-    expect(await screen.findByText(/The draft was created, but the correspondence file was not updated/)).toBeTruthy();
-    await clickRecovery('Open saved document');
-    expect(authoringCalls()).toHaveLength(2);
-    expect(correspondencePatches()).toHaveLength(1);
-    expect(peekEditorTarget()).toMatchObject({ docId: DOC_ID, programId: PROGRAM, sectionCode: 'agency_question_response' });
-  });
-
-  it('checking an interrupted correspondence section never advances the agency-question lifecycle', async () => {
-    sectionReply = () => { throw new TypeError('Synthetic unknown response draft text'); };
-    readReply = url => url.includes('?') ? listReceipt() : url.endsWith('/sections') ? sectionsReceipt([
-      { id: SECTION_ID, doc_id: DOC_ID, code: 'agency_question_response', title: 'Saved response', content: '<p>Saved before disconnect.</p>' },
-    ]) : detailReceipt();
-    const { onNav, action } = await prepareCorrespondence();
-    fireEvent.click(action); await settle();
-    await clickRecovery('Check document sections');
-    expect(authoringCalls()).toHaveLength(2);
-    expect(correspondencePatches()).toHaveLength(0);
-    expect(onNav).not.toHaveBeenCalled();
-    await clickRecovery('Open document to review');
-    expect(correspondencePatches()).toHaveLength(0);
-    expect(peekEditorTarget()).toMatchObject({ docId: DOC_ID, programId: PROGRAM });
-  });
 });
 
 describe('late explicit recovery cannot publish across account or project visits', () => {

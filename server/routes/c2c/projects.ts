@@ -48,6 +48,7 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
 import { workstreamSqlCase } from '../../../shared/constants/domain/product-types.js';
+import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
    VALID_PRODUCT_TYPES / DRUG_APPLICATION_TYPES) and its canonical
@@ -66,6 +67,10 @@ import {
   normalizeDeviceClassification,
   usesDeviceClassification,
 } from '../../../shared/constants/domain/device-classification.js';
+import {
+  programmePredicateDevicesColumn,
+  programmeTeamMembersColumn,
+} from '../../services/c2c/programme-profile-write.js';
 /* Every 5xx on this router goes through the canonical helper. Its job here is
    the one the MDX UAT (item A1) proved was missing: it logs the failure keyed
    by the SAME `X-Request-Id` the user is shown as "Reference <id>", and echoes
@@ -461,7 +466,7 @@ function allowProgramMutation(
  *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
  *  match on lower() — otherwise every real row falls through to the ELSE branch
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
-const WS_CASE = workstreamSqlCase('p.program_type');
+const WS_CASE = workstreamSqlCase('p.program_type', 'p.product_type');
 
 // ── The program DETAIL — one projection, one serializer ──────────────────────
 //
@@ -709,8 +714,14 @@ router.post('/', async (req: Request, res: Response) => {
   // Accept 'YYYY-MM-DD' (wizard <input type=date>); '' → null.
   const rawDate = str(body.targetSubmissionDate);
   const targetSubmissionDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : null;
-  const teamMembers = Array.isArray(body.teamMembers)
-    ? (body.teamMembers as unknown[]).filter((m) => typeof m === 'string')
+  /* The wizard sends names. `team_members` is a TeamMember[] column and the
+     governed write stores `{ name, role? }` with role OPTIONAL, so a name with
+     no stated role maps onto the canonical shape and asserts nothing extra.
+     Until 2026-10-19 this wrote the bare string array: the service that reads
+     `Array<{ name?, userId?, role? }>` saw `{}` for every member, and the
+     owner initials computed from `teamMembers[].name` came out undefined. */
+  const teamMemberNames = Array.isArray(body.teamMembers)
+    ? (body.teamMembers as unknown[]).filter((m): m is string => typeof m === 'string' && m.trim() !== '')
     : [];
 
   if (!name) return send400(res, 'name is required');
@@ -742,7 +753,7 @@ router.post('/', async (req: Request, res: Response) => {
   // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
   // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
   // not be recorded as medicinal. The rules are productTypeForIntake's.
-  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase());
+  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase(), submissionTypeId);
   if ('refusal' in classDecision) return send400(res, classDecision.refusal);
   const { productType } = classDecision;
 
@@ -807,11 +818,26 @@ router.post('/', async (req: Request, res: Response) => {
   }
   const dc = deviceCls.value;
 
+  /* Both json columns through the governed write's own schemas, so a shape it
+     would refuse cannot be written here either. The predicate pair is already
+     enforced by normalizeDeviceClassification, which 400s above when only one
+     half arrives; `id` is the submission number, the key the audit row records
+     the claim under. */
+  const teamMembersColumn = programmeTeamMembersColumn.parse(
+    teamMemberNames.map((name) => ({ name })),
+  ) ?? [];
+  const predicateDevicesColumn = programmePredicateDevicesColumn.parse(
+    dc.predicateK && dc.predicateName
+      ? [{ id: dc.predicateK, name: dc.predicateName, kNumber: dc.predicateK }]
+      : [],
+  ) ?? [];
+
   const targetAgencies = JSON.stringify([primaryAgency]);
   const metadata = JSON.stringify({
     createdVia: 'v2-new-project-wizard',
     ...(submissionTypeId ? { submissionTypeId } : {}),
-    ...(teamMembers.length ? { teamMemberNames: teamMembers } : {}),
+    /* `teamMemberNames` was mirrored here and read by nothing — one capability,
+       one home: the `team_members` column below. */
     /* Review panel and the device flags have no column of their own. The flags
        are load-bearing — each one adds a statutory section, so they drive the
        required-content model rather than describing the product. */
@@ -845,7 +871,7 @@ router.post('/', async (req: Request, res: Response) => {
       [
         orgId, name, code, programType, productType, primaryAgency,
         targetAgencies, productName, indication, priority,
-        targetSubmissionDate, userId, JSON.stringify(teamMembers), metadata, createdBy,
+        targetSubmissionDate, userId, JSON.stringify(teamMembersColumn), metadata, createdBy,
         dc.deviceClass ?? null,
         /* The US premarket route, derived from the filing type the user picked
            — not asked for twice. FILING_TYPE_PRODUCT_CLASS already knows a
@@ -853,7 +879,7 @@ router.post('/', async (req: Request, res: Response) => {
         devicePathFor(programType),
         dc.productCode ?? null,
         dc.intendedUse ?? null,
-        JSON.stringify(dc.predicateK ? [{ kNumber: dc.predicateK }] : []),
+        JSON.stringify(predicateDevicesColumn),
         applicationNumber,
       ],
     );
@@ -1935,6 +1961,8 @@ function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown
     origin: prov.origin ?? null,
     fileUploadId: prov.fileUploadId ?? null,
     extractionMethod: prov.extractionMethod ?? null,
+    // How much of a scanned PDF OCR read; null when not recorded or malformed.
+    extractionCoverage: readExtractionCoverage(prov.extractionCoverage),
     evidenceKind: (meta.dossier?.evidenceKind as string | undefined) ?? null,
   };
 }

@@ -10,7 +10,13 @@
  *                   project home's Respond tab — one inbox per project)
  *                   REAL (server routes/concept2cure.ts → concept2cure_agency_communications).
  *   Meetings      → GET /api/ha-interactions/interactions   REAL (listInteractions).
- *   Commitments   → GET /api/ha-interactions/commitments     REAL (listCommitments).
+ *   Commitments   → GET /api/ha-interactions/commitments     REAL (listCommitments,
+ *                   the organisation's own) and, with a project open,
+ *                   GET /api/concept2cure/projects/:pid/commitments (those made
+ *                   in answers to its agency letters, behind project admission).
+ *                   A row is CommitmentRow.tsx, its fulfilment dialog CommitmentFulfilment.tsx:
+ *                   a PMR, PMC or REMS is fulfilled by a Part 11 signature that
+ *                   names what met it (P-41, 2026-10-19).
  *   Authority     → GET /api/concept2cure/projects/:pid/authority-profiles
  *   profiles        REAL (server routes/concept2cure.ts → concept2cure_authority_profiles).
  *   FDA loop      → GET /api/concept2cure/projects/:pid/submission-center/items
@@ -33,12 +39,16 @@ import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import { CC_SOURCE_TYPES, CC_INTERACTION_TYPES } from '../fixtures/commcenter';
-import { AgencyInboxList, daysTo, draftResponseWithAna, letterSourceOptions, letterSourceRef, useAgencyInbox } from './AgencyInbox';
+import { AgencyInboxList, daysTo, dueInWords, draftResponseWithAna, letterSourceOptions, letterSourceRef, useAgencyInbox, type LetterOpening } from './AgencyInbox';
+import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { isSourcesPage, sourcesUrl, type SourcesPage } from './projectSources';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { ApiRequestError, apiRequest } from '@/lib/queryClient';
+import { CommitmentFulfilDialog } from './CommitmentFulfilment';
+import { CommitmentRowView, isCommitmentsPayload, type CommitmentRow, type CommitmentsPayload } from './CommitmentRow';
 
 /* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
@@ -62,23 +72,9 @@ interface InteractionRow {
   held_date: string | null;
 }
 
-/**
- * GET /api/ha-interactions/commitments returns { commitments, summary }.
- * effectiveStatus is derived server-side; the rest are snake_case + nullable.
- */
-interface CommitmentRow {
-  id: number;
-  commitment_type: string;
-  description: string;
-  regulatory_basis: string | null;
-  due_date: string | null;
-  status: string;
-  fulfilled_date: string | null;
-  effectiveStatus: string;
-}
-interface CommitmentsPayload {
-  commitments: CommitmentRow[];
-}
+/* The commitment row, its shape guard and its chip tone live in
+   CommitmentRow.tsx, its fulfilment dialog in CommitmentFulfilment.tsx
+   (2026-10-19). */
 
 /**
  * GET authority-profiles row (concept2cure_authority_profiles), aligned to
@@ -123,6 +119,34 @@ function currentProjectId(): string | null {
 }
 
 /* ── Helpers ── */
+
+/** The id shapes a letter link may carry (notificationTarget.ts's safe id); anything else opens nothing. */
+const SAFE_LETTER_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+
+/**
+ * A link from another screen to one letter (2026-10-19): CMC / Module 3's
+ * "Open on its letter" stashes `{ letterId, questionId }` for this surface on
+ * the navigation-params channel (navParams.ts). Read once after mount, and on
+ * the channel's event while mounted; consumed on read, so a later visit opens
+ * nothing. An id that is not id-shaped is ignored.
+ */
+function useLetterLink(onLink: (opening: Omit<LetterOpening, 'token'>) => void) {
+  const latest = React.useRef(onLink);
+  latest.current = onLink;
+  React.useEffect(() => {
+    const receive = () => {
+      const p = consumeNavParams('communication-center');
+      const letterId = p?.letterId;
+      if (typeof letterId !== 'string' || !SAFE_LETTER_ID.test(letterId)) return;
+      const q = /^\d{1,10}$/.test(p?.questionId ?? '') ? Number(p!.questionId) : null;
+      latest.current({ letterId, questionId: q });
+    };
+    // After commit, not in a state initialiser: StrictMode may run one twice.
+    receive();
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, []);
+}
 
 
 /* Honest loading → error → empty guard for a list slice (mirrors the reference
@@ -182,6 +206,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const [owner, setOwner] = React.useState<'all' | 'mine'>('all');
   const [form, setForm] = React.useState(false);
   const [toast, fire] = useToast();
+  /* A letter another screen links to opens on the inbox, with every owner
+     shown, so the filter cannot hide it. */
+  const [opening, setOpening] = React.useState<LetterOpening | null>(null);
+  useLetterLink((o) => {
+    setTab('inbox');
+    setOwner('all');
+    setOpening((prev) => ({ ...o, token: (prev?.token ?? 0) + 1 }));
+  });
 
   const projectId = currentProjectId();
 
@@ -205,12 +237,48 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     .filter((c) => c.dueDate)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())[0];
 
-  // ── Meetings & commitments — REAL, org-scoped (no project id required) ──
+  // ── Meetings & commitments — REAL ──
   const interState = useLiveRows<InteractionRow>('/api/ha-interactions/interactions');
-  const commitState = useLiveData<CommitmentsPayload>('/api/ha-interactions/commitments');
-  const commitments = Array.isArray(commitState.data?.commitments)
-    ? commitState.data!.commitments
-    : [];
+  const [commitVersion, setCommitVersion] = React.useState(0);
+  /* Two doors onto the one register (2026-10-18). The organisation's own
+     commitments (no project) come from /api/ha-interactions; a commitment made
+     in an answer to a project's agency letter belongs to that project and is
+     read, and fulfilled, behind its project admission. Either read failing
+     shows the error, never a shorter list. */
+  const orgCommitState = useLiveData<CommitmentsPayload>('/api/ha-interactions/commitments', [commitVersion], isCommitmentsPayload);
+  const projectCommitPath = projectId ? `/api/concept2cure/projects/${encodeURIComponent(projectId)}/commitments` : null;
+  const projectCommitState = useLiveData<CommitmentsPayload>(projectCommitPath, [projectCommitPath, commitVersion], isCommitmentsPayload);
+  const commitState = {
+    loading: orgCommitState.loading || (projectCommitPath !== null && projectCommitState.loading),
+    error: orgCommitState.error || (projectCommitPath !== null ? projectCommitState.error : undefined),
+  };
+  /* The commitment being recorded as fulfilled, and its door: a project's own
+     commitment through the project's routes, the organisation's through
+     /api/ha-interactions. What it takes (a signature naming what met it, or a
+     reason) is the server's rule, read by the dialog. */
+  const [fulfilling, setFulfilling] = React.useState<{ row: CommitmentRow; door: 'org' | 'project' } | null>(null);
+  const [recordingCommitment, setRecordingCommitment] = React.useState(false);
+  const recordCommitment = async (v: Record<string, string>) => {
+    try {
+      await apiRequest('POST', '/api/ha-interactions/commitments', {
+        commitmentType: v.commitmentType,
+        description: v.description,
+        ...(v.dueDate ? { dueDate: v.dueDate } : {}),
+        ...(v.regulatoryBasis ? { regulatoryBasis: v.regulatoryBasis } : {}),
+        reason: v.reason,
+      });
+      fire('Commitment recorded, with an audit entry.');
+      setRecordingCommitment(false);
+      setCommitVersion((n) => n + 1);
+    } catch (e) {
+      fire('Commitment not recorded: ' + (e instanceof ApiRequestError && e.message ? e.message : 'the service could not be reached') + '. Nothing was stored.', 'error');
+    }
+  };
+  // One list, project rows first; memoised so the AnA context below is rebuilt only when a read changes.
+  const commitments = React.useMemo(() => {
+    const rowsOf = (d: CommitmentsPayload | null | undefined): CommitmentRow[] => (Array.isArray(d?.commitments) ? d!.commitments : []);
+    return [...(projectCommitPath ? rowsOf(projectCommitState.data) : []), ...rowsOf(orgCommitState.data)];
+  }, [projectCommitPath, projectCommitState.data, orgCommitState.data]);
   const commitEmpty = !commitState.loading && !commitState.error && commitments.length === 0;
 
   // ── Authority profiles — REAL, project-scoped ──
@@ -300,6 +368,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               id: c.id, type: c.commitment_type, description: c.description,
               regulatoryBasis: c.regulatory_basis, due: c.due_date,
               status: c.status, effectiveStatus: c.effectiveStatus, fulfilled: c.fulfilled_date,
+              // What met it, as the reader may see it, and the server's verdict on its signature.
+              fulfilment: c.status === 'fulfilled' ? c.fulfilment.state : null,
+              metBy: [
+                c.fulfilment.sequence?.readable ? `sequence ${c.fulfilment.sequence.sequenceNumber}` : c.fulfilment.sequence ? 'a sequence in a project the reader cannot open' : null,
+                c.fulfilment.vaultVersion?.readable ? `${c.fulfilment.vaultVersion.title ?? 'a Vault document'} v${c.fulfilment.vaultVersion.version ?? '?'}` : c.fulfilment.vaultVersion ? 'a Vault document in a project the reader cannot open' : null,
+              ].filter(Boolean),
             })),
         authorityProfiles: profState.loading || profState.error
           ? null
@@ -411,7 +485,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               {critical[0].dueDate ? (
                 <>
                   {' '}
-                  — you have <b>{daysTo(critical[0].dueDate)} days</b> to respond
+                  {(daysTo(critical[0].dueDate) ?? 0) > 0
+                    ? <>— you have <b>{dueInWords(critical[0].dueDate)?.replace(/^in /, '')}</b> to respond</>
+                    : daysTo(critical[0].dueDate) === 0
+                      ? <>— it is due <b>today</b></>
+                      : <>— its due date was <b>{dueInWords(critical[0].dueDate)}</b></>}
                 </>
               ) : null}
               .
@@ -423,7 +501,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               {responseDue.length === 1 ? 'needs' : 'need'} a response
               {soonest && soonest.dueDate ? (
                 <>
-                  , the soonest in <b>{daysTo(soonest.dueDate)} days</b>
+                  , the soonest {(daysTo(soonest.dueDate) ?? 0) >= 0 ? 'due' : 'was due'} <b>{dueInWords(soonest.dueDate)}</b>
                 </>
               ) : null}
               .
@@ -588,6 +666,8 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             onAdvance={(id) => void triage(id)}
             onAsk={onAsk}
             onOpenTask={() => nav('tasks')}
+            responses={projectId ? { projectId, fire } : undefined}
+            opening={opening}
           />
         </>
       )}
@@ -651,59 +731,33 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               ))}
             </div>
           </StateGuard>
-          <div className="pj-seclbl">
-            Regulatory commitments{' '}
-            <span className="s">· PMR / PMC / REMS</span>
+          <div className="cc-inbox-head">
+            <div className="pj-seclbl" style={{ margin: 0 }}>
+              Regulatory commitments{' '}
+              <span className="s">· PMR / PMC / REMS</span>
+            </div>
+            <button className="cc-btn sm" onClick={() => setRecordingCommitment(true)}>
+              {I.plus} Record commitment
+            </button>
           </div>
           <StateGuard
             loading={commitState.loading}
             error={commitState.error}
             empty={commitEmpty}
             emptyTitle="No regulatory commitments yet"
-            emptyHint="PMR / PMC / REMS commitments tracked for your organization appear here, with their derived on-track / due-soon status."
+            emptyHint="PMR, PMC and REMS commitments recorded for your organization, and those made in answers to this project's agency letters, appear here with their status. A commitment past its due date and not met reads overdue."
             errorTitle="Couldn't load regulatory commitments"
             errorHint="The HA commitments service didn't respond. Sign in and retry, or check the service is reachable."
           >
             <div className="cc-list">
               {commitments.map((c) => (
-                <div key={c.id} className="cc-row">
-                  <span className="cc-row-tag" data-kind={c.commitment_type}>
-                    {c.commitment_type ? c.commitment_type.toUpperCase() : '—'}
-                  </span>
-                  <div className="cc-row-b">
-                    <div className="cc-row-t">{c.description}</div>
-                    <div className="cc-row-s mono">
-                      {[c.regulatory_basis, c.due_date ? 'due ' + c.due_date : null]
-                        .filter(Boolean)
-                        .join(' · ') || '—'}
-                    </div>
-                  </div>
-                  <span
-                    className={
-                      'rd-chip tone-' +
-                      (c.effectiveStatus === 'on_track' || c.effectiveStatus === 'fulfilled'
-                        ? 'ok'
-                        : c.effectiveStatus === 'due_soon'
-                          ? 'warn'
-                          : 'err')
-                    }
-                  >
-                    {(c.effectiveStatus || c.status || 'unknown').replace(/_/g, ' ')}
-                  </span>
-                  <button
-                    className="cc-btn sm"
-                    aria-label="Ask AnA about this commitment"
-                    onClick={() =>
-                      onAsk(
-                        'What is needed to fulfill this ' +
-                          (c.commitment_type ? c.commitment_type.toUpperCase() : 'commitment') +
-                          ' on time?',
-                      )
-                    }
-                  >
-                    {I.sparkles}
-                  </button>
-                </div>
+                <CommitmentRowView
+                  key={`${c.project_id ?? 'org'}-${c.id}`}
+                  c={c}
+                  onNav={nav}
+                  onAsk={onAsk}
+                  onFulfil={() => setFulfilling({ row: c, door: c.project_id != null && projectId ? 'project' : 'org' })}
+                />
               ))}
             </div>
           </StateGuard>
@@ -768,6 +822,53 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             </StateGuard>
           )}
         </>
+      )}
+
+      {fulfilling && (
+        <CommitmentFulfilDialog
+          row={fulfilling.row}
+          door={fulfilling.door}
+          projectId={projectId}
+          fire={fire}
+          onClose={() => setFulfilling(null)}
+          onDone={() => {
+            setFulfilling(null);
+            setCommitVersion((n) => n + 1);
+          }}
+        />
+      )}
+
+      {recordingCommitment && (
+        <C2CForm
+          config={{
+            eyebrow: 'Regulatory commitments',
+            title: 'Record a commitment',
+            sub: 'A postmarketing requirement or commitment, a REMS, or a commitment made to an agency. One made in an answer to a letter is recorded from that answer in the inbox, so it names the question.',
+            governed: 'Recorded with your reason in the audit trail.',
+            submitLabel: 'Record commitment',
+            fields: [
+              {
+                key: 'commitmentType',
+                label: 'Type',
+                type: 'select',
+                required: true,
+                options: [
+                  { value: 'pmr', label: 'Postmarketing requirement (PMR)' },
+                  { value: 'pmc', label: 'Postmarketing commitment (PMC)' },
+                  { value: 'rems', label: 'REMS' },
+                  { value: 'meeting_commitment', label: 'Meeting commitment' },
+                  { value: 'other', label: 'Other' },
+                ],
+              },
+              { key: 'description', label: 'What was committed', type: 'textarea', required: true },
+              { key: 'dueDate', label: 'Due date', type: 'date', half: true },
+              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', placeholder: 'e.g. 21 CFR 314.81(b)(2)(vii)', half: true },
+              { key: 'reason', label: 'Reason', type: 'text', required: true },
+            ],
+          }}
+          onCancel={() => setRecordingCommitment(false)}
+          onSubmit={(v) => void recordCommitment(v)}
+        />
       )}
 
       {/* ════ Log communication form ════ */}

@@ -92,12 +92,34 @@ beforeAll(async () => {
   const auditDdl = core.match(/CREATE TABLE "regulatory_audit_logs" \([\s\S]*?\n\);/)?.[0];
   if (!auditDdl) throw new Error('Actual regulatory audit DDL missing');
   await h.pg.exec(auditDdl);
+  /* The questions on a letter (2026-10-18) on their own deploy DDL. Closing a
+     letter reads them, the commitments recorded against them and the
+     signatures that approve them. The commitments register runs on its own
+     deploy DDL too; its one other parent and the signature store are stubbed
+     with the columns they touch. */
+  await h.pg.exec(`
+    ALTER TABLE users ADD COLUMN name text;
+    CREATE TABLE submissions (id serial PRIMARY KEY);
+  `);
+  await h.pg.exec(fs.readFileSync(path.join(ROOT, 'migrations/20260610_ha_interactions_commitments.sql'), 'utf8'));
+  await h.pg.exec(`
+    CREATE TABLE electronic_signatures (id serial PRIMARY KEY, organization_id integer, signed_target text,
+      bound_payload_digest text, signer_id integer, signer_name text, signed_at timestamp, signature_meaning text,
+      superseded_by integer, is_valid boolean DEFAULT true);
+  `);
+  await h.pg.exec(fs.readFileSync(path.join(ROOT, 'migrations/20261018b_agency_response_questions.sql'), 'utf8'));
   await h.pg.exec(`
     INSERT INTO concept2cure_agency_communications
       (event_id, organization_id, project_id, source_type, communication_type, source_channel,
        urgency, human_review_status, closure_status, audit_metadata)
     VALUES ('evt-1', 7, 42, 'agency', 'information_request', 'esg', 'high',
+            'pending_review', 'open', '{"visibilityTier":"shared_client_c2c"}'::jsonb),
+           ('evt-2', 7, 42, 'agency', 'information_request', 'esg', 'high',
             'pending_review', 'open', '{"visibilityTier":"shared_client_c2c"}'::jsonb);
+    INSERT INTO agency_communication_questions
+      (organization_id, project_id, communication_event_id, question_ref, question_text, response_text,
+       response_revision, response_updated_by, created_by)
+    VALUES (7, 42, 'evt-2', 'Q1', 'Provide the batch analyses.', 'Provided in 3.2.P.5.4.', 1, 5, 5);
   `);
 });
 afterAll(async () => {
@@ -111,6 +133,9 @@ function app() {
     req.userId = 5;
     req.userEmail = 'a@b.c';
     req.tenantContext = { organizationId:7 };
+    // The tenant-pinned request client, as tenantContextMiddleware attaches it:
+    // closing a letter checks its questions and closes it in one transaction on it.
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (sql: string, params?: unknown[]) => h.pg.query(sql, params) };
     next();
   });
   a.use('/api/concept2cure', router);
@@ -132,6 +157,21 @@ describe('PATCH agency-communications/:eventId/advance on the deploy path’s ta
       `SELECT human_review_status, closure_status FROM concept2cure_agency_communications WHERE event_id = 'evt-1'`,
     );
     expect(stored.rows[0]).toEqual({ human_review_status: 'actioned', closure_status: 'closed' });
+  });
+});
+
+describe('closing a letter with a recorded question (2026-10-18)', () => {
+  it('is refused while the response is not approved by signature, and the letter stays open', async () => {
+    const url = '/api/concept2cure/projects/42/agency-communications/evt-2/advance';
+    expect((await request(app()).patch(url).send({})).status).toBe(200); // triage
+    const close = await request(app()).patch(url).send({});
+    expect(close.status, JSON.stringify(close.body)).toBe(409);
+    expect(close.body.error).toMatchObject({ code: 'RESPONSES_NOT_APPROVED' });
+    expect(close.body.error.message).toContain('Q1 (not approved)');
+    const stored = await h.pg.query<{ closure_status: string }>(
+      `SELECT closure_status FROM concept2cure_agency_communications WHERE event_id = 'evt-2'`,
+    );
+    expect(stored.rows[0].closure_status).toBe('in_progress');
   });
 });
 

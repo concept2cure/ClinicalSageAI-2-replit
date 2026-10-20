@@ -1,0 +1,164 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+{
+  "timestamp": "2026-10-18T17:59:56.758Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+{
+  "timestamp": "2026-10-18T17:59:58.634Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T17:59:58.634Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+{
+  "timestamp": "2026-10-18T17:59:58.634Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > refuses the authorship meaning before the password and before any SQL 34ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > still accepts approval 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > still accepts review 4ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > still accepts responsibility 3ms
+ × server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses the recorder with 403, rolls back, and writes nothing 4ms
+   → {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 403 // Object.is equality
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > admits a colleague, and the approval lands 3ms
+ × server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > checks only AFTER the section row is locked, and before anything is written 4ms
+   → expected -1 to be greater than 1
+ × server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses with 409 when a cited record has no recorded operator, and names it 3ms
+   → {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 409 // Object.is equality
+ × server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses with 409 when the section cites no recorded source 5ms
+   → {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 409 // Object.is equality
+ × server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > answers 503 — not 200 — when the check could not run 7ms
+   → {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > refuses the authorship meaning before the password and before any SQL
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+    144|       .post(URL)
+    145|       .send({ reason: REASON, meaning: 'authorship', reauth: { passwor…
+    146|     expect(res.status).toBe(400);
+       |                        ^
+    147|     expect(res.body.error).toBe('APPROVAL_IS_NOT_AUTHORSHIP');
+    148|     expect(res.body.detail).toMatch(/review, approval or responsibilit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses the recorder with 403, rolls back, and writes nothing
+AssertionError: {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+    161|   it('refuses the recorder with 403, rolls back, and writes nothing', …
+    162|     const res = await request(app).post(URL).send({ reason: REASON, me…
+    163|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    164|     expect(res.body.error).toBe('SEPARATION_OF_DUTIES');
+    165|     expect(res.body.detail).toMatch(/you are an author of this record/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > checks only AFTER the section row is locked, and before anything is written
+AssertionError: expected -1 to be greater than 1
+    182|     const insert = order.findIndex((s) => /INSERT INTO cmc_module3_sec…
+    183|     expect(lock).toBeGreaterThanOrEqual(0);
+    184|     expect(lineage).toBeGreaterThan(lock);
+       |                     ^
+    185|     expect(insert).toBeGreaterThan(lineage);
+    186|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses with 409 when a cited record has no recorded operator, and names it
+AssertionError: {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+    189|     h.recorded = [['specification', '11', RECORDER]];
+    190|     const res = await request(colleagueApp).post(URL).send({ reason: R…
+    191|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    192|     expect(res.body.error).toBe('SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVE…
+    193|     expect(res.body.detail).toContain('method:22');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses with 409 when the section cites no recorded source
+AssertionError: {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+    199|     h.recorded = [];
+    200|     const res = await request(colleagueApp).post(URL).send({ reason: R…
+    201|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    202|     expect(res.body.detail).toMatch(/cites no recorded source/);
+    203|     wroteNothing();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > answers 503 — not 200 — when the check could not run
+AssertionError: {"success":true,"sectionKey":"3.2.P.5","versionNumber":1,"approvedVersionId":"ver-1","governance":{"actionId":"act-1","sha256Chain":"chain"}}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+    207|     h.auditReadFails = true;
+    208|     const res = await request(colleagueApp).post(URL).send({ reason: R…
+    209|     expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                  ^
+    210|     expect(res.body.error).toBe('SEPARATION_OF_DUTIES_UNVERIFIED');
+    211|     /* The failed lookup's cause is internal and stays in the log. */
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)
+   Start at  17:59:54
+   Duration  4.69s (transform 2.90s, setup 82ms, import 4.21s, tests 78ms, environment 0ms)
+

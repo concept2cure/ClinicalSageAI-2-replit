@@ -25,7 +25,7 @@
  *      authoring it clears exactly that gap. Nothing is invented from an empty
  *      section (only content-bearing sections become leaves).
  *   4. /assemble reports artifactKind 'official-estar' — content is complete
- *      AND the official nIVD eSTAR v7.0 template is vendored with a verified
+ *      AND the official nIVD eSTAR v7.1 template is vendored with a verified
  *      field map, so canProduceOfficialEstar is true.
  *   5. In PRODUCTION with ESTAR_REQUIRE_TEMPLATE, the same content with NO
  *      template present carries a hard blocker naming the template file (the
@@ -641,14 +641,20 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       });
       expect(res.status).toBe(200);
       // The decisive honesty output: every required section is authored AND the
-      // official nIVD eSTAR v7.0 is vendored with a verified field map, so the
+      // official nIVD eSTAR v7.1 is vendored with a verified field map, so the
       // real official eSTAR is producible — asserted from the same deterministic
       // engine that used to (rightly) report 'content-package-draft'.
       expect(res.body.artifactKind, JSON.stringify(res.body.blockers)).toBe('official-estar');
       expect(res.body.canProduceOfficialEstar).toBe(true);
       expect(res.body.template.available).toBe(true);
       expect(res.body.template.requiredFileName).toBe('eSTAR-510k-non-ivd.pdf');
-      expect(res.body.template.descriptor.version).toBe('7.0');
+      // 7.1, not 7.0: estar-template-registry pins v7.1 for every nIVD/IVD
+      // descriptor, and estar-field-map records 20 nIVD fields enumerated from
+      // THAT template via listXfaFields and verified against it, with the
+      // recomputed-field behaviour measured on it. checksums.txt pins the bytes.
+      // This assertion was written in the v7.0 era and is what the journey was
+      // failing on — the engine was right.
+      expect(res.body.template.descriptor.version).toBe('7.1');
       expect(res.body.validationReport.errors).toEqual(res.body.blockers);
       return {
         artifactKind: res.body.artifactKind,
@@ -1349,7 +1355,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         'instead of a fabricated eCTD filing identity. Asserted as an honest absence in step 1.',
     );
     R.limitations.push(
-      'The official nIVD eSTAR v7.0 template IS vendored (assets/estar-templates/eSTAR-510k-non-ivd.pdf) and ' +
+      'The official nIVD eSTAR v7.1 template IS vendored (assets/estar-templates/eSTAR-510k-non-ivd.pdf) and ' +
         'its canonical→XFA field map is verified, so the official-eSTAR production path is exercised end-to-end ' +
         'here. What is asserted is the datasets packet read back at the mapped SOM paths — that Acrobat/LiveCycle ' +
         'RENDERS those values in the form is not verifiable without the viewer. 20 canonical keys are mapped and ' +

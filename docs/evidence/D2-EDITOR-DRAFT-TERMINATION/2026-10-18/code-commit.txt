@@ -1,0 +1,58 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/authoring.router.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/routes/authoring.router.ts (8677 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3283 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 2d2ded138] fix: refuse unfinished editor drafts before candidate acceptance
+ 35 files changed, 3683 insertions(+), 2 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/acceptance/baseline-red-command.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/acceptance/baseline-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/baseline-source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/client/baseline-controls-command.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/client/baseline-controls.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/contract-commit.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/final-command.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/final-green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/final-result.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/final-source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/frozen-tests.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/generation/baseline.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/generation/frozen-generation-tests.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/generation/frozen-test.ts.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/generation/initial-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/generation/lint-baseline.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/generation/lint-current.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/generation/lint-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/independent-review.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/lint-baseline-stderr.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/lint-baseline.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/lint-comparison-pre-path-remedy.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/lint-comparison.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/lint-final-stderr.txt
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/lint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/store/baseline-command.json
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/store/baseline-red.txt
+ create mode 100644 server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts
+ create mode 100644 server/services/authoring/authoring-draft-termination.ts

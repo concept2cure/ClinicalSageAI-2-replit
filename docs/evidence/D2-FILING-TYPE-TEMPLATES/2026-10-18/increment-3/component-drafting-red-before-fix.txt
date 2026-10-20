@@ -1,0 +1,139 @@
+# tests/regulatory/ctd-component-outlines.test.ts -t 'AnA drafts', BEFORE the resolver fix (outlines already read from the record) — 2026-10-20
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_NONCLIN_OVERVIEW: every section resolves, asked by code + title, by title or by code
+   → expected [ …(12) ] to deeply equal []
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_CLIN_OVERVIEW: every section resolves, asked by code + title, by title or by code
+   → expected [ …(15) ] to deeply equal []
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_NONCLIN_SUMMARY: every section resolves, asked by code + title, by title or by code
+   → expected [ …(12) ] to deeply equal []
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_CLIN_SUMMARY: every section resolves, asked by code + title, by title or by code
+   → expected [ …(86) ] to deeply equal []
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > a title the outline holds more than once is listed, never resolved to the first
+   → expected 'none' to be 'record:candidates' // Object.is equality
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > a code asked with another title still carries the mismatch note
+
+# Each unresolved request (same criteria as the test; vitest truncates the arrays):
+ICH_NONCLIN_OVERVIEW	2.4.1 Overview of the Nonclinical Testing Strategy	→ record:ctd-section:2.4:ancestor+title-mismatch
+ICH_NONCLIN_OVERVIEW	Overview of the Nonclinical Testing Strategy	→ none
+ICH_NONCLIN_OVERVIEW	2.4.2 Pharmacology	→ record:ctd-section:2.4:ancestor+title-mismatch
+ICH_NONCLIN_OVERVIEW	Pharmacology	→ none
+ICH_NONCLIN_OVERVIEW	2.4.3 Pharmacokinetics	→ record:ctd-section:2.4:ancestor+title-mismatch
+ICH_NONCLIN_OVERVIEW	Pharmacokinetics	→ none
+ICH_NONCLIN_OVERVIEW	2.4.4 Toxicology	→ record:ctd-section:2.4:ancestor+title-mismatch
+ICH_NONCLIN_OVERVIEW	Toxicology	→ none
+ICH_NONCLIN_OVERVIEW	2.4.5 Integrated Overview and Conclusions	→ record:ctd-section:2.4:ancestor+title-mismatch
+ICH_NONCLIN_OVERVIEW	Integrated Overview and Conclusions	→ none
+ICH_NONCLIN_OVERVIEW	2.4.6 List of Literature References	→ record:ctd-section:2.4:ancestor+title-mismatch
+ICH_NONCLIN_OVERVIEW	List of Literature References	→ none
+ICH_CLIN_OVERVIEW	2.5.6.1 Therapeutic Context	→ record:ctd-section:2.5.6:ancestor+title-mismatch
+ICH_CLIN_OVERVIEW	Therapeutic Context	→ none
+ICH_CLIN_OVERVIEW	2.5.6.1.1 Disease or Condition	→ record:ctd-section:2.5.6:ancestor+title-mismatch
+ICH_CLIN_OVERVIEW	Disease or Condition	→ none
+ICH_CLIN_OVERVIEW	2.5.6.1.2 Current Therapies	→ record:ctd-section:2.5.6:ancestor+title-mismatch
+ICH_CLIN_OVERVIEW	Current Therapies	→ none
+ICH_CLIN_OVERVIEW	2.5.6.2 Benefits	→ record:ctd-section:2.5.6:ancestor+title-mismatch
+ICH_CLIN_OVERVIEW	Benefits	→ none
+ICH_CLIN_OVERVIEW	2.5.6.3 Risks	→ record:ctd-section:2.5.6:ancestor+title-mismatch
+ICH_CLIN_OVERVIEW	Risks	→ none
+ICH_CLIN_OVERVIEW	2.5.6.4 Benefit-Risk Assessment	→ record:ctd-section:2.5.6:ancestor+title-mismatch
+ICH_CLIN_OVERVIEW	Benefit-Risk Assessment	→ none
+ICH_CLIN_OVERVIEW	2.5.6.5 Appendix	→ record:ctd-section:2.5.6:ancestor+title-mismatch
+ICH_CLIN_OVERVIEW	Appendix	→ none
+ICH_CLIN_OVERVIEW	2.5.7 Literature References	→ record:ctd-section:2.5:ancestor+title-mismatch
+ICH_NONCLIN_SUMMARY	Absorption	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Distribution	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Excretion	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Pharmacokinetic Drug Interactions	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Other Pharmacokinetic Studies	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Single-Dose Toxicity	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Repeat-Dose Toxicity	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Genotoxicity	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Carcinogenicity	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Reproductive and Developmental Toxicity	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Local Tolerance	→ record:outside-outline
+ICH_NONCLIN_SUMMARY	Other Toxicity Studies	→ record:outside-outline
+ICH_CLIN_SUMMARY	2.7.1.1 Background and Overview	→ record:ctd-section:2.7.1:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Background and Overview	→ none
+ICH_CLIN_SUMMARY	2.7.1.2 Summary of Results of Individual Studies	→ record:ctd-section:2.7.1:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Summary of Results of Individual Studies	→ none
+ICH_CLIN_SUMMARY	2.7.1.3 Comparison and Analyses of Results Across Studies	→ record:ctd-section:2.7.1:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Comparison and Analyses of Results Across Studies	→ none
+ICH_CLIN_SUMMARY	2.7.1.4 Appendix	→ record:ctd-section:2.7.1:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Appendix	→ none
+ICH_CLIN_SUMMARY	2.7.2.1 Background and Overview	→ record:ctd-section:2.7.2:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Background and Overview	→ none
+ICH_CLIN_SUMMARY	2.7.2.2 Summary of Results of Individual Studies	→ record:ctd-section:2.7.2:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Summary of Results of Individual Studies	→ none
+ICH_CLIN_SUMMARY	2.7.2.3 Comparison and Analyses of Results Across Studies	→ record:ctd-section:2.7.2:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Comparison and Analyses of Results Across Studies	→ none
+ICH_CLIN_SUMMARY	2.7.2.4 Special Studies	→ record:ctd-section:2.7.2:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Special Studies	→ none
+ICH_CLIN_SUMMARY	2.7.2.5 Appendix	→ record:ctd-section:2.7.2:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Appendix	→ none
+ICH_CLIN_SUMMARY	2.7.3.1 Background and Overview of Clinical Efficacy	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Background and Overview of Clinical Efficacy	→ none
+ICH_CLIN_SUMMARY	2.7.3.2 Summary of Results of Individual Studies	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Summary of Results of Individual Studies	→ none
+ICH_CLIN_SUMMARY	2.7.3.3 Comparison and Analyses of Results Across Studies	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Comparison and Analyses of Results Across Studies	→ none
+ICH_CLIN_SUMMARY	2.7.3.3.1 Study Populations	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Study Populations	→ none
+ICH_CLIN_SUMMARY	2.7.3.3.2 Comparison of Efficacy Results of All Studies	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Comparison of Efficacy Results of All Studies	→ none
+ICH_CLIN_SUMMARY	2.7.3.3.3 Comparison of Results in Sub-populations	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Comparison of Results in Sub-populations	→ none
+ICH_CLIN_SUMMARY	2.7.3.4 Analysis of Clinical Information Relevant to Dosing Recommendations	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Analysis of Clinical Information Relevant to Dosing Recommendations	→ none
+ICH_CLIN_SUMMARY	2.7.3.5 Persistence of Efficacy and/or Tolerance Effects	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Persistence of Efficacy and/or Tolerance Effects	→ none
+ICH_CLIN_SUMMARY	2.7.3.6 Appendix	→ record:ctd-section:2.7.3:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Appendix	→ none
+ICH_CLIN_SUMMARY	2.7.4.1 Exposure to the Drug	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Exposure to the Drug	→ none
+ICH_CLIN_SUMMARY	2.7.4.1.1 Overall Safety Evaluation Plan and Narratives of Safety Studies	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Overall Safety Evaluation Plan and Narratives of Safety Studies	→ none
+ICH_CLIN_SUMMARY	2.7.4.1.2 Overall Extent of Exposure	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Overall Extent of Exposure	→ none
+ICH_CLIN_SUMMARY	2.7.4.1.3 Demographic and Other Characteristics of Study Population	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Demographic and Other Characteristics of Study Population	→ none
+ICH_CLIN_SUMMARY	2.7.4.2 Adverse Events	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Adverse Events	→ none
+ICH_CLIN_SUMMARY	2.7.4.2.1 Analysis of Adverse Events	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Analysis of Adverse Events	→ none
+ICH_CLIN_SUMMARY	2.7.4.2.1.1 Common Adverse Events	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Common Adverse Events	→ none
+ICH_CLIN_SUMMARY	2.7.4.2.1.2 Deaths	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Deaths	→ none
+ICH_CLIN_SUMMARY	2.7.4.2.1.3 Other Serious Adverse Events	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Other Serious Adverse Events	→ none
+ICH_CLIN_SUMMARY	2.7.4.2.1.4 Other Significant Adverse Events	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Other Significant Adverse Events	→ none
+ICH_CLIN_SUMMARY	2.7.4.2.1.5 Analysis of Adverse Events by Organ System or Syndrome	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Analysis of Adverse Events by Organ System or Syndrome	→ none
+ICH_CLIN_SUMMARY	2.7.4.2.2 Narratives	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Narratives	→ none
+ICH_CLIN_SUMMARY	2.7.4.3 Clinical Laboratory Evaluations	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Clinical Laboratory Evaluations	→ none
+ICH_CLIN_SUMMARY	2.7.4.4 Vital Signs, Physical Findings, and Other Observations Related to Safety	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Vital Signs, Physical Findings, and Other Observations Related to Safety	→ none
+ICH_CLIN_SUMMARY	2.7.4.5 Safety in Special Groups and Situations	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Safety in Special Groups and Situations	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.1 Intrinsic Factors	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Intrinsic Factors	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.2 Extrinsic Factors	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Extrinsic Factors	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.3 Drug Interactions	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Drug Interactions	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.4 Use in Pregnancy and Lactation	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Use in Pregnancy and Lactation	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.5 Overdose	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Overdose	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.6 Drug Abuse	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Drug Abuse	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.7 Withdrawal and Rebound	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Withdrawal and Rebound	→ none
+ICH_CLIN_SUMMARY	2.7.4.5.8 Effects on Ability to Drive or Operate Machinery or Impairment of Mental Ability	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Effects on Ability to Drive or Operate Machinery or Impairment of Mental Ability	→ none
+ICH_CLIN_SUMMARY	2.7.4.6 Post-marketing Data	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Post-marketing Data	→ none
+ICH_CLIN_SUMMARY	2.7.4.7 Appendix	→ record:ctd-section:2.7.4:ancestor+title-mismatch
+ICH_CLIN_SUMMARY	Appendix	→ none

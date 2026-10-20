@@ -62,8 +62,18 @@ function sourceReference(outline: DocumentTemplateStructure): string {
     : `${source.kind}:${source.registryId}:${source.record}`;
 }
 
+/**
+ * Every section a template carries: front matter, then each section followed
+ * by its subsections, in outline order. The picker's document holds the same
+ * nodes as the governed pack minted from the same outline (review finding,
+ * 2026-10-18: a PBRER's title page and 16.2, a PAS's 3.2.P, were in the pack
+ * and not in the picker's document).
+ */
 function outlineSections(outline: DocumentTemplateStructure): IndTemplateOutlineSection[] {
-  return outline.sections.map((section, ordering) => ({
+  const flat: DocumentTemplateStructure['sections'] = [];
+  const walk = (list: DocumentTemplateStructure['sections']) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
+  walk([...(outline.frontMatter ?? []), ...outline.sections]);
+  return flat.map((section, ordering) => ({
     code: section.number, title: section.heading, content: '', ordering,
     guidance: {
       guidance_text: `${section.purpose}\n\nExisting scaffold expectation: ${section.required ? 'marked required' : 'not marked required'}. This flag does not determine legal applicability or waive applicable content.`,

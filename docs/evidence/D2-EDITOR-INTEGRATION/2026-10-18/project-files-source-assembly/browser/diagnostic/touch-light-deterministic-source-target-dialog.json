@@ -1,0 +1,20 @@
+{
+  "kind": "source-chooser",
+  "viewportWidth": 390,
+  "viewportHeight": 844,
+  "x": 23.40625,
+  "right": 390,
+  "scrollWidth": 366,
+  "clientWidth": 366,
+  "openAction": {
+    "x": 212.203125,
+    "y": 784,
+    "width": 157.796875,
+    "height": 44,
+    "top": 784,
+    "right": 370,
+    "bottom": 828,
+    "left": 212.203125
+  },
+  "text": "Selected sources → document editorBuild from selected sourcesTarget project: Synthetic assembly projectOpens the selected working document. Preview and build there, with or without AnA. No text is changed by opening it.Synthetic retained Vault stability source.pdf · 99999999-0000-4000-8000-000000000181SHA-256 7777777777777777777777777777777777777777777777777777777777777777The editor verifies the selected source versions before building. Retained readable data can be used when the original file is unavailable.Working documentChoose a working documentAssembly working documentTo create one, use New document in the editor, then return here to select it.Close to create a documentCancelOpen in editor"
+}

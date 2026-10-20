@@ -11,6 +11,8 @@ Updated 2026-10-16 with current-access and specialist-handoff checks under the
 Updated 2026-10-17 with the existing specialist controls and explicit actions in
 the [shared authoring creation recovery contract](../design/AUTHORING_SHARED_RECOVERY_2026-10-17.md).
 The same editor now includes the [document and section build workflow](../design/AUTHORING_ASSEMBLY_BUILD_2026-10-17.md).
+The [Project files Vault build entry](../design/PROJECT_FILES_SOURCE_ASSEMBLY_2026-10-18.md)
+uses the same source chooser and guarded document handoff as the catalogue.
 
 This is an executable checklist, not a report of a completed human session.
 Record the actual commit and observations below. The
@@ -162,7 +164,7 @@ provider status. If the approved model or embedding lane is unavailable, execute
 the manual cases and record AnA cases as **Blocked**, including the visible
 reason. Preserve preparation-only and original-record restrictions throughout.
 
-## Thirty-three tester cases and outcome worksheet
+## Tester cases and outcome worksheet
 
 Use **Not run**, **Pass**, **Fail** or **Blocked**. A pass requires the observed
 outcome and evidence; a blocked prerequisite is not a pass. A case with several
@@ -208,6 +210,8 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 35 | With a clean editable document, no current selection and the draft review pane closed, choose **Use saved sources**. It must recheck the same saved event and source versions before selecting those exact identities. Choose a current template and preview a new build, then sample deterministic and approved-provider AnA modes. No old plan, reason, candidate or acceptance may be reconstructed. A new catalogue selection must take precedence until explicitly cleared and checked again. Opening a draft review during the recheck must preserve that review and refuse the late source change. | Not run | |
 | 36 | With the operator, change the last recorded sources' extraction, version, disposition or access before check/reuse, and separately simulate an unreadable or unverifiable latest audit record. Show a refusal and a remedy through current catalogue selection; never restore an older usable event or treat a failed read as no history. In a document with more than 500 later unrelated audit events, the source check must still address the last recorded source build. | Not run | |
 | 37 | Delay saved-source check and reuse responses. Exercise rapid repeated clicks, project A → B → A, account/session change, document/source changes, dirty edits and an open governed form before completion. Old metadata and results must not appear or adopt sources in the new context. A failed/stale check must preserve local text, current selection, plan and retained reviews. An unresolved build/acceptance must stay held; checking references must not release it or repeat any write. | Not run | |
+| 38 | In Authoring, open **Project files → Vault**, select an uploaded file, then choose **Build in editor**. Repeat for a later-page search match. The chooser must name the exact Vault document and effective project; opening the selected working document must use the existing editor and build disclosure without writing or generating. Preview explicitly and sample deterministic and approved-provider AnA modes. A retained readable source with unavailable original bytes may be used for assembly while **Work on document** retains its separate original-file restriction. Verify Open/import/cite/reference still work independently. | Not run | |
+| 39 | From that Vault rail, exercise a source change, a live withdrawal/disabled change followed by re-allowing the same source, project A → B → A and account/session changes while the chooser read is pending. No retired chooser may publish a target. Authored sections/folders must not be treated as Vault uploads; withdrawn/superseded/earlier versions must refuse. With unsaved editor text, choose another working target and exercise **Stay** and the existing Save/Discard remedies: no refused handoff may replace text or bind sources. Repeat source browsing when the current section is read-only and confirm target permissions remain authoritative. | Not run | |
 
 For case 15, use the canonical registry entries `US_NDA`, `CA_CTA`, `EU_CTA`,
 `JP_CTN`, plus `component:quality_overall_summary`; identify choices by the

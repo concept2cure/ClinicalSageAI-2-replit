@@ -1,0 +1,31 @@
+# AFTER (this fix round). 2026-10-18T19:53:35Z
+$ npx vitest run server/utils/__tests__/virusScan.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — bypass when not configured > returns scanned=false, clean=true when CLAMAV_HOST is unset 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — clean response > parses "stream: OK" as scanned + clean 10ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses signature name out of "stream: X FOUND" 3ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses multi-word signatures correctly 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > marks a Heuristics.Limits.Exceeded result incomplete, and not clean 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > does not mark a real signature incomplete 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason on unparseable response 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason when host is unreachable 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is true when clamd answers PONG 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, within its timeout, when clamd accepts and never answers 303ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false on any answer but PONG 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when nothing listens, and when CLAMAV_HOST is unset 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached reuses a result for at most 30 s 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached treats a clock stepped back as expired 4ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached shares one in-flight ping: 50 concurrent callers open 1 connection 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "abc" 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "70000" 0ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "3310.5" 0ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "-1" 0ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  19:53:35
+   Duration  740ms (transform 97ms, setup 88ms, import 36ms, tests 344ms, environment 0ms)
+
+exit=0

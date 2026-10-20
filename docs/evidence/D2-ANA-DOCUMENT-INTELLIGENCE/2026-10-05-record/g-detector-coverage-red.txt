@@ -1,0 +1,59 @@
+Red — written and run before the change (2026-10-19).
+server/services/__tests__/contradiction-detector-coverage.test.ts
+
+      Tests  12 failed (12)
+
+including:
+
+ × a read that hit its limit is reported, not treated as the whole set > assumption drift says the read was truncated at the limit
+ × a read that hit its limit is reported, not treated as the whole set > …and a read comfortably under the limit is not
+ × a read that hit its limit is reported, not treated as the whole set > nothing to read is "compared nothing", not "nothing is wrong"
+ × a read that hit its limit is reported, not treated as the whole set > one assumption on its own is compared with nothing
+ × every detector reports coverage in the same shape > detectAssumptionDrift reports a DetectorCoverage named assumption_drift
+ × every detector reports coverage in the same shape > detectDecisionActionInconsistency reports a DetectorCoverage named decision_action_inconsistency
+ × every detector reports coverage in the same shape > detectCrossJurisdictionalDivergence reports a DetectorCoverage named cross_jurisdictional_divergence
+ × every detector reports coverage in the same shape > detectApprovedVsWorkingDrift reports a DetectorCoverage named approved_vs_working_drift
+ × every detector reports coverage in the same shape > detectStatusConflict reports a DetectorCoverage named status_conflict
+ × every detector reports coverage in the same shape > detectCrossArtifactContentConflict reports a DetectorCoverage named cross_artifact_content
+ × every detector reports coverage in the same shape > recorded always matches the findings actually returned
+ × the full scan is incomplete when ANY detector is > names the detectors whose coverage was short
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════
+Two design errors of mine, each caught by a test rather than by reasoning
+════════════════════════════════════════════════════════════════════════════════════════════════
+
+1. comparedNothing hand-set in five detectors. A print of the real scan output showed one of the
+   five assignments was never reached:
+
+   coverage [ ...,
+     {"detector":"status_conflict","read":0,"readLimit":200,"readTruncated":false,"skipped":0,
+      "recorded":0,"recordTruncated":false,"comparedNothing":false}, ... ]
+
+   read 0 and comparedNothing false. It is now derived in one place, and the cross-artifact
+   detector's early return routed through the same helper so the derivation cannot be bypassed.
+
+2. `found` used for both "pairs compared" and "issues found":
+
+ × the detector says what it compared and what it dropped > a complete scan of two agreeing sections is complete, and reports no conflict
+   → expected true to be falsy
+
+   Two sections that were compared and AGREED (0 issues found) were reported as having compared
+   nothing. `compared` and `found` are now separate fields.
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════
+Two pre-existing tests that broke, migrated rather than weakened
+════════════════════════════════════════════════════════════════════════════════════════════════
+
+ × contradiction-scan-failclosed.test.ts > returns findings normally when the read succeeds
+   → expected { findings: [], coverage: { …(7) } } to deeply equal []
+
+   A detector returns { findings, coverage } now. Its three REJECTION assertions — the gate this
+   change must not weaken — are untouched and pass.
+
+ × contradiction-scan-project-scope.test.ts > a project the organisation holds > is scanned, and every read is filtered to it
+   → driftFindings is not iterable
+
+   This found a SECOND aggregator I had missed: scanProject also spread the detectors' results.
+   It now collects coverage and reports `incomplete` on the same contract as scanProjectFull.

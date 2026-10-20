@@ -1,0 +1,33 @@
+# Review mutation 19 — one full stop after the server's sentence (finding 14)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "one full stop")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -51,8 +51,7 @@
+ /** A refusal the server returned, as one sentence that ends by saying nothing was stored. */
+ export function refusalSentence(message: string): string {
+   const m = message.trim();
+-  if (/Nothing was/.test(m)) return `Not recorded as fulfilled: ${m}`;
+-  return `Not recorded as fulfilled: ${m.replace(/[.\s]+$/, '')}. Nothing was stored.`;
++  return `Not recorded as fulfilled: ${m}${/Nothing was/.test(m) ? '' : '. Nothing was stored.'}`;
+ }
+ 
+ /** What a 401 means here when the server gave no sentence of its own. */
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > one full stop after the server's sentence 334ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > one full stop after the server's sentence 5353ms
+   → Unable to find an element with the text: Not recorded as fulfilled: That commitment is already fulfilled, waived or released; there is nothing to fulfil. Nothing was stored.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > one full stop after the server's sentence
+TestingLibraryElementError: Unable to find an element with the text: Not recorded as fulfilled: That commitment is already fulfilled, waived or released; there is nothing to fulfil. Nothing was stored.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

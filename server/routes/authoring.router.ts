@@ -45,7 +45,7 @@ import {
   commitSectionToFiling,
   type CommitSectionResult,
 } from '../services/c2c/commit-section-to-filing.js';
-import { filingResponse, signedFilingSectionTexts } from '../services/c2c/filing-section-target.js';
+import { filingAgreesWithEditing, filingResponse, signedFilingSectionTexts, type FilingDivergence } from '../services/c2c/filing-section-target.js';
 // Spine F1: the approval signature records the filing sections it approves
 // through the one governed-action writer (audit_logs + c2c_ana_actions).
 import { recordGovernedAction } from './c2c/actions';
@@ -131,6 +131,8 @@ import {
   type GovernedClaimVerdict,
 } from '../services/authoring/governed-machine-claims';
 import { evidenceShown, fileFailedDraftTurn, openDraftTurn, type DraftTurn } from '../services/ana/turn-record-draft';
+import { assertEditorDraftNotTruncated, DraftTruncatedError } from '../services/authoring/authoring-draft-termination';
+import { isTruncated } from '../services/ai-gateway/finish-reason';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
 import {
@@ -3970,6 +3972,11 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
       return serverError(res, logger, 'drafting AI', aiError);
     }
 
+    // Retain the served response for the failed turn, but never expose or park
+    // known cutoff prose, even when its structured envelope looks usable.
+    draftTurn?.served(gwResponse);
+    assertEditorDraftNotTruncated({ finishReason: gwResponse.finishReason });
+
     // Parse the structured envelope tolerantly. On ANY shortfall the whole
     // response becomes the draft with no attributions — the draft still lands
     // and is attributed by verified quotes + author lineage (Phase 3).
@@ -3978,7 +3985,6 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
     // shapes it has to survive are unit-testable without the route.
     const { content: generatedContent, attributions: modelAttributions } =
       parseDraftEnvelope(gwResponse.content);
-    draftTurn?.served(gwResponse);
     if (!generatedContent) {
       /* The provider answered and said nothing usable. That is not a draft and
          it is not an outage; it is refused as an invalid response. */
@@ -4077,6 +4083,8 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           generatedAt: new Date().toISOString(),
           requestId: gwResponse.requestId ?? null,
           turnRecordId: drafted?.turnRecord.status === 'recorded' ? drafted.turnRecord.id : null,
+          finishReason: gwResponse.finishReason ?? null,
+          truncated: isTruncated(gwResponse.finishReason),
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
           ...(assemblySources ? { assemblySources } : {}),
           savedSectionBase: savedSectionDraftBase(section),
@@ -4132,6 +4140,10 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
             : 'AI draft generated with no Data Room sources above the relevance threshold',
     });
   } catch (error) {
+    if (error instanceof DraftTruncatedError) {
+      await fileFailedDraftTurn(draftTurn, 'The AI draft was cut off (DRAFT_TRUNCATED). No candidate was retained.');
+      return res.status(422).json({ success: false, error: { code: error.code, message: error.message } });
+    }
     const sourceFailure = assemblySourceErrorDetails(error);
     if (sourceFailure) {
       await fileFailedDraftTurn(draftTurn, 'The selected source receipt could not be verified. No candidate was retained.');
@@ -4229,6 +4241,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         });
       }
       generator = candidate.generator as Record<string, unknown> | null;
+      assertEditorDraftNotTruncated(candidate.generator);
       const { reserveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
       await reserveSectionDraftSources(client, tenantId, candidate.generator?.vaultSources, Number(actor));
       if (candidate.generator?.assemblySources !== undefined) {
@@ -4366,6 +4379,9 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       }
       const sourceFailure = assemblySourceErrorDetails(err);
       if (sourceFailure) return res.status(sourceFailure.status).json({ success: false, error: { code: sourceFailure.code, message: sourceFailure.message } });
+      if (err instanceof DraftTruncatedError) {
+        return res.status(422).json({ success: false, error: { code: err.code, message: err.message } });
+      }
       if (err instanceof DraftCandidateBaseChangedError) {
         return res.status(409).json({ success: false, error: { code: err.code, message: err.message } });
       }
@@ -5067,6 +5083,90 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
   };
 }
 
+/**
+ * The 409 a freeze answers when the filed copy is not this document's text
+ * (P-29, `docs/EXIT_ATTESTATION_DECISION_2026-10-18.md`).
+ *
+ * The seals are where this refusal belongs, and the remedy is why: saving the
+ * section rewrites the filed copy (`commitSectionToFiling`), so the author can
+ * clear it on the surface they are already on. After the seal the remedy is
+ * narrow — a QMS-controlled document can be revised into a new editing copy
+ * (`reviseControlledQmsDocument`), and every other document has no path at all
+ * — which is exactly why a divergence must never be allowed to reach one.
+ *
+ * WHY THE COPY SAYS "make any edit and save" RATHER THAN "save". `different`
+ * is by construction a state in which the EDITING text did not change — the
+ * filing did — so the editor's Save is disabled: `dirty` requires
+ * `editorDirty` (client/src/concept2cure/v2/editor/DocumentWorkbench.tsx). A
+ * refusal that prescribes a greyed-out button is a dead end, so the copy names
+ * what is performable today. Enabling a re-file of an unchanged body is the
+ * follow-up; until it lands this wording is the honest one.
+ */
+function filingDivergedRefusal(
+  diverged: ReadonlyArray<{ key: string; section: { code: string } }>,
+  act: 'frozen' | 'signed',
+) {
+  /* NAME WHAT THE AUTHOR CAN OPEN, not only the node. For an assembled node the
+     key is `2.5` and no authoring section has that code, so a refusal naming
+     only the key sends the author looking for a section that does not exist.
+     The contributing section's code rides along on the divergence for exactly
+     this. Where they are the same — an exact-code node — say it once. */
+  const named = diverged.map((d) => (d.section.code === d.key ? d.key : `${d.section.code} (filed at ${d.key})`));
+  const one = named.length === 1;
+  return {
+    success: false,
+    error: {
+      code: 'FILING_DIVERGED',
+      message:
+        `Not ${act} — the filed copy of ${one ? 'section' : 'sections'} ${named.join(', ')} ` +
+        `${one ? 'is' : 'are'} not the text this document holds. ${act === 'frozen' ? 'Freezing' : 'Signing'} ` +
+        'seals the text for filing, so the signature would attest to text the submission does not ' +
+        `contain. Re-file it from the editor: open ${one ? 'that section' : 'those sections'}, make ` +
+        `any edit and save, which rewrites the filed copy. Then ${act === 'frozen' ? 'freeze' : 'sign'} again.`,
+    },
+    diverged,
+  };
+}
+
+/**
+ * The one place the three seals ask whether the filing still holds this
+ * document's text (P-29.2, docs/EXIT_ATTESTATION_DECISION_2026-10-18.md).
+ *
+ * Runs on the SEALING transaction, so the answer is the one the seal is about
+ * to act on. Only `different` refuses — a node the filing holds nothing for is
+ * reported on the response, because six editing-layer writers still do not
+ * commit and that population is large and legitimate until they are routed.
+ */
+async function filingBlocksSeal(
+  client: Queryable, docId: string | string[] | undefined, tenantId: number, act: 'frozen' | 'signed',
+): Promise<{ refusal: ReturnType<typeof filingDivergedRefusal> | null; unfiled: string[] }> {
+  const agreement = await filingAgreesWithEditing(client, { authoringDocId: String(docId), tenantId });
+  const rewritten: FilingDivergence[] = agreement.diverged.filter((d) => d.filed === 'different');
+  return {
+    refusal: rewritten.length > 0 ? filingDivergedRefusal(rewritten, act) : null,
+    unfiled: agreement.diverged.filter((d) => d.filed === 'empty').map((d) => d.key),
+  };
+}
+
+/**
+ * The seal check as ONE statement at a signing handler: sends the 409 and
+ * answers true when the filing has been rewritten, so the caller returns.
+ *
+ * It exists in this shape for a reason worth keeping. The two signing handlers
+ * sit at the lint ratchet's function-length limit, and the obvious way to
+ * free room — hoisting the APPROVER approval stamp into a helper — is refused
+ * by `ci:sign-ceremony`, correctly: an approval stamp whose handler writes no
+ * signature row is exactly what that gate catches. So the check shrinks
+ * instead of the ceremony.
+ */
+async function sealRefusedForFiling(
+  client: Queryable, res: Response, docId: string | string[] | undefined, tenantId: number,
+): Promise<boolean> {
+  const { refusal } = await filingBlocksSeal(client, docId, tenantId, 'signed');
+  if (refusal) res.status(409).json(refusal);
+  return refusal !== null;
+}
+
 async function lockedSigningContent(client: Queryable, req: Request, docId: string, tenantId: number) {
   const document = await client.query(
     "SELECT d.*, to_jsonb(d)->'provenance' AS provenance, to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=$2 FOR UPDATE",
@@ -5154,6 +5254,22 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
         return res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits));
       }
+
+      /* P-29.2 — the seal is the last point at which the two stores can still
+         be made to agree, so the comparison happens here, on this transaction
+         client, before anything is sealed. Only a node whose filed text DIFFERS
+         refuses; a node the filing holds nothing for is reported on the
+         response instead. The split is deliberate and is not a soft landing:
+         six editing-layer writers do not commit to the filing at all
+         (apply-template, createSection-with-content, the genesis seed loop,
+         reorder, the title rename), so `empty` has a large and legitimate
+         population today, and refusing on it would block freezes across the
+         product for a gap whose fix is to route those writers. `different`
+         has no legitimate population: something overwrote the filed copy
+         outside the editor. */
+      const seal = await filingBlocksSeal(client, docId, tenantId, 'frozen');
+      if (seal.refusal) return res.status(409).json(seal.refusal);
+      const filingUnfiled = seal.unfiled;
 
       /* What was sealed over is part of why it was sealed, so it goes into the
          reason the frozen record carries rather than only into the audit row. */
@@ -5276,6 +5392,12 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         signatureId,
         documentHash: docHash,
         frozenAt: new Date().toISOString(),
+        /* P-29.2: the sealed document has text these filing nodes do not hold,
+           so the submission built from the filing will not carry it. Reported,
+           not refused — see the comparison above for why — but never silent:
+           an author who is told nothing would reasonably believe the seal
+           covers what ships. */
+        ...(filingUnfiled.length > 0 ? { filingUnfiled } : {}),
       });
     } finally {
       if (!committed) await client.query('ROLLBACK').catch(() => {});
@@ -5405,14 +5527,34 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
       const current = await lockedSigningContent(client, req, String(docId), tenantId);
       const workflowSourceAdoption = await adoptionForSigning(client, req, current, meaning);
+
+      /* P-29.2 — THE SEAL THIS DECISION WAS ACTUALLY ABOUT. An APPROVER
+         e-signature reaches the same sealed state a freeze does: it writes
+         status APPROVED, frozen_at, the snapshot and the signature. The freeze
+         route's own refusal copy even directs people here. So gating only the
+         freeze left the path a client actually uses to approve a document
+         passing no check at all — a gate the product routes around, which
+         reads as coverage it does not have.
+
+         Before `reverifyAuthoringSigner`, so a refusal spends no
+         re-authentication code; before the status flip, the snapshot and the
+         signature row, so a refused approval seals nothing. */
+      if (meaning === 'APPROVER' && await sealRefusedForFiling(client, res, docId, tenantId)) return;
+
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
       const docHash = sectionsDigest(current.sections);
       const signatureId = crypto.randomUUID();
       let covered = meaning === 'APPROVER' ? null : await currentFrozenSnapshot(docId, tenantId, client);
 
-      // On APPROVER the approval and its snapshot come FIRST, so the signature
-      // can name the snapshot it creates (approveAndSnapshotForSignature).
+      /* On APPROVER the approval and its snapshot come FIRST, so the signature
+         can name the snapshot it creates (approveAndSnapshotForSignature).
+         THE STAMP STAYS IN THIS HANDLER. It was briefly extracted on
+         2026-10-18 to free a line for the P-29 seal check, and
+         `ci:sign-ceremony` refused the push: an approval stamp whose handler
+         writes no signature row is the shape that gate exists to catch, and
+         its baseline is shrink-only. The gate was right — an approval stamp
+         belongs beside the signature that justifies it. */
       if (meaning === 'APPROVER') {
         await client.query(
           `UPDATE authoring_documents
@@ -5423,12 +5565,12 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         covered = await approveAndSnapshotForSignature({ client, docId: String(docId), tenantId, email, docHash });
       }
 
-      const signatureDigest = computeSignatureDigest({
-        signerEmail: email,
-        meaning,
-        contentHash: docHash,
-        coveredContentHash: covered?.contentHash ?? null,
-      });
+      // One line, not six: this handler is at the lint ratchet's function-length
+      // limit, and the room the P-29 seal check needs had to come from
+      // somewhere that is not the signing ceremony — `ci:sign-ceremony`
+      // (correctly) refuses hoisting the approval stamp out of this handler.
+      // Formatting only; the arguments are unchanged.
+      const signatureDigest = computeSignatureDigest({ signerEmail: email, meaning, contentHash: docHash, coveredContentHash: covered?.contentHash ?? null });
       await insertAuthoringSignature(client, req, {
         id: signatureId,
         docId,
@@ -7486,6 +7628,23 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
       const current = await lockedSigningContent(client, req, String(docId), tenantId);
       const workflowSourceAdoption = await adoptionForSigning(client, req, current, meaning);
+
+      /* P-29.2 — the third seal. A signature here records `content_hash` over
+         the editing layer, and at the last cleared step it also approves and
+         freezes the document (`advanceWorkflowForSignature` →
+         `approveAndFreezeDocument`).
+         REFUSED FOR EVERY MEANING, not only the step that seals, and
+         deliberately: whether this signature is the last one is not known
+         until the workflow is advanced, which is after the signature row is
+         written — and a reviewer's "I reviewed this" that attests to text the
+         submission will not carry is a defective record whichever step it is
+         on. `different` means something overwrote the filed copy outside the
+         editor, which is a reason to stop a workflow rather than to sign
+         around it. If evidence later shows reviewers blocked by a divergence
+         they cannot clear, narrow this to the sealing step — do not weaken the
+         refusal. */
+      if (await sealRefusedForFiling(client, res, docId, tenantId)) return;
+
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
       const contentHash = sectionsDigest(current.sections);

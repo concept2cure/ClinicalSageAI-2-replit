@@ -1,0 +1,16 @@
+91 questions (13 authorities × 7 topics)
+  get_cmc_requirements answers   91/91
+  find_cmc_guidance answers      80/91
+
+11 question(s) for which the document search finds nothing:
+  · EMA / container closure
+  · MHRA / container closure
+  · NMPA / container closure
+  · Health Canada / container closure
+  · TGA / container closure
+  · ANVISA / container closure
+  · Swissmedic / container closure
+  · HSA / container closure
+  · MFDS / container closure
+  · CDSCO / container closure
+  · WHO / container closure

@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { GLOBAL_REGISTRY } from '../../../../shared/regulatory/global-document-registry';
 import {
   DOCUMENT_TEMPLATES, getRegistryDocumentTemplate, getDocumentTemplate, componentTemplateIdForRegistry,
+  type DocumentTemplateStructure,
 } from '../../market-specs/document-template-library';
 import { documentComponentRegion, resolveDocumentPreparationScope } from '../../market-specs/document-preparation';
 import { searchTemplates } from '../../regulatory/templateCatalog';
@@ -16,6 +17,15 @@ const targets = GLOBAL_REGISTRY.filter(entry => entry.active && entry.segment ==
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.some(family => family === 'ectd' || family === 'ctis'));
 let all: BuiltinAuthoringTemplate[];
 beforeAll(async () => { all = await getBuiltinAuthoringTemplates(); });
+
+
+/** The whole outline the projection carries: front matter, then each section and its subsections (second review, 2026-10-18). */
+function everySection(outline: DocumentTemplateStructure): DocumentTemplateStructure['sections'] {
+  const out: DocumentTemplateStructure['sections'] = [];
+  const walk = (list: DocumentTemplateStructure['sections']) => { for (const s of list) { out.push(s); if (s.subsections?.length) walk(s.subsections); } };
+  walk([...(outline.frontMatter ?? []), ...outline.sections]);
+  return out;
+}
 
 describe('one builtin authoring projection', () => {
   it('preserves every IND source object and snapshot without added metadata', () => {
@@ -45,11 +55,11 @@ describe('one builtin authoring projection', () => {
     expect(actual.name).toContain(`${entry.region} · `);
     expect(actual.filingContext).toEqual({ registryId: entry.id, region: entry.region, agency: entry.agency });
     expect(actual.sections.map(section => [section.code, section.title])).toEqual(
-      expected!.sections.map(section => [section.number, section.heading]),
+      everySection(expected!).map(section => [section.number, section.heading]),
     );
     for (const [index, section] of actual.sections.entries()) {
       expect(section.ordering).toBe(index);
-      expect(section.guidance.guidance_text).toContain(expected!.sections[index].purpose);
+      expect(section.guidance.guidance_text).toContain(everySection(expected!)[index].purpose);
       expect(section.guidance.regulatory_references).toContain(expected!.regulatoryBasis);
       expect(section.guidance.source_reference.length).toBeGreaterThan(0);
     }
@@ -70,7 +80,7 @@ describe('one builtin authoring projection', () => {
       agency: documentComponentRegion(outline.id) === 'EU' ? 'EMA' : 'ICH' });
     expect(actual.families).toEqual(outline.families);
     expect(actual.name).toContain(`${documentComponentRegion(outline.id)} · `);
-    expect(actual.sections.map(section => [section.code, section.title])).toEqual(outline.sections.map(section => [section.number, section.heading]));
+    expect(actual.sections.map(section => [section.code, section.title])).toEqual(everySection(outline).map(section => [section.number, section.heading]));
     if (!outline.ctdSection) expect(actual.module).toBeNull();
   });
 

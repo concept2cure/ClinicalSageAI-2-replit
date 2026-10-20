@@ -6,7 +6,8 @@ import type { Editor } from '@tiptap/core';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(),
+  useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
 import {
   CanonicalAuthoringFlow, clearAuthoringFlowScope, FLOW_DOC, FLOW_PROGRAM, FLOW_SECTION,
   sendAuthoringPrefill, sentAuthoringTurns, serveAuthoringStream, setAuthoringFlowScope, toolbarDraftButton,

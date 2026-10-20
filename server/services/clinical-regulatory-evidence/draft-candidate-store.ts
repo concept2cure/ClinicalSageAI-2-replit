@@ -65,6 +65,10 @@ export interface DraftGenerator {
   requestId?: string | null;
   /** The AnA turn record the draft was filed under (services/ana/turn-record-draft.ts). */
   turnRecordId?: string | null;
+  /** Actual gateway status, retained server-side; absence is legacy/unconfirmed. */
+  finishReason?: string | null;
+  /** Derived from the reported reason; false is not proof of complete content. */
+  truncated?: boolean;
   /** Exact project Vault versions shown to this draft; revalidated on accept. */
   vaultSources?: import('../authoring/authoring-draft-sources.js').SectionDraftSourceReceipt;
   /** Exact selected catalogue excerpts verified before and after generation. */
@@ -303,6 +307,8 @@ function parsedDraftGenerator(raw: unknown): DraftGenerator | null {
     generatedAt: stringOrNull(value.generatedAt) ?? '',
     requestId: stringOrNull(value.requestId),
     turnRecordId: stringOrNull(value.turnRecordId),
+    ...(value.finishReason !== undefined ? { finishReason: stringOrNull(value.finishReason) } : {}),
+    ...(value.truncated !== undefined ? { truncated: value.truncated === true } : {}),
     // Preserve malformed recorded receipts for the fail-closed accept verifier.
     ...(value.vaultSources !== undefined
       ? { vaultSources: value.vaultSources as DraftGenerator['vaultSources'] } : {}),

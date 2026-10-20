@@ -27,6 +27,11 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { createJourneyDb, extractTableDdl, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
+import {
+  computeBoundPayloadDigestFromComponents,
+  type BoundDigestValidatorOutcome,
+} from '../../server/services/submission-package-orchestrator';
+import type { ECTDLeaf } from '../../server/services/ectd/ectd4-validator';
 
 const T = 180_000;
 
@@ -62,7 +67,70 @@ const SUBMISSION_ID = '4001';
 const DOC_ID = 4001; // run.submission_id_fk → the signature's §11.70 document anchor
 const RUN_ID = '5b1c2a10-0000-4000-8000-000000000001'; // run_id is UUID in the real DDL
 const OTHER_RUN_ID = '5b1c2a10-0000-4000-8000-000000000002';
-const PAYLOAD_DIGEST = 'a'.repeat(64);
+const PROGRAM_ID = '5b1c2a10-0000-4000-8000-00000000000a'; // regulatory_programs.id is UUID
+/**
+ * The frozen release record a suspended run actually carries.
+ *
+ * PAYLOAD_DIGEST used to be `'a'.repeat(64)` and the seeded package.sign step
+ * carried `{ payloadDigest }` and nothing else. verifyAwaitingReleasePayload
+ * requires a signedSnapshot with a leaves array, a validatorOutcome and an
+ * identity matching the run, and then requires payloadDigest to EQUAL the digest
+ * recomputed from that snapshot — so every attempt was refused 409
+ * SIGNATURE_SNAPSHOT_INVALID before reverifySigner was ever called, and the
+ * account-standing steps below could not reach what they claim to prove.
+ *
+ * So the record is DERIVED, not invented: the digest comes from the production
+ * function the route itself uses, over a snapshot shaped like the one
+ * buildSignedSnapshot writes. Shapes mirror the canonical fixture in
+ * server/services/__tests__/sign-payload-snapshot.test.ts. The identity tuple
+ * matches the run rows seeded below — submissionId, organizationId,
+ * applicationNumber, region, submissionType are exactly the five keys
+ * sameRunIdentity compares.
+ *
+ * This strengthens the assertions that read PAYLOAD_DIGEST rather than relaxing
+ * them: bound_payload_digest is now the real digest of a real frozen record
+ * instead of a row of 'a's.
+ */
+const VALIDATOR_OUTCOME: BoundDigestValidatorOutcome = {
+  gatewayReady: true,
+  hardenedScore: 100,
+  summary: { errors: 0, warnings: 0, infos: 0, sectionsPresent: 2, sectionsRequired: 2, sectionsMissing: [] as string[] },
+};
+
+const LEAF: ECTDLeaf = {
+  sectionCode: 'm3.2.S.1',
+  title: 'm3.2.S.1',
+  checksum: 'a'.repeat(32), // md5 per the eCTD spec
+  checksumType: 'md5',
+  operation: 'new',
+  filePath: 'm3/m3.2.S.1.pdf',
+  mimeType: 'application/pdf',
+  fileSize: 1024,
+};
+
+/** Each run owns its own snapshot: the identity tuple includes the tenant. */
+function snapshotFor(organizationId: number) {
+  return {
+    leaves: [LEAF],
+    backboneXml: '<index.xml/>',
+    validatorOutcome: VALIDATOR_OUTCOME,
+    submissionId: SUBMISSION_ID,
+    organizationId,
+    applicationNumber: 'NDA210001',
+    sequenceNumber: '0000',
+    region: 'US' as const,
+    submissionType: 'original',
+    totalSizeBytes: 2048,
+  };
+}
+
+/** The digest sign-prep and resume both compute, from the snapshot itself. */
+function digestFor(snap: ReturnType<typeof snapshotFor>): string {
+  return computeBoundPayloadDigestFromComponents({ ...snap, backboneXml: snap.backboneXml || undefined });
+}
+
+const SNAPSHOT = snapshotFor(ORG);
+const PAYLOAD_DIGEST = digestFor(SNAPSHOT);
 const PASSWORD = 'Correct-Horse-Battery-42';
 
 /** approver → authorized to sign; member → not (§11.10(g) policy default). */
@@ -111,7 +179,12 @@ beforeAll(async () => {
     // write cannot happen — which, since L138, correctly refuses the signature.
     prereqSql: [
       baseline,
-      'CREATE TABLE IF NOT EXISTS submissions (id SERIAL PRIMARY KEY, organization_id INTEGER);',
+      // deleted_at: readLegacyReleaseInputs filters on it
+      // (`WHERE organization_id = $1 AND deleted_at IS NULL`), so without the
+      // column that read threw 42703 and the release gate was refused for a
+      // missing column. program_id is added by the real anchor migration below,
+      // not declared here.
+      'CREATE TABLE IF NOT EXISTS submissions (id SERIAL PRIMARY KEY, organization_id INTEGER, deleted_at timestamptz);',
       `ALTER TABLE audit_logs
          ADD COLUMN IF NOT EXISTS table_name    TEXT,
          ADD COLUMN IF NOT EXISTS record_id     TEXT,
@@ -137,8 +210,37 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
+      // The chain's ORDER KEY and its BEFORE INSERT trigger. Without this file
+      // writeChainedAuditRow still writes, but chain_seq does not exist, so
+      // chain.ts falls back to the pre-fix (occurred_at, id) walk it announces
+      // on stderr — and this journey, which drives governed writes through the
+      // real writer, claimed coverage of a chain recipe production no longer
+      // uses. assertNoSchemaGaps is what refused to let it; the gap was
+      // otherwise visible only as a log line. The fix itself is proven in
+      // server/services/audit/__tests__/chain-order.pglite.test.ts, which
+      // applies this same file.
+      'migrations/20260921_audit_logs_chain_seq.sql',
       'db/migrations/20260725_submission_orchestrator_store_port.sql',
       'db/migrations/20260725_esig_gate_columns_port.sql',
+      // regulatory_programs, which the continuation store below FKs. Built from
+      // its own migration, as the IND journey does, rather than hand-mirrored.
+      'migrations/20260524_program_workbench_schema.sql',
+      // AFTER program_workbench above: this file is guarded on
+      // to_regclass('public.regulatory_programs') and silently RETURNs without it,
+      // which is how it first appeared to do nothing here.
+      // submissions.program_id. With no continuation-inputs row for the seeded
+      // run, readContinuationInputs falls back to readLegacyReleaseInputs, which
+      // SELECTs program_id FROM submissions — a column the journey's minimal
+      // submissions table did not have, so the read threw 42703 and the step was
+      // refused for a missing column rather than by the account check it names.
+      'migrations/20260925b_submissions_program_anchor.sql',
+      // The continuation store prepareOrchestratorRelease reads before the
+      // signing ceremony. Without it that read threw and the route answered 503
+      // release_record_verification_unavailable for every attempt after the
+      // first — fail-closed and correct, but it meant the locked-account and
+      // suspended-account steps below were "blocked" by an absent relation
+      // rather than by the account checks they exist to prove.
+      'db/migrations/20261014_orchestrator_continuation_inputs.sql',
       // Without this, the signing ceremony's lockout read of users.locked_until
       // throws and every signature attempt — correct password or not — is
       // refused (ledger C-20, which found it in the route's former verifier).
@@ -180,10 +282,25 @@ beforeAll(async () => {
     );
   }
 
+  // The program scope the release gate resolves before it asks anyone to sign.
+  // readLegacyReleaseInputs reads submissions.program_id and then
+  // requireOrchestratorProgramAccess → canMutateProgram, which for a role
+  // outside ORG_MANAGE_ROLES allows only the program's LEAD. The approver is
+  // that lead, so the gate reaches the signing ceremony instead of refusing
+  // 403 PROGRAM_WRITE_ACCESS_DENIED first.
+  await jdb.pool.query(
+    // Every NOT NULL column with no default, from the real table — the program
+    // this release belongs to, not a stub that would need the schema loosened.
+    `INSERT INTO regulatory_programs
+       (id, organization_id, name, code, program_type, product_name, product_type, primary_agency, lead_user_id)
+     VALUES ($1,$2,$3,$4,'nda','Journey Drug Substance','small_molecule','FDA',$5)`,
+    [PROGRAM_ID, ORG, 'NDA 210001 programme', 'NDA-210001', APPROVER.id],
+  );
+
   // submission_orchestrator_runs.submission_id_fk is a real FK to submissions(id).
   await jdb.pool.query(
-    `INSERT INTO submissions (id, organization_id) VALUES ($1,$2)`,
-    [DOC_ID, ORG],
+    `INSERT INTO submissions (id, organization_id, program_id) VALUES ($1,$2,$3)`,
+    [DOC_ID, ORG, PROGRAM_ID],
   );
 
   // The §11.70 anchor: a document with stored version content. The service binds
@@ -202,10 +319,16 @@ beforeAll(async () => {
     [DOC_ID, 'Release package manifest content', APPROVER.id],
   );
 
-  const steps = JSON.stringify([
-    { key: 'package.validate', status: 'complete' },
-    { key: 'package.sign', status: 'awaiting-signature', outputRef: JSON.stringify({ payloadDigest: PAYLOAD_DIGEST }) },
-  ]);
+  const stepsFor = (snap: ReturnType<typeof snapshotFor>) =>
+    JSON.stringify([
+      { key: 'package.validate', status: 'complete' },
+      {
+        key: 'package.sign',
+        status: 'awaiting-signature',
+        outputRef: JSON.stringify({ payloadDigest: digestFor(snap), signedSnapshot: snap }),
+      },
+    ]);
+  const steps = stepsFor(SNAPSHOT);
   await jdb.pool.query(
     `INSERT INTO submission_orchestrator_runs
        (run_id, organization_id, submission_id, submission_id_fk, application_number,
@@ -219,7 +342,10 @@ beforeAll(async () => {
        (run_id, organization_id, submission_id, submission_id_fk, application_number,
         region, submission_type, started_at, status, steps)
      VALUES ($1,$2,$3,$4,$5,'US','original',NOW(),'awaiting-signature',$6::jsonb)`,
-    [OTHER_RUN_ID, OTHER_ORG, SUBMISSION_ID, DOC_ID, 'NDA210001', steps],
+    // Its OWN snapshot, so the cross-tenant refusal below is proven by the
+    // run lookup's organization scope and not by a record that would have
+    // failed identity anyway.
+    [OTHER_RUN_ID, OTHER_ORG, SUBMISSION_ID, DOC_ID, 'NDA210001', stepsFor(snapshotFor(OTHER_ORG))],
   );
 
   const { default: signReleaseRouter } = await import('../../server/routes/submission-sign-release');
@@ -317,6 +443,7 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
 
     // ── KNOWN-BAD: locked account cannot sign, even with the right password ─
     // (negative-journey follow-ups from the 2026-07-30 auth/e-sig audit)
+    //
     await R.expectBlocked('locked-account-cannot-sign', async () => {
       await jdb.pool.query(
         `UPDATE users SET locked_until = NOW() + interval '1 hour' WHERE id = $1`,
@@ -346,13 +473,26 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
         const res = await asUser(APPROVER)(
           request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`),
         ).send(signBody());
-        // Refused by the one signing ceremony, which every signing surface now
-        // shares; this route's own check was the only one that did (F-28).
-        return {
-          blocked: res.status === 401 && res.body.code === 'ACCOUNT_INACTIVE',
-          status: res.status,
-          code: res.body.code,
-        };
+        // Refused on ACCOUNT STANDING, by whichever layer sees it first.
+        //
+        // 2026-10-19: suspension revokes active membership, and the release gate
+        // resolves the program scope before the signing ceremony — so
+        // readCsrProjectActor, reached through requireOrchestratorProgramAccess,
+        // now refuses 403 CSR_PROJECT_ACCESS_DENIED ("no longer an active member
+        // of this organization") before reverifySigner can answer 401
+        // ACCOUNT_INACTIVE. This step was written when this route's own check was
+        // the only one (F-28), and it still asserts the thing that matters: a
+        // suspended account cannot sign, and no signature row is written.
+        //
+        // The ceremony's own answer is not taken on trust either — it is
+        // asserted directly, on the same reverifySigner this route calls, at
+        // server/services/part11/__tests__/reverify-signer.test.ts:234 (401 /
+        // ACCOUNT_INACTIVE). Both codes are listed rather than one broadened
+        // away, so a refusal for any OTHER reason still fails this step.
+        const standing =
+          (res.status === 401 && res.body.code === 'ACCOUNT_INACTIVE') ||
+          (res.status === 403 && res.body.error === 'CSR_PROJECT_ACCESS_DENIED');
+        return { blocked: standing, status: res.status, code: res.body.code ?? res.body.error };
       } finally {
         await jdb.pool.query(`UPDATE users SET status = 'active' WHERE id = $1`, [APPROVER.id]);
       }

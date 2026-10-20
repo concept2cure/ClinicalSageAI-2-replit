@@ -1,0 +1,53 @@
+// @vitest-environment jsdom
+// THROWAWAY PROBE (honest-state review 2026-10-19). Lives in the scratchpad, not the repo.
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+const m = vi.hoisted(() => ({ api: vi.fn() }));
+vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: m.api }));
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { NdaCockpit } from '@/concept2cure/v2/surfaces/NdaCockpit';
+import { clearShellProject, publishShellProject } from '@/concept2cure/v2/shellProject';
+
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
+const ID = '22222222-2222-4222-8222-222222222222';
+const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
+beforeEach(() => { m.api.mockReset(); publishShellProject({ id: PROGRAM, title: 'Actual open program' }); });
+afterEach(() => { cleanup(); clearShellProject(); });
+
+describe('PROBE: NDA cockpit BLA tab after the embedded workbench saves the first draft', () => {
+  it('table below vs workbench notice', async () => {
+    let saved: any = null; let tableReads = 0; let workbenchReads = 0;
+    m.api.mockImplementation(async (method: string, path: string, input: any) => {
+      if (method === 'GET' && path === '/api/biopharma/bla/assessments') { tableReads += 1; return ok({ assessments: saved ? [saved] : [] }); }
+      if (method === 'GET' && path.startsWith('/api/biopharma/bla/assessments?programId=')) { workbenchReads += 1; return ok({ assessments: saved ? [saved] : [] }); }
+      if (method === 'GET' && path.startsWith('/api/biopharma/bla/assessments/')) return ok(saved);
+      if (method === 'POST' && path.endsWith('/comparability')) {
+        saved = { id: ID, program_id: PROGRAM, title: input.title, kind: 'comparability', status: 'draft', verdict: 'comparable', modality: null, input, result: { conclusion: 'comparable', summary: 'Exact retained engine result' } };
+        return ok({ result: saved.result, assessment: saved });
+      }
+      return ok({ data: [] });
+    });
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><NdaCockpit {...({ surface: { id: 'nda-cockpit', label: 'NDA cockpit' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' } as any)} /></QueryClientProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: /BLA biologics/ }));
+    await screen.findByText('No BLA biologics assessments yet');
+    await screen.findByText('No assessments are saved for this program.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Assess Q5E comparability' }));
+    const form = within(screen.getByRole('dialog'));
+    const vals: Record<string, string> = { 'Saved assessment title': 'Recorded evidence', 'Reason for saving': 'Retaining these actual scientific facts', 'Manufacturing change': 'Changed purification step', 'Quality attribute': 'Potency', 'Attribute criticality': 'high', 'Pre-change lot measurements': '95,96,97', 'Post-change lot measurements': '96,97,98' };
+    for (const [label, value] of Object.entries(vals)) fireEvent.change(form.getByLabelText(new RegExp(label)), { target: { value } });
+    fireEvent.click(form.getByRole('button', { name: 'Compute and save draft' }));
+    await screen.findByText(/Draft saved\./);
+    await new Promise((r) => setTimeout(r, 300));
+
+    const result = {
+      workbenchNotice: screen.queryByText(/Draft saved\./)?.textContent,
+      tableStillSaysNone: !!screen.queryByText('No BLA biologics assessments yet'),
+      tableHintStillSaysNoneRun: !!screen.queryByText(/No 351\(a\) biologics assessments have been run for this organization yet/),
+      tableReads, workbenchReads, serverHasRow: !!saved,
+    };
+    console.log('PROBE-RESULT-NDA ' + JSON.stringify(result));
+    expect(result.tableStillSaysNone, 'table must not still claim none exist after a draft was saved').toBe(false);
+  });
+});

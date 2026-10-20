@@ -1,10 +1,20 @@
 /**
  * postMarketStatusQuery — the documentation-status query string.
  *
- * What matters: a device fact the program has not stated is never sent as
- * false. The server reads an absent `implantable` as unknown (the SSCP stays
- * undetermined) and `implantable=false` as a statement that removes an
- * obligation, so sending false for "not stated" would silently drop the SSCP.
+ * What matters: the query carries the regulation and nothing else. The device
+ * class and the implantable / custom-made facts the obligations turn on come
+ * from the programme record, read server-side
+ * (server/services/gspr-postmarket/programme-eu-device-record.ts).
+ *
+ * Until 2026-10-19 this surface sent all four. `deviceClass` was
+ * `profile.deviceClass` — the US 21 CFR 860 class — so a European programme's
+ * MDR assessment was computed from "class II" and answered `"class II" is not
+ * an MDR device class` while its MDR class sat unread in `eu_mdr_class`.
+ * `implantable=false` and `customMade=true` each REMOVE an obligation, so a
+ * caller-sent fact could drop the SSCP from a programme that owes one.
+ *
+ * This test is the pin against any of the four coming back: a governed
+ * obligation set is not computed from what the client happens to hold.
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -19,30 +29,17 @@ import { postMarketStatusQuery } from '../useCerPostMarket';
 const parse = (q: string) => Object.fromEntries(new URLSearchParams(q));
 
 describe('postMarketStatusQuery', () => {
-  it('sends no implantable or customMade when no fact is stated', () => {
-    expect(parse(postMarketStatusQuery('IIb', 'MDR', {}))).toEqual({ regulation: 'MDR', deviceClass: 'IIb' });
-    expect(parse(postMarketStatusQuery('IIb', 'MDR'))).toEqual({ regulation: 'MDR', deviceClass: 'IIb' });
+  it('sends the regulation, and only the regulation', () => {
+    expect(parse(postMarketStatusQuery('MDR'))).toEqual({ regulation: 'MDR' });
+    expect(parse(postMarketStatusQuery('IVDR'))).toEqual({ regulation: 'IVDR' });
   });
 
-  it('sends a stated false as false', () => {
-    expect(parse(postMarketStatusQuery('IIa', 'MDR', { implantable: false, customMade: false }))).toEqual({
-      regulation: 'MDR',
-      deviceClass: 'IIa',
-      implantable: 'false',
-      customMade: 'false',
-    });
-  });
-
-  it('sends nothing for a null fact', () => {
-    const q = parse(postMarketStatusQuery('IIa', 'MDR', { implantable: null, customMade: null }));
-    expect(q).not.toHaveProperty('implantable');
-    expect(q).not.toHaveProperty('customMade');
-  });
-
-  it('sends the regulation, and omits an unset class rather than inventing one', () => {
-    expect(parse(postMarketStatusQuery(null, 'IVDR', { implantable: true }))).toEqual({
-      regulation: 'IVDR',
-      implantable: 'true',
-    });
-  });
+  it.each(['deviceClass', 'implantable', 'customMade'])(
+    'never sends %s — the record states it, not the caller',
+    key => {
+      for (const regulation of ['MDR', 'IVDR'] as const) {
+        expect(parse(postMarketStatusQuery(regulation))).not.toHaveProperty(key);
+      }
+    },
+  );
 });

@@ -10,6 +10,12 @@ import {
   PRODUCT_TYPES,
   type ProductType,
 } from '@shared/constants/domain/product-types';
+import {
+  filingDocumentClassForFiling,
+  filingDocumentClassOf,
+  filingTypeInSentence,
+  productTypeFixedByFiling,
+} from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
@@ -108,6 +114,13 @@ const SEG_LABELS: Record<string, string> = {
 export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   const id = (sel?.id ?? '').toLowerCase();
   const pw = (sel?.pathway ?? '').toLowerCase();
+  // A filing that is a document, not an application — a supplement, an annual
+  // report, an IND amendment, a meeting package, a designation request, a CSR —
+  // is its own class, decided before any pathway rule below. Every one of them
+  // used to fall to the 'ctd' default and was scaffolded as a 73-node NDA, the
+  // CSR to the closing 'ind' (shared/regulatory/filing-document-classes.ts).
+  const documentClass = filingDocumentClassForFiling(id);
+  if (documentClass) return documentClass.docType;
   if (id.includes('510k')) return '510k';
   if (id.includes('de_novo') || pw === 'denovo') return 'de_novo';
   if (id.includes('pma')) return 'pma';
@@ -174,6 +187,12 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
 }
 
+/** A filing document class as the review step names it ("Prior Approval Supplement"), or null for an application. */
+function documentClassLabel(programType: string): string | null {
+  const label = filingDocumentClassOf(programType)?.label;
+  return label ? label.charAt(0).toUpperCase() + label.slice(1) : null;
+}
+
 /** The three steps, in order. One list, read by the step rail, the sub-heading
  *  and the bounds checks below, so a step cannot be renamed in one place and
  *  stay stale in another. */
@@ -216,6 +235,10 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const [deviceClass, setDeviceClass] = useState('');
   const [reviewPanel, setReviewPanel] = useState('');
   const [predicateK, setPredicateK] = useState('');
+  /* The predicate's trade name. The official eSTAR prints it beside the
+     submission number, both from `predicate_devices[0]`, so the pair travels
+     together — the server refuses one without the other. */
+  const [predicateName, setPredicateName] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
   const [deviceFlags, setDeviceFlags] = useState<DeviceFlagId[]>([]);
   const toggleFlag = (id: DeviceFlagId) =>
@@ -264,7 +287,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
      the person states it. From the filing type, not the lane: a 510(k) picked
      from any tab is a device filing, and a pharma filing picked from the device
      tab is not. */
-  const fixedClass = productTypeForFilingType(programType, uiSeg);
+  // A filing document class asks, unless the filing names its class itself (an
+  // sBLA is a biologics licence supplement): filing-document-classes.ts.
+  const fixedClass = productTypeForFilingType(programType, uiSeg) ?? productTypeFixedByFiling(selTpl?.id);
   const asksClass = fixedClass === null;
   const recordedClass: string | null = fixedClass ?? (statedClass || null);
   const isDeviceFiling = usesDeviceClassification(fixedClass);
@@ -304,7 +329,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
         ? {
             deviceClassification: {
               productCode, regulationNumber, deviceClass,
-              reviewPanel, predicateK, intendedUse,
+              reviewPanel, predicateK, predicateName, intendedUse,
               flags: deviceFlags,
             },
           }
@@ -607,7 +632,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                       {STATED_CLASS_CHOICES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                     <span className="npw-field-help" id="npw-class-help">
-                      Required. A {programType.toUpperCase()} covers drugs and biologics; the program records which.
+                      Required. {filingTypeInSentence(programType)} covers drugs and biologics; the program records which.
                     </span>
                   </label>
                 )}
@@ -657,7 +682,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                   </label>
 
                   <label className="npw-field">
-                    <span className="npw-field-l">Predicate device</span>
+                    <span className="npw-field-l">Predicate 510(k) number</span>
                     <input
                       className="c2c-input"
                       value={predicateK}
@@ -667,6 +692,22 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     />
                     <span className="npw-field-help" id="npw-pk-help">
                       The cleared device this one is substantially equivalent to.
+                    </span>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Predicate device name</span>
+                    <input
+                      className="c2c-input"
+                      value={predicateName}
+                      onChange={e => setPredicateName(e.target.value)}
+                      placeholder="the predicate’s trade name, as it is marketed"
+                      aria-describedby="npw-pn-help"
+                    />
+                    <span className="npw-field-help" id="npw-pn-help">
+                      The eSTAR prints this beside the number, so give both or
+                      neither — the record does not hold half a claim of
+                      substantial equivalence.
                     </span>
                   </label>
                 </div>
@@ -773,7 +814,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                 </div>
                 <div className="npw-review-row">
                   <dt>Pathway</dt>
-                  <dd>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
+                  {/* A filing document class names itself: its pathway key is the
+                      'ctd' default, which read "CTD" for a supplement or a CSR. */}
+                  <dd>{documentClassLabel(programType) ?? (selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
                 </div>
                 {/* Both lines are derived exactly as the create call derives
                     them, so the review step shows what will actually persist.
@@ -782,7 +825,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     for a device filing — and then stored it. */}
                 <div className="npw-review-row">
                   <dt>Workstream</dt>
-                  <dd>{workstreamForFilingType(programType) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                  <dd>{workstreamForFilingType(programType, recordedClass) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>
@@ -807,7 +850,13 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     </div>
                     <div className="npw-review-row">
                       <dt>Predicate</dt>
-                      <dd>{predicateK || 'Not recorded'}</dd>
+                      <dd>
+                        {predicateK && predicateName
+                          ? `${predicateK} — ${predicateName}`
+                          : predicateK || predicateName
+                            ? 'Not recorded — the number and the trade name are filed together'
+                            : 'Not recorded'}
+                      </dd>
                     </div>
                     {deviceFlags.length > 0 && (
                       <div className="npw-review-row">

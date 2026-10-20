@@ -1,0 +1,38 @@
+# The time-point parser, before and after
+
+$ npx tsx probe-timepoints.ts
+
+## Before
+```
+monthsIn("Month 24")                     null
+monthsIn("Month 0")                      null
+monthsIn("0")                            null
+
+-- a complete 24-month study labelled "Month N" --
+studyCoverage                            {"recorded":0,"planned":24,"unreadable":false}
+numericSeries (the canonical reader)     4 points, furthest 24
+
+verdict:
+  Q1E_EXTRAPOLATION_WITHOUT_ACCELERATED  fail   "...runs past the 0 months the long-term data covers"
+  Q1E_EXTRAPOLATION_BEYOND_LIMIT         fail   "...from 0 months of long-term data: at most 0 months"
+```
+
+## After
+```
+── my monthsIn vs the register’s own labels ──
+monthsIn("Month 24")                     null
+monthsIn("Month 0")                      null
+monthsIn("T24")                          null
+monthsIn("24")                           24
+monthsIn("0")                            null
+monthsIn("24m")                          null
+monthsIn("2 years")                      24
+monthsIn("month 12")                     null
+
+── a complete 24-month study labelled "Month N" ──
+studyCoverage                            {"recorded":24,"planned":24,"unreadable":false}
+numericSeries (the canonical reader)     {"ok":true,"points":[{"time":0,"value":99.4},{"time":6,"value":98.2},{"time":12,"value":97.5},{"time":24,"value":96.6}],"pointsUsable":4}
+
+verdict:
+  Q1E_CLAIM_WITHIN_DATA                  pass     The claim of 24 months is within the 24 months of long-term data recorded.
+```

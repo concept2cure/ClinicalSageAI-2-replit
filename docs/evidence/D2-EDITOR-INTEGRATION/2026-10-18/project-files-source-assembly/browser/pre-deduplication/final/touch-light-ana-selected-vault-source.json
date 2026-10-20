@@ -1,0 +1,94 @@
+{
+  "kind": "project-files-rail",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "panel": {
+    "x": 10,
+    "y": 0,
+    "right": 390,
+    "bottom": 844,
+    "width": 380,
+    "height": 844,
+    "clientWidth": 379,
+    "scrollWidth": 379
+  },
+  "pageWidth": 390,
+  "scrollOwner": {
+    "className": "ed-comments",
+    "overflowY": "auto",
+    "scrollTop": 0,
+    "clientHeight": 844,
+    "scrollHeight": 844
+  },
+  "footer": {
+    "x": 25,
+    "y": 622,
+    "right": 376,
+    "bottom": 830,
+    "width": 351,
+    "height": 208,
+    "clientWidth": 351,
+    "scrollWidth": 351
+  },
+  "controls": [
+    {
+      "text": " Open",
+      "disabled": false,
+      "bounds": {
+        "x": 37,
+        "y": 684,
+        "right": 118.734375,
+        "bottom": 728,
+        "width": 81.734375,
+        "height": 44,
+        "clientWidth": 80,
+        "scrollWidth": 80
+      }
+    },
+    {
+      "text": " Build in editor",
+      "disabled": false,
+      "bounds": {
+        "x": 124.734375,
+        "y": 684,
+        "right": 256.875,
+        "bottom": 728,
+        "width": 132.140625,
+        "height": 44,
+        "clientWidth": 130,
+        "scrollWidth": 130
+      }
+    },
+    {
+      "text": " Work on document",
+      "disabled": true,
+      "bounds": {
+        "x": 37,
+        "y": 734,
+        "right": 199.015625,
+        "bottom": 778,
+        "width": 162.015625,
+        "height": 44,
+        "clientWidth": 160,
+        "scrollWidth": 160
+      }
+    },
+    {
+      "text": " Cite in §3.2.P.8.1",
+      "disabled": false,
+      "bounds": {
+        "x": 205.015625,
+        "y": 734,
+        "right": 349.015625,
+        "bottom": 778,
+        "width": 144,
+        "height": 44,
+        "clientWidth": 142,
+        "scrollWidth": 142
+      }
+    }
+  ],
+  "text": "Synthetic retained Vault stability source.pdfSHA-256 777777777777… Open Build in editor Work on document Cite in §3.2.P.8.1The original file is unavailable. Use retained data-room text with AnA where data use is still permitted."
+}

@@ -22,9 +22,17 @@
  * unavailable for a submission — never a fabricated score or a fake zero.
  * Display fields the surface renders that have NO faithful org-scoped source in
  * this schema (specifications, stability series, batch dispositions, blueprint
- * readiness, per-region global readiness, agency correspondence) are returned
- * as explicit null — never invented. Failed/unprovisioned reads publish
- * unavailable metadata and no established counts.
+ * readiness, per-region global readiness) are returned as explicit null —
+ * never invented. Failed/unprovisioned reads publish unavailable metadata and
+ * no established counts.
+ *
+ * NO AGENCY CORRESPONDENCE (2026-10-19, rows D2 and D5; decisions P-38 and
+ * P-39 item 1). The board read the earlier CMC question file (reg_questions)
+ * and served it as `correspondence`, with an `irOverdue` KPI counted by that
+ * file's own rule. Agency questions have one home, the letter: CMC reads a
+ * program's questions from GET /api/concept2cure/projects/:projectId/
+ * agency-questions, with the letter's own overdue verdict, and the earlier file
+ * is read-only history behind GET /api/cmc/agency-questions.
  *
  * @module server/routes/cmc-module3-board.routes
  */
@@ -59,29 +67,12 @@ interface PortfolioRow {
  * Is this error "no backend here", or a read that failed?
  *
  * Every block below answered both with `provisioned: false`, so a transient
- * database error rendered as "the correspondence store is not provisioned" —
- * and the overdue-IR KPI silently swapped to a different metric under the same
- * label. 42P01 (undefined_table) is genuinely unprovisioned; anything else is a
- * read that did not complete, and the surface must be told which it got.
+ * database error rendered as "the store is not provisioned". 42P01
+ * (undefined_table) is genuinely unprovisioned; anything else is a read that
+ * did not complete, and the surface must be told which it got.
  */
 function isUnprovisioned(err: unknown): boolean {
   return (err as { code?: string } | null)?.code === '42P01';
-}
-
-/** One open agency question touching Module 3 — straight from reg_questions. */
-interface CorrespondenceRow {
-  id: number | string;
-  question: string;
-  sectionRef: string | null;
-  priority: string | null;
-  severity: string | null;
-  status: string;
-  region: string | null;
-  dueDate: string | null;
-  overdue: boolean;
-  assignedTo: string | null;
-  /** The authoring document holding the drafted response, when one is linked. */
-  responseDocId: string | null;
 }
 
 /** One governed Module 3 section — matches CmcSection { key, path, st }. */
@@ -181,112 +172,6 @@ async function buildSpinePortfolio(
 }
 
 /**
- * Open agency questions touching Module 3 — reg_questions is org-scoped and
- * carries the question text, CTD section reference, priority/severity, status
- * and due date. The board previously returned correspondence:null and the
- * Program-records tab rendered a permanent empty state while these rows fed
- * only an Overview KPI. Filtered to Module 3 references PLUS unsectioned
- * rows — the Log-question dialog makes the section optional, and a question
- * this file confirmed must never vanish from the only UI over the store
- * (non-M3 sections stay excluded: they belong to another module's file).
- * Ordered so the nearest deadline is first. Fails closed to unprovisioned.
- */
-async function buildCorrespondence(
-  tenantId: number,
-): Promise<{
-  rows: CorrespondenceRow[];
-  provisioned: boolean;
-  /** True when the read FAILED (as opposed to the store being absent). */
-  unreadable: boolean;
-  /** Open questions matching the filter, BEFORE the page limit. */
-  totalOpen: number;
-  /** Overdue among ALL of them — not among the page. */
-  overdueTotal: number;
-  /** True when the page shows fewer than the store holds. */
-  truncated: boolean;
-}> {
-  try {
-    const rows = (
-      await q(
-        `select id, question_text, section_reference, priority, severity, status,
-                region, due_date, assigned_to, response_doc_id,
-                (due_date is not null and due_date < current_date
-                 and status in ('OPEN','DRAFTED','IN_REVIEW')) as overdue
-           from reg_questions
-          where organization_id = $1
-            and status in ('OPEN','DRAFTED','IN_REVIEW')
-            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
-                 or section_reference is null)
-          order by (due_date is null), due_date asc, id desc
-          limit 50`,
-        [tenantId],
-      )
-    ).rows as Array<{
-      id: number | string;
-      question_text: string;
-      section_reference: string | null;
-      priority: string | null;
-      severity: string | null;
-      status: string;
-      region: string | null;
-      due_date: string | Date | null;
-      assigned_to: string | null;
-      response_doc_id: string | null;
-      overdue: boolean;
-    }>;
-    /* The counts come from the STORE, not from the page above. `irOverdue` —
-       rendered as "You have N information requests overdue" — was the overdue
-       count of this LIMIT 50 page, so an org with more than fifty open Module 3
-       questions was told it had fewer overdue than it did. A page is for
-       reading; a count is for acting on. */
-    const totals = (
-      await q(
-        `select count(*)::int as total,
-                count(*) filter (
-                  where due_date is not null and due_date < current_date
-                )::int as overdue
-           from reg_questions
-          where organization_id = $1
-            and status in ('OPEN','DRAFTED','IN_REVIEW')
-            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
-                 or section_reference is null)`,
-        [tenantId],
-      )
-    ).rows[0] as { total: number; overdue: number } | undefined;
-    const totalOpen = Number(totals?.total ?? rows.length);
-
-    return {
-      totalOpen,
-      overdueTotal: Number(totals?.overdue ?? rows.filter((r) => r.overdue).length),
-      truncated: totalOpen > rows.length,
-      rows: rows.map((r) => ({
-        id: r.id,
-        question: r.question_text,
-        sectionRef: r.section_reference,
-        priority: r.priority,
-        severity: r.severity,
-        status: r.status,
-        region: r.region,
-        dueDate: r.due_date ? new Date(r.due_date).toISOString() : null,
-        overdue: Boolean(r.overdue),
-        assignedTo: r.assigned_to,
-        responseDocId: r.response_doc_id ?? null,
-      })),
-      provisioned: true,
-      unreadable: false,
-    };
-  } catch (err) {
-    logger.warn('reg_questions read failed', {
-      err: err instanceof Error ? err.message : String(err),
-    });
-    return {
-      rows: [], provisioned: false, unreadable: !isUnprovisioned(err),
-      totalOpen: 0, overdueTotal: 0, truncated: false,
-    };
-  }
-}
-
-/**
  * Build the governed Module 3 section list for one project from
  * cmc_module3_sections. Returns null when no projectId is supplied (the
  * governed list is inherently per-project). Fails closed to an empty,
@@ -359,10 +244,9 @@ export default function createCmcModule3BoardRoutes(): Router {
       typeof projectIdRaw === 'string' && projectIdRaw.trim() ? projectIdRaw.trim() : undefined;
 
     try {
-      const [portfolio, sections, correspondence] = await Promise.all([
+      const [portfolio, sections] = await Promise.all([
         buildSpinePortfolio(tenantId,projectId),
         buildSections(tenantId, projectId),
-        buildCorrespondence(tenantId),
       ]);
 
       const rpiValues = portfolio.rows
@@ -370,12 +254,6 @@ export default function createCmcModule3BoardRoutes(): Router {
         .filter((v): v is number => typeof v === 'number');
       const rpiAverage = rpiValues.length
         ? Math.round(rpiValues.reduce((a, b) => a + b, 0) / rpiValues.length)
-        : null;
-
-      // The same real correspondence read feeds both the card and its overdue
-      // KPI. An absent or failed store establishes no overdue count.
-      const irOverdue: number | null = correspondence.provisioned
-        ? correspondence.overdueTotal
         : null;
 
       /* A failed section read publishes NO counts: 0 sections / 0 approved /
@@ -401,7 +279,6 @@ export default function createCmcModule3BoardRoutes(): Router {
           kpis: {
             submissions: portfolio.provisioned && !portfolio.unreadable ? portfolio.rows.length : null,
             rpiAverage,
-            irOverdue,
             sectionsApproved,
             sectionsTotal,
             readyPercent,
@@ -413,26 +290,15 @@ export default function createCmcModule3BoardRoutes(): Router {
           batches: null,
           blueprint: null,
           global: null,
-          // Open Module 3 agency questions (reg_questions, org-scoped) — null
-          // ONLY when the store is unprovisioned, so the surface can tell
-          // "no backend here" from "no open questions".
-          correspondence: correspondence.provisioned ? correspondence.rows : null,
           meta: {
             projectId: projectId ?? null,
             portfolioProvisioned: portfolio.provisioned,
             spinePortfolioProvisioned: portfolio.provisioned,
             sectionsProvisioned: sections ? sections.provisioned : null,
-            correspondenceProvisioned: correspondence.provisioned,
             /* provisioned:false answers two different questions; these say which
-               one you got, so a failed read is never rendered as "none open". */
-            correspondenceUnreadable: correspondence.unreadable,
+               one you got, so a failed read is never rendered as "none". */
             portfolioUnreadable: portfolio.unreadable,
             sectionsUnreadable: sections ? sections.unreadable : null,
-            /* The card shows a page; these describe the store behind it, so a
-               surface can say "50 of 128" rather than imply it holds them all. */
-            correspondenceTotalOpen: correspondence.provisioned ? correspondence.totalOpen : null,
-            correspondenceOverdueTotal: correspondence.provisioned ? correspondence.overdueTotal : null,
-            correspondenceTruncated: correspondence.provisioned ? correspondence.truncated : null,
             generatedAt: new Date().toISOString(),
           },
         },

@@ -281,12 +281,9 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
           'IB change log',
         ],
         documentBindings: [
-          {
-            ctdSection: '5.3.5.4',
-            sectionTitle: "Investigator's Brochure",
-            ectdLifecycleOp: 'replace',
-            artifactTypes: ['investigator_brochure'],
-          },
+          /* Was 5.3.5.4 — Module 5, where the CLINICAL STUDY REPORTS live. The same misfiling
+             ind-pyramid.ts carried until 2026-10-12; this sibling kept it a day longer. */
+          ...m1Binding('investigators_brochure', { ectdLifecycleOp: 'replace', artifactTypes: ['investigator_brochure'] }),
         ],
       },
       {

@@ -32,6 +32,7 @@ import { randomUUID } from 'node:crypto';
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
 import { ensureSubmissionSpine } from '../../routes/c2c/project-intake.js';
 import { resolveDocumentClass, describeUnmappedClass } from './document-class.js';
+import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes.js';
 import { findActiveRulePack } from './rule-pack-lookup.js';
 import { readMarketSupport, documentAgencyFor } from '../regulatory/market-support.js';
 import { regionalSubtree, type PackSectionLike } from '../../../shared/regulatory/filing-scope.js';
@@ -39,7 +40,7 @@ import { DEVICE_FAMILY_PRODUCT_TYPES } from '../../../shared/constants/domain/pr
 
 export type AddMarketRefusalCode =
   | 'PROJECT_NOT_FOUND' | 'DEVICE_PROGRAM' | 'MARKET_NOT_OFFERED' | 'UNMAPPED_PROGRAM_TYPE'
-  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING';
+  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING' | 'NOT_AN_APPLICATION';
 
 export class AddMarketRefusal extends Error {
   constructor(readonly status: 404 | 409 | 422, readonly code: AddMarketRefusalCode, message: string) {
@@ -80,12 +81,12 @@ export interface AddMarketResult {
 
 interface ProgramRow {
   name: string; product_name: string | null; product_type: string | null; primary_agency: string | null;
-  target_agencies: unknown;
+  target_agencies: unknown; program_type: string | null;
 }
 
 async function readProgram(client: PoolClient, programId: string, orgId: number): Promise<ProgramRow> {
   const { rows } = await client.query(
-    `SELECT name, product_name, product_type, primary_agency, target_agencies
+    `SELECT name, product_name, product_type, primary_agency, target_agencies, program_type
        FROM regulatory_programs
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
       FOR UPDATE`,
@@ -100,6 +101,25 @@ async function resolveMarket(client: PoolClient, input: AddMarketInput, program:
   if (DEVICE_FAMILY_PRODUCT_TYPES.includes((program.product_type ?? '') as never)) {
     throw new AddMarketRefusal(422, 'DEVICE_PROGRAM',
       'A device or diagnostic project files on its own pathway, not as an eCTD market. Nothing was added.');
+  }
+  // A filing document class (a supplement, a CSR, a meeting package) is
+  // authored, never sequenced here: adding a "market" to one, or an
+  // application market to a project that is one, would write the submission
+  // spine its creation deliberately does not (2026-10-18). The project's own
+  // class is read too: a PAS project asked for an NDA market was given an NDA
+  // document and an NDA submission (review finding, 2026-10-18). The two cases
+  // are worded apart: an NDA project asked for a PAS market is not "a document"
+  // project, and the reason is the platform's limit, not a claim that the
+  // filing is never submitted (review finding, 2026-10-18).
+  const ownClass = filingDocumentClassOf(program.program_type);
+  if (ownClass) {
+    throw new AddMarketRefusal(422, 'NOT_AN_APPLICATION',
+      `No market is added to this project: it is ${filingTypeInSentence(ownClass.docType, true)}. ${classNotSequencedReason(ownClass)} Nothing was added.`);
+  }
+  const requestedClass = filingDocumentClassOf(input.applicationType);
+  if (requestedClass) {
+    throw new AddMarketRefusal(422, 'NOT_AN_APPLICATION',
+      `${filingTypeInSentence(requestedClass.docType)} is authored as its own project, not added to another as a market. ${classNotSequencedReason(requestedClass)} Nothing was added.`);
   }
   const marketInput = { applicationType: input.applicationType, market: input.agency };
   const [statement] = await readMarketSupport(client, [marketInput]);
