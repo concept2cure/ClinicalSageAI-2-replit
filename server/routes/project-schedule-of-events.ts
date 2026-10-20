@@ -11,19 +11,21 @@
  *   POST   /projects/:id/schedule-of-events/review      proactive health review (acts on findings)
  *   POST   /projects/:id/schedule-of-events/goals/reset re-baseline program goals
  *
- * Every handler is org- and project-scoped for tenant isolation.
+ * Every handler requires current membership and canonical project sharing on the request executor.
  *
  * `:id` is the integer projects.id ('12' / 'proj_12') or a regulatory_programs
- * UUID, which is resolved to its anchored projects row on the server (see
+ * UUID, which requires one eligible project anchor on the server (see
  * requireOwnedProject). Nothing else is accepted.
  *
  * @module server/routes/project-schedule-of-events
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db, pool } from '../db';
-import { looksLikeProgramUuid } from '../lib/project-id';
-import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { requestDb, requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { governedActorId } from '../middleware/orgMembership';
+import { looksLikeProgramUuid, parseIntegerProjectId } from '../lib/project-id';
+import { readCurrentProgramActor, requireCurrentProgramAccess, ProgramReadAccessError } from '../services/c2c/current-program-access';
+import { canAccessReportProject } from '../services/report-os/project-access';
 import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
 import { SchedulePreservationConflict } from '../services/projects/schedule-of-events/preservation';
 import {
@@ -33,6 +35,7 @@ import {
   resetProjectGoals,
   reviewScheduleHealth,
   type GeneratorGoal,
+  type ScheduleExecutionContext,
 } from '../services/projects/schedule-of-events';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -43,33 +46,20 @@ const logger = createScopedLogger('project-schedule-of-events');
 
 // ── tenant / param helpers (mirror server/routes/concept2cure.ts) ────────────
 function getOrganizationId(req: Request): number {
-  const ctx = (req as any).tenantContext;
-  if (ctx?.organizationId != null) {
-    const orgId = typeof ctx.organizationId === 'number' ? ctx.organizationId : parseInt(String(ctx.organizationId), 10);
-    if (!Number.isNaN(orgId)) return orgId;
+  const tenantContext = (req as any).tenantContext;
+  const authoritative = tenantContext && Object.hasOwn(tenantContext, 'organizationId');
+  const raw = authoritative ? tenantContext.organizationId : (req as any).tenantId;
+  if (raw == null && !authoritative) throw new Error('Organization context required');
+  const id = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : NaN;
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) {
+    throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'A valid current organization is required.');
   }
-  const tid = (req as any).tenantId;
-  if (tid != null) {
-    const n = typeof tid === 'number' ? tid : parseInt(String(tid), 10);
-    if (!Number.isNaN(n)) return n;
-  }
-  throw new Error('Organization context required');
+  return id;
 }
 
-/**
- * Strictly parse the numeric project id ('12' or 'proj_12').
- *
- * MUST fail closed on anything else. The previous `parseInt(raw.replace(…))`
- * truncated arbitrary idents to their leading digits, so a regulatory_programs
- * UUID like '7abb…' — the id-space the v2 surfaces hold — silently resolved to
- * project 7 and served ANOTHER project's schedule inside the same org. A
- * non-numeric ident is a 400, never a prefix-guessed project.
- */
 function getProjectId(req: Request): number | null {
-  const raw = req.params.id;
-  if (typeof raw !== 'string') return null;
-  const m = /^(?:proj_)?(\d+)$/.exec(raw.trim());
-  return m ? parseInt(m[1], 10) : null;
+  const id = parseIntegerProjectId(req.params.id);
+  return id !== null && id <= 2_147_483_647 ? id : null;
 }
 
 function parseDate(value: unknown): Date | null {
@@ -91,97 +81,85 @@ function parseGoals(value: unknown): GeneratorGoal[] {
     .filter((g) => g.title);
 }
 
-/**
- * Look up a project WITHIN the caller's organization.
- *
- * This used to be `resolveProjectType`, returning `string | null` — which
- * conflated two entirely different answers:
- *
- *   - "that project is not yours" (or does not exist), and
- *   - "it is yours, and it has no submission type set".
- *
- * Only one caller used it, and it treated both as "no type known" and carried
- * on. So POST /projects/:id/schedule-of-events/generate would proceed for a
- * project in ANOTHER organization, reaching an upsert whose ON CONFLICT arbiter
- * was org-blind. Distinguishing the two cases is what makes an ownership gate
- * expressible at all, so the return type now carries the distinction.
- *
- * Errors are rethrown rather than swallowed into `null`. The previous
- * `catch { return null }` turned a transient database failure into "no type",
- * and under the gate below would turn it into a 404 — reporting "your project
- * does not exist" because a query timed out.
- */
-type ProjectLookup = { found: false } | { found: true; projectType: string | null };
-
-async function findProjectInOrg(orgId: number, projectId: number): Promise<ProjectLookup> {
-  const { rows } = await pool.query(
-    `SELECT type, metadata FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-    [projectId, orgId],
-  );
-  const r = rows[0];
-  if (!r) return { found: false };
-  const md = r.metadata && typeof r.metadata === 'object' ? r.metadata : {};
-  return { found: true, projectType: (md.submissionType as string) || r.type || null };
+interface OwnedScheduleProject {
+  orgId: number;
+  projectId: number;
+  projectType: string | null;
+  execution: ScheduleExecutionContext;
 }
 
-/**
- * Ownership gate for every handler in this router.
- *
- * Resolves the project id and confirms it belongs to the caller's organization,
- * writing the response and returning null when it does not. A cross-tenant
- * request and a genuinely absent project both get the same 404 — the response
- * must not reveal that project 42 exists but belongs to somebody else.
- *
- * The service layer scopes its own reads by organization_id, so a cross-tenant
- * GET already returned an empty schedule rather than the victim's. This gate
- * exists for the mutating handlers, and to keep the composite FK added in
- * 20260728_schedule_of_events_org_scoped_uniqueness.sql from surfacing as a 500
- * with constraint text in the body.
- */
-async function requireOwnedProject(
-  req: Request,
-  res: Response,
-): Promise<{ orgId: number; projectId: number; projectType: string | null } | null> {
-  const orgId = getOrganizationId(req);
-  let projectId = getProjectId(req);
-  /* A program UUID — the id every v2 surface holds for the open project — is
-     resolved HERE, through the one anchor reader (projects.regulatory_program_id,
-     org-scoped, lowest id), never by parsing it. QA 2026-10-08 (j1): Project
-     home's Plan and Review panels refused every program, even one the wizard
-     had anchored, because this route took only the integer and the client had
-     no honest way to get one.
+function accessUnavailable(): ProgramReadAccessError {
+  return new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+}
 
-     Strict: a lookup that could not complete throws to the handler's 500, so a
-     dropped connection is never reported as "this program has no project
-     record". A program with no anchor is a real state — seeded programs and
-     those created while the organisation had no workspace carry none — and is
-     named as such (PROGRAM_UNANCHORED), so the surface can say it instead of
-     "not found". The ownership gate below still runs on the resolved row. */
-  if (projectId == null && looksLikeProgramUuid(req.params.id)) {
-    projectId = await resolveProgramProjectAnchor(db, {
-      programId: String(req.params.id).trim().toLowerCase(),
-      orgId,
-      context: 'schedule-of-events',
-      strict: true,
-    });
-    if (projectId == null) {
-      res.status(404).json({
-        error: 'This program has no project record to hold a schedule or tasks.',
-        code: 'PROGRAM_UNANCHORED',
-      });
-      return null;
-    }
+function requireActorId(req: Request): number {
+  const id = governedActorId(req);
+  if (!id || !Number.isSafeInteger(id) || id > 2_147_483_647) {
+    throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'A current organization actor is required.');
   }
-  if (projectId == null) {
+  return id;
+}
+
+async function admittedProgramProject(executor: RequestSqlClient, orgId: number, actorUserId: number, programId: string): Promise<number> {
+  const admitted = await requireCurrentProgramAccess(executor, { organizationId: orgId, userId: actorUserId, programId });
+  if (admitted.actor.userId !== actorUserId || admitted.programId !== programId ||
+      !Number.isSafeInteger(admitted.projectId) || admitted.projectId <= 0 || admitted.projectId > 2_147_483_647) {
+    throw accessUnavailable();
+  }
+  return admitted.projectId;
+}
+
+async function admitRouteProject(executor: RequestSqlClient, orgId: number, actorUserId: number, numericId: number | null, programId: string | null): Promise<number> {
+  try {
+    const actor = await readCurrentProgramActor(executor, { organizationId: orgId, userId: actorUserId });
+    if (actor.userId !== actorUserId) throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'The current project actor could not be verified.');
+    const projectId = programId ? await admittedProgramProject(executor, orgId, actorUserId, programId) : numericId;
+    if (projectId === null || !await canAccessReportProject(orgId, actor, projectId, executor)) {
+      throw new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Current project access does not permit this operation.');
+    }
+    return projectId;
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) throw error;
+    throw accessUnavailable();
+  }
+}
+
+function projectTypeFromRow(row: Record<string, unknown>): string | null {
+  const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata as Record<string, unknown> : {};
+  return typeof metadata.submissionType === 'string' && metadata.submissionType
+    ? metadata.submissionType : typeof row.type === 'string' ? row.type : null;
+}
+
+/** Resolve the exact project and current persisted sharing policy on the
+ * caller-owned connection. Organization ownership alone grants no access. */
+async function requireOwnedProject(req: Request, res: Response): Promise<OwnedScheduleProject | null> {
+  const orgId = getOrganizationId(req);
+  const numericId = getProjectId(req);
+  const programId = looksLikeProgramUuid(req.params.id) ? String(req.params.id).trim().toLowerCase() : null;
+  if (numericId === null && programId === null) {
     res.status(400).json({ error: 'Invalid project id' });
     return null;
   }
-  const project = await findProjectInOrg(orgId, projectId);
-  if (!project.found) {
+  const actorUserId = requireActorId(req);
+  const executor = requestPgClient(req);
+  const projectId = await admitRouteProject(executor, orgId, actorUserId, numericId, programId);
+  const { rows } = await executor.query('SELECT type, metadata FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1', [projectId, orgId]);
+  const row = rows[0];
+  if (!row) {
     res.status(404).json({ error: 'Project not found' });
     return null;
   }
-  return { orgId, projectId, projectType: project.projectType };
+  return { orgId, projectId, projectType: projectTypeFromRow(row), execution: { actorUserId, executor } };
+}
+
+function scheduleRouteError(res: Response, operation: string, error: unknown) {
+  if (error instanceof ProgramReadAccessError) {
+    if (error.code === 'PROJECT_ANCHOR_UNRESOLVED') {
+      return res.status(error.status).json({ error: 'This program needs one verified project record before its schedule or tasks can be supplied.', code: 'PROGRAM_UNANCHORED' });
+    }
+    return res.status(error.status).json({ error: error.message, code: error.code });
+  }
+  return serverError(res, logger, operation, error);
 }
 
 // ── routes ────────────────────────────────────────────────────────────────────
@@ -200,11 +178,16 @@ router.get('/projects/:id/unified-work', async (req: Request, res: Response) => 
   try {
     const owned = await requireOwnedProject(req, res);
     if (!owned) return;
-    const { orgId, projectId } = owned;
-    const view = await loadUnifiedWork({ organizationId: orgId, projectId });
+    const { orgId, projectId, execution } = owned;
+    const view = await loadUnifiedWork({ organizationId: orgId, projectId }, requestDb(req));
+    // This composed read has several source queries. Do not release earlier
+    // private results after an observed revocation or changed program anchor.
+    const current = await requireOwnedProject(req, res);
+    if (!current) return;
+    if (current.orgId !== orgId || current.projectId !== projectId || current.execution.actorUserId !== execution.actorUserId) throw accessUnavailable();
     return res.json(view);
   } catch (err: any) {
-    return serverError(res, logger, 'loading unified work', err);
+    return scheduleRouteError(res, 'loading unified work', err);
   }
 });
 
@@ -212,11 +195,11 @@ router.get('/projects/:id/schedule-of-events', async (req: Request, res: Respons
   try {
     const owned = await requireOwnedProject(req, res);
     if (!owned) return;
-    const { orgId, projectId } = owned;
-    const view = await getScheduleOfEvents(orgId, projectId);
+    const { orgId, projectId, execution } = owned;
+    const view = await getScheduleOfEvents(orgId, projectId, execution);
     return res.json(view);
   } catch (err: any) {
-    return serverError(res, logger, 'loading schedule of events', err);
+    return scheduleRouteError(res, 'loading schedule of events', err);
   }
 });
 
@@ -224,7 +207,7 @@ router.post('/projects/:id/schedule-of-events/generate', async (req: Request, re
   try {
     const owned = await requireOwnedProject(req, res);
     if (!owned) return;
-    const { orgId, projectId } = owned;
+    const { orgId, projectId, execution } = owned;
     const body = req.body ?? {};
     // The gate already resolved the project inside the caller's org, so the
     // stored type comes from there rather than a second lookup.
@@ -240,13 +223,13 @@ router.post('/projects/:id/schedule-of-events/generate', async (req: Request, re
       reason: typeof body.reason === 'string' ? body.reason.trim() || undefined : undefined,
       triggeredBy: 'user',
       createdByAna: false,
-    });
+    }, execution);
     return res.json(view);
   } catch (err: any) {
     if (err instanceof SchedulePreservationConflict) {
       return res.status(409).json({ error: err.message, code: err.code });
     }
-    return serverError(res, logger, 'generating schedule of events', err);
+    return scheduleRouteError(res, 'generating schedule of events', err);
   }
 });
 
@@ -254,7 +237,7 @@ router.post('/projects/:id/schedule-of-events/amend', async (req: Request, res: 
   try {
     const owned = await requireOwnedProject(req, res);
     if (!owned) return;
-    const { orgId, projectId } = owned;
+    const { orgId, projectId, execution } = owned;
     const body = req.body ?? {};
     const milestoneKey = typeof body.milestone_key === 'string' ? body.milestone_key.trim() : '';
     if (!milestoneKey) return res.status(400).json({ error: 'milestone_key is required' });
@@ -268,11 +251,11 @@ router.post('/projects/:id/schedule-of-events/amend', async (req: Request, res: 
       note: typeof body.note === 'string' ? body.note : undefined,
       triggeredBy: 'user',
       createdByAna: false,
-    });
-    const view = await getScheduleOfEvents(orgId, projectId);
+    }, execution);
+    const view = await getScheduleOfEvents(orgId, projectId, execution);
     return res.json({ result, schedule: view });
   } catch (err: any) {
-    return serverError(res, logger, 'saving amend', err);
+    return scheduleRouteError(res, 'saving amend', err);
   }
 });
 
@@ -280,13 +263,13 @@ router.post('/projects/:id/schedule-of-events/review', async (req: Request, res:
   try {
     const owned = await requireOwnedProject(req, res);
     if (!owned) return;
-    const { orgId, projectId } = owned;
+    const { orgId, projectId, execution } = owned;
     const apply = req.body?.apply === undefined ? true : !!req.body.apply;
-    const result = await reviewScheduleHealth({ orgId, projectId, apply, triggeredBy: 'user' });
-    const view = await getScheduleOfEvents(orgId, projectId);
+    const result = await reviewScheduleHealth({ orgId, projectId, apply, triggeredBy: 'user' }, execution);
+    const view = await getScheduleOfEvents(orgId, projectId, execution);
     return res.json({ result, schedule: view });
   } catch (err: any) {
-    return serverError(res, logger, 'saving review', err);
+    return scheduleRouteError(res, 'saving review', err);
   }
 });
 
@@ -294,18 +277,18 @@ router.post('/projects/:id/schedule-of-events/goals/reset', async (req: Request,
   try {
     const owned = await requireOwnedProject(req, res);
     if (!owned) return;
-    const { orgId, projectId } = owned;
+    const { orgId, projectId, execution } = owned;
     const body = req.body ?? {};
     const goals = parseGoals(body.goals);
     const rationale = typeof body.rationale === 'string' ? body.rationale.trim() : '';
     if (goals.length === 0 || !rationale) {
       return res.status(400).json({ error: 'goals and rationale are required' });
     }
-    const result = await resetProjectGoals({ orgId, projectId, goals, rationale, triggeredBy: 'user', createdByAna: false });
-    const view = await getScheduleOfEvents(orgId, projectId);
+    const result = await resetProjectGoals({ orgId, projectId, goals, rationale, triggeredBy: 'user', createdByAna: false }, execution);
+    const view = await getScheduleOfEvents(orgId, projectId, execution);
     return res.json({ result, schedule: view });
   } catch (err: any) {
-    return serverError(res, logger, 'saving reset', err);
+    return scheduleRouteError(res, 'saving reset', err);
   }
 });
 

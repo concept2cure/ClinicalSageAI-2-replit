@@ -1,7 +1,7 @@
 {
-  "$comment": "Client files unreachable from client/src/main.tsx. This list may only SHRINK. Adding an entry means new code was written that the browser cannot load — that is a regression, not a fix. Regenerate with --write-baseline ONLY after removing entries. Type-only imports are counted as reachable, so the real dead set is larger than this.",
+  "$comment": "Client files unreachable from client/src/main.tsx. This list may only SHRINK. Adding an entry means new code was written that the browser cannot load \u2014 that is a regression, not a fix. Regenerate with --write-baseline ONLY after removing entries. Type-only imports are counted as reachable, so the real dead set is larger than this.",
   "$entry": "client/src/main.tsx",
-  "$withheld": "Modules a recorded decision withholds are NOT banked here. Writing one in would spend the ratchet's one number on it and raise the floor off 0 permanently, and it would be counted twice — once as a verified exemption, once as debt nobody can pay down until the decision is reversed. They live in WITHHELD in this gate, where four checks hold them to the decision that put them there: client/src/concept2cure/v2/surfaces/indSafetyReportCard.ts",
+  "$withheld": "Modules a recorded decision withholds are NOT banked here. Writing one in would spend the ratchet's one number on it and raise the floor off 0 permanently, and it would be counted twice \u2014 once as a verified exemption, once as debt nobody can pay down until the decision is reversed. They live in WITHHELD in this gate, where four checks hold them to the decision that put them there. There are currently no withheld client modules; the P-32 source is retained under tests/fixtures/withheld/indSafetyReportCard.ts.",
   "$generated": "2026-10-18",
   "count": 0,
   "modules": []

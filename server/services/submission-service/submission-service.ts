@@ -97,7 +97,7 @@ import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readin
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
-import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
+import { regionalDeviceApplicationClassForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
 import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
 import { stfFileName } from '../ectd/stf-generator';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
@@ -231,7 +231,7 @@ async function insertSubmissionRow(
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
-  if (regionalDeviceApplicationClassOf(input.applicationType)) {
+  if (regionalDeviceApplicationClassOf(input.applicationType) || regionalDeviceApplicationClassForFiling(input.applicationType)) {
     throw new SubmissionError('DEVICE_PREPARATION_ONLY',
       'Start this filing as an authoring project. Its preparation outline does not support canonical submission creation yet. Nothing was created.');
   }

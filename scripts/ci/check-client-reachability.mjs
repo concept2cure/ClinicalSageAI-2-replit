@@ -108,19 +108,8 @@ const ENTRY = ENTRY_POINTS[0];
  * code that cannot run. A withheld file answers that in its own header or it
  * does not get the exemption.
  */
-const WITHHELD = {
-  'client/src/concept2cure/v2/surfaces/indSafetyReportCard.ts': {
-    decision: 'P-32',
-    why:
-      '15-day IND safety reporting and ICSR transmission stay shut. The routes this card ' +
-      'calls (/api/ind-lifecycle/safety-report and its /pdf and /file) belong to the ' +
-      '`pharmacovigilance` surface, outside the release, so production refuses them 403 ' +
-      'LAUNCH_SCOPE — a card offering them would be a button refused every time it is ' +
-      'pressed. Hidden, not deleted: the card, its intake and its honesty rules are kept ' +
-      'intact and tested (__tests__/indLifecycleDeliverables.test.tsx) so it returns as it ' +
-      'was rather than being rebuilt by someone who never knew it existed.',
-  },
-};
+// The P-32 card is retained under tests/fixtures/withheld, outside client code.
+const WITHHELD = {};
 
 /** Where a decision id must be written down for an exemption to stand. */
 const DECISION_LOG = 'docs/LAUNCH_DEFINITION_OF_DONE.md';
@@ -174,7 +163,7 @@ function resolve(spec, fromFile) {
  * the reasoning that a commented-out import should not keep a file alive. That
  * is true and it is not worth it: regex cannot tell a comment from a string, and
  * client/src/App.jsx opens with a header comment containing a path with `/*` in
- * it. The block-comment pattern matched from there to the next `*​/` and ate 2,039
+ * it. The block-comment pattern matched from there to the next closing delimiter and ate 2,039
  * of the file's 3,659 characters — every import among them. The tracer reported
  * 14 reachable files instead of ~337, and every gate built on it would have been
  * confidently, catastrophically wrong.

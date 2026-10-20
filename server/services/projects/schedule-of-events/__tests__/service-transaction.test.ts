@@ -1,26 +1,32 @@
-/** Connection lifecycle proof only; SQL rollback and locking are covered by the dbtest. */
+/** Caller-owned connection lifecycle; real rollback/locking also run in the dbtest. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const H = vi.hoisted(() => ({
-  query: vi.fn(), clientQuery: vi.fn(), connect: vi.fn(), release: vi.fn(), generate: vi.fn(),
+  poolQuery: vi.fn(), connect: vi.fn(), query: vi.fn(), discard: vi.fn(), generate: vi.fn(),
 }));
-vi.mock('../../../../db', () => ({ pool: { query: H.query, connect: H.connect } }));
+vi.mock('../../../../db', () => ({ pool: { query: H.poolQuery, connect: H.connect } }));
 vi.mock('../../../notifications/notification-service', () => ({ createNotification: vi.fn() }));
+vi.mock('../../../c2c/current-program-access', async original => {
+  const actual = await original<typeof import('../../../c2c/current-program-access')>();
+  return { ...actual, readCurrentProgramActor: async () => ({ userId: 99, role: 'member' }) };
+});
+vi.mock('../../../report-os/project-access', () => ({ canAccessReportProject: async () => true }));
 vi.mock('../generator', () => ({ generateSchedule: H.generate }));
 
 import { generateProjectSchedule } from '../service';
 
 const params = { orgId: 3, projectId: 12, projectType: 'ind' };
+const executor = { query: H.query, discard: H.discard };
+const context = { actorUserId: 99, executor };
 const reply = async (sql: string) => ({
-  rows: sql.includes('SELECT id FROM projects') ? [{ id: 12 }]
+  rows: sql.includes('SELECT id, status FROM projects') ? [{ id: 12, status: 'active' }]
     : sql.includes('RETURNING id, version') ? [{ id: 5, version: 1 }] : [],
 });
 
 beforeEach(() => {
   vi.resetAllMocks();
   H.query.mockImplementation(reply);
-  H.clientQuery.mockImplementation(reply);
-  H.connect.mockResolvedValue({ query: H.clientQuery, release: H.release });
+  H.discard.mockResolvedValue(undefined);
   H.generate.mockReturnValue({
     projectType: 'ind', framework: 'FDA', basisSummary: 'Recorded basis', confidence: 'medium',
     baselineDate: new Date('2026-10-17'), targetDate: new Date('2027-01-17'),
@@ -32,73 +38,58 @@ beforeEach(() => {
 });
 
 describe('schedule generation transaction lifecycle', () => {
-  it('does not acquire a connection when deterministic generation fails', async () => {
+  it('does not query when deterministic generation fails', async () => {
     const failure = new Error('Invalid schedule inputs');
     H.generate.mockImplementation(() => { throw failure; });
-    await expect(generateProjectSchedule(params)).rejects.toBe(failure);
-    expect(H.connect).not.toHaveBeenCalled();
-    expect(H.query).not.toHaveBeenCalled();
+    await expect(generateProjectSchedule(params,context)).rejects.toBe(failure);
+    expect(H.query).not.toHaveBeenCalled(); expect(H.connect).not.toHaveBeenCalled();
   });
-
-  it('propagates connection acquisition failure without a pool write', async () => {
-    const failure = new Error('No connection available');
-    H.connect.mockRejectedValue(failure);
-    await expect(generateProjectSchedule(params)).rejects.toBe(failure);
-    expect(H.query).not.toHaveBeenCalled();
-    expect(H.release).not.toHaveBeenCalled();
+  it('refuses absent caller context without acquiring another connection', async () => {
+    await expect(generateProjectSchedule(params,undefined as unknown as typeof context)).rejects.toMatchObject({status:403});
+    expect(H.query).not.toHaveBeenCalled(); expect(H.connect).not.toHaveBeenCalled(); expect(H.poolQuery).not.toHaveBeenCalled();
   });
-
-  it('commits after its response reads and releases a healthy connection', async () => {
-    await generateProjectSchedule(params);
-    const queries = H.clientQuery.mock.calls.map(([sql]) => String(sql));
-    expect(queries[0]).toBe('BEGIN');
-    expect(queries.at(-1)).toBe('COMMIT');
-    expect(queries.slice(1, -1).some(sql => sql.includes('SELECT * FROM project_schedule_revisions'))).toBe(true);
-    expect(H.query).not.toHaveBeenCalled();
-    expect(H.release).toHaveBeenCalledExactlyOnceWith();
+  it('commits after its response reads on the caller connection', async () => {
+    await generateProjectSchedule(params,context);
+    const queries = H.query.mock.calls.map(([sql]) => String(sql));
+    expect(queries[0]).toBe('BEGIN'); expect(queries.at(-1)).toBe('COMMIT');
+    expect(queries.slice(1,-1).some(sql => sql.includes('SELECT * FROM project_schedule_revisions'))).toBe(true);
+    expect(queries.filter(sql => sql.includes('SELECT id, status FROM projects') && sql.includes('FOR UPDATE'))).toHaveLength(2);
+    expect(H.connect).not.toHaveBeenCalled(); expect(H.poolQuery).not.toHaveBeenCalled(); expect(H.discard).not.toHaveBeenCalled();
   });
-
   it('rolls back a response-load failure and preserves the original error', async () => {
     const failure = new Error('Could not read generated goals');
-    H.clientQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes('SELECT * FROM project_schedule_goals')) throw failure;
-      return reply(sql);
-    });
-    await expect(generateProjectSchedule(params)).rejects.toBe(failure);
-    expect(H.clientQuery).toHaveBeenCalledWith('ROLLBACK');
-    expect(H.clientQuery).not.toHaveBeenCalledWith('COMMIT');
-    expect(H.release).toHaveBeenCalledExactlyOnceWith();
+    H.query.mockImplementation(async (sql: string) => { if (sql.includes('SELECT * FROM project_schedule_goals')) throw failure; return reply(sql); });
+    await expect(generateProjectSchedule(params,context)).rejects.toBe(failure);
+    expect(H.query).toHaveBeenCalledWith('ROLLBACK'); expect(H.query).not.toHaveBeenCalledWith('COMMIT'); expect(H.discard).not.toHaveBeenCalled();
   });
-
-  it('evicts the connection if BEGIN cannot be confirmed', async () => {
+  it('discards if BEGIN cannot be confirmed without pretending to roll back', async () => {
     const failure = new Error('BEGIN connection failure');
-    H.clientQuery.mockImplementation(async (sql: string) => {
-      if (sql === 'BEGIN') throw failure;
-      return reply(sql);
-    });
-    await expect(generateProjectSchedule(params)).rejects.toBe(failure);
-    expect(H.release).toHaveBeenCalledExactlyOnceWith(true);
+    H.query.mockRejectedValue(failure);
+    await expect(generateProjectSchedule(params,context)).rejects.toBe(failure);
+    expect(H.discard).toHaveBeenCalledExactlyOnceWith(failure); expect(H.query).not.toHaveBeenCalledWith('ROLLBACK');
   });
-
-  it('evicts on rollback failure without masking the write failure', async () => {
+  it('discards on rollback failure without masking the original write failure', async () => {
     const failure = new Error('Milestone insert refused');
-    H.clientQuery.mockImplementation(async (sql: string) => {
+    H.query.mockImplementation(async (sql: string) => {
       if (sql.includes('INSERT INTO project_workflow_stages')) throw failure;
       if (sql === 'ROLLBACK') throw new Error('Lost connection during rollback');
       return reply(sql);
     });
-    await expect(generateProjectSchedule(params)).rejects.toBe(failure);
-    expect(H.release).toHaveBeenCalledExactlyOnceWith(true);
+    await expect(generateProjectSchedule(params,context)).rejects.toBe(failure);
+    expect(H.discard).toHaveBeenCalledExactlyOnceWith(failure); expect(H.query).not.toHaveBeenCalledWith('COMMIT');
   });
-
-  it('rejects and evicts an uncertain COMMIT even if cleanup succeeds', async () => {
+  it('rejects and discards an uncertain COMMIT without retrying or issuing ROLLBACK', async () => {
     const failure = new Error('COMMIT acknowledgement lost');
-    H.clientQuery.mockImplementation(async (sql: string) => {
-      if (sql === 'COMMIT') throw failure;
-      return reply(sql);
-    });
-    await expect(generateProjectSchedule(params)).rejects.toBe(failure);
-    expect(H.clientQuery).toHaveBeenCalledWith('ROLLBACK');
-    expect(H.release).toHaveBeenCalledExactlyOnceWith(true);
+    H.query.mockImplementation(async (sql: string) => { if (sql === 'COMMIT') throw failure; return reply(sql); });
+    await expect(generateProjectSchedule(params,context)).rejects.toBe(failure);
+    expect(H.discard).toHaveBeenCalledExactlyOnceWith(failure);
+    expect(H.query.mock.calls.filter(([sql]) => sql === 'COMMIT')).toHaveLength(1); expect(H.query).not.toHaveBeenCalledWith('ROLLBACK');
+  });
+  it('preserves the uncertain COMMIT failure even if discard also fails', async () => {
+    const failure = new Error('COMMIT acknowledgement lost');
+    H.query.mockImplementation(async (sql: string) => { if (sql === 'COMMIT') throw failure; return reply(sql); });
+    H.discard.mockRejectedValue(new Error('Discard cleanup unavailable'));
+    await expect(generateProjectSchedule(params,context)).rejects.toBe(failure);
+    expect(H.discard).toHaveBeenCalledExactlyOnceWith(failure); expect(H.query).not.toHaveBeenCalledWith('ROLLBACK');
   });
 });

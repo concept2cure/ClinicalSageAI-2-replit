@@ -216,6 +216,8 @@ const MIGRATIONS = [
   // The project: the program, its filing scaffold, its PM-spine anchor.
   'migrations/20260524_program_workbench_schema.sql',
   'migrations/20260907_regulatory_programs_application_number.sql',
+  // The real project create INSERT now records both EU device classifications.
+  'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
   'migrations/20260528_phase9_document_schema.sql',
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
