@@ -9,6 +9,8 @@
  *
  *   GET  /projects/:projectId/agency-communications/:eventId/questions
  *   POST /projects/:projectId/agency-communications/:eventId/questions
+ *   PATCH /projects/:projectId/agency-communications/:eventId/questions/:questionId
+ *   PATCH /projects/:projectId/agency-communications/:eventId/questions/:questionId/owner
  *   PUT  /projects/:projectId/agency-communications/:eventId/questions/:questionId/response
  *   POST /projects/:projectId/agency-communications/:eventId/questions/:questionId/approve
  *   POST /projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw
@@ -16,7 +18,24 @@
  *   POST /projects/:projectId/agency-communications/:eventId/no-response-required
  *   POST /projects/:projectId/agency-communications/:eventId/response-package
  *   GET  /projects/:projectId/commitments
+ *   GET  /projects/:projectId/commitments/:commitmentId/fulfilment-options
  *   POST /projects/:projectId/commitments/:commitmentId/fulfill
+ *   GET  /projects/:projectId/agency-questions?ctdModule=1..5
+ *
+ * One CTD module's view of the project's questions (2026-10-19, rows D2 and
+ * D5; decisions P-38 and P-39 item 1). CMC / Module 3 kept a second home for
+ * agency questions (reg_questions, now read-only); it reads this instead, and
+ * every write stays on the letter. The view counts only letters the person
+ * may see, and says how many it withheld, as the inbox list does. A
+ * question's CTD section is recorded with it and corrected by the PATCH above,
+ * with a reason; it is classification, so the approval signature does not
+ * cover it. Overdue is the letter's (response-logic.ts letterOverdue), and the
+ * letter's own read reports the same verdict.
+ *
+ * The two commitment fulfilment routes are commitment-fulfil-route.ts, shared
+ * with the organisation's door (2026-10-19, P-41): a PMR, PMC or REMS is
+ * fulfilled by a Part 11 signature naming the sequence or Vault version that
+ * met it, here constrained to this project's program.
  *
  * ── Why (rows D2 and D5, 2026-10-18) ────────────────────────────────────────
  * The inbox kept a letter's questions as strings and closed a letter nobody
@@ -45,18 +64,21 @@ import { z } from 'zod';
 import { requestPgClient } from '../../db/requestDb';
 import { serverError } from '../../lib/api-response';
 import { governedActorId } from '../../middleware/orgMembership';
-import { createCommitmentTx, fulfillCommitmentTx, HaError, listCommitments } from '../../services/ha-interactions/ha-service';
-import { deriveCommitmentStatus, summarizeCommitmentPortfolio } from '../../services/ha-interactions/ha-logic';
-import { recordHaCommitmentCreated, recordHaCommitmentFulfilled } from '../../services/ha-metrics';
+import { createCommitmentTx, HaError, listCommitments } from '../../services/ha-interactions/ha-service';
+import { recordHaCommitmentCreated } from '../../services/ha-metrics';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { DECISION_ACT_MEANINGS } from '../../services/part11/signature-meanings';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../../services/export/governedExportConsequence';
-import { assembleResponsePackage, closeRefusal, outstandingResponses } from '../../services/agency-responses/response-logic';
+import { assembleResponsePackage, closeRefusal, letterOverdue, outstandingResponses } from '../../services/agency-responses/response-logic';
+import { moduleQuestionsView, type CtdModule } from '../../services/agency-responses/module-view';
+import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { renderResponsePackageDocx } from '../../services/agency-responses/response-package-docx';
 import {
   AGENCY_RESPONSE_CODE_STATUS,
   AgencyResponseError,
+  assignQuestionOwnerTx,
+  classifyQuestionTx,
   closeLetterTx,
   insertQuestionTx,
   markNoResponseRequiredTx,
@@ -64,6 +86,8 @@ import {
   questionForCommitment,
   questionForViewer,
   readLetter,
+  readProjectLetters,
+  readProjectQuestions,
   readQuestions,
   saveResponseTx,
   withdrawQuestionTx,
@@ -72,8 +96,15 @@ import {
 } from '../../services/agency-responses/response-service';
 import { createScopedLogger } from '../../utils/logger';
 import { governedReason } from '../governed-reason';
-import { recordGovernedAction } from './actions';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act';
+import {
+  answerFulfilmentFailure,
+  commitmentsForRequest,
+  fulfilCommitmentRoute,
+  fulfilmentOptionsRoute,
+  governedRequestWrite,
+  type CommitmentDoor,
+} from '../commitment-fulfil-route';
 import { requireProjectAdmission, ProjectAdmissionRefusal } from './project-access';
 import { getOrganizationId, sendError, sendSuccess } from './shared';
 
@@ -92,10 +123,14 @@ const dateStr = z
     return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === d;
   }, 'That date does not exist.');
 
+/** A CTD section as a person typed it; normalised (or refused) by sectionOf. */
+const sectionField = z.string().trim().max(40, 'A CTD section is at most 40 characters.');
+
 const questionBody = z.object({
   questionRef: z.string().trim().min(1, 'Give the number the agency used for this question.').max(40),
   questionText: z.string().trim().min(1, 'Paste the question as the agency worded it.').max(20000),
   discipline: z.string().trim().max(80).optional(),
+  ctdSection: sectionField.optional(),
   severity: z.enum(['minor', 'major', 'critical']).default('major'),
   reason: governedReason,
 });
@@ -107,6 +142,8 @@ const responseBody = z.object({
 });
 
 const approveBody = z.object({ expectedRevision: z.number().int().min(0).max(MAX_INT) });
+const sectionBody = z.object({ ctdSection: sectionField.nullable(), reason: governedReason });
+const ownerBody = z.object({ ownerUserId: z.number().int().min(1).max(MAX_INT).nullable(), reason: governedReason });
 const reasonBody = z.object({ reason: governedReason });
 
 const commitmentBody = z.object({
@@ -118,7 +155,6 @@ const commitmentBody = z.object({
 });
 
 const packageBody = z.object({ format: z.enum(['md', 'docx']).default('md') });
-const fulfilBody = z.object({ fulfilledDate: z.string().optional(), reason: governedReason });
 
 /** Who may see a letter of a visibility tier (communication-center.ts canViewVisibilityTier). */
 export type VisibilityCheck = (tier: any, role?: string) => boolean;
@@ -170,6 +206,21 @@ function questionIdOf(req: Request, res: Response): number | null {
   return id;
 }
 
+/**
+ * A typed CTD section in the repository's one spelling (normalizeCtdCode), or
+ * null for none; a value that is not a CTD code is refused 400 BAD_SECTION and
+ * `undefined` is returned, so nothing is written.
+ */
+function sectionOf(res: Response, raw: string | null | undefined): string | null | undefined {
+  if (raw == null || raw.trim() === '') return null;
+  const code = normalizeCtdCode(raw);
+  if (code === null) {
+    sendError(res, 400, `"${raw.trim()}" is not a CTD section such as 3.2.S.4.1. Nothing was recorded.`, undefined, 'BAD_SECTION');
+    return undefined;
+  }
+  return code;
+}
+
 /** The first field problem, as a sentence, so the person reads what to fix rather than "try again". */
 function validation(res: Response, err: z.ZodError): void {
   const first = err.issues[0];
@@ -205,7 +256,10 @@ async function visibleLetter(client: Queryable, scope: Scope, req: Request, canV
 /**
  * A governed write that is not a signature: the change and its ledger pair
  * (audit_logs + c2c_ana_actions, with the person's reason) on one transaction
- * on the request's tenant-pinned connection, or neither.
+ * on the request's tenant-pinned connection, or neither. The transaction is
+ * governedRequestWrite (commitment-fulfil-route.ts, shared with a commitment's
+ * unsigned fulfilment since 2026-10-19); this answers in this router's
+ * envelope and refusals.
  */
 async function governedWrite(
   req: Request,
@@ -214,29 +268,14 @@ async function governedWrite(
   run: (client: Queryable) => Promise<{ target: string; payload: Record<string, unknown>; body: unknown }>,
 ): Promise<void> {
   const { scope, command, reason, domain } = write;
-  const client = requestPgClient(req) as unknown as Queryable;
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, scope.orgId);
-    const { target, payload, body } = await run(client);
-    const gov = await recordGovernedAction(client, {
-      orgId: scope.orgId,
-      userId: scope.userId,
-      command,
-      target,
-      reason,
-      payload,
-      domain,
-      surface: 'communication-center',
-    });
-    await client.query('COMMIT');
-    res.status(command === 'update' ? 200 : 201).json({
-      success: true,
-      data: body,
-      governance: { actionId: gov.actionId, auditId: gov.auditId, sha256Chain: gov.sha256Chain },
-    });
+    const { body, governance } = await governedRequestWrite(
+      req,
+      { orgId: scope.orgId, userId: scope.userId, command, reason, domain, surface: 'communication-center' },
+      (client) => run(client as unknown as Queryable),
+    );
+    res.status(command === 'update' ? 200 : 201).json({ success: true, data: body, governance });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
     refusal(res, err, `${command} on an agency question`);
   }
 }
@@ -305,6 +344,8 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
           responseRequired: letter.responseRequired,
           /** Why the letter may not be closed now, or null: the server's rule, shown as said. */
           closeRefusal: letter.closureStatus === 'closed' ? null : closeRefusal(questions, letter.responseRequired),
+          /** The one overdue verdict (letterOverdue): CMC's count is made of the same. */
+          overdue: letterOverdue(letter, questions, today()),
         },
         viewer: await viewerCapabilities(req, scope, client),
         questions: [...questions]
@@ -324,18 +365,45 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
     const parsed = questionBody.safeParse(req.body ?? {});
     if (!parsed.success) return validation(res, parsed.error);
     const input = parsed.data;
+    const ctdSection = sectionOf(res, input.ctdSection);
+    if (ctdSection === undefined) return;
     await governedWrite(req, res, { scope, command: 'create', reason: input.reason, domain: DOMAIN }, async (client) => {
       const letter = await visibleLetter(client, scope, req, canView, true);
       const { id } = await insertQuestionTx(client, scope, letter, {
         questionRef: input.questionRef,
         questionText: input.questionText,
         discipline: input.discipline ?? null,
+        ctdSection,
         severity: input.severity,
       });
       return {
         target: `agency-question:${id}`,
-        payload: { communicationEventId: letter.eventId, questionRef: input.questionRef, severity: input.severity },
-        body: { id, questionRef: input.questionRef, state: 'unanswered' },
+        payload: { communicationEventId: letter.eventId, questionRef: input.questionRef, severity: input.severity, ctdSection },
+        body: { id, questionRef: input.questionRef, state: 'unanswered', ctdSection },
+      };
+    });
+  });
+
+  /* A question's CTD section, corrected with a reason (2026-10-19). It is
+     classification: the approval digest does not cover it, so an approved
+     response stays approved, and the ledger row records from and to. */
+  router.patch(`${BASE}/questions/:questionId`, async (req, res) => {
+    const scope = scopeOf(req, res);
+    if (!scope) return;
+    const questionId = questionIdOf(req, res);
+    if (questionId === null) return;
+    const parsed = sectionBody.safeParse(req.body ?? {});
+    if (!parsed.success) return validation(res, parsed.error);
+    const ctdSection = sectionOf(res, parsed.data.ctdSection);
+    if (ctdSection === undefined) return;
+    await governedWrite(req, res, { scope, command: 'update', reason: parsed.data.reason, domain: DOMAIN }, async (client) => {
+      const letter = await visibleLetter(client, scope, req, canView, true);
+      const changed = await classifyQuestionTx(client, scope, letter, questionId, ctdSection);
+      const view = (await readQuestions(client, scope.orgId, scope.projectId, scope.eventId, today())).find((q) => q.id === questionId)!;
+      return {
+        target: `agency-question:${questionId}`,
+        payload: { communicationEventId: letter.eventId, questionRef: changed.question.questionRef, ctdSection: { from: changed.from, to: changed.to } },
+        body: questionForViewer(view, scope.userId),
       };
     });
   });
@@ -468,7 +536,17 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
      the project. It is listed and fulfilled here, behind this router's project
      admission, and only when the letter it came from is one this person may
      see; /api/ha-interactions reaches only the organisation's own (project_id
-     IS NULL). One implementation (ha-service), scoped per door. */
+     IS NULL). One implementation (ha-service, commitment-fulfil-route), scoped
+     per door. Since 2026-10-19 (P-41) what met a commitment is named, and may
+     only be of this project's program. */
+  const projectDoor = (req: Request): CommitmentDoor => ({
+    scope: { projectId: Number(req.params.projectId) },
+    idParam: 'commitmentId',
+    visible: (row) => row.sourceCommunicationEventId == null || canView(row.visibilityTier, req.userRole),
+    viewer: async (r, client, orgId, userId) =>
+      viewerCapabilities(r, { orgId, userId, projectId: Number(r.params.projectId), eventId: '' }, client as unknown as Queryable),
+  });
+
   router.get('/projects/:projectId/commitments', async (req, res) => {
     const projectId = Number(req.params.projectId);
     let orgId: number;
@@ -482,43 +560,76 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
       const rows = (await listCommitments(orgId, undefined, { projectId }, client)).filter(
         (r) => r.source_communication_event_id == null || canView(r.source_visibility_tier, req.userRole),
       );
-      const t = today();
-      const commitments = rows.map((r) => ({
-        ...r,
-        effectiveStatus: deriveCommitmentStatus({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date }, t),
-      }));
-      const summary = summarizeCommitmentPortfolio(rows.map((r) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), t);
-      return sendSuccess(res, { commitments, summary });
+      return sendSuccess(res, await commitmentsForRequest(req, orgId, rows));
     } catch (err) {
-      return refusal(res, err, "reading a project's commitments");
+      return answerFulfilmentFailure(res, err);
     }
   });
 
-  router.post('/projects/:projectId/commitments/:commitmentId/fulfill', async (req, res) => {
+  router.get('/projects/:projectId/commitments/:commitmentId/fulfilment-options', (req, res) =>
+    fulfilmentOptionsRoute(req, res, projectDoor(req)));
+
+  router.post('/projects/:projectId/commitments/:commitmentId/fulfill', (req, res) =>
+    fulfilCommitmentRoute(req, res, projectDoor(req)));
+
+  /* Who owns preparing a question's response, set or cleared with a reason
+     (2026-10-19, review of the CMC convergence): the replacement for the
+     free-text assignment CMC kept on its own, now read-only, file. The owner
+     must be an active member who may open this letter at its visibility
+     tier; the ledger row records from and to. Not covered by the signature. */
+  router.patch(`${BASE}/questions/:questionId/owner`, async (req, res) => {
+    const scope = scopeOf(req, res);
+    if (!scope) return;
+    const questionId = questionIdOf(req, res);
+    if (questionId === null) return;
+    const parsed = ownerBody.safeParse(req.body ?? {});
+    if (!parsed.success) return validation(res, parsed.error);
+    const { ownerUserId, reason } = parsed.data;
+    await governedWrite(req, res, { scope, command: 'update', reason, domain: DOMAIN }, async (client) => {
+      const letter = await visibleLetter(client, scope, req, canView, true);
+      const changed = await assignQuestionOwnerTx(client, scope, letter, { questionId, ownerUserId }, (tier, role) => canView(tier, role));
+      const view = (await readQuestions(client, scope.orgId, scope.projectId, scope.eventId, today())).find((q) => q.id === questionId)!;
+      return {
+        target: `agency-question:${questionId}`,
+        payload: { communicationEventId: letter.eventId, questionRef: changed.question.questionRef, ownerUserId: { from: changed.from, to: changed.to } },
+        body: questionForViewer(view, scope.userId),
+      };
+    });
+  });
+
+  /* ── One CTD module's view of the project's questions (2026-10-19) ──────
+     CMC / Module 3 reads this; it writes nothing about agency questions.
+     Letters this person may not see are dropped before anything is counted,
+     and only their number is said (`withheld`, the inbox list's `filtered`):
+     no question, count or module split of theirs. */
+  router.get('/projects/:projectId/agency-questions', async (req, res) => {
+    // router.param('projectId') has admitted the project and replaced a
+    // program uuid with its integer anchor.
     const projectId = Number(req.params.projectId);
-    const userId = governedActorId(req);
     let orgId: number;
     try {
       orgId = getOrganizationId(req);
     } catch {
       return sendError(res, 401, 'Organization context required.', undefined, 'AUTH_REQUIRED');
     }
-    if (userId === null) return sendError(res, 401, 'A signed-in user is required.', undefined, 'AUTH_REQUIRED');
-    const raw = String(req.params.commitmentId ?? '');
-    const id = /^\d{1,10}$/.test(raw) ? Number(raw) : NaN;
-    if (!Number.isInteger(id) || id <= 0 || id > MAX_INT) return sendError(res, 404, 'Commitment not found here.', undefined, 'NOT_FOUND');
-    const parsed = fulfilBody.safeParse(req.body ?? {});
-    if (!parsed.success) return validation(res, parsed.error);
-    const scope: Scope = { orgId, userId, projectId, eventId: '' };
-    await governedWrite(req, res, { scope, command: 'resolve', reason: parsed.data.reason, domain: 'ha' }, async (client) => {
-      const visible = (await listCommitments(orgId, undefined, { projectId }, client)).find((r) => Number(r.id) === id);
-      if (!visible || (visible.source_communication_event_id != null && !canView(visible.source_visibility_tier, req.userRole))) {
-        throw new HaError('NOT_FOUND', 'Commitment not found here.');
-      }
-      await fulfillCommitmentTx(client, orgId, id, parsed.data.fulfilledDate ?? null, { projectId }, today());
-      recordHaCommitmentFulfilled();
-      return { target: `regulatory-commitment:${id}`, payload: { status: 'fulfilled', projectId }, body: { id, status: 'fulfilled' } };
-    });
+    const rawModule = String(req.query.ctdModule ?? '');
+    if (!/^[1-5]$/.test(rawModule)) {
+      return sendError(res, 400, 'Say which CTD module to read (ctdModule=1 to 5). Nothing was read.', undefined, 'VALIDATION');
+    }
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return sendError(res, 404, 'That project was not found.', undefined, 'PROJECT_NOT_FOUND');
+    }
+    try {
+      const client = requestPgClient(req) as unknown as Queryable;
+      const all = await readProjectLetters(client, orgId, projectId);
+      const letters = all.filter((l) => canView(l.visibilityTier, req.userRole));
+      const questions = await readProjectQuestions(client, orgId, projectId, new Set(letters.map((l) => l.eventId)));
+      const day = today();
+      const view = moduleQuestionsView({ letters, questions, module: Number(rawModule) as CtdModule, today: day });
+      return sendSuccess(res, { module: Number(rawModule), today: day, ...view, withheld: all.length - letters.length });
+    } catch (err) {
+      return refusal(res, err, 'reading the agency questions of a project');
+    }
   });
 
   router.post(`${BASE}/response-package`, async (req, res) => {

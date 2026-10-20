@@ -3406,6 +3406,16 @@ export const C2C_MIGRATION_FILES = [
   // file above). Public, integer organization_id, so the sweeps below policy
   // the new table. Additive and IF NOT EXISTS throughout; drops nothing.
   'migrations/20261018b_agency_response_questions.sql',
+  // A commitment's fulfilment names what met it (2026-10-19, rows D2 and D5;
+  // decision P-41): five nullable columns on regulatory_commitments (the
+  // sequence, the Vault version and its sha256, who recorded it and when), a
+  // same-organisation key on ectd_sequences for the composite FK, and the
+  // guards that hold a fulfilled PMR/PMC/REMS to its signature at COMMIT and a
+  // recorded fulfilment to what it recorded. After every parent: the two
+  // files above, the submission core (ectd_sequences, line ~154) and the Vault
+  // shape (~1859). Creates no table; adds columns to one the sweeps already
+  // policy. Additive, guarded, drops nothing another file creates.
+  'migrations/20261019_commitment_fulfilment_evidence.sql',
 
   // The signer and date of a stability study's shelf-life close-out (2026-10-19).
   // The shelf life §3.2.S.7 / §3.2.P.8 prints as the dossier's claim, and the
@@ -3417,6 +3427,15 @@ export const C2C_MIGRATION_FILES = [
   // public, and the table already carries organization_id INTEGER NOT NULL, so
   // the sweep at the tail polices it.
   'migrations/20261019_stability_shelf_life_signature.sql',
+  // The earlier CMC agency-question file is read-only (2026-10-19, rows D2 and
+  // D5; decisions P-38 and P-39 item 1): reg_questions refuses every INSERT and
+  // UPDATE, for every role, by a row trigger; the runtime role's SELECT-only
+  // ceiling is APPEND_ONLY_TABLES. Agency questions are recorded on the letter
+  // (20261018b above, which gains ctd_section in place the same day). After the
+  // table's own column file (db/migrations/20260830_reg_questions_response_doc.sql,
+  // line ~2029); no set file issues DML on it. Creates no table (the sweeps are
+  // unaffected) and drops nothing; CREATE OR REPLACE throughout.
+  'migrations/20261019b_reg_questions_read_only.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

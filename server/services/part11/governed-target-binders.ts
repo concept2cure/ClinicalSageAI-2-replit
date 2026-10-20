@@ -19,6 +19,8 @@ import {
   type SignatureDbClient,
 } from './signature-persistence.js';
 import { AGENCY_RESPONSE_DIGEST_RECIPE, agencyResponseDigest } from '../agency-responses/response-logic.js';
+import { COMMITMENT_FULFILMENT_DIGEST_RECIPE, commitmentFulfilmentDigest } from '../ha-interactions/ha-logic.js';
+import { readCommitmentFulfilmentContent } from '../ha-interactions/fulfilment-record.js';
 
 /** One target type's binder: `rest` is the pointer after `<prefix>:`. */
 export type ContentBinder = (
@@ -187,6 +189,29 @@ const agencyResponseBinding: ContentBinder = async (client, rest, orgId, ledgerF
   };
 };
 
+/**
+ * regulatory-commitment:<id>: a commitment's recorded fulfilment (P-41,
+ * 2026-10-19), as the signing transaction has just written it. The digest is
+ * commitmentFulfilmentDigest over readCommitmentFulfilmentContent, the one
+ * reader the list read uses too, so the binder and "does the signature match
+ * the record" cannot disagree about the input. A commitment not fulfilled, or
+ * fulfilled without a recorder (a row from before fulfilments were recorded),
+ * has no fulfilment to bind and falls back; the database then refuses the
+ * commit, because it accepts only this basis.
+ */
+const commitmentFulfilmentBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed regulatory commitment pointer');
+  const record = (await readCommitmentFulfilmentContent(client, orgId, [Number(rest)])).get(Number(rest));
+  if (!record) return ledgerFallback('regulatory commitment not readable at signing time');
+  if (record.status !== 'fulfilled' || !record.recorded) return ledgerFallback('the commitment carries no recorded fulfilment at signing time');
+  const c = record.content;
+  return {
+    digest: commitmentFulfilmentDigest(c),
+    basis: BINDING_BASIS.COMMITMENT_FULFILMENT_CONTENT,
+    note: `sha256 (recipe ${COMMITMENT_FULFILMENT_DIGEST_RECIPE}) over commitment ${rest}'s type, description, basis and due date, the date it was fulfilled (${c.fulfilledDate}), and what met it: ${c.sequenceId != null ? `sequence ${c.sequenceNumber ?? c.sequenceId} of submission ${c.submissionId ?? 'unknown'}` : 'no sequence'}; ${c.vaultDocumentId != null ? `Vault version ${c.vaultDocumentId} at sha256 ${c.vaultSha256}` : 'no Vault version'}. No status, recorder or timestamp is bound.`,
+  };
+};
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-document': (client, rest, orgId, fallback) =>
@@ -196,4 +221,5 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'report-run': reportRunSealBinding,
   'interim-snapshot': interimSnapshotBinding,
   'agency-question': agencyResponseBinding,
+  'regulatory-commitment': commitmentFulfilmentBinding,
 };

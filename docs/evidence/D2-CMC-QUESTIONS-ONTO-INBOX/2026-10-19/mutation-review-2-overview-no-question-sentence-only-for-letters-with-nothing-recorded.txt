@@ -1,0 +1,47 @@
+# MUTATION-REVIEW 2 the Overview's 'no question to answer recorded' branch also taken for letters overdue on their other questions
+# Finding: Findings 1, 6, 9, 18 (client half): the lead read a letter overdue on other questions as one with nothing recorded, and its door fell back to Program records.
+# File: client/src/concept2cure/v2/surfaces/CmcModule.tsx
+# Replaced:
+#   -               : fig.state === 'ready' && fig.lettersWithoutQuestionsOverdue
+#   -               ? <>
+# With:
+#   +               : fig.state === 'ready' && (fig.lettersWithoutQuestionsOverdue || fig.lettersOverdueOnOtherQuestions)
+#   +               ? <>
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored client/src/concept2cure/v2/surfaces/CmcModule.tsx: sha256 713c22b419e8f051… before = 713c22b419e8f051… after (byte-identical)
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a positive count is a button that opens the Module 3 questions 313ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > shows the server's figure: an approved answer on an overdue letter is not counted, a zero is a plain figure 33ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a read that failed is unknown, never zero, and the lead says so 95ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > with no program open it claims no count and issues no read 38ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > its action opens the overdue letter in Communication; it neither drafts nor promises sign-offs 84ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > says what it did not count, each as what it counts: questions as questions, letters as letters, and the earlier file as organization-wide 28ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a failed read of the earlier file is said on the Overview, never taken for "nothing open" 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero is green only as an all-clear: never over letters withheld from this person 21ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero over a measured, complete figure is green 20ms
+ × client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > an approved Module 3 answer on a letter overdue only on a Clinical question: no Module 3 overdue, no "no question recorded" 43ms
+   → expected <div class="al-b"><b></b></div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > a Module 3 letter with nothing recorded, past its date: said as that, and the action opens that letter 56ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > one question overdue on one letter, and another letter overdue only on a Clinical question: "on 1 letter" 20ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > names the section, and opens the question on its letter 127ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > counts by the server's "outstanding", and says "at least" when the server listed a page 86ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > matches whole segments: a question at 3.2.S.20 is not about 3.2.S.2 93ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > with no program open it asks for one and reads nothing 13ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > lists each question with the server's state and one door: open it on its letter 97ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > offers no working act of its own 149ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > a failed read is an error, never the empty list 30ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > says what it did not count, and names a Module 3 letter with no question recorded 45ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty program says where questions are recorded 25ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty list over letters withheld from this person speaks only for the letters read 26ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a letter overdue on its other questions is said, and its approved answer is not overdue 47ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a Module 3 letter whose only question is withdrawn is named once, and not "not counted" 38ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > renders nothing when the file holds nothing 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > says what each row holds, and nothing it does not 61ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > a failed read of the earlier file is said, not hidden 30ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected <div class="al-b"><b></b></div> to be null
+- Expected:
++ Received:

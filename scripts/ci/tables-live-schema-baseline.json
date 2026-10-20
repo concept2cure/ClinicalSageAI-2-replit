@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
   "referencedCount": 752,
-  "count": 39,
+  "count": 36,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -87,19 +87,8 @@
     "pg_stat_statements": [
       "server/utils/database-optimizer.ts"
     ],
-    "reg_changes": [
-      "server/src/services/reg/rpi.ts"
-    ],
     "reg_ectd_packages": [
       "server/services/documentExportService.ts"
-    ],
-    "reg_m3_sections": [
-      "server/src/services/reg/rpi.ts"
-    ],
-    "reg_submissions": [
-      "server/routes/cmc-module3-board.routes.ts",
-      "server/src/services/integrations/gmail.ts",
-      "server/src/services/reg/rpi.ts"
     ],
     "regulatory_status": [
       "server/sage-plus-service.ts"

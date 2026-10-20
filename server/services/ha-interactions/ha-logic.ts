@@ -8,6 +8,7 @@
  * @module server/services/ha-interactions/ha-logic
  */
 
+import { createHash } from 'node:crypto';
 import type {
   CommitmentStatus,
   HaInteractionStatus,
@@ -73,6 +74,141 @@ export function summarizeCommitmentPortfolio(commitments: CommitmentView[], toda
   const s: PortfolioSummary = { total: commitments.length, overdue: 0, due_30: 0, due_90: 0, later: 0, undated: 0, closed: 0 };
   for (const c of commitments) s[commitmentUrgency(c, today)] += 1;
   return s;
+}
+
+// ─── Fulfilment: what met a commitment (P-41, 2026-10-19) ───────────────────
+
+/**
+ * The commitment types whose fulfilment is a Part 11 signed act. Recording a
+ * postmarketing requirement or commitment, or a REMS, as fulfilled takes it off
+ * the overdue register and out of the annual status report (21 CFR
+ * 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1): an attestation, signed,
+ * that names what met it. The database holds the same list
+ * (migrations/20261019_commitment_fulfilment_evidence.sql,
+ * regulatory_commitments_signed_fulfilment_guard), pinned equal by
+ * tests/db/commitment-fulfilment-database.dbtest.ts.
+ */
+export const SIGNED_FULFILMENT_TYPES = ['pmr', 'pmc', 'rems'] as const;
+
+export interface FulfilmentRule {
+  /** Recorded only by an electronic signature (the one ceremony). */
+  signatureRequired: boolean;
+  /** Names the sequence the agency received, the Vault version, or both. */
+  evidenceRequired: boolean;
+  /** Names its date: the signer is shown the date the signature binds. */
+  dateRequired: boolean;
+}
+
+const SIGNED_RULE: FulfilmentRule = Object.freeze({ signatureRequired: true, evidenceRequired: true, dateRequired: true });
+const UNSIGNED_RULE: FulfilmentRule = Object.freeze({ signatureRequired: false, evidenceRequired: false, dateRequired: false });
+
+/**
+ * What fulfilling a commitment of this type takes. A meeting commitment or
+ * other is a governed write with a reason, and what met it may be named. Any
+ * other value, which the column's CHECK does not admit today, is held to the
+ * signed rule: a new type is never fulfilled more loosely by default.
+ */
+export function fulfilmentRule(commitmentType: string): FulfilmentRule {
+  if (commitmentType === 'meeting_commitment' || commitmentType === 'other') return { ...UNSIGNED_RULE };
+  return { ...SIGNED_RULE };
+}
+
+/** The type as a person names it in a sentence: "A PMR", "A REMS". */
+function typeWords(commitmentType: string): string {
+  const t = commitmentType.toUpperCase();
+  return ['PMR', 'PMC', 'REMS'].includes(t) ? `A ${t}` : 'This commitment';
+}
+
+/** Why this fulfilment names too little to be recorded, or null. */
+export function fulfilmentEvidenceRefusal(
+  commitmentType: string,
+  evidence: { sequenceId?: number | null; vaultDocumentId?: string | null },
+): string | null {
+  if (!fulfilmentRule(commitmentType).evidenceRequired) return null;
+  if (evidence.sequenceId != null || (evidence.vaultDocumentId != null && evidence.vaultDocumentId !== '')) return null;
+  return `${typeWords(commitmentType)} is met by a submission or a document. Name the dispatched sequence the agency received, the Vault document version, or both. Nothing was recorded.`;
+}
+
+/** Recipe tag inside the digested bytes, so a later recipe cannot collide with this one. */
+export const COMMITMENT_FULFILMENT_DIGEST_RECIPE = 'commitment-fulfilment/v1' as const;
+
+/** Exactly what a fulfilment signature binds (BINDING_BASIS.COMMITMENT_FULFILMENT_CONTENT). */
+export interface CommitmentFulfilmentContent {
+  commitmentId: number;
+  commitmentType: string;
+  description: string;
+  regulatoryBasis: string | null;
+  /** yyyy-mm-dd, as the register stores it. */
+  dueDate: string | null;
+  /** yyyy-mm-dd. */
+  fulfilledDate: string | null;
+  sequenceId: number | null;
+  sequenceNumber: string | null;
+  submissionId: number | null;
+  vaultDocumentId: string | null;
+  vaultSha256: string | null;
+}
+
+/**
+ * sha256 over the commitment, its fulfilment date and what met it: the
+ * sequence (its id, number and submission) and the Vault version (its id and
+ * the sha256 of its bytes). A fixed-order array, so the bytes do not depend on
+ * key order. No status, recorder or time: those are on the signature and the
+ * ledger. The binder and the list read both compute it from one reader
+ * (fulfilment-record.ts), so they cannot disagree about the input. A change to
+ * this recipe needs a new recipe tag.
+ */
+export function commitmentFulfilmentDigest(c: CommitmentFulfilmentContent): string {
+  const bytes = JSON.stringify([
+    COMMITMENT_FULFILMENT_DIGEST_RECIPE,
+    c.commitmentId,
+    c.commitmentType,
+    c.description,
+    c.regulatoryBasis,
+    c.dueDate,
+    c.fulfilledDate,
+    c.sequenceId,
+    c.sequenceNumber,
+    c.submissionId,
+    c.vaultDocumentId,
+    c.vaultSha256,
+  ]);
+  return createHash('sha256').update(bytes, 'utf8').digest('hex');
+}
+
+/**
+ * How a commitment's fulfilment reads, decided here so the screen narrates a
+ * verdict and never derives one:
+ *   not-fulfilled        open, in progress, waived or released;
+ *   legacy               fulfilled before fulfilments were recorded (no recorder);
+ *   recorded             a meeting commitment or other, recorded with a reason;
+ *   signed               a live signature binds the record as it stands;
+ *   signature-mismatch   a live signature binds something else;
+ *   signature-withdrawn  its signature was revoked, voided or superseded;
+ *   signature-missing    recorded, of a signed type, with no signature at all.
+ */
+export type FulfilmentRecordState =
+  | 'not-fulfilled'
+  | 'legacy'
+  | 'recorded'
+  | 'signed'
+  | 'signature-mismatch'
+  | 'signature-withdrawn'
+  | 'signature-missing';
+
+export function fulfilmentRecordState(input: {
+  status: string;
+  signatureRequired: boolean;
+  /** fulfilment_recorded_at is set. */
+  recorded: boolean;
+  liveSignature: { bindsRecord: boolean } | null;
+  withdrawnSignature: boolean;
+}): FulfilmentRecordState {
+  if (input.status !== 'fulfilled') return 'not-fulfilled';
+  if (!input.recorded) return 'legacy';
+  if (!input.signatureRequired) return 'recorded';
+  if (input.liveSignature) return input.liveSignature.bindsRecord ? 'signed' : 'signature-mismatch';
+  return input.withdrawnSignature ? 'signature-withdrawn' : 'signature-missing';
 }
 
 export interface MeetingReadinessInput {

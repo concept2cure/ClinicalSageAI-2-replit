@@ -1,0 +1,32 @@
+# Review mutation 11 — a cut options list keeps the most recent sequences, organisation door with no submission (findings 7 and 11)
+#
+# File mutated: server/services/ha-interactions/commitment-fulfilment.ts
+# Test selection (db): tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "on the organisation's door, with no submission")
+# Restored afterwards: sha256 before 8041be22c862418b1f0586da3068054e90c4b7cdeb524bba2804355fc9ae39c5, after 8041be22c862418b1f0586da3068054e90c4b7cdeb524bba2804355fc9ae39c5 (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/server/services/ha-interactions/commitment-fulfilment.ts
++++ b/server/services/ha-interactions/commitment-fulfilment.ts (mutated)
+@@ -327,7 +327,7 @@
+              JOIN submissions sub ON sub.id = s.submission_id AND sub.organization_id = s.organization_id AND sub.deleted_at IS NULL
+             WHERE s.organization_id = $1 AND s.deleted_at IS NULL AND s.dispatch_status = ANY($2::text[])
+               AND (sub.program_id IS NULL OR sub.program_id = ANY($3::uuid[]))
+-            ORDER BY s.id DESC
++            ORDER BY sub.id, s.sequence_number DESC
+             LIMIT 201`,
+           [p.orgId, filed, access.programIds],
+         )).rows;
+
+## Control: the same selection on the unmutated tree
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open 158ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 30 skipped (31)
+
+## With the mutation in place
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open 130ms
+   → the newest submission was cut from the list: expected [ Array(200) ] to deeply equal ArrayContaining [3607, 3608, 3609]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open
+AssertionError: the newest submission was cut from the list: expected [ Array(200) ] to deeply equal ArrayContaining [3607, 3608, 3609]
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)

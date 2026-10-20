@@ -1,0 +1,4 @@
+# npm run -s typecheck (tsc --noEmit over the whole project), 2026-10-19T04:10:00Z, on the final tree (HEAD ae287394 plus this slice).
+# tsc prints nothing when there are no errors. Its output, then the exit code:
+exit 0
+# error count: 0

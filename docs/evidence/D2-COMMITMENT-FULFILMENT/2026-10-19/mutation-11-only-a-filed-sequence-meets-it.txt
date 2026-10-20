@@ -1,0 +1,43 @@
+# Mutation 11 — a sequence still pending transmit, rejected or never dispatched is accepted as what met a commitment (the filed rule removed from resolveFulfilmentEvidenceTx)
+#
+# Replaced in server/services/ha-interactions/commitment-fulfilment.ts:
+#   -   if (!isFiledDispatchStatus(r.dispatch_status)) {# with:
+#   +   if (false && !isFiledDispatchStatus(r.dispatch_status)) { // MUTATION 11: a sequence the agency never received may be named#
+# Test run with the mutation in place: db — tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "pending transmit|agency rejected|never dispatched")
+# Restored afterwards: sha256 before 285144917976251e7b96a6c5333cf8d08ed4d1ee07e2b161cee6f4233f06dd86, after 285144917976251e7b96a6c5333cf8d08ed4d1ee07e2b161cee6f4233f06dd86 (identical)
+
+## The mutation (git diff of the working tree while it was in place)
+(new, untracked file: diff -u of the file before and with the mutation)
+--- a/server/services/ha-interactions/commitment-fulfilment.ts
++++ b/server/services/ha-interactions/commitment-fulfilment.ts
+@@ -161,7 +161,7 @@
+       `Sequence ${number} belongs to ${r.submission_title ?? 'another submission'}, not to the submission this commitment was made under. Nothing was recorded.`,
+     );
+   }
+-  if (!isFiledDispatchStatus(r.dispatch_status)) {
++  if (false && !isFiledDispatchStatus(r.dispatch_status)) { // MUTATION 11: a sequence the agency never received may be named
+     const state = r.dispatch_status == null ? 'it was never dispatched' : `dispatch status ${String(r.dispatch_status)}`;
+     throw new HaError(
+       'SEQUENCE_NOT_FILED',
+
+## The run
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 65ms
+   → {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 409 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 42ms
+   → {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 409 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 39ms
+   → {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing
+AssertionError: {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 409 // Object.is equality
+- Expected
++ Received
+- 409
++ 401
+ Test Files  1 failed (1)
+      Tests  3 failed | 24 skipped (27)
+
+## Reading
+With the filed rule removed, a sequence pending transmit, rejected by the agency, or frozen and never dispatched is accepted as what met a PMR: the three cases receive 401 (the request reached the credential check) instead of 409 SEQUENCE_NOT_FILED. The database's deferred guard holds the same rule at COMMIT ("names only a sequence the agency received", tests/db/commitment-fulfilment-database.dbtest.ts); this mutation proves the code's refusal, which is the one given before a password. Control: "M11 db", 3 passed.

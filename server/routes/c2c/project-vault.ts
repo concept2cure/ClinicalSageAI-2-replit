@@ -1622,6 +1622,10 @@ export default function createProjectVaultRoutes(): Router {
             placementStatus: r.placementStatus,
             version: r.version,
             current: r.current,
+            // The bytes a version is: a screen that names a version as
+            // evidence shows the sha256 it will pin (the library search
+            // below already carries it).
+            contentHash: r.contentHash ?? null,
             originalFileAvailable: r.originalFileAvailable,
             disposition: r.disposition,
             snippet: r.snippet,

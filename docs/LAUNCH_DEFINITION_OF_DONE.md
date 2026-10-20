@@ -579,7 +579,8 @@ customer files (P-28: a sponsor composing small-molecule Module 3 for a US IND) 
 
 In the launch catalog, and finished in this order (gap analysis, "Next in-catalog work"): correspondence with the
 agency and the signed answer to each question (P-32), the commitments made in those answers and their fulfilment,
-submission assembly and the eCTD viewer in Submission Center, and the dossier templates the project wizard
+submission assembly and the eCTD viewer Submission Center already has (`EctdCompile.tsx`, completed, not
+rebuilt: CLAUDE.md RULE 3), and the dossier templates the project wizard
 scaffolds.
 
 **Not in the launch catalog: registrations and labels** (`server/routes/rim.ts`, `rim_*`). A launch customer holds
@@ -605,6 +606,11 @@ deletion record the working agreement requires:
 
 1. **`reg_questions`** (`/api/cmc/agency-questions`), onto `agency_communication_questions`. It is the one inside a
    launch app (CMC / Module 3), and closing a question there is a status update, not a signature.
+   *2026-10-19:* converged, and the file made read-only rather than retired: CMC reads a program's Module 3 questions
+   from the letters and opens each on its letter, writing none; `/api/cmc/agency-questions` answers 410 to a write and
+   the database refuses one (`migrations/20261019b_reg_questions_read_only.sql`); its rows stay as history. The act
+   that moves a row not closed there onto a letter is owed, deferred until a deployed estate shows such rows
+   (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`).
 2. **`c2c_commitments`** (`/api/c2c/commitments`), onto `regulatory_commitments`: an AI extraction with an
    ungoverned create.
 3. **The `c2c_correspondence` family** (`/api/regulatory-correspondence`), onto the project inbox, keeping its issue
@@ -643,6 +649,27 @@ work by `upper(d.status) = 'IN_REVIEW'`. The two disagreeing definitions of whic
 `LOCKED_DOCUMENT_STATUSES` (two) in `document-lock.ts` against `IMMUTABLE_DOCUMENT_STATUSES` (eight) in
 `authoring-permissions.ts` — are recorded as open, not reconciled here: both are load-bearing in different places
 and each list has mutants that open a real hole.
+
+### P-41 — A PMR, PMC or REMS is recorded fulfilled by a signature that names what met it
+
+Decided 2026-10-19 under the founder's delegation of 2026-10-18. Recording a postmarketing requirement, a
+postmarketing commitment or a REMS as fulfilled takes the obligation off the overdue register and out of the annual
+status report (21 CFR 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1). It is an attestation, so it is a Part 11
+signed act, as the platform's comparable acts are (label approval, a QMS document becoming effective, the Shadow
+dispositions of P-34 and P-35, an agency response's approval under P-32): meaning approval or responsibility, the
+signer's reason, password and second factor, through the one ceremony (`server/routes/governed-signed-act.ts`
+signGovernedAct). The signature names the dispatched sequence the agency received (sent or acknowledged), or the
+Vault version that met it at its sha256, or both, and the date, and binds them
+(`BINDING_BASIS.COMMITMENT_FULFILMENT_CONTENT`). The database holds it: a fulfilled PMR, PMC or REMS commits only with
+such a signature written by the same transaction, by the person recorded, over the same evidence and date; a
+commitment's type never changes, so a PMR cannot be retyped out of its signature; and a recorded fulfilment cannot
+change or be hidden by an UPDATE (`migrations/20261019_commitment_fulfilment_evidence.sql`). It does not hold the
+record against a hard DELETE by the runtime role, which the tenant purge needs; a delete guard needs a purge door
+with it.
+A meeting commitment or other is fulfilled by a governed write with a reason; what met it may be named. AnA cannot
+sign, so its fulfil tool refuses a PMR, PMC or REMS and points to Communication, Meetings & commitments. There is no
+separation of duties: the signer attests to the record, not to another person's work. Correcting a fulfilment
+signed in error (§11.70 supersession, or a reopen) is owed. Evidence: `docs/evidence/D2-COMMITMENT-FULFILMENT/2026-10-19/`.
 
 ## How sessions run under this file
 

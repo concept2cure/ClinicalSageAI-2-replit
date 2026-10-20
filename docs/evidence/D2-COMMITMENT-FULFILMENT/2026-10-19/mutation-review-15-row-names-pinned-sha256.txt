@@ -1,0 +1,33 @@
+# Review mutation 15 — a fulfilled row names the sha256 the fulfilment pinned (finding 3)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentRow.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "row names the type")
+# Restored afterwards: sha256 before 66db6f704a8bce2507f01e9c5a361480839f2462696d8dcefa9ac34b48d297d9, after 66db6f704a8bce2507f01e9c5a361480839f2462696d8dcefa9ac34b48d297d9 (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentRow.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentRow.tsx (mutated)
+@@ -170,8 +170,7 @@
+   const pinned = pinnedSha256(v.sha256);
+   return (
+     <div key="vault" className="cc-fulfil-line">
+-      Met by {v.title ?? 'a Vault document'} v{v.version ?? '?'}{versionNote(v)},{' '}
+-      {pinned ? <span title={`sha256 ${pinned}`}>pinned at sha256 {shortSha256(pinned)}</span> : 'with no sha256 pinned'}.
++      Met by {v.title ?? 'a Vault document'} v{v.version ?? '?'}{versionNote(v)}.{pinned ? '' : ''}
+       {!v.removed && (
+         <button type="button" className="cc-fulfil-link" onClick={open}>
+           Open in Vault
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > the row names the type as the dialog does, and the signature's time against the audit trail's UTC 304ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > the row names the type as the dialog does, and the signature's time against the audit trail's UTC 299ms
+   → expected 'PMRFinal CSR for study 301due 2027-06…' to match /pinned at sha256 aaaaaaaaaaaa…/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > the row names the type as the dialog does, and the signature's time against the audit trail's UTC
+AssertionError: expected 'PMRFinal CSR for study 301due 2027-06…' to match /pinned at sha256 aaaaaaaaaaaa…/
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

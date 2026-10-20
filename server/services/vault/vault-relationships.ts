@@ -27,6 +27,7 @@ import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requirePro
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { readVersionFamily, supersededSql } from './vault-version-family.js';
+import { lockLiveVaultVersion, type LiveVaultVersion } from './vault-version-lock';
 import { type Refusal, refuse, inRefusableTransaction } from './vault-refusal.js';
 
 export const RELATIONSHIP_TYPES = ['supporting', 'references', 'based_on'] as const;
@@ -76,26 +77,8 @@ interface Actor {
   userAgent?: string;
 }
 
-interface VersionRow { id: string; title: string | null; version: string | null; program_id: string }
-
-/** A live version in this organisation, locked for the transaction; null when there is none. */
-async function lockVersion(client: PoolClient, documentId: string, organizationId: number,
-  userId: number | null, programId?: string): Promise<VersionRow | null> {
-  const identity=await client.query(`SELECT d.id::text AS id,d.organization_id,d.program_id::text AS program_id
-    FROM vault.documents d WHERE d.id=$1 AND d.deleted_at IS NULL
-      AND ($3::uuid IS NULL OR d.program_id=$3::uuid)
-      AND EXISTS(SELECT 1 FROM regulatory_programs rp WHERE rp.id=d.program_id AND rp.organization_id=$2 AND rp.deleted_at IS NULL)
-    FOR SHARE OF d`,[documentId,organizationId,programId ?? null]);
-  if (identity.rows.length!==1) return null;
-  const parent=await requireCurrentProgramAccess(client,{organizationId,userId:userId ?? undefined,
-    programId:identity.rows[0].program_id,forShare:true});
-  if (identity.rows[0].organization_id==null) throw new ProgramReadAccessError(409,'VAULT_TENANT_RECONCILIATION_REQUIRED','This Vault record needs a verified organization relationship.');
-  if (Number(identity.rows[0].organization_id)!==organizationId) return null;
-  const {rows}=await client.query(`SELECT d.id::text AS id,d.document_title AS title,d.version,d.program_id::text AS program_id
-    FROM vault.documents d JOIN regulatory_programs rp ON rp.id=d.program_id AND rp.organization_id=$2 AND rp.deleted_at IS NULL
-    WHERE d.id=$1 AND d.program_id=$3 AND d.organization_id=$2 AND d.deleted_at IS NULL FOR SHARE OF d`,[documentId,organizationId,parent.programId]);
-  return (rows[0] as VersionRow | undefined) ?? null;
-}
+/** A related version, as lockLiveVaultVersion (vault-version-lock.ts, moved from here 2026-10-19) reads it. */
+type VersionRow = LiveVaultVersion;
 async function relationshipWriteAccess(client: PoolClient,a: Actor): Promise<Refusal | null> {
   const parent=await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,
     programId:a.programId,forShare:true});
@@ -176,9 +159,9 @@ export async function addRelationship(
 
   return programRefusable(()=>inRefusableTransaction(async (client) => {
     const role=await relationshipWriteAccess(client,a); if (role) return role;
-    const from = await lockVersion(client, a.documentId, a.organizationId, a.userId, a.programId);
+    const from = await lockLiveVaultVersion(client, { documentId: a.documentId, organizationId: a.organizationId, userId: a.userId, programId: a.programId });
     if (!from) return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
-    const to = await lockVersion(client, toId, a.organizationId, a.userId);
+    const to = await lockLiveVaultVersion(client, { documentId: toId, organizationId: a.organizationId, userId: a.userId });
     if (!to) return refuse(404, 'TARGET_NOT_FOUND', 'The document to relate it to was not found in this organization.');
     const family = await readVersionFamily(client, { programId: a.programId, organizationId: a.organizationId, documentId: from.id });
     if (family?.some((v) => v.id === to.id)) {
@@ -224,8 +207,8 @@ export async function removeRelationship(
     const rel = rows[0];
     if (!rel) return refuse(404, 'RELATIONSHIP_NOT_FOUND', 'No such relationship in this project.');
     if (rel.removed_at) return refuse(409, 'ALREADY_REMOVED', 'That relationship was already removed.');
-    const from = await lockVersion(client, rel.from_id, a.organizationId, a.userId);
-    const to = await lockVersion(client, rel.to_id, a.organizationId, a.userId);
+    const from = await lockLiveVaultVersion(client, { documentId: rel.from_id, organizationId: a.organizationId, userId: a.userId });
+    const to = await lockLiveVaultVersion(client, { documentId: rel.to_id, organizationId: a.organizationId, userId: a.userId });
     if (!from || !to) return refuse(409, 'DOCUMENT_GONE', 'One of its documents is no longer in the Vault, so nothing was changed.');
     await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:from.program_id,forShare:true});
     await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:to.program_id,forShare:true});

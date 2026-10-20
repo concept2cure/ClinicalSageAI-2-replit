@@ -50,7 +50,10 @@ export class AgencyResponseError extends Error {
       | 'QUESTION_WITHDRAWN'
       | 'QUESTIONS_RECORDED'
       | 'NOT_RESPONSE_REQUIRED'
-      | 'RESPONSES_NOT_APPROVED',
+      | 'RESPONSES_NOT_APPROVED'
+      | 'BAD_SECTION'
+      | 'OWNER_NOT_MEMBER'
+      | 'OWNER_CANNOT_SEE_LETTER',
     message: string,
   ) {
     super(message);
@@ -72,6 +75,9 @@ export const AGENCY_RESPONSE_CODE_STATUS: Readonly<Record<string, number>> = {
   QUESTIONS_RECORDED: 409,
   NOT_RESPONSE_REQUIRED: 409,
   RESPONSES_NOT_APPROVED: 409,
+  BAD_SECTION: 400,
+  OWNER_NOT_MEMBER: 400,
+  OWNER_CANNOT_SEE_LETTER: 400,
 };
 
 export interface LetterRow {
@@ -140,8 +146,12 @@ export async function readLetter(client: Queryable, orgId: number, projectId: nu
 interface QuestionRow extends QuestionRecord {
   projectId: number;
   discipline: string | null;
+  /** The CTD section the question concerns (2026-10-19); classification, not signed. */
+  ctdSection: string | null;
   severity: string;
   ownerUserId: number | null;
+  /** The owner's name as the users row holds it; null with no owner. */
+  ownerName: string | null;
   responseUpdatedByName: string | null;
   responseUpdatedAt: string | null;
   createdAt: string | null;
@@ -158,8 +168,10 @@ function toQuestion(row: any): QuestionRow {
     questionRef: String(row.question_ref),
     questionText: String(row.question_text),
     discipline: row.discipline ?? null,
+    ctdSection: row.ctd_section ?? null,
     severity: String(row.severity),
     ownerUserId: row.owner_user_id == null ? null : Number(row.owner_user_id),
+    ownerName: row.owner_user_id == null ? null : (row.owner_name ?? null),
     responseText: String(row.response_text ?? ''),
     responseRevision: Number(row.response_revision),
     responseUpdatedBy: row.response_updated_by == null ? null : Number(row.response_updated_by),
@@ -173,19 +185,39 @@ function toQuestion(row: any): QuestionRow {
   };
 }
 
-async function questionRows(client: Queryable, orgId: number, projectId: number, eventId: string): Promise<QuestionRow[]> {
-  const r = await client.query(
-    `SELECT q.id, q.project_id, q.communication_event_id, q.question_ref, q.question_text, q.discipline,
-            q.severity, q.owner_user_id, q.response_text, q.response_revision, q.response_updated_by,
-            q.response_updated_at, q.created_at, q.withdrawn_at, q.withdrawal_reason,
-            u.name AS response_updated_by_name, w.name AS withdrawn_by_name
-       FROM agency_communication_questions q
-       LEFT JOIN users u ON u.id = q.response_updated_by
-       LEFT JOIN users w ON w.id = q.withdrawn_by
-      WHERE q.organization_id = $1 AND q.project_id = $2 AND q.communication_event_id = $3
-      ORDER BY q.id`,
-    [orgId, projectId, eventId],
-  );
+/**
+ * The questions on one letter, or (eventId null) on every letter of the
+ * project. Two literal statements rather than one with a spliced clause, as
+ * readLetter: no SQL text is assembled at run time (ci:sql-interpolation).
+ */
+async function questionRows(client: Queryable, orgId: number, projectId: number, eventId: string | null): Promise<QuestionRow[]> {
+  const r = eventId === null
+    ? await client.query(
+        `SELECT q.id, q.project_id, q.communication_event_id, q.question_ref, q.question_text, q.discipline,
+                q.ctd_section, q.severity, q.owner_user_id, q.response_text, q.response_revision, q.response_updated_by,
+                q.response_updated_at, q.created_at, q.withdrawn_at, q.withdrawal_reason,
+                u.name AS response_updated_by_name, w.name AS withdrawn_by_name, o.name AS owner_name
+           FROM agency_communication_questions q
+           LEFT JOIN users u ON u.id = q.response_updated_by
+           LEFT JOIN users w ON w.id = q.withdrawn_by
+           LEFT JOIN users o ON o.id = q.owner_user_id
+          WHERE q.organization_id = $1 AND q.project_id = $2
+          ORDER BY q.id`,
+        [orgId, projectId],
+      )
+    : await client.query(
+        `SELECT q.id, q.project_id, q.communication_event_id, q.question_ref, q.question_text, q.discipline,
+                q.ctd_section, q.severity, q.owner_user_id, q.response_text, q.response_revision, q.response_updated_by,
+                q.response_updated_at, q.created_at, q.withdrawn_at, q.withdrawal_reason,
+                u.name AS response_updated_by_name, w.name AS withdrawn_by_name, o.name AS owner_name
+           FROM agency_communication_questions q
+           LEFT JOIN users u ON u.id = q.response_updated_by
+           LEFT JOIN users w ON w.id = q.withdrawn_by
+           LEFT JOIN users o ON o.id = q.owner_user_id
+          WHERE q.organization_id = $1 AND q.project_id = $2 AND q.communication_event_id = $3
+          ORDER BY q.id`,
+        [orgId, projectId, eventId],
+      );
   return r.rows.map(toQuestion);
 }
 
@@ -193,12 +225,13 @@ async function questionRows(client: Queryable, orgId: number, projectId: number,
 export async function lockQuestion(client: Queryable, orgId: number, projectId: number, eventId: string, questionId: number): Promise<QuestionRow> {
   const r = await client.query(
     `SELECT q.id, q.project_id, q.communication_event_id, q.question_ref, q.question_text, q.discipline,
-            q.severity, q.owner_user_id, q.response_text, q.response_revision, q.response_updated_by,
+            q.ctd_section, q.severity, q.owner_user_id, q.response_text, q.response_revision, q.response_updated_by,
             q.response_updated_at, q.created_at, q.withdrawn_at, q.withdrawal_reason,
-            u.name AS response_updated_by_name, w.name AS withdrawn_by_name
+            u.name AS response_updated_by_name, w.name AS withdrawn_by_name, o.name AS owner_name
        FROM agency_communication_questions q
        LEFT JOIN users u ON u.id = q.response_updated_by
        LEFT JOIN users w ON w.id = q.withdrawn_by
+       LEFT JOIN users o ON o.id = q.owner_user_id
       WHERE q.id = $1 AND q.organization_id = $2 AND q.project_id = $3 AND q.communication_event_id = $4
       FOR UPDATE OF q`,
     [questionId, orgId, projectId, eventId],
@@ -335,6 +368,45 @@ export async function readQuestions(client: Queryable, orgId: number, projectId:
   });
 }
 
+/** A letter with the CTD section codes it was logged against (the module view reads them). */
+export interface ProjectLetterRow extends LetterRow {
+  linkedSectionCodes: unknown[];
+}
+
+/** Every letter of the project, newest first. Visibility is the caller's to apply, before anything is counted. */
+export async function readProjectLetters(client: Queryable, orgId: number, projectId: number): Promise<ProjectLetterRow[]> {
+  const r = await client.query(
+    `SELECT event_id, communication_type, source_type, received_date, due_date, closure_status,
+            human_review_status, response_required, audit_metadata, linked_section_codes
+       FROM concept2cure_agency_communications
+      WHERE organization_id = $1 AND project_id = $2
+      ORDER BY created_at DESC, event_id`,
+    [orgId, projectId],
+  );
+  return r.rows.map((row) => ({
+    ...toLetter(row),
+    linkedSectionCodes: Array.isArray(row.linked_section_codes) ? row.linked_section_codes : [],
+  }));
+}
+
+/**
+ * The questions on the given letters of a project, each with where it stands
+ * (questionApproval over its live signatures). The same reader as a letter's
+ * own (questionRows, liveSignatures), without the history and commitments a
+ * module view does not show. Questions on letters not in `eventIds` are not
+ * returned, so a letter the person may not see contributes nothing.
+ */
+export async function readProjectQuestions(
+  client: Queryable,
+  orgId: number,
+  projectId: number,
+  eventIds: ReadonlySet<string>,
+): Promise<Array<QuestionRow & { approval: QuestionApproval }>> {
+  const rows = (await questionRows(client, orgId, projectId, null)).filter((q) => eventIds.has(q.communicationEventId));
+  const sigs = await liveSignatures(client, orgId, rows.map((q) => q.id));
+  return rows.map((q) => ({ ...q, approval: questionApproval(q, sigs.get(q.id) ?? []) }));
+}
+
 function refuseIfClosed(letter: LetterRow): void {
   if (letter.closureStatus === 'closed') {
     throw new AgencyResponseError('LETTER_CLOSED', 'This letter is closed. Its questions and responses are final.');
@@ -351,6 +423,8 @@ export interface NewQuestion {
   questionRef: string;
   questionText: string;
   discipline?: string | null;
+  /** Normalised by the route (normalizeCtdCode); the CHECK admits nothing else. */
+  ctdSection?: string | null;
   severity: 'minor' | 'major' | 'critical';
   ownerUserId?: number | null;
 }
@@ -368,9 +442,9 @@ export async function insertQuestionTx(client: Queryable, scope: WriteScope, let
   }
   const r = await client.query(
     `INSERT INTO agency_communication_questions
-       (organization_id, project_id, communication_event_id, question_ref, question_text, discipline, severity, owner_user_id, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-    [scope.orgId, scope.projectId, letter.eventId, input.questionRef, input.questionText, input.discipline ?? null, input.severity, input.ownerUserId ?? null, scope.userId],
+       (organization_id, project_id, communication_event_id, question_ref, question_text, discipline, ctd_section, severity, owner_user_id, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+    [scope.orgId, scope.projectId, letter.eventId, input.questionRef, input.questionText, input.discipline ?? null, input.ctdSection ?? null, input.severity, input.ownerUserId ?? null, scope.userId],
   );
   return { id: Number(r.rows[0].id) };
 }
@@ -446,6 +520,90 @@ export async function withdrawQuestionTx(client: Queryable, scope: WriteScope, l
     [questionId, scope.orgId, scope.projectId, letter.eventId, scope.userId, reason],
   );
   return { ...q, withdrawn: true, withdrawalReason: reason };
+}
+
+/**
+ * Correct the CTD section a question concerns (2026-10-19), with a reason the
+ * route records. Classification only: the approval digest does not cover it,
+ * so an approved response stays approved. Refused on a closed letter, for a
+ * withdrawn question, and when nothing would change.
+ */
+export async function classifyQuestionTx(
+  client: Queryable,
+  scope: WriteScope,
+  letter: LetterRow,
+  questionId: number,
+  ctdSection: string | null,
+): Promise<{ question: QuestionRow; from: string | null; to: string | null }> {
+  refuseIfClosed(letter);
+  const q = await lockQuestion(client, scope.orgId, scope.projectId, letter.eventId, questionId);
+  refuseIfWithdrawn(q);
+  if (q.ctdSection === ctdSection) {
+    throw new AgencyResponseError('NO_CHANGE', `${q.questionRef} is already recorded ${ctdSection ? `at §${ctdSection}` : 'with no CTD section'}.`);
+  }
+  await client.query(
+    `UPDATE agency_communication_questions
+        SET ctd_section = $5, updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND project_id = $3 AND communication_event_id = $4`,
+    [questionId, scope.orgId, scope.projectId, letter.eventId, ctdSection],
+  );
+  return { question: { ...q, ctdSection }, from: q.ctdSection, to: ctdSection };
+}
+
+/**
+ * Who owns preparing a question's response (2026-10-19, review of the CMC
+ * convergence): CMC kept a free-text "assigned to" on its own file, which is
+ * read-only now, and the letter's record had an owner column with no way to
+ * set it. Set or cleared here with a reason the route records, from and to.
+ * The owner must be an active member of the organisation whose role may open
+ * this letter's visibility tier (`canSee`, the same rule that admits the
+ * person reading it), so no one is made responsible for a letter they cannot
+ * see. Not covered by the approval signature. Refused on a closed letter, for
+ * a withdrawn question, and when nothing would change.
+ */
+export async function assignQuestionOwnerTx(
+  client: Queryable,
+  scope: WriteScope,
+  letter: LetterRow,
+  change: { questionId: number; ownerUserId: number | null },
+  canSee: (tier: string | null, role: string) => boolean,
+): Promise<{ question: QuestionRow; from: number | null; to: number | null; toName: string | null }> {
+  const { questionId, ownerUserId } = change;
+  refuseIfClosed(letter);
+  const q = await lockQuestion(client, scope.orgId, scope.projectId, letter.eventId, questionId);
+  refuseIfWithdrawn(q);
+  if (q.ownerUserId === ownerUserId) {
+    throw new AgencyResponseError('NO_CHANGE', ownerUserId === null ? `${q.questionRef} has no owner already.` : `${q.questionRef} is already owned by ${q.ownerName ?? 'that person'}.`);
+  }
+  let toName: string | null = null;
+  if (ownerUserId !== null) {
+    const m = await client.query(
+      `SELECT ou.role, u.name
+         FROM organization_users ou
+         JOIN users u ON u.id = ou.user_id
+        WHERE ou.organization_id = $1 AND ou.user_id = $2 AND u.status = 'active'
+        LIMIT 1`,
+      [scope.orgId, ownerUserId],
+    );
+    const member = m.rows[0];
+    if (!member) {
+      throw new AgencyResponseError('OWNER_NOT_MEMBER', 'That person is not an active member of this organisation. Nothing was changed.');
+    }
+    if (!canSee(letter.visibilityTier, String(member.role))) {
+      throw new AgencyResponseError(
+        'OWNER_CANNOT_SEE_LETTER',
+        `${member.name ?? 'That person'} cannot open this letter at its visibility, so cannot own a response to it. Nothing was changed.`,
+      );
+    }
+    toName = member.name ?? null;
+  }
+  await client.query(
+    `UPDATE agency_communication_questions
+        SET owner_user_id = $5, updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND project_id = $3 AND communication_event_id = $4`,
+    [questionId, scope.orgId, scope.projectId, letter.eventId, ownerUserId],
+  );
+  return { question: { ...q, ownerUserId, ownerName: toName }, from: q.ownerUserId, to: ownerUserId, toName };
 }
 
 /**
@@ -540,12 +698,13 @@ export async function closeLetterTx(
 export async function questionForCommitment(client: Queryable, orgId: number, projectId: number, eventId: string, questionId: number): Promise<QuestionRow> {
   const r = await client.query(
     `SELECT q.id, q.project_id, q.communication_event_id, q.question_ref, q.question_text, q.discipline,
-            q.severity, q.owner_user_id, q.response_text, q.response_revision, q.response_updated_by,
+            q.ctd_section, q.severity, q.owner_user_id, q.response_text, q.response_revision, q.response_updated_by,
             q.response_updated_at, q.created_at, q.withdrawn_at, q.withdrawal_reason,
-            u.name AS response_updated_by_name, w.name AS withdrawn_by_name
+            u.name AS response_updated_by_name, w.name AS withdrawn_by_name, o.name AS owner_name
        FROM agency_communication_questions q
        LEFT JOIN users u ON u.id = q.response_updated_by
        LEFT JOIN users w ON w.id = q.withdrawn_by
+       LEFT JOIN users o ON o.id = q.owner_user_id
       WHERE q.id = $1 AND q.organization_id = $2 AND q.project_id = $3 AND q.communication_event_id = $4
       LIMIT 1`,
     [questionId, orgId, projectId, eventId],
@@ -566,8 +725,10 @@ export function questionForViewer(q: QuestionView, viewerId: number) {
     questionRef: q.questionRef,
     questionText: q.questionText,
     discipline: q.discipline,
+    ctdSection: q.ctdSection,
     severity: q.severity,
     ownerUserId: q.ownerUserId,
+    ownerName: q.ownerName,
     responseText: q.responseText,
     responseRevision: q.responseRevision,
     responseUpdatedBy: q.responseUpdatedBy,

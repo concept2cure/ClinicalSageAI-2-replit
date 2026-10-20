@@ -102,6 +102,8 @@ trunk checkout. `green-db.txt` was run with a local key set.
 ## Owed
 
 - The CMC / Module 3 question store (`reg_questions`) still holds questions and answers of its own. Converging it onto
-  this record is the next slice (the gap analysis already names it first).
+  this record is the next slice (the gap analysis already names it first). *2026-10-19:* converged as P-39 item 1
+  asks (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`): CMC reads the letters' questions, the file is
+  read-only. The act that moves a row not closed there onto a letter is owed, and deferred on its decision input.
 - Extracting questions from the letter file; a fulfilment that names the sequence or document that met it.
 - URS and OQ coverage for this function (row D4).

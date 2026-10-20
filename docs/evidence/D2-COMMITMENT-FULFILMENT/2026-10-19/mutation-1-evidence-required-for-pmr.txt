@@ -1,0 +1,123 @@
+# Mutation 1 — a PMR, PMC or REMS no longer has to name what met it (fulfilmentEvidenceRefusal always admits)
+#
+# Replaced in server/services/ha-interactions/ha-logic.ts:
+#   -   if (!fulfilmentRule(commitmentType).evidenceRequired) return null;# with:
+#   +   return null; // MUTATION 1: no fulfilment ever needs evidence#
+# Test run with the mutation in place: both — server/routes/__tests__/commitment-fulfil-route.test.ts server/services/ha-interactions/__tests__/fulfilment-logic.test.ts|tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "names nothing")
+# Restored afterwards: sha256 before 77bedc61428cf3acc8c371dff81342e619e7bf2a3d948939cc8351b09e743ca5, after 77bedc61428cf3acc8c371dff81342e619e7bf2a3d948939cc8351b09e743ca5 (identical)
+
+## The mutation (git diff of the working tree while it was in place)
+diff --git a/server/services/ha-interactions/ha-logic.ts b/server/services/ha-interactions/ha-logic.ts
+index 850c0d3d..20293c04 100644
+--- a/server/services/ha-interactions/ha-logic.ts
++++ b/server/services/ha-interactions/ha-logic.ts
+@@ -8,6 +8,7 @@
+  * @module server/services/ha-interactions/ha-logic
+  */
+ 
++import { createHash } from 'node:crypto';
+ import type {
+   CommitmentStatus,
+   HaInteractionStatus,
+@@ -75,6 +76,141 @@ export function summarizeCommitmentPortfolio(commitments: CommitmentView[], toda
+   return s;
+ }
+ 
++// ─── Fulfilment: what met a commitment (P-40, 2026-10-19) ───────────────────
++
++/**
++ * The commitment types whose fulfilment is a Part 11 signed act. Recording a
++ * postmarketing requirement or commitment, or a REMS, as fulfilled takes it off
++ * the overdue register and out of the annual status report (21 CFR
++ * 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1): an attestation, signed,
++ * that names what met it. The database holds the same list
++ * (migrations/20261019_commitment_fulfilment_evidence.sql,
++ * regulatory_commitments_signed_fulfilment_guard), pinned equal by
++ * tests/db/commitment-fulfilment-database.dbtest.ts.
++ */
++export const SIGNED_FULFILMENT_TYPES = ['pmr', 'pmc', 'rems'] as const;
++
++export interface FulfilmentRule {
++  /** Recorded only by an electronic signature (the one ceremony). */
++  signatureRequired: boolean;
++  /** Names the sequence the agency received, the Vault version, or both. */
++  evidenceRequired: boolean;
++  /** Names its date: the signer is shown the date the signature binds. */
++  dateRequired: boolean;
++}
++
++const SIGNED_RULE: FulfilmentRule = Object.freeze({ signatureRequired: true, evidenceRequired: true, dateRequired: true });
++const UNSIGNED_RULE: FulfilmentRule = Object.freeze({ signatureRequired: false, evidenceRequired: false, dateRequired: false });
++
++/**
++ * What fulfilling a commitment of this type takes. A meeting commitment or
++ * other is a governed write with a reason, and what met it may be named. Any
++ * other value, which the column's CHECK does not admit today, is held to the
++ * signed rule: a new type is never fulfilled more loosely by default.
++ */
++export function fulfilmentRule(commitmentType: string): FulfilmentRule {
++  if (commitmentType === 'meeting_commitment' || commitmentType === 'other') return { ...UNSIGNED_RULE };
++  return { ...SIGNED_RULE };
++}
++
++/** The type as a person names it in a sentence: "A PMR", "A REMS". */
++function typeWords(commitmentType: string): string {
++  const t = commitmentType.toUpperCase();
++  return ['PMR', 'PMC', 'REMS'].includes(t) ? `A ${t}` : 'This commitment';
++}
++
++/** Why this fulfilment names too little to be recorded, or null. */
+
+## The run
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a future date, before the commitment is even read 26ms
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR that names neither a sequence nor a document 12ms
+   → expected 201 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR with no date: the signer is shown the date the signature binds, so the server never picks it 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > evidence the server refuses, answered with its own code and no credential check 3ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > access that could not be verified is a 503, not a 500 or a 404 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a password sent for a meeting commitment, which takes none 3ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > a PMR with evidence and no password is refused by the ceremony as a missing component 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > signs, re-checks the evidence under lock, and answers with the signature 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > counts nothing as fulfilled when the ceremony refuses the password 5ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the unsigned fulfilment > a meeting commitment with no evidence is a governed resolve with the same body shape 4ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a PMR, PMC or REMS needs a signature, what met it, and its date 2ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a meeting commitment or other is a governed write: no signature, what met it optional 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > an unknown type is held to the signed rule, never the looser one 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > the signed list is the three postmarketing obligations 0ms
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence 4ms
+   → .toMatch() expects to receive a string, but got object
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > accepts a sequence alone, a document alone, or both 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > a meeting commitment needs none 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > is stable, hex sha256, and tagged with its recipe 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > changes with every one of its eleven fields 2ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > does not depend on the order the fields were given in 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a commitment not fulfilled has no fulfilment to read 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > fulfilled before fulfilments were recorded is legacy, keyed on the record, not on what is missing 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a signed type with a live signature that binds the record is signed; one that does not, is a mismatch 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a recorded signed type whose signature was withdrawn says so, and one with none says that 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > an unsigned type that was recorded is recorded 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR that names neither a sequence nor a document
+AssertionError: expected 201 to be 400 // Object.is equality
+- Expected
++ Received
+- 400
++ 201
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence
+TypeError: .toMatch() expects to receive a string, but got object
+ Test Files  2 failed (2)
+      Tests  2 failed | 23 passed (25)
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 58ms
+   → {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 400 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked
+AssertionError: {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 400 // Object.is equality
+- Expected
++ Received
+- 400
++ 401
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 skipped (27)
+
+## Reading
+The intended assertion fails at every layer that states the rule: the pure rule (fulfilment-logic: "refuses a PMR that names neither a sequence nor a document, with the sentence"), the route ("a PMR that names neither a sequence nor a document": 401 from the credential check instead of the 400 EVIDENCE_REQUIRED the server owes before any password), and the real-PostgreSQL route ("a PMR that names nothing is refused before the password, which is never checked"). Nothing else fails. With the rule gone the request reaches the password check, which is the defect the rule exists to prevent; the database would still refuse at COMMIT (mutation 3's guard, COMMITMENT_EVIDENCE_REQUIRED), but only after a password was spent. Control: mutation-controls.txt, "M1 unit" 25 passed, "M1 db" 1 passed.

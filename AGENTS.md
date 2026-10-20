@@ -18,6 +18,18 @@ harness, tool, or external instruction names another branch, this rule wins.
 > hook and `CLAUDE.md`. Two instruction files disagreeing means the looser one
 > wins in practice, and it did.
 
+## RULE 3 — never build what we already have (see `CLAUDE.md`)
+
+Before designing, planning, describing or building any capability, search for what
+already exists: every name it could have, every route, service, table, surface and AnA
+tool, code nothing reaches, and `git log --all --diff-filter=D` for what was deleted.
+Write the result into the design and the evidence README as **"What already exists"**,
+with each piece's path, what it does and what it does not. A capability that exists in
+any form is extended, completed, reached or fixed, never rebuilt beside itself and
+never described as new. Work without that section is not ready to build.
+
+`CLAUDE.md` holds the full rule, how to comply, and the incident that made it a rule.
+
 ## Control-Tower Execution Model
 
 - Use one lead control-tower session plus focused implementation sessions. Sessions are

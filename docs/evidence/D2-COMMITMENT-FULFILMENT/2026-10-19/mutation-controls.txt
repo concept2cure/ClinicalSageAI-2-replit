@@ -1,0 +1,57 @@
+# Controls: each mutation's exact test selection on the unmutated tree (2026-10-19T03:48:51Z, HEAD ae287394 + working tree)
+# A -t filter that skips a describe also skips that describe's beforeAll, so a selection can fail for want of
+# its setup. Every selection a mutation file records passes in full here without the mutation, so a failure under a
+# mutation is the mutation's. One does not: "signs:|the list names", the selection mutation 8 first used. It skips the
+# describe whose beforeAll creates the commitment, so it fails with or without the mutation (404, nothing to sign). It
+# is kept here as the reason mutation 8 was re-run with "a project PMR", which runs that setup.
+
+### M1 unit — unit: server/routes/__tests__/commitment-fulfil-route.test.ts server/services/ha-interactions/__tests__/fulfilment-logic.test.ts 
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+### M1 db — db: tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "names nothing")
+ Test Files  1 passed (1)
+      Tests  1 passed | 26 skipped (27)
+### M2 unit — unit: server/services/ha-interactions/__tests__/fulfilment-logic.test.ts 
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+### M2 db — db: tests/db/commitment-fulfilment-evidence.dbtest.ts tests/db/commitment-fulfilment-database.dbtest.ts 
+ Test Files  2 passed (2)
+      Tests  40 passed (40)
+### M3 db — db: tests/db/commitment-fulfilment-database.dbtest.ts (-t "database signs exactly|fails at COMMIT|M5")
+ Test Files  1 passed (1)
+      Tests  4 passed | 9 skipped (13)
+### M4 db — db: tests/db/commitment-fulfilment-database.dbtest.ts (-t "cannot be changed")
+ Test Files  1 passed (1)
+      Tests  1 passed | 12 skipped (13)
+### M5 db — db: tests/db/commitment-fulfilment-database.dbtest.ts (-t "M5|cannot be changed")
+ Test Files  1 passed (1)
+      Tests  2 passed | 11 skipped (13)
+### M6 db — db: tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "another project's sequence")
+ Test Files  1 passed (1)
+      Tests  1 passed | 26 skipped (27)
+### M7 db — db: tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "cannot open")
+ Test Files  1 passed (1)
+      Tests  2 passed | 25 skipped (27)
+### M8 unit — unit: server/services/part11/__tests__/commitment-fulfilment-binder.test.ts 
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+### M8 db — db: tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "a project PMR")
+ Test Files  1 passed (1)
+      Tests  18 passed | 9 skipped (27)
+### M8 db (the selection first used, recorded because it does not pass without the mutation) — db: tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "signs:|the list names")
+ Test Files  1 failed (1)
+      Tests  2 failed | 25 skipped (27)
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 112ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 41ms
+### M9 unit — unit: server/services/ana/__tests__/ana-cannot-sign.test.ts 
+ Test Files  1 passed (1)
+      Tests  33 passed (33)
+### M10 unit — unit: server/routes/__tests__/commitment-fulfil-route.test.ts 
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+### M10 db — db: tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "before the password")
+ Test Files  1 passed (1)
+      Tests  11 passed | 16 skipped (27)
+### M11 db — db: tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "pending transmit|agency rejected|never dispatched")
+ Test Files  1 passed (1)
+      Tests  3 passed | 24 skipped (27)

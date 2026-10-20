@@ -144,6 +144,17 @@ export const BINDING_BASIS = {
    */
   AGENCY_RESPONSE_CONTENT: 'agency-response-content-sha256',
   /**
+   * sha256 (recipe commitment-fulfilment/v1, ha-interactions/ha-logic.ts
+   * commitmentFulfilmentDigest) over a regulatory commitment's fulfilment: the
+   * commitment's type, words, basis and due date, the date it was met, and
+   * what met it, the sequence (id, number, submission) and the Vault version
+   * (id and the sha256 of its bytes). Signed on `regulatory-commitment:<id>`
+   * when a PMR, PMC or REMS is recorded fulfilled (P-41, 2026-10-19). The
+   * database refuses that fulfilment at COMMIT unless its signature carries
+   * this basis (migrations/20261019_commitment_fulfilment_evidence.sql).
+   */
+  COMMITMENT_FULFILMENT_CONTENT: 'commitment-fulfilment-content-sha256',
+  /**
    * sha256 over the eCTD release package the submission orchestrator assembled:
    * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
    * identity (see submission-package-orchestrator.computeBoundPayloadDigest).

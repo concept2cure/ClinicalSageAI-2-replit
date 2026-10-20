@@ -598,6 +598,16 @@ describe('the real registry with the IND tools in Submission Center, agency ques
       '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7/commitments',
       '/api/concept2cure/projects/42/agency-communications/ace_1/response-package',
       '/api/ha-interactions/commitments/3/fulfill',
+      // A fulfilment names what met it (P-41, 2026-10-19): the options read on
+      // both doors, and the project door's list and fulfil.
+      '/api/ha-interactions/commitments/3/fulfilment-options',
+      '/api/concept2cure/projects/42/commitments',
+      '/api/concept2cure/projects/42/commitments/3/fulfill',
+      '/api/concept2cure/projects/42/commitments/3/fulfilment-options',
+      // CMC / Module 3 reads the letters' questions (P-39 item 1, 2026-10-19);
+      // a question's CTD section is corrected on its letter.
+      '/api/concept2cure/projects/42/agency-questions',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7',
     ]) expect((await run(gate, p)).passed, p).toBe(true);
   });
 });

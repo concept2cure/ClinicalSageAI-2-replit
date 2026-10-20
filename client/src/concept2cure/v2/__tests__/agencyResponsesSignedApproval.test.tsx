@@ -354,3 +354,146 @@ describe('after the review of 0308ee25', () => {
     expect(screen.queryByText('open')).toBeNull();
   });
 });
+
+/* 2026-10-19 (rows D2, D5; P-39 item 1): a question carries the CTD section it
+   concerns, so CMC / Module 3 can show the ones about its sections without a
+   store of its own. The section is classification, recorded and corrected
+   here with a reason; the signature does not cover it. The letter says it is
+   overdue in the server's words, the same verdict CMC's count is made of. */
+describe('the CTD section on a question, and the letter\'s overdue verdict', () => {
+  it('records a question with the section it concerns', async () => {
+    let body: Record<string, unknown> | undefined;
+    apiRequest.mockImplementation(async (m: string, url: string, b?: Record<string, unknown>) => {
+      if (m === 'POST' && url === `${BASE}/questions`) { body = b; return ok({ success: true, data: { id: 8 } }, 201); }
+      return url === `${BASE}/questions` ? ok(payload([])) : ok({});
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: /Record question/ }));
+    fireEvent.change(screen.getByLabelText(/^Question number/), { target: { value: 'Q2' } });
+    fireEvent.change(screen.getByLabelText(/^Question text/), { target: { value: 'Justify the impurity limit.' } });
+    fireEvent.change(screen.getByLabelText(/^CTD section/), { target: { value: '3.2.S.4.1' } });
+    fireEvent.change(screen.getByLabelText(/^Reason/), { target: { value: 'Recording the IR received 2026-10-12' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Record question/ }).at(-1)!);
+    await waitFor(() => expect(body).toMatchObject({ questionRef: 'Q2', ctdSection: '3.2.S.4.1', reason: 'Recording the IR received 2026-10-12' }));
+  });
+
+  it('shows the section on the question, and corrects it with a reason', async () => {
+    let body: Record<string, unknown> | undefined;
+    let url: string | undefined;
+    apiRequest.mockImplementation(async (m: string, u: string, b?: Record<string, unknown>) => {
+      if (m === 'PATCH') { url = u; body = b; return ok({ success: true, data: question({ ctdSection: '3.2.P.5.1' }) }); }
+      return u === `${BASE}/questions` ? ok(payload([question({ ctdSection: '3.2.P.5' })])) : ok({});
+    });
+    mount();
+    expect(await screen.findByText('§3.2.P.5')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Correct section/ }));
+    fireEvent.change(screen.getByLabelText(/^CTD section/), { target: { value: '3.2.P.5.1' } });
+    fireEvent.change(screen.getByLabelText(/^Reason/), { target: { value: 'The agency cites the method, not the specification' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Correct section/ }).at(-1)!);
+    await waitFor(() => expect(body).toEqual({ ctdSection: '3.2.P.5.1', reason: 'The agency cites the method, not the specification' }));
+    expect(url).toBe(`${BASE}/questions/7`);
+  });
+
+  it('offers no section correction on a closed letter or a withdrawn question', async () => {
+    apiRequest.mockImplementation(async (_m: string, u: string) =>
+      u === `${BASE}/questions`
+        ? ok(payload([question({ ctdSection: '3.2.P.5' }), question({ id: 8, questionRef: 'Q2', state: 'withdrawn', withdrawal: { withdrawnAt: null, withdrawnByName: null, reason: 'x' } })], false, [], { letter: { closureStatus: 'closed' } }))
+        : ok({}),
+    );
+    mount();
+    expect(await screen.findByText('§3.2.P.5')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Correct section/ })).toBeNull();
+  });
+
+  it('says the letter is overdue when the server says so, and only then', async () => {
+    apiRequest.mockImplementation(async (_m: string, u: string) =>
+      u === `${BASE}/questions` ? ok(payload([question()], false, undefined, { letter: { overdue: true, dueDate: '2026-10-01T00:00:00.000Z' } })) : ok({}),
+    );
+    const first = mount();
+    expect(await screen.findByText(/^Overdue:/)).toBeTruthy();
+    first.unmount();
+    apiRequest.mockImplementation(async (_m: string, u: string) =>
+      u === `${BASE}/questions` ? ok(payload([question({ state: 'approved', approval: { signatureId: 1, signerName: 'Dana Reyes', signedAt: '2026-10-18T10:00:00.000Z', meaning: 'approval' } })], true, [], { letter: { overdue: false, dueDate: '2026-10-01T00:00:00.000Z' } })) : ok({}),
+    );
+    mount();
+    await screen.findByText(/Approved by Dana Reyes/);
+    expect(screen.queryByText(/^Overdue:/)).toBeNull();
+  });
+
+  /* Review of 2026-10-19: the overdue note says what made the verdict. A
+     response-required letter with nothing recorded is overdue because nothing
+     is recorded, not because responses are unapproved: it has none. */
+  it('on a letter with no question recorded, the overdue note says that, not "responses not approved"', async () => {
+    apiRequest.mockImplementation(async (_m: string, u: string) =>
+      u === `${BASE}/questions` ? ok(payload([], false, [], { letter: { overdue: true, dueDate: '2026-10-10T00:00:00.000Z' } })) : ok({}),
+    );
+    mount();
+    const note = await screen.findByText(/^Overdue:/);
+    expect(note.textContent).toBe('Overdue: past its due date (2026-10-10), with no question recorded.');
+    expect(note.textContent).not.toMatch(/responses not approved/);
+  });
+
+  it('with questions recorded, it keeps the server\'s reason: responses not approved as they stand', async () => {
+    apiRequest.mockImplementation(async (_m: string, u: string) =>
+      u === `${BASE}/questions` ? ok(payload([question()], false, undefined, { letter: { overdue: true, dueDate: '2026-10-10T00:00:00.000Z' } })) : ok({}),
+    );
+    mount();
+    expect((await screen.findByText(/^Overdue:/)).textContent).toBe('Overdue: past its due date (2026-10-10), with responses not approved as they stand.');
+  });
+
+  /* Review of 2026-10-19: a question with no section is offered "Record
+     section", which CMC's "not counted" line sends people to; "Correct" is
+     only for a section that is recorded. */
+  /* Review of 2026-10-19: CMC's free-text assignment went read-only with its
+     file; the owner is set here, on the letter, with a reason. */
+  it('sets who owns a response, with a reason, from the organisation\'s members, and shows it', async () => {
+    let call: [string, string, Record<string, unknown> | undefined] | undefined;
+    let owned = false;
+    apiRequest.mockImplementation(async (m: string, u: string, b?: Record<string, unknown>) => {
+      if (m === 'PATCH') { call = [m, u, b]; owned = true; return ok({ success: true, data: question({ ownerUserId: 41, ownerName: 'Ines Okafor' }) }); }
+      if (u === `/api/concept2cure/projects/${PID}/team`) {
+        return ok({ success: true, data: [{ userId: 41, name: 'Ines Okafor', role: 'member' }, { userId: 42, name: 'Sam Author', role: 'admin' }] });
+      }
+      return u === `${BASE}/questions`
+        ? ok(payload([owned ? question({ ownerUserId: 41, ownerName: 'Ines Okafor' }) : question()]))
+        : ok({});
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Set owner' }));
+    expect(screen.getByText('Set the owner')).toBeTruthy();
+    const select = screen.getByLabelText(/^Owner/) as HTMLSelectElement;
+    await waitFor(() => expect(Array.from(select.options).map((o) => o.textContent)).toContain('Ines Okafor (member)'));
+    fireEvent.change(select, { target: { value: '41' } });
+    fireEvent.change(screen.getByLabelText(/^Reason/), { target: { value: 'Ines leads the dissolution work' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Record owner' }));
+    await waitFor(() => expect(call).toEqual(['PATCH', `${BASE}/questions/7/owner`, { ownerUserId: 41, reason: 'Ines leads the dissolution work' }]));
+    expect(await screen.findByText('Owner: Ines Okafor')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Change owner' })).toBeTruthy();
+  });
+
+  it('offers no owner change on a closed letter', async () => {
+    apiRequest.mockImplementation(async (_m: string, u: string) =>
+      u === `${BASE}/questions` ? ok(payload([question({ ownerUserId: 41, ownerName: 'Ines Okafor' })], false, [], { letter: { closureStatus: 'closed' } })) : ok({}),
+    );
+    mount();
+    expect(await screen.findByText('Owner: Ines Okafor')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /(Set|Change) owner/ })).toBeNull();
+  });
+
+  it('a question with no section is offered "Record section", and the form records one', async () => {
+    let body: Record<string, unknown> | undefined;
+    apiRequest.mockImplementation(async (m: string, u: string, b?: Record<string, unknown>) => {
+      if (m === 'PATCH') { body = b; return ok({ success: true, data: question({ ctdSection: '3.2.P.5.1' }) }); }
+      return u === `${BASE}/questions` ? ok(payload([question({ ctdSection: null })])) : ok({});
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Record section' }));
+    expect(screen.queryByRole('button', { name: /Correct section/ })).toBeNull();
+    expect(screen.getByText('Record the section')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/^CTD section/), { target: { value: '3.2.P.5.1' } });
+    fireEvent.change(screen.getByLabelText(/^Reason/), { target: { value: 'The agency cites the dissolution method' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Record section' }).at(-1)!);
+    await waitFor(() => expect(body).toEqual({ ctdSection: '3.2.P.5.1', reason: 'The agency cites the dissolution method' }));
+  });
+});
+

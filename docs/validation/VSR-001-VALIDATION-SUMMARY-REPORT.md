@@ -1550,3 +1550,36 @@ Prepared by the W3 Claude session (drafting and execution only; cannot sign).
 No result was edited after execution, except the one absolute path removed
 from the first attempt's OQ-001 record (`first-attempt/README.md`). The runners
 wrote every record, and the matrix builder regenerated TM-001.
+
+## 19. Addendum 2026-10-19 — a new Part 11 control with no OQ step yet (D2 session)
+
+URS-001 v0.7 adds URS-PROJ-014: a PMR, PMC or REMS is recorded fulfilled only by an electronic signature naming
+what met it, held by the database at commit (decision P-41, `docs/LAUNCH_DEFINITION_OF_DONE.md`). VMP-001 §3.1
+requires scripted testing for every Part 11 control. The control is proven by automated tests on real PostgreSQL as
+the runtime role, each shown to catch its own removal (`docs/evidence/D2-COMMITMENT-FULFILMENT/2026-10-19/`,
+`mutation-*.txt` and the review's `mutation-review-*.txt`), but no OQ-001 step executes it. RA-001 v0.22 assesses it
+(high, scripted). Owed before row D4 counts it: a credentialed OQ-PROJ step that records a fulfilment through the
+signing dialog's API and recomputes the bound digest from the stored record (the OQ-006 QMS pattern). TM-001 has not
+been regenerated for it: the committed matrix (generated 2026-10-01) predates URS-PROJ-014 and has no row for it, and
+the matrix builder (`scripts/validation/build-traceability.mjs`) still stops on the 24 URS-CMC rows that have no
+RA-001 row, as it did before this change. When the matrix is regenerated, URS-PROJ-014 will read "uncovered" until
+the OQ step executes. This package claims nothing for it.
+
+
+## 20. Addendum 2026-10-19 — CMC's agency questions moved onto the letter (D2 session)
+
+URS-007 v1.1 adds URS-CMC-030 and OQ-008 v0.9 adds OQ-CMC-42 (scripted, `tests/validation/oq/cmc/steps-correspondence.mjs`):
+agency questions on Module 3 are the agency letter's record (decisions P-38 and P-39 item 1,
+`docs/LAUNCH_DEFINITION_OF_DONE.md`). CMC's own question file (`reg_questions`), where a question was closed by a
+status update with no signature, is read-only in the route (410) and in the database (a row trigger refusing INSERT,
+UPDATE and DELETE and a statement trigger refusing TRUNCATE, for every role a trigger fires for, the owner included;
+and a SELECT-only grant ceiling for the runtime role). The owner of a question's response, which CMC held as free text
+on that file, is set on the letter with a reason, to a member who may open the letter. CMC reads a programme's questions from their letters and opens
+each on its letter, in Communication, where a response is approved by a Part 11 signature. The controls are proven by
+automated tests on real PostgreSQL as the runtime role with row security on, and each was shown to catch its own
+removal (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`, `mutation-*.txt`). OQ-CMC-42 has not been executed:
+OQ-008 as a whole is unexecuted (§3 of the protocol). RA-001 is not amended: no URS-CMC requirement has an RA-001 row
+(CMC's risk is the Risk column of URS-007, as for URS-CMC-001 to -029), and adding the first for this one alone would
+make the other twenty-nine look assessed by omission. The matrix builder (`scripts/validation/build-traceability.mjs`)
+therefore still stops on the URS-CMC rows that have no RA-001 row, now thirty, as it did before this change; TM-001 is
+not regenerated here. This package claims nothing for URS-CMC-030 until OQ-008 executes.

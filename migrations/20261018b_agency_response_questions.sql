@@ -43,6 +43,24 @@
 --     no longer has to be answered.
 -- Dropped nothing; no constraint another file defines is touched.
 --
+-- AMENDED IN PLACE 2026-10-19 (CMC / Module 3 questions onto the letter; rows
+-- D2 and D5; decision P-39 item 1; evidence
+-- docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/). Added, idempotently:
+--   * ctd_section on the question: the CTD section it concerns ("3.2.S.4.1"),
+--     so CMC / Module 3 can show the questions about its sections without a
+--     store of its own. Classification, like discipline and severity: the
+--     approval signature does not bind it (agencyResponseDigest is unchanged),
+--     so correcting it, with a reason, leaves an approval standing. Its CHECK
+--     admits exactly what the repository's one CTD rule stores
+--     (shared/regulatory/section-code.ts normalizeCtdCode: `[1-5]` then
+--     `.SEGMENT`s of digits and capitals), up to 40 characters; the TypeScript
+--     rule and this CHECK share one case table
+--     (server/services/agency-responses/__tests__/ctd-section-cases.ts).
+--     Added only when pg_constraint does not hold it, so a replay re-checks no
+--     row. A question's section refines its letter's linked_section_codes; it
+--     does not replace them.
+-- Dropped nothing; no constraint another file defines is touched.
+--
 -- An agency letter in the project's inbox (concept2cure_agency_communications,
 -- db/migrations/20260331_communication_center_scaffold.sql) recorded its
 -- questions as a JSON array of strings, so a question had no response, no
@@ -161,6 +179,23 @@ CREATE INDEX IF NOT EXISTS idx_agency_q_revisions_scope
 CREATE INDEX IF NOT EXISTS idx_agency_q_revisions_digest
   ON public.agency_question_response_revisions (question_id, response_digest);
 
+-- The CTD section a question concerns (amended 2026-10-19). Classification only.
+ALTER TABLE public.agency_communication_questions
+  ADD COLUMN IF NOT EXISTS ctd_section TEXT;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'agency_communication_questions_ctd_section_format'
+       AND conrelid = 'public.agency_communication_questions'::regclass
+  ) THEN
+    ALTER TABLE public.agency_communication_questions
+      ADD CONSTRAINT agency_communication_questions_ctd_section_format
+      CHECK (ctd_section IS NULL
+             OR (length(ctd_section) <= 40 AND ctd_section ~ '^[1-5](\.[0-9A-Z]+)*$'));
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_agency_comm_questions_scope
   ON public.agency_communication_questions (organization_id, project_id);
 CREATE INDEX IF NOT EXISTS idx_agency_comm_questions_event
@@ -223,5 +258,7 @@ COMMENT ON TABLE public.agency_communication_questions IS
   'equals the digest of the current response; there is no approval column.';
 COMMENT ON COLUMN public.agency_communication_questions.response_updated_by IS
   'Who wrote the current response text. Anyone who wrote a revision since the last approved one cannot sign its approval.';
+COMMENT ON COLUMN public.agency_communication_questions.ctd_section IS
+  'The CTD section the question concerns (3.2.S.4.1), as normalizeCtdCode stores it. Classification only: the approval signature does not bind it.';
 COMMENT ON TABLE public.agency_question_response_revisions IS
   'Every text an agency response has had. A signature binds one of these by digest; the text it approved is read back here.';

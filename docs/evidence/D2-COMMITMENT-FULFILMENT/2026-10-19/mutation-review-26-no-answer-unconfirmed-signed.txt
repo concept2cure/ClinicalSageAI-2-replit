@@ -1,0 +1,33 @@
+# Review mutation 26 — a signature with no answer is not shown as the browser's error (finding 19)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "a signature with no answer")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -280,8 +280,7 @@
+       });
+     } catch (e) {
+       if (e instanceof ApiRequestError) throw new Error(refusalSentence(said(e)), { cause: e });
+-      uncertain.current = true;
+-      throw new Error(UNCONFIRMED_SIGN, { cause: e });
++      throw e;
+     }
+     const body = (await res.json().catch(() => null)) as { signedAt?: string; data?: { status?: string } } | null;
+     // apiRequest hands a 401 back rather than throwing: the server refused it.
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > a signature with no answer says the outcome could not be confirmed, never the browser's error 461ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > a signature with no answer says the outcome could not be confirmed, never the browser's error 5362ms
+   → Unable to find an element with the text: /could not be confirmed\. Reload before signing again\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > a signature with no answer says the outcome could not be confirmed, never the browser's error
+TestingLibraryElementError: Unable to find an element with the text: /could not be confirmed\. Reload before signing again\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

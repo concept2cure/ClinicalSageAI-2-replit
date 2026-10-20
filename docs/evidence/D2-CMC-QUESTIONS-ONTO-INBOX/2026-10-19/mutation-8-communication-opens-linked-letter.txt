@@ -1,0 +1,2135 @@
+# MUTATION 8 Communication opens the linked letter (the link is not passed to the inbox)
+# File: client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx
+# Replaced:
+#   -             opening={opening}
+# With:
+#   +             opening={null}
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored: sha256 242648cba1d3ab2c… before = 242648cba1d3ab2c… after (byte-identical)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > on mount: the inbox, that letter's card open with its questions, focus on it 5055ms
+   → Unable to find an element with the text: Justify the impurity limit for the des-methyl degradant.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+ × client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > when already mounted, the channel's event opens the letter 5036ms
+   → Unable to find an element with the text: Justify the impurity limit for the des-methyl degradant.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+ × client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > a letter that is not in this project's inbox is said to be so, and no other letter opens 5015ms
+   → Unable to find an element with the text: /That letter is not in this project's inbox, or you cannot open it\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+ ✓ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > an id that is not id-shaped opens nothing 36ms
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  10:31:36
+   Duration  16.92s (transform 685ms, setup 141ms, import 863ms, tests 15.15s, environment 590ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > on mount: the inbox, that letter's card open with its questions, focus on it
+TestingLibraryElementError: Unable to find an element with the text: Justify the impurity limit for the des-methyl degradant.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx:88:25
+     86|     stashNavParamsForTarget('communication-center', { letterId: 'ace_2…
+     87|     render(<CommunicationCenter {...props} />);
+     88|     expect(await screen.findByText('Justify the impurity limit for the…
+       |                         ^
+     89|     expect(reads()).toEqual([`${COMMS_URL}/ace_2/questions`]);
+     90|     const card = document.querySelector('[data-letter-id="ace_2"]') as…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > when already mounted, the channel's event opens the letter
+TestingLibraryElementError: Unable to find an element with the text: Justify the impurity limit for the des-methyl degradant.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx:103:25
+    101|     expect(reads()).toEqual([]);
+    102|     await act(async () => { stashNavParamsForTarget('communication-cen…
+    103|     expect(await screen.findByText('Justify the impurity limit for the…
+       |                         ^
+    104|     expect(reads()).toEqual([`${COMMS_URL}/ace_2/questions`]);
+    105|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > a letter that is not in this project's inbox is said to be so, and no other letter opens
+TestingLibraryElementError: Unable to find an element with the text: /That letter is not in this project's inbox, or you cannot open it\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cc"
+      style="max-width: 1200px;"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission · Communication Center
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Communication center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced to its filing and turned into governed action.
+          </p>
+        </div>
+        <button
+          class="sp-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+           Log communication
+        </button>
+      </div>
+      <div
+        class="al-lead al-urgent"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-clock"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+            />
+          </svg>
+           
+          What the FDA is waiting on from you
+        </div>
+        <div
+          class="al-h"
+        >
+          <b>
+            2
+          </b>
+           agency communication
+          s
+           
+          need
+           a response
+          .
+        </div>
+        <div
+          class="al-b"
+        >
+          Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the ones that still need a response.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Draft response with AnA
+          [...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx:110:25
+    108|     stashNavParamsForTarget('communication-center', { letterId: 'ace_9…
+    109|     render(<CommunicationCenter {...props} />);
+    110|     expect(await screen.findByText(/That letter is not in this project…
+       |                         ^
+    111|     expect(reads()).toEqual([]);
+    112|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+

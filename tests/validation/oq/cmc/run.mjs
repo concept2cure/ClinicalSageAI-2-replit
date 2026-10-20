@@ -2,7 +2,7 @@
  * OQ-008 — Operational Qualification: CMC / Module 3.
  * Protocol: docs/validation/OQ-008-CMC-MODULE-3.md. Requirements: docs/validation/URS-007-CMC-MODULE-3.md.
  *
- * The steps live in the five `./steps-*.mjs` modules, in the order imported
+ * The steps live in the eight `./steps-*.mjs` modules, in the order imported
  * below; `./context.mjs` holds the run they share. They are this runner's
  * steps — `ci:validation-traceability` reads the runner as this file plus the
  * modules it imports with `from './*.mjs'` — so each must carry the kind the
@@ -30,8 +30,9 @@ import { FILING_STEPS } from './steps-filing.mjs';
 import { SURFACE_STEPS } from './steps-surface.mjs';
 import { REGISTER_STEPS } from './steps-registers.mjs';
 import { ATTRIBUTION_STEPS } from './steps-attribution.mjs';
+import { CORRESPONDENCE_STEPS } from './steps-correspondence.mjs';
 
-console.info(`OQ-008 step modules: ${[ACCESS_STEPS, COMPILE_STEPS, APPROVAL_STEPS, FILING_STEPS, SURFACE_STEPS, REGISTER_STEPS, ATTRIBUTION_STEPS].join(', ')}`);
+console.info(`OQ-008 step modules: ${[ACCESS_STEPS, COMPILE_STEPS, APPROVAL_STEPS, FILING_STEPS, SURFACE_STEPS, REGISTER_STEPS, ATTRIBUTION_STEPS, CORRESPONDENCE_STEPS].join(', ')}`);
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

@@ -13506,21 +13506,35 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { fulfillCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const { fulfillCommitmentTx, readCommitmentForFulfilment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
+  const { fulfilmentRule } = await import('../ha-interactions/ha-logic.js');
   const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    /* P-41 (2026-10-19): a PMR, PMC or REMS is recorded fulfilled only by a
+       Part 11 signature naming what met it, and AnA cannot sign. The type is
+       read from the record, never taken from the model; for those three the
+       tool writes nothing and hands the act to the screen. */
+    const commitment = await readCommitmentForFulfilment(client, ctx.organizationId, commitmentId, ORG_LEVEL, { lock: true });
+    if (commitment && fulfilmentRule(commitment.commitmentType).signatureRequired) {
+      await client.query('ROLLBACK');
+      return refuseSignatureInChat(
+        'fulfill_regulatory_commitment',
+        `Recording a ${commitment.commitmentType.toUpperCase()} as fulfilled`,
+        'Communication, Meetings & commitments, where you name the sequence or document that met it and sign',
+      );
+    }
     const fulfilledDate = typeof input.fulfilled_date === 'string' ? input.fulfilled_date : null;
-    await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
+    const done = await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, { fulfilledDate, evidence: null, userId: ctx.userId });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'resolve',
       target: `regulatory-commitment:${commitmentId}`, reason,
-      payload: { fulfilledDate }, domain: 'ha', surface: 'ana',
+      payload: { status: 'fulfilled', fulfilledDate: done.fulfilledDate }, domain: 'ha', surface: 'ana',
     });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled.` });
+    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled on ${done.fulfilledDate}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `fulfill_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
