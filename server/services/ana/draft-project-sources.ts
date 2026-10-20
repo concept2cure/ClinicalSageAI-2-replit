@@ -8,6 +8,7 @@ import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.j
 import { chooseSourceWindow, type SourceWindow } from './draft-source-window.js';
 import { draftSourceIdentityForText } from './draft-source-identity.js';
 import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
+import { throwIfDraftCancelled, trustedSignal } from './batch-draft-result.js';
 
 export interface DraftSource extends DraftSourceReferenceV2 {
   programId: string;
@@ -33,7 +34,7 @@ type PinnedConsumerIdentity = Readonly<{ organizationId: string; userId: string;
 type SourceContextAuthority = Readonly<{
   identity: PinnedConsumerIdentity;
   sources: readonly DraftSource[];
-  assertCurrent: () => Promise<void>;
+  assertCurrent: (signal?: AbortSignal) => Promise<void>;
 }>;
 // Neither public field equality nor a persisted receipt grants process-local authority.
 const sourceContexts = new WeakMap<object, SourceContextAuthority>();
@@ -69,14 +70,17 @@ function consumerIdentity(identity: DraftSourceContextIdentity): PinnedConsumerI
 }
 
 /** Checkpoints current authority; this does not continuously revoke an in-flight call. */
-export async function assertDraftSourceContextCurrent(context: unknown, identity: DraftSourceContextIdentity): Promise<void> {
+export async function assertDraftSourceContextCurrent(context: unknown, identity: DraftSourceContextIdentity, signal?: AbortSignal): Promise<void> {
   const authority = contextAuthority(context);
   if (!authority) return;
   // Copy consumer primitives before the first current-source await.
   const consumer = consumerIdentity(identity);
   if (consumer.organizationId !== authority.identity.organizationId || consumer.userId !== authority.identity.userId ||
       consumer.projectId !== authority.identity.projectId) throw new Error('SOURCE_CONTEXT_IDENTITY_MISMATCH');
-  await authority.assertCurrent();
+  const currentSignal = trustedSignal(signal);
+  throwIfDraftCancelled(currentSignal);
+  await authority.assertCurrent(currentSignal);
+  throwIfDraftCancelled(currentSignal);
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{64}$/i;
@@ -144,6 +148,8 @@ function sourceIdentity(text: string, span: DraftSource['span'], expectedExtract
 
 /** `query`: the section's type and instructions, which choose each source's window (S5d). */
 export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext, query?: string): Promise<DraftSourceContext> {
+  const signal = trustedSignal(ctx?.signal);
+  throwIfDraftCancelled(signal);
   if (raw === undefined) return { status: 'unassessed', sources: [] };
   const ids = selectedIds(raw);
   // Copy caller-owned identity and selection before the first import/read await.
@@ -153,7 +159,9 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext, q
   const sectionQuery = typeof query === 'string' ? query : undefined;
   const { catalogScope, sourceReadInput } = await import('./catalog-scope.js');
   const { loadDocumentForActor, revalidateActorSourceScope } = await import('../vault/document-catalog.service.js');
+  throwIfDraftCancelled(signal);
   const scope = await catalogScope(pinned, pinned.organizationId, null, 'read');
+  throwIfDraftCancelled(signal);
   if ('error' in scope || !scope.programId) throw new Error('SOURCE_PROJECT_REQUIRED');
   const { programId, executor, admittedScope, accessibleScope } = scope;
   const actor = Object.freeze(sourceReadInput(pinned, pinned.organizationId));
@@ -162,10 +170,15 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext, q
   let remaining = 48000;
   for (const documentId of ids) {
     // Check project ownership before fetching extracted text, not after serving it.
+    throwIfDraftCancelled(signal);
     const meta = await loadDocumentForActor({ ...actor, documentId }, { currentOnly: true });
+    throwIfDraftCancelled(signal);
     const before = sourceState(meta, documentId, programId);
     if (remaining === 0) throw new Error('SOURCE_UNAVAILABLE');
-    const doc = sourceContent(await loadDocumentForActor({ ...actor, documentId }, { includeText: true, currentOnly: true }), before, programId);
+    throwIfDraftCancelled(signal);
+    const body = await loadDocumentForActor({ ...actor, documentId }, { includeText: true, currentOnly: true });
+    throwIfDraftCancelled(signal);
+    const doc = sourceContent(body, before, programId);
     // The stretch of the document this section needs, not its opening (S5d).
     const window = intactWindow(doc.extractedText, chooseSourceWindow(doc.extractedText, sectionQuery, Math.min(12000, remaining)));
     const span = { start: window.start, end: window.end, totalChars: doc.extractedText.length };
@@ -189,16 +202,25 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext, q
   Object.freeze(snapshots);
   // The same private body and state checks serve loader return and every later
   // generation checkpoint; no replacement excerpt or metadata-only digest read.
-  const assertCurrent = async () => {
+  // Each consumer supplies its own signal; issuing a context does not bind it
+  // permanently to the loader's lifetime. In-flight catalog operations may finish.
+  const assertCurrent = async (currentSignal?: AbortSignal) => {
     for (const [index, before] of snapshots.entries()) {
-      const current = sourceContent(await loadDocumentForActor({ ...actor, documentId: before.documentId }, { includeText: true, currentOnly: true }), before, programId);
+      throwIfDraftCancelled(currentSignal);
+      const body = await loadDocumentForActor({ ...actor, documentId: before.documentId }, { includeText: true, currentOnly: true });
+      throwIfDraftCancelled(currentSignal);
+      const current = sourceContent(body, before, programId);
       const identity = sourceIdentity(current.extractedText, sources[index].span, before.extractedTextSha256);
       if (identity.spanSha256 !== sources[index].spanSha256) throw new Error('SOURCE_UNAVAILABLE');
     }
+    throwIfDraftCancelled(currentSignal);
     await revalidateActorSourceScope(actor, admittedScope);
+    throwIfDraftCancelled(currentSignal);
     await requireProgramScopeStillCurrent(executor, { organizationId: pinned.organizationId, userId: pinned.userId, programId }, accessibleScope);
+    throwIfDraftCancelled(currentSignal);
   };
-  await assertCurrent();
+  await assertCurrent(signal);
+  throwIfDraftCancelled(signal);
   const context = Object.freeze({ status: 'loaded' as const, sources });
   sourceContexts.set(context, Object.freeze({ identity: consumer, sources, assertCurrent }));
   return context;

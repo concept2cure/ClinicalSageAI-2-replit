@@ -1003,7 +1003,7 @@ function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftReque
 async function draftSourceCheckpoint(req: DocumentDraftRequest) {
   const identity = Object.freeze({ organizationId: req.organizationId, userId: req.userId, projectId: req.projectId });
   const { assertDraftSourceContextCurrent, draftSourcePrompt, draftSourceAudit } = await import('./draft-project-sources.js');
-  const assertCurrent = () => assertDraftSourceContextCurrent(req.sourceContext, identity);
+  const assertCurrent = () => assertDraftSourceContextCurrent(req.sourceContext, identity, req.signal);
   await assertCurrent();
   const selectedSources = req.sourceContext?.status === 'loaded';
   if (selectedSources && (req.onStream || req.enableTools)) throw new Error('SOURCE_CONTEXT_REQUIRES_NONSTREAMING_DRAFT');

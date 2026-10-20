@@ -15852,9 +15852,8 @@ function batchDraftInstruction(receipt: { failed: number; cancelled: number }): 
 
 /**
  * Apply the recorded submission context and load each section's selected
- * sources, in order, stopping with the run. No read starts after stop; a load
- * that settles after it is discarded, since its reads carry no signal and
- * cannot be abandoned mid-query.
+ * sources, in order, stopping between catalog operations. An already-started
+ * operation may finish; a load that settles after Stop is discarded.
  */
 async function prepareBatchSections(
   requests: Array<{ requestIndex: number; sectionType: string; instructions: string; submissionType?: string;
@@ -15865,8 +15864,12 @@ async function prepareBatchSections(
   outcomes: Map<number, import('./batch-draft-result.js').BatchDraftFailure>,
 ): Promise<void> {
   const { loadDraftProjectSources } = await import('./draft-project-sources.js');
-  const { batchSectionRecord, cancelledDraft, trustedSignal } = await import('./batch-draft-result.js');
+  const { batchSectionRecord, cancelledDraft, isDraftCancellation, trustedSignal } = await import('./batch-draft-result.js');
   const signal = trustedSignal(ctx?.signal);
+  const sourceFailure = (sectionType: string, error: unknown): import('./batch-draft-result.js').BatchDraftFailure =>
+    signal?.aborted && isDraftCancellation(error) ? cancelledDraft(sectionType)
+      : { sectionType, error: 'DRAFT_FAILED',
+        message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' };
   if (!signal?.aborted) {
     const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
     await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
@@ -15880,12 +15883,11 @@ async function prepareBatchSections(
         request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
           `${request.sectionType} ${request.instructions}`);
       }
-    } catch {
-      failure = { sectionType: request.sectionType, error: 'DRAFT_FAILED',
-        message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' };
+    } catch (error) {
+      failure = sourceFailure(request.sectionType, error);
     }
-    // A source refusal keeps its own classification; only a load that would
-    // otherwise have succeeded is discarded as stopped.
+    // Genuine source refusals keep their classification, even during Stop.
+    // A late successful load is discarded as stopped.
     if (signal?.aborted && !failure) {
       request.sourceContext = undefined;
       failure = cancelledDraft(request.sectionType);
