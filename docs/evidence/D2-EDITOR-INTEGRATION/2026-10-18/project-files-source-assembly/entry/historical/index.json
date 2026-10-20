@@ -1,0 +1,86 @@
+[
+  {
+    "artifact": "project-files-source-entry-red.txt.receipt.json",
+    "originalName": "project-files-source-entry-red.txt",
+    "rawBytes": 21629,
+    "rawSha256": "8e7a1fbe89cdb07cd012634a5ac0a2a9601345552e0ad1c2809cd48a6a56917c",
+    "retainedSummaryLines": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed (2)",
+      "Start at  00:53:13",
+      "Duration  11.84s (transform 525ms, setup 167ms, import 645ms, tests 10.35s, environment 515ms)"
+    ],
+    "capturedWrapperExitCode": null
+  },
+  {
+    "artifact": "project-files-source-eligibility-red.txt.receipt.json",
+    "originalName": "project-files-source-eligibility-red.txt",
+    "rawBytes": 3650,
+    "rawSha256": "07f52e1863c2da695d544cc1f29071a01a2c81483abe32594677de96482e84c1",
+    "retainedSummaryLines": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 2 skipped (4)",
+      "Start at  00:53:46",
+      "Duration  1.82s (transform 539ms, setup 151ms, import 664ms, tests 378ms, environment 470ms)"
+    ],
+    "capturedWrapperExitCode": null
+  },
+  {
+    "artifact": "project-files-source-entry-first-green.txt.receipt.json",
+    "originalName": "project-files-source-entry-first-green.txt",
+    "rawBytes": 960,
+    "rawSha256": "e86e28ba4b1fa15a22e86c7eca01550f99e58598e6f9b3e40405bda11f2dffa6",
+    "retainedSummaryLines": [
+      "Test Files  1 passed (1)",
+      "Tests  4 passed (4)",
+      "Start at  00:54:25",
+      "Duration  2.13s (transform 558ms, setup 155ms, import 671ms, tests 603ms, environment 519ms)"
+    ],
+    "capturedWrapperExitCode": null
+  },
+  {
+    "artifact": "project-files-source-entry-expanded-green.txt.receipt.json",
+    "originalName": "project-files-source-entry-expanded-green.txt",
+    "rawBytes": 3613,
+    "rawSha256": "8dee33c3020e6099627e7e99540686b1a08eea4afe40671f718543992331b38e",
+    "retainedSummaryLines": [
+      "Test Files  1 passed (1)",
+      "Tests  17 passed (17)",
+      "Start at  00:55:18",
+      "Duration  3.68s (transform 570ms, setup 166ms, import 712ms, tests 2.12s, environment 498ms)"
+    ],
+    "capturedWrapperExitCode": null
+  },
+  {
+    "artifact": "project-files-source-production-freeze.json.receipt.json",
+    "originalName": "project-files-source-production-freeze.json",
+    "rawBytes": 647,
+    "rawSha256": "523083dfde300cb8eb8ab9c1a3218922ca46ea194ba6eed1e3c7cc46aa5dbdbe",
+    "retainedSummaryLines": [],
+    "capturedWrapperExitCode": null
+  },
+  {
+    "artifact": "project-files-source-strict-lint.txt.receipt.json",
+    "originalName": "project-files-source-strict-lint.txt",
+    "rawBytes": 0,
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "retainedSummaryLines": [],
+    "capturedWrapperExitCode": null
+  },
+  {
+    "artifact": "project-files-source-lint-baseline.json.receipt.json",
+    "originalName": "project-files-source-lint-baseline.json",
+    "rawBytes": 1764,
+    "rawSha256": "c2ba1982d8791a1ca06e4bd25e895a1fac0685bb8fdf5dc5617cee6903eff98c",
+    "retainedSummaryLines": [],
+    "capturedWrapperExitCode": null
+  },
+  {
+    "artifact": "project-files-source-vault-lint.json.receipt.json",
+    "originalName": "project-files-source-vault-lint.json",
+    "rawBytes": 106445,
+    "rawSha256": "15beaee052682d2e202393606b84e357763a9835be82326d49a052c352267de2",
+    "retainedSummaryLines": [],
+    "capturedWrapperExitCode": null
+  }
+]

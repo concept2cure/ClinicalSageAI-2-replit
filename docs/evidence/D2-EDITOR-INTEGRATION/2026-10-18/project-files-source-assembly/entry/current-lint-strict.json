@@ -1,0 +1,58 @@
+{
+  "command": [
+    "npx",
+    "eslint",
+    "--format",
+    "json",
+    "--max-warnings",
+    "0",
+    "client/src/concept2cure/v2/editor/ProjectFileActions.tsx",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+    "client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx"
+  ],
+  "executionBase": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+  "startedAt": "2026-10-20T19:35:03.258955+00:00",
+  "elapsedSeconds": 6.326,
+  "node": "v22.23.3",
+  "exitCode": 0,
+  "rawBytes": 1325,
+  "rawSha256": "a28ccc033cb729526cd0533a85467baaf71d575bf7e122bed68d43d3127c9a6a",
+  "output": "[{\"filePath\":\"/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/ProjectFileActions.tsx\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n",
+  "inputBytes": null,
+  "inputSha256": null,
+  "inputQualification": "Current working-tree files",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFileActions.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}
