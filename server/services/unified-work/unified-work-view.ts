@@ -29,6 +29,7 @@
 
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
+import type { RequestDb } from '../../db/requestDb';
 import { projectTasks, c2cProjectWorkItems, unifiedTasks } from '../../../shared/schema';
 import { estarSubmissions } from '../../../shared/schema/estar-submission';
 import { describeFailure, type VerificationOutcome } from '../../lib/verification-outcome';
@@ -419,12 +420,12 @@ async function readSource<T>(
  * as zero: `sources` records per table whether its SELECT ran, `summary.partial`
  * is true when any did not, and the driver's reason is logged.
  */
-export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<UnifiedWorkResult> {
+export async function loadUnifiedWork(input: LoadUnifiedWorkInput, database: Pick<RequestDb, 'select'> = db): Promise<UnifiedWorkResult> {
   const { organizationId, projectId, includeCompleted = false } = input;
 
   const tasks = await readSource<TaskRowLike>(
     'project_tasks',
-    db
+    database
       .select()
       .from(projectTasks)
       .where(
@@ -436,7 +437,7 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
 
   const workItems = await readSource<WorkItemRowLike>(
     'c2c_project_work_items',
-    db
+    database
       .select()
       .from(c2cProjectWorkItems)
       .where(
@@ -448,7 +449,7 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
 
   const filings = await readSource<FilingRowLike>(
     'estar_submissions',
-    db
+    database
       .select()
       .from(estarSubmissions)
       .where(
@@ -467,7 +468,7 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
   const notAMirror = sqlDistinctFromProjectTask();
   const boardTasks = await readSource<UnifiedTaskRowLike>(
     'unified_tasks',
-    db
+    database
       .select()
       .from(unifiedTasks)
       .where(

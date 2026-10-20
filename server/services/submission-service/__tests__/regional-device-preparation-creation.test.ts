@@ -27,6 +27,24 @@ describe('preparation-only regional applications cannot create a canonical submi
     expect(audit).not.toHaveBeenCalled();
   });
 
+  const filingSelections = [
+    ...REGIONAL_DEVICE_APPLICATION_CLASSES.flatMap(({ registryId }) => [registryId, registryId.toLowerCase()]),
+    'fda_hde', 'hc_mdl', 'hc_ivd', 'pmda_shonin', 'pmda_nintei', 'pmda_ivd', 'cdx_pmda',
+    ' US_HDE ', ' FDA_HDE ',
+  ];
+  it.each(filingSelections.flatMap(applicationType => [
+    { applicationType, mode: 'standalone' },
+    { applicationType, mode: 'transactional' },
+  ]))('$applicationType refuses $mode creation before insert or audit', async ({ applicationType, mode }) => {
+    const creation = mode === 'standalone'
+      ? createSubmission(input(applicationType), ctx)
+      : createSubmissionTx({ query } as never, input(applicationType), ctx);
+    await expect(creation).rejects.toMatchObject({ code: 'DEVICE_PREPARATION_ONLY' });
+    expect(insert).not.toHaveBeenCalled();
+    expect(query).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
   it('reports the preparation refusal as 422 to existing callers', () => {
     expect(SUBMISSION_ERROR_STATUS).toHaveProperty('DEVICE_PREPARATION_ONLY', 422);
   });

@@ -38,13 +38,13 @@ describe('actual registry search preserves the selected product family across la
     // not switch its tab. No picker or RegistryBridge replacement is involved.
     const search = await screen.findByRole('textbox', { name: 'Search filing types' });
     fireEvent.change(search, { target: { value: id } });
-    const title = getSubmissionTypeContext(id)!.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    fireEvent.click(await screen.findByRole('button', { name: new RegExp(`^${title}(?:\\s|$)`) }));
+    const title = getSubmissionTypeContext(id)!.displayName;
+    fireEvent.click(await screen.findByRole('button', { name: (accessibleName: string) => accessibleName === title || (accessibleName.startsWith(title) && /^\s/.test(accessibleName.slice(title.length))) }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
     fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), { target: { value: 'Cross-lane device preparation' } });
     fireEvent.change(screen.getByRole('combobox', { name: classLabel }), { target: { value } });
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-    expect(screen.getByText(new RegExp(` · ${product}$`))).toBeDefined();
+    expect(screen.getByText((content: string) => content.endsWith(` · ${product}`))).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: /create project/i }));
     const posted = () => apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/c2c/projects');
     await vi.waitFor(() => expect(posted()).toBeDefined());

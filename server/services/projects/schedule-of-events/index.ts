@@ -12,6 +12,7 @@ export {
   amendMilestone,
   resetProjectGoals,
   reviewScheduleHealth,
+  reviewScheduleHealthForSweep,
   listActiveSchedulePlans,
   type ScheduleOfEventsView,
   type SchedulePlanView,
@@ -22,6 +23,7 @@ export {
   type AmendMilestoneParams,
   type ResetGoalsParams,
   type HealthReviewResult,
+  type ScheduleExecutionContext,
 } from './service';
 
 export { generateSchedule, type GeneratorGoal } from './generator';
