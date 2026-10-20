@@ -1,0 +1,107 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/document-passage-tools.ts",
+    "server/services/ana/tool-outcome.ts",
+    "server/services/ana/__tests__/document-passage-tools-budget.test.ts",
+    "server/services/ana/__tests__/document-passage-result-bound.test.ts",
+    "server/services/ana/__tests__/document-passage-result-cap.test.ts",
+    "server/services/ana/__tests__/document-passage-result-references.test.ts",
+    "tests/services/tool-outcome-passage-omission.test.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "a4c4ba0117db3cd50534d8cf571cd93f92faa7226d6e5dd72bd7b9d028805a61",
+  "note": "Summary omits duplicated source fields; not raw output",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-result-bound.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-result-cap.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-result-references.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-tools-budget.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/document-passage-tools.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/tool-outcome.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/tests/services/tool-outcome-passage-omission.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ],
+  "inputs": {
+    "server/services/ana/document-passage-tools.ts": "593c291d3a588a9825678cffe98a41a122150b74fa41617d3b9cd83a06bdab9d",
+    "server/services/ana/tool-outcome.ts": "e32bef67da8f61db7b8a15fd636505ae2c572d3830e293e9600cf8de087761ed",
+    "server/services/ana/__tests__/document-passage-tools-budget.test.ts": "a7212ef3dbad3803b506bc93f143b363111fd69cada455d968e58f9240c15076",
+    "server/services/ana/__tests__/document-passage-result-bound.test.ts": "f44a4a9276210278cdfeae37dc621d5ea5fd9f3b2bc58e73133cca740f5cf880",
+    "server/services/ana/__tests__/document-passage-result-cap.test.ts": "80d5129c5ce062ea870129992d9df762e3b84f665462dd4738c4328c7ae85a2e",
+    "server/services/ana/__tests__/document-passage-result-references.test.ts": "ce0e392385c17eb328bccbf1c433afeb2fbdaaf41c11c26f9107f00e4604a836",
+    "tests/services/tool-outcome-passage-omission.test.ts": "44480dd94dc578e0b5fafd46b6827accc11c145d90de10f84c1fc25003a609cf"
+  },
+  "completedAt": "2026-10-20T23:45:29.121634+00:00"
+}

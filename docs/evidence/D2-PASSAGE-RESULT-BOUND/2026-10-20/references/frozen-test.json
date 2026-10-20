@@ -1,0 +1,10 @@
+{
+  "file": "server/services/ana/__tests__/document-passage-result-references.test.ts",
+  "sha256": "ce0e392385c17eb328bccbf1c433afeb2fbdaaf41c11c26f9107f00e4604a836",
+  "baselineExpectedFailures": 4,
+  "baselinePassingControls": 5,
+  "total": 9,
+  "baselineProductionSha256": "a697a0c3ea0c6fda5cd631279d0e3ae07693b83a133e7066ede816bdcd472ea5",
+  "unchangedInputCount": 18,
+  "productionEdited": false
+}

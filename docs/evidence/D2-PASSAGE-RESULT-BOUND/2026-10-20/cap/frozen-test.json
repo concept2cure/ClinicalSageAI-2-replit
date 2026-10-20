@@ -1,0 +1,11 @@
+{
+  "file": "server/services/ana/__tests__/document-passage-result-cap.test.ts",
+  "sha256": "80d5129c5ce062ea870129992d9df762e3b84f665462dd4738c4328c7ae85a2e",
+  "lines": 178,
+  "baselineExpectedFailures": 6,
+  "baselinePassingControls": 8,
+  "total": 14,
+  "unchangedBoundInputs": 10,
+  "lintExitCode": 0,
+  "productionUnchanged": true
+}

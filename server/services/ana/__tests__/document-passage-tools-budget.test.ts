@@ -21,7 +21,7 @@
  *   • three passes, each complete before the next, lowest rank first:
  *     (1) context.text goes and the hit's text comes back (context.textOmitted),
  *     (2) the hit's text goes (textOmitted), (3) whole passages go from the end
- *     (omittedPassages), never the last one;
+ *     (omittedPassages), including the last if its complete locator cannot fit;
  *   • reference, chunkRange, clipped, hitSpan and locators are never dropped
  *     from a passage that is kept;
  *   • the message routes to read_project_document by the reference's offsets
@@ -298,15 +298,16 @@ describe('the three passes, lowest rank first', () => {
     expect(passages.map(p => p.documentId)).toEqual(hits.slice(0, passages.length).map(h => h.documentId));
   });
 
-  it('never drops the last passage, even when the budget cannot be met', async () => {
-    // Titles are never dropped, so three of these cannot fit; the top one is still returned.
+  it('omits every passage when even the top complete locator cannot fit, and says matches existed', async () => {
+    // Titles stay exact. An oversized final locator is omitted whole, never cut.
     const hits = [1, 2, 3].map(r => ({ ...unavailable(r, 4000), documentTitle: `Study report ${r} `.padEnd(8000, '.') }));
-    const { out } = await render(hits);
+    const { raw, out } = await render(hits);
+    expect(raw.length).toBeLessThanOrEqual(PASSAGE_RESULT_BUDGET);
     expect(out.ok).toBe(true);
-    expect(out.passages).toHaveLength(1);
-    expect(out.passages[0].documentId).toBe(hits[0].documentId);
-    expect(out.passages[0].documentTitle).toBe(hits[0].documentTitle);
-    expect(out.omittedPassages).toBe(2);
+    expect(out.passages).toEqual([]);
+    expect(out.omittedPassages).toBe(3);
+    expect(out.message).toMatch(/match/i);
+    expect(out.message).not.toContain('No passage matched');
   });
 });
 

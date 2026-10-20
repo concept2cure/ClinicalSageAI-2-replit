@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "4850366835b61b094940ac5160e0ecf9966adf2e38e3771698f930da8ca283d6",
+    "baseline-command.json": "d5de3a49ee7104e24a7ab60f2d73e5919afb1fd9e19d78755291ddf4c5fd6964",
+    "baseline-red.txt": "79dd27196436691892ab91d2fcffa6581202a890e24da7e2053338628b15da06",
+    "first-baseline-command.json": "c7f57b66f9ffa151f6981803f9b9108653bd1b090f9a1bb501daaf8327c1ac95",
+    "first-baseline-red.txt": "1d2cf6d008b9c0b477b503a950a6c5c9b70cd423539b267a6ce96e35695375bb",
+    "frozen-test.json": "dec6f21a4ea70efef7ae825a4f61ef505e3959ad30eae1b2061c61fc51029d91",
+    "lint-command.json": "843ab6bdf584d62d572d2c811f9772e3c0467b9217be603a36b06dc4230b6709",
+    "lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "excludes": "this manifest itself"
+}
