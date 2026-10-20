@@ -1,0 +1,35 @@
+{
+  "cwd": "/workspace/Concept2Cure",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "nodeVersion": "v22.23.3",
+  "before": {
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts": "9544137f904f4170f2ba8e23d087d38a640ee7fca28ab89028e88f038410032a",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "b72a19f20f534a2273d65cf4b649a47096b50f95159c0e109b6bc7ce8d7e418f",
+    "server/services/ocr/extractDocumentText.ts": "f2c8cb2fe756a915784cb7b495a3f669bfd853b90de241de710d21f0bbd5d25e",
+    "server/services/ocr/ocr-budget.ts": "846680cab3efb6832ea8f1e025111b287269834279a7a499a996b01eb44ac5b7",
+    "shared/data-room-processing-status.ts": "86396fc9a0bccac5f589586c67775f0008b896ca4b0a1eb7a56c5148d5f0aacf",
+    "server/services/storage/storage-provider.ts": "d08b95a99ef406e17e919c03a8ac14e7ab55779a0b3eb0e8a124a272e0462b76"
+  },
+  "startedUtc": "2026-10-20T22:02:02.698122+00:00",
+  "after": {
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts": "9544137f904f4170f2ba8e23d087d38a640ee7fca28ab89028e88f038410032a",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "b72a19f20f534a2273d65cf4b649a47096b50f95159c0e109b6bc7ce8d7e418f",
+    "server/services/ocr/extractDocumentText.ts": "f2c8cb2fe756a915784cb7b495a3f669bfd853b90de241de710d21f0bbd5d25e",
+    "server/services/ocr/ocr-budget.ts": "846680cab3efb6832ea8f1e025111b287269834279a7a499a996b01eb44ac5b7",
+    "shared/data-room-processing-status.ts": "86396fc9a0bccac5f589586c67775f0008b896ca4b0a1eb7a56c5148d5f0aacf",
+    "server/services/storage/storage-provider.ts": "d08b95a99ef406e17e919c03a8ac14e7ab55779a0b3eb0e8a124a272e0462b76"
+  },
+  "finishedUtc": "2026-10-20T22:02:05.178386+00:00",
+  "exitCode": 1
+}
