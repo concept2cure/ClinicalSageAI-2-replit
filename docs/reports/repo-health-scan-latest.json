@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-19T13:47:27.192Z",
+  "generatedAt": "2026-10-20T02:46:21.901Z",
   "git": {
-    "sha": "2dc1e396d040c5a7b14b91af6e70dab3b03c4b4f",
+    "sha": "dd83686326df207df423a07a3b2dc3c20fb25d1c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2225,7 +2225,7 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 376909
+        "bytes": 379378
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2357,7 +2357,7 @@
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 119061
+        "bytes": 119599
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2507,7 +2507,7 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3471
+        "lines": 3489
       },
       {
         "file": "server/services/module3Composer.ts",
