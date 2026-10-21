@@ -66,13 +66,28 @@
       "exitCode": 0,
       "log": "backend-type-fix-green.txt",
       "note": "Type-only row annotation; these cases repeat the 17 in backendFocused."
+    },
+    "incomingVault": {
+      "command": "vitest run8changedVault/authoringcomponentandSQLsuites",
+      "files": 8,
+      "testsPassed": 139,
+      "todo": 1,
+      "exitCode": 0,
+      "log": "incoming-vault-tests.txt",
+      "sourceBindings": "incoming-source-bindings.json"
+    },
+    "buildFinal": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "build-final.txt"
     }
   },
   "typecheck": {
     "command": "node scripts/ci/typecheck-no-regression.mjs --incremental",
     "log": "typecheck.txt",
     "exitCode": 0,
-    "errors": 0
+    "errors": 0,
+    "qualificationScope": "PM source tree before concurrent Vault merge; the ordinary pre-push gate qualifies the final merged tree and is retained in the publication receipt/push log."
   },
   "publication": {
     "branch": "concept2cure-v2",
