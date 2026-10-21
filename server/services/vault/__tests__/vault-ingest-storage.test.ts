@@ -103,7 +103,7 @@ const BYTES = Buffer.from('%PDF-1.7 a governed document');
 
 /** A transaction client whose INSERT is captured for inspection. */
 function txClient(
-  insertReturns: Array<Record<string, unknown>> = [{ id: 'doc-1', processing_status: 'PENDING' }],
+  insertReturns?: Array<Record<string, unknown>>,
   fail: { on: RegExp; err: unknown } | null = null,
 ) {
   const calls: Array<{ sql: string; params: unknown[] }> = [];
@@ -113,7 +113,10 @@ function txClient(
       if (fail && fail.on.test(String(sql))) throw fail.err;
       const admitted = currentAccessRows(sql);
       if (admitted) return { rows: admitted, rowCount: admitted.length };
-      if (/INSERT INTO vault\.documents/.test(String(sql))) return { rows: insertReturns, rowCount: insertReturns.length };
+      if (/INSERT INTO vault\.documents/.test(String(sql))) {
+        const rows = insertReturns ?? [{ id: params?.[30], processing_status: 'PENDING', storage_version_id: 'ver-abc' }];
+        return { rows, rowCount: rows.length };
+      }
       return { rows: [], rowCount: 0 };
     }),
     release: vi.fn(),
@@ -198,6 +201,35 @@ describe('the bytes go to the storage provider', () => {
     expect(insert!.params).toContain(`vault://${ORG}/${PROGRAM}/csr-201.pdf`);
     expect(insert!.sql).toMatch(/storage_version_id/);
     expect(insert!.sql).toMatch(/storage_provider/);
+  });
+});
+
+describe('canonical admission ownership is based on the returned row UUID', () => {
+  it('mints an appended INSERT UUID and confirms only the candidate row', async () => {
+    const { client, calls } = txClient();
+    const queryTransaction = client.query.getMockImplementation()!;
+    client.query.mockImplementation(async (sql, params) => {
+      if (/INSERT INTO vault\.documents/.test(sql)) {
+        calls.push({ sql, params: params ?? [] });
+        return { rows: [{ id: params?.[30], processing_status: 'PENDING' }], rowCount: 1 };
+      }
+      return queryTransaction(sql, params);
+    });
+    connect.mockResolvedValue(client);
+    const result = await ingestVaultDocument(args());
+    expect(result).toMatchObject({ ok: true, admission: { created: true } });
+    const insert = calls.find(call => /INSERT INTO vault\.documents/.test(call.sql))!;
+    expect(insert.params[30]).toMatch(/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i);
+    expect(insert.sql).toMatch(/\$31/);
+  });
+
+  it('does not claim creation when ON CONFLICT returns a winner after an empty pre-read', async () => {
+    const { client } = txClient([{ id: 'already-recorded-winner', processing_status: 'PENDING' }]);
+    connect.mockResolvedValue(client);
+    const result = await ingestVaultDocument(args());
+    expect(result).toMatchObject({ ok: true, document: { id: 'already-recorded-winner' }, admission: { created: false } });
+    expect(result).not.toHaveProperty('reupload');
+    expect(del).toHaveBeenCalledWith('ver-abc', ORG);
   });
 });
 
@@ -390,11 +422,11 @@ describe('when the copy cannot be removed, the refusal says so', () => {
     connect.mockResolvedValue(client);
     recordRefersToStoredBytes = true;
     const res = await ingestVaultDocument(args());
-    expect(res).toMatchObject({ ok: false, code: 'INGEST_FAILED' });
+    expect(res).toMatchObject({ ok: false, status: 503, code: 'OUTCOME_UNKNOWN' });
     expect(del).not.toHaveBeenCalled();
     const message = (res as { message: string }).message;
     expect(message).not.toMatch(/Nothing was saved/);
-    expect(message).toMatch(/check the Vault/);
+    expect(message).toMatch(/Review the current Vault/);
   });
 });
 

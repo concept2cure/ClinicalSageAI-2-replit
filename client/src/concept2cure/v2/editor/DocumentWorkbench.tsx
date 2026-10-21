@@ -6250,8 +6250,9 @@ export function DocumentWorkbench({
         </aside>
       )}
 
-      {fileToVaultOpen && activeDoc && (
+      {activeDoc && (
         <FileToVaultDialog
+          open={fileToVaultOpen}
           docId={activeDoc.id}
           docTitle={activeDoc.title}
           docStatus={activeDoc.status}

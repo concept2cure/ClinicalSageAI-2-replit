@@ -622,8 +622,9 @@ export function DocumentCanvas({
         return beside && paneEl ? createPortal(region, paneEl) : region;
       })()}
 
-      {fileToVaultOpen && doc && (
+      {doc && (
         <FileToVaultDialog
+          open={fileToVaultOpen}
           docId={doc.id}
           docTitle={doc.title}
           docStatus={doc.status}

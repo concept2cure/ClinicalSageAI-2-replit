@@ -1,0 +1,31 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "nodeVersion": "v22.23.3",
+  "argv": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts"
+  ],
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "dateUtc": "2026-10-21",
+  "startTimeReportedByVitest": "01:12:31",
+  "durationSecondsReportedByVitest": 8.77,
+  "finishedAtExitFileTimestamp": "2026-10-21T01:12:40.452Z",
+  "exitCode": 1,
+  "summary": [
+    "Test Files  2 failed (2)",
+    "Tests  3 failed | 57 passed (60)"
+  ],
+  "sourcePinFile": "ambiguity-red-production.sha256",
+  "sourcePinNote": "Additional RED before transaction acknowledgement and raced-copy cleanup fixes.",
+  "rawLog": "ambiguity-red.raw.log.gz",
+  "rawSha256": "4d2e254fd0b63cc39c4168cbf546f35d7feae87ed3541c1c82dff5690242ab0d",
+  "gzipSha256": "b43cfd5285aa285106400d5a8280d4432f8fad1729f3a2092d080e5a89af9746"
+}

@@ -1,0 +1,86 @@
+{
+  "qualifiedAt": "2026-10-21T01:25:36.005700+00:00",
+  "results": [
+    {
+      "gate": "gate-single-native-canvas",
+      "receipt": "gate-single-native-canvas.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-canvas-path",
+      "receipt": "gate-canvas-path.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-check-editor-integrity",
+      "receipt": "gate-check-editor-integrity.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-design-system",
+      "receipt": "gate-design-system.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-token-cascade",
+      "receipt": "gate-token-cascade.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-token-contrast",
+      "receipt": "gate-token-contrast.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-check-phantom-tokens",
+      "receipt": "gate-check-phantom-tokens.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-gateway-bypass",
+      "receipt": "gate-gateway-bypass.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-sql-interpolation",
+      "receipt": "gate-sql-interpolation-final.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-migration-set-order",
+      "receipt": "gate-migration-set-order.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-migration-guard-order",
+      "receipt": "gate-migration-guard-order.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-migration-reachability",
+      "receipt": "gate-migration-reachability.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-migration-deploy-path",
+      "receipt": "gate-migration-deploy-path.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-migration-drop-safety",
+      "receipt": "gate-migration-drop-safety.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-migration-prefix-collisions",
+      "receipt": "gate-migration-prefix-collisions.json",
+      "exitCode": 0
+    },
+    {
+      "gate": "gate-repo-health",
+      "receipt": "gate-repo-health.json",
+      "exitCode": 0
+    }
+  ],
+  "sqlAllowanceReduced": "sql-interpolation-ratchet.json"
+}
