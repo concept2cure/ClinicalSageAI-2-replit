@@ -13,6 +13,8 @@ export interface IndSponsorRecord {
   contactName: string | null;
   contactPhone: string | null;
   contactEmail: string | null;
+  signatoryName: string | null;
+  signatoryTitle: string | null;
   revision: string;
 }
 export interface IndProgramFacts {
@@ -38,7 +40,7 @@ const nullableText = (value: unknown) => value === null || typeof value === 'str
 const versioned = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 100;
 export function isIndSponsorRecord(value: unknown): value is IndSponsorRecord {
   return object(value) && typeof value.id === 'string' && UUID.test(value.id) && typeof value.name === 'string' && value.name.trim() !== ''
-    && versioned(value.revision) && ['duns', 'contactName', 'contactPhone', 'contactEmail'].every(key => nullableText(value[key]));
+    && versioned(value.revision) && ['duns', 'contactName', 'contactPhone', 'contactEmail', 'signatoryName', 'signatoryTitle'].every(key => nullableText(value[key]));
 }
 export function isIndProgramFacts(value: unknown): value is IndProgramFacts {
   if (!object(value) || typeof value.id !== 'string' || !UUID.test(value.id) || !object(value.formMetadata)) return false;
@@ -68,12 +70,14 @@ function Reason({ label, value, onChange, disabled }: { label: string; value: st
   </label>;
 }
 
-type SponsorValues = Pick<IndSponsorRecord, 'name' | 'duns' | 'contactName' | 'contactPhone' | 'contactEmail'>;
-const emptySponsor = (): SponsorValues => ({ name: '', duns: '', contactName: '', contactPhone: '', contactEmail: '' });
+type SponsorValues = Pick<IndSponsorRecord, 'name' | 'duns' | 'contactName' | 'contactPhone' | 'contactEmail' | 'signatoryName' | 'signatoryTitle'>;
+const emptySponsor = (): SponsorValues => ({ name: '', duns: '', contactName: '', contactPhone: '', contactEmail: '', signatoryName: '', signatoryTitle: '' });
 const sponsorFields: Array<{ key: keyof SponsorValues; label: string; max: number; type?: string }> = [
   { key: 'name', label: 'Sponsor legal name', max: 200 }, { key: 'duns', label: 'DUNS number', max: 16 },
   { key: 'contactName', label: 'Regulatory contact name', max: 200 }, { key: 'contactPhone', label: 'Regulatory contact telephone', max: 40, type: 'tel' },
   { key: 'contactEmail', label: 'Regulatory contact email', max: 254, type: 'email' },
+  { key: 'signatoryName', label: 'Authorized representative name', max: 200 },
+  { key: 'signatoryTitle', label: 'Authorized representative title', max: 200 },
 ];
 function sponsorWriteFields(values: SponsorValues): SponsorValues {
   return Object.fromEntries(sponsorFields.map(field => [field.key, field.key === 'name' ? values.name.trim() : clearable(values[field.key] ?? '')])) as SponsorValues;
@@ -125,7 +129,7 @@ function SponsorEditor({ editing, isCurrent, onRecorded, onClose, onBusy, onHold
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 8 }}>
       {sponsorFields.map(field => <label key={field.key} style={{ fontSize: 12 }}>{field.label}<input className="c2c-input" type={field.type ?? 'text'} value={values[field.key] ?? ''} maxLength={field.max} disabled={busy || unconfirmed || locked} onChange={event => setValues(old => ({ ...old, [field.key]: event.target.value }))} /></label>)}
     </div>
-    <p style={{ fontSize: 12, color: 'var(--text-400)' }}>DUNS is nine digits. FDA packaging requires a recorded DUNS and complete regulatory contact; incomplete sponsor records can be saved for completion.</p>
+    <p style={{ fontSize: 12, color: 'var(--text-400)' }}>DUNS is nine digits. FDA packaging requires a recorded DUNS and complete regulatory contact; incomplete sponsor records can be saved for completion. The authorized representative fields fill the forms; recording them does not sign a form.</p>
     <Reason label="Reason for sponsor record change" value={reason} onChange={setReason} disabled={busy || unconfirmed || locked} />
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       <button className="nda-open" disabled={busy || unconfirmed || locked || !values.name.trim() || !reasonValid(reason)} onClick={() => void save()}>{busy ? 'Saving sponsor…' : 'Save sponsor record'}</button>
@@ -250,7 +254,7 @@ function ProgramFactFields({ model, indTypes }: { model: IdentityModel; indTypes
 function RecordedSponsor({ program }: { program: IndProgramFacts }) {
   const row = program.boundSponsor;
   if (!row) return program.applicantSponsorId ? <p role="status">The bound sponsor record could not be verified. Reload recorded program facts before saving.</p> : null;
-  return <p style={{ fontSize: 12 }}>Recorded sponsor: {row.name}. DUNS: {row.duns ?? 'not recorded'}. Regulatory contact: {row.contactName ?? 'not recorded'} · {row.contactPhone ?? 'telephone not recorded'} · {row.contactEmail ?? 'email not recorded'}.</p>;
+  return <p style={{ fontSize: 12 }}>Recorded sponsor: {row.name}. DUNS: {row.duns ?? 'not recorded'}. Regulatory contact: {row.contactName ?? 'not recorded'} · {row.contactPhone ?? 'telephone not recorded'} · {row.contactEmail ?? 'email not recorded'}. Authorized representative: {row.signatoryName ?? 'name not recorded'} · {row.signatoryTitle ?? 'title not recorded'}.</p>;
 }
 function IdentityStatus({ model, program }: { model: IdentityModel; program: IndProgramFacts }) {
   return <>

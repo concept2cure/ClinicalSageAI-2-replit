@@ -13,6 +13,11 @@ Evidence: `docs/evidence/MR-10/2026-10-21-applicant-identity/`.
   by `scripts/db/migration-set.mjs`. No product client calls these sponsor routes.
   The route strips identity keys but does not actually run the advertised Zod
   validation. Sponsor writes currently have no required reason.
+  The same registry already stores `signatory_name`/`signatory_title`, and
+  `form-context-assembler.ts` maps them to authorized representative fields.
+  Once bound program forms pin those recorded facts, the reached registry
+  editor must expose these existing two fields too; otherwise users cannot
+  complete required signatory facts through the UI.
 - `docs/evidence/D7-IND-MASTER-DATA-ON-DEPLOY-PATH/README.md` explicitly names
   `ind_sponsors.duns` and its contact columns as the intended home for CAT2-02.
   The MR-10 work order's proposal to copy them into program columns predates
@@ -175,7 +180,8 @@ not claim full MR-10 Stage 4 or D7 closure.
    proof is not labelled tampered; it simply does not cover the current FDA
    identity. Missing/mismatched run identity stays an explicit unsigned dry run.
 9. Extend `IndFormsPanel` in place with application number, sponsor selection,
-   required reason and a compact existing-registry editor. Registry save and
+   required reason and a compact existing-registry editor, including its
+   existing signatory name/title used by program-backed forms. Registry save and
    program binding are separate explicit actions/receipts. A newly created
    sponsor is unbound until selected and saved to the program; editing shared
    sponsor data states that every bound program uses it. Reuse existing

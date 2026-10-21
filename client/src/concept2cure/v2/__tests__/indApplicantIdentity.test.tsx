@@ -20,7 +20,7 @@ const SID = '819edd20-9af6-41e7-a206-c00ecb4671b9';
 const VERSION = '2026-10-21T15:20:03.123456Z';
 const NEXT = '2026-10-21T15:20:04.123456Z';
 const AUDIT = { persisted: true, chained: true };
-const SPONSOR = { id: SID, name: 'Recorded test sponsor', duns: '123456789', contactName: 'Test contact', contactPhone: '+1 212 555 0100', contactEmail: 'contact@example.test', revision: VERSION };
+const SPONSOR = { id: SID, name: 'Recorded test sponsor', duns: '123456789', contactName: 'Test contact', contactPhone: '+1 212 555 0100', contactEmail: 'contact@example.test', signatoryName: null as string | null, signatoryTitle: null as string | null, revision: VERSION };
 const PROGRAM = {
   id: ID, code: 'TEST-IND', name: 'Recorded test program', programType: 'IND', primaryAgency: 'FDA',
   sponsorName: 'Recorded organization', productName: 'Recorded test product', indication: 'Test indication',
@@ -115,9 +115,12 @@ describe('recorded applicant facts in the existing forms panel', () => {
     fireEvent.change(within(editor).getByLabelText('Regulatory contact name'), { target: { value: SPONSOR.contactName } });
     fireEvent.change(within(editor).getByLabelText('Regulatory contact telephone'), { target: { value: SPONSOR.contactPhone } });
     fireEvent.change(within(editor).getByLabelText('Regulatory contact email'), { target: { value: SPONSOR.contactEmail } });
+    fireEvent.change(within(editor).getByLabelText('Authorized representative name'), { target: { value: 'Recorded test representative' } });
+    fireEvent.change(within(editor).getByLabelText('Authorized representative title'), { target: { value: 'Authorized officer' } });
     fireEvent.change(within(editor).getByLabelText('Reason for sponsor record change'), { target: { value: 'Record verified sponsor identity' } });
     fireEvent.click(within(editor).getByRole('button', { name: 'Save sponsor record' }));
     await screen.findByText(/Sponsor record saved.*not bound to this program/i);
+    expect(api.request).toHaveBeenCalledWith('POST', '/api/ind-master-data/sponsors', expect.objectContaining({ signatoryName: 'Recorded test representative', signatoryTitle: 'Authorized officer' }));
     expect(api.request.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(0);
     expect((screen.getByLabelText('Applicant sponsor record') as HTMLSelectElement).value).toBe('');
   });
@@ -132,9 +135,11 @@ describe('recorded applicant facts in the existing forms panel', () => {
     expect(screen.getByText(/Every program bound to this sponsor uses changes/i)).toBeTruthy();
     const editor = screen.getByRole('group', { name: 'Sponsor registry record' });
     fireEvent.change(within(editor).getByLabelText('Regulatory contact name'), { target: { value: 'Changed test contact' } });
+    fireEvent.change(within(editor).getByLabelText('Authorized representative name'), { target: { value: 'Updated test representative' } });
+    fireEvent.change(within(editor).getByLabelText('Authorized representative title'), { target: { value: 'Regulatory director' } });
     fireEvent.change(within(editor).getByLabelText('Reason for sponsor record change'), { target: { value: 'Update the confirmed contact' } });
     fireEvent.click(within(editor).getByRole('button', { name: 'Save sponsor record' }));
-    await waitFor(() => expect(api.request).toHaveBeenCalledWith('PATCH', `/api/ind-master-data/sponsors/${SID}`, expect.objectContaining({ expectedRevision: VERSION, reason: 'Update the confirmed contact', contactName: 'Changed test contact' })));
+    await waitFor(() => expect(api.request).toHaveBeenCalledWith('PATCH', `/api/ind-master-data/sponsors/${SID}`, expect.objectContaining({ expectedRevision: VERSION, reason: 'Update the confirmed contact', contactName: 'Changed test contact', signatoryName: 'Updated test representative', signatoryTitle: 'Regulatory director' })));
     await screen.findByText(/sponsor record was saved.*audit entry could not be confirmed/i);
   });
 
@@ -353,4 +358,51 @@ describe('all recorded sponsor and investigator inputs reach field checks', () =
     expect(screen.getByText('Investigator 2: investigator_email')).toBeTruthy();
     expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/no required fields missing/));
   });
+});
+
+
+describe('existing sponsor authorized representative facts', () => {
+  it.each(['signatoryName', 'signatoryTitle'])('holds a sponsor save when the receipt omits %s', async missing => {
+    const base = api.request.getMockImplementation()!;
+    api.request.mockImplementation((method, path, body) => method === 'POST' ? Promise.resolve(response({ ...SPONSOR, ...body, [missing]: undefined, revision: NEXT, auditTrail: AUDIT }, 201)) : base(method, path, body));
+    await open(); await screen.findByRole('option', { name: /Recorded test sponsor/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Record a sponsor' }));
+    fireEvent.change(screen.getByLabelText('Sponsor legal name'), { target: { value: 'Recorded representative test sponsor' } });
+    fireEvent.change(screen.getByLabelText('Authorized representative name'), { target: { value: 'Recorded representative' } });
+    fireEvent.change(screen.getByLabelText('Authorized representative title'), { target: { value: 'Authorized officer' } });
+    fireEvent.change(screen.getByLabelText('Reason for sponsor record change'), { target: { value: 'Record confirmed representative' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save sponsor record' }));
+    await screen.findByText(/could not confirm whether the sponsor record was saved/i);
+    expect((screen.getByRole('button', { name: 'Save sponsor record' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it('holds a sponsor update when the returned representative differs from the submitted fact', async () => {
+    const base = api.request.getMockImplementation()!;
+    api.request.mockImplementation((method, path, body) => method === 'PATCH' ? Promise.resolve(response({ ...SPONSOR, ...body, signatoryTitle: 'A different title', revision: NEXT, auditTrail: AUDIT })) : base(method, path, body));
+    await open(); await screen.findByRole('option', { name: /Recorded test sponsor/ });
+    fireEvent.change(screen.getByLabelText('Applicant sponsor record'), { target: { value: SID } });
+    fireEvent.click(screen.getByRole('button', { name: 'Edit selected sponsor' }));
+    fireEvent.change(screen.getByLabelText('Authorized representative name'), { target: { value: 'Recorded representative' } });
+    fireEvent.change(screen.getByLabelText('Authorized representative title'), { target: { value: 'Authorized officer' } });
+    fireEvent.change(screen.getByLabelText('Reason for sponsor record change'), { target: { value: 'Record confirmed representative' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save sponsor record' }));
+    await screen.findByText(/could not confirm whether the sponsor record was saved/i);
+    expect((screen.getByRole('button', { name: 'Save sponsor record' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it('reads and clears an existing representative title while retaining other recorded facts', async () => {
+    sponsors = [{ ...SPONSOR, signatoryName: 'Recorded representative', signatoryTitle: 'Authorized officer' }];
+    program = { ...program, applicantSponsorId: SID, boundSponsor: sponsors[0], sponsorName: SPONSOR.name };
+    const base = api.request.getMockImplementation()!;
+    api.request.mockImplementation((method, path, body) => method === 'PATCH' ? Promise.resolve(response({ ...sponsors[0], ...body, revision: NEXT, auditTrail: AUDIT })) : base(method, path, body));
+    await open(); await screen.findByRole('option', { name: /Recorded test sponsor/ });
+    expect(screen.getByText(/Authorized representative: Recorded representative.*Authorized officer/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit selected sponsor' }));
+    expect((screen.getByLabelText('Authorized representative name') as HTMLInputElement).value).toBe('Recorded representative');
+    expect((screen.getByLabelText('Authorized representative title') as HTMLInputElement).value).toBe('Authorized officer');
+    fireEvent.change(screen.getByLabelText('Authorized representative title'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('Reason for sponsor record change'), { target: { value: 'Clear the superseded title' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save sponsor record' }));
+    await screen.findByText('Sponsor record saved.');
+    expect(api.request).toHaveBeenCalledWith('PATCH', `/api/ind-master-data/sponsors/${SID}`, expect.objectContaining({ signatoryName: 'Recorded representative', signatoryTitle: null, expectedRevision: VERSION }));
+  });
+
 });
