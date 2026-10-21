@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-20T23:42:48.505616+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "-t",
+    "valid different program UUID"
+  ],
+  "elapsedSeconds": 7.583,
+  "exitCode": 1,
+  "sources": {
+    "server/services/ana/saved-template-review.ts": "4cf50b21ced6829107aad43bf7b5590aab7c340f289aadf4bbf9a9535a9908c1",
+    "server/services/ana/saved-document-critique.ts": "23a198966f7a327111fbc10c7621999f9c044ce81fa046d58feeb50364385b8e",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts": "67a994cf04c2746bbcf2c60b705204ef8c4c89725953dd7a02a97f6d7984e21e",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172"
+  },
+  "sourceDrift": [],
+  "rawOutput": "program-scope-red-output.txt.gz",
+  "outputSha256": "8696b9ece41e3fe100cd71773af21dbc26ad2499b55b6770372984750dfef5c7",
+  "summary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 26 skipped (27)"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "at": "2026-10-20T23:47:40.306095+00:00",
+  "rootChanges": {
+    "reviewer": "/root/regional_authoring_audit",
+    "mode": "Read-only; no edits or tests",
+    "conclusion": "No blockers",
+    "findings": [
+      "Existing Notified Body mapping runtime values preserved; only3 existing classes receive EMA storage key",
+      "Other classes and Japanese registered certification body remain distinct",
+      "Market/channel behavior and transport limits unchanged",
+      "Prompt keeps section source and parent identity separate; original-record/manual/readiness limits retained"
+    ],
+    "pinsObservedByRoot": {
+      "server/services/c2c/document-class.ts": "be2587c95089206d94e01213f5857b6112fa66f0752f2737acfb2b2763f63445",
+      "server/services/regulatory/market-support.ts": "f63b4b2bb99a9e1f6e9772b25c7a63aabd6085bf525dfdd7cfa1f44cee001579",
+      "client/src/concept2cure/v2/editor/authoringOversight.ts": "6ec2ab4d14b67f49c9d727e44ebc3483a3735d6908ead45480aae74a15ee345e"
+    }
+  },
+  "savedReviewChanges": {
+    "reviewer": "/root",
+    "mode": "Read-only production/test/evidence inspection",
+    "conclusion": "No blockers after actual program identity check added",
+    "findings": [
+      "Solecaller passes actual admitted program identity; receipt program is compared directly",
+      "Canonical guidance/source parser retained; exact section source and limits enter snapshot and paging",
+      "Parent identity and scores unchanged; historical nonassembly identity-only records remain qualified",
+      "Missing full stored-template assembly reference refuses complete review rather than borrow parent source"
+    ],
+    "pinsObservedByRoot": {
+      "server/services/ana/saved-template-review.ts": "44e01675a2429f97bd03a9843e962ee075432e5071d2afeef342ab9694eb0ac2",
+      "server/services/ana/saved-document-critique.ts": "21c54de1f5f09f8aa5a876f167f1e54e6912a0a48d2431bbeb9d88dbf4505d2a"
+    }
+  },
+  "assemblyChanges": {
+    "at": "2026-10-20T23:59:25.595696+00:00",
+    "reviewer": "/root/regional_authoring_audit",
+    "mode": "Read-only production inspection; no edits, tests or Git mutations",
+    "conclusion": "No blockers after implicit IND, unknown receiving region and explicit authority/ICH-storage conflicts resolved",
+    "findings": [
+      "Actual tenant/project/live-program lookup precedes template/source reads",
+      "Commit shares locks on bound filing/program and recomputes server-derived filing snapshot",
+      "Target snapshot includes binding without altering template source snapshot",
+      "Common medicinal Modules2\u20135 preserved; implicit USIND administrative/whole templates require actual USIND",
+      "Regional builtin/stored templates require known matching receiving region",
+      "Explicit authority must match actual region and compatible storage agency"
+    ],
+    "pinsObservedByReviewer": {
+      "server/services/authoring/authoring-assembly-source.ts": "d957f5ec6cc8866d21e8a25aeeb8105828be9a324553762f126abddd02aae9b9",
+      "server/services/authoring/authoring-assembly-plan.ts": "cc47f6e9b96d72f15856fbd5c319c3974d94016faff71a80d0a150aa894ae5ee",
+      "server/services/market-specs/document-preparation.ts": "89f691d9f8b4bc6a70c45a582d09891422cef3d536ea138d3c43673dce8b7685"
+    }
+  },
+  "queryOnlyFollowup": {
+    "at": "2026-10-21T00:01:43.866949+00:00",
+    "reviewer": "/root/regional_authoring_audit",
+    "mode": "Read-only query comparison; no edits/tests/Git mutations",
+    "conclusion": "No new blocker",
+    "findings": [
+      "Both fixed literals retain identical SELECT/JOIN/WHERE and actual $1\u2013$3 binding",
+      "Tenant/project/live-program guards remain unchanged",
+      "Commit retains FOR SHARE OF d,p; preview has no lock clause"
+    ],
+    "sourceSha256": "9b88fa8db2a9868506a0f549bba81dcabc13349b602bd31e01cbe2e3df4c5bf2"
+  }
+}

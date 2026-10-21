@@ -10,6 +10,19 @@ const classes = [
   ['todokede', 'PMDA', 'pmda'], ['ivd_approval', 'PMDA', 'pmda'], ['jp_cdx', 'PMDA', 'pmda'],
 ] as const;
 
+describe('Notified Body document identity reuses the existing pure class resolver', () => {
+  it.each(['mdr', 'ivdr', 'cer'])('%s resolves the existing pack key for every recorded body label', type => {
+    for (const agency of ['EU / Notified Body', 'Notified_Body', 'notified body', 'NB']) {
+      expect(resolveDocumentClass(type, agency)).toEqual({ docType: type, agency: 'ema' });
+    }
+  });
+  it.each(['nda', 'maa', 'pma', 'mdl', 'ivd_licence', 'ninsho', 'device'])('%s does not gain a Notified Body filing identity', type => {
+    for (const agency of ['EU / Notified Body', 'Notified_Body', 'notified body', 'NB']) {
+      expect(resolveDocumentClass(type, agency)).toBeNull();
+    }
+  });
+});
+
 describe('exact regional device application classes reuse the governed document path', () => {
   it.each(classes)('%s resolves only its actual authority', (type, agency, code) => {
     expect(resolveDocumentClass(type, agency)).toEqual({ docType: type, agency: code });

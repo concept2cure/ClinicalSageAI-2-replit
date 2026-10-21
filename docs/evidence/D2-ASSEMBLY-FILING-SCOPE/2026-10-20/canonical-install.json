@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-20T23:56:58.019624+00:00",
+  "argv": [
+    "npm",
+    "ci",
+    "--ignore-scripts",
+    "--no-audit",
+    "--no-fund"
+  ],
+  "elapsedSeconds": 40.587,
+  "exitCode": 0,
+  "lockSha256Before": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+  "lockSha256After": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+  "rawOutput": "canonical-install-output.txt.gz",
+  "outputSha256": "63e4bb4e5816a325332735409b74301ee79c8a3dbabe041f0c0572b42a75623f",
+  "reason": "Qualify canonical38c7f1606 lockfile after incoming Vite/follow-redirects updates. Existing package lifecycle scripts are not needed by this targeted test/build cohort. No package or lockfile edits."
+}

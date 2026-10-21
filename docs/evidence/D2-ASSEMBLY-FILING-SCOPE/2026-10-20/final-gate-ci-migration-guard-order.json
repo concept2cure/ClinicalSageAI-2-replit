@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:01:31.516728+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-guard-order"
+  ],
+  "elapsedSeconds": 0.223,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "rawOutput": "final-gate-ci-migration-guard-order-output.txt.gz",
+  "outputSha256": "ae70966a988d0768dac41bc4aead394c7ea4694b5524b8789239964d94301ba6",
+  "stdout": "[ci:migration-guard-order] OK \u2014 every guarded table is created before it is guarded (0 baselined).\n"
+}

@@ -306,7 +306,7 @@ function assertDeviceComponentFiling(scope: DocumentPreparationScope): void {
   }
 }
 
-function assertPreparationScope(scope: DocumentPreparationScope, family: string | undefined): void {
+export function assertPreparationScope(scope: DocumentPreparationScope, family: string | undefined): void {
   const template = scope.templateId ? getDocumentTemplate(scope.templateId) : undefined;
   const device = isDeviceDocumentScope(scope);
   const entryDevice = scope.entry && isDeviceDocumentScope({ entry: scope.entry });
