@@ -105,7 +105,11 @@ strict lint pass are in `client/binding-fixture/`; production code did not chang
 `qualified-source-freeze.json` records the route-comment correction and the
 47-suite selection. `release-source-freeze.json` records the sole test-mock
 correction and explicitly pins the lowered SQL baseline: all 80 final inputs
-match. Compiler/build/runtime input hashes are unchanged by that test correction.
+match at that qualification. Compiler/build/runtime input hashes are unchanged by that test correction.
+The publication check then removed one extra EOF newline byte from the types-only
+extraction; `publication-whitespace-note.json` records the exact byte change and
+`publication-source-freeze.json` pins the final 80 inputs. No semantic change
+requires a repeated regression run; normal push hooks verify the final inputs.
 The later canonical catch-up to `440a1d006` contains only two repository-report
 documents; see `pre-publication-remote.json`. Raw command output, argv, exits,
 elapsed times and input/output hashes are retained beside the JSON receipts.

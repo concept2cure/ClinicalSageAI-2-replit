@@ -1,7 +1,7 @@
 {
   "qualifiedAt": "2026-10-21T01:34:01.891384+00:00",
   "canonicalBase": "440a1d0061aed53ef8a3e0772ef8c94351875880",
-  "sourceFreeze": "release-source-freeze.json",
+  "sourceFreeze": "publication-source-freeze.json",
   "sourcePinsMatched": 80,
   "regressions": {
     "passed": 616,
@@ -30,5 +30,6 @@
     "Vault source authoring lineage in the governance manifest",
     "Universal post-admission compensation and third-party use races are not qualified"
   ],
-  "scope": "Existing authoring \u2192 Vault continuity; one existing editor and existing Vault placement"
+  "scope": "Existing authoring \u2192 Vault continuity; one existing editor and existing Vault placement",
+  "postQualificationChange": "One EOF newline byte removed from a type-only declaration file; publication-whitespace-note.json"
 }

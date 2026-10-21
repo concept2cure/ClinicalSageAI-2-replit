@@ -95,4 +95,3 @@ export type VaultIngestResult =
     }
   /** VERSION_CONTENT_CONFLICT: the current version at that code, which a check-in adds to. */
   | { ok: false; status: number; code: string; message: string; headDocumentId?: string; headVersion?: string };
-

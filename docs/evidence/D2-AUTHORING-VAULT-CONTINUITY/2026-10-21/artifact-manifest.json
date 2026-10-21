@@ -1,7 +1,7 @@
 {
-  "createdAt": "2026-10-21T01:34:28.727502+00:00",
+  "createdAt": "2026-10-21T01:35:15.917105+00:00",
   "files": {
-    "README.md": "28fe35b0789cb5ad9a1f7fb87c2f2b9d9c173f043ad32d48861dd57faad7d95d",
+    "README.md": "68fbc0ef1d800e26730589dbb519185f34a96e2adec303fe89165ae601176757",
     "build.json": "ec75f115fb46a2f46db6ad2fa9b8cce05258c83e1a615e272b2501758500303c",
     "build.log.gz": "0d2fe33bdd4c0cf70558ef0ded598802db8eceb08a33888d5323ddf91f07268e",
     "canonical-catchup.json": "6a445ec765f3ac3c67c8f67858d2cfc49f2531163b63cd7e59c4a04a7af27a56",
@@ -83,7 +83,9 @@
     "merged-regressions.log.gz": "5ef38b89a15bfd13d63e1f5745551884e4607f2bf39edb2a7d0a622e50a482e5",
     "pre-publication-remote.json": "4a2b46d40f4733e1aa171f1f2913740281426928bebc0b75880850147db3131d",
     "pre-verification-remote.json": "d628aed722a1be0a4afbcc7c877c7756b66c2b8bc168e08476994d321ae2c6dc",
-    "publication-qualification.json": "81092eb03ca31f62e8366cb2586d9156750d6ffb4ceb9dee589ef9ee90552c89",
+    "publication-qualification.json": "c861a5060d92547d4f08565152b889399c3e4e79f36f5c2d21372d5ac4274637",
+    "publication-source-freeze.json": "fcb9aa0a4ca915024056dd01afd5d102bda1b2ef26694e9e67b006c0d03b262f",
+    "publication-whitespace-note.json": "2b3aa005b1156d272e2640237a3716277a0c8102ba09d87a10fcb8b60372badd",
     "qualified-source-freeze.json": "806cb596b24fb5f0d8969bb934c52ade789c1ca0085299d0cf30f8499ecd3826",
     "regression-selection.json": "a86f729bb9187fbec1119c87dbd033b6e69b75814445bb50a352a0100ca3fa4c",
     "release-changed-file-lint.json": "0ddc7a475b0a3616d5bdd012dd03876c0c96117b9a82530c1547a026f983548b",
