@@ -108,7 +108,7 @@ async function response(q: RequestSqlClient, ctx: ActorContext): Promise<Project
 }
 
 const fingerprint = (ctx: ActorContext) => JSON.stringify({ projectId: ctx.project.id, workspace: ctx.project.clientWorkspaceId,
-  owner: ctx.project.ownerId, creator: ctx.project.createdById, raw: ctx.snapshot.raw, visibility: ctx.snapshot.sharing.visibility, role: ctx.role });
+  status: ctx.project.status, owner: ctx.project.ownerId, creator: ctx.project.createdById, raw: ctx.snapshot.raw, visibility: ctx.snapshot.sharing.visibility, role: ctx.role });
 
 export async function readProjectSharing(req: Request): Promise<ProjectSharingResponse> {
   const q = requestPgClient(req);

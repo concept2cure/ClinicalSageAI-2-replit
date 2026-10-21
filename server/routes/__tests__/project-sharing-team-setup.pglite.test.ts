@@ -25,6 +25,7 @@ const B = '22222222-2222-4222-8222-222222222222';
 let pg: PGlite;
 let failMembers = false;
 let loseCommit = false;
+let archiveOnRoster = false;
 let zeroWrite: 'visibility' | 'revoke' | null = null;
 const discard = vi.fn();
 const statements: string[] = [];
@@ -37,6 +38,10 @@ function app(userId = 5, claimedRole = 'admin', workspace = 1, pinned = true) {
       ...(pinned ? { dbClient: { discard, async query(sql: string, params?: unknown[]) {
         statements.push(sql);
         if (failMembers && sql.includes('project-sharing:members')) throw Object.assign(new Error('private missing store'), { code: '42P01' });
+        if (archiveOnRoster && sql.startsWith('SELECT u.id,u.name,u.email,ou.role FROM organization_users')) {
+          archiveOnRoster = false;
+          await pg.exec("UPDATE projects SET status='archived' WHERE id=101");
+        }
         if ((zeroWrite === 'visibility' && sql.startsWith('INSERT INTO project_visibility_settings')) ||
             (zeroWrite === 'revoke' && sql.startsWith('UPDATE project_members'))) return { rows: [] };
         const result = await pg.query(sql, params);
@@ -69,7 +74,7 @@ beforeAll(async () => {
   for (const id of [5, 6, 7, 8, 9, 11]) await pg.query("INSERT INTO users(id,name,email,password_hash,status) VALUES($1,'Same Name',$2,'fixture','active')", [id, `member${id}@example.test`]);
 }, 60_000);
 beforeEach(async () => {
-  failMembers = false; loseCommit = false; zeroWrite = null; discard.mockReset(); statements.length = 0;
+  failMembers = false; loseCommit = false; archiveOnRoster = false; zeroWrite = null; discard.mockReset(); statements.length = 0;
   await pg.exec(`ALTER TABLE regulatory_audit_logs DROP CONSTRAINT IF EXISTS pm04_audit_refused;
     DELETE FROM regulatory_audit_logs; DELETE FROM project_members; DELETE FROM project_visibility_settings; DELETE FROM projects; DELETE FROM regulatory_programs;
     DELETE FROM organization_users; UPDATE users SET status='active'; UPDATE organizations SET status='active';
@@ -97,6 +102,13 @@ describe('current management read and membership setup', () => {
     expect(r.status).toBe(200);
     expect(r.body.data).toMatchObject({ canManage: false, candidates: [] });
     expect(r.body.data.members.every((m: { canRevoke: boolean; canSetRole: boolean }) => !m.canRevoke && !m.canSetRole)).toBe(true);
+  });
+  it('refuses stale management controls when the project is archived during the roster read', async () => {
+    archiveOnRoster = true;
+    const r = await request(app()).get(path());
+    expect(r.status, JSON.stringify(r.body)).toBe(503);
+    expect(r.body.error.code).toBe('PROJECT_ACCESS_CHANGED');
+    expect(r.body.data).toBeUndefined();
   });
   it('grants a current account despite a stale viewer claim and records the existing audit outcome', async () => {
     const r = await request(app(5, 'viewer')).put(memberPath(7)).send({ role: 'edit' });
