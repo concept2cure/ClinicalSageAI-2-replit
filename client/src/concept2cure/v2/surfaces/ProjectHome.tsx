@@ -7,7 +7,7 @@ import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers 
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
-import { PJ_LIFECYCLE, Ring, pjInitials } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, Ring } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
@@ -32,6 +32,8 @@ import { ComingLater } from './ProjectComingLater';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
 import { sourceReadView } from '@shared/data-room-processing-status';
+import type { ProjectTeamResponse } from '@shared/project-team';
+import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -130,14 +132,6 @@ const REGULATORY_PATH_LABEL: Record<string, string> = {
 const DEVICE_FLAG_LABEL: Record<string, string> = Object.fromEntries(DEVICE_FLAGS.map((f) => [f.id, f.label]));
 const isDeviceProgram = (productType: string | null | undefined): boolean =>
   (DEVICE_FAMILY_PRODUCT_TYPES as readonly string[]).includes(String(productType ?? '').toLowerCase());
-
-/** GET /api/c2c/projects/:id/team → { team: [...] } (project_members ∪ users). */
-interface TeamRow {
-  user_id: number | null;
-  role: string | null;
-  name: string | null;
-  email: string | null;
-}
 
 /** GET /api/c2c/projects/:id/activity → { activity: [...] } (audit_logs). */
 interface ActivityRow {
@@ -1425,7 +1419,7 @@ function ModuleRow({ w, match, onOpen }: {
 }
 
 function AuthorWorkspace({
-  pid, completion, readinessAsOf, onNav, teamState, activityState, wsState, docs, onRetryDocs, onOpenDoc,
+  pid, completion, readinessAsOf, onNav, teamState, onRetryTeam, activityState, wsState, docs, onRetryDocs, onOpenDoc,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
@@ -1434,7 +1428,8 @@ function AuthorWorkspace({
   /** "Measured …" for that figure, or null. */
   readinessAsOf: string | null;
   onNav: (id: string) => void;
-  teamState: DataState<{ team: TeamRow[] }>;
+  teamState: DataState<ProjectTeamResponse>;
+  onRetryTeam: () => void;
   activityState: DataState<{ activity: ActivityRow[] }>;
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
   /** GET /api/authoring/docs?programId= — the project's documents. */
@@ -1492,28 +1487,10 @@ function AuthorWorkspace({
           </section>
         )}
 
-        {/* Team & activity — REAL: project_members + audit_logs */}
+        {/* Sourced responsibility/sharing facts and the existing audit read. */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Team &amp; activity</h2></div>
-          <Anchored
-            state={teamState}
-            loadingText="Loading team…"
-            errorTitle="Couldn't load the project team"
-            errorHint="The project members read didn't respond. Sign in and retry, or check the service is reachable."
-            emptyTitle="No project members yet"
-            emptyHint="Members added to this project (with their role) appear here."
-            isEmpty={(d) => (d.team ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-team">
-                {(d.team ?? []).map((g, i) => {
-                  const nm = g.name || g.email || 'Member';
-                  return (
-                    <span key={i} className="pj-team-m"><span className="pj-team-av">{pjInitials(nm)}</span>{nm}{g.role && <span className="rd-chip tone-idle">{g.role}</span>}</span>
-                  );
-                })}
-              </div>
-            )}
-          />
+          <ProjectTeamResponsibilities programId={pid} state={teamState} onRetry={onRetryTeam} />
           <div style={{ marginTop: 12 }}>
             <Anchored
               state={activityState}
@@ -1631,7 +1608,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
-  const teamState = useLiveData<{ team: TeamRow[] }>(pid ? `/api/c2c/projects/${pid}/team` : null);
+  const { state: teamState, reload: reloadTeam } = useProjectTeam(pid);
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
   const wsState = useLiveData<{ workstreams: WorkstreamRow[] }>(pid ? `/api/c2c/projects/${pid}/workstreams` : null);
   /* The project's documents (FILING_SPINE.md F3), read once for the Author
@@ -1769,7 +1746,18 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         },
         team: teamState.loading || teamState.error || !Array.isArray(team)
           ? null
-          : team.slice(0, 12).map((t) => ({ name: t.name, role: t.role })),
+          : team.slice(0, 12).map((t) => ({
+              // Display labels may contain disambiguating email. Keep contact
+              // details on screen, outside model context (as on Projects).
+              entry_id: t.entry_id, user_id: t.user_id, identity: t.identity,
+              name: t.name && !t.name.includes('@') ? t.name : null, role: t.role, responsibilities: t.responsibilities,
+              sharing_role: t.sharing_role, sources: t.sources,
+            })),
+        teamProgramId: teamState.loading || teamState.error ? null : teamState.data?.program_id ?? null,
+        teamProjectId: teamState.loading || teamState.error ? null : teamState.data?.project_id ?? null,
+        teamTotal: teamState.loading || teamState.error || !team ? null : team.length,
+        teamTruncated: teamState.loading || teamState.error || !team ? null : team.length > 12,
+        teamAuthority: PROJECT_TEAM_AUTHORITY_NOTE,
         teamUnavailable: teamState.error ? 'the team read failed' : null,
         workstreams: wsState.loading || wsState.error || !Array.isArray(workstreams)
           ? null
@@ -2004,6 +1992,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               readinessAsOf={readinessAsOf}
               onNav={onNav}
               teamState={teamState}
+              onRetryTeam={reloadTeam}
               activityState={activityState}
               wsState={wsState}
               docs={docsRead}

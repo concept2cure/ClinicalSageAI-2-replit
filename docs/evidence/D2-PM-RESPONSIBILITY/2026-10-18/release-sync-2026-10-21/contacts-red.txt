@@ -1,0 +1,147 @@
+PM-03 compatibility red: current merged source still drops canonical object names.
+Command: npx vitest run --config vitest.config.ts server/services/c2c/__tests__/project-team.test.ts
+Focused service tests mock final canonical admission; native HTTP evidence is separate.
+v22.23.3
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/c2c/__tests__/project-team.test.ts
+{
+  "timestamp": "2026-10-21T00:21:26.778Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:21:26.780Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-team.test.ts
+{
+  "timestamp": "2026-10-21T00:21:26.780Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/project-team.test.ts
+[database] Database connection successful
+
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > uses each recorded source and never infers contributor, reviewer, approver, or observer 5ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > deduplicates only IDs while preserving lead, owner, creator, and durable member sources 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > ignores revoked rows but retains an independent owner or lead reference 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > does not take access roles from legacy JSON sharing when durable membership was read 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > keeps same-name accounts and a same-name legacy entry distinct, without matching email 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > retains unconfirmed account references without names, emails, or sharing 7ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > uses the shared member label convention for same names with distinct email addresses 2ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > uses an account reference when an active member has no display name or email 1ms
+ × server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > retains canonical profile object names and legacy strings only as unlinked recorded names 13ms
+   → expected [ { …(10) } ] to deeply equal [ { …(10) }, { …(10) }, { …(10) } ]
+ × server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > never turns freeform profile roles or matching object identity claims into account assignments 1ms
+   → expected [ 'user:5' ] to deeply equal [ 'user:5', 'recorded-name:0', …(1) ]
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > returns an actual empty roster with canonical scope and skips the account lookup 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > binds the admitted program, organization, project, and subject IDs on the supplied executor 2ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"projectId":12} 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"clientWorkspaceId":72} 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"actor":{"userId":5,"role":"viewer"}} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"actor":{"userId":6,"role":"member"}} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > propagates canonical denial after membership revocation without returning the roster 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed roster verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed members verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed accounts verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses a parent/anchor association that disappeared while loading 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses malformed recorded account IDs rather than publishing an invented account 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses a malformed durable sharing role 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5,"membership_role":""}]} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5,"membership_role":null}]} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5},{"id":5}]} 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > retains canonical profile object names and legacy strings only as unlinked recorded names
+AssertionError: expected [ { …(10) } ] to deeply equal [ { …(10) }, { …(10) }, { …(10) } ]
+
+- Expected
++ Received
+
+@@ -1,36 +1,8 @@
+  [
+    {
+      "email": null,
+-     "entry_id": "recorded-name:0",
+-     "identity": "recorded_name",
+-     "label": "Canonical contact",
+-     "name": "Canonical contact",
+-     "responsibilities": [],
+-     "role": null,
+-     "sharing_role": null,
+-     "sources": [
+-       "recorded_name",
+-     ],
+-     "user_id": null,
+-   },
+-   {
+-     "email": null,
+-     "entry_id": "recorded-name:1",
+-     "identity": "recorded_name",
+-     "label": "Named contact",
+-     "name": "Named contact",
+-     "responsibilities": [],
+-     "role": null,
+-     "sharing_role": null,
+-     "sources": [
+-       "recorded_name",
+-     ],
+-     "user_id": null,
+-   },
+-   {
+-     "email": null,
+      "entry_id": "recorded-name:3",
+      "identity": "recorded_name",
+      "label": "Legacy contact",
+      "name": "Legacy contact",
+      "responsibilities": [],
+
+ ❯ server/services/c2c/__tests__/project-team.test.ts:112:25
+    110|         { name: ' ' }, '  Legacy contact  ', { name: 99 }, null, [], {…
+    111|     const result = await ask(q);
+    112|     expect(result.team).toEqual([
+       |                         ^
+    113|       { entry_id: 'recorded-name:0', user_id: null, role: null, name: …
+    114|         identity: 'recorded_name', label: 'Canonical contact', respons…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > never turns freeform profile roles or matching object identity claims into account assignments
+AssertionError: expected [ 'user:5' ] to deeply equal [ 'user:5', 'recorded-name:0', …(1) ]
+
+- Expected
++ Received
+
+  [
+    "user:5",
+-   "recorded-name:0",
+-   "recorded-name:1",
+  ]
+
+ ❯ server/services/c2c/__tests__/project-team.test.ts:129:50
+    127|     }], members: [], people: [{ id: 5, name: 'Jordan', email: 'same@ex…
+    128|     const result = await ask(q);
+    129|     expect(result.team.map(row => row.entry_id)).toEqual(['user:5', 'r…
+       |                                                  ^
+    130|     expect(result.team[0]).toMatchObject({ user_id: 5, role: 'lead', r…
+    131|       sharing_role: null, sources: ['program_lead'] });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 24 passed (26)
+   Start at  00:21:24
+   Duration  2.09s (transform 947ms, setup 103ms, import 1.62s, tests 44ms, environment 0ms)
+
