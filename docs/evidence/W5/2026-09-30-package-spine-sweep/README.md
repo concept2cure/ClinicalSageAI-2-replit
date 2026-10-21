@@ -47,29 +47,29 @@ both finders, and every verifier, were cut off by account usage limits
 | F10 | lifecycle | high | A filed withdrawal never leaves the filed state: the delete entry carries no `leafKey`, so the fold keyed on `leafKey` drops nothing; the document can be withdrawn twice, replaced after withdrawal, and is refused ("already on file") when re-filed. | **confirmed** 2026-10-01; **fixed** — see "Fixed after verification" |
 | F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium); **fixed** — an empty section files nothing |
 | F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium); **fixed** — a move names the withdrawal it needs |
-| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium); **fixed** — per-submission letters and forms file new; an IND follow-up without a 1571 blocks |
+| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium); **fixed** — per-submission letters and forms file new; an IND follow-up without a 1571 blocks; since 2026-10-08 (VP-1) sequence 0000 too |
 | F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
 | F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | **partially confirmed** 2026-10-01 (medium); **fixed** (sequence lock) |
 | F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | **confirmed** 2026-10-01 (medium); **`FDA-CESUB` default removed**; S/MIME, routing and MDN verification open |
 | F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | **partially confirmed** 2026-10-01 (medium): no sequence folder; `ectd.zip` is not a defect |
 | F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | **partially confirmed** 2026-10-01 (low); **fixed** (identifier rule, descriptor-authoritative metadata) |
 | F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01 (high); **fixed** — one bundle per filed sequence, and a governed action records an agency technical rejection; Ack3 ingestion remains procurement-blocked |
-| F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | **confirmed** 2026-10-08 (high) — see LENSES.md |
-| HS-1 | honest state | high | The transmit success toast drops `filedSequenceWarning`: a filed-history write that failed, had no usable manifest, or conflicted (two bundles under one number) reads as a clean success. | **confirmed** 2026-10-08 — see LENSES.md |
-| HS-2 | honest state | medium | The pre-transmit gate's failed checks and its "NOT an FDA-conformant Module 1 backbone" warning are returned and never shown; the assemble response carries no conformance verdict. | **confirmed** 2026-10-08 — see LENSES.md |
-| HS-3 | honest state | medium | A pre-transmit gate refusal renders as "Structural gate refused · 0 findings · … assemble again": the blockers arrive as strings and are dropped. | **confirmed** 2026-10-08 — see LENSES.md |
-| HS-4 | honest state | low | With the REST transport, FDA ESG reads "configured" and every transmit ends in a bare 500 INTERNAL_ERROR. | **confirmed** 2026-10-08 — see LENSES.md |
-| HS-5 | honest state | medium | A bundle the agency may hold (delivered, unconfirmed) is announced "Transmit failed", and the log is not reloaded, so the row holding the lock is invisible. | **confirmed** 2026-10-08 — see LENSES.md |
-| HS-6 | honest state | medium | The active-transmittal refusal drops "the agency may already hold it" and advises a rollback that leads to sending the same sequence again. | **confirmed** 2026-10-08 — see LENSES.md |
-| HS-7 | honest state | low | A clean assembly's warnings (cover letter missing, placeholder on file, empty section) are reduced to a count, with no way to see them. | **confirmed** 2026-10-08 — see LENSES.md |
-| HS-8 | honest state | low | The transmittal log silently truncates at 100 rows, and the header and AnA report the truncated count. | **confirmed** 2026-10-08 — see LENSES.md |
-| VP-1 | validation parity | high | An IND sequence 0000 with no Form FDA 1571 assembles with 0 errors and clears the production guard. | **confirmed** 2026-10-08 — see LENSES.md |
-| VP-2 | validation parity | high | The 1571 rule is met by any PDF at 1.1; on this spine that is always a rendering of an artifact's text, never FDA's fillable form. | **confirmed** 2026-10-08 — see LENSES.md |
-| VP-3 | validation parity | medium | Plain leaves ship as PDF 1.3 whenever PDF/A conversion does not run; nothing checks the version, and the PDF check says "the agency accepts plain PDF 1.4–1.7". | **confirmed** 2026-10-08 — see LENSES.md |
-| VP-4 | validation parity | medium | `validateEctdPackage` claims "the eCTD checksum contract" but checks neither the root `index-md5.txt` nor the leaf checksums. | **confirmed** 2026-10-08 — see LENSES.md |
-| VP-5 | validation parity | low | The rule corpus says orphan files, DTD validity, leaf titles and STFs are "enforced here"; nothing in the repo checks them. | **partially confirmed** 2026-10-08 — see LENSES.md |
-| VP-6 | validation parity | low | FDA's gateway limit is 4 GB here while the repo's own records say ESG is required up to 10 GB; 4–10 GB sequences are sent to physical media. | **confirmed** 2026-10-08 — see LENSES.md |
-| VP-7 | validation parity | low | File-name checks cover the base name only and more loosely than the product's own spec; folder names and path length are never checked. | **partially confirmed** 2026-10-08 — see LENSES.md |
+| F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | **confirmed** 2026-10-08 (high); **mechanism fixed** 2026-10-08 — a 1.1 leaf whose bytes are FDA's completed 1571 or 356h is declared `<form form-type>` in the admin block, a rendered or blank one is not. On this spine no leaf can carry FDA's form until the leaf-source hand-off lands, and no 356h is recognised (vendored decrypted), so its admin block still has no `<form>`; other forms wait on the DTD — see "Lens findings fixed" |
+| HS-1 | honest state | high | The transmit success toast drops `filedSequenceWarning`: a filed-history write that failed, had no usable manifest, or conflicted (two bundles under one number) reads as a clean success. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-2 | honest state | medium | The pre-transmit gate's failed checks and its "NOT an FDA-conformant Module 1 backbone" warning are returned and never shown; the assemble response carries no conformance verdict. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — transmit half `f0a6c43e9`, assemble half with VP-1–VP-7 — see "Lens findings fixed" |
+| HS-3 | honest state | medium | A pre-transmit gate refusal renders as "Structural gate refused · 0 findings · … assemble again": the blockers arrive as strings and are dropped. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-4 | honest state | low | With the REST transport, FDA ESG reads "configured" and every transmit ends in a bare 500 INTERNAL_ERROR. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`, sequence-spine follow-up `b649ac2ae`) — see "Lens findings fixed" |
+| HS-5 | honest state | medium | A bundle the agency may hold (delivered, unconfirmed) is announced "Transmit failed", and the log is not reloaded, so the row holding the lock is invisible. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-6 | honest state | medium | The active-transmittal refusal drops "the agency may already hold it" and advises a rollback that leads to sending the same sequence again. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-7 | honest state | low | A clean assembly's warnings (cover letter missing, placeholder on file, empty section) are reduced to a count, with no way to see them. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-8 | honest state | low | The transmittal log silently truncates at 100 rows, and the header and AnA report the truncated count. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| VP-1 | validation parity | high | An IND sequence 0000 with no Form FDA 1571 assembles with 0 errors and clears the production guard. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
+| VP-2 | validation parity | high | The 1571 rule is met by any PDF at 1.1; on this spine that is always a rendering of an artifact's text, never FDA's fillable form. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
+| VP-3 | validation parity | medium | Plain leaves ship as PDF 1.3 whenever PDF/A conversion does not run; nothing checks the version, and the PDF check says "the agency accepts plain PDF 1.4–1.7". | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
+| VP-4 | validation parity | medium | `validateEctdPackage` claims "the eCTD checksum contract" but checks neither the root `index-md5.txt` nor the leaf checksums. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
+| VP-5 | validation parity | low | The rule corpus says orphan files, DTD validity, leaf titles and STFs are "enforced here"; nothing in the repo checks them. | **partially confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
+| VP-6 | validation parity | low | FDA's gateway limit is 4 GB here while the repo's own records say ESG is required up to 10 GB; 4–10 GB sequences are sent to physical media. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
+| VP-7 | validation parity | low | File-name checks cover the base name only and more loosely than the product's own spec; folder names and path length are never checked. | **partially confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
 
 ## Verification round 1 — 2026-10-01 (F10, F11, F12, F14, F19)
 
@@ -397,9 +397,11 @@ is left out when it is that same document unchanged (the earlier submission's).
 On an FDA follow-up the route then names what the sequence lacks of its own
 Module 1: `M1-FORM-1571-MISSING` (error, IND packages — Form FDA 1571 accompanies
 every IND submission) and `M1-COVER-LETTER-MISSING` (warning — FDA expects one
-with every submission). Other regions are diffed as before. Sequence 0000's
+with every submission). Other regions are diffed as before. ~~Sequence 0000's
 completeness (an IND original without a 1571) is the readiness engine's, not
-this check's. Three route tests that used the cover letter as their example of a
+this check's.~~ *Corrected 2026-10-08 (VP-1): that was false — no readiness
+check on this spine ever held sequence 0000 to a 1571. The rule now runs at
+0000 too; see "Lens findings fixed".* Three route tests that used the cover letter as their example of a
 replace now use a dossier document, and the cover letter has its own case.
 
 ```
@@ -476,6 +478,198 @@ Not this lane's, seen in passing:
 fails at HEAD (`[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope`)
 since `b7bf25037` (gateway-account selection, D7) made the transmit guard query the
 database in a test that does not mock it.
+
+## Lens findings fixed — 2026-10-08 (HS-1–HS-8, VP-1–VP-7, F20)
+
+Each finding was re-checked at HEAD before it was fixed, and all of them still
+reproduced. Every fix was reviewed adversarially. The must-fix review issues
+were fixed and re-tested, and each fix has a test that failed first. The lens
+findings and their verdicts are in [`LENSES.md`](LENSES.md).
+
+**Honest state, transmit (`f0a6c43e9`).** The changes are listed in that commit's
+message:
+- the pre-transmit refusal is itemized (422 `PRE_TRANSMIT_BLOCKED`);
+- an unverified transport is a 412 `TRANSPORT_NOT_VERIFIED`, not a 500;
+- the duplicate-send refusal says the agency may already hold the bundle;
+- the transmittal log reports its true total;
+- the transmittals surface shows warnings, failed checks, uncertain sends and
+  filed-history failures, and stops calling them clean.
+
+**`b649ac2ae` (two problems the HS-4 change left behind):**
+- The sequence spine (`transmitSequence`) read the REST transport's
+  "not configured" as missing credentials. The Submission Center then told the
+  operator that FDA ESG had no credentials, when it had credentials and an
+  unverified transport. It now returns `transport_not_verified` and says so.
+- 19 FDA gateway tests matched the old duplicate-send SELECT and failed. Their
+  mocks now match both forms.
+
+**VP-1, VP-2: the Form FDA 1571 rule runs on bytes and at 0000.** The rule
+now covers every FDA IND sequence, including the original. A 1.1 leaf meets
+it only when `assessLeafPdfSecurity` judges its bytes to be FDA's Form 1571 as
+FDA issued it, and they are not FDA's blank template byte for byte
+(`blankTemplateDigests`). The finding is per sequence, not per leaf. If no
+forms leaf meets the rule, the sequence gets one error:
+- `M1-FORM-1571-MISSING` when it ships no 1.1 leaf at all;
+- `M1-FORM-1571-NOT-FDA-FORM` otherwise, which says what each 1.1 leaf is ("a
+  page rendered from its artifact's text", "FDA's blank Form FDA 1571", "FDA's
+  blank Form FDA 3674").
+
+Once one leaf meets the rule, other forms leaves beside it get no error.
+
+**Review fix (F20 half 2): Form FDA 356h.** The same rule now holds an NDA,
+ANDA or BLA original to Form FDA 356h:
+- the errors are `M1-FORM-356H-MISSING` and `M1-FORM-356H-NOT-FDA-FORM`;
+- the MISSING error cites the basis for its application type: 21 CFR
+  314.50(a) for an NDA, 314.94(a)(1) for an ANDA, 601.2(a) for a BLA;
+- the rule applies only to Original Application / Original. An annual report
+  takes Form 2252, and nothing in the repository records which other sequences
+  FDA holds to a 356h.
+
+**Consequence: every IND package this spine assembles as FDA eCTD now carries
+a blocking error.**
+The spine renders every leaf from artifact text, so none of its leaves can be
+FDA's form. This is the honest state. The leaf source is a design hand-off:
+- `rendered_leaf_files` already holds the filled 1571 (`generateIndForm`) and
+  the forms panel's official upload;
+- the sequence spine's `leaf-source-resolver` already ships those bytes
+  unrendered;
+- a package section needs a way to reference that row.
+
+**F20: the admin form declaration.** `fdaFormLeafIdentity` judges each FDA
+forms leaf's bytes once, when the leaf is built:
+- A completed 1571 or 356h, as FDA issued it, is passed to the packager as
+  `formType`. `fdaFormsBlock` writes it as `<form form-type="fdaft1|fdaft2">`
+  under `submission-information`, and `fdaModule1Block` leaves it out of the
+  Module 1 headings.
+- A rendered or blank form stays a bare leaf, and `conformanceGap` names it.
+
+The review's must-fix was that the first version declared a 356h from its
+section key alone; it is now declared from its bytes. One limit remains: the
+repository vendors FDA's 356h decrypted, so no 356h is recognised as issued
+yet, and none is declared. Forms other than 1571 and 356h are not yet wrapped
+in `<form>` under `m1-1-forms`; that waits on the vendored us-regional DTD.
+
+**HS-2, assemble half.** Two new warnings, both counted in `warningCount`:
+- `REGIONAL-BACKBONE-NOT-CONFORMANT`, worded by `evaluateRegionalBackboneGate`
+  run report-only;
+- `DTD-NOT-SELF-CONTAINED`, naming the absent DTDs and stylesheets.
+
+The assemble response now carries `regionalBackbone {regionConformant,
+conformanceGap}` and `dtdStatus {selfContained, missing}`.
+
+**VP-3: PDF version.**
+- `leaf-pdf.ts` renders PDF 1.7 with one bookmark (the document title). It
+  stays byte-reproducible across processes.
+- New error `LEAF-PDF-VERSION`: it reads the header through `classifyPdfA` and
+  takes the accepted range from the region's market spec. It runs in
+  `validateEctdLeafs` when eCTD rules apply. In `validateEctdPackage` it runs as
+  an unlabelled error, and only when one regional backbone names the region;
+  otherwise a warning says the version was not checked.
+- `checkPdfA`'s not-required detail now ends "PDF/A not required." Its
+  production blocker still says the agency also accepts plain PDF 1.4–1.7, and
+  `pdfa-requirement.test.ts` pins that sentence.
+- The FDA registry rule `pdf-version` is now `partial`, and corpus
+  `PDF_VERSION` is `ectd-validator`. The rationale names the check, and a test
+  ties the claim to the code.
+
+**VP-4: checksums.** `validateEctdPackage` now checks:
+- that the root `index-md5.txt` exists and holds the MD5 of the `index.xml`
+  bytes;
+- that every leaf with an href, in `index.xml` and in each regional backbone,
+  has a checksum of type md5 that matches its file.
+
+**VP-5: rule labels.** No in-repo check fully implements `NO_ORPHAN_FILES`,
+`LEAF_TITLE_PRESENT`, `INDEX_XML_VALID` or `STF_FOR_STUDIES`, so they are
+labelled `external`. For `INDEX_XML_VALID`, `validateDtdConformance` checks a
+regex subset of the DTD, on the compile/export path only. The real checks are
+not built.
+
+**VP-6: FDA size limit.** The limit is FDA's 10 GB (10^10 bytes, Form 5640
+v2.0), and one remedy applies: physical media to the CDER or CBER document
+room. The us-ectd market spec said 4096 MB, a second, conflicting FDA limit;
+it is now 9536 MiB. Canada keeps 4 GiB as its own constant, marked pending a
+Health Canada source.
+
+**VP-7: names and paths.**
+- `FILENAME_PATTERN` is the one-dot rule: lowercase a-z, 0-9 and '-', then one
+  '.' and the extension, at most 64 characters. Its words are
+  `FILENAME_RULE_TEXT`, and every message quotes them: four regional rules, the
+  validator, the STF generator and the eCTD submission agent. The agent's
+  separate extension check is removed.
+- Every folder is checked against `FOLDER_NAME_PATTERN`.
+- New rule `LEAF-PATH-LENGTH` checks the path against the region's
+  `maxPathLength`.
+- The assemble route now validates the path the zip carries
+  (`leafPackagePath().relPath`, so `m3/3-2-p-1/…`, not `m3/3-2-P-1/…`). The
+  route change and the folder check must land together, and they do.
+
+Failing first. VP-1, VP-2, F20, HS-2 and VP-7 were run against HEAD's route,
+packager and `package-leaf-bytes` (a vitest plugin served HEAD's files to the
+new tests); the other rows were run with their change reverted:
+
+```
+VP-1  expected [] to deeply equal [ ObjectContaining{…} ]                 (1571 at 0000)
+VP-2  expected undefined to match object { severity: 'error', …(1) }      (rendered 1571)
+F20   expected '\n <submission-id submission…' to match /<form form-type="fdaft1">…/
+F20 review  expected '\n <submission-id submission…' not to contain '<form '   (rendered 356h, IND and NDA rows)
+356h  nda/anda/bla originals: expected [] to deeply equal [ ObjectContaining{…} ]
+blank 1571  expected [] to deeply equal [ ObjectContaining{…} ]
+HS-2  expected [] to deeply equal [ ObjectContaining{…} ]
+VP-7  m3/3-2-P-1/3-2-p-1-desc0003.pdf is in the zip: expected null to be truthy
+VP-3  expected '%PDF-1.3' to be '%PDF-1.7'; LEAF-PDF-VERSION: expected [] to deeply equal [ 'm2/old.pdf', … ]
+VP-4  expected true to be false — wrong / missing root checksum, wrong index.xml and regional leaf checksums
+VP-5  NO_ORPHAN_FILES: expected 'ectd-validator' to be 'external'
+VP-6  US limit: expected 4294967296 to be 10000000000; market spec: the 5 GB case was flagged
+VP-7  a.b.c.pdf: expected true to be false; rule messages: "violates EU naming rules (lowercase a-z, 0-9, hyphens, periods only…)"
+Reverted one at a time: 356h/1571 wording ("form FDA_3674"), STF one-dot text and PDF_VERSION label each fail their new test
+```
+
+What changed in existing tests:
+- `submission-ops-assemble-routes.test.ts` expects one more error on its IND
+  0000 fixtures (`IND_NO_1571`), because none of them carries FDA's form. Its
+  main case asserts the finding itself.
+- `submission-orchestrator.test.ts` treated 5 GiB as over FDA's limit; it now
+  uses 11 GiB, and a new case shows that 5 GiB is not flagged.
+- `fda-module1-headings.test.ts` pinned a declared form being written twice
+  ("not conformant"). Its two F20 cases now pin it written once, under
+  `<submission-information><form>`.
+- `ectd-regional-rules.test.ts` pinned the US limit at 4 GiB; it now pins
+  10^10 bytes.
+
+**Decisions this change needs (lead or founder):**
+- **Rendered PDFs will be re-filed.** Every rendered leaf's bytes changed
+  (PDF 1.7 plus a bookmark). A package that already has a filed sequence will
+  re-file its unchanged rendered documents as `replace` on its next follow-up.
+  The choice is to accept that, or to re-baseline the filed `sourceMd5` values.
+  No production filed history is known to exist, because the ESG is not
+  provisioned.
+- **A study id with a '.' is now refused** as an STF file name. This is
+  ICH-correct (one '.' before the extension), but it is a new refusal on the
+  export path.
+
+**Hand-offs (not changed here):**
+- Every eCTD market spec keeps its own `fileNamePattern`, wider than
+  `FILENAME_PATTERN`, and `market-formatting-validator` applies it: us, jp, ca
+  and cn allow 64 characters before the extension; eu, uk, ch, au, br, sa and
+  kr allow periods. For us-ectd that validator also states FDA's limit as
+  "9536 MB" (10 GB in MiB, rounded down).
+- `ectd4-validator.ts` has its own naming check.
+- `pdfa-readiness.ts` and `checkPdfA`'s production blocker keep the sentence
+  "the agency also accepts plain PDF 1.4–1.7". It is a true general statement;
+  `pdfa-requirement.test.ts` pins the pre-transmit one.
+- The `ectd-validator` enforcement statement now names only the paths that
+  run the check (Submission Ops assembly, a validated eCTD export). It said
+  "when the package is compiled and exported", and the Compile action runs no
+  such check.
+- The export lane's `validateEctdPackage` now also refuses:
+  - an out-of-range PDF version;
+  - an md5sum-format root `index-md5.txt`;
+  - a missing or non-md5 leaf checksum;
+  - a multi-dot name or a bad folder in a caller-supplied ZIP.
+- The VP-4 follow-ups in `fda-criteria-adapter.ts` and `qualify.ts` are not
+  done.
+- The PDF-version check for device bundles is not done (us-estar accepts 1.7
+  only).
 
 ## What this sweep produced that is already fixed
 

@@ -374,7 +374,25 @@ describe('ectd-regional-rules', () => {
     expect(findings.some(f => f.ruleId === 'FDA-ESG-001' || f.message.includes('not a 4-digit'))).toBe(true);
   });
 
-  it('flags package size over FDA 4 GB gateway limit', () => {
+  // 2026-10-08 (sweep VP-6): the limit was 4 GiB, citing an FDA document that
+  // does not exist; FDA's Form 5640 v2.0 takes sequences up to 10 GB through the
+  // ESG. This case pinned 5 GiB as over the limit — it is inside it.
+  it('flags package size over the FDA 10 GB gateway limit', () => {
+    const ctx: RegionalContext = {
+      region: 'US',
+      applicationNumber: 'IND123456',
+      sequenceNumber: '0000',
+      submissionType: 'IND',
+      totalSizeBytes: 11 * 1024 * 1024 * 1024,
+    };
+    const leaves: RegionalLeafRef[] = [
+      { sectionCode: 'm1.us', filePath: 'm1/us/us-regional.xml', mimeType: 'text/xml', fileSize: 1000 },
+    ];
+    const findings = validateRegionalPackage(ctx, leaves);
+    expect(findings.some(f => f.ruleId === 'FDA-ESG-003')).toBe(true);
+  });
+
+  it('does not flag a 5 GiB FDA package (inside the 10 GB ESG range)', () => {
     const ctx: RegionalContext = {
       region: 'US',
       applicationNumber: 'IND123456',
@@ -385,8 +403,7 @@ describe('ectd-regional-rules', () => {
     const leaves: RegionalLeafRef[] = [
       { sectionCode: 'm1.us', filePath: 'm1/us/us-regional.xml', mimeType: 'text/xml', fileSize: 1000 },
     ];
-    const findings = validateRegionalPackage(ctx, leaves);
-    expect(findings.some(f => f.ruleId === 'FDA-ESG-003')).toBe(true);
+    expect(validateRegionalPackage(ctx, leaves).some(f => f.ruleId === 'FDA-ESG-003')).toBe(false);
   });
 
   it('accepts valid EU application number format', () => {

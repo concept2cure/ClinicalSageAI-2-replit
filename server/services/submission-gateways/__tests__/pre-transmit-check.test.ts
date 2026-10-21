@@ -36,6 +36,36 @@ describe('evaluatePreTransmit', () => {
     expect(r.checks.find((c) => c.name === 'gateway-size-limit')?.passed).toBe(false);
   });
 
+  // 2026-10-08 (sweep VP-6): 4–10 GB FDA packages were refused and sent to
+  // physical media, a channel FDA keeps for sequences over 10 GB.
+  it('FDA: clears a 5 GiB package, and above 10 GB names FDA’s one remedy, physical media', () => {
+    const inside = evaluatePreTransmit({ region: 'fda', bundle: bundle({ sizeBytes: 5 * GB, format: 'ectd', builtRegion: 'fda' }), environment: 'production', enforceExternal: false, env: {} });
+    expect(inside.checks.find((c) => c.name === 'gateway-size-limit')?.passed).toBe(true);
+    expect(inside.blockers.filter((b) => /gateway limit/.test(b))).toEqual([]);
+    const over = evaluatePreTransmit({ region: 'fda', bundle: bundle({ sizeBytes: 11 * GB }), environment: 'production', enforceExternal: false, env: {} });
+    const blocker = over.blockers.find((b) => /over the FDA gateway limit/.test(b)) ?? '';
+    expect(blocker).toMatch(/limit of 10\.00 GB/);
+    expect(blocker).toMatch(/physical media/);
+    expect(blocker).not.toMatch(/e\.g\./);
+  });
+
+  // 2026-10-08 (sweep VP-3): the passing detail said "the agency accepts plain
+  // PDF 1.4–1.7" of leaves whose version this check never reads — they shipped
+  // as PDF 1.3. The version is the structural validator's (LEAF-PDF-VERSION).
+  it('a passing PDF/A check does not vouch for the version of plain leaves it did not read', () => {
+    const r = evaluatePreTransmit({
+      region: 'fda',
+      bundle: bundle({ submissionGrade: { total: 3, pdfLeaves: 3, pdfaConverted: 0, notConverted: ['a.pdf', 'b.pdf', 'c.pdf'], allPdfA: false } }),
+      environment: 'production',
+      enforceExternal: false,
+      env: {},
+    });
+    const check = r.checks.find((c) => c.name === 'pdfa-submission-grade')!;
+    expect(check.passed).toBe(true);
+    expect(check.detail).toMatch(/PDF\/A not required/);
+    expect(check.detail).not.toMatch(/accepts plain PDF/);
+  });
+
   it('clears a small package with no flags set', () => {
     const r = evaluatePreTransmit({ region: 'fda', bundle: bundle(), environment: 'production', enforceExternal: false, env: {} });
     expect(r.cleared).toBe(true);

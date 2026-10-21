@@ -65,7 +65,7 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
     rule: 'PDF versions 1.4 to 1.7, PDF/A-1 and PDF/A-2 are acceptable.',
     consequence: 'A leaf in another version (for example PDF 2.0) does not meet FDA’s PDF specification.',
     basis: FDA_PDF_SPECS,
-    platform: { check: 'not-checked', note: 'The version is read (ectd/pdfa-detect.ts) but no verdict uses it; only encryption decides acceptableForEctd.' },
+    platform: { check: 'partial', note: 'LEAF-PDF-VERSION (submission-gateways/ectd-structural-validator.ts) refuses a leaf outside the region’s accepted versions when Submission Ops assembles an eCTD package and when an eCTD package is exported; the transmit guard does not read the version.' },
   },
   {
     id: 'pdf-no-security', area: 'pdf',
@@ -86,7 +86,7 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
     rule: 'A document of 5 or more pages carries a hyperlinked table of contents and bookmarks, the bookmark hierarchy identical to the table of contents, up to four levels deep.',
     consequence: 'Without them a reviewer cannot move through a long document, and the structure a summarising tool relies on is lost.',
     basis: FDA_PDF_SPECS,
-    platform: { check: 'partial', note: 'The structured leaf renderer adds bookmarks (ectd/leaf-pdf-renderer.ts); leaves built by the Submission Ops assemble route have none, and nothing checks an uploaded leaf.' },
+    platform: { check: 'partial', note: 'The structured leaf renderer adds bookmarks (ectd/leaf-pdf-renderer.ts); leaves built by the Submission Ops assemble route carry one bookmark, the document title (ectd/leaf-pdf.ts), with no table of contents; nothing checks an uploaded leaf.' },
   },
   {
     id: 'pdf-text', area: 'pdf',

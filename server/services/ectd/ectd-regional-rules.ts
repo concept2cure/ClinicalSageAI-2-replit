@@ -89,6 +89,12 @@ export interface RegionalFinding {
   leafPath?: string;
 }
 
+/** FILENAME_PATTERN (below) in words: every rule description and finding that
+ *  refuses a file name quotes this, so the operator reads the rule the name was
+ *  tested against. Declared here because the rule catalog reads it at load. */
+export const FILENAME_RULE_TEXT =
+  "lowercase a-z, 0-9 and '-', then one '.' and the extension; at most 64 characters in all";
+
 // ── Rule catalog ─────────────────────────────────────────────────────────────
 
 export const REGIONAL_RULES: RegionalRule[] = [
@@ -110,9 +116,11 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'FDA-ESG-003',
     region: 'US',
-    description: 'Total package size must not exceed 4 GB compressed (gateway limit)',
+    // 2026-10-08 (sweep VP-6): was "must not exceed 4 GB", citing an "FDA ESG
+    // Technical Conformance Guide §4.5" that FDA does not publish.
+    description: 'A sequence over 10 GB goes to FDA on physical media, not through the ESG',
     severity: 'error',
-    citation: 'FDA ESG Technical Conformance Guide §4.5',
+    citation: 'FDA, Transmitting Electronic Submissions Using eCTD Specifications (Form 5640 v2.0)',
   },
   {
     id: 'FDA-ESG-004',
@@ -171,7 +179,7 @@ export const REGIONAL_RULES: RegionalRule[] = [
     id: 'EMA-CESP-005',
     region: 'EU',
     description:
-      'Filenames must use only lowercase a-z, 0-9, hyphens and periods (max 64 chars incl. extension); the total folder path must not exceed 180 characters',
+      `File names: ${FILENAME_RULE_TEXT}; the total folder path must not exceed 180 characters`,
     severity: 'error',
     citation: 'EU eCTD Specification v3.2.2 §4.1',
   },
@@ -335,7 +343,7 @@ export const REGIONAL_RULES: RegionalRule[] = [
       id: `${region}-REG-002`,
       region,
       description:
-        'Filenames must follow the eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods; max 64 chars)',
+        `File names follow the eCTD naming convention (${FILENAME_RULE_TEXT})`,
       severity: 'warning',
       citation: 'eCTD specification — universal file-naming convention',
     },
@@ -361,13 +369,44 @@ const PMDA_APPLICATION_PREFIX = /^\d{8}$/;
 // followed by garbage does not slip through as a conformant identifier.
 const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+$/i;
 const SEQUENCE_PATTERN = /^\d{4}$/;
-/** eCTD leaf file name: lowercase, [a-z0-9.-], at most 64 characters including
- *  the extension (ICH eCTD v3.2.2 Appendix; EMA-CESP-005). Exported so the
- *  assemble path composes names to it and the structural validator refuses
- *  names that break it — one rule, not three spellings of it. */
-export const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
+/** eCTD leaf file name: lowercase a-z, 0-9 and '-', ONE '.' before the
+ *  extension, at most 64 characters including the extension (ICH eCTD v3.2.2
+ *  Appendix 2; EMA-CESP-005). Exported so the assemble path composes names to it
+ *  and the structural validator refuses names that break it — one rule, not
+ *  three spellings of it.
+ *  2026-10-08 (sweep VP-7): it was /^[a-z0-9][a-z0-9.-]{0,63}$/, which passed
+ *  'a.b.c.pdf' and 'noextension'. The us-ectd market spec's pattern is not the
+ *  replacement: it allows 64 characters BEFORE the extension. Its words are
+ *  FILENAME_RULE_TEXT; change both together. */
+export const FILENAME_PATTERN = /^(?=.{1,64}$)[a-z0-9][a-z0-9-]*\.[a-z0-9]+$/;
 
-const FDA_GATEWAY_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
+/** eCTD folder name: the file-name character set with no '.', at most 64
+ *  characters (ICH eCTD v3.2.2 Appendix 2 names folders and files alike). */
+export const FOLDER_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+/*
+ * FDA: the ESG takes a sequence of up to 10 GB; above that FDA takes it on
+ * physical media (USB) at the CDER or CBER document room — FDA, "Transmitting
+ * Electronic Submissions Using eCTD Specifications" (Form 5640 v2.0, 2026-07),
+ * recorded in docs/ectd/SPEC_DIGEST.md §6. Read as DECIMAL gigabytes (10^10
+ * bytes): of the two readings it is the smaller, so the gateway is never handed
+ * a package FDA may count as over 10 GB.
+ * 2026-10-08 (sweep VP-6): this was 4 GiB, citing an "FDA ESG Technical
+ * Conformance Guide §4.5" FDA does not publish, so 4–10 GB sequences were refused
+ * and sent to physical media, which FDA keeps for sequences over 10 GB.
+ */
+const FDA_GATEWAY_LIMIT_BYTES = 10 * 1000 ** 3;
+const FDA_GATEWAY_LIMIT_LABEL = `${FDA_GATEWAY_LIMIT_BYTES / 1000 ** 3} GB`;
+/** FDA's one remedy for a sequence over the ESG limit. The regional finding and
+ *  the pre-transmit blocker both give this, so the operator reads one answer. */
+export const FDA_OVERSIZE_REMEDY =
+  `FDA takes a sequence over ${FDA_GATEWAY_LIMIT_LABEL} on physical media (USB) sent to the CDER or CBER document room, ` +
+  'not through the gateway (FDA Form 5640 v2.0).';
+/** Health Canada CESG: 4 GiB, PENDING VERIFICATION against Health Canada CESG
+ *  guidance — no Health Canada source is filed for it. It was the FDA constant
+ *  until 2026-10-08 (sweep VP-6); it keeps that value so Canada does not move
+ *  when FDA's figure is corrected. */
+const CA_CESG_LIMIT_BYTES = 4 * 1024 ** 3;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
 const PMDA_LIMIT_BYTES = 1024 * 1024 * 1024;
 // NMPA does not publish a single eCTD gateway package-size limit in the accessible
@@ -541,7 +580,7 @@ function validateFDAPackage(
       region: 'US',
       severity: 'warning',
       message:
-        'Package size could not be verified against the FDA ESG 4 GB gateway limit (totalSizeBytes not supplied)',
+        `Package size could not be verified against the FDA ESG ${FDA_GATEWAY_LIMIT_LABEL} gateway limit (totalSizeBytes not supplied)`,
       fix: 'Supply totalSizeBytes so the gateway size limit can be checked',
       scope: 'package',
     });
@@ -550,10 +589,11 @@ function validateFDAPackage(
       ruleId: 'FDA-ESG-003',
       region: 'US',
       severity: 'error',
-      message: `Package size ${(context.totalSizeBytes / 1024 / 1024 / 1024).toFixed(
+      // Decimal GB, the unit the limit is recorded in.
+      message: `Package size ${(context.totalSizeBytes / 1000 ** 3).toFixed(
         2
-      )} GB exceeds FDA ESG 4 GB gateway limit`,
-      fix: 'Split the submission into multiple sequences',
+      )} GB exceeds the FDA ESG limit of ${FDA_GATEWAY_LIMIT_LABEL}`,
+      fix: FDA_OVERSIZE_REMEDY,
       scope: 'package',
     });
   }
@@ -639,7 +679,7 @@ function validateEMAPackage(
     ruleId: 'EMA-CESP-005',
     severity: 'error',
     makeMessage: filename =>
-      `Filename "${filename}" violates EU naming rules (lowercase a-z, 0-9, hyphens, periods only; max 64 chars)`,
+      `File name "${filename}" breaks the EU eCTD naming rule (${FILENAME_RULE_TEXT})`,
     fix: 'Rename to match EU eCTD specification §4.1',
   });
 }
@@ -756,7 +796,7 @@ function validateNMPAPackage(
     ruleId: 'NMPA-CDE-005',
     severity: 'warning',
     makeMessage: filename =>
-      `Filename "${filename}" does not follow the NMPA eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+      `File name "${filename}" does not follow the NMPA eCTD naming convention (${FILENAME_RULE_TEXT})`,
     fix: 'Rename to ASCII per the NMPA eCTD技术规范 file-naming rules (Chinese belongs in document content, not file names)',
   });
 }
@@ -781,7 +821,7 @@ function validateMFDSPackage(
     ruleId: 'MFDS-KR-004',
     severity: 'warning',
     makeMessage: filename =>
-      `Filename "${filename}" does not follow the KR eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+      `File name "${filename}" does not follow the KR eCTD naming convention (${FILENAME_RULE_TEXT})`,
     fix: 'Rename to ASCII per the KR eCTD v1.0 file-naming rules (Korean belongs in document content, not file names)',
   });
 }
@@ -819,7 +859,7 @@ function validateGenericRegionPackage(
     ruleId: `${context.region}-REG-002`,
     severity: 'warning',
     makeMessage: filename =>
-      `Filename "${filename}" does not follow the eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+      `File name "${filename}" does not follow the eCTD naming convention (${FILENAME_RULE_TEXT})`,
     fix: 'Rename per the eCTD file-naming rules (ASCII only, max 64 chars, no spaces)',
   });
 }
@@ -843,7 +883,7 @@ export function getGatewaySizeLimit(region: RegulatoryRegion): number {
     case 'JP':
       return PMDA_LIMIT_BYTES;
     case 'CA':
-      return FDA_GATEWAY_LIMIT_BYTES;
+      return CA_CESG_LIMIT_BYTES;
     case 'CN':
       return NMPA_LIMIT_BYTES;
     case 'KR':

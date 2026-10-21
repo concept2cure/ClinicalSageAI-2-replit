@@ -52,6 +52,17 @@ describe('market formatting validator — violations', () => {
     expect(r.findings.some((x) => x.rule === 'PDF_NO_SECURITY')).toBe(true);
   });
 
+  // 2026-10-08 (W5/D7, sweep VP-6 follow-up): the US spec said 4096 MB while
+  // the gateway rule says FDA's 10 GB, so a 5 GB FDA sequence was refused here
+  // and accepted there.
+  it('holds an FDA eCTD sequence to FDA’s 10 GB, not 4 GiB', () => {
+    const fiveGb: LeafFileDescriptor = { fileName: 'big.pdf', fileSizeBytes: 5 * 1000 ** 3 };
+    expect(validateLeavesAgainstMarketSpec(usEctd, [fiveGb]).findings.some((x) => x.rule === 'SUBMISSION_SIZE')).toBe(false);
+    const elevenGb: LeafFileDescriptor = { fileName: 'big.pdf', fileSizeBytes: 11 * 1000 ** 3 };
+    expect(validateLeavesAgainstMarketSpec(usEctd, [elevenGb]).findings.some((x) => x.rule === 'SUBMISSION_SIZE')).toBe(true);
+    expect((usEctd.formatting.maxSubmissionSizeMb ?? 0) * 1024 ** 2).toBeLessThanOrEqual(10 * 1000 ** 3);
+  });
+
   it('errors when the total exceeds the EU 600 MB submission limit', () => {
     const big: LeafFileDescriptor = { fileName: 'big.pdf', fileSizeBytes: 700 * 1024 * 1024 };
     const r = validateLeavesAgainstMarketSpec(euEctd, [big]);

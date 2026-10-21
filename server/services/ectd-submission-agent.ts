@@ -9,7 +9,7 @@
  */
 
 import crypto from 'crypto';
-import { FILENAME_PATTERN } from './ectd/ectd-regional-rules';
+import { FILENAME_PATTERN, FILENAME_RULE_TEXT } from './ectd/ectd-regional-rules';
 import { getPool } from '../db';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -63,11 +63,11 @@ const REQUIRED_MODULES: Record<string, string[]> = {
   annual_report: ['m1'],
 };
 
-// The eCTD file-name rule is FILENAME_PATTERN (ectd-regional-rules): lowercase
-// a-z, 0-9, '.' and '-', at most 64 characters including the extension. A
-// second, weaker pattern here allowed '_' and had no length bound, so a
-// 200-character name "followed naming conventions".
-const hasExtension = (name: string) => /\.[a-z0-9]+$/.test(name);
+// The eCTD file-name rule is FILENAME_PATTERN (ectd-regional-rules), in words
+// FILENAME_RULE_TEXT. A second, weaker pattern here allowed '_' and had no
+// length bound, so a 200-character name "followed naming conventions".
+// 2026-10-08 (W5/D7, sweep VP-7): FILENAME_PATTERN now requires the one '.' and
+// extension itself, so the separate extension check here is gone.
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
@@ -196,12 +196,12 @@ export class EctdSubmissionAgent {
 
     // Rule 1: File naming convention
     for (const doc of docs) {
-      const passed = FILENAME_PATTERN.test(doc.file_name) && hasExtension(doc.file_name);
+      const passed = FILENAME_PATTERN.test(doc.file_name);
       validations.push({
         ruleId: 'FILE_NAMING', ruleCategory: 'naming', severity: passed ? 'info' : 'error',
         message: passed
           ? `File "${doc.file_name}" follows the eCTD file-name rule`
-          : `File "${doc.file_name}" breaks the eCTD file-name rule (lowercase a-z, 0-9, '.', '-'; at most 64 characters including the extension)`,
+          : `File "${doc.file_name}" breaks the eCTD file-name rule (${FILENAME_RULE_TEXT})`,
         sectionCode: doc.section_code, documentPath: doc.document_path,
         passed, fixSuggestion: passed ? null : 'Rename the file to lowercase letters, digits, hyphens and a single extension, at most 64 characters',
       });

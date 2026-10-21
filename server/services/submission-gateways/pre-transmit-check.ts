@@ -30,7 +30,7 @@
  */
 
 import type { Region, SubmissionBundle } from './types';
-import { getGatewaySizeLimit, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
+import { getGatewaySizeLimit, FDA_OVERSIZE_REMEDY, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
 import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
@@ -203,10 +203,13 @@ function checkPdfA(
     name: 'pdfa-submission-grade',
     // Plain PDF fails this check only where PDF/A was chosen.
     passed: notConverted === 0 || !pdfa.required,
+    // 2026-10-08 (sweep VP-3): the not-required text said "the agency accepts
+    // plain PDF 1.4–1.7" of leaves this check never reads, and they shipped as
+    // PDF 1.3. The version is judged at assembly (LEAF-PDF-VERSION), not here.
     detail:
       `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} plain PDF` +
       asIssued +
-      (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required: the agency accepts plain PDF 1.4–1.7.'),
+      (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required.'),
   };
   if (!(isProd && pdfa.required && notConverted > 0)) return { check };
   return {
@@ -217,6 +220,37 @@ function checkPdfA(
   };
 }
 
+/**
+ * The gateway size limit — hard, always, where the figure is sourced; a warning
+ * where it is not (SIZE_LIMIT_UNSOURCED). Extracted from evaluatePreTransmit
+ * (2026-10-08, sweep VP-6), same shape as checkPdfA.
+ */
+function checkGatewaySize(region: Region, sizeBytes: number): { check: PreTransmitCheck; blocker?: string; warning?: string } {
+  const limit = getGatewaySizeLimit(REGION_TO_REGULATORY[region]);
+  const sizeOk = sizeBytes <= limit;
+  const unsourced = SIZE_LIMIT_UNSOURCED[region];
+  const name = region.toUpperCase();
+  const check: PreTransmitCheck = {
+    name: 'gateway-size-limit',
+    passed: sizeOk,
+    detail: `${sizeBytes} bytes vs ${limit} byte limit for ${name}` + (unsourced ? ` (not enforced: ${unsourced})` : ''),
+  };
+  if (sizeOk) return { check };
+  // Decimal GB (10^9 bytes): FDA states its 10 GB in it, and a figure printed in
+  // binary units read "9.31 GB" for that limit (2026-10-08, sweep VP-6).
+  const gb = (n: number) => (n / 1000 ** 3).toFixed(2);
+  if (unsourced) {
+    return {
+      check,
+      warning: `Package is ${gb(sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ${name} gateway. Not enforced: ${unsourced}.`,
+    };
+  }
+  // FDA's own remedy, the same one its regional finding (FDA-ESG-003) gives.
+  const remedy =
+    region === 'fda' ? FDA_OVERSIZE_REMEDY : "Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.";
+  return { check, blocker: `Package is ${gb(sizeBytes)} GB, over the ${name} gateway limit of ${gb(limit)} GB. ${remedy}` };
+}
+
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {
   const env = input.env ?? process.env;
   const blockers: string[] = [];
@@ -224,35 +258,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   const checks: PreTransmitCheck[] = [];
   const isProd = input.environment === 'production';
 
-  // 1. Size limit — hard, always, where the figure is sourced; a warning where
-  // it is not (SIZE_LIMIT_UNSOURCED).
-  const limit = getGatewaySizeLimit(REGION_TO_REGULATORY[input.region]);
-  const sizeOk = input.bundle.sizeBytes <= limit;
-  const unsourced = SIZE_LIMIT_UNSOURCED[input.region];
-  checks.push({
-    name: 'gateway-size-limit',
-    passed: sizeOk,
-    detail: `${
-      input.bundle.sizeBytes
-    } bytes vs ${limit} byte limit for ${input.region.toUpperCase()}` +
-      (unsourced ? ` (not enforced: ${unsourced})` : ''),
-  });
-  const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
-  if (!sizeOk && unsourced) {
-    warnings.push(
-      `Package is ${gb(input.bundle.sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ` +
-        `${input.region.toUpperCase()} gateway. Not enforced: ${unsourced}.`
-    );
-  } else if (!sizeOk) {
-    blockers.push(
-      `Package is ${gb(
-        input.bundle.sizeBytes
-      )} GB, over the ${input.region.toUpperCase()} gateway limit of ` +
-        `${gb(
-          limit
-        )} GB. Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.`
-    );
-  }
+  // 1. Size limit.
+  const size = checkGatewaySize(input.region, input.bundle.sizeBytes);
+  checks.push(size.check);
+  if (size.blocker) blockers.push(size.blocker);
+  if (size.warning) warnings.push(size.warning);
 
   // 2. PDF/A submission grade. Required only when the deployment or the
   // organisation chose it: every agency here accepts plain PDF 1.4–1.7 too

@@ -47,7 +47,7 @@
  * @module server/services/ectd/stf-generator
  */
 
-import { FILENAME_PATTERN } from './ectd-regional-rules';
+import { FILENAME_PATTERN, FILENAME_RULE_TEXT } from './ectd-regional-rules';
 import { FDA_STUDY_DATA_TRC, recall } from '../ind/ctd/regulatory-basis';
 import type { RegulatoryBasis } from '../ind/ctd/types';
 
@@ -162,15 +162,17 @@ function escapeXml(s: string): string {
 /**
  * The STF file name for a study: "stf-" + study-id + ".xml", case-folded because
  * eCTD file names are lower case. Throws when the result breaks the eCTD
- * file-name rule (FILENAME_PATTERN) — a study id with a space, '&', '_' or '/',
- * or one too long — rather than inventing a different name for the study.
+ * file-name rule (FILENAME_PATTERN) — a study id with a space, '&', '_', '/' or
+ * '.', or one too long — rather than inventing a different name for the study.
+ * 2026-10-08 (W5/D7, sweep VP-7): a '.' in the study id passed until the rule
+ * became ICH's one '.' before the extension; such an id is now refused.
  */
 export function stfFileName(studyId: string): string {
   const name = `stf-${studyId.toLowerCase()}.xml`;
   if (!FILENAME_PATTERN.test(name)) {
     throw new Error(
       `Study id "${studyId}" cannot form its Study Tagging File name: "${name}" breaks the eCTD file-name rule ` +
-        `(lower case a-z, 0-9, '.', '-'; at most 64 characters). The STF is named "stf-" + study-id + ".xml" ` +
+        `(${FILENAME_RULE_TEXT}). The STF is named "stf-" + study-id + ".xml" ` +
         `(ICH STF v2.6.1); give the study an id that fits rather than have the platform rename it.`,
     );
   }

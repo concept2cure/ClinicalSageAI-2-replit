@@ -38,7 +38,10 @@ vi.mock('../server/services/ectd/package-leaf-bytes', () => ({
 const writeFileFn = vi.fn().mockResolvedValue(undefined);
 const mkdirFn = vi.fn().mockResolvedValue(undefined);
 const readFileFn = vi.fn().mockResolvedValue(Buffer.from('PK-ZIP-CONTENT', 'utf8'));
-vi.mock('fs', () => ({
+vi.mock('fs', async () => ({
+  // Read at module load by the forms-template locator the 1571 rule's
+  // leaf-pdf-security reaches (it finds the package root); the real one.
+  existsSync: (await vi.importActual<typeof import('fs')>('fs')).existsSync,
   promises: {
     mkdir: (...a: unknown[]) => mkdirFn(...a),
     writeFile: (...a: unknown[]) => writeFileFn(...a),
@@ -237,6 +240,14 @@ const findings = (res: any): Array<{ ruleId: string; severity: string; message: 
  *  activity sequence 0000 opened (sweep F04). These posts used 'Efficacy
  *  Supplement', which no IND can file, and which the route now refuses. */
 const IND_AMENDMENT = { submissionType: 'Original Application', submissionSubType: 'Amendment', submissionId: '0000' };
+
+/** The fixture package is an IND original, and no fixture here ships FDA's own
+ *  Form FDA 1571 — nothing on this route can: every leaf is a rendering of
+ *  artifact text — so every IND 0000 assembly carries one M1-FORM-1571-MISSING
+ *  error (package-spine sweep VP-1, 2026-10-08). The error counts below are each
+ *  case's own errors plus this one; they were pinned without it while the rule
+ *  skipped sequence 0000. */
+const IND_NO_1571 = 1;
 
 const FILED_0000 = {
   sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 1,
@@ -553,9 +564,11 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.data.bundle.sizeBytes).toBe(Buffer.byteLength('PK-ZIP-CONTENT'));
     expect(res.body.data.bundle.format).toBe('ectd');
 
-    // No errors (identifiers recorded, everything placeable); the empty 2.5
-    // section ships no placeholder leaf and yields a warning naming it.
-    expect(res.body.data.bundle.validation.errorCount).toBe(0);
+    // No error but the IND's missing Form FDA 1571 (identifiers recorded,
+    // everything placeable); the empty 2.5 section ships no placeholder leaf and
+    // yields a warning naming it.
+    expect(res.body.data.bundle.validation.errorCount).toBe(IND_NO_1571);
+    expect(findings(res).filter((f) => f.ruleId === 'M1-FORM-1571-MISSING')).toEqual([expect.objectContaining({ severity: 'error' })]);
     expect(findings(res)).toContainEqual(expect.objectContaining({
       ruleId: 'SECTION-EMPTY', severity: 'warning', message: expect.stringContaining('Clinical Overview (2.5)'),
     }));
@@ -586,7 +599,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(dbState.updateSet.metadata.foo).toBe('bar');
     expect(bundle.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(bundle.leafCount).toBe(3);
-    expect(bundle.validation.errorCount).toBe(0);
+    expect(bundle.validation.errorCount).toBe(IND_NO_1571);
     expect(Array.isArray(bundle.validation.findings)).toBe(true);
     expect(bundle.storage.provider).toBe('local');
     // The packager's own evidence is persisted for the pre-transmit gate.
@@ -614,7 +627,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(unplaced).toHaveLength(2);
     expect(unplaced.every((f) => f.severity === 'error')).toBe(true);
     expect(unplaced[1].message).toMatch(/names Module 3, but a bare module is not a heading/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(2);
+    expect(res.body.data.bundle.validation.errorCount).toBe(2 + IND_NO_1571);
     // Only the placeable leaf shipped, and the descriptor says so.
     const opts = packageLeafBytesFn.mock.calls[0][0];
     expect(opts.leaves.map((l: any) => l.ctdSection)).toEqual(['1.2']);
@@ -630,7 +643,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const unplaced = findings(res).filter((f) => f.ruleId === 'LEAF-UNPLACED');
     expect(unplaced).toHaveLength(1);
     expect(unplaced[0].message).toMatch(/'3\.foo' is not a placeable ICH heading/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
     expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.ctdSection)).toEqual(['3.2.P.1']);
   });
 
@@ -646,7 +659,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(dis[0].message).toMatch(/filed at 3\.2\.S\.4\.2 \(Module 3\) but its section names Module 5/);
     // The explicit placement is kept as declared (a warning, not an override).
     expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.ctdSection)).toEqual(['3.2.S.4.2']);
-    expect(res.body.data.bundle.validation.errorCount).toBe(0);
+    expect(res.body.data.bundle.validation.errorCount).toBe(IND_NO_1571);
   });
 
   it('ships an artifact mapped twice (duplicate row, or into two sections) as ONE leaf and surfaces the duplicate mapping', async () => {
@@ -666,7 +679,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(dups[1].message).toMatch(/already ships as a leaf at 3\.2\.P\.1 from Module 3 CMC \(module3_cmc\)/);
     expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.ctdSection)).toEqual(['3.2.P.1']);
     expect(res.body.data.bundle.leafCount).toBe(1);
-    expect(res.body.data.bundle.validation.errorCount).toBe(0);
+    expect(res.body.data.bundle.validation.errorCount).toBe(IND_NO_1571);
   });
 
   it('the same document at two DIFFERENT sections (a reference cited from 4.3 and 5.4) is two leaves, not a duplicate', async () => {
@@ -702,6 +715,21 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(new Set(names).size).toBe(2);
   });
 
+  /* 2026-10-08 (package-spine sweep VP-1): FDA's own Module 1 rules ran for
+     follow-ups only. Sequence 0000 is held to them too; a missing cover letter
+     stays a warning, worded for an original (there is no earlier letter). */
+  it('holds sequence 0000 to its own cover letter: none mapped is a warning, worded for an original', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', '2.5', 2)]];
+    const res = await post();
+    expect(findings(res).filter((f) => f.ruleId === 'M1-COVER-LETTER-MISSING')).toEqual([{
+      severity: 'warning',
+      ruleId: 'M1-COVER-LETTER-MISSING',
+      message: 'Sequence 0000 carries no cover letter (Module 1.2). Each FDA submission is expected to carry its own. Map this submission’s letter.',
+    }]);
+  });
+
   it('BLOCKS when the package records no agency identifiers — never ships an internal id as the application number', async () => {
     dbState.pkg = lockedPkg({ foo: 'bar' }); // no metadata.regulatory
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
@@ -713,7 +741,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(missing).toHaveLength(1);
     expect(missing[0].severity).toBe('error');
     expect(missing[0].message).toMatch(/regulatory\.applicationNumber, regulatory\.applicantId, regulatory\.applicantName/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
     const opts = packageLeafBytesFn.mock.calls[0][0];
     expect(opts.applicationId).toMatch(/^UNASSIGNED-/);
     expect(opts.applicationId).not.toBe('pkg_locked');
@@ -746,7 +774,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(f).toHaveLength(1);
     expect(f[0].severity).toBe('error');
     expect(f[0].message).toMatch(/six digits FDA assigned, with leading zeros and no IND\/NDA\/BLA prefix/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
     expect(packageLeafBytesFn.mock.calls[0][0].applicationId).toBe('IND123456');
   });
 
@@ -766,7 +794,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const f = identifierFindings(res);
     expect(f).toHaveLength(1);
     expect(f[0].message).toMatch(/missing or malformed package metadata: regulatory\.applicantId\)\. .*regulatory contact.*name, telephone and e-mail/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
     expect(packageLeafBytesFn.mock.calls[0][0].fda.contacts ?? []).toEqual([]);
   });
 
@@ -1240,8 +1268,8 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
     expect(f[0].message).toMatch(/'draft'/);
     // The approved one is not named.
     expect(f[0].message).not.toMatch(/artifact_co/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(1);
-    expect(dbState.updateSet.metadata.bundle.validation.errorCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
+    expect(dbState.updateSet.metadata.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
 
     const refusal = await transmitStored();
     expect(refusal).toBeInstanceOf(GovernedTransmitRefusal);
@@ -1263,7 +1291,7 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
     const res = await post();
     expect(res.status).toBe(200);
     expect(unapproved(res)).toEqual([]);
-    expect(res.body.data.bundle.validation.errorCount).toBe(0);
+    expect(res.body.data.bundle.validation.errorCount).toBe(IND_NO_1571);
   });
 
   it('every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact', async () => {
@@ -1276,7 +1304,7 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
     const f = unapproved(res);
     expect(f.map((x) => x.message.match(/\(artifact_(\w+) v1\)/)?.[1])).toEqual(['rv', 'ar']);
     expect(f.every((x) => x.severity === 'error')).toBe(true);
-    expect(res.body.data.bundle.validation.errorCount).toBe(2);
+    expect(res.body.data.bundle.validation.errorCount).toBe(2 + IND_NO_1571);
   });
 
   it('applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit', async () => {
@@ -1323,7 +1351,7 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
     expect(f[0].message).toMatch(/edited after approval/);
     expect(f[0].message).toMatch(/v2.*v1/);
     expect(f[0].message).not.toMatch(/artifact_co/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
 
     const refusal = await transmitStored();
     expect(refusal).toBeInstanceOf(GovernedTransmitRefusal);
@@ -1346,7 +1374,7 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
     expect(f.map((x) => x.message.match(/\(artifact_(\w+) v\d\)/)?.[1])).toEqual(['lk', 'nv']);
     expect(f[0].message).toMatch(/edited after approval/);
     expect(f[1].message).toMatch(/no approved version is recorded/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(2);
+    expect(res.body.data.bundle.validation.errorCount).toBe(2 + IND_NO_1571);
   });
 
   /* 2026-09-23 (W5/D7, round-2 skeptic, round 3). The status route and the
@@ -1373,7 +1401,7 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
     // A remedy the status route will accept: unlock, review, approve, lock.
     expect(f[0].message).toMatch(/locked → draft/);
     expect(f[0].message).toMatch(/review → approved/);
-    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1 + IND_NO_1571);
 
     const refusal = await transmitStored();
     expect(refusal).toBeInstanceOf(GovernedTransmitRefusal);

@@ -436,10 +436,14 @@ ${leafElement(f.leaf, resolve(f.leaf)).split('\n').map((l) => '            ' + l
  * `<m1-2-cover-letters>` before `<m1-1-forms>`. Every heading is still written
  * directly under `<m1-regional>`; `usRegionalHeadingPlacement` says why a deeper
  * one is not nested, and `fdaBackboneGaps` reports each one that should be.
+ *
+ * A leaf declared under `fda.forms` is written once, by `fdaFormsBlock`, and not
+ * here (package-spine sweep F20, 2026-10-08): it was written in both places with
+ * one ID, which `fdaFormGaps` could only report.
  */
 function fdaModule1Block(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const byHeading = new Map<string, { element: string; leaves: string[] }>();
-  for (const l of input.leaves.filter((x) => isModule1Section(x.ctdSection))) {
+  for (const l of fdaModule1HeadingLeaves(input)) {
     const { heading, element } = usRegionalHeadingPlacement(l.ctdSection);
     const group = byHeading.get(heading) ?? { element, leaves: [] };
     group.leaves.push(leafElement(l, resolve(l)));
@@ -463,7 +467,7 @@ function fdaModule1Block(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef
  */
 function fdaBackboneGaps(input: PackagerInput): string[] {
   const fda = input.fda ?? {};
-  const m1 = input.leaves.filter((l) => isModule1Section(l.ctdSection));
+  const m1 = fdaModule1HeadingLeaves(input);
   const headingGaps = new Map<string, string>();
   for (const l of m1) {
     const { heading, gap } = usRegionalHeadingPlacement(l.ctdSection);
@@ -488,23 +492,39 @@ function fdaContactGaps(contacts: readonly FdaApplicantContact[]): string[] {
 }
 
 /**
- * The forms' gaps. A Module 1 leaf that is also declared under `fda.forms` (the
- * same leaf object) is written by both `fdaFormsBlock` and `fdaModule1Block`,
- * with one ID. A forms leaf (1.1, or a 1.1.x filed under it) that is not
- * declared has no form type. Form handling itself is unchanged here: where a
- * form belongs is an open question the repository does not settle.
+ * The Module 1 leaves written under their heading in `<m1-regional>`: every
+ * Module 1 leaf except one declared under `fda.forms` (the same leaf object),
+ * which the admin block carries instead.
+ */
+function fdaModule1HeadingLeaves(input: PackagerInput): EctdLeaf[] {
+  const declared = new Set((input.fda?.forms ?? []).map((f) => f.leaf));
+  return input.leaves.filter((l) => isModule1Section(l.ctdSection) && !declared.has(l));
+}
+
+/**
+ * The forms' gaps, over the Module 1 leaves written under a heading
+ * (`fdaModule1HeadingLeaves`). A forms leaf (1.1, or a 1.1.x filed under it)
+ * there has no declared form type.
+ *
+ * Where a form belongs: FDA's Module 1 backbone specification (v2.6, the
+ * DTD 3.3 line) places the 356h and the 1571 in their application's admin
+ * section and other forms under `m1-1-forms` using the form element; the
+ * repository's docs/ectd/SPEC_DIGEST.md records the admin `<form form-type>`
+ * under `<submission-information>`, which `fdaFormsBlock` writes (sweep F20,
+ * 2026-10-08, where the sentence and its sources are recorded). This replaces
+ * a note that called the placement an open question. Wrapping the other forms
+ * in `<form>` under `m1-1-forms` waits on the vendored us-regional DTD, so a
+ * bare forms leaf there stays reported here.
  */
 function fdaFormGaps(m1: readonly EctdLeaf[], forms: readonly FdaFormLeaf[]): string[] {
   const unresolved = forms
     .filter((f) => !resolveFormTypeCode(f.formType))
     .map((f) => `form ${f.leaf.fileName} has form type ${JSON.stringify(f.formType)}, which is not a form-type code; it is written as fdaft2`);
-  const leafGaps = m1.flatMap((l) => {
-    const { heading, element } = usRegionalHeadingPlacement(l.ctdSection);
-    if (forms.some((f) => f.leaf === l)) {
-      return [`${l.fileName} is written twice, under <form> and under <${element}>, with one ID; leaf IDs must be unique in a backbone (ectd-packager/leaf-id.ts)`];
-    }
-    return heading === '1.1' ? [`Module 1 forms leaf ${l.fileName} (${l.ctdSection}) has no declared form type`] : [];
-  });
+  const leafGaps = m1.flatMap((l) =>
+    usRegionalHeadingPlacement(l.ctdSection).heading === '1.1'
+      ? [`Module 1 forms leaf ${l.fileName} (${l.ctdSection}) has no declared form type`]
+      : [],
+  );
   return [...unresolved, ...leafGaps];
 }
 

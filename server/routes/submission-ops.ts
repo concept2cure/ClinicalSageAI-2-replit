@@ -55,7 +55,7 @@ import { buildECTDZip } from '../src/services/ectd';
 // builder the compile/export/sign path uses, so the transmitted artifact is the
 // conformant one (see server/services/ectd/package-leaf-bytes.ts).
 import { packageLeafBytes } from '../services/ectd/package-leaf-bytes';
-import { moduleForSectionKey, resolveArtifactPlacement } from '../services/ectd/section-to-ctd';
+import { indFormForDocumentType, moduleForSectionKey, resolveArtifactPlacement } from '../services/ectd/section-to-ctd';
 import {
   fdaIdentifierProblems,
   readRegulatoryContact,
@@ -111,7 +111,13 @@ import {
 } from '../services/ectd/package-content-change';
 import { bundleTrustEnforced } from '../services/submission-gateways/bundle-namespace';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
-import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
+import { ValidationError as PackagerValidationError, type SubmissionBundle } from '../services/submission-gateways/types';
+import { leafPackagePath } from '../services/submission-gateways/regional-packager';
+import { assessLeafPdfSecurity } from '../services/ectd/leaf-pdf-security';
+// Import only: the IND forms lane's own record of FDA's blank forms and the 356h's id.
+import { blankTemplateDigests } from '../services/ind-forms/ind-form-fill-service';
+import { FORM_356H } from '../services/ind-forms/ind-form-data-builders';
+import { evaluateRegionalBackboneGate } from '../services/ectd/regional-backbone-readiness';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
 import {
   VALIDATOR_REGISTRY,
@@ -2129,43 +2135,228 @@ function fdaIdentifierRefusal(
   };
 }
 
+/** An FDA Module 1 forms leaf: 1.1, or a 1.1.x where a form is filed under it. */
+function isFdaFormsSection(ctdSection: string): boolean {
+  return ctdSection === '1.1' || ctdSection.startsWith('1.1.');
+}
+
 /** FDA Module 1 sections whose documents belong to one submission: the cover
- *  letter (1.2) and the forms (1.1, and 1.1.x where a form is filed under it). */
+ *  letter (1.2) and the forms. */
 function isFdaPerSubmissionSection(ctdSection: string): boolean {
-  return ctdSection === '1.2' || ctdSection === '1.1' || ctdSection.startsWith('1.1.');
+  return ctdSection === '1.2' || isFdaFormsSection(ctdSection);
+}
+
+/** An FDA form the assemble route holds a sequence to, or declares in the
+ *  backbone: the forms engine's id, and the form number the packager's
+ *  form-type resolver reads. */
+type FdaAdminForm = { formId: string; formType: string; name: string };
+const FDA_1571: FdaAdminForm = { formId: indFormForDocumentType('form_1571')!.formId, formType: '1571', name: 'Form FDA 1571' };
+const FDA_356H: FdaAdminForm = { formId: FORM_356H, formType: '356h', name: 'Form FDA 356h' };
+
+/** The forms FDA's Module 1 specification places in the application's admin
+ *  block rather than under `m1-1-forms`. */
+const FDA_ADMIN_FORMS: readonly FdaAdminForm[] = [FDA_1571, FDA_356H];
+
+/** What an FDA forms leaf's bytes are, judged once, when the leaf is built. */
+type FdaFormLeafIdentity = {
+  /** The FDA form the bytes are, as FDA issued it (assessLeafPdfSecurity). */
+  issuedForm?: string;
+  /** The bytes are FDA's blank form, byte for byte (blankTemplateDigests). */
+  blankForm?: true;
+  /** The admin form a completed leaf is, declared to the packager (F20). */
+  formType?: string;
+};
+
+/**
+ * What an FDA forms leaf's bytes are (package-spine sweep F20, and its review,
+ * 2026-10-08). The admin form type is declared from the BYTES, never from the
+ * section key: read from the key, a page rendered from text in a section keyed
+ * 'form-356h' was declared to FDA as Form FDA 356h with no finding, and the
+ * backbone gap that had named the leaf went quiet. Only a leaf that is FDA's
+ * Form FDA 1571 or 356h as issued, and not FDA's blank form byte for byte (the
+ * IND lane refuses that one too, ind-forms.routes BLANK_TEMPLATE), is declared.
+ * The repository vendors the 356h decrypted, so no 356h is recognised as issued
+ * yet; a 356h leaf stays a forms leaf, and the backbone gap names it.
+ */
+async function fdaFormLeafIdentity(ctdSection: string, bytes: Buffer): Promise<FdaFormLeafIdentity> {
+  if (!isFdaFormsSection(ctdSection)) return {};
+  const security = await assessLeafPdfSecurity(bytes, 'fda');
+  if (security.verdict !== 'fda-form-as-issued') return {};
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if ((await blankTemplateDigests(security.formId)).includes(sha256)) return { issuedForm: security.formId, blankForm: true };
+  const admin = FDA_ADMIN_FORMS.find((f) => f.formId === security.formId);
+  return { issuedForm: security.formId, ...(admin ? { formType: admin.formType } : {}) };
+}
+
+/** A finding the assemble route itself adds to the structural validation. */
+type AssembleFinding = { severity: 'error' | 'warning'; ruleId: string; message: string; filePath?: string };
+
+/** A shipping leaf, as the Module 1 rules read it. */
+type FdaModule1Leaf = { ctdSection: string; fileName: string; modulePath: string } & FdaFormLeafIdentity;
+
+/** A form a sequence must carry: which, why, and where it can come from. */
+type FdaFormRule = { form: FdaAdminForm; basis: string; source: string };
+
+/** What the 1571 findings say about where the form can come from: only what
+ *  is true of this route and of the IND lifecycle's forms panel. */
+const FDA_1571_SOURCE =
+  'FDA expects its own fillable Form FDA 1571, completed and signed, not a page rendered from text. ' +
+  'This package renders every document from its artifact text, so it cannot carry that form yet; ' +
+  'in the IND lifecycle, the forms panel files the completed, signed form with an IND sequence as the file itself.';
+
+const FDA_356H_SOURCE =
+  'FDA expects its own fillable Form FDA 356h, completed and signed, not a page rendered from text. ' +
+  'This package renders every document from its artifact text, so it cannot carry that form yet.';
+
+/** Why a marketing application's original carries Form FDA 356h, by application-type code. */
+const FDA_356H_BASIS: Record<string, string> = {
+  fdaat1: 'A new drug application carries a completed and signed application form, Form FDA 356h (21 CFR 314.50(a)).',
+  fdaat2: 'An abbreviated new drug application carries a completed and signed application form, Form FDA 356h (21 CFR 314.94(a)(1)).',
+  fdaat3: 'A biologics license application is made on the form FDA prescribes, Form FDA 356h (21 CFR 601.2(a)).',
+};
+
+/**
+ * The forms an FDA sequence must carry (package-spine sweep VP-1, F20 review,
+ * 2026-10-08). An IND: Form FDA 1571, on every sequence (21 CFR 312.23(a)(1),
+ * 312.30–312.33). An NDA, ANDA or BLA: Form FDA 356h on the original
+ * application — submission type Original Application, sub-type Original. Its
+ * other sequences are not held to it here: the repository does not record
+ * which of them FDA holds to a 356h, and an NDA's annual report takes Form FDA
+ * 2252 instead (21 CFR 314.81(b)(2)).
+ */
+function fdaFormRules(sequence: string, typeCode: string | null, identity: FdaSequenceIdentity | null): FdaFormRule[] {
+  if (typeCode === 'fdaat4') {
+    const basis =
+      sequence === '0000'
+        ? 'An IND original carries Form FDA 1571 first (21 CFR 312.23(a)(1)).'
+        : 'Form FDA 1571 accompanies every IND submission, each with its own serial number; the form on file belongs to the sequence that filed it.';
+    return [{ form: FDA_1571, basis, source: FDA_1571_SOURCE }];
+  }
+  const basis = typeCode ? FDA_356H_BASIS[typeCode] : undefined;
+  return basis && isOriginalApplication(identity) ? [{ form: FDA_356H, basis, source: FDA_356H_SOURCE }] : [];
+}
+
+/** The sequence is the application itself: submission type Original
+ *  Application, sub-type Original (not an amendment, report or correspondence). */
+function isOriginalApplication(identity: FdaSequenceIdentity | null): boolean {
+  return identity?.submissionTypeCode === 'fdast1' && identity.submissionSubTypeCode === 'fdasst1';
+}
+
+/** What a forms leaf is, said against the form a rule wants. */
+function fdaFormLeafDescription(leaf: FdaModule1Leaf, form: FdaAdminForm): string {
+  if (!leaf.issuedForm) return 'is a page rendered from its artifact’s text';
+  if (leaf.issuedForm === form.formId) return `is FDA’s blank ${form.name}, byte for byte, not a completed one`;
+  const named = FDA_ADMIN_FORMS.find((f) => f.formId === leaf.issuedForm)?.name ?? `Form ${leaf.issuedForm.replace(/^FDA_/, 'FDA ')}`;
+  return `is FDA’s ${leaf.blankForm ? 'blank ' : ''}${named}, not ${form.name}`;
 }
 
 /**
- * What an FDA follow-up sequence lacks of its own Module 1 (sweep F13,
- * 2026-10-01). Its own cover letter and forms file `new`; one that is the
- * document on file, unchanged, is the earlier submission's and does not ship —
- * so a follow-up whose letter or form nobody revised now carries none, and
- * says so. Form FDA 1571 accompanies every IND submission, each with its own
- * serial number: missing, it blocks. A cover letter is expected with every
- * submission: missing, it warns.
+ * One form rule, judged on what the shipping BYTES are (package-spine sweep
+ * VP-1, VP-2; F20 review, 2026-10-08), or null when it is met.
+ *
+ * The 1571 rule ran for follow-ups only, and was met by any leaf at Module 1.1:
+ * an IND original with no 1571 assembled with 0 errors, and a Form FDA 3674 page
+ * stood in for it. Every leaf this route ships is a buildLeafPdf rendering of
+ * artifact text, never FDA's fillable form, so a rule is met only by a forms
+ * leaf whose bytes are the completed form as FDA issued it. On this route no
+ * leaf is, so every sequence a rule applies to reports it unmet: that is the
+ * state of the package, not a false alarm.
  */
-function fdaFollowUpModule1Findings(
-  sequence: string,
-  shipping: ReadonlyArray<{ ctdSection: string }>,
-  isInd: boolean,
-): Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> {
-  const findings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
-  if (isInd && !shipping.some((l) => l.ctdSection === '1.1' || l.ctdSection.startsWith('1.1.'))) {
-    findings.push({
+function fdaFormFinding(sequence: string, shipping: ReadonlyArray<FdaModule1Leaf>, rule: FdaFormRule): AssembleFinding | null {
+  const { form } = rule;
+  const forms = shipping.filter((l) => isFdaFormsSection(l.ctdSection));
+  if (forms.some((l) => l.issuedForm === form.formId && !l.blankForm)) return null;
+  const ruleId = `M1-FORM-${form.formType.toUpperCase()}`;
+  if (forms.length === 0) {
+    return {
       severity: 'error',
-      ruleId: 'M1-FORM-1571-MISSING',
+      ruleId: `${ruleId}-MISSING`,
+      message: `Sequence ${sequence} carries no ${form.name} (Module 1.1). ${rule.basis} ${rule.source}`,
+    };
+  }
+  const what = forms.map((l) => `${l.fileName} ${fdaFormLeafDescription(l, form)}`);
+  return {
+    severity: 'error',
+    ruleId: `${ruleId}-NOT-FDA-FORM`,
+    message: `Sequence ${sequence} carries no ${form.name} as FDA issued it at Module 1.1: ${what.join('; ')}. ${rule.source}`,
+    filePath: forms[0].modulePath,
+  };
+}
+
+/**
+ * What the packager reported about its own output that a validator will not
+ * accept, as assemble WARNINGS (package-spine sweep HS-2, 2026-10-08). The
+ * bundle carried both facts and the pre-transmit gate warned on them, but
+ * assembly listed neither, so the operator signed for a package whose Module 1
+ * backbone the product itself judged not FDA-conformant. Warnings, not errors:
+ * every FDA bundle is non-conformant today for reasons that wait on vendored FDA
+ * files (its telephone-number-type list, the DTDs), and an error would block
+ * every send on that. The backbone sentence is the gate's own.
+ */
+function packagerEvidenceFindings(bundle: Pick<SubmissionBundle, 'regionalBackbone' | 'dtdStatus'>): AssembleFinding[] {
+  const findings: AssembleFinding[] = [];
+  const backbone = bundle.regionalBackbone;
+  if (backbone && backbone.regionConformant !== true) {
+    for (const message of evaluateRegionalBackboneGate({ status: backbone, environment: 'staging', required: false }).warnings) {
+      findings.push({ severity: 'warning', ruleId: 'REGIONAL-BACKBONE-NOT-CONFORMANT', message, filePath: backbone.file });
+    }
+  }
+  const dtd = bundle.dtdStatus;
+  if (dtd && dtd.selfContained !== true) {
+    const absent = [...(dtd.missing ?? []), ...(dtd.missingStylesheets ?? [])];
+    findings.push({
+      severity: 'warning',
+      ruleId: 'DTD-NOT-SELF-CONTAINED',
       message:
-        `Sequence ${sequence} carries no Form FDA 1571 (Module 1.1). Form FDA 1571 accompanies every IND submission, ` +
-        'each with its own serial number; the form on file belongs to the sequence that filed it. Map this submission’s signed 1571.',
+        absent.length > 0
+          ? `The package does not carry ${absent.join(', ')}, which its backbones reference; they were not available to the packager. A validator that reads them from the package cannot check the backbones against them.`
+          : 'The package is not DTD self-contained, and the packager did not name the files it lacks.',
     });
+  }
+  return findings;
+}
+
+/** The assemble response's conformance facts: what packagerEvidenceFindings read. */
+function assembleConformanceSummary(evidence: Pick<SubmissionBundle, 'regionalBackbone' | 'dtdStatus'> | undefined) {
+  const backbone = evidence?.regionalBackbone;
+  const dtd = evidence?.dtdStatus;
+  return {
+    ...(backbone
+      ? { regionalBackbone: { regionConformant: backbone.regionConformant, ...(backbone.conformanceGap ? { conformanceGap: backbone.conformanceGap } : {}) } }
+      : {}),
+    ...(dtd ? { dtdStatus: { selfContained: dtd.selfContained, missing: [...(dtd.missing ?? []), ...(dtd.missingStylesheets ?? [])] } } : {}),
+  };
+}
+
+/**
+ * What an FDA sequence lacks of its own Module 1 (sweep F13, 2026-10-01; VP-1,
+ * 2026-10-08: sequence 0000 included). On a follow-up the cover letter and forms
+ * file `new`; one that is the document on file, unchanged, is the earlier
+ * submission's and does not ship — so a follow-up whose letter or form nobody
+ * revised carries none, and says so. A form the sequence must carry
+ * (fdaFormRules: an IND's 1571, a marketing application original's 356h):
+ * missing, or not FDA's completed form, it blocks. A cover letter is expected
+ * with every submission: missing, it warns.
+ */
+function fdaModule1Findings(
+  sequence: string,
+  shipping: ReadonlyArray<FdaModule1Leaf>,
+  applicationTypeCode: string | null,
+  identity: FdaSequenceIdentity | null,
+): AssembleFinding[] {
+  const findings: AssembleFinding[] = [];
+  for (const rule of fdaFormRules(sequence, applicationTypeCode, identity)) {
+    const form = fdaFormFinding(sequence, shipping, rule);
+    if (form) findings.push(form);
   }
   if (!shipping.some((l) => l.ctdSection === '1.2')) {
     findings.push({
       severity: 'warning',
       ruleId: 'M1-COVER-LETTER-MISSING',
       message:
-        `Sequence ${sequence} carries no cover letter (Module 1.2). Each FDA submission is expected to carry its own; ` +
-        'the letter on file belongs to the sequence that filed it. Map this submission’s letter.',
+        `Sequence ${sequence} carries no cover letter (Module 1.2). Each FDA submission is expected to carry its own` +
+        (sequence === '0000' ? '. ' : '; the letter on file belongs to the sequence that filed it. ') +
+        'Map this submission’s letter.',
     });
   }
   return findings;
@@ -2446,14 +2637,16 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       // The DOCUMENT's identity across sequences, independent of its file name.
       leafKey: string;
       operation?: LeafBytes['operation']; modifiedFile?: string;
-    }> = [];
+      // FDA: what a forms leaf's bytes are (fdaFormLeafIdentity); its
+      // `formType` is declared to the packager.
+    } & FdaFormLeafIdentity> = [];
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
     // Withdrawals: backbone-only leaves with no bytes, kept apart from
     // `ctdLeaves` because everything that set is used for — validation, the
     // leaf count, the empty-section list — is about files this bundle contains.
     const withdrawals: LeafBytes[] = [];
-    const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
+    const placementFindings: AssembleFinding[] = [];
     // ── Only approved documents are filed (2026-09-23, W5/D7, round-2 review) ──
     // The mapped-artifact read below had no status predicate, publish needs
     // only 80% readiness, and the governed transmit reads no artifact status,
@@ -2680,16 +2873,12 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         let fileName = leafFileName(section.sectionKey, disc);
         for (let n = 2; seenPaths.has(fileName); n += 1) fileName = leafFileName(section.sectionKey, `${disc}-${n}`);
         seenPaths.add(fileName);
-        // The leaf's IN-PACKAGE path, derived the way the canonical packager
-        // derives it (`m<module>/<section-dashed>/<file>`, Module 1 under the
-        // region directory), so the validator's findings cite a path that
-        // exists in the zip rather than a module-level approximation.
-        const moduleDigit = placement.code.split('.')[0];
-        const sectionDashed = placement.code.replace(/\./g, '-');
-        const modulePath =
-          moduleDigit === '1'
-            ? `m1/${regionCode}/${sectionDashed}/${fileName}`
-            : `m${moduleDigit}/${sectionDashed}/${fileName}`;
+        // The leaf's IN-PACKAGE path, from the canonical packager's own path
+        // helper, so the validator's findings cite a path that exists in the
+        // zip. 2026-10-08 (package-spine sweep VP-7): it was re-derived here
+        // with the section's dots replaced and its case kept, so the validator
+        // was handed `m3/3-2-P-1/…` while the zip carries `m3/3-2-p-1/…`.
+        const modulePath = leafPackagePath({ ctdSection: placement.code, fileName }, packagerRegion).relPath;
 
         const markdown = `### ${artifact.title} (${artifact.artifactId} v${artifact.version})\n\n${artifact.content ?? ''}\n`;
         const title = `${artifact.title} — ${sectionLabel}`;
@@ -2703,7 +2892,8 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
            and because moving a document to a different section is a withdrawal
            and a new filing, never a replace across sections. */
         const leafKey = `artifact:${artifact.artifactId}@${placement.code}`;
-        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath, leafKey });
+        const formIdentity = packagerRegion === 'fda' ? await fdaFormLeafIdentity(placement.code, bytes) : {};
+        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath, leafKey, ...formIdentity });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
         const approval = approvalOf.get(artifact)!;
         if (!approval.filable) {
@@ -2832,10 +3022,8 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       }
       ctdLeaves.length = 0;
       ctdLeaves.push(...kept);
-      if (packagerRegion === 'fda' && sequence !== '0000') {
-        placementFindings.push(
-          ...fdaFollowUpModule1Findings(sequence, kept, fdaEctdApplicationType(pkg.packageFamily, { region, format }) === 'fdaat4'),
-        );
+      if (packagerRegion === 'fda') {
+        placementFindings.push(...fdaModule1Findings(sequence, kept, fdaEctdApplicationType(pkg.packageFamily, { region, format }), fdaIdentity));
       }
     }
 
@@ -2880,8 +3068,8 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       | {
           format: typeof format;
           submissionGrade?: unknown;
-          dtdStatus?: unknown;
-          regionalBackbone?: unknown;
+          dtdStatus?: SubmissionBundle['dtdStatus'];
+          regionalBackbone?: SubmissionBundle['regionalBackbone'];
         }
       | undefined;
     /**
@@ -2983,6 +3171,10 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           dtdStatus: canonical.dtdStatus,
           regionalBackbone: canonical.regionalBackbone,
         };
+        for (const f of packagerEvidenceFindings(canonical)) {
+          validation.findings.push(f);
+          validation.warningCount += 1;
+        }
       } catch (packErr) {
         if (!(packErr instanceof PackagerValidationError)) throw packErr;
         // The packager REFUSED the package (its findings say why). This used to
@@ -3274,6 +3466,10 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
             warningCount: descriptor.validation.warningCount,
             infoCount: descriptor.validation.infoCount,
           },
+          // The packager's verdict on its own backbone and DTD bundling, so a
+          // surface can name a non-conformance instead of reading a count
+          // (sweep HS-2). Absent for a non-eCTD build, which has neither.
+          ...assembleConformanceSummary(canonicalEvidence),
           assembledAt: descriptor.assembledAt,
         },
       },
