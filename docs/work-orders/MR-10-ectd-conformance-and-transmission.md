@@ -61,6 +61,18 @@ A pilot sponsor builds an FDA IND sequence in the Submission Center, and the pac
 
 ### Stage 1 — Record study id and STF file-tag on the placement path (Phase 0 · S · engineering) — closes CAT2-04 (part: unblocks testing)
 
+2026-10-20 continuation: the governed writer and existing-leaf Builder editor
+were already completed in the
+[Builder evidence](../evidence/MR-10/2026-10-20-builder-study-tagging/README.md).
+The three existing placement forms are now connected to those same fields and
+rules; qualification is recorded in
+[placement evidence](../evidence/MR-10/2026-10-20-study-placement/README.md).
+Required inputs follow the existing FDA/unknown-region coverage severity;
+other regions retain their advisory behavior. The tag remains explicit reviewed
+text because the document-tag recall list is not yet source-verified. Stage 6
+still owns the sourced vocabulary and DTD qualification. This continuation does
+not close CAT2-04 or establish agency acceptance or human witnessing.
+
 1. Re-confirm CAT2-04 at the current head (statuses here are from 94b4f9238).
 2. Failing first: add a pglite route test showing that an FDA sequence with a 5.3.5.1 leaf placed through `PUT /api/submissions/sequences/:seqId/leaves` fails compile with FDA-TRC-1789 when no study id or file-tag is given. Record the red output.
 3. In `server/services/submission-service/submission-service.ts`, add `studyId?: string | null` and `stfFileTag?: string | null` to `UpsertLeafInput` (`:2363-2385`), and persist both in the insert (`:3169-3186`) and in the update branch. The columns already exist (`migrations/20261012_submission_leaf_stf_study_tagging.sql`); no migration is needed.

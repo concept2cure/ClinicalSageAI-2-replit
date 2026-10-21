@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > displays recorded metadata even when the sequence is immutable 66ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > requires a reason, sends only metadata plus exact optimistic expectations, and refreshes after confirmation 351ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > sends explicit nulls to clear both values rather than omitting them 104ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > reports a confirmed no-op without claiming a new write 89ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > warns when metadata committed but the audit is not confirmed and propagates sequence demotion 79ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > warns separately when the leaf audit stands but the sequence transition audit is unconfirmed 75ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {"id":999} 101ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {"sequenceId":99} 101ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {"studyId":"OTHER-STUDY"} 128ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {} 195ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > requires explicit reread after a metadata success without a receipt (HTTP 204) 142ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > requires explicit reread after a metadata success without a receipt (HTTP 200) 100ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > holds an unknown outcome until explicit successful reread; preserves inputs and never replays the write 121ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > keeps uncertainty and entered values after an unverifiable reread 105ms
+stderr | client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > rereads parent state on explicit close after an unknown write without silently saving
+An update to RecordHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to BuilderWorkspaceForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > refreshes parent status and history on confirmed no-op after an earlier unknown write 117ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > rereads parent state on explicit close after an unknown write without silently saving 79ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > reviews a concurrently moved or retitled leaf and submits its current identity without losing entered values 111ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > carries the selected submission and project on initial and reconciliation leaf reads 141ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging read ownership > does not fabricate optimistic expectations for legacy rows lacking metadata/timestamps 61ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging read ownership > discards an old write receipt after project A to B to A, even with the same leaf id 67ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging read ownership > discards a late refusal after an actor revision change 62ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > requires both values before placing an FDA study report 433ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > places the exact reviewed pair through the existing writer and checks its receipt 92ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > refuses a study id that cannot form the existing STF filename 84ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > clears manually reviewed values when the source or canonical section changes 72ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 4.3 66ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 5.2 66ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 5.3.6 68ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 5.4 58ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 2.5 59ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > retains the existing non-US advisory and delete exemptions 84ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {} 88ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {"studyId":"OTHER"} 79ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {"documentId":9} 98ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {"sequenceId":99} 89ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds a bodyless success or an uncertain failure (HTTP 204) 92ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds a bodyless success or an uncertain failure (HTTP 200) 105ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds a bodyless success or an uncertain failure (HTTP 408) 92ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > keeps a definite refusal retryable and distinguishes a no-op 91ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > warns independently about unconfirmed sequence-transition audit 66ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > does not start placement using an expired actor session 51ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder placement ownership during a request > keeps inputs inert and discards a late receipt after an actor revision change 63ms
+
+ Test Files  2 passed (2)
+      Tests  42 passed (42)
+   Start at  23:51:44
+   Duration  9.05s (transform 1.54s, setup 339ms, import 2.09s, tests 4.41s, environment 1.77s)
+
+JSON report written to /workspace/scratch/study-placement-20261020/builder-layout-final.json

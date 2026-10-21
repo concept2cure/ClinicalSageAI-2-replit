@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-20T23:45:50.271Z",
+  "generatedAt": "2026-10-21T00:15:03.839Z",
   "git": {
-    "sha": "404371c51421cc86ebf53ce0b95c0bf77e6da2a9",
+    "sha": "ff0155e5dd964b91c72f1a65eaf20e0debbfa9d8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -239,6 +239,25 @@
         ]
       },
       {
+        "basename": "probe",
+        "count": 13,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx",
+          "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/probe.tsx",
+          "docs/evidence/MR-10/2026-10-20-study-placement/browser/probe.tsx"
+        ]
+      },
+      {
         "basename": "routes",
         "count": 13,
         "paths": [
@@ -255,24 +274,6 @@
           "server/api/site-intel/routes.ts",
           "server/api/templates/routes.ts",
           "server/startup/routes.ts"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 12,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx",
-          "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/probe.tsx"
         ]
       },
       {
@@ -2378,6 +2379,10 @@
         "bytes": 119001
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "bytes": 117107
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "bytes": 117106
       },
@@ -2400,10 +2405,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 114827
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "bytes": 114644
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2600,12 +2601,12 @@
         "lines": 2386
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2368
-      },
-      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 2353
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "lines": 2338
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2907,7 +2908,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 167,
+      "duplicateGroups": 168,
       "largeByBytes": 0,
       "largeByLines": 5
     },
