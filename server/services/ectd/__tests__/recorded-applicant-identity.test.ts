@@ -92,7 +92,7 @@ describe('captured applicant identity proof', () => {
   it.each([undefined, null, {}, { version: 2 }, { version: 1 }, { version: 1, identity: {} },
     { version: 1, identity: { contact: null } }])('malformed or absent stored proof fails closed: %j', async (untrusted) => {
     const { identity } = await read();
-    expect(sameRecordedPackageIdentitySnapshot(untrusted as RecordedPackageIdentitySnapshot, recordedPackageIdentitySnapshot(identity))).toBe(false);
+    expect(sameRecordedPackageIdentitySnapshot(untrusted as unknown as RecordedPackageIdentitySnapshot, recordedPackageIdentitySnapshot(identity))).toBe(false);
   });
   it('does not invent a partial regulatory contact', async () => {
     const { identity } = await read({ contact_email: null });

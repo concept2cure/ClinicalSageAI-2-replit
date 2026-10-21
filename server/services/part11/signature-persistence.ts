@@ -676,7 +676,7 @@ export interface GovernedSignParams {
  */
 export interface GovernedActionSignatureParams extends GovernedSignParams {
   /** Explicit, honest binding. `digest: null` ⇒ the audit chain hash is bound. */
-  binding: GovernedBinding | { digest: string | null; basis: string; note: string };
+  binding: Omit<GovernedBinding, 'basis'> & { basis: string };
   /** electronic_signatures.signature_type. Default 'governed-action'. */
   signatureType?: string;
   /** manifest `kind` discriminator. Default 'governed-sign'. */

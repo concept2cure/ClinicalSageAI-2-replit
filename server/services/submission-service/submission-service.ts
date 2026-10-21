@@ -1750,7 +1750,7 @@ async function shadowReviewRefusalUnderLock(
 /** Repeat the existing renewal status rule after taking the sequence lock. */
 function assertDispatchRenewalStillEligible(
   row: { status?: string; region?: string; dispatch_status?: string | null } | undefined,
-  expectedDispatchStatus: string | null,
+  expectedDispatchStatus: string | null | undefined,
 ): void {
   const current = sequenceDispatchAuthorizationEligibility({ status: row?.status ?? '',
     region: row?.region ?? '', dispatchStatus: row?.dispatch_status });
@@ -2716,7 +2716,7 @@ async function transmitDispatchedSequence(
      status it read minutes ago. */
   const attemptId = randomUUID();
   const claim = await claimTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId,
-    { boundDigest: verdict.boundDigest, programId: submission.programId, fda, recordedPackageIdentity: verdict.recordedPackageIdentity });
+    { boundDigest: verdict.boundDigest, programId: submission.programId ?? null, fda, recordedPackageIdentity: verdict.recordedPackageIdentity });
   if (!claim.claimed) {
     const fresh = await getSequence(sequenceId, ctx);
     throw new SubmissionError(
