@@ -40,6 +40,7 @@ import {
 import { createScopedLogger } from '../utils/logger.js';
 import { runScheduledOnce } from '../db/scheduledOnce';
 import { withTenantConnection } from '../db/withTenantConnection';
+import { filterTenantsForBackgroundWork } from '../services/tenant/tenant-lifecycle';
 import type { RequestSqlClient } from '../db/requestDb';
 
 const logger = createScopedLogger('schedule-of-events-sweep');
@@ -49,6 +50,8 @@ export interface ScheduleSweepSummary {
   reviewed: number;
   /** Unclaimed schedules: within the window or no longer active/eligible. */
   recentlyReviewed: number;
+  /** Schedules of tenants whose lifecycle posture refuses background work (suspended, past due, canceled). */
+  skippedNotEntitled: number;
   tasksCreated: number;
   alertsCreated: number;
   errors: number;
@@ -64,7 +67,7 @@ export interface ScheduleSweepSummary {
 const REVIEW_CLAIM_FRACTION = 0.9;
 
 function emptySummary(): ScheduleSweepSummary {
-  return { schedules: 0, reviewed: 0, recentlyReviewed: 0, tasksCreated: 0, alertsCreated: 0, errors: 0 };
+  return { schedules: 0, reviewed: 0, recentlyReviewed: 0, skippedNotEntitled: 0, tasksCreated: 0, alertsCreated: 0, errors: 0 };
 }
 
 /**
@@ -112,6 +115,38 @@ export async function runScheduleOfEventsSweep(
   return outcome.ran ? outcome.value : { ...emptySummary(), skipped: 'held_elsewhere' };
 }
 
+/** Claim and review one plan under its own tenant's connection. Best-effort: a failure is counted. */
+async function reviewPlan(
+  p: { scheduleId: number; orgId: number; projectId: number },
+  minAgeMs: number,
+  summary: ScheduleSweepSummary,
+): Promise<void> {
+  try {
+    const result = await withTenantConnection({
+      tenantId: p.orgId, role: null, source: 'job', caller: 'schedule-of-events-sweep:review',
+    }, async client => {
+      if (!(await claimScheduleForReview(client, p, minAgeMs))) return null;
+      // Let transaction failures reach the connection owner, which evicts
+      // the client when a COMMIT acknowledgement is uncertain.
+      return reviewScheduleHealthForSweep({ orgId: p.orgId, projectId: p.projectId, apply: true }, client);
+    });
+    if (result === null) {
+      summary.recentlyReviewed += 1;
+      return;
+    }
+    if (result.ok) {
+      summary.reviewed += 1;
+      summary.tasksCreated += result.tasksCreated;
+      summary.alertsCreated += result.alertsCreated;
+    } else {
+      summary.errors += 1;
+    }
+  } catch {
+    summary.errors += 1; // per-project best-effort
+    logger.warn('schedule review failed', { organizationId: p.orgId, projectId: p.projectId, scheduleId: p.scheduleId });
+  }
+}
+
 async function sweepAll(minAgeMs: number): Promise<ScheduleSweepSummary> {
   const summary = emptySummary();
   let plans: Array<{ scheduleId: number; orgId: number; projectId: number }>;
@@ -123,31 +158,26 @@ async function sweepAll(minAgeMs: number): Promise<ScheduleSweepSummary> {
     return summary;
   }
   summary.schedules = plans.length;
+  // TENANT LIFECYCLE, as taskDueSweep. The claim's SQL checks organizations.status
+  // only, and a tenant whose row reads active can still be read_only: past due or
+  // canceled. Every HTTP write refuses that tenant; this sweep created AnA's tasks
+  // and alerts for it. One posture per distinct organization; a posture that
+  // cannot be read refuses (backgroundWorkPermitted(null) is false).
+  let allowedOrgs: Set<number>;
+  try {
+    allowedOrgs = await filterTenantsForBackgroundWork(plans.map(p => p.orgId));
+  } catch {
+    // Unknown entitlement is not permission: nothing is reviewed this tick.
+    summary.errors += 1;
+    logger.warn('tenant lifecycle read failed; no schedule was reviewed');
+    return summary;
+  }
   for (const p of plans) {
-    try {
-      const result = await withTenantConnection({
-        tenantId: p.orgId, role: null, source: 'job', caller: 'schedule-of-events-sweep:review',
-      }, async client => {
-        if (!(await claimScheduleForReview(client, p, minAgeMs))) return null;
-        // Let transaction failures reach the connection owner, which evicts
-        // the client when a COMMIT acknowledgement is uncertain.
-        return reviewScheduleHealthForSweep({ orgId: p.orgId, projectId: p.projectId, apply: true }, client);
-      });
-      if (result === null) {
-        summary.recentlyReviewed += 1;
-        continue;
-      }
-      if (result.ok) {
-        summary.reviewed += 1;
-        summary.tasksCreated += result.tasksCreated;
-        summary.alertsCreated += result.alertsCreated;
-      } else {
-        summary.errors += 1;
-      }
-    } catch {
-      summary.errors += 1; // per-project best-effort
-      logger.warn('schedule review failed', { organizationId: p.orgId, projectId: p.projectId, scheduleId: p.scheduleId });
+    if (!allowedOrgs.has(p.orgId)) {
+      summary.skippedNotEntitled += 1;
+      continue;
     }
+    await reviewPlan(p, minAgeMs, summary);
   }
   return summary;
 }
