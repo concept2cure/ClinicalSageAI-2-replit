@@ -1,0 +1,20 @@
+{
+  "baseline": "8c6bd712ecbf0e8e6a62cd581d1b1f7186b98aaf",
+  "tests": {
+    "failed": 17,
+    "passed": 4,
+    "skipped": 3,
+    "total": 24
+  },
+  "files": {
+    "server/services/ana/__tests__/strict-round-body-budget.test.ts": "5a50f1674373e69b9b5c2609d0b15cf21fadd5cf7ffaa6d1520e6fb6b4c01e1a",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/baseline-inputs.json": "312804a9ec66cb23cc9be9520488a581f7feced05fcef5158e548145166139d8",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/SUMMARY.md": "2c648afad123be8d226569f0b5e84f075059fa1abb733573eb24d2083e67dc02",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/baseline-post.json": "f37191912c6722c1ceddffdbbb81d18cb8848051e724d710da03f9e5a7c6815b",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/baseline-pre.json": "f37191912c6722c1ceddffdbbb81d18cb8848051e724d710da03f9e5a7c6815b",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/node-version.txt": "33e26f35db6e57ce0c486ddc815fe966867e4f649e418eaf323f75f4720eb8e9",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/red.command.txt": "e7a27ad3dbb01ce6bbb9dca8ec90f6f68a197b020c1e0f1c9719437cf84f718c",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/red.exit-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/red.raw.txt": "47c844cf2e17246bddf3360c12cd8cd7a50aacd1905890ec890702ee32226f6f"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "branch": "concept2cure-v2",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "normalHooks": true,
+  "noForceOrBypass": true,
+  "implementation": "7780de83f",
+  "merge": "679557d17ecd217127a7564c41f25cf36fa56af3"
+}

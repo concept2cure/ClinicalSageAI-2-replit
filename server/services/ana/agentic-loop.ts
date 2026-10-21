@@ -582,8 +582,10 @@ export function capToolResultForModel(content: string, maxChars = 8000): string 
 }
 
 export interface ToolResultBudgetOptions {
-  /** Total character budget for one round's results fed to the model (default 24000). */
+  /** Raw result-body character target (default 24000); strictTotal makes it a bound. */
   totalBudget?: number;
+  /** Refuse handoff if truthful per-call bodies cannot fit. Default preserves legacy replay. */
+  strictTotal?: boolean;
   /** Per-result ceiling, matching the classic single-result cap (default 8000). */
   perResultMax?: number;
   /** Floor below which a result's share is never squeezed (default 1500). */
@@ -605,6 +607,49 @@ export function notDeliveredResult(readAgainFrom: number): string {
 
 const PASSAGE_RESULT_WITHHELD = JSON.stringify({ delivered: false, code: 'PASSAGE_RESULT_WITHHELD',
   message: 'This round withheld the passage result. Do not infer matches or absence. Narrow the query or read a known source.' });
+
+const TOOL_RESULT_WITHHELD = JSON.stringify({ delivered: false, code: 'TOOL_RESULT_WITHHELD',
+  message: 'This tool result was withheld from this round. Do not infer success, failure or absence from it. Tool work may already have completed. Inspect current state before repeating any action.' });
+
+/** Refused handoff, never a claim that earlier tool work or receipts were rolled back. */
+export class ToolResultBudgetExceededError extends Error {
+  readonly code = 'ANA_TOOL_RESULT_BUDGET_EXCEEDED';
+  constructor() {
+    super('This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.');
+    this.name = 'ToolResultBudgetExceededError';
+  }
+}
+
+/** Non-mutating check for the final host bodies; framing and history are additional costs. */
+export function assertToolResultBodyBudget(entries: readonly ToolResultEntry[], totalBudget = 24000): void {
+  if (!Number.isFinite(totalBudget) || totalBudget < 0 ||
+    entries.reduce((sum, e) => sum + e.content.length, 0) > totalBudget) {
+    throw new ToolResultBudgetExceededError();
+  }
+}
+
+/** Reduce only positive contributions, preserving protected text and every call's identity. */
+function reconcileStrictBodyBudget(entries: ToolResultEntry[], options: ToolResultBudgetOptions): ToolResultEntry[] {
+  const totalBudget = options.totalBudget ?? 24000;
+  let total = entries.reduce((sum, e) => sum + e.content.length, 0);
+  if (total <= totalBudget) return entries;
+  const out = entries.map(e => ({ ...e }));
+  const whole = options.wholeOrNothing;
+  for (const priority of [0, 1, 2]) {
+    for (let i = out.length - 1; i >= 0 && total > totalBudget; i--) {
+      const entry = out[i];
+      const read = whole?.get(entry.tool_use_id);
+      const kind = read ? 2 : entry.name === 'search_document_passages' ? 1 : 0;
+      if (kind !== priority) continue;
+      const replacement = read ? notDeliveredResult(read.span.start) : kind === 1 ? PASSAGE_RESULT_WITHHELD : TOOL_RESULT_WITHHELD;
+      if (replacement.length >= entry.content.length) continue;
+      total -= entry.content.length - replacement.length;
+      entry.content = replacement;
+    }
+  }
+  assertToolResultBodyBudget(out, totalBudget);
+  return out;
+}
 
 /** A server-authored tool name selects integrity, never fields in its payload. */
 function protectedPassage(entry: ToolResultEntry, whole: NonNullable<ToolResultBudgetOptions['wholeOrNothing']>): boolean {
@@ -679,8 +724,9 @@ function placeWholeOrNothing(
  * replaced, never cut (see placeWholeOrNothing). Named passage-search bodies
  * are also kept whole or explicitly withheld, after private reads. Ordinary
  * floors and irreducible replacements mean the total is a target, not a hard
- * bound for arbitrarily many calls or tiny custom totals. With no passages,
- * the existing behaviour above is unchanged.
+ * bound for arbitrarily many calls or tiny custom totals unless strictTotal
+ * is enabled. Strict mode reconciles these candidates with truthful per-call
+ * replacements or refuses handoff; legacy replay keeps its historical bytes.
  *
  * Callers that also ground the final answer against a tool-evidence corpus MUST
  * feed the corpus these budgeted strings — the grounding contract is that the
@@ -690,6 +736,14 @@ export function budgetToolResultsForModel(
   entries: ToolResultEntry[],
   options: ToolResultBudgetOptions = {},
 ): ToolResultEntry[] {
+  // Validate even empty rounds before the legacy fast path; do not change
+  // historical option semantics when strict mode is omitted.
+  if (options.strictTotal) assertToolResultBodyBudget([], options.totalBudget);
+  const candidates = budgetToolResultCandidates(entries, options);
+  return options.strictTotal ? reconcileStrictBodyBudget(candidates, options) : candidates;
+}
+
+function budgetToolResultCandidates(entries: ToolResultEntry[], options: ToolResultBudgetOptions): ToolResultEntry[] {
   const perResultMax = options.perResultMax ?? 8000;
   const limits = { totalBudget: options.totalBudget ?? 24000, minPerResult: options.minPerResult ?? 1500, perResultMax };
   const whole = options.wholeOrNothing ?? new Map<string, { span: { start: number } }>();

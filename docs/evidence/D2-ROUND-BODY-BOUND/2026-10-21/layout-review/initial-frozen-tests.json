@@ -1,0 +1,27 @@
+{
+  "productionBaseline": "8c6bd712ecbf0e8e6a62cd581d1b1f7186b98aaf",
+  "contractCommits": [
+    "4643a34d2",
+    "518c71f05"
+  ],
+  "baselineInputsUnchanged": true,
+  "tests": {
+    "server/services/ana/__tests__/strict-round-body-budget.test.ts": "5a50f1674373e69b9b5c2609d0b15cf21fadd5cf7ffaa6d1520e6fb6b4c01e1a",
+    "server/services/ana/__tests__/strict-round-body-executor.test.ts": "2f6379774a16e026738da65df3129b34bba5c0f70f0209bfba279d649f88842c",
+    "server/services/ana/__tests__/strict-round-body-read-integrity.test.ts": "5199b253d644aafea12a76555e0a7232b297be9c99a366395892031f84d60821",
+    "server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts": "ae5c8cda43b31c7c4b02af0ed02bb7097110ba332017d8b44b891cd4f4132b52",
+    "server/routes/chat/__tests__/send-message-result-budget.test.ts": "c65f2f63632dc965f4da22e08f5fe5a64ba1ddbab3e425452c71504cad4912bd"
+  },
+  "testCounts": {
+    "total": 53,
+    "intendedFailures": 36,
+    "passingControls": 12,
+    "explicitNewExportSkips": 5
+  },
+  "reviews": [
+    "Canonical allocator audit approved opt-in and final nonmutating assertion.",
+    "Native host audit added staging-boundary assertion for replan and exact staging without recap; amended contract approved.",
+    "Independent review approved interface and documented child evidence exception."
+  ],
+  "note": "Earlier flawed fixture attempts remain labeled; authoritative per-owner red runs use corrected frozen files. No production changes preceded these freezes."
+}
