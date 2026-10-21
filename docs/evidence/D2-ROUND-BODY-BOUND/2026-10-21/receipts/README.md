@@ -45,3 +45,12 @@ source-refusal envelopes. They qualify post-allocation growth and honest
 retention of an earlier acknowledged outcome, not allocator selection of that
 fixture. No live DB/provider, provider delivery, current-source admission or
 rollback is claimed. The test file is not edited after freeze.
+
+## Root layout qualification addendum
+
+Root subsequently split only the long first `describe` callback to remove a lint
+warning. Assertions and fixtures are unchanged. Original frozen source and exact
+diff remain in `../layout-review/`; root repeated the revised suite against the
+original production baseline with all 21 selected pins unchanged. The final
+layout hash is in `../frozen-tests.json`. Production was restored byte-identically
+after this replay. The original owner freeze remains historical evidence.

@@ -184,6 +184,9 @@ describe('strict raw-body admission through the actual classic host', () => {
     expect.soft(receiptsFor(DOC_A)).toEqual([]);
   });
 
+});
+
+describe('classic late-source and redirected-round handoff', () => {
   it('rejects late guard growth before staging and retains a prior successful receipt honestly', async () => {
     addDocument(DOC_A, SOURCE);
     addDocument(DOC_B, SOURCE);

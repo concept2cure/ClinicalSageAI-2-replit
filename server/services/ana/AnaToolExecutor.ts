@@ -191,7 +191,7 @@ import {
   runAgenticToolLoop,
   resolveMaxRounds,
   resolveRoundExtension,
-  capToolResultForModel,
+  assertToolResultBodyBudget,
   budgetToolResultsForModel,
   buildAdaptationNote,
   mapWithConcurrency,
@@ -16128,7 +16128,9 @@ function drainOperatorTurns(queued: GatewayMessage[] | undefined): GatewayMessag
 /** Format before notifying detached observers; this reports host staging only. */
 function stageToolResultsForModel(results: ToolResultEntry[], round: number,
   observer: AgenticOptions['onToolResultsForModel']): string {
-  const staged = results.map(tr => ({ ...tr, content: capToolResultForModel(tr.content) }));
+  // Replans bypass executeTools. Check here too, and retain accepted body bytes.
+  assertToolResultBodyBudget(results);
+  const staged = results.map(tr => ({ ...tr }));
   const content = staged.map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(tr.content)}`).join('\n\n');
   if (observer) notifyObserver('onToolResultsForModel', () => observer(staged.map(entry => ({ ...entry })), round));
   return content;
@@ -16146,7 +16148,7 @@ export interface AgenticOptions {
   onStream?: StreamCallback;
   /** Called when a tool is executed */
   onToolExecution?: (toolName: string, input: Record<string, unknown>, result: string) => void;
-  /** Exact bodies staged by this host, after guards and classic capping.
+  /** Exact bodies staged by this host, after allocation and source guards.
    * Detached observation only; not proof of provider delivery. */
   onToolResultsForModel?: (entries: readonly Readonly<ToolResultEntry>[], round: number) => void;
   /** Tenant + thread context forwarded to each tool handler */
@@ -16403,12 +16405,15 @@ export async function executeAgenticLoop(
     // goes whole or not at all, and its receipt is written only if it went
     // whole (read-receipts.ts).
     pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
-    const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+    const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts, strictTotal: true });
     const guarded = await guardReadResultsForHandoff(entries, budgeted, readReceipts, { signal });
     const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
     await settleReadReceipts(entries, guarded, readReceipts, undefined, {
       signal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(guarded, id, { signal })),
     });
+    // Guards/withdrawal can grow bodies. Refuse handoff without rewriting any
+    // receipt outcome; earlier tool work and host admission may already exist.
+    assertToolResultBodyBudget(guarded);
     return guarded;
   };
 
@@ -16426,8 +16431,7 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return { text: '', toolCalls: [] };
 
     loopMessages.push({ role: 'assistant', content: priorText || '' });
-    // Entries arrive pre-budgeted from executeTools (the cap here is a no-op
-    // safety net); the adaptation note rides the same user turn so a failed
+    // Stage accepted bodies exactly; the adaptation note rides the same user turn so a failed
     // round becomes a course correction instead of an identical retry.
     const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
     pendingAdaptationNote = '';

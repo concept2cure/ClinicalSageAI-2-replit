@@ -1,0 +1,14 @@
+{
+  "passedTests": 613,
+  "suites": 37,
+  "skippedTests": 0,
+  "frozenTestsVerified": true,
+  "regressionHashesVerified": true,
+  "productionHashesVerified": true,
+  "lintErrors": 0,
+  "lintWarnings": 138,
+  "warningGrowth": 0,
+  "newTestWarnings": 0,
+  "baselineFiles": 21,
+  "note": "Synthetic deterministic seams, not live DB/provider or filing acceptance."
+}

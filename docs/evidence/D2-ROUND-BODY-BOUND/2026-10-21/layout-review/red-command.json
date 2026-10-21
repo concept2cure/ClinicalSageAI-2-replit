@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/ana/__tests__/strict-round-body-executor.test.ts",
+    "server/services/ana/__tests__/strict-round-body-read-integrity.test.ts"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "baselineInputsUnchanged": true,
+  "note": "Only describe wrappers split to remove two new lint warnings; every test assertion and fixture unchanged. Original frozen sources, raw red and initial 613-test green retained. Production temporarily restored to original pinned bytes for the repeat baseline."
+}
