@@ -12,6 +12,7 @@ import request from 'supertest';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
+import { pglitePool } from '../../services/ana-ri/__tests__/pglite-pool.fixture';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 /* `db` is drizzle over PGlite; `pool` is the duck-typed shim the raw-SQL
@@ -25,6 +26,7 @@ vi.mock('../../db', () => ({
       const r = await holder.pglite.query(text, params as unknown[]);
       return { rows: r.rows as unknown[], rowCount: (r.rows as unknown[]).length };
     },
+    connect: async () => pglitePool(() => holder.pglite).client,
   },
 }));
 /* Object bytes never touch the disk in a test: the storage provider is the only
@@ -55,6 +57,7 @@ vi.mock('../../services/auditService', () => ({
   default: {
     logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
   },
+  writeChainedAuditRow: vi.fn(async () => {}),
 }));
 
 import formsRouter from '../ind-forms.routes';
@@ -91,6 +94,14 @@ beforeAll(async () => {
   // Seed a project (org 1) for the governed-artifact route's org-scoping check.
   await harness.pglite.exec("INSERT INTO projects (id, organization_id, name) VALUES (1, 1, 'Test IND Project')");
   await harness.pglite.exec("INSERT INTO organizations (id, name) VALUES (1, 'Concept2Cure Therapeutics'), (2, 'Other Sponsor Inc')");
+  // Program-facts writes re-read current persisted authority in their own transaction.
+  await harness.pglite.exec(`
+    ALTER TABLE organizations ADD COLUMN status TEXT DEFAULT 'active';
+    CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT);
+    CREATE TABLE organization_users (organization_id INTEGER, user_id INTEGER, role TEXT);
+    INSERT INTO users VALUES (9,'active');
+    INSERT INTO organization_users VALUES (1,9,'manager');
+  `);
   // PGlite bootstrap can exceed the global 10s hookTimeout when the full
   // suite runs under load; give it explicit headroom.
 }, 60_000);
@@ -509,6 +520,15 @@ async function seedProgram(opts: {
   return String((r.rows[0] as { id: string }).id);
 }
 
+/** The existing fact editor now sends the exact read version and a stated reason. */
+async function saveProgramFacts(body: Record<string, unknown>) {
+  const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: body.projectIdent });
+  return request(app).put('/api/ind-forms/program-facts').send({
+    expectedFactsVersion: listed.body.program?.factsVersion ?? '2026-10-21T00:00:00.000000Z',
+    reason: 'Record the sponsor-completed program facts.', ...body,
+  });
+}
+
 /** The canonical submission (and, unless withSequence is false, its 0000). */
 async function seedSpine(opts: {
   org?: number;
@@ -617,12 +637,9 @@ describe('the open program supplies the form facts', () => {
     expect(res.body.missingRequired).toContain('indication');
   });
 
-  /* QA 2026-10-08 (j7, findings 3b and 3c). The program record has no column
-     for the sponsor's address or the IND type; the build reads both — and the
-     phase — from the request, merged over the record. That is where the forms
-     panel's inputs now go. Nothing is defaulted: an unstated phase stays a
-     missing required field. */
-  it('the sponsor address, IND type and phase the panel states land where the 1571 build reads them; unstated, they stay missing', async () => {
+  /* Program-backed identity/address are recorded facts. Existing per-build
+     IND type and phase remain explicit choices; missing facts stay missing. */
+  it('a build pins program address while retaining stated IND type and phase; unstated facts stay missing', async () => {
     await seedProgram({ code: 'BX-903', name: 'BX-903 (IND)', productName: 'Product 903', applicationNumber: '000903', indication: 'Z' });
     const stated = await request(app).post('/api/ind-forms/FDA_1571/build').send({
       projectIdent: 'BX-903', sponsor: { address: '1 Main St, Boston MA 02110, US' }, indType: 'Commercial IND', studyPhase: 'Phase 2',
@@ -630,11 +647,12 @@ describe('the open program supplies the form facts', () => {
     expect(stated.status).toBe(200);
     expect(stated.body.fields).toMatchObject({
       sponsor_name: 'Concept2Cure Therapeutics',
-      sponsor_address: '1 Main St, Boston MA 02110, US',
+      sponsor_address: '',
       ind_type: 'Commercial IND',
       phase_of_study: 'Phase 2',
     });
-    for (const id of ['sponsor_address', 'ind_type', 'phase_of_study']) expect(stated.body.missingRequired).not.toContain(id);
+    for (const id of ['ind_type', 'phase_of_study']) expect(stated.body.missingRequired).not.toContain(id);
+    expect(stated.body.missingRequired).toContain('sponsor_address');
 
     const unstated = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-903' });
     expect(unstated.body.missingRequired).toEqual(expect.arrayContaining(['sponsor_address', 'ind_type', 'phase_of_study']));
@@ -661,7 +679,7 @@ describe('the sponsor address and IND type are recorded on the program', () => {
      every build request, so a build from anywhere else had none. */
   it('PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record', async () => {
     const programId = await seedProgram({ code: 'BX-906', name: 'BX-906 (IND)', productName: 'Product 906', indication: 'V' });
-    const put = await request(app).put('/api/ind-forms/program-facts').send({
+    const put = await saveProgramFacts({
       projectIdent: 'BX-906', sponsorAddress: ' 2 Kendall Sq, Cambridge MA 02139, US ', indType: 'Research IND',
     });
     expect(put.status, JSON.stringify(put.body)).toBe(200);
@@ -682,14 +700,14 @@ describe('the sponsor address and IND type are recorded on the program', () => {
     expect(listed.body.program.formMetadata).toMatchObject({ sponsor: { address: '2 Kendall Sq, Cambridge MA 02139, US' }, indType: 'Research IND' });
 
     // The write is audited with the fields it changed.
-    const auditService = (await import('../../services/auditService')).default as unknown as { logAction: ReturnType<typeof vi.fn> };
-    expect(auditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+    const { writeChainedAuditRow } = await import('../../services/auditService');
+    expect(writeChainedAuditRow).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       action: 'ind_form.program_facts.update', resourceType: 'regulatory_program', resourceId: programId,
-      metadata: expect.objectContaining({ fields: ['sponsorAddress', 'indType'] }),
+      details: expect.objectContaining({ fields: ['sponsorAddress', 'indType'] }),
     }));
 
     // A blank clears the address; an absent field is left as recorded.
-    const cleared = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-906', sponsorAddress: '' });
+    const cleared = await saveProgramFacts({ projectIdent: 'BX-906', sponsorAddress: '' });
     expect(cleared.status).toBe(200);
     const after = await harness.pglite.query(`SELECT sponsor_address, ind_type FROM regulatory_programs WHERE id = $1`, [programId]);
     expect(after.rows[0]).toEqual({ sponsor_address: null, ind_type: 'Research IND' });
@@ -700,17 +718,17 @@ describe('the sponsor address and IND type are recorded on the program', () => {
     await seedProgram({ code: 'BX-908', name: 'BX-908 (NDA)', productName: 'Product 908', programType: 'NDA' });
     await seedProgram({ org: 2, code: 'BX-909', name: 'BX-909 (IND)', productName: 'Product 909' });
 
-    const unknown = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907', indType: 'Phase 1' });
+    const unknown = await saveProgramFacts({ projectIdent: 'BX-907', indType: 'Phase 1' });
     expect(unknown.status).toBe(400);
     expect(unknown.body.error.message).toMatch(/Commercial IND/);
-    const notInd = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-908', indType: 'Research IND' });
+    const notInd = await saveProgramFacts({ projectIdent: 'BX-908', indType: 'Research IND' });
     expect(notInd.status).toBe(400);
     expect(notInd.body.error.message).toMatch(/IND type/);
-    const empty = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907' });
+    const empty = await saveProgramFacts({ projectIdent: 'BX-907' });
     expect(empty.status).toBe(400);
-    const numeric = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: '12', sponsorAddress: 'x' });
+    const numeric = await saveProgramFacts({ projectIdent: '12', sponsorAddress: 'x' });
     expect(numeric.status).toBe(400);
-    const foreign = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-909', sponsorAddress: 'Somewhere' });
+    const foreign = await saveProgramFacts({ projectIdent: 'BX-909', sponsorAddress: 'Somewhere' });
     expect(foreign.status).toBe(404);
 
     const rows = await harness.pglite.query(
@@ -726,7 +744,7 @@ describe('the sponsor address and IND type are recorded on the program', () => {
 
   it('a stated value in the build request still wins over the recorded one', async () => {
     await seedProgram({ code: 'BX-910A', name: 'BX-910A (IND)', productName: 'Product 910A' });
-    await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-910A', sponsorAddress: 'Recorded St', indType: 'Commercial IND' });
+    await saveProgramFacts({ projectIdent: 'BX-910A', sponsorAddress: 'Recorded St', indType: 'Commercial IND' });
     const built = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-910A', indType: 'Treatment IND' });
     expect(built.body.fields).toMatchObject({ sponsor_address: 'Recorded St', ind_type: 'Treatment IND' });
   });
@@ -1070,8 +1088,7 @@ describe('an attached form counts as complete only when the forms engine finds n
   const SPONSOR_ADDRESS = '1 Harbor Way, Boston MA';
   async function seedIndWithFacts(code: string) {
     await seedProgram({ code, name: `${code} (IND)`, productName: `Product ${code}`, indication: 'Ovarian cancer' });
-    const facts = await request(app).put('/api/ind-forms/program-facts')
-      .send({ projectIdent: code, sponsorAddress: SPONSOR_ADDRESS, indType: 'Commercial IND' });
+    const facts = await saveProgramFacts({ projectIdent: code, sponsorAddress: SPONSOR_ADDRESS, indType: 'Commercial IND' });
     expect(facts.status, JSON.stringify(facts.body)).toBe(200);
     return seedSpine({ title: `${code} (IND)`, productName: `Product ${code}` });
   }

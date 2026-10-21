@@ -10,7 +10,9 @@
  * @module server/services/ectd/run-package-identity
  */
 import { pool } from '../../db.js';
-import { packageIdentityRefusal, readSubmissionPackageIdentity } from './package-identity.js';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
+import type { RegulatoryContactValues } from './regulatory-identifiers';
+import { packageIdentityRefusal, readSubmissionPackageIdentity, recordedPackageIdentitySnapshot, type RecordedPackageIdentitySnapshot } from './package-identity.js';
 
 /** What a run says about the submission it packages. */
 export interface RunIdentityInputs {
@@ -18,11 +20,12 @@ export interface RunIdentityInputs {
   submissionId: string;
   submissionFk?: number | null;
   applicationNumber: string;
+  region?: string;
 }
 
 /** The identity a run's package names: recorded, or a dry run and why. */
 export type RunPackageIdentity =
-  | { recorded: true; applicationNumber: string; applicantName: string }
+  | { recorded: true; applicationNumber: string; applicantName: string; applicantId: string | null; contact: RegulatoryContactValues; recordedPackageIdentity?: RecordedPackageIdentitySnapshot }
   | { recorded: false; reason: string };
 
 /**
@@ -58,7 +61,8 @@ export async function resolveRunPackageIdentity(inputs: RunIdentityInputs): Prom
     console.error('[Orchestrator] package identity read failed:', err instanceof Error ? err.message : err);
     return { recorded: false, reason: 'the recorded application number and applicant could not be read.' };
   }
-  const refusal = packageIdentityRefusal(identity, 'This assembly is a dry run.');
+  const fda = canonicalRegionOf(inputs.region) === 'US';
+  const refusal = packageIdentityRefusal(identity, 'This assembly is a dry run.', { fda });
   if (refusal) return { recorded: false, reason: refusal.message };
   if (identity.applicationNumber !== inputs.applicationNumber) {
     return {
@@ -72,5 +76,8 @@ export async function resolveRunPackageIdentity(inputs: RunIdentityInputs): Prom
     recorded: true,
     applicationNumber: identity.applicationNumber as string,
     applicantName: identity.applicantName as string,
+    applicantId: fda ? identity.applicantId : null,
+    contact: identity.contact,
+    ...(fda ? { recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
   };
 }

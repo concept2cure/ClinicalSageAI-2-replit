@@ -37,6 +37,7 @@ import {
   packageEctdSubmission,
   type EctdLeaf,
   type FdaRegionalAdmin,
+  type FdaApplicantContact,
 } from '../submission-gateways/regional-packager';
 import type { ECTDLeaf } from './ectd4-validator';
 import type { ComposedSection } from '../module3Composer';
@@ -77,6 +78,7 @@ export interface RealAssemblyContext {
   /** FDA Module 1 admin block. For region 'fda' the backbone must state an
    *  application type; see regional-packager.buildFdaBackbone. */
   fda?: FdaRegionalAdmin;
+  contacts?: FdaApplicantContact[];
   /**
    * The applicant's own identifier — DUNS for FDA, the EMA organisation id, the
    * PMDA applicant id. It is NOT the application number: `sponsorId` was filled
@@ -196,7 +198,7 @@ export async function assembleRealPackage(
          latter. Passing it in the right slot is what stopped an original IND
          from being coded fdast9 ("IND Safety Reports") by a lookup in the wrong
          vocabulary. An explicit block always wins. */
-      fda: ctx.fda ?? { applicationType: ctx.submissionType },
+      fda: { ...(ctx.fda ?? { applicationType: ctx.submissionType }), ...(ctx.contacts ? { contacts: ctx.contacts } : {}) },
       // The caller's: the recorded applicant, or a dry run's placeholder.
       sponsorId: ctx.applicantId,
       sponsorName: ctx.sponsorName,

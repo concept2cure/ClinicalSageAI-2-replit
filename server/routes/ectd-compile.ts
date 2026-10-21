@@ -50,7 +50,7 @@ import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd'
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
-import { readRecordedPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity';
+import { readRecordedPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -1138,17 +1138,17 @@ async function compileFromSpine(
     // assembled: the refusal becomes this compile's ASSEMBLY_REFUSED finding
     // and its `failed` status below (package-identity.ts, QA 2026-10-08 j6).
     const identity = await readRecordedPackageIdentity(pool, orgId, anchor.programId);
-    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.');
+    const fda = toPackagerRegion(seq.region) === 'fda';
+    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
     if (missingIdentity) throw missingIdentity;
     const assembled = await assembleSequence({
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
       applicationId: identity.applicationNumber as string,
-      // The applicant's <id> (D-U-N-S) has no recorded home on this path yet
-      // (package-identity.ts header); its name is the organisation's.
-      sponsorId: `UNASSIGNED-ORG-${orgId}`,
+      sponsorId: fda ? identity.applicantId as string : '',
       sponsorName: identity.applicantName as string,
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
       priorState,
     });
     auditTrail = assembled.auditTrail;

@@ -9236,7 +9236,8 @@ function confinePackagerPaths(
 async function recordedPackageIdentityOrRefusal(
   programIdInput: unknown,
   organizationId: number,
-): Promise<{ ok: true; applicationNumber: string; applicantName: string } | { ok: false; refusal: string }> {
+  fda: boolean,
+): Promise<{ ok: true; identity: import('../ectd/package-identity').RecordedPackageIdentity } | { ok: false; refusal: string }> {
   const programId = typeof programIdInput === 'string' ? programIdInput.trim() : '';
   if (!programId) {
     return {
@@ -9255,14 +9256,14 @@ async function recordedPackageIdentityOrRefusal(
     import('../../db.js'),
   ]);
   const identity = await readRecordedPackageIdentity(getPool(), organizationId, programId);
-  const missing = packageIdentityRefusal(identity, 'Nothing was built.');
+  const missing = packageIdentityRefusal(identity, 'Nothing was built.', { fda });
   if (missing) {
     return {
       ok: false,
       refusal: JSON.stringify({ error: missing.message, code: missing.code, missing: missing.missing, retry: false }),
     };
   }
-  return { ok: true, applicationNumber: identity.applicationNumber as string, applicantName: identity.applicantName as string };
+  return { ok: true, identity };
 }
 
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
@@ -9294,9 +9295,12 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!paths.ok) return paths.refusal;
   const { sourcePaths, outputDir } = paths;
   try {
-    const identity = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId);
-    if (!identity.ok) return identity.refusal;
-    const { applicationNumber, applicantName } = identity;
+    const recorded = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId, region === 'fda');
+    if (!recorded.ok) return recorded.refusal;
+    const identity = recorded.identity;
+    const applicationNumber = identity.applicationNumber as string;
+    const applicantName = identity.applicantName as string;
+    const { fdaContactsForPackageIdentity } = await import('../ectd/package-identity.js');
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const bundle = await packageEctdSubmission({
       region: region as any,
@@ -9308,11 +9312,9 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
          packager used to default to `fdaat1` — NDA — for every package this
          tool built. It now refuses, so the tool asks for it. */
       ...(typeof input.application_type === 'string' && input.application_type.trim()
-        ? { fda: { applicationType: input.application_type.trim() } }
+        ? { fda: { applicationType: input.application_type.trim(), ...(region === 'fda' ? { contacts: fdaContactsForPackageIdentity(identity) } : {}) } }
         : {}),
-      // The applicant's <id> (D-U-N-S) has no recorded home yet; it says so,
-      // as the compile's does (package-identity.ts header, P-27 known gap).
-      sponsorId:     `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorId:     region === 'fda' ? identity.applicantId as string : '',
       sponsorName:   applicantName,
       productName:   String(input.product_name),
       // A delete's source_path is passed through as given, never dropped: the

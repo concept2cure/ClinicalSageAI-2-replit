@@ -160,7 +160,7 @@ function messageFromBody(p: unknown, status: number): string {
 }
 
 export async function mutateVerbatim<T>(
-  method: 'POST' | 'PUT' | 'DELETE',
+  method: 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   path: string,
   body?: unknown,
 ): Promise<MutateResult<T>> {
@@ -1142,6 +1142,8 @@ interface ReadinessAssessment extends WaiverReadiness {
    *  (signingNowResolvesRelease: the resolver's spine precedence lives there),
    *  and this client never re-derives it. */
   dispatchGateOnSigning: { cleared: boolean; blockers: string[] };
+  /** Existing dispatch action may reauthorize an unsent FDA release; server-owned eligibility. */
+  dispatchAuthorization?: { reauthorizing: boolean; eligible: boolean; refusal: string | null };
   /** Whether THIS user may sign the freeze and dispatch, from the lookup the
    *  sign step enforces (separation of duties: the sequence's creator cannot).
    *  Informational — the server still decides at signing. */
@@ -2009,6 +2011,8 @@ export function DispatchWorkspace({
   // The gate blocks, and its only blocker is the release signature that the
   // dispatch e-signature itself records. See the header state that reads this.
   const awaitingOwnSignature = !!a && !a.gate.cleared && dispatchOpen;
+  const reauthorizing = seq.status === 'dispatched' && a?.dispatchAuthorization?.reauthorizing === true;
+  const renewalOpen = reauthorizing && a?.dispatchAuthorization?.eligible === true && awaitingOwnSignature;
   // Separation of duties, told in advance. The sign step refuses the sequence's
   // creator, and used to say so only after a password and code were typed. The
   // buttons are not offered to someone the server will refuse; 'unverified'
@@ -2101,10 +2105,15 @@ export function DispatchWorkspace({
             </div>
             {awaitingOwnSignature && (
               <div className="scaf-note sc-mb">
-                This submission type requires a 21 CFR Part 11 release signature, and none is on record
-                for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
-                recorded as that release signature, and the server checks the full gate again with it
-                on record before anything moves.
+                {reauthorizing ? <>
+                  The earlier release signature does not cover the current recorded facts. Re-signing applies a release signature
+                  to the current applicant, application and sequence content before any transmission.
+                </> : <>
+                  This submission type requires a 21 CFR Part 11 release signature, and none is on record
+                  for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
+                  recorded as that release signature, and the server checks the full gate again with it
+                  on record before anything moves.
+                </>}
               </div>
             )}
             {!a.gate.cleared && !awaitingOwnSignature && (
@@ -2154,6 +2163,16 @@ export function DispatchWorkspace({
                 when you sign.
               </div>
             )}
+            {reauthorizing && cannotSign && (
+              <div className="sc-verdict tone-warn" role="status">
+                {signerState === 'author'
+                  ? 'You created this sequence, so you cannot re-sign its release. A different colleague with signing rights must apply the current release.'
+                  : 'No creator is recorded for this sequence, so independence cannot be verified and its release cannot be re-signed.'}
+              </div>
+            )}
+            {reauthorizing && a.dispatchAuthorization?.eligible === false && a.dispatchAuthorization.refusal && (
+              <div className="sc-verdict tone-warn" role="status">{redactInternals(a.dispatchAuthorization.refusal, 'The current dispatch cannot be reauthorized.')}</div>
+            )}
             <div className="sc-disp-actions">
               {/* FREEZE reads `freezeGate`, not `gate`. `gate` is the dispatch
                   verdict and for IND / NDA / BLA / MAA it requires a §11.70
@@ -2190,14 +2209,16 @@ export function DispatchWorkspace({
                   here. When the signature is what this click supplies, the label
                   says so: the signer is applying the release, not only moving a
                   status (§11.50 — the meaning of the act must be clear). */}
-              {dispatchOpen && !cannotSign && seq.status === 'frozen' && (
+              {dispatchOpen && !cannotSign && (seq.status === 'frozen' || renewalOpen) && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
                   onClick={() => onGoverned(seq, 'dispatch')}
                 >
                   {I.rocket}{' '}
-                  {awaitingOwnSignature
+                  {reauthorizing
+                    ? 'Re-sign release for current recorded facts (Part 11 e-signature)'
+                    : awaitingOwnSignature
                     ? 'Sign the release and dispatch (Part 11 e-signature)'
                     : 'Dispatch sequence (Part 11 e-signature)'}
                 </button>

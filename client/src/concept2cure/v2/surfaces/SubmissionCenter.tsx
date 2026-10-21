@@ -974,6 +974,7 @@ export function SubmissionCenter({
       throw new Error(done.error ?? `The ${f.kind} was not applied.`);
     }
     setSeqBump((b) => b + 1);
+    setReadinessBump((b) => b + 1);
     setNotice({
       tone: 'ok',
       text: `Sequence ${f.seq.sequenceNumber} is now ${

@@ -25,6 +25,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { IndFormsPanel } from '../surfaces/IndFormsPanel';
 
 const PROGRAM_UUID = '709edd20-9af6-41e7-a206-c00ecb4671b9';
+const FACTS_VERSION = '2026-10-21T15:20:03.123456Z';
+const REASON = 'Record confirmed sponsor facts';
 const isListing = (url: string) => url.startsWith('/api/ind-forms/?') || url === '/api/ind-forms/';
 
 /* GET /api/ind-forms/?projectIdent=… for an IND program, as the server answers
@@ -39,7 +41,7 @@ const LISTING = {
     id: PROGRAM_UUID, code: 'BX-512', name: 'Vorelinib · KIT-mutant GIST (IND)', programType: 'IND',
     sponsorName: 'Concept2Cure Therapeutics', productName: 'Vorelinib · BX-512',
     indication: 'KIT-mutant gastrointestinal stromal tumor · 4L+', applicationNumber: '000512',
-    sponsorAddress: null as string | null, indType: null as string | null,
+    sponsorAddress: null as string | null, indType: null as string | null, applicantSponsorId: null, boundSponsor: null, factsVersion: FACTS_VERSION,
     formMetadata: { sponsorName: 'Concept2Cure Therapeutics', drugName: 'Vorelinib · BX-512', indNumber: '000512' },
   },
   placements: [],
@@ -49,6 +51,8 @@ function mockProgramListing(overrides: Partial<typeof LISTING> = {}) {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM_UUID };
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ ...LISTING, ...overrides }) } as Response;
+    if (method === 'GET' && url === '/api/ind-master-data/sponsors') return { ok: true, status: 200, json: async () => [] } as Response;
+    if (method === 'PUT' && url === '/api/ind-forms/program-facts') return { ok: true, status: 200, json: async () => ({ ...LISTING.program, ...apiRequest.mock.calls.at(-1)![2], programId: PROGRAM_UUID, factsVersion: '2026-10-21T15:20:04.123456Z', auditTrail: { persisted: true, chained: true } }) } as Response;
     if (method === 'POST' && url.endsWith('/build')) {
       return { ok: true, status: 200, json: async () => ({ formId: 'FDA_1571', fields: {}, missingRequired: [] }) } as Response;
     }
@@ -83,7 +87,7 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
     expect(body).not.toHaveProperty('sponsorAddress');
   });
 
-  it('"Save to program" records the sponsor address and IND type on the program, then re-reads the record', async () => {
+  it('"Save to program" records the sponsor address and IND type with reason, revision and an exact resulting receipt', async () => {
     mockProgramListing();
     const note = vi.fn();
     render(<IndFormsPanel note={note} />);
@@ -93,17 +97,18 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
     fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: '1 Main St, Boston MA 02110, US' } });
     fireEvent.change(screen.getByLabelText('IND type'), { target: { value: 'Commercial IND' } });
     // Until saved, the panel says the forms read the record, not the edit.
-    expect(screen.getByText(/Not saved\. The forms read the program’s recorded sponsor address and IND type/)).toBeTruthy();
+    expect(screen.getByText(/Not saved\. Forms and packages continue to read the recorded program facts/)).toBeTruthy();
+    expect(save.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: REASON } });
     expect(save.disabled).toBe(false);
-    const listingsBefore = apiRequest.mock.calls.filter((c) => c[0] === 'GET' && isListing(String(c[1]))).length;
     fireEvent.click(save);
     await waitFor(() => {
       const put = apiRequest.mock.calls.find((c) => c[0] === 'PUT' && c[1] === '/api/ind-forms/program-facts');
       expect(put).toBeTruthy();
-      expect(put![2]).toEqual({ projectIdent: PROGRAM_UUID, sponsorAddress: '1 Main St, Boston MA 02110, US', indType: 'Commercial IND' });
+      expect(put![2]).toEqual({ projectIdent: PROGRAM_UUID, expectedFactsVersion: FACTS_VERSION, reason: REASON, applicationNumber: '000512', applicantSponsorId: null, sponsorAddress: '1 Main St, Boston MA 02110, US', indType: 'Commercial IND' });
     });
-    await waitFor(() => expect(note).toHaveBeenCalledWith('Sponsor address and IND type saved to the program record.'));
-    await waitFor(() => expect(apiRequest.mock.calls.filter((c) => c[0] === 'GET' && isListing(String(c[1]))).length).toBeGreaterThan(listingsBefore));
+    await waitFor(() => expect(note).toHaveBeenCalledWith('Program facts saved to the program record.'));
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Save to program' }) as HTMLButtonElement).disabled).toBe(true));
   });
 
   it('a refused save says why, in the server\'s words, as an error', async () => {
@@ -119,8 +124,10 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
     render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
     fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: REASON } });
     fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/^Couldn’t save to the program record — IND type must be one of/), 'error'));
+    await screen.findByText(/IND type must be one of Commercial IND/);
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/Program facts saved/));
   });
 
   it('a program that is not an IND has no IND type to record', async () => {
@@ -129,10 +136,11 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
     await screen.findByText(/FDA 1571/);
     expect(screen.queryByLabelText('IND type')).toBeNull();
     fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: '1 Main St' } });
+    fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: REASON } });
     fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
     await waitFor(() => {
       const put = apiRequest.mock.calls.find((c) => c[0] === 'PUT' && c[1] === '/api/ind-forms/program-facts');
-      expect(put![2]).toEqual({ projectIdent: PROGRAM_UUID, sponsorAddress: '1 Main St' });
+      expect(put![2]).toEqual({ projectIdent: PROGRAM_UUID, expectedFactsVersion: FACTS_VERSION, reason: REASON, applicationNumber: '000512', applicantSponsorId: null, sponsorAddress: '1 Main St' });
     });
   });
 });

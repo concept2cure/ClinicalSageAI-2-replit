@@ -352,3 +352,44 @@ describe('the Builder says what the server knows about each leaf', () => {
     expect(document.body.textContent).not.toContain('placed from “Cover Letter” — server-confirmed');
   });
 });
+
+describe('confirmed release renewal refreshes the existing dispatch assessment', () => {
+  function renewalApi(confirmed: boolean) {
+    let renewed = false;
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url, body) => {
+      if (method === 'GET' && url.endsWith('/dispatch-readiness')) return ok(readiness({
+        sequenceStatus: 'dispatched',
+        gate: renewed ? CLEAR : { cleared: false, blockers: ['The current recorded facts need a release signature.'] },
+        releaseSignature: { required: true, verdict: renewed ? 'valid' : 'unsigned', cleared: renewed },
+        dispatchAuthorization: { reauthorizing: true, eligible: true, refusal: null },
+      }));
+      if (method === 'POST' && url.endsWith('/governed-precheck')) {
+        const step = (body as { step?: string } | undefined)?.step;
+        return step === 'dispatch' ? ok({ step, cleared: true, refusal: null }) : ok({ step: 'transmit', cleared: false, refusal: 'Gateway unavailable.', transmit: TRANSMIT({ staging: false, production: false }) });
+      }
+      if (method === 'POST' && url === '/api/c2c/actions/sign') return ok({ actionId: 'act_renewal', sha256Chain: 'a'.repeat(64) });
+      if (method === 'POST' && url.endsWith('/dispatch')) {
+        renewed = confirmed;
+        return confirmed ? ok(seqRow({ status: 'dispatched' })) : ok({ error: { code: 'OUTCOME_UNKNOWN', message: 'The release renewal could not be confirmed.' } }, 503);
+      }
+      return undefined;
+    });
+  }
+  it('reads the new release verdict after a confirmed dispatched to dispatched act', async () => {
+    renewalApi(true); await ready(); openWorkspace('Dispatch');
+    fireEvent.click(await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ }));
+    await screen.findByRole('dialog'); await sign();
+    await screen.findByText('Signature applied');
+    await waitFor(() => expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length).toBeGreaterThan(1));
+    expect(calledWith('POST', '/api/submissions/sequences/21/dispatch')).toHaveLength(1);
+  });
+  it('preserves the unresolved verdict when the governed act has no confirmed receipt', async () => {
+    renewalApi(false); await ready(); openWorkspace('Dispatch');
+    fireEvent.click(await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ }));
+    await screen.findByRole('dialog'); await sign();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('The release renewal could not be confirmed.'));
+    expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness')).toHaveLength(1);
+    expect(screen.queryByText('Signature applied')).toBeNull();
+  });
+});

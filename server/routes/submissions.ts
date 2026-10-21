@@ -28,6 +28,8 @@ import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-
 import {
   createSubmission,
   getSubmission,
+  getSequence,
+  sequenceDispatchAuthorizationEligibility,
   createSequence,
   transitionSequence,
   upsertLeaf,
@@ -1928,7 +1930,11 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
     const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-    const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
+    const [assessment, sequence] = await Promise.all([
+      assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId }),
+      getSequence(seqId, ctx),
+    ]);
+    const dispatchAuthorization = sequenceDispatchAuthorizationEligibility(sequence);
     // Whether THIS user may sign the sequence's freeze and dispatch, asked of
     // the sign step's own separation-of-duties check (signerIndependenceOf),
     // so the Dispatch tab can say so before a password is typed rather than
@@ -1938,7 +1944,7 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
     // 'independent'.
     const { signerIndependenceOf } = await import('../services/governance/separation-of-duties');
     const signer = { state: await signerIndependenceOf(`ectd-sequence:${seqId}`, ctx.organizationId, ctx.userId) };
-    res.json({ ...assessment, signer });
+    res.json({ ...assessment, signer, dispatchAuthorization });
   } catch (err) {
     fail(res, err);
   }

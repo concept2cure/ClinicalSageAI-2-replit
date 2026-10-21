@@ -26,6 +26,7 @@ import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
+import { pglitePool } from '../../services/ana-ri/__tests__/pglite-pool.fixture';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 vi.mock('../../db', () => ({
@@ -35,6 +36,7 @@ vi.mock('../../db', () => ({
       const r = await holder.pglite.query(text, params as unknown[]);
       return { rows: r.rows as unknown[], rowCount: (r.rows as unknown[]).length };
     },
+    connect: async () => pglitePool(() => holder.pglite).client,
   },
 }));
 const storage = vi.hoisted(() => ({ objects: new Map<string, Buffer>() }));
@@ -55,7 +57,7 @@ vi.mock('../../services/storage', async () => {
 const audit = vi.hoisted(() => ({ logAction: null as any }));
 vi.mock('../../services/auditService', () => {
   audit.logAction = vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true }));
-  return { default: { logAction: audit.logAction } };
+  return { default: { logAction: audit.logAction }, writeChainedAuditRow: vi.fn(async () => {}) };
 });
 
 import formsRouter from '../ind-forms.routes';
@@ -73,6 +75,13 @@ beforeAll(async () => {
   holder.pglite = harness.pglite;
   await harness.pglite.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260903_rendered_leaf_files.sql'), 'utf8'));
   await harness.pglite.exec("INSERT INTO organizations (id, name) VALUES (1, 'Concept2Cure Therapeutics')");
+  await harness.pglite.exec(`
+    ALTER TABLE organizations ADD COLUMN status TEXT DEFAULT 'active';
+    CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT);
+    CREATE TABLE organization_users (organization_id INTEGER, user_id INTEGER, role TEXT);
+    INSERT INTO users VALUES (9,'active');
+    INSERT INTO organization_users VALUES (1,9,'manager');
+  `);
   app = express();
   app.use(express.json());
   app.use((req, _res, next) => { (req as any).user = { id: UPLOADER, organizationId: 1, roles: ['regulatory-author'] }; next(); });
@@ -87,8 +96,10 @@ async function seedInd(code: string): Promise<{ submissionId: number; sequenceId
      VALUES (1, $1, $2, 'IND', $3, 'Ovarian cancer')`,
     [`${code} (IND)`, code, `Product ${code}`],
   );
+  const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: code });
   const facts = await request(app).put('/api/ind-forms/program-facts')
-    .send({ projectIdent: code, sponsorAddress: '1 Harbor Way, Boston MA', indType: 'Commercial IND' });
+    .send({ projectIdent: code, sponsorAddress: '1 Harbor Way, Boston MA', indType: 'Commercial IND',
+      expectedFactsVersion: listed.body.program.factsVersion, reason: 'Record the sponsor-completed facts.' });
   expect(facts.status, JSON.stringify(facts.body)).toBe(200);
   const sub = await harness.pglite.query<{ id: number }>(
     `INSERT INTO submissions (title, product_name, application_type, client_type, primary_region, organization_id, created_by)

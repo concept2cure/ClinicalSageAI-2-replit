@@ -2964,6 +2964,9 @@ export const C2C_MIGRATION_FILES = [
   // an empty database: clean both passes, 3 of 3 tables with organization_id
   // NOT NULL. Evidence docs/evidence/D7-IND-MASTER-DATA-ON-DEPLOY-PATH/.
   'migrations/20260609_ind_master_data.sql',
+  // MR-10 CAT2-02: bind programs to that existing registry, preserving one
+  // DUNS/contact authority. Replay-safe nullable link + same-tenant FK only.
+  'migrations/20261021_regulatory_programs_applicant_sponsor.sql',
 
   // ── Shared state across API tasks: continuity baseline and presence roster
   //    (2026-10-01, D1, audit W2 fix units U14 + U16) ───────────────────────

@@ -67,7 +67,9 @@ import {
   GOVERNED_REVOCATION_SIGNATURE_TYPE,
   isSignatureWithdrawn,
   deriveGovernedTargetBinding,
+  manifestSignatureHash,
 } from '../part11/signature-persistence.js';
+import { sameRecordedPackageIdentitySnapshot, type RecordedPackageIdentitySnapshot } from './package-identity';
 import type { GovernedSequenceStep } from '../submission-service/submission-service.js';
 import type { ReleaseSignatureVerdict } from './dispatch-gate.js';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -96,6 +98,8 @@ interface CandidateRow {
   verification_status: unknown;
   superseded_by: unknown;
   is_valid: unknown;
+  signature_manifest?: unknown;
+  signature_hash?: unknown;
 }
 
 /** Drizzle returns either `{rows}` or a bare array depending on the driver. */
@@ -132,7 +136,8 @@ async function findReleaseSignatureRows(
            es.bound_payload_digest,
            es.verification_status,
            es.superseded_by,
-           es.is_valid
+           es.is_valid,
+           es.signature_manifest, es.signature_hash
       FROM electronic_signatures es
       JOIN c2c_ana_actions a
         ON a.id = (es.signature_manifest::jsonb ->> 'actionId')
@@ -165,7 +170,8 @@ function isWithdrawn(row: CandidateRow): boolean {
 }
 
 /** The manifest digest of the sequence's CURRENT content, or why it is unknown. */
-type ManifestProbe = { ok: true; digest: string } | { ok: false; detail: string };
+type CurrentManifest = { ok: true; digest: string; sequenceContentDigest?: string; recordedPackageIdentity?: RecordedPackageIdentitySnapshot };
+type ManifestProbe = CurrentManifest | { ok: false; detail: string };
 
 /**
  * Re-derive the sequence's leaf-manifest digest NOW, through the very function
@@ -204,7 +210,37 @@ async function currentLeafManifestDigest(
       detail: `the current leaf manifest for ${target} is not derivable, so the release signature cannot be verified`,
     };
   }
-  return { ok: true, digest: binding.digest };
+  return { ok: true, digest: binding.digest, sequenceContentDigest: binding.sequenceContentDigest, recordedPackageIdentity: binding.recordedPackageIdentity };
+}
+
+/** Only proven identity-only drift may invite renewal. Changed leaf content
+ *  keeps the existing invalid verdict, even if identity also changed. */
+function identityOnlyStaleness(row: CandidateRow, current: CurrentManifest, signedDigest: string): boolean {
+  if (!current.recordedPackageIdentity || !current.sequenceContentDigest) return false;
+  let manifest = row.signature_manifest;
+  if (typeof manifest === 'string') {
+    try { manifest = JSON.parse(manifest); } catch { return false; }
+  }
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return false;
+  const proof = manifest as Record<string, unknown>;
+  const modern = Object.hasOwn(proof, 'recordedPackageIdentity') || Object.hasOwn(proof, 'sequenceContentDigest');
+  // A pre-integration FDA signature covered exactly this sequence and leaves,
+  // but never covered applicant facts. Retain it intact and require renewal.
+  if (!modern) return signedDigest === current.sequenceContentDigest;
+  const old = proof.recordedPackageIdentity as RecordedPackageIdentitySnapshot | undefined;
+  return proof.boundPayloadDigest === signedDigest
+    && proof.sequenceContentDigest === current.sequenceContentDigest
+    && sameRecordedPackageIdentitySnapshot(old, old)
+    && !sameRecordedPackageIdentitySnapshot(old, current.recordedPackageIdentity)
+    && row.signature_hash === manifestSignatureHash(manifest);
+}
+
+function mismatchedBinding(row: CandidateRow, current: CurrentManifest, signedDigest: string, signatureId?: number): SequenceReleaseSignature {
+  return identityOnlyStaleness(row, current, signedDigest)
+    ? { verdict: 'unsigned', signatureId,
+        detail: 'The release signature does not cover the current recorded application/applicant facts. Renew dispatch authorization over the current facts before transmitting.' }
+    : { verdict: 'invalid', signatureId,
+        detail: 'the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content' };
 }
 
 /**
@@ -279,13 +315,7 @@ export async function resolveSequenceReleaseSignature(params: {
   }
 
   if (current.digest !== signedDigest) {
-    return {
-      verdict: 'invalid',
-      detail:
-        `the sequence changed after it was signed for dispatch (leaf manifest digest differs); ` +
-        `re-sign the current content`,
-      signatureId,
-    };
+    return mismatchedBinding(newest, current, signedDigest, signatureId);
   }
 
   return {

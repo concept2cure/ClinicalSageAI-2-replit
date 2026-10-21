@@ -57,6 +57,9 @@ import os from 'os';
 import path from 'path';
 
 const poolCalls: Array<{ text: string; params?: unknown[] }> = [];
+const recordedIdentity = () => ({ programId: 'p-1', applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
+  applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantId: '123456789',
+  contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' } });
 const state = { dispatchStatus: 'pending' as string, signatureActionId: null as string | null, attemptId: null as string | null, signatureSpent: false, spendAfterLock: false };
 
 vi.mock('../../../db', () => {
@@ -108,8 +111,11 @@ vi.mock('../../../db', () => {
       // The FDA gateway's transmittal row (only the SFTP case reaches it).
       if (/INSERT INTO submission_transmittals/.test(text)) return { rowCount: 1, rows: [{ id: 99 }] };
       // What the package names, from the record (package-identity.ts, QA j6).
+      if (/LEFT JOIN ind_sponsors/.test(text)) return { rows: [{ organization_name: 'Concept2Cure Therapeutics', application_number: '123456',
+        applicant_sponsor_id: '22222222-2222-4222-8222-222222222222', sponsor_id: '22222222-2222-4222-8222-222222222222',
+        sponsor_name: 'Concept2Cure Therapeutics', duns: '123456789', contact_name: 'Regulatory Contact', contact_phone: '+1 617 555 0100', contact_email: 'regulatory@example.test' }] };
       if (/FROM organizations/.test(text)) return { rowCount: 1, rows: [{ name: 'Concept2Cure Therapeutics' }] };
-      if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: 'IND123456' }] };
+      if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: '123456' }] };
       return { rowCount: 0, rows: [] };
     },
     connect: async () => ({
@@ -122,7 +128,7 @@ vi.mock('../../../db', () => {
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) }, writeChainedAuditRow: vi.fn() }));
 vi.mock('../../part11/signature-persistence', async (orig) => ({
   ...(await orig<any>()),
-  deriveGovernedTargetBinding: async () => ({ digest: 'd', basis: 'ectd-sequence-leaf-manifest-sha256', note: '' }),
+  deriveGovernedTargetBinding: async () => ({ digest: 'd', basis: 'ectd-sequence-leaf-manifest-sha256', note: '', recordedPackageIdentity: { version: 1, identity: recordedIdentity() } }),
   isSignatureWithdrawn: () => false,
 }));
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({
@@ -148,7 +154,7 @@ vi.mock('../../submission-gateways/bundle-integrity', async (orig) => {
 
 const bundle = { path: '', sha256: '', sizeBytes: 0, format: 'ectd' as const };
 vi.mock('../../ectd/assemble-from-core', () => ({
-  assembleSequence: async () => ({ bundle, skipped: [], unfinalized: 0, unfinalizedSections: [], unresolvedLeaves: [], materialized: 1, cleanup: async () => {} }),
+  assembleSequence: async (args: { recordedPackageIdentity?: unknown }) => ({ bundle, recordedPackageIdentity: args.recordedPackageIdentity, skipped: [], unfinalized: 0, unfinalizedSections: [], unresolvedLeaves: [], materialized: 1, cleanup: async () => {} }),
   assembledTransmitBlockers: () => [],
 }));
 
@@ -217,7 +223,7 @@ afterEach(() => {
 
 const transmit = () => transmitSequence({
   sequenceId: 1, ctx: { organizationId: 7, userId: 11 }, signatureActionId: 'sig-1',
-  environment: 'staging', applicationId: 'IND123456',
+  environment: 'staging', applicationId: '123456',
 }).catch((e) => e);
 
 describe('transmit guard refusal before the wire', () => {
@@ -253,7 +259,7 @@ describe('transmit guard refusal before the wire', () => {
     const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue({} as any);
     const err = await transmitSequence({
       sequenceId: 1, ctx: { organizationId: 7, userId: 11 }, signatureActionId: 'sig-1',
-      environment: 'staging', applicationId: 'IND123456',
+      environment: 'staging', applicationId: '123456',
     }).catch((e) => e);
     expect(wire).not.toHaveBeenCalled();
     expect(String(err?.message)).toMatch(/encrypted\/secured/);
