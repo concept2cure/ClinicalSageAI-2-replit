@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "origin/concept2cure-v2"
+  ],
+  "localBefore": "5153f62c8e7e516b735a6bb145d8d3de6b3b407a",
+  "incomingHead": "463181413e93810938b5cd6d0bed63f7bee1d713",
+  "selectedQualificationInputIntersection": [],
+  "incomingExecutablePaths": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+    "client/src/concept2cure/v2/editor/authoringOversight.ts",
+    "server/routes/__tests__/_authoring-assembly-filing-cases.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "server/services/ana/saved-document-critique.ts",
+    "server/services/ana/saved-template-review.ts",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/services/authoring/authoring-assembly-plan.ts",
+    "server/services/authoring/authoring-assembly-source.ts",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts",
+    "server/services/c2c/document-class.ts",
+    "server/services/market-specs/document-preparation.ts",
+    "server/services/regulatory/market-support.ts"
+  ],
+  "startedAt": "2026-10-21T00:30:10.046171+00:00"
+}

@@ -1,0 +1,117 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/routes/ana-ri/stream.ts (3923 lines)
+  server/services/ana/AnaToolExecutor.ts (22057 lines)
+  server/services/ana/agentic-loop.ts (812 lines)
+  server/services/ana/sub-agent.ts (523 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3312 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 5153f62c8] fix: preserve passage round bodies and child staging evidence
+ 105 files changed, 14946 insertions(+), 37 deletions(-)
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/README.md
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/README.md
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/evidence-sha256.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/frozen-test.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/lint-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/lint-raw.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/red-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/red-raw.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/red-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/README.md
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/evidence-sha256.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/frozen-test.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-lint-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-lint-raw.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/lint-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/lint-raw.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/README.md
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/evidence-sha256.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/frozen-test.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-lint-summary.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/lint-summary.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-lint-summary.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/README.md
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/evidence-sha256.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/frozen-test.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/lint-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/lint-raw.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/executor/lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/frozen-tests.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/green-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/green-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/green-tests.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/independent-review.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/initial-green-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/initial-green-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/initial-green-tests.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/initial-lint-final-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/initial-lint-final.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/lint-baseline-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/lint-baseline.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/lint-comparison.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/lint-final-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/lint-final.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/README.md
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/evidence-sha256.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/frozen-test.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/lint-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/lint-raw.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/lint-stderr.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/review-frozen-tests.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/source-input-pins.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/README.md
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/evidence-sha256.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/first-baseline-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/first-baseline-red.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/first-baseline-result.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/frozen-test.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/lint-command.json
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/lint-raw.txt
+ create mode 100644 docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/lint-result.json
+ create mode 100644 server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts
+ create mode 100644 server/services/ana/__tests__/passage-round-budget.test.ts
+ create mode 100644 server/services/ana/__tests__/passage-round-executor.test.ts
+ create mode 100644 server/services/ana/__tests__/passage-round-read-priority.test.ts
+ create mode 100644 server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+ create mode 100644 tests/services/tool-outcome-passage-withheld.test.ts
