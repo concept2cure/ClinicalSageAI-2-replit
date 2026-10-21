@@ -14,7 +14,9 @@ failure semantics before production changes. Work remains on `concept2cure-v2`.
 - `server/services/ana/AnaToolExecutor.ts` and
   `server/routes/ana-ri/stream.ts` already allocate, guard, settle and stage;
   their observer/recorder/corpus are the verification seams. Ordinary stream
-  shortfall notes still inspect raw bodies.
+  shortfall notes still inspect raw bodies. Checkpoint replan results bypass
+  execution; the actual staging boundary must also assert the aggregate and
+  preserve the accepted bodies without recapping.
 - `server/services/ana/tool-output-frame.ts` adds framing overhead separately.
   `server/services/ana/sub-agent-stream.ts` preserves legacy replay, while
   modern child evidence consumes staged bytes.

@@ -73,6 +73,13 @@ settlement; late assertion refusal may follow receipt persistence. Neither
 refusal rolls back tools, raw UI events or prior receipt outcomes. Cancellation
 and existing source identity checks remain authoritative.
 
+Assert again at each actual host staging boundary, before recording/framing or
+observer notification. A checkpoint replan creates redirected results outside
+`executeTools`; those must also fit or refuse the next call. Stage the accepted
+bodies exactly, without recapping after recorder/corpus admission. Allocation
+remains the canonical place for ordinary per-result capping. Redirected results
+are already host-authored control messages; no tool ran in that replaced round.
+
 SSE shortfall notes consume actual staged bodies for all tool names, with no raw
 fallback. The fixed ordinary envelope is self-guiding and conveys no count or
 operation verdict. No extra outcome taxonomy is needed. Existing passage
