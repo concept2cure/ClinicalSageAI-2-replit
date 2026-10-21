@@ -1,0 +1,158 @@
+{
+  "syntheticSchemas": true,
+  "agencyAcceptance": false,
+  "packageSha256": "b81d4ca73e821e134d6daab156264f6b310095631a56532b6536481a507fa8e6",
+  "dtdStatus": {
+    "required": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd"
+    ],
+    "present": [
+      "ich-ectd-3-2.dtd",
+      "ich-stf-v2-2.dtd",
+      "us-regional-v3-3.dtd"
+    ],
+    "missing": [],
+    "missingStylesheets": [],
+    "requiredStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl"
+    ],
+    "presentStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl"
+    ],
+    "selfContained": true,
+    "validation": {
+      "version": 1,
+      "expectedFiles": [
+        "index.xml",
+        "m1/us/us-regional.xml",
+        "m5/5-3-5-1/study-001/stf-study-001.xml"
+      ],
+      "files": [
+        {
+          "relPath": "index.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "dtd"
+          }
+        },
+        {
+          "relPath": "m1/us/us-regional.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "dtd"
+          }
+        },
+        {
+          "relPath": "m5/5-3-5-1/study-001/stf-study-001.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": true,
+            "valid": false,
+            "errors": [
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute xmlns:ectd of element study",
+              "//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute xmlns:xlink of element study",
+              "//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute dtd-version of element study",
+              "//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:5: element title: validity error : No declaration for element title",
+              "<title>Pivotal efficacy study</title>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:6: element study-id: validity error : No declaration for element study-id",
+              "<study-id>STUDY-001</study-id>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:7: element study-identifier: validity error : No declaration for element study-identifier",
+              "</study-identifier>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:9: element doc-content: validity error : No declaration for attribute href of element doc-content",
+              "<doc-content xlink:href=\"../../../index.xml#leaf-5-3-5-1-study-report\">",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:10: element title: validity error : No declaration for element title",
+              "<title>Pivotal Study Report</title>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for attribute name of element file-tag",
+              "<file-tag name=\"study-report-body\" info-type=\"ich\"/>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for attribute info-type of element file-tag",
+              "<file-tag name=\"study-report-body\" info-type=\"ich\"/>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for element file-tag",
+              "<file-tag name=\"study-report-body\" info-type=\"ich\"/>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:12: element doc-content: validity error : No declaration for element doc-content",
+              "</doc-content>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:13: element study-document: validity error : No declaration for element study-document",
+              "</study-document>",
+              "^",
+              "./m5/5-3-5-1/study-001/stf-study-001.xml:14: element study: validity error : No declaration for element study",
+              "</ectd:study>",
+              "^"
+            ],
+            "mode": "dtd"
+          }
+        }
+      ],
+      "integrity": {
+        "verified": [
+          "ectd-2-0.xsl",
+          "ich-ectd-3-2.dtd",
+          "ich-stf-v2-2.dtd",
+          "us-regional-v3-3.dtd",
+          "us-regional.xsl"
+        ],
+        "mismatched": [],
+        "missingFiles": [],
+        "unlistedFiles": [],
+        "ok": true
+      },
+      "passed": false
+    }
+  },
+  "regionalBackbone": {
+    "region": "fda",
+    "file": "m1/us/us-regional.xml",
+    "regionConformant": false,
+    "conformanceGap": "applicant contact \"Jane Smith\" has no telephone, so no <telephones>; form-356h.pdf is written twice, under <form> and under <m1-1-forms>, with one ID; leaf IDs must be unique in a backbone (ectd-packager/leaf-id.ts)"
+  }
+}

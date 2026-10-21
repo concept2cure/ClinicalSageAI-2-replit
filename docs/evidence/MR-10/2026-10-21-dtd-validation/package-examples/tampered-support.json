@@ -1,0 +1,120 @@
+{
+  "syntheticSchemas": true,
+  "agencyAcceptance": false,
+  "packageSha256": "716c3b5d765dd7fde8d2fd4cce8cee604502f5a2515ef611751c7a84cd3362c5",
+  "dtdStatus": {
+    "required": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd"
+    ],
+    "present": [
+      "ich-ectd-3-2.dtd",
+      "ich-stf-v2-2.dtd",
+      "us-regional-v3-3.dtd"
+    ],
+    "missing": [],
+    "missingStylesheets": [],
+    "requiredStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl"
+    ],
+    "presentStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl"
+    ],
+    "selfContained": true,
+    "validation": {
+      "version": 1,
+      "expectedFiles": [
+        "index.xml",
+        "m1/us/us-regional.xml",
+        "m5/5-3-5-1/study-001/stf-study-001.xml"
+      ],
+      "files": [
+        {
+          "relPath": "index.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "dtd"
+          }
+        },
+        {
+          "relPath": "m1/us/us-regional.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "dtd"
+          }
+        },
+        {
+          "relPath": "m5/5-3-5-1/study-001/stf-study-001.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "dtd"
+          }
+        }
+      ],
+      "integrity": {
+        "verified": [
+          "ectd-2-0.xsl",
+          "ich-stf-v2-2.dtd",
+          "us-regional-v3-3.dtd",
+          "us-regional.xsl"
+        ],
+        "mismatched": [
+          {
+            "fileName": "ich-ectd-3-2.dtd",
+            "expected": "b3fa5197564d6a2472c1d70d1046c1f78f0ee90b2fa0ca2c0ba69f546fad86fe",
+            "actual": "62a4a165056b1aece47f2c295f2623429e0cfad7d4d3975028f549907303f537"
+          }
+        ],
+        "missingFiles": [],
+        "unlistedFiles": [],
+        "ok": false
+      },
+      "passed": false
+    }
+  },
+  "regionalBackbone": {
+    "region": "fda",
+    "file": "m1/us/us-regional.xml",
+    "regionConformant": false,
+    "conformanceGap": "applicant contact \"Jane Smith\" has no telephone, so no <telephones>; form-356h.pdf is written twice, under <form> and under <m1-1-forms>, with one ID; leaf IDs must be unique in a backbone (ectd-packager/leaf-id.ts)"
+  }
+}

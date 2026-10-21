@@ -1,0 +1,88 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-21T00:38:00.963Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:38:00.965Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-21T00:38:00.966Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 15ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 4ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 9ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > refuses absent DTD proof when required while preserving PDF/A warning semantics 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 4ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > forwards the selected external descriptor so a matching clean report can pass the required gate 4ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > reports a matching external error as a failed assessment and blocks required production 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > keeps a clean selected subset from satisfying the required external assessment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > refuses required external clearance without a trusted descriptor despite a clean engine-named report 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in production 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in staging 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps advisory unassessed execution distinct from a clean zero-error assessment 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > surfaces an advisory mismatched report as invalid rather than passed 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > retains valid internal subset error diagnostics without calling them an external assessment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > preserves low-level enforceExternal=false even when required with no descriptor 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 5ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 1142ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > a complete placeholder drop-point proves presence but cannot clear actual DTD validation 1049ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records every generated backbone/STF as unverified when the drop-point is empty 987ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > validates all captured ZIP XML and checksum-pins its exact supportive bytes 1686ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned 1391ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > refuses to certify changed supportive bytes despite otherwise valid XML 1663ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing 1926ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > does not require an STF DTD when this sequence generates no STF 450ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory xml-errors details 3ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-present details 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-styles-inventory details 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory duplicate-required details 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses absent historical status and presence-only historical status when required 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > accepts actual complete proof while preserving the default/report-only posture 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged empty proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged duplicate proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-row proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged skipped proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged doctype proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged integrity proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-required-style proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged nonboolean proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses omitted STF coverage in a study package 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > does not establish conformance from a clean structural-gap report alone 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > accepts a clean structural report only with current complete regional proof 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > retains structural refusals even with an XML-valid synthetic grammar 1ms
+
+ Test Files  3 passed (3)
+      Tests  52 passed (52)
+   Start at  00:37:54
+   Duration  18.87s (transform 4.62s, setup 181ms, import 7.32s, tests 10.40s, environment 1ms)
+

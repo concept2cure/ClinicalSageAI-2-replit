@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > detects leaving and returning to the same program 4ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps same-program and metadata updates current 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires pending handoffs across a tenant clear and return to the same program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > a fresh guard belongs to the current program 1ms
+ × client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires a batched accepted-ident visit from 42 to 43 and back 15ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires a batched accepted-ident visit from PROGRAM-A to PROGRAM-B and back 5ms
+   → expected true to be false // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps the same numeric identifier current across its string representation and metadata updates 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps UUID case changes current without weakening the UUID-only routing helper 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires a batched accepted-ident visit from 42 to 43 and back
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires a batched accepted-ident visit from PROGRAM-A to PROGRAM-B and back
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts:36:23
+     34|     project.publishShellProject({ id: b });
+     35|     project.publishShellProject({ id: a });
+     36|     expect(current()).toBe(false);
+       |                       ^
+     37|   });
+     38|   it('keeps the same numeric identifier current across its string repr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  00:33:14
+   Duration  1.44s (transform 204ms, setup 286ms, import 84ms, tests 34ms, environment 767ms)
+

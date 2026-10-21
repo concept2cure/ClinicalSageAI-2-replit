@@ -1,0 +1,33 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/ectd/qualification/__tests__/qualification-stf.test.ts > qualification reaches every generated STF > records original and lifecycle STF checks and explicit unvendored schema notes 1388ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/qualification/__tests__/qualification-stf.test.ts > qualification reaches every generated STF > records original and lifecycle STF checks and explicit unvendored schema notes
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ectd/qualification/__tests__/qualification-stf.test.ts:15:76
+     13|       const report = await qualifyV3('fda', work);
+     14|       const names = report.validators.filter(row => row.name.includes(…
+     15|       expect(names.some(name => name.startsWith('xmllint well-formed (…
+       |                                                                            ^
+     16|       expect(names.some(name => name.startsWith('0001/xmllint well-for…
+     17|       expect(report.notes.join(' ')).toMatch(/stf-study-001\.xml.*ich-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  00:30:22
+   Duration  3.18s (transform 1.09s, setup 189ms, import 1.15s, tests 1.39s, environment 0ms)
+

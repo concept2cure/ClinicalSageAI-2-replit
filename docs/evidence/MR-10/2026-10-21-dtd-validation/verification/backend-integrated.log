@@ -1,0 +1,670 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > POSITIVE CONTROL: a well-formed grouped container reports only its heading children 4ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > sees a stray flat <leaf> AFTER the grouped headings — the exact case the positional regex missed 2ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > sees a stray flat <leaf> BEFORE the headings too (the one case the old regex did catch) 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > a self-closing <leaf/> and a <leaf>…</leaf> pair are both direct children 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS when the container is absent — an unreadable backbone is never a clean one 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS when the container is never closed 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS on a non-string / empty document and on an unidentified container 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > an EMPTY container is readable, and the emptiness is caught by the non-vacuity assertions, not hidden 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA is NOT conformant by region alone: with no build report it says so 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA requires a current regional DTD result as well as its clean structural report 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA with reported gaps is not conformant, and the gaps are the stated reason: the first four, then a count 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > EMA / PMDA / Health Canada are NOT conformant: own root element, but Module 1 is flat — with the gap stated 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > the eight widened regions are EMA-structure placeholders, never conformant 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > fda: EVERY Module 1 leaf sits under a published heading element — and the status names what the builder cannot stand behind 1215ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > ema: NOT conformant — eu-regional.xml really does file EVERY Module 1 leaf flat under <m1-eu> 736ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > pmda: NOT conformant — jp-regional.xml files every Module 1 leaf flat under <m1-jp> 857ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > uk: placeholderOf=ema, and uk-regional.xml carries an <eu-regional> root 663ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a placeholder is ALWAYS surfaced (failing check + warning), even when not enforced 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a flat-Module-1 backbone is ALWAYS surfaced with its specific gap 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > FAILS CLOSED: blocks a production transmit of a placeholder OR a flat backbone when enforcement is on 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > does not block staging even when enforced (report-only there) 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a conformant region passes cleanly 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a malformed placeholderOf on a stored status cannot crash the gate 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a required production flag refuses absent historical evidence 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > the env flag is true only for the literal "true" 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > NO region claims conformance for this fixture, and FDA — the one grouped builder — names its gaps 2ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > fda: the ROOT ELEMENT in the bytes is the one the conformance report records 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ema: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > pmda: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ca: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > uk: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ch: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > au: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > cn: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > br: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > in: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > kr: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > sg: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > fda groups its Module 1 — NO <leaf> is a direct child of its Module 1 container, wherever in the container it sits 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ema claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > pmda claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ca claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > uk claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ch claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > au claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > cn claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > br claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > in claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > kr claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > sg claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > generates a well-formed, checksum-verified FDA package with a working lifecycle 2717ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ema (well-formed + checksums) 1895ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region pmda (well-formed + checksums) 1738ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ca (well-formed + checksums) 1541ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v4.0 qualification > generates a well-formed RPS package, verifies checksums + in-message integrity, and a lifecycle revise 410ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > runQualification (full suite, preserved reports) > runs FDA v3 + v4 and writes reports with exact spec versions 4455ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a vendored stylesheet that checksums.txt does not record 2795ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a manifest entry whose agency artifact is GONE from the drop point 1420ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > the v4.0 schema drop point has the same three fault classes 609ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > POSITIVE CONTROL: a recorded stylesheet verifies clean 1326ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > skips (does not fail) a region whose regional DTD is absent from a partial drop 1657ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > states the AMENDMENT package's skip too, not only the original sequence's 1224ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > POSITIVE CONTROL: with no drop-point at all, every backbone is skipped and none fails 2101ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone with no DOCTYPE at all (it must not vanish from the report) 10ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE carries no parseable SYSTEM identifier 9ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE points OUTSIDE the package (not self-contained) 35ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS an unreadable backbone rather than reporting nothing about its DTD 2ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > STILL skips (does not fail) when the DOCTYPE is right but the DTD is unvendored 21ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > POSITIVE CONTROL: a real generated package declares and validates its DTDs > emits an xmllint DTD row for every backbone when the drop-point is complete 1386ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > passes a pointer to a leaf ID the prior backbone carries, from index.xml and from the regional backbone 5ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a file-path pointer, which names no leaf 5ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS an ID no leaf of the prior backbone carries 5ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a Module 1 pointer that climbs out of the regional backbone too few folders 4ms
+stderr | tests/routes/ectd-compile-spine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-spine.test.ts
+{
+  "timestamp": "2026-10-21T00:40:04.620Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] could not record spine compilation for Program BX-204: column "leaf_manifest" of relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+[eCTD History] query failed for Program BX-204: relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 2093ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 9ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 11ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 9ms
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 4ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 12ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 413ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 15ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the resolver itself distinguishes one level from two (the check is not vacuous) 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > fda: m1/us/us-regional.xml points its DTD at util/dtd/us-regional-v3-3.dtd 184ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ema: m1/eu/eu-regional.xml points its DTD at util/dtd/eu-regional.dtd 130ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > pmda: m1/jp/jp-regional.xml points its DTD at util/dtd/jp-regional.dtd 121ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ca: m1/ca/ca-regional.xml points its DTD at util/dtd/ca-regional.dtd 150ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the ICH index.xml at the root references util/dtd/ directly 122ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > fda: m1/us/us-regional.xml points its stylesheet at util/style/us-regional.xsl 139ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > the ICH index.xml carries a stylesheet PI that resolves to util/style/ectd-2-0.xsl 109ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > bundles vendored *.xsl into util/style/ and checksums them into the MD5 index 120ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > index.xml: <ectd:ectd> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 100ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > m1/us/us-regional.xml: <fda-regional:fda-regional> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 126ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > requiredDtdsForRegion > always includes the ICH backbone plus the regional DTD 2ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > requiredDtdsForRegion > requires eu-regional.dtd for every widened region (they build the EMA backbone) 1ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > listVendoredDtds > returns [] for a missing directory without throwing 1ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > listVendoredDtds > with a populated drop-point > lists only *.dtd files, sorted 2ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > blocks a production FDA package missing the regional DTD when required 1ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > clears when every required DTD is present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > does NOT block when DTDs are not required (graceful default), but still reports missing 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > does NOT block staging even when required 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > blocks a production widened-region (kr) package missing eu-regional.dtd 1ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > does not claim exact package SYSTEM paths resolve to uppercase filenames 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > dtdRequiredFromEnv > is true only for the literal "true" 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > requires the ICH stylesheet everywhere and the FDA regional stylesheet only for fda 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > listVendoredStylesheets lists only *.xsl and returns [] for a missing directory 3ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > a production package with every DTD but no stylesheet is NOT self-contained when required 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > requires the exact stylesheet case used by package processing instructions 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > report-only when not required: names the missing stylesheets but does not block 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > fda: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > ema: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > pmda: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > ca: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > uk: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > ch: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > au: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > cn: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > br: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > in: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > kr: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > sg: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > yet only FDA can be region-conformant — the DTDs do not close the other eleven 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records every generated backbone/STF as unverified when the drop-point is empty 610ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > validates all captured ZIP XML and checksum-pins its exact supportive bytes 1115ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned 1233ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > refuses to certify changed supportive bytes despite otherwise valid XML 1124ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing 1280ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > does not require an STF DTD when this sequence generates no STF 554ms
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+{
+  "timestamp": "2026-10-21T00:40:18.734Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record 1476ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation 13ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics 8ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check 9ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check 11ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check 13ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check 10ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check 6ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters 8ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report 3ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 0 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 1 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 2 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 3 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 4 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 5 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with empty proof 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with duplicate proof 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with not-ran proof 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with missing-integrity proof 1ms
+stderr | tests/routes/ectd-compile-sequence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-sequence.test.ts
+{
+  "timestamp": "2026-10-21T00:40:21.905Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence 1402ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled 2ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named" 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles 5ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the status read names the sequence asked for, with its recorded region 2ms
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-21T00:40:27.855Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:40:27.856Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-21T00:40:27.856Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > refuses absent DTD proof when required while preserving PDF/A warning semantics 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > forwards the selected external descriptor so a matching clean report can pass the required gate 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > reports a matching external error as a failed assessment and blocks required production 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > keeps a clean selected subset from satisfying the required external assessment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > refuses required external clearance without a trusted descriptor despite a clean engine-named report 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in production 6ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in staging 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps advisory unassessed execution distinct from a clean zero-error assessment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > surfaces an advisory mismatched report as invalid rather than passed 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > retains valid internal subset error diagnostics without calling them an external assessment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > preserves low-level enforceExternal=false even when required with no descriptor 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 23ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 2102ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > a complete placeholder drop-point proves presence but cannot clear actual DTD validation 564ms
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+{
+  "timestamp": "2026-10-21T00:40:31.867Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it 1229ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit 7ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf 8ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out 4ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so 4ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal 12ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > a rehearsal of an original sequence is refused before anything is assembled 1ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only 5ms
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+{
+  "timestamp": "2026-10-21T00:40:34.582Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 1289ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 8ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 3ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-stf.test.ts > qualification reaches every generated STF > records original and lifecycle STF checks and explicit unvendored schema notes 1033ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > executes a real contained DTD as its positive control 20ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > accepts a captured package-local secondary parameter entity 13ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not certify a DOCTYPE written only in a comment 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not let a benign commented declaration mask the actual escaped DTD 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked XML input even when its declaration names a local DTD 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked primary DTD 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects an intermediate DTD directory symlink 12ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked secondary parameter entity 13ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an absolute file URI hidden in a secondary DTD declaration 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: missing.ent 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: https://schemas.invalid/not-captured.ent 12ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an XML internal subset that references an outside entity 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not use an ambient XML catalog as proof of a missing packaged module 9ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects URI-encoded traversal even when a literal percent-path decoy exists in the package 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a constructed external identifier split across parameter entities 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not audit UTF-16 DTD bytes as if they were dependency-free UTF-8 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records actual well-formedness, DOCTYPE and DTD execution 37ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records grammar-invalid XML separately from well-formedness 21ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records a declared but absent DTD as unexecuted, not passed 12ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records a missing runtime as unexecuted, not passed 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > does not let a commented declaration override the actual declaration 15ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unsafe XML path ../outside.xml before invoking xmllint 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unsafe XML path /outside.xml before invoking xmllint 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses a symlinked XML file outside the package 3ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses absolute primary DTD references 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses symlink primary DTD references 8ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses network primary DTD references 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe outside secondary dependency 8ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe network secondary dependency 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe missing secondary dependency 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe symlink secondary dependency 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe public secondary dependency 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > allows a literal package-contained secondary dependency and lets xmllint judge its grammar 18ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unprovable declarations generated by parameter entities 5ms
+stderr | tests/routes/ectd-compile-ident.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-ident.test.ts
+{
+  "timestamp": "2026-10-21T00:40:39.754Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it
+[eCTD Compile] Project 7: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'compile' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-10-21T00:40:40.152Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'status' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-10-21T00:40:40.157Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'validate' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-10-21T00:40:40.158Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > keeps the numeric legacy path: sections load by project id, org-scoped 6ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program UUID org-scoped and reports the unlinked section store honestly 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program CODE ident (non-UUID, non-numeric) 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 404s an ident outside the caller org without leaking data 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 401s without an org context before any resolution 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/validate — program idents get the unlinked-store finding > prepends SECTION_STORE_UNLINKED as a blocking error 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers 3ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/history — program idents filter by the program label > reads history org-scoped with the resolved label 3ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > imported validator reports cannot bypass the regional-device refusal 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'status' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'validate' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'validate' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'compile' fails closed if the bridge cannot be read 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'status' fails closed if the bridge cannot be read 4ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'validate' fails closed if the bridge cannot be read 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'a foreign or missing project' 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'an unresolved, foreign or deleted lin…' 0ms
+stderr | tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written
+[eCTD Validate] eValidator import not recorded: audit_logs unavailable
+
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it 12ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > a replaced report stays listed on the one that replaces it, and the import record names it 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written 3ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report 4ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation 1ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > checkWellFormed > accepts well-formed XML 11ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > checkWellFormed > rejects malformed XML with diagnostics 6ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > validateAgainstDtd > validates a document against an explicit DTD (and fails an invalid one) 11ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > validateAgainstXsd > validates against an XSD schema 11ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > requires the RPS message schema for v4.0 only 2ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > lists vendored .xsd files and resolves their path 6ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > never throws on a missing directory 1ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > blocks a required-but-missing schema only in production 1ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > reads the enforcement flag 0ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > parses sha256sum-format entries, ignoring comments/blanks 1ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > verifies matching hashes and flags mismatch / missing / unlisted 4ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > detects a tampered file (hash mismatch) 3ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > is trivially ok when nothing is vendored and nothing is listed (pre-vendoring state) 2ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier covers vendored stylesheets by default > reports a *.xsl with no manifest entry as unlisted (default extensions) 3ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier covers vendored stylesheets by default > verifies a listed *.xsl against its digest (default extensions) 3ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 6ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 1ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 2ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory xml-errors details 2ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-present details 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-styles-inventory details 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory duplicate-required details 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses absent historical status and presence-only historical status when required 2ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > accepts actual complete proof while preserving the default/report-only posture 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged empty proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged duplicate proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-row proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged skipped proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged doctype proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged integrity proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-required-style proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged nonboolean proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses omitted STF coverage in a study package 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > does not establish conformance from a clean structural-gap report alone 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > accepts a clean structural report only with current complete regional proof 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > retains structural refusals even with an XML-valid synthetic grammar 2ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > checks the exact buffers, including stylesheets, and reports all three fault classes 7ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > treats a missing manifest as unlisted files, and keeps the empty pre-vendoring result distinct 2ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > honors the existing extension filter 3ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > does not reread changed drop-point bytes; its filesystem wrapper uses the same result shape 16ms
+ ✓ server/services/ectd/__tests__/xml-validator-capability.test.ts > xmllint execution facts after its capability probe > does not report execution when the previously available binary disappears 4ms
+ ✓ server/services/ectd/__tests__/xml-validator-capability.test.ts > xmllint execution facts after its capability probe > preserves a failed execution even when stderr is empty, with catalogs disabled per command 1ms
+
+ Test Files  23 passed (23)
+      Tests  384 passed (384)
+   Start at  00:39:03
+   Duration  100.22s (transform 5.85s, setup 580ms, import 21.69s, tests 70.46s, environment 3ms)
+
+JSON report written to /workspace/scratch/dtd-validation-20261021/backend-integrated.json
