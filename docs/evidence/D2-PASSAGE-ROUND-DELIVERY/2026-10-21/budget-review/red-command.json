@@ -1,0 +1,59 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/ana/__tests__/passage-round-read-priority.test.ts"
+  ],
+  "nodeVersion": "v22.23.3",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "startedAt": "2026-10-21T00:27:03.484522+00:00",
+  "stage": "Read-only review regressions against initial implementation, not original baseline",
+  "testSha256": "140552597db383196fc74fc2795bd7d767ded8dbe3a55bdcbdc493514e48e099",
+  "reviewStageProduction": {
+    "server/services/ana/agentic-loop.ts": "a462a2b7537428cafa45d681c1fec0ac20c385c7d13d73b9fd43f4100778c32f",
+    "server/services/ana/tool-outcome.ts": "b50360e330a0a34be43eba0f46158f30d2b41eae629f51e0c6db53291666e989",
+    "server/services/ana/AnaToolExecutor.ts": "afc4b55227f4472d58bab3dc87c97172b1536b8c30523f24349ce6572278d5ee",
+    "server/routes/ana-ri/stream.ts": "464e52eb3f4f5f680f4769e816872f31614cd7dbaa1a4d108e5150bd82395047",
+    "server/services/ana/sub-agent.ts": "a3c7eb48dba9144651a2b97ede7aedd3f1aa206021f70e30f46f4d6ee8321794",
+    "server/services/ana/sub-agent-shape.ts": "6e64dd3f35897cfd198b8f034518b0276468cc9b868f45a3a5b5e6fce341311d",
+    "server/services/ana/sub-agent-stream.ts": "36feeb55e663a2e54642ba61fc951ff0eff1d3395a554c0bf7e507d2d5c6fa05"
+  },
+  "matchesInitialGreenCommandProduction": true,
+  "originalBaselineHead": "cb4065898efa6c1422ea5fb3b3a995de069e7569",
+  "originalBaselineDifferences": {
+    "server/services/ana/agentic-loop.ts": {
+      "baseline": "92d50798e39ea550e3207328b057db3897911f68b66515a3a56cb2c34dd154ff",
+      "reviewStage": "a462a2b7537428cafa45d681c1fec0ac20c385c7d13d73b9fd43f4100778c32f"
+    },
+    "server/services/ana/tool-outcome.ts": {
+      "baseline": "e32bef67da8f61db7b8a15fd636505ae2c572d3830e293e9600cf8de087761ed",
+      "reviewStage": "b50360e330a0a34be43eba0f46158f30d2b41eae629f51e0c6db53291666e989"
+    },
+    "server/services/ana/AnaToolExecutor.ts": {
+      "baseline": "32237592c1ca6d1fde9c9b8226a8471debfe78fce0ea656c7e62bfb57d62b934",
+      "reviewStage": "afc4b55227f4472d58bab3dc87c97172b1536b8c30523f24349ce6572278d5ee"
+    },
+    "server/routes/ana-ri/stream.ts": {
+      "baseline": "d3d3d37b631d94e5abe177ad3c3889f2a104ec8bdb77f5bb4addc86d025e1838",
+      "reviewStage": "464e52eb3f4f5f680f4769e816872f31614cd7dbaa1a4d108e5150bd82395047"
+    },
+    "server/services/ana/sub-agent.ts": {
+      "baseline": "fef0ba01ad72d371f506afcc4aaf12ff94949a5b25259ef22e7653598e7986b2",
+      "reviewStage": "a3c7eb48dba9144651a2b97ede7aedd3f1aa206021f70e30f46f4d6ee8321794"
+    },
+    "server/services/ana/sub-agent-shape.ts": {
+      "baseline": "571eff6f1f3c98af8301394b7342fd651b4b787643169713c306a9ede70dea68",
+      "reviewStage": "6e64dd3f35897cfd198b8f034518b0276468cc9b868f45a3a5b5e6fce341311d"
+    },
+    "server/services/ana/sub-agent-stream.ts": {
+      "baseline": "751eacc19b131be0fd3eaeb4e364050da8800d89cc01a156f4e1cfbff5e8f8c0",
+      "reviewStage": "36feeb55e663a2e54642ba61fc951ff0eff1d3395a554c0bf7e507d2d5c6fa05"
+    }
+  }
+}

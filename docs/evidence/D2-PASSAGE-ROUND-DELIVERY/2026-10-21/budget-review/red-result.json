@@ -1,0 +1,8 @@
+{
+  "exitCode": 1,
+  "expectedFailures": 2,
+  "passingControls": 0,
+  "total": 2,
+  "productionUnchangedDuringRun": true,
+  "testSha256": "140552597db383196fc74fc2795bd7d767ded8dbe3a55bdcbdc493514e48e099"
+}

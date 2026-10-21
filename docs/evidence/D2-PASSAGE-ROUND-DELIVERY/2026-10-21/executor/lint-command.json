@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/__tests__/passage-round-executor.test.ts"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "testSha256": "311a2b62d1009eead544ad66d8f12ba0e463ba35f597a1af8c6d867d64104e25"
+}

@@ -1,0 +1,12 @@
+{
+  "file": "server/services/ana/__tests__/sub-agent-passage-staging.test.ts",
+  "sha256": "a677a4f47dadb4e5d4d3fb7be8ad1d46a3efbcafd2c1ba4a7053e30e06bdc73a",
+  "baselineExpectedFailures": 22,
+  "baselinePassingControls": 5,
+  "tests": 27,
+  "unchangedBaselineInputs": 26,
+  "unchangedTotalInputs": 30,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "freeze": "Final test bytes frozen before production implementation."
+}

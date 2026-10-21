@@ -46,7 +46,7 @@ import { runRefusingModelCalls } from '../ai-gateway/model-call-scope.js';
 import type { AnyAnaTool, GatewayRequest } from '../ai-gateway/types.js';
 import type { AgenticToolEvent } from './agentic-tool-dispatch.js';
 import { notifyObserver } from './agentic-tool-dispatch.js';
-import type { LoopStopDirective } from './agentic-loop.js';
+import type { LoopStopDirective, ToolResultEntry } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { RunHoldAnnounce, RunHoldOutcome } from './run-hold.js';
 import { refusalOf } from './tool-trace.js';
@@ -386,6 +386,16 @@ function childStopWhen(run: AgentRun): () => LoopStopDirective {
   };
 }
 
+/** Attach only an unambiguous server correlation; payload fields confer none. */
+function recordStagedResults(steps: AgentStep[], entries: readonly Readonly<ToolResultEntry>[], round: number): void {
+  for (const entry of entries) {
+    const id = entry.tool_use_id;
+    if (!id.trim() || entries.filter(other => other.tool_use_id === id).length !== 1) continue;
+    const matching = steps.filter(step => step.round === round && step.toolUseId === id);
+    if (matching.length === 1 && matching[0].tool === entry.name) matching[0].modelContent = entry.content;
+  }
+}
+
 /** Run the child loop. The caller turns its outcome into the result. */
 async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: CheckReading[]) {
   const { host: h, runId } = run;
@@ -429,9 +439,10 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
          as evidence the answer had been checked against. `refusalOf` is the
          one judgment of a refusal, and the parent's own path uses it. */
       const ok = !e.errorMessage && refusalOf(e.result ?? '') === null;
-      if (e.phase === 'end') run.steps.push({ round: e.round, tool: e.call.name, input: e.call.input, result: e.result ?? '', ok });
+      if (e.phase === 'end') run.steps.push({ round: e.round, tool: e.call.name, toolUseId: e.call.id, input: e.call.input, result: e.result ?? '', ok });
       run.emit({ phase: 'step', runId, step: e.phase, tool: e.call.name, round: e.round, ...(e.phase === 'end' ? { ok } : {}) });
     },
+    onToolResultsForModel: (entries, round) => recordStagedResults(run.steps, entries, round),
     onModelResponse: response => {
       run.usage.modelCalls += 1;
       run.usage.inputTokens += response.usage?.inputTokens ?? 0;

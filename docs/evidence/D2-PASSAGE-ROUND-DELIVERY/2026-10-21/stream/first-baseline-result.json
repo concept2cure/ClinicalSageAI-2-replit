@@ -1,0 +1,26 @@
+{
+  "exitCode": 1,
+  "completedAt": "2026-10-21T00:22:04.859702+00:00",
+  "unchangedInputs": {
+    "server/routes/ana-ri/stream.ts": true,
+    "server/services/ana/agentic-loop.ts": true,
+    "server/services/ana/tool-outcome.ts": true,
+    "server/services/ana/tool-output-frame.ts": true,
+    "server/services/ana/turn-record.ts": true,
+    "server/services/ana/read-receipts.ts": true,
+    "server/services/ana/source-read-receipt.ts": true,
+    "server/services/ana/answer-grounding.ts": true,
+    "server/services/ai-gateway/generation-capture.ts": true,
+    "server/routes/ana-ri/__tests__/support/stream-route-harness.ts": true,
+    "server/services/ana/__tests__/support/read-delivery-vault.ts": true,
+    "vitest.config.ts": true,
+    "tests/setup.ts": true,
+    "eslint.config.js": true,
+    "package.json": true,
+    "package-lock.json": true,
+    "tsconfig.json": true,
+    "AGENTS.md": true,
+    "CLAUDE.md": true
+  },
+  "testSha256": "8829b5381c7853b054fedb4f73157e52d59a65c3d95b8e09b105076d7e2835e5"
+}

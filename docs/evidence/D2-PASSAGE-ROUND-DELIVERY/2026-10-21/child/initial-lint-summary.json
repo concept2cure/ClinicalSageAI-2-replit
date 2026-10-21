@@ -1,0 +1,36 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/__tests__/sub-agent-passage-staging.test.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "942a7ee5d9479355632a5992b3718da415cc2654fabd403b4ccb17467b3403b8",
+  "note": "Summary omits duplicated source fields; not raw output.",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/sub-agent-passage-staging.test.ts",
+      "messages": [
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 23,
+          "column": 44,
+          "messageId": "undef",
+          "endLine": 23,
+          "endColumn": 59
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 1,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

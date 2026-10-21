@@ -55,6 +55,15 @@ AnA's adaptation guidance. See
 The classic per-result cap leaves these bodies intact; aggregate round
 budgeting and multilingual retrieval qualification remain separate needs.
 
+Delivery completion, 2026-10-21: the existing round budget now keeps passage
+results whole or explicitly withholds them. Private read admission remains
+unchanged; new child traces retain exact host-staged bodies for grounding,
+instead of reconstructing them from raw output and completion order. See
+[passage round delivery](../../evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/README.md).
+This establishes controlled host staging, not provider delivery. General hard
+aggregate size, framing overhead and multilingual retrieval qualification
+remain separate needs.
+
 Delivery update, 2026-10-18: the budget and coverage part of priority 4 is
 delivered; see [OCR budgets](../../evidence/D2-OCR-BUDGET/2026-10-18/README.md).
 Data Room OCR of scanned PDFs is bounded (100 pages, 10 minutes, 40 Mpx per

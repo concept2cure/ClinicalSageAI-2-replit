@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/__tests__/passage-round-budget.test.ts"
+  ],
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "testSha256": "c5240153c5ad361072fa187ccbe429fafa2ef6725d201a9a640b8398b0bb35c1"
+}
