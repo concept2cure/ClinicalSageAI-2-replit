@@ -61,10 +61,11 @@ export async function resolveProgramIdent(
   ident: string,
   organizationId: number,
   database: Pick<typeof db, 'select'> = db,
+  forUpdate = false,
 ): Promise<ResolvedProgram | null> {
   const byUuid = UUID_RE.test(ident);
   try {
-    const [row] = await database
+    const query = database
       .select({
         id: regulatoryPrograms.id,
         code: regulatoryPrograms.code,
@@ -95,6 +96,9 @@ export async function resolveProgramIdent(
         ),
       )
       .limit(1);
+    // The governed writer uses this same full-facts reader for its row lock.
+    // Lock only the program, never the nullable sides of its outer joins.
+    const [row] = await (forUpdate ? query.for('update', { of: regulatoryPrograms }) : query);
     if (!row) return null;
     return {
       ...row,
@@ -241,11 +245,10 @@ export async function recordProgramFormFacts(
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const database = drizzle(client);
-    const resolved = await resolveProgramIdent(ident, ctx.organizationId, database);
+    // Acquire the program write lock through its existing facts reader before
+    // the authority helper's share lock and the selected sponsor's share lock.
+    const resolved = await resolveProgramIdent(ident, ctx.organizationId, database, true);
     if (!resolved) throw new ProgramFactsWriteRefusal('NOT_FOUND', 404, 'Project not found for this organization.');
-    // Acquire the program write lock before the authority helper's share lock,
-    // then sponsor share lock, matching sequence-release lock order.
-    await client.query('SELECT id FROM regulatory_programs WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR UPDATE', [resolved.id, ctx.organizationId]);
     await requireGovernedProgramWriteTx(client, ctx.organizationId, ctx.userId, resolved.id);
     const program = await resolveProgramIdent(resolved.id, ctx.organizationId, database);
     if (!program) throw new ProgramFactsWriteRefusal('NOT_FOUND', 404, 'Project not found for this organization.');
