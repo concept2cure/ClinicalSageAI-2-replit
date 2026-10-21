@@ -165,4 +165,3 @@ describe('classic chat carries canonical context admission refusal', () => {
     expect(result.text).not.toContain('PRIVATE_PROVIDER_CONTEXT');
   });
 });
-
