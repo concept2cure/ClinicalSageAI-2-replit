@@ -40,6 +40,7 @@ import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import { downloadBlob } from '../download';
+import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { stashNavParamsForTarget } from '../navParams';
@@ -1531,12 +1532,14 @@ function transmitBlockedBy(t: TransmitReadiness, env: 'staging' | 'production'):
  */
 function PackageDownload({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
   const [pkg, setPkg] = React.useState<{ phase: 'idle' | 'running' | 'done' | 'error'; text?: string }>({ phase: 'idle' });
+  // 2026-10-15: sent no review, so production refused every download (403).
+  const review = useExportReview(`${sub.id}:${seq.id}`);
   const final = seq.status === 'dispatched' || seq.status === 'frozen';
   const download = async () => {
     if (pkg.phase === 'running') return;
     setPkg({ phase: 'running' });
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${sub.id}`, { sequenceNumber: seq.sequenceNumber });
+      const res = await apiRequest('POST', `/api/ectd/export/${sub.id}`, { sequenceNumber: seq.sequenceNumber, governance: review.governance });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as unknown;
         setPkg({ phase: 'error', text: serverMessage(body) ?? `The package was not returned (HTTP ${res.status}).` });
@@ -1555,6 +1558,7 @@ function PackageDownload({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
   const label = final ? 'Download the eCTD package (zip)' : 'Download an inspection copy of the package (zip)';
   return (
     <>
+      <ExportReviewConfirmation review={review} subject={`sequence ${seq.sequenceNumber}'s package`} disabled={pkg.phase === 'running'} />
       <div className="cm-pushbar sc-mb">
         <button type="button" className="sc-trans-b" disabled={pkg.phase === 'running'} onClick={download}>
           {I.layers} {pkg.phase === 'running' ? 'Assembling the package…' : label}

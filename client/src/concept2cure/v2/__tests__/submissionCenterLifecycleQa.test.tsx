@@ -142,7 +142,9 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
     openWorkspace('Dispatch');
     fireEvent.click(await screen.findByRole('button', { name: /Download the eCTD package \(zip\)/ }));
     await waitFor(() => expect(document.body.textContent).toContain('Package ind-000512-0000.zip downloaded'));
-    expect(apiRequest).toHaveBeenCalledWith('POST', '/api/ectd/export/7', { sequenceNumber: '0000' });
+    // 2026-10-15: the body carried no review block (production refused it, 403).
+    // No signed-in user is mounted here, so it says the package was not reviewed.
+    expect(apiRequest).toHaveBeenCalledWith('POST', '/api/ectd/export/7', { sequenceNumber: '0000', governance: { humanReviewApproved: false } });
     expect(downloadBlob).toHaveBeenCalledWith('ind-000512-0000.zip', expect.any(Blob));
   });
 

@@ -852,6 +852,9 @@ registerToolHandler('project_knowledge_search', async (input, rawCtx) => {
         },
         query,
         confidence: confidenceFromScore(d.finalScore),
+        // 2026-10-15: only the bucket was passed, so persisted provenance
+        // recorded retrievalScore null for every scored passage.
+        retrievalScore: typeof d.finalScore === 'number' ? d.finalScore : null,
       });
     });
     return JSON.stringify({

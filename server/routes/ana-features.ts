@@ -3980,8 +3980,10 @@ router.post(
         // signature block would read as clean. Detail goes to the log.
         return respondVerificationUnavailable(res, logger, 'reading the provenance ledger', err, {
           code: 'LEDGER_UNAVAILABLE',
+          // 2026-10-15: named only the audit history and signatures, though an
+          // unread AI-use record (proposals, runs, plan) refuses the export too.
           message:
-            'The export was refused: its provenance ledger could not be read, so the document cannot substantiate its audit history or signatures. Nothing was exported.',
+            'The export was refused: its provenance ledger (audit history, signatures or AI-use record) could not be read. Nothing was exported.',
           extra: { artifactId },
         });
       }
@@ -5533,6 +5535,15 @@ router.get(
       return res.json(plan);
     } catch (err: any) {
       logger.error('[AnA authoring-plan active] failed:', { error: err?.message || err });
+      // 2026-10-15: the generator answered a missing authoring_plans table as
+      // "no plan", so this route said 404 "No active plan" without reading
+      // anything. The store being absent is now said as that.
+      if (err?.code === '42P01') {
+        return res.status(503).json({
+          error: 'The authoring plan store could not be read, so whether this section has an active plan is not known.',
+          code: 'AUTHORING_PLAN_STORE_UNAVAILABLE',
+        });
+      }
       return res.status(500).json({
         error: 'Failed to load active authoring plan',
         code: 'AUTHORING_PLAN_ACTIVE_ERROR',

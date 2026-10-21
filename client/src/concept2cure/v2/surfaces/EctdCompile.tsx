@@ -43,6 +43,7 @@ import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -869,6 +870,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const [historyState, setHistoryState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [busy, setBusy] = useState<'validate' | 'compile' | 'export' | null>(null);
   const [toast, fireToast] = useToast();
+  // The package download's review: the signed-in user's confirmation of this
+  // compile (a new compile starts unconfirmed). 2026-10-15: none was sent, so
+  // production refused every download (403 HUMAN_REVIEW_REQUIRED).
+  const exportReview = useExportReview(compileResult?.id ?? '');
 
   // ── Orchestrator pipeline state (folded in from the deleted duplicate) ──
   // Each panel carries its OWN read-outcome flag for the same reason
@@ -1010,7 +1015,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     if (subId == null) return;
     setBusy('export');
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
+        ...exportRequestBody(compileResult, regionBody),
+        governance: exportReview.governance,
+      });
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
         fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
@@ -1030,7 +1038,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     } finally {
       setBusy(null);
     }
-  }, [compileResult, regionBody, ident, fireToast]);
+  }, [compileResult, regionBody, ident, fireToast, exportReview.governance]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null) return;
@@ -1333,14 +1341,17 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 content file and is still a package (2026-09-29, W5/D7: this
                 was gated on rendered leaf files, so it could not be exported). */}
             {compileResult.submissionId != null && compileResult.package != null && (
-              <button
-                className="btn primary"
-                style={{ height: 32, marginRight: 8 }}
-                disabled={busy != null}
-                onClick={() => void doExport()}
-              >
-                {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
-              </button>
+              <>
+                <ExportReviewConfirmation review={exportReview} subject="this compiled package's content" disabled={busy != null} />
+                <button
+                  className="btn primary"
+                  style={{ height: 32, marginRight: 8 }}
+                  disabled={busy != null}
+                  onClick={() => void doExport()}
+                >
+                  {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
+                </button>
+              </>
             )}
             {compileResult.xmlBackbone && (
               <>
