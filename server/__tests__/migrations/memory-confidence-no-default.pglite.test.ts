@@ -14,7 +14,6 @@ import { describe, it, expect } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
-// @ts-expect-error — a plain .mjs module, no declarations.
 import { C2C_MIGRATION_FILES, UUID_TENANT_ISOLATION_NONPUBLIC } from '../../../scripts/db/migration-set.mjs';
 
 const FILE = 'migrations/20261015l_memory_confidence_no_default.sql';

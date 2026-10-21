@@ -70,7 +70,7 @@ describe('DeepResearch fan-out — a failed source is a failure, not "0 results"
   it('shows the failed source as failed with its error, and the answered one with its count', async () => {
     render(
       <DeepResearch
-        {...({ surface: { id: 'deep-research', label: 'Deep Research' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' } as never)}
+        {...({ surface: { id: 'deep-research', label: 'Deep Research' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' } as any)}
       />,
     );
     await screen.findByText('PubMed / MEDLINE');

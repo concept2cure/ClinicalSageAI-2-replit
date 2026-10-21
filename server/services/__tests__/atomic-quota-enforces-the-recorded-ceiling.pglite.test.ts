@@ -34,7 +34,12 @@ vi.mock('../../db.js', () => ({
 const consent = vi.hoisted(() => vi.fn(async () => undefined));
 vi.mock('../tenant/invitation-consent.js', () => ({ recordInvitationConsent: consent }));
 
-import { atomicAcceptInvitation, atomicCreateProject, atomicCreateUser } from '../atomicQuotaService.js';
+// The .js module is typed only through the *.js wildcard (default export), so its
+// named exports are read through a dynamic import, as the sibling quota tests do.
+const { atomicAcceptInvitation, atomicCreateProject, atomicCreateUser } = (await import('../atomicQuotaService.js')) as Record<
+  string,
+  (...args: any[]) => Promise<any>
+>;
 
 let pg: PGlite;
 
