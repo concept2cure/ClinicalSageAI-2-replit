@@ -371,25 +371,29 @@ describe('confirmed release renewal refreshes the existing dispatch assessment',
       if (method === 'POST' && url === '/api/c2c/actions/sign') return ok({ actionId: 'act_renewal', sha256Chain: 'a'.repeat(64) });
       if (method === 'POST' && url.endsWith('/dispatch')) {
         renewed = confirmed;
-        return confirmed ? ok(seqRow({ status: 'dispatched' })) : ok({ error: { code: 'OUTCOME_UNKNOWN', message: 'The release renewal could not be confirmed.' } }, 503);
+        return confirmed ? ok(seqRow({ status: 'dispatched' })) : { ...ok({ error: { code: 'OUTCOME_UNKNOWN', message: 'The release renewal could not be confirmed.' } }, 503), ok: false } as Response;
       }
       return undefined;
     });
   }
   it('reads the new release verdict after a confirmed dispatched to dispatched act', async () => {
     renewalApi(true); await ready(); openWorkspace('Dispatch');
-    fireEvent.click(await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ }));
+    const renew = await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ });
+    const readsBefore = calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length;
+    fireEvent.click(renew);
     await screen.findByRole('dialog'); await sign();
     await screen.findByText('Signature applied');
-    await waitFor(() => expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length).toBeGreaterThan(1));
+    await waitFor(() => expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length).toBeGreaterThan(readsBefore));
     expect(calledWith('POST', '/api/submissions/sequences/21/dispatch')).toHaveLength(1);
   });
   it('preserves the unresolved verdict when the governed act has no confirmed receipt', async () => {
     renewalApi(false); await ready(); openWorkspace('Dispatch');
-    fireEvent.click(await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ }));
+    const renew = await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ });
+    const readsBefore = calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length;
+    fireEvent.click(renew);
     await screen.findByRole('dialog'); await sign();
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('The release renewal could not be confirmed.'));
-    expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness')).toHaveLength(1);
+    expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness')).toHaveLength(readsBefore);
     expect(screen.queryByText('Signature applied')).toBeNull();
   });
 });

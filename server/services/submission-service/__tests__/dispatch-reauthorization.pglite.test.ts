@@ -2,8 +2,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ db: null as any, pglite: null as any, duringAssembly: null as (() => Promise<void>) | null }));
 vi.mock('../../../db', () => {
-  const query = async (text: string, params?: unknown[]) => {
-    const result = await h.pglite.query(text, params);
+  const query = async (raw: string | { text: string; values?: unknown[] }, params?: unknown[]) => {
+    const text = typeof raw === 'string' ? raw : raw.text;
+    const values = params ?? (typeof raw === 'string' ? undefined : raw.values);
+    const result = await h.pglite.query(text, values);
     return { ...result, rowCount: result.affectedRows ?? result.rows.length };
   };
   return { get db() { return h.db; }, pool: { query, connect: async () => ({ query, release: () => undefined }) } };

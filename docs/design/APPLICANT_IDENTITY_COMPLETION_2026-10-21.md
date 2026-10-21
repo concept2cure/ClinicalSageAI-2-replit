@@ -74,8 +74,10 @@ Evidence: `docs/evidence/MR-10/2026-10-21-applicant-identity/`.
 - `client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx` already runs the
   governed freeze/dispatch sign-and-act chain and owns the readiness refresh
   generation. Waiver/disposition refresh it; ordinary dispatch currently only
-  refreshes sequence rows. Renewal keeps the same workflow status, so complete
-  this existing refresh after a confirmed governed dispatch receipt.
+  refreshes sequence rows. An initial same-status renewal refresh concern was
+  refuted by mutation: the existing sequence reload masks then remounts the
+  workspace, refreshing its assessment. Preserve this working infrastructure;
+  no additional production refresh is needed.
 
 Searches covered applicant/sponsor/identity/DUNS/regulatory-contact names in
 client, routes, services, AnA, shared schema, migrations and work orders;
@@ -236,5 +238,6 @@ remains invalid. This preserves the existing tamper refusal and sign-now rule.
 Old rows are never rewritten. Root owns signature derivation/persistence and
 sequence-release resolver/tests; caller worker owns backend renewal; UI worker
 owns its reachable Builder affordance after wire contract coordination.
-UI worker also owns the narrow confirmed governed-success readiness-refresh
-hunk in `SubmissionCenter.tsx` and its existing continuation tests.
+UI worker verifies the existing confirmed governed-success continuation in
+`SubmissionCenter.tsx`. Its redundant proposed refresh line was removed after
+the passing mutation refuted the gap; continuation/refusal regressions remain.
