@@ -26,6 +26,8 @@ import type { QueryResult, QueryResultRow } from 'pg';
 import { getPool } from '../../db.js';
 import { requestPgClient } from '../../db/requestDb.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
+import { GatewayContextWindowError } from '../../services/ai-gateway/context-budget.js';
+import { classifyGatewayError, GATEWAY_ERROR_HTTP_STATUS } from '../../services/ai-gateway/gateway-error-map.js';
 import {
   resolveEffortLevel,
   resolveEffortStrategy,
@@ -588,11 +590,13 @@ export function mountStreamRoute(router: Router): void {
     // answered, stopped or failed — and chained. Undefined until the tenant is
     // known; null for a turn that has none, which cannot be filed.
     let turnRecorder: TurnRecorder | null | undefined;
+    // An early typed context refusal closes its timeline without opening SSE.
+    let contextRefusalBeforeStream = false;
     // The Summary's events: each one appended to the recorder and written as a
     // `timeline` frame, the one producer (turn-timeline-emitter.ts, S4).
     const timeline = new TurnTimeline({
       write: frame => {
-        if (!res.writableEnded) res.write(frame);
+        if (!res.writableEnded && !contextRefusalBeforeStream) res.write(frame);
       },
       recorder: () => turnRecorder,
       // The run's live mirror (AnA detach DT1): a durable run's handle carries
@@ -3750,6 +3754,9 @@ export function mountStreamRoute(router: Router): void {
         fileTurnRecord,
       });
     } catch (error: any) {
+      const contextRefusal = error instanceof GatewayContextWindowError
+        ? classifyGatewayError(error, { priorToolWorkMayExist: true }) : null;
+      contextRefusalBeforeStream = Boolean(contextRefusal) && !res.headersSent;
       streamFailed = true;
       console.error('[AnA RI Stream] Error:', error.message);
       // The turn is recorded as it ended: with the part of the answer the
@@ -3776,18 +3783,20 @@ export function mountStreamRoute(router: Router): void {
       timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, turnPolicyOf?.stoppedReason('cancelled')) : null);
       const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
       const budgetRefusal = error instanceof ToolResultBudgetExceededError ? error : null;
+      const refusal = budgetRefusal ?? contextRefusal;
       if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({
             type: 'error',
-            error: budgetRefusal?.message ?? 'An error occurred while generating the response',
-            ...(budgetRefusal ? { code: budgetRefusal.code } : {}),
+            error: refusal?.message ?? 'An error occurred while generating the response',
+            ...(refusal ? { code: refusal.code } : {}),
             turnRecord,
           })}\n\n`
         );
         res.end();
       } else {
         if (budgetRefusal) sendError(res, 422, budgetRefusal.message, { turnRecord }, budgetRefusal.code);
+        else if (contextRefusal) sendError(res, GATEWAY_ERROR_HTTP_STATUS[contextRefusal.code], contextRefusal.message, { turnRecord }, contextRefusal.code);
         else sendError(res, 500, 'Internal server error');
       }
     } finally {

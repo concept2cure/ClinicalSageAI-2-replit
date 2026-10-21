@@ -576,9 +576,18 @@ function framePresentation(event: Record<string, unknown>): Partial<AnaToolCall>
  * "AnA is unreachable — the network or the AI gateway did not respond", which
  * sent people to check a connection that was fine.
  */
+const CONTEXT_REFUSAL_FALLBACK = 'This conversation is too large for one AI request. Reduce the input or start a new conversation with a smaller selection. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.';
+
+/** Only the explicit context code reaches this recovery; retain canonical sanitization. */
+function contextWindowRecoveryText(payload: unknown): string {
+  return serverMessage(payload) ?? CONTEXT_REFUSAL_FALLBACK;
+}
+
 function streamFailure(event: { error?: unknown; code?: unknown; status?: unknown; runId?: unknown }) {
-  const failure = new Error(serverMessage(event) ?? 'Stream error') as Error & { code?: string; status?: number; runId?: string };
-  failure.code = errorCodeOf(event);
+  const code = errorCodeOf(event);
+  const message = code === 'TOKEN_LIMIT_EXCEEDED' ? contextWindowRecoveryText(event) : serverMessage(event) ?? 'Stream error';
+  const failure = new Error(message) as Error & { code?: string; status?: number; runId?: string };
+  failure.code = code;
   if (typeof event.status === 'number') failure.status = event.status;
   // RUN_IN_PROGRESS names the live run that holds the conversation (§2.8).
   if (typeof (event as { runId?: unknown }).runId === 'string') failure.runId = (event as { runId: string }).runId;
@@ -614,6 +623,7 @@ export function streamRefusalText(err: unknown): string {
   if (failure?.status === 403) {
     return 'AnA cannot accept this request with your current access. Sign in again or ask an administrator to review your access. Prior turns are preserved.';
   }
+  if (failure?.code === 'TOKEN_LIMIT_EXCEEDED') return contextWindowRecoveryText(err);
   if (failure?.code === 'GATEWAY_UNAVAILABLE') {
     return 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.';
   }
@@ -688,6 +698,12 @@ function partialReplyRecoveryText(err: unknown): string {
   }
   if (failure?.status === 401) return 'Sign in again before asking AnA to continue.';
   if (failure?.status === 403) return 'Ask an administrator to review your access before asking AnA to continue.';
+  return partialServiceRecoveryText(err);
+}
+
+function partialServiceRecoveryText(err: unknown): string {
+  const failure = err as { code?: string; status?: number } | undefined;
+  if (failure?.code === 'TOKEN_LIMIT_EXCEEDED') return contextWindowRecoveryText(err);
   if (failure?.code === 'GATEWAY_UNAVAILABLE') {
     return 'An administrator needs to configure an AI provider before AnA can continue.';
   }
@@ -1561,6 +1577,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // Set when the server's closing event said whether the turn was recorded;
       // only a turn it did not speak for is looked up afterwards.
       let serverStatedRecord = false;
+      const retainContextRefusalRecord = (record: AnaTurnRecordStatus | undefined): void => {
+        if (!record) return;
+        serverStatedRecord = true;
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, turnRecord: record } : m));
+      };
       const clearIdleTimer = () => {
         if (idleTimer) {
           clearTimeout(idleTimer);
@@ -1780,15 +1801,24 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
              network or the user's connection — and the message below must
              say that, not "unreachable". */
           let code: string | undefined;
+          let contextMessage: string | undefined;
           try {
             // Nested ({ error: { code } }) from the route; top-level ({ code })
             // from the platform's usage limiter.
-            const j = (await res.clone().json()) as { error?: { code?: string; details?: unknown } | string; code?: string };
+            const j = (await res.clone().json()) as { error?: { code?: string; details?: unknown } | string; code?: string; turnRecord?: unknown };
             code = (typeof j?.error === 'object' ? j.error?.code : undefined) ?? j?.code;
             // An enforced pre-stream refusal can carry the real audit outcome
             // before any SSE warning is possible. Keep its bounded notice on
             // this reply while preserving the original refusal below.
             const details = typeof j?.error === 'object' && j.error ? j.error.details : undefined;
+            if (code === 'TOKEN_LIMIT_EXCEEDED') {
+              contextMessage = contextWindowRecoveryText(j);
+              const record = readTurnRecord(j.turnRecord) ?? readTurnRecord(
+                details && typeof details === 'object' && !Array.isArray(details)
+                  ? (details as Record<string, unknown>).turnRecord : undefined,
+              );
+              retainContextRefusalRecord(record);
+            }
             const receipt = details && typeof details === 'object' && !Array.isArray(details)
               ? (details as Record<string, unknown>).auditTrail : undefined;
             const audit = receipt && typeof receipt === 'object' && !Array.isArray(receipt)
@@ -1803,7 +1833,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           } catch {
             /* not JSON: keep the status-only error */
           }
-          const e = new Error(`Stream request failed: ${res.status}`) as Error & { code?: string; status?: number };
+          const e = new Error(contextMessage ?? (code === 'TOKEN_LIMIT_EXCEEDED'
+            ? CONTEXT_REFUSAL_FALLBACK : `Stream request failed: ${res.status}`)) as Error & { code?: string; status?: number };
           e.code = code;
           e.status = res.status;
           throw e;

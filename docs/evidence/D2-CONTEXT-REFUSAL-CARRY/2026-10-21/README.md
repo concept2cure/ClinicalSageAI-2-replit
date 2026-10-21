@@ -21,9 +21,54 @@ partial-work honesty and compatibility boundary before production changes.
   record validation are reused. Existing gateway, host and hook suites expose
   the verification seams. [INVENTORY.md](INVENTORY.md) records prior searches.
 
-Root owns production and Git, with disjoint test owners after interface review.
-All work goes directly to `concept2cure-v2`. Qualification/publication results
-will be added here with raw transcripts and exact hashes. No tool, provider,
-model, dependency, schema or user surface is added. Context admission remains
-an estimate; no provider delivery, whole-turn rollback or agency acceptance is
-claimed.
+## Qualification
+
+Five owners froze six new suites: **80 tests, 33 intended failures and 47 passing
+controls**, with no skips or missing-export failures. Three existing real
+gateway-admission controls also passed. All 24 selected baseline inputs stayed
+unchanged before production. [Classifier](classifier/SUMMARY.md),
+[chat](chat/README.md), [stream](stream/README.md), [client](client/README.md) and
+[native executor/cost](executor/README.md) evidence names exact commands, hashes,
+raw transcripts and substituted boundaries. The latter are passing controls,
+not invented red evidence. [frozen-tests.json](frozen-tests.json) pins the suites.
+
+Root removed one extra test EOF newline before production edits and repeated
+that chat baseline: three intended failures, four controls, no skips; every
+assertion/fixture and all 24 inputs were unchanged. Original bytes and the
+repeat proof remain in [whitespace-review](whitespace-review/refrozen.json).
+Earlier worker fixture/lint attempts remain labeled and preserved.
+
+The initial full regression passed **970 tests / 79 suites**. Explicit included
+lint then found two client warnings that the default command's ignored-file
+result concealed. Root established the actual 37-warning client baseline by
+linting byte-identical original Git source via stdin under its actual filename,
+then extracted two small recovery helpers without changing frozen tests. The
+final included lint across all ten changed TypeScript files has **zero errors,
+80 existing warnings, zero growth and zero test warnings**. Initial runs remain
+retained. No suppression or warning baseline changed. Three independent reviews
+cleared production; a further review cleared the helper extraction and unchanged
+server hashes. The final canonical Node 22 run passed the same **970 tests / 79
+suites, with zero skips**. Commands/results are under `root/`; publication
+evidence records actual normal hooks and fresh remote verification.
+
+## Behavior and limits
+
+The existing canonical classifier preserves default/false outputs. Its explicit
+prior-work option appends guidance only to a genuine typed context refusal;
+provider-wrapped token failures, copied error names, raw-body422 and generic
+responses retain their existing behavior. Both chat routes use the existing
+413 table and retain failed/stopped records. An early context refusal closes
+its timeline in the existing recorder/mirror without prematurely opening SSE.
+The client carries sanitized guidance and valid records through HTTP/SSE,
+preserves partial text, uses fixed safe fallback copy and performs no automatic
+resubmission. Other error messages are not made displayable by this change.
+
+Root owns production and Git. All work goes directly to `concept2cure-v2`.
+No tool, provider, model, dependency, schema, admission engine or user surface
+is added. Context admission remains a lenient estimate, not exact tokenizer or
+provider-payload measurement. No SDK dispatch for the refused invocation says
+nothing about earlier calls/actions or host-admission receipts. No live
+provider/DB, source-admission authority, whole-turn rollback, multilingual
+relevance or agency acceptance is claimed by these fixtures. Selected source
+pins are not an exhaustive dependency graph. Raw `.txt` transcripts retain exact
+bytes; lint JSON summaries omit duplicated source and retain raw stdout hashes.

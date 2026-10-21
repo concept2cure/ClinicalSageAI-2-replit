@@ -61,3 +61,11 @@ live provider admission, exact tokens, source access, actual actions/receipts,
 durable records or agency acceptance. Raw transcripts retain their exact bytes,
 including terminal whitespace. No production, Git or compiler work was done
 by this owner.
+
+## Root EOF qualification addendum
+
+Before production edits, root removed only one extra trailing EOF newline from
+the frozen test file. Original bytes/diff and repeat baseline are retained in
+`../whitespace-review/`: three intended failures, four controls, no skips,
+included lint zero and all 24 selected baseline inputs unchanged. The final
+hash is in `../frozen-tests.json`; every assertion and fixture is unchanged.

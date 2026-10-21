@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "normalHooks": true
+}
