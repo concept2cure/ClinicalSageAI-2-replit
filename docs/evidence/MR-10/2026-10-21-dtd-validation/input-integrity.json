@@ -1,0 +1,22 @@
+{
+  "anchor": "218e49eb8898015938bf0a6603f077a1543f46af",
+  "cohorts": [
+    {
+      "inputManifest": "ui-inputs.json",
+      "pins": 20,
+      "mismatches": []
+    },
+    {
+      "inputManifest": "backend-inputs.json",
+      "pins": 40,
+      "mismatches": []
+    },
+    {
+      "inputManifest": "browser/result/result.json",
+      "pins": 40,
+      "mismatches": []
+    }
+  ],
+  "fixtureHostStopped": true,
+  "humanWitnessed": false
+}

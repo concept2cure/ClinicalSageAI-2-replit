@@ -1,0 +1,327 @@
+{
+  "root-eslint.json": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/shellProject.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/check.mjs",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/probe.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/server.mjs",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "validator-eslint-frozen.json": [
+    {
+      "file": "server/services/ectd/__tests__/backbone-validation.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ectd/__tests__/checksum-buffers.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ectd/__tests__/xml-validator-capability.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ectd/backbone-validation.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ectd/checksum-manifest.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ectd/qualification/__tests__/qualification-stf.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ectd/qualification/qualify.ts",
+      "errors": 0,
+      "warnings": 2,
+      "messages": [
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'qualifyV3' has a complexity of 23. Maximum allowed is 15."
+        },
+        {
+          "rule": "security/detect-possible-timing-attacks",
+          "severity": 1,
+          "message": "Potential timing attack, right side: true"
+        }
+      ]
+    },
+    {
+      "file": "server/services/ectd/xml-validator.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "compile-eslint-before.json": [
+    {
+      "file": "server/routes/ectd-compile.ts",
+      "errors": 0,
+      "warnings": 8,
+      "messages": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (176). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 32. Maximum allowed is 15."
+        },
+        {
+          "rule": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1401). Maximum allowed is 500."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'leafPlacementFindings' has a complexity of 19. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'compileFromSpine' has too many lines (230). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'compileFromSpine' has a complexity of 53. Maximum allowed is 15."
+        },
+        {
+          "rule": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        }
+      ]
+    }
+  ],
+  "compile-eslint-final.json": [
+    {
+      "file": "server/routes/ectd-compile.ts",
+      "errors": 0,
+      "warnings": 8,
+      "messages": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (176). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 32. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1475). Maximum allowed is 500."
+        },
+        {
+          "rule": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'leafPlacementFindings' has a complexity of 19. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'compileFromSpine' has too many lines (236). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'compileFromSpine' has a complexity of 58. Maximum allowed is 15."
+        },
+        {
+          "rule": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        }
+      ]
+    },
+    {
+      "file": "tests/routes/ectd-compile-dtd-evidence.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "ui-eslint-before.json": [
+    {
+      "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "messages": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1428). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'EctdCompile' has too many lines (816). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'EctdCompile' has a complexity of 103. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 22. Maximum allowed is 15."
+        }
+      ]
+    }
+  ],
+  "ui-eslint-final.json": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "messages": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1607). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'EctdCompileForScope' has too many lines (825). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'EctdCompileForScope' has a complexity of 103. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 22. Maximum allowed is 15."
+        }
+      ]
+    }
+  ],
+  "ui-extraction-eslint-before.json": [
+    {
+      "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "messages": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1607). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'EctdCompileForScope' has too many lines (825). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'EctdCompileForScope' has a complexity of 103. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 22. Maximum allowed is 15."
+        }
+      ]
+    }
+  ],
+  "ui-extraction-eslint-final.json": [
+    {
+      "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "messages": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1482). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'EctdCompileForScope' has too many lines (825). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'EctdCompileForScope' has a complexity of 103. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 22. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

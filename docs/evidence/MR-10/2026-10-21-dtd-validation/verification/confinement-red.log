@@ -1,0 +1,85 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > executes a real contained DTD as its positive control 26ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > accepts a captured package-local secondary parameter entity 23ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not certify a DOCTYPE written only in a comment 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not let a benign commented declaration mask the actual escaped DTD 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked XML input even when its declaration names a local DTD 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked primary DTD 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects an intermediate DTD directory symlink 9ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked secondary parameter entity 24ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an absolute file URI hidden in a secondary DTD declaration 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: missing.ent 12ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: https://schemas.invalid/not-captured.ent 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an XML internal subset that references an outside entity 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not use an ambient XML catalog as proof of a missing packaged module 9ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects URI-encoded traversal even when a literal percent-path decoy exists in the package 8ms
+ × server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a constructed external identifier split across parameter entities 48ms
+   → expected { ran: true, valid: true, …(2) } to match object { ran: false, valid: false, …(1) }
+(1 matching property omitted from actual)
+ × server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not audit UTF-16 DTD bytes as if they were dependency-free UTF-8 22ms
+   → expected { ran: true, valid: true, …(2) } to match object { ran: false, valid: false, …(1) }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a constructed external identifier split across parameter entities
+AssertionError: expected { ran: true, valid: true, …(2) } to match object { ran: false, valid: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "mode": "dtd",
+-   "ran": false,
+-   "valid": false,
++   "ran": true,
++   "valid": true,
+  }
+
+ ❯ expectConfinedRefusal server/services/ectd/__tests__/backbone-validation-confinement.test.ts:40:22
+     38| async function expectConfinedRefusal(): Promise<void> {
+     39|   const result = await validateBackboneFile(pkg, 'index.xml');
+     40|   expect(result.dtd).toMatchObject({ ran: false, valid: false, mode: '…
+       |                      ^
+     41|   expect(result.dtd.errors.join(' ').length).toBeGreaterThan(0);
+     42|   expect(result.reports.some(report => !report.passed)).toBe(true);
+ ❯ server/services/ectd/__tests__/backbone-validation-confinement.test.ts:147:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not audit UTF-16 DTD bytes as if they were dependency-free UTF-8
+AssertionError: expected { ran: true, valid: true, …(2) } to match object { ran: false, valid: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "mode": "dtd",
+-   "ran": false,
+-   "valid": false,
++   "ran": true,
++   "valid": true,
+  }
+
+ ❯ expectConfinedRefusal server/services/ectd/__tests__/backbone-validation-confinement.test.ts:40:22
+     38| async function expectConfinedRefusal(): Promise<void> {
+     39|   const result = await validateBackboneFile(pkg, 'index.xml');
+     40|   expect(result.dtd).toMatchObject({ ran: false, valid: false, mode: '…
+       |                      ^
+     41|   expect(result.dtd.errors.join(' ').length).toBeGreaterThan(0);
+     42|   expect(result.reports.some(report => !report.passed)).toBe(true);
+ ❯ server/services/ectd/__tests__/backbone-validation-confinement.test.ts:154:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  00:32:18
+   Duration  872ms (transform 157ms, setup 143ms, import 76ms, tests 237ms, environment 0ms)
+
+JSON report written to /workspace/scratch/dtd-validation-20261021/confinement-red.json

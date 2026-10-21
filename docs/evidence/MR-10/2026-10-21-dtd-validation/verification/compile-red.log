@@ -1,0 +1,417 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+{
+  "timestamp": "2026-10-21T00:27:04.185Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record 1873ms
+   → expected undefined to deeply equal { required: [ …(3) ], …(7) }
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation 12ms
+   → expected true to be false // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics 14ms
+   → expected false to be true // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check 9ms
+   → expected true to be false // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check 9ms
+   → expected true to be false // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check 10ms
+   → expected true to be false // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check 8ms
+   → expected true to be false // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters 6ms
+   → expected true to be false // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report 3ms
+   → expected undefined to deeply equal { …(2) }
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 0 1ms
+   → expected undefined to be null
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 1 1ms
+   → expected undefined to be null
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 2 1ms
+   → expected undefined to be null
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 3 1ms
+   → expected undefined to be null
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 4 0ms
+   → expected undefined to be null
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 5 0ms
+   → expected undefined to be null
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+AssertionError: expected undefined to deeply equal { required: [ …(3) ], …(7) }
+
+- Expected:
+{
+  "missing": [],
+  "missingStylesheets": [],
+  "present": [
+    "ich-ectd-3-2.dtd",
+    "us-regional-v3-3.dtd",
+    "ich-stf-v2-2.dtd",
+  ],
+  "presentStylesheets": [],
+  "required": [
+    "ich-ectd-3-2.dtd",
+    "us-regional-v3-3.dtd",
+    "ich-stf-v2-2.dtd",
+  ],
+  "requiredStylesheets": [],
+  "selfContained": true,
+  "validation": {
+    "expectedFiles": [
+      "index.xml",
+      "m1/us/us-regional.xml",
+      "m5/stf-study-101.xml",
+    ],
+    "files": [
+      {
+        "doctype": {
+          "errors": [],
+          "valid": true,
+        },
+        "dtd": {
+          "errors": [],
+          "mode": "dtd",
+          "ran": true,
+          "valid": true,
+        },
+        "relPath": "index.xml",
+        "wellFormed": {
+          "errors": [],
+          "mode": "well-formed",
+          "ran": true,
+          "valid": true,
+        },
+      },
+      {
+        "doctype": {
+          "errors": [],
+          "valid": true,
+        },
+        "dtd": {
+          "errors": [],
+          "mode": "dtd",
+          "ran": true,
+          "valid": true,
+        },
+        "relPath": "m1/us/us-regional.xml",
+        "wellFormed": {
+          "errors": [],
+          "mode": "well-formed",
+          "ran": true,
+          "valid": true,
+        },
+      },
+      {
+        "doctype": {
+          "errors": [],
+          "valid": true,
+        },
+        "dtd": {
+          "errors": [],
+          "mode": "dtd",
+          "ran": true,
+          "valid": true,
+        },
+        "relPath": "m5/stf-study-101.xml",
+        "wellFormed": {
+          "errors": [],
+          "mode": "well-formed",
+          "ran": true,
+          "valid": true,
+        },
+      },
+    ],
+    "integrity": {
+      "mismatched": [],
+      "missingFiles": [],
+      "ok": true,
+      "unlistedFiles": [],
+      "verified": [
+        "index.xml",
+        "m1/us/us-regional.xml",
+        "m5/stf-study-101.xml",
+        "util/dtd/ich-ectd-3-2.dtd",
+        "util/dtd/us-regional-v3-3.dtd",
+        "util/dtd/ich-stf-v2-2.dtd",
+      ],
+    },
+    "passed": true,
+    "version": 1,
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:60:39
+     58|   it('projects complete index, regional and STF proof and persists it …
+     59|     const evidence = proof(); const payload = await compile(evidence);
+     60|     expect(payload.package.dtdStatus).toEqual(dtdStatus(evidence));
+       |                                       ^
+     61|     expect(payload.package.regionalStatus).toMatchObject({ region: 'fd…
+     62|     const summary = payload.validationResults.find(row => row.rule ===…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:71:79
+     69|     const evidence = proof(); evidence.files[2].dtd.valid = false; evi…
+     70|     const payload = await compile(evidence);
+     71|     expect(payload.status).toBe('completed'); expect(payload.submissio…
+       |                                                                               ^
+     72|     expect(payload.contentValidationPassed).toBe(false);
+     73|     expect(payload.errors.some(message => message.includes(EXPECTED[2]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:79:98
+     77|     const evidence = proof(); evidence.files[2].dtd.valid = false; evi…
+     78|     const payload = await compile(evidence);
+     79|     expect(payload.errors.some(message => message.includes(EXPECTED[2]…
+       |                                                                                                  ^
+     80|     expect(payload.contentValidationPassed).toBe(false);
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:88:37
+     86|     if (kind === 'duplicate') evidence.files.push(evidence.files[0]);
+     87|     const payload = await compile(kind === 'missing' ? null : evidence…
+     88|     expect(payload.submissionReady).toBe(false);
+       |                                     ^
+     89|     const summary = payload.validationResults.find(row => row.rule ===…
+     90|     expect(summary).toBeTruthy(); expect(summary?.severity).not.toBe('…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:96:37
+     94|     const evidence = proof(); evidence.integrity.missingFiles = ['util…
+     95|     const payload = await compile(evidence);
+     96|     expect(payload.submissionReady).toBe(false);
+       |                                     ^
+     97|     expect(payload.errors.join(' ')).toMatch(/ich-stf-v2-2\.dtd/);
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report
+AssertionError: expected undefined to deeply equal { …(2) }
+
+- Expected:
+{
+  "dtdStatus": {
+    "missing": [],
+    "missingStylesheets": [],
+    "present": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd",
+    ],
+    "presentStylesheets": [],
+    "required": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd",
+    ],
+    "requiredStylesheets": [],
+    "selfContained": true,
+    "validation": {
+      "expectedFiles": [
+        "index.xml",
+        "m1/us/us-regional.xml",
+        "m5/stf-study-101.xml",
+      ],
+      "files": [
+        {
+          "doctype": {
+            "errors": [],
+            "valid": true,
+          },
+          "dtd": {
+            "errors": [],
+            "mode": "dtd",
+            "ran": true,
+            "valid": true,
+          },
+          "relPath": "index.xml",
+          "wellFormed": {
+            "errors": [],
+            "mode": "well-formed",
+            "ran": true,
+            "valid": true,
+          },
+        },
+        {
+          "doctype": {
+            "errors": [],
+            "valid": true,
+          },
+          "dtd": {
+            "errors": [],
+            "mode": "dtd",
+            "ran": true,
+            "valid": true,
+          },
+          "relPath": "m1/us/us-regional.xml",
+          "wellFormed": {
+            "errors": [],
+            "mode": "well-formed",
+            "ran": true,
+            "valid": true,
+          },
+        },
+        {
+          "doctype": {
+            "errors": [],
+            "valid": true,
+          },
+          "dtd": {
+            "errors": [],
+            "mode": "dtd",
+            "ran": true,
+            "valid": true,
+          },
+          "relPath": "m5/stf-study-101.xml",
+          "wellFormed": {
+            "errors": [],
+            "mode": "well-formed",
+            "ran": true,
+            "valid": true,
+          },
+        },
+      ],
+      "integrity": {
+        "mismatched": [],
+        "missingFiles": [],
+        "ok": true,
+        "unlistedFiles": [],
+        "verified": [
+          "index.xml",
+          "m1/us/us-regional.xml",
+          "m5/stf-study-101.xml",
+          "util/dtd/ich-ectd-3-2.dtd",
+          "util/dtd/us-regional-v3-3.dtd",
+          "util/dtd/ich-stf-v2-2.dtd",
+        ],
+      },
+      "passed": true,
+      "version": 1,
+    },
+  },
+  "packageSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+}
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:105:57
+    103|     const status = dtdStatus(); const report = { validator: 'External …
+    104|     const result = await history([{ id: 3, validation_results: [record…
+    105|     expect(result.compilations[0].packageDtdValidation).toEqual({ pack…
+       |                                                         ^
+    106|     expect(result.compilations[0].external_validation).toEqual(report);
+    107|     const read = poolQuery.mock.calls.find(call => /FROM ectd_compilat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 0
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 1
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 2
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 3
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 4
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 5
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:116:57
+    114|   ])('returns unverified for absent, ambiguous or malformed stored pro…
+    115|     const result = await history([{ id: 4, status: 'completed', has_ma…
+    116|     expect(result.compilations[0].packageDtdValidation).toBeNull();
+       |                                                         ^
+    117|   });
+    118| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed (15)
+   Start at  00:27:01
+   Duration  6.49s (transform 3.24s, setup 143ms, import 4.04s, tests 1.95s, environment 0ms)
+

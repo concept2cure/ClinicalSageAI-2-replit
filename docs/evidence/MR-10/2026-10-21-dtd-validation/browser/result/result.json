@@ -1,0 +1,314 @@
+{
+  "status": "pass",
+  "executedAt": "2026-10-21T00:46:15.629Z",
+  "anchor": "218e49eb8898015938bf0a6603f077a1543f46af",
+  "fixtureOnly": true,
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "stages": [
+    {
+      "name": "compile-pass",
+      "text": "Package DTD validation\nDTD validation passed\nPackage SHA-256 1044122f8b5fb0d13a75100e57d82b3507b61f9bd63c142a06675ec8070ea776\nXML FILE\tXML STRUCTURE\tDOCTYPE\tDTD EXECUTION\tDIAGNOSTICS\nindex.xml\tWell-formed\tValid reference\tRan · valid\t—\nm1/us/us-regional.xml\tWell-formed\tValid reference\tRan · valid\t—\nm5/5-3-5-1/study-001/stf-study-001.xml\tWell-formed\tValid reference\tRan · valid\t—\nSupportive-file integrity verified (5 files)."
+    },
+    {
+      "name": "compile-invalid-stf",
+      "text": "Package DTD validation\nDTD validation has not passed — unverified.\nPackage SHA-256 b81d4ca73e821e134d6daab156264f6b310095631a56532b6536481a507fa8e6\nXML FILE\tXML STRUCTURE\tDOCTYPE\tDTD EXECUTION\tDIAGNOSTICS\nindex.xml\tWell-formed\tValid reference\tRan · valid\t—\nm1/us/us-regional.xml\tWell-formed\tValid reference\tRan · valid\t—\nm5/5-3-5-1/study-001/stf-study-001.xml\tWell-formed\tValid reference\tRan · invalid\t\n./m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute xmlns:ectd of element study\n//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute xmlns:xlink of element study\n//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute dtd-version of element study\n//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:5: element title: validity error : No declaration for element title\n<title>Pivotal efficacy study</title>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:6: element study-id: validity error : No declaration for element study-id\n<study-id>STUDY-001</study-id>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:7: element study-identifier: validity error : No declaration for element study-identifier\n</study-identifier>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:9: element doc-content: validity error : No declaration for attribute href of element doc-content\n<doc-content xlink:href=\"../../../index.xml#leaf-5-3-5-1-study-report\">\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:10: element title: validity error : No declaration for element title\n<title>Pivotal Study Report</title>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for attribute name of element file-tag\n<file-tag name=\"study-report-body\" info-type=\"ich\"/>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for attribute info-type of element file-tag\n<file-tag name=\"study-report-body\" info-type=\"ich\"/>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for element file-tag\n<file-tag name=\"study-report-body\" info-type=\"ich\"/>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:12: element doc-content: validity error : No declaration for element doc-content\n</doc-content>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:13: element study-document: validity error : No declaration for element study-document\n</study-document>\n^\n./m5/5-3-5-1/study-001/stf-study-001.xml:14: element study: validity error : No declaration for element study\n</ectd:study>\n^\nSupportive-file integrity verified (5 files)."
+    },
+    {
+      "name": "compile-missing-dtd",
+      "text": "Package DTD validation\nDTD validation has not passed — unverified.\nPackage SHA-256 106baf066966744de652632825da463d04d8f853862c849f6bb43c0a48fdfd21\nXML FILE\tXML STRUCTURE\tDOCTYPE\tDTD EXECUTION\tDIAGNOSTICS\nindex.xml\tWell-formed\tValid reference\tDid not run · unverified\t\nDeclared DTD ich-ectd-3-2.dtd is missing from the package.\n\nm1/us/us-regional.xml\tWell-formed\tValid reference\tDid not run · unverified\t\nDeclared DTD us-regional-v3-3.dtd is missing from the package.\n\nm5/5-3-5-1/study-001/stf-study-001.xml\tWell-formed\tValid reference\tDid not run · unverified\t\nDeclared DTD ich-stf-v2-2.dtd is missing from the package.\nSupportive-file integrity is unverified or failed."
+    },
+    {
+      "name": "compile-missing-tool",
+      "text": "Package DTD validation\nDTD validation has not passed — unverified.\nPackage SHA-256 1044122f8b5fb0d13a75100e57d82b3507b61f9bd63c142a06675ec8070ea776\nXML FILE\tXML STRUCTURE\tDOCTYPE\tDTD EXECUTION\tDIAGNOSTICS\nindex.xml\tWell-formed\tValid reference\tDid not run · unverified\t\nxmllint not available\n\nm1/us/us-regional.xml\tWell-formed\tValid reference\tDid not run · unverified\t\nxmllint not available\n\nm5/5-3-5-1/study-001/stf-study-001.xml\tWell-formed\tValid reference\tDid not run · unverified\t\nxmllint not available\nSupportive-file integrity verified (5 files)."
+    },
+    {
+      "name": "compile-tampered",
+      "text": "Package DTD validation\nDTD validation has not passed — unverified.\nPackage SHA-256 716c3b5d765dd7fde8d2fd4cce8cee604502f5a2515ef611751c7a84cd3362c5\nXML FILE\tXML STRUCTURE\tDOCTYPE\tDTD EXECUTION\tDIAGNOSTICS\nindex.xml\tWell-formed\tValid reference\tRan · valid\t—\nm1/us/us-regional.xml\tWell-formed\tValid reference\tRan · valid\t—\nm5/5-3-5-1/study-001/stf-study-001.xml\tWell-formed\tValid reference\tRan · valid\t—\nSupportive-file integrity is unverified or failed.\nChecksum mismatch: ich-ectd-3-2.dtd (expected b3fa5197564d6a2472c1d70d1046c1f78f0ee90b2fa0ca2c0ba69f546fad86fe; actual 62a4a165056b1aece47f2c295f2623429e0cfad7d4d3975028f549907303f537)"
+    },
+    {
+      "name": "compile-legacy",
+      "text": "Package DTD validation\nDTD validation not recorded — unverified.\nPackage SHA-256 1044122f8b5fb0d13a75100e57d82b3507b61f9bd63c142a06675ec8070ea776"
+    },
+    {
+      "name": "compile-empty-proof",
+      "text": "Package DTD validation\nDTD validation evidence is incomplete — unverified.\nPackage SHA-256 1044122f8b5fb0d13a75100e57d82b3507b61f9bd63c142a06675ec8070ea776\nXML FILE\tXML STRUCTURE\tDOCTYPE\tDTD EXECUTION\tDIAGNOSTICS\nSupportive-file integrity verified (5 files)."
+    },
+    {
+      "name": "stale-compile-suppressed",
+      "context": "A→B→A",
+      "staleResultVisible": false
+    }
+  ],
+  "compileCount": 8,
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ectd-compile/42/compile"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ectd-compile/42/history"
+    }
+  ],
+  "pageErrors": [],
+  "sourcePinsUnchanged": true,
+  "sourceSha256": {
+    "package.json": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "client/src/concept2cure/v2/surfaces/EctdCompile.tsx": "57efe1af2a9e733a44b82e9d82bf01fc52a9d923212e197f02531cf905c9cba9",
+    "client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx": "68a573219692ecb85b8790b3754f7df927021f6dca0272028727d42daf39b58e",
+    "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "server/routes/ectd-compile.ts": "690f1c514ff02242ac39c007d7ed4f6981a415d67d44f569d5c4166b8ab4d8a3",
+    "server/services/ectd/assemble-from-core.ts": "2583b28f92611bcbb659ec7efb2636f452856fb42d2da3c92026e3e35161b7fd",
+    "server/services/ectd/backbone-validation.ts": "5183eb2bd408816a2c3ec6cffee3b8351b77a0e0b5406dcc13181b3cc499d428",
+    "server/services/ectd/xml-validator.ts": "f30dba29f32b7911cbc2476aa364f756d991803bf8d411169509de3af1dc1b2e",
+    "server/services/ectd/checksum-manifest.ts": "b1e3a7957d294a3e086122e34a9df26ecb2097272447a5859290bbc409116372",
+    "server/services/ectd/dtd-bundler.ts": "c59f85bb23a5b8c56e5bb792d598871ce4dad34c1eb61aae07ce57b10931e1cc",
+    "server/services/ectd/stf-generator.ts": "dd3d6409043bb76fdb73462d317c4a0885c6722c906c5c6871dcb7354ec9bc37",
+    "server/services/ectd/regional-backbone-readiness.ts": "87fd4a4cbbf4a7159c922e8e7ba61a6f3b6a528a2918cb4d10a946c26f39c91a",
+    "server/services/submission-gateways/regional-packager.ts": "19497bb6cf50d817f0190b613a787c579e86f3cc581fb6a3c4e0ae2ef35a5fd2",
+    "server/services/submission-gateways/types.ts": "703fa1d77dcbb3e830608e0abfa1cd3df5490375bf8a09742b7f2ffa03fc963a",
+    "server/services/submission-gateways/pre-transmit-check.ts": "8d71bc84fd2e36af128bdf334775f3d4a438abcc1fcb0d9318121b14572baefd",
+    "shared/regulatory/ectd-dtd-validation.ts": "7807b5a4b4918bfe305b657bead40ed59a2e47d0c0bad51bf77ad9345812ad61",
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/concept2cure/v2/styles/app-v2.css": "3edd14c1fe3cd592aa6120b97d7f45ace5ac27ed6e3a927ce567e9d4048885e5",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/submission-v2.css": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "6224ed53861451c8f4354743dc2ce2dc6968fc402d65cfd3413160852b258064",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d01eaa1a721ca28e6acd6d336fedac38a1d3d392a51771a57241001480c0fd78",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/synthetic-valid.json": "c3b9bd8a1e41132783969dad0a1e7dc97b33f8548c6813db9eda35435eccf85a",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/synthetic-valid.zip": "1044122f8b5fb0d13a75100e57d82b3507b61f9bd63c142a06675ec8070ea776",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/invalid-stf.json": "9da9865f9964767b0650df108c63a947a3ceb36be2debc253fd5fc02ba369987",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/invalid-stf.zip": "b81d4ca73e821e134d6daab156264f6b310095631a56532b6536481a507fa8e6",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/missing-assets.json": "1fddbfbfaef8573abfb5f4bfddbb9aa73dc98763ed7297c53efcc2c688ecf634",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/missing-assets.zip": "106baf066966744de652632825da463d04d8f853862c849f6bb43c0a48fdfd21",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/tampered-support.json": "38868cb7718d0a31a70bc370f27ceb5456361fa8d50e35d1a9c4c1d9746eadad",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/tampered-support.zip": "716c3b5d765dd7fde8d2fd4cce8cee604502f5a2515ef611751c7a84cd3362c5",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/probe.tsx": "c843ddbf06dc6804364947886781adabaf9887e164db118ba621131841db5bac",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/server.mjs": "ad2c66c4df4f343feb3d4b2aabab067cd3e4dea98b6a41fe931705a49629eac0",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/check.mjs": "e9cb1f2749ef291706abdcea5317d7e9d11cf2f26e448f3923b25cbd5fe8dc8f",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/index.html": "57a8dae0df8d54c848d28ae36b5d90464047cbbfe1a3be4867cdbd2eba37d70a"
+  }
+}

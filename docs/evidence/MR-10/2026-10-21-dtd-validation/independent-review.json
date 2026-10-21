@@ -1,0 +1,44 @@
+{
+  "review": "Independent read-only evidence review",
+  "anchor": "218e49eb8898015938bf0a6603f077a1543f46af",
+  "primaryTests": {
+    "ui": {
+      "passed": 117,
+      "files": 10,
+      "pins": 20
+    },
+    "backend": {
+      "passed": 384,
+      "files": 23,
+      "pins": 40
+    }
+  },
+  "browser": {
+    "stages": 8,
+    "compileRequests": 8,
+    "totalInterceptedRequests": 56,
+    "pins": 40,
+    "trackedSourcePins": 28,
+    "evidenceOnlyPins": 12,
+    "screenshots": 8
+  },
+  "syntheticPackages": {
+    "zipHashesMatch": 4,
+    "exactXmlCoverageVerified": 4,
+    "passed": [
+      "synthetic-valid"
+    ],
+    "agencyAcceptance": false
+  },
+  "buildArtifactHashesMatch": 3,
+  "materialClaimContradictions": [],
+  "defaultSecretScan": {
+    "config": "built-in/default; repository config not explicitly supplied",
+    "findings": 4,
+    "disposition": "All four matches are the same recorded authService.tsx SHA-256; verified against source bytes at final218e and initial56745108. No credentials. Repository-config scan is recorded separately in secret-scan-summary.json."
+  },
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "nativeDatabaseIntegrationExecuted": false,
+  "publicationAndArtifactManifest": "Source accepted directly on canonical; final archive integrity is checked by the control tower."
+}

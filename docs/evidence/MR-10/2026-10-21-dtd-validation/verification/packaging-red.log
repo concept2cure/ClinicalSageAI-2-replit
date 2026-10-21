@@ -1,0 +1,257 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records every generated backbone/STF as unverified when the drop-point is empty 605ms
+   → expected undefined to be defined
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > validates all captured ZIP XML and checksum-pins its exact supportive bytes 1011ms
+   → expected undefined to match object { version: 1, passed: true, …(1) }
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned 1289ms
+   → expected undefined to match object { passed: false, …(1) }
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > refuses to certify changed supportive bytes despite otherwise valid XML 1095ms
+   → expected undefined to match object { passed: false, integrity: { …(2) } }
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing 1216ms
+   → promise resolved "{ …(11) }" instead of rejecting
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > does not require an STF DTD when this sequence generates no STF 550ms
+   → Target cannot be null or undefined.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records every generated backbone/STF as unverified when the drop-point is empty
+AssertionError: expected undefined to be defined
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:75:24
+     73|     const bundle = await packageEctdSubmission(input);
+     74|     const validation = bundle.dtdStatus?.validation as DtdValidationEv…
+     75|     expect(validation).toBeDefined();
+       |                        ^
+     76|     const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+     77|     const expected = Object.keys(zip.files).filter(name => name === 'i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > validates all captured ZIP XML and checksum-pins its exact supportive bytes
+AssertionError: expected undefined to match object { version: 1, passed: true, …(1) }
+
+- Expected:
+{
+  "integrity": {
+    "ok": true,
+  },
+  "passed": true,
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:91:24
+     89|     const bundle = await packageEctdSubmission(input);
+     90|     const validation = bundle.dtdStatus?.validation as DtdValidationEv…
+     91|     expect(validation).toMatchObject({ version: 1, passed: true, integ…
+       |                        ^
+     92|     expect(validation.files).toHaveLength(3);
+     93|     for (const file of validation.files) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned
+AssertionError: expected undefined to match object { passed: false, …(1) }
+
+- Expected:
+{
+  "integrity": {
+    "ok": true,
+  },
+  "passed": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:120:42
+    118|     await writeManifest();
+    119|     const bundle = await packageEctdSubmission(input);
+    120|     expect(bundle.dtdStatus?.validation).toMatchObject({ passed: false…
+       |                                          ^
+    121|     const rows = bundle.dtdStatus!.validation!.files;
+    122|     expect(rows.find(row => /\/stf-/.test(row.relPath))?.dtd).toMatchO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > refuses to certify changed supportive bytes despite otherwise valid XML
+AssertionError: expected undefined to match object { passed: false, integrity: { …(2) } }
+
+- Expected:
+{
+  "integrity": {
+    "mismatched": [
+      ObjectContaining {
+        "fileName": "ich-ectd-3-2.dtd",
+      },
+    ],
+    "ok": false,
+  },
+  "passed": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:131:42
+    129|     await fs.appendFile(path.join(drop, 'ich-ectd-3-2.dtd'), '\n<!-- C…
+    130|     const bundle = await packageEctdSubmission(input);
+    131|     expect(bundle.dtdStatus?.validation).toMatchObject({ passed: false…
+       |                                          ^
+    132|       mismatched: [expect.objectContaining({ fileName: 'ich-ectd-3-2.d…
+    133|     await capture('tampered-support', bundle);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing
+AssertionError: promise resolved "{ …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "crossReferenceStatus": {
++     "broken": [],
++     "ok": true,
++     "resolved": 1,
++   },
++   "displayName": "Goldenmab · FDA original #0000",
++   "dtdStatus": {
++     "missing": [],
++     "missingStylesheets": [],
++     "present": [
++       "ich-ectd-3-2.dtd",
++       "ich-stf-v2-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "required": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "selfContained": true,
++   },
++   "format": "ectd",
++   "leafManifest": [
++     {
++       "backbone": "m1/us/us-regional.xml",
++       "ctdSection": "1.1",
++       "fileName": "form-356h.pdf",
++       "href": "m1/us/1-1/form-356h.pdf",
++       "leafId": "leaf-1-1-form-356h",
++       "md5": "33afe6409da8155e1efe862723bb55c6",
++       "operation": "new",
++       "sourceMd5": "1aa84472e7ab0eb2032ef877bc22c0ab",
++       "title": "Form FDA 356h",
++     },
++     {
++       "backbone": "m1/us/us-regional.xml",
++       "ctdSection": "1.2",
++       "fileName": "cover-letter.pdf",
++       "href": "m1/us/1-2/cover-letter.pdf",
++       "leafId": "leaf-1-2-cover-letter",
++       "md5": "2c36ab2cce0e1c07e2780aafa5b53453",
++       "operation": "new",
++       "sourceMd5": "bb97ee6781f50f57a32727149b219e56",
++       "title": "Cover Letter",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "2.2",
++       "fileName": "intro.pdf",
++       "href": "m2/2-2/intro.pdf",
++       "leafId": "leaf-2-2-intro",
++       "md5": "de3a235fa1ed3d624d8927ed0a52ac9f",
++       "operation": "new",
++       "sourceMd5": "e5535f2dc786ceee9d3fe3d752bfa14d",
++       "title": "Introduction",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.p.1",
++       "fileName": "description-composition.pdf",
++       "href": "m3/3-2-p-1/description-composition.pdf",
++       "leafId": "leaf-3-2-p-1-description-composition",
++       "md5": "b7701a56b6b8c1b89db26aa01214338b",
++       "operation": "new",
++       "sourceMd5": "9637d76ef0f7a0c249207cddec5cc7b5",
++       "title": "Description and Composition",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "5.3.5.1",
++       "fileName": "study-report.pdf",
++       "href": "m5/5-3-5-1/study-001/study-report.pdf",
++       "leafId": "leaf-5-3-5-1-study-report",
++       "md5": "0231be9ab9d559b0a5b5dfc3e6605346",
++       "operation": "new",
++       "sourceMd5": "8062fec1b5d8b263f7cca0795b3a4b56",
++       "title": "Pivotal Study Report",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "5.3.5.1",
++       "fileName": "stf-study-001.xml",
++       "href": "m5/5-3-5-1/study-001/stf-study-001.xml",
++       "leafId": "leaf-5-3-5-1-stf-study-001",
++       "md5": "e8712bd9bd20e4492e3ef24f8df55af3",
++       "operation": "new",
++       "title": "Study Tagging File — STUDY-001",
++     },
++   ],
++   "path": "/tmp/synthetic-package-dtd-yfBHwH/refused-output/123456-0000-fda.zip",
++   "regionalBackbone": {
++     "conformanceGap": "applicant contact \"Jane Smith\" has no telephone, so no <telephones>; form-356h.pdf is written twice, under <form> and under <m1-1-forms>, with one ID; leaf IDs must be unique in a backbone (ectd-packager/leaf-id.ts)",
++     "file": "m1/us/us-regional.xml",
++     "region": "fda",
++     "regionConformant": false,
++   },
++   "sha256": "12a494e2e3427026dd976a75cf08667f93408495e14e08a4a5aea27b6645ae4d",
++   "sizeBytes": 25545,
++   "stf": {
++     "leaves": 1,
++     "studies": 1,
++     "untagged": 0,
++   },
++   "submissionGrade": {
++     "agencyFormsAsIssued": [],
++     "allPdfA": true,
++     "notConverted": [],
++     "pdfLeaves": 5,
++     "pdfaConverted": 5,
++     "total": 5,
++   },
+  }
+
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:143:91
+    141|     const outputDir = path.join(work, 'refused-output');
+    142|     const mkdir = vi.spyOn(fs, 'mkdtemp');
+    143|     await expect(packageEctdSubmission({ ...input, environment: 'produ…
+       |                                                                                           ^
+    144|     expect(await fs.readdir(outputDir).catch(() => [])).toEqual([]);
+    145|     const privateDirs = await Promise.all(mkdir.mock.results.map(resul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > does not require an STF DTD when this sequence generates no STF
+AssertionError: Target cannot be null or undefined.
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:152:57
+    150|     const bundle = await packageEctdSubmission({ ...input, leaves: inp…
+    151|     expect(bundle.dtdStatus?.required).not.toContain('ich-stf-v2-2.dtd…
+    152|     expect(bundle.dtdStatus?.validation?.expectedFiles).toHaveLength(2…
+       |                                                         ^
+    153|   }, 30_000);
+    154| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  00:27:34
+   Duration  7.60s (transform 1.03s, setup 253ms, import 1.01s, tests 5.78s, environment 0ms)
+

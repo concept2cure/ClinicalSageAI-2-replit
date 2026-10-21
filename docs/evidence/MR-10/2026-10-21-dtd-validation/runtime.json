@@ -1,0 +1,12 @@
+{
+  "node": "v22.23.3",
+  "xmllint": {
+    "source": "https://snapshot.debian.org/archive/debian/20260925T181338Z/pool/main/libx/libxml2/libxml2-utils_2.12.7+dfsg+really2.9.14-2.1+deb13u3_amd64.deb",
+    "packageSha256": "cfa40541f9b314491c53b6c63e23ee1a2afa2ac309e6ca379c1081ef2b62e773",
+    "versionOutput": "/workspace/scratch/dtd-validation-20261021/xmllint-runtime/usr/bin/xmllint: using libxml version 20914\n   compiled with: Threads Tree Output Push Reader Patterns Writer SAXv1 FTP HTTP DTDValid HTML Legacy C14N Catalog XPath XPointer XInclude Iconv ISO8859X Unicode Regexps Automata Schemas Schematron Modules Debug Zlib Lzma",
+    "installation": "Extracted with dpkg-deb into task scratch; no system or production dependency change. Production Dockerfile already declares libxml2-utils.",
+    "binarySha256": "e17c5db6dd44245d989eca51eab75e631d8789f9918fad262ec3234359e054b3"
+  },
+  "agencyArtifactsAcquired": false,
+  "humanWitnessed": false
+}

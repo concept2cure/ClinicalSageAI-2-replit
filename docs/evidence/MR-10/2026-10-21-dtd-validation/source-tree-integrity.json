@@ -1,0 +1,21 @@
+{
+  "verifiedCommit": "218e49eb8898015938bf0a6603f077a1543f46af",
+  "cohorts": [
+    {
+      "manifest": "ui-inputs.json",
+      "trackedSourcePins": 20,
+      "mismatches": []
+    },
+    {
+      "manifest": "backend-inputs.json",
+      "trackedSourcePins": 40,
+      "mismatches": []
+    },
+    {
+      "manifest": "browser/result/result.json",
+      "trackedSourcePins": 28,
+      "mismatches": []
+    }
+  ],
+  "harnessAndPackageArtifacts": "Working-tree pins checked in input-integrity.json; final evidence tree is checked after evidence commit."
+}

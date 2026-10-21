@@ -1,0 +1,70 @@
+{
+  "startingAnchor": "cb4065898efa6c1422ea5fb3b3a995de069e7569",
+  "implementationAnchor": "c424d1f48e025b93e724b823b5fec183526c6793",
+  "integrationBuildAnchor": "218e49eb8898015938bf0a6603f077a1543f46af",
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "agencySchemasAcquired": false,
+  "nativeDatabaseIntegrationExecuted": false,
+  "testEngine": "Real xmllint with explicitly synthetic schemas; backend route fixtures and intercepted browser APIs.",
+  "ui": {
+    "passed": 117,
+    "failed": 0,
+    "files": 10,
+    "inputPins": "ui-inputs.json",
+    "inputsMatchIntegration": true
+  },
+  "backend": {
+    "passed": 384,
+    "failed": 0,
+    "files": 23,
+    "inputPins": "backend-inputs.json",
+    "inputsMatchIntegration": true
+  },
+  "browser": {
+    "passed": true,
+    "stages": 8,
+    "compileRequests": 8,
+    "sourcePins": 40,
+    "sourcePinsUnchanged": true,
+    "pageErrors": [],
+    "anchor": "218e49eb8898015938bf0a6603f077a1543f46af",
+    "actualSyntheticPackageOutputsUsed": true
+  },
+  "build": {
+    "anchor": "218e49eb8898015938bf0a6603f077a1543f46af",
+    "command": "PATH=<Node22> NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exit": 0,
+    "sha256": {
+      "dist/index.js": "4d9d6a0ace1d0ebbf89c32fd4bae22f54bd64d05e0cd238ebecbcca62e4d3655",
+      "dist/ops/verify-audit-chain.mjs": "fcd682e198d1a83380a50414ee90642f9538589d2e650e00a7a94300d0faa791",
+      "dist/public/assets/index-DwWCc1qn.js": "9e07f8882027d906c084c3f5433c9bd5c536981edf50c91822417697357fba88"
+    },
+    "embeddedAnchor": {
+      "dist/index.js": true,
+      "dist/ops/verify-audit-chain.mjs": false,
+      "dist/public/assets/index-DwWCc1qn.js": true
+    }
+  },
+  "baselinesChanged": false,
+  "flagDefaultsChanged": false,
+  "normalPushGates": {
+    "status": "passed; source accepted directly on canonical",
+    "initialAttempt": {
+      "anchor": "567451081bfee8085d94f40cf1e0971d764947ea",
+      "reason": "EctdCompile.tsx grew to 107078 bytes, taking files above 100000 bytes to 58 against the unchanged ceiling of 57.",
+      "typecheckReached": false,
+      "hooksBypassed": false,
+      "baselineChanged": false
+    },
+    "acceptedSource": "218e49eb8898015938bf0a6603f077a1543f46af",
+    "typecheckErrors": 0,
+    "tscExit": 0,
+    "typecheckBaseline": 0,
+    "eslintWarningGrowth": -3,
+    "allPrePushGatesPassed": true,
+    "hooksBypassed": false
+  },
+  "rendererExtractionAnchor": "451232eed5bb9cff1b54b7f8f9d8f2a914249d47",
+  "backendExecutionAnchor": "567451081bfee8085d94f40cf1e0971d764947ea"
+}

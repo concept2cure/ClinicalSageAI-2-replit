@@ -110,6 +110,19 @@ CAT2-13 alone is P2. It is done here because it is small, it shares the adapter 
 
 ### Stage 3 — Vendor the agency DTDs and validate every backbone (Phase 1 · M · mixed) — closes CAT2-01
 
+2026-10-21 continuation: the existing validator is now reached by normal
+packaging and the existing eCTD Compile UI/history. Index, regional and every
+STF receive per-file execution evidence; captured supportive bytes receive
+SHA-256 verification. The existing opt-in production gates fail closed on
+missing or failed proof, and regional conformance also requires current proof.
+The enforcement defaults remain unchanged for Stage 11. Qualification of this
+integration slice is recorded in
+[DTD validation evidence](../evidence/MR-10/2026-10-21-dtd-validation/README.md).
+Actual agency assets were not acquired: the existing vendoring runbook's counsel
+prerequisite remains open. Synthetic schemas prove execution and negative
+cases only. Stage 3 and CAT2-01 remain open until the agency corpus and remaining
+acceptance criteria are qualified; unsupported dependency forms are unverified.
+
 This is the root of stages 4–7, 9, 10 and 11. Nothing downstream can be proved without it.
 
 1. Re-confirm CAT2-01 at the current head (statuses here are from 94b4f9238).
