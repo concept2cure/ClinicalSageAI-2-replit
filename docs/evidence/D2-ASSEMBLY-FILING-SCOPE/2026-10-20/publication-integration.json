@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-21T00:22:23.434443+00:00",
+  "argv": [
+    "npx",
+    "--no-install",
+    "vitest",
+    "run",
+    "client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts",
+    "client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx",
+    "client/src/concept2cure/v2/__tests__/studyTaggingPlacement.test.tsx",
+    "client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx",
+    "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+    "shared/regulatory/__tests__/ectd-leaf-rules.test.ts",
+    "client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx",
+    "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx",
+    "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+    "server/services/ectd/__tests__/stf-generator.test.ts",
+    "server/services/ectd/__tests__/stf-coverage-1789.test.ts",
+    "server/services/ectd/__tests__/stf-1789-input-path.test.ts",
+    "server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "--reporter=verbose"
+  ],
+  "elapsedSeconds": 89.277,
+  "exitCode": 0,
+  "sourceFreeze": "publication-source-freeze.json",
+  "testInputs": "publication-test-inputs.json",
+  "sourceDrift": [],
+  "rawOutput": "publication-integration-output.txt.gz",
+  "outputSha256": "07a70b0494dffb4b54d62bf2d0ca12593cd89d19a33e6996b03ec48898d6c3f3",
+  "summary": [
+    "Test Files  21 passed (21)",
+    "Tests  412 passed | 2 todo (414)"
+  ],
+  "suiteCount": 21
+}

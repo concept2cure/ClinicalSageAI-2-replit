@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-21T00:14:09.349219+00:00",
+  "workstream": "W1/D2; local authoring completion",
+  "branch": "concept2cure-v2",
+  "preCommitCanonicalHead": "6b9b206280bb046f70af7a2a1a9e3e16a6662612",
+  "qualificationSourceFreeze": "source-freeze-qualified.json",
+  "sourcePins": 232,
+  "sourceDrift": [],
+  "combined": {
+    "testsPassed": 1101,
+    "suitesPassed": 38,
+    "failed": 0,
+    "skipped": 0,
+    "receipt": "qualified-integration.json",
+    "actualProducerConsumerCaseObserved": "reviews every exact Canadian section source and limit after HTTP assembly into a blank no-parent document"
+  },
+  "compilerErrors": 0,
+  "strictLint": {
+    "files": 14,
+    "errors": 0,
+    "warnings": 0
+  },
+  "warningGrowthFiles": 0,
+  "buildExitCode": 0,
+  "staticGatesPassed": 16,
+  "manualCases": 53,
+  "manualNotRun": 53,
+  "scope": "Existing single editor, assembly resolver and saved review completed in place. No UI pattern, provider, dependency, schema, migration or transport added.",
+  "knownLimits": [
+    "Unmapped saved bound filing operation, including legacy Canada NDS, is unverified; unbound working copy remains available.",
+    "Stored organization/global assembly without complete recorded source/guidance cannot receive complete AnA reference-review verdict."
+  ],
+  "notQualified": [
+    "Human acceptance",
+    "Live provider behavior",
+    "Fresh full PostgreSQL installation",
+    "Official current form adequacy",
+    "Agency transmission"
+  ],
+  "overlappingCountsMustNotBeAdded": true
+}

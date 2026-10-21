@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-20T23:41:20.323098+00:00",
+  "branch": "concept2cure-v2",
+  "head": "4282257ac3da9b1c5d15b8e7db6c7599f2388f28",
+  "origin": "4282257ac3da9b1c5d15b8e7db6c7599f2388f28",
+  "aheadBehind": "0\t0",
+  "previousIncrement": "7b87ad1a4088f04d91e9cb3869781c604170c9e5",
+  "incoming": "4282257ac3da9b1c5d15b8e7db6c7599f2388f28",
+  "incomingPaths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "mode": "Clean report-only canonical fast-forward before source edits; root owns Git",
+  "node": "v22.23.3",
+  "network": {
+    "environmentObservationCurrent": true,
+    "httpMode": "unrestricted",
+    "httpState": "enforced",
+    "vpnConfigured": false,
+    "configuredProviderCredentials": 0
+  },
+  "providerCallsPerformed": false
+}

@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:19:09.934563+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-deploy-path"
+  ],
+  "elapsedSeconds": 0.225,
+  "exitCode": 0,
+  "sourceFreeze": "publication-source-freeze.json",
+  "rawOutput": "publication-gate-ci-migration-deploy-path-output.txt.gz",
+  "outputSha256": "7e5276ef16f95bb753435c264b87c80da0844950ec1ee127fcef622a673aecc2",
+  "stdout": "[ci:migration-deploy-path] OK \u2014 105 baselined file(s) on no deploy path, none new.\n"
+}

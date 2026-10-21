@@ -84,6 +84,31 @@ export const AGENCY_TO_CODE: Readonly<Record<string, string>> = {
   REGISTERED_CERTIFICATION_BODY: 'jp_rcb', JP_RCB: 'jp_rcb',
 };
 
+/**
+ * An agency that names a region without being that region's own agency
+ * (added 2026-10-08, F19b review).
+ *
+ * The EU device lane: an MDR or IVDR technical file, or a clinical evaluation
+ * report, is assessed by a Notified Body, not by the EMA. The catalog names the
+ * agency 'EU / Notified Body' (filing-catalog.ts AGENCY_LABEL), and neither the
+ * region identity nor AGENCY_TO_CODE knows that string, so every such filing
+ * read "Refused at creation" and the EU MDR/IVDR lane had no way in, while its
+ * packs exist (mdr:ema, ivdr:ema, cer:ema). Those packs are keyed 'ema' by
+ * their own migration's choice (migrations/20260810b, "WHY agency 'ema'": the
+ * c2c_documents agency CHECK has no Notified Body value), so a Notified Body
+ * filing of those three classes reads the 'ema' outline. The statement still
+ * names the Notified Body, and its channel is judged from the Notified Body's
+ * own registered filings. Any other class at a Notified Body has no outline:
+ * a Notified Body takes no NDA or MAA.
+ */
+export const NOTIFIED_BODY = {
+  keys: new Set(['notified_body', 'eu_notified_body', 'nb']),
+  region: 'EU' as const,
+  agency: 'Notified_Body',
+  documentAgency: 'EMA',
+  docTypes: new Set(['mdr', 'ivdr', 'cer']),
+};
+
 /** 'Health Canada', 'health-canada', 'HEALTH_CANADA' and 'ICH / Global' → the AGENCY_TO_CODE key. */
 function agencyKey(primaryAgency: string): string {
   return String(primaryAgency).trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
@@ -143,7 +168,11 @@ export function resolveDocumentClass(
   if (!programType || !primaryAgency) return null;
 
   const docType = PROGRAM_TO_DOC_TYPE[String(programType).trim().toLowerCase()];
-  const agency = AGENCY_TO_CODE[agencyKey(primaryAgency)];
+  const authorityKey = agencyKey(primaryAgency);
+  let agency = AGENCY_TO_CODE[authorityKey];
+  if (NOTIFIED_BODY.keys.has(authorityKey.toLowerCase()) && NOTIFIED_BODY.docTypes.has(docType)) {
+    agency = AGENCY_TO_CODE[NOTIFIED_BODY.documentAgency];
+  }
 
   if (!docType || !agency) return null;
   if (!documentAgencyCandidates(docType, agency).length) return null;

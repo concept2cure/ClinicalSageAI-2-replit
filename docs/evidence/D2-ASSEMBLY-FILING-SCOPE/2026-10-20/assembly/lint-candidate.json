@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-20T23:54:44.308416+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/authoring/authoring-assembly-source.ts",
+    "server/services/authoring/authoring-assembly-plan.ts",
+    "server/services/market-specs/document-preparation.ts",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "--format",
+    "json"
+  ],
+  "elapsedSeconds": 1.554,
+  "exitCode": 0,
+  "rawOutput": "lint-candidate-output.txt.gz",
+  "outputSha256": "8cbe21b0bb8c3c1153947df8c825616fb34d34eaaed97b42cec8a1f85fad925c",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "180a7c5c80f0265888e193770fecaa5253cf2a2c4613db379cf2800e5aa0d54a",
+    "server/services/authoring/authoring-assembly-plan.ts": "cc47f6e9b96d72f15856fbd5c319c3974d94016faff71a80d0a150aa894ae5ee",
+    "server/services/market-specs/document-preparation.ts": "89f691d9f8b4bc6a70c45a582d09891422cef3d536ea138d3c43673dce8b7685",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": "75ab834b9ad09c1ff6d11e79cf0b4686d28be0ed1dbcfe2b00b95743417a67ac",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "e0b09adc22de9aee787fd0052f5811a33c6feecd46f48ece203f20244bb80e4a"
+  },
+  "sourceDrift": []
+}

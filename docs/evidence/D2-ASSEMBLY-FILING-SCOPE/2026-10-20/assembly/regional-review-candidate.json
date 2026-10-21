@@ -1,0 +1,32 @@
+{
+  "at": "2026-10-20T23:54:12.318948+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts"
+  ],
+  "elapsedSeconds": 20.872,
+  "exitCode": 1,
+  "rawOutput": "regional-review-candidate-output.txt.gz",
+  "outputSha256": "ef990476b9c3b42281748d76b8078ffbd904fc0c6a5986d1be7f64f3d096fa8b",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "73c1d1480b32413ca66afe47653b465a78d3e3ec2aec3a39ea958a235855230f",
+    "server/services/authoring/authoring-assembly-plan.ts": "cc47f6e9b96d72f15856fbd5c319c3974d94016faff71a80d0a150aa894ae5ee",
+    "server/services/market-specs/document-preparation.ts": "89f691d9f8b4bc6a70c45a582d09891422cef3d536ea138d3c43673dce8b7685",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": "75ab834b9ad09c1ff6d11e79cf0b4686d28be0ed1dbcfe2b00b95743417a67ac",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "e0b09adc22de9aee787fd0052f5811a33c6feecd46f48ece203f20244bb80e4a",
+    "server/services/ana/saved-template-review.ts": "44e01675a2429f97bd03a9843e962ee075432e5071d2afeef342ab9694eb0ac2",
+    "server/services/ana/saved-document-critique.ts": "21c54de1f5f09f8aa5a876f167f1e54e6912a0a48d2431bbeb9d88dbf4505d2a"
+  },
+  "sourceDrift": [],
+  "summary": [
+    "Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af",
+    "Test Files  1 failed | 1 passed (2)",
+    "Tests  1 failed | 116 passed (117)"
+  ]
+}

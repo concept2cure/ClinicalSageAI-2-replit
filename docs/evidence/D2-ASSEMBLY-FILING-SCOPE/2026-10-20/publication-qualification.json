@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-21T00:24:55.576181+00:00",
+  "mergeCommit": "270cb8e88b5f54d06d31efb70cf31e12bf7de1eb",
+  "assemblyImplementation": "9a4da8500534c19cec3d25f51f40db0081776cf1",
+  "sourceFreeze": "publication-source-freeze.json",
+  "sourceDrift": [],
+  "testsPassed": 412,
+  "suitesPassed": 21,
+  "failed": 0,
+  "preExistingTodo": {
+    "count": 2,
+    "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "verifiedPresentAt": "9a4da8500534c19cec3d25f51f40db0081776cf1",
+    "cases": [
+      "it.todo('step 4: placement passes an approved Vault version (or files one) and upsertLeaf records a vault_documents leaf \u2014 no product path does yet');",
+      "it.todo('step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today');"
+    ]
+  },
+  "compilerErrors": 0,
+  "buildExitCode": 0,
+  "staticGatesPassed": 16,
+  "originalQualification": {
+    "testsPassed": 1101,
+    "suitesPassed": 38,
+    "all232PinnedInputsUnchanged": true,
+    "receipt": "qualified-integration.json"
+  },
+  "countsOverlapDoNotAdd": true,
+  "humanAcceptance": false,
+  "agencyTransmission": false
+}

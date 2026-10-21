@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-21T00:23:50.225831+00:00",
+  "assemblyImplementation": "9a4da8500534c19cec3d25f51f40db0081776cf1",
+  "firstPush": {
+    "exitCode": 1,
+    "allNormalPrePushGatesPassed": true,
+    "reason": "Remote advanced during hooks; Git rejected non-fast-forward update. No force/bypass used."
+  },
+  "incomingCanonical": "cb4065898efa6c1422ea5fb3b3a995de069e7569",
+  "normalMerge": "270cb8e88b5f54d06d31efb70cf31e12bf7de1eb",
+  "mergeParents": [
+    "9a4da8500534c19cec3d25f51f40db0081776cf1",
+    "cb4065898efa6c1422ea5fb3b3a995de069e7569"
+  ],
+  "conflicts": [],
+  "assemblyCodeUnchangedAtMerge": {
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx": true,
+    "client/src/concept2cure/v2/editor/authoringOversight.ts": true,
+    "server/routes/__tests__/_authoring-assembly-filing-cases.ts": true,
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": true,
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts": true,
+    "server/services/ana/saved-document-critique.ts": true,
+    "server/services/ana/saved-template-review.ts": true,
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": true,
+    "server/services/authoring/authoring-assembly-plan.ts": true,
+    "server/services/authoring/authoring-assembly-source.ts": true,
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts": true,
+    "server/services/c2c/document-class.ts": true,
+    "server/services/market-specs/document-preparation.ts": true,
+    "server/services/regulatory/market-support.ts": true
+  },
+  "originalQualificationPins": 232,
+  "originalSourceDrift": [],
+  "publicationSourceFreeze": "publication-source-freeze.json",
+  "publicationRegressionSelection": "publication-test-inputs.json",
+  "node": "v22.23.3",
+  "pendingPublicationCommit": "Evidence only after merged qualification; no additional code changes."
+}
