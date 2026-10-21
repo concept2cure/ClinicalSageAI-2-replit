@@ -1,0 +1,232 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > recognizes the code and strict false delivery flag without inferring matches 6ms
+   → expected null to deeply equal { kind: 'withheld' }
+ × tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > keeps withholding separate from both a genuine miss and known omitted matches 1ms
+   → expected null to deeply equal { kind: 'withheld', …(1) }
+ × tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > bounds the message using the existing 160-character detail policy 1ms
+   → expected null to deeply equal { kind: 'withheld', …(1) }
+ × tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not turn copied diagnostic prose into a service outage after explicit withholding 2ms
+   → expected { kind: 'unavailable', …(1) } to deeply equal { kind: 'withheld', …(1) }
+ × tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer an empty result from stray zero counters beside the withholding declaration 1ms
+   → expected { kind: 'empty' } to deeply equal { kind: 'withheld', …(1) }
+ × tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer known matches from stray omission metadata on an undelivered result 1ms
+   → expected { kind: 'omitted', …(1) } to deeply equal { kind: 'withheld', …(1) }
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than true 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than 0 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than "false" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than {} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "passage_result_withheld" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "PASSAGE_RESULT_WITHHELD " 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "OTHER_RESULT_WITHHELD" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than 1 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'top-level array' declarations 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'nested payload' declarations 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'JSON string' declarations 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not interpret ordinary prose about a withheld result as the structured declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not interpret incomplete JSON as withholding authority 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps a true empty list empty when the delivery flag is invalid 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps the ordinary diagnostic outage heuristic when the code is invalid 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps successful known-match omission distinct when there is no withholding declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"error":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"refused":true,"reason":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"ok":false} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'unavailable' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'lookup_failed' ahead of the withholding marker 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'needs_parameters' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'not_found' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves an explicit unavailable flag 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"passages":[{"documentId":"source-1","locator":"p.3"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"records":[{"id":"record-1"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"molecules":[{"chemblId":"CHEMBL25"}]} 0ms
+ × tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > names the withheld result and guides recovery without asserting matches or a miss 1ms
+   → expected '' to contain '[Adaptation note] 1 of 1 tool call'
+ × tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps mixed-round withholding, known omitted matches, a true miss and returned records distinct 2ms
+   → expected '[Adaptation note] 2 of 4 tool calls t…' to contain '3 of 4 tool calls'
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps ordinary notes byte-identical without a withheld result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps known-omitted notes byte-identical without a withheld result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"status":"error"} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"status":"stopped"} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"heldBack":true} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > adds no note when a structured declaration also returned records 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > adds no note to an empty round 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > recognizes the code and strict false delivery flag without inferring matches
+AssertionError: expected null to deeply equal { kind: 'withheld' }
+
+- Expected:
+{
+  "kind": "withheld",
+}
+
++ Received:
+null
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:15:65
+     13| describe('the exact structured passage withholding declaration', () =>…
+     14|   it('recognizes the code and strict false delivery flag without infer…
+     15|     expect(shortfallOf(json({ delivered: false, code: CODE }))).toEqua…
+       |                                                                 ^
+     16|   });
+     17|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > keeps withholding separate from both a genuine miss and known omitted matches
+AssertionError: expected null to deeply equal { kind: 'withheld', …(1) }
+
+- Expected:
+{
+  "detail": "This round withheld the passage result. Do not infer matches or absence. Narrow the query or read a known source.",
+  "kind": "withheld",
+}
+
++ Received:
+null
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:19:37
+     17|
+     18|   it('keeps withholding separate from both a genuine miss and known om…
+     19|     expect(shortfallOf(withheld())).toEqual({ kind: 'withheld', detail…
+       |                                     ^
+     20|     expect(shortfallOf(withheld())?.kind).not.toBe('empty');
+     21|     expect(shortfallOf(withheld())?.kind).not.toBe('omitted');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > bounds the message using the existing 160-character detail policy
+AssertionError: expected null to deeply equal { kind: 'withheld', …(1) }
+
+- Expected:
+{
+  "detail": "This round withheld the passage result. Do not infer matches or absence. Narrow the query or read a known source. More recovery guidance. More recovery guidanc…",
+  "kind": "withheld",
+}
+
++ Received:
+null
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:26:48
+     24|   it('bounds the message using the existing 160-character detail polic…
+     25|     const message = `${MESSAGE} ${'More recovery guidance. '.repeat(30…
+     26|     expect(shortfallOf(withheld({ message }))).toEqual({ kind: 'withhe…
+       |                                                ^
+     27|   });
+     28|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not turn copied diagnostic prose into a service outage after explicit withholding
+AssertionError: expected { kind: 'unavailable', …(1) } to deeply equal { kind: 'withheld', …(1) }
+
+- Expected
++ Received
+
+  {
+    "detail": "A prior API unavailable diagnostic does not establish what this withheld result contained.",
+-   "kind": "withheld",
++   "kind": "unavailable",
+  }
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:31:48
+     29|   it('does not turn copied diagnostic prose into a service outage afte…
+     30|     const message = 'A prior API unavailable diagnostic does not estab…
+     31|     expect(shortfallOf(withheld({ message }))).toEqual({ kind: 'withhe…
+       |                                                ^
+     32|   });
+     33|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer an empty result from stray zero counters beside the withholding declaration
+AssertionError: expected { kind: 'empty' } to deeply equal { kind: 'withheld', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "detail": "This round withheld the passage result. Do not infer matches or absence. Narrow the query or read a known source.",
+-   "kind": "withheld",
++   "kind": "empty",
+  }
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:35:63
+     33|
+     34|   it('does not infer an empty result from stray zero counters beside t…
+     35|     expect(shortfallOf(withheld({ passages: [], count: 0 }))).toEqual(…
+       |                                                               ^
+     36|   });
+     37|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer known matches from stray omission metadata on an undelivered result
+AssertionError: expected { kind: 'omitted', …(1) } to deeply equal { kind: 'withheld', …(1) }
+
+- Expected
++ Received
+
+  {
+    "detail": "This round withheld the passage result. Do not infer matches or absence. Narrow the query or read a known source.",
+-   "kind": "withheld",
++   "kind": "omitted",
+  }
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:39:83
+     37|
+     38|   it('does not infer known matches from stray omission metadata on an …
+     39|     expect(shortfallOf(withheld({ ok: true, passages: [], omittedPassa…
+       |                                                                                   ^
+     40|   });
+     41| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > names the withheld result and guides recovery without asserting matches or a miss
+AssertionError: expected '' to contain '[Adaptation note] 1 of 1 tool call'
+
+- Expected
++ Received
+
+- [Adaptation note] 1 of 1 tool call
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:119:18
+    117|   it('names the withheld result and guides recovery without asserting …
+    118|     const note = buildShortfallNote([step('Vault passage search', with…
+    119|     expect(note).toContain('[Adaptation note] 1 of 1 tool call');
+       |                  ^
+    120|     expect(note).toMatch(/Vault passage search[^;]*withheld/i);
+    121|     expect(note).toMatch(/narrow/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps mixed-round withholding, known omitted matches, a true miss and returned records distinct
+AssertionError: expected '[Adaptation note] 2 of 4 tool calls t…' to contain '3 of 4 tool calls'
+
+Expected: "3 of 4 tool calls"
+Received: "[Adaptation note] 2 of 4 tool calls this round returned nothing usable: Known omitted matches — matching passages were omitted to fit the result; Literature lookup — returned no results. Omitted matches are not evidence absence. Do not quote text that was not returned: narrow the query or read the source files. For other shortfalls, vary the input or source, or ask the person for missing input."
+
+ ❯ tests/services/tool-outcome-passage-withheld.test.ts:136:18
+    134|       step('Study records', json({ records: [{ id: 'study-1' }] })),
+    135|     ], 4);
+    136|     expect(note).toContain('3 of 4 tool calls');
+       |                  ^
+    137|     expect(note).toMatch(/Withheld passage search[^;]*withheld/i);
+    138|     expect(note).toContain('Known omitted matches — matching passages …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 39 passed (47)
+   Start at  00:21:20
+   Duration  567ms (transform 152ms, setup 84ms, import 103ms, tests 26ms, environment 0ms)
+

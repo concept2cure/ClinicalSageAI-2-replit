@@ -29,6 +29,7 @@
  */
 import {
   documentAgencyCandidates,
+  NOTIFIED_BODY,
   AGENCY_TO_CODE,
   PROGRAM_TO_DOC_TYPE,
   describeUnmappedClass,
@@ -343,31 +344,6 @@ function channelLine(channel: { state: ChannelState; detail: string; channel: st
 type Base = Pick<MarketSupport, 'applicationType' | 'market' | 'region' | 'agency'>;
 type Identity = (typeof REGION_IDENTITY)[CanonicalRegion];
 type JudgedChannel = ReturnType<typeof channelSupportFor>;
-
-/**
- * An agency that names a region without being that region's own agency
- * (added 2026-10-08, F19b review).
- *
- * The EU device lane: an MDR or IVDR technical file, or a clinical evaluation
- * report, is assessed by a Notified Body, not by the EMA. The catalog names the
- * agency 'EU / Notified Body' (filing-catalog.ts AGENCY_LABEL), and neither the
- * region identity nor AGENCY_TO_CODE knows that string, so every such filing
- * read "Refused at creation" and the EU MDR/IVDR lane had no way in, while its
- * packs exist (mdr:ema, ivdr:ema, cer:ema). Those packs are keyed 'ema' by
- * their own migration's choice (migrations/20260810b, "WHY agency 'ema'": the
- * c2c_documents agency CHECK has no Notified Body value), so a Notified Body
- * filing of those three classes reads the 'ema' outline. The statement still
- * names the Notified Body, and its channel is judged from the Notified Body's
- * own registered filings. Any other class at a Notified Body has no outline:
- * a Notified Body takes no NDA or MAA.
- */
-const NOTIFIED_BODY = {
-  keys: new Set(['notified_body', 'eu_notified_body', 'nb']),
-  region: 'EU' as CanonicalRegion,
-  agency: 'Notified_Body',
-  documentAgency: 'EMA',
-  docTypes: new Set(['mdr', 'ivdr', 'cer']),
-};
 
 const marketKey = (market: string) => market.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 

@@ -16125,6 +16125,15 @@ function drainOperatorTurns(queued: GatewayMessage[] | undefined): GatewayMessag
   return queued && queued.length > 0 ? queued.splice(0, queued.length) : [];
 }
 
+/** Format before notifying detached observers; this reports host staging only. */
+function stageToolResultsForModel(results: ToolResultEntry[], round: number,
+  observer: AgenticOptions['onToolResultsForModel']): string {
+  const staged = results.map(tr => ({ ...tr, content: capToolResultForModel(tr.content) }));
+  const content = staged.map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(tr.content)}`).join('\n\n');
+  if (observer) notifyObserver('onToolResultsForModel', () => observer(staged.map(entry => ({ ...entry })), round));
+  return content;
+}
+
 export interface AgenticOptions {
   /** Maximum tool-use rounds before forcing stop */
   maxRounds?: number;
@@ -16137,6 +16146,9 @@ export interface AgenticOptions {
   onStream?: StreamCallback;
   /** Called when a tool is executed */
   onToolExecution?: (toolName: string, input: Record<string, unknown>, result: string) => void;
+  /** Exact bodies staged by this host, after guards and classic capping.
+   * Detached observation only; not proof of provider delivery. */
+  onToolResultsForModel?: (entries: readonly Readonly<ToolResultEntry>[], round: number) => void;
   /** Tenant + thread context forwarded to each tool handler */
   toolContext?: ToolContext;
   /** Abort signal — when aborted, the loop stops before the next round (barge-in). */
@@ -16421,10 +16433,7 @@ export async function executeAgenticLoop(
     pendingAdaptationNote = '';
     loopMessages.push({
       role: 'user',
-      content:
-        results
-          .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(capToolResultForModel(tr.content))}`)
-          .join('\n\n') + adaptationSuffix,
+      content: stageToolResultsForModel(results, round, options?.onToolResultsForModel) + adaptationSuffix,
     });
 
     // Steers ride AFTER the tool results. See drainOperatorTurns.

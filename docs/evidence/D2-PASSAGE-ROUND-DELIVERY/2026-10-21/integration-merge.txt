@@ -1,0 +1,480 @@
+Merge made by the 'ort' strategy.
+ .../__tests__/workbenchTemplateOversight.test.tsx  |    2 +
+ .../concept2cure/v2/editor/authoringOversight.ts   |    4 +-
+ .../ASSEMBLY_FILING_SCOPE_AND_REVIEW_2026-10-20.md |  120 +
+ .../D2-ASSEMBLY-FILING-SCOPE/2026-10-20/README.md  |  129 +
+ .../2026-10-20/artifact-manifest.json              |  234 ++
+ .../2026-10-20/assembly/README.md                  |  110 +
+ .../2026-10-20/assembly/candidate-output.txt.gz    |  Bin 0 -> 3598 bytes
+ .../2026-10-20/assembly/candidate.json             |   29 +
+ .../assembly/chosen-operation-red-output.txt.gz    |  Bin 0 -> 3456 bytes
+ .../2026-10-20/assembly/chosen-operation-red.json  |   27 +
+ .../assembly/declared-authority-red-output.txt.gz  |  Bin 0 -> 2479 bytes
+ .../assembly/declared-authority-red.json           |   28 +
+ .../2026-10-20/assembly/final-source-pins.json     |   22 +
+ .../assembly/fixed-sql-lint-output.txt.gz          |  Bin 0 -> 267 bytes
+ .../2026-10-20/assembly/fixed-sql-lint.json        |   66 +
+ .../2026-10-20/assembly/fixed-sql-source-pins.json |   24 +
+ .../2026-10-20/assembly/green-output.txt.gz        |  Bin 0 -> 5796 bytes
+ .../2026-10-20/assembly/green.json                 |   36 +
+ .../implicit-regional-scope-red-output.txt.gz      |  Bin 0 -> 15595 bytes
+ .../assembly/implicit-regional-scope-red.json      |   28 +
+ .../assembly/lint-candidate-output.txt.gz          |  Bin 0 -> 15762 bytes
+ .../2026-10-20/assembly/lint-candidate.json        |   26 +
+ .../2026-10-20/assembly/lint-green-output.txt.gz   |  Bin 0 -> 267 bytes
+ .../2026-10-20/assembly/lint-green.json            |   66 +
+ .../2026-10-20/assembly/red-output.txt.gz          |  Bin 0 -> 16510 bytes
+ .../2026-10-20/assembly/red.json                   |   28 +
+ .../regional-review-candidate-output.txt.gz        |  Bin 0 -> 3926 bytes
+ .../assembly/regional-review-candidate.json        |   32 +
+ .../assembly/scope-snapshot-red-output.txt.gz      |  Bin 0 -> 3533 bytes
+ .../2026-10-20/assembly/scope-snapshot-red.json    |   28 +
+ .../2026-10-20/canonical-catchup.json              |   23 +
+ .../2026-10-20/canonical-install-output.txt.gz     |  Bin 0 -> 985 bytes
+ .../2026-10-20/canonical-install.json              |   17 +
+ .../canonical-prequalification-fetch.json          |  132 +
+ .../canonical-prequalification-integration.json    |  126 +
+ .../2026-10-20/canonical-publication-fetch.json    |   18 +
+ .../canonical-publication-integration.json         |   18 +
+ .../2026-10-20/documentation-check.json            |    8 +
+ .../2026-10-20/evidence-integrity.json             |   11 +
+ ...al-gate-audit-repo-health-ceiling-output.txt.gz |  Bin 0 -> 238 bytes
+ .../final-gate-audit-repo-health-ceiling.json      |   22 +
+ .../final-gate-ci-canvas-path-output.txt.gz        |  Bin 0 -> 166 bytes
+ .../2026-10-20/final-gate-ci-canvas-path.json      |   15 +
+ ...al-gate-ci-check-editor-integrity-output.txt.gz |  Bin 0 -> 281 bytes
+ .../final-gate-ci-check-editor-integrity.json      |   15 +
+ ...inal-gate-ci-check-phantom-tokens-output.txt.gz |  Bin 0 -> 102 bytes
+ .../final-gate-ci-check-phantom-tokens.json        |   15 +
+ .../final-gate-ci-design-system-output.txt.gz      |  Bin 0 -> 125 bytes
+ .../2026-10-20/final-gate-ci-design-system.json    |   15 +
+ .../final-gate-ci-gateway-bypass-output.txt.gz     |  Bin 0 -> 94 bytes
+ .../2026-10-20/final-gate-ci-gateway-bypass.json   |   15 +
+ ...nal-gate-ci-migration-deploy-path-output.txt.gz |  Bin 0 -> 98 bytes
+ .../final-gate-ci-migration-deploy-path.json       |   15 +
+ ...nal-gate-ci-migration-drop-safety-output.txt.gz |  Bin 0 -> 218 bytes
+ .../final-gate-ci-migration-drop-safety.json       |   15 +
+ ...nal-gate-ci-migration-guard-order-output.txt.gz |  Bin 0 -> 107 bytes
+ .../final-gate-ci-migration-guard-order.json       |   15 +
+ ...te-ci-migration-prefix-collisions-output.txt.gz |  Bin 0 -> 101 bytes
+ .../final-gate-ci-migration-prefix-collisions.json |   15 +
+ ...al-gate-ci-migration-reachability-output.txt.gz |  Bin 0 -> 154 bytes
+ .../final-gate-ci-migration-reachability.json      |   15 +
+ ...final-gate-ci-migration-set-order-output.txt.gz |  Bin 0 -> 132 bytes
+ .../final-gate-ci-migration-set-order.json         |   15 +
+ ...inal-gate-ci-single-native-canvas-output.txt.gz |  Bin 0 -> 79 bytes
+ .../final-gate-ci-single-native-canvas.json        |   15 +
+ .../final-gate-ci-sql-interpolation-output.txt.gz  |  Bin 0 -> 504 bytes
+ .../final-gate-ci-sql-interpolation.json           |   15 +
+ .../final-gate-ci-token-cascade-output.txt.gz      |  Bin 0 -> 742 bytes
+ .../2026-10-20/final-gate-ci-token-cascade.json    |   15 +
+ .../final-gate-ci-token-contrast-output.txt.gz     |  Bin 0 -> 169 bytes
+ .../2026-10-20/final-gate-ci-token-contrast.json   |   15 +
+ .../2026-10-20/final-repo-health-report.json       | 2966 +++++++++++++++++++
+ .../2026-10-20/final-static-gates.json             |   86 +
+ .../gate-audit-repo-health-ceiling-output.txt.gz   |  Bin 0 -> 234 bytes
+ .../2026-10-20/gate-audit-repo-health-ceiling.json |   22 +
+ .../2026-10-20/gate-ci-canvas-path-output.txt.gz   |  Bin 0 -> 166 bytes
+ .../2026-10-20/gate-ci-canvas-path.json            |   15 +
+ .../gate-ci-check-editor-integrity-output.txt.gz   |  Bin 0 -> 281 bytes
+ .../2026-10-20/gate-ci-check-editor-integrity.json |   15 +
+ .../gate-ci-check-phantom-tokens-output.txt.gz     |  Bin 0 -> 102 bytes
+ .../2026-10-20/gate-ci-check-phantom-tokens.json   |   15 +
+ .../2026-10-20/gate-ci-design-system-output.txt.gz |  Bin 0 -> 125 bytes
+ .../2026-10-20/gate-ci-design-system.json          |   15 +
+ .../gate-ci-gateway-bypass-output.txt.gz           |  Bin 0 -> 94 bytes
+ .../2026-10-20/gate-ci-gateway-bypass.json         |   15 +
+ .../gate-ci-migration-deploy-path-output.txt.gz    |  Bin 0 -> 98 bytes
+ .../2026-10-20/gate-ci-migration-deploy-path.json  |   15 +
+ .../gate-ci-migration-drop-safety-output.txt.gz    |  Bin 0 -> 218 bytes
+ .../2026-10-20/gate-ci-migration-drop-safety.json  |   15 +
+ .../gate-ci-migration-guard-order-output.txt.gz    |  Bin 0 -> 107 bytes
+ .../2026-10-20/gate-ci-migration-guard-order.json  |   15 +
+ ...te-ci-migration-prefix-collisions-output.txt.gz |  Bin 0 -> 101 bytes
+ .../gate-ci-migration-prefix-collisions.json       |   15 +
+ .../gate-ci-migration-reachability-output.txt.gz   |  Bin 0 -> 154 bytes
+ .../2026-10-20/gate-ci-migration-reachability.json |   15 +
+ .../gate-ci-migration-set-order-output.txt.gz      |  Bin 0 -> 132 bytes
+ .../2026-10-20/gate-ci-migration-set-order.json    |   15 +
+ .../gate-ci-single-native-canvas-output.txt.gz     |  Bin 0 -> 79 bytes
+ .../2026-10-20/gate-ci-single-native-canvas.json   |   15 +
+ .../gate-ci-sql-interpolation-output.txt.gz        |  Bin 0 -> 794 bytes
+ .../2026-10-20/gate-ci-sql-interpolation.json      |   15 +
+ .../2026-10-20/gate-ci-token-cascade-output.txt.gz |  Bin 0 -> 742 bytes
+ .../2026-10-20/gate-ci-token-cascade.json          |   15 +
+ .../gate-ci-token-contrast-output.txt.gz           |  Bin 0 -> 169 bytes
+ .../2026-10-20/gate-ci-token-contrast.json         |   15 +
+ .../2026-10-20/independent-review.json             |   79 +
+ .../2026-10-20/integration-suites.json             |   40 +
+ .../oversight-handoff-green-output.txt.gz          |  Bin 0 -> 1307 bytes
+ .../2026-10-20/oversight-handoff-green.json        |   26 +
+ .../2026-10-20/oversight-handoff-red-output.txt.gz |  Bin 0 -> 2718 bytes
+ .../2026-10-20/oversight-handoff-red.json          |   25 +
+ .../2026-10-20/publication-build-output.txt.gz     |  Bin 0 -> 4474 bytes
+ .../2026-10-20/publication-build.json              |   14 +
+ .../2026-10-20/publication-evidence-integrity.json |   11 +
+ .../2026-10-20/publication-final-fetch.json        |    9 +
+ ...on-gate-audit-repo-health-ceiling-output.txt.gz |  Bin 0 -> 240 bytes
+ ...publication-gate-audit-repo-health-ceiling.json |   22 +
+ .../publication-gate-ci-canvas-path-output.txt.gz  |  Bin 0 -> 166 bytes
+ .../publication-gate-ci-canvas-path.json           |   15 +
+ ...on-gate-ci-check-editor-integrity-output.txt.gz |  Bin 0 -> 281 bytes
+ ...publication-gate-ci-check-editor-integrity.json |   15 +
+ ...tion-gate-ci-check-phantom-tokens-output.txt.gz |  Bin 0 -> 102 bytes
+ .../publication-gate-ci-check-phantom-tokens.json  |   15 +
+ ...publication-gate-ci-design-system-output.txt.gz |  Bin 0 -> 125 bytes
+ .../publication-gate-ci-design-system.json         |   15 +
+ ...ublication-gate-ci-gateway-bypass-output.txt.gz |  Bin 0 -> 94 bytes
+ .../publication-gate-ci-gateway-bypass.json        |   15 +
+ ...ion-gate-ci-migration-deploy-path-output.txt.gz |  Bin 0 -> 98 bytes
+ .../publication-gate-ci-migration-deploy-path.json |   15 +
+ ...ion-gate-ci-migration-drop-safety-output.txt.gz |  Bin 0 -> 218 bytes
+ .../publication-gate-ci-migration-drop-safety.json |   15 +
+ ...ion-gate-ci-migration-guard-order-output.txt.gz |  Bin 0 -> 107 bytes
+ .../publication-gate-ci-migration-guard-order.json |   15 +
+ ...te-ci-migration-prefix-collisions-output.txt.gz |  Bin 0 -> 101 bytes
+ ...cation-gate-ci-migration-prefix-collisions.json |   15 +
+ ...on-gate-ci-migration-reachability-output.txt.gz |  Bin 0 -> 154 bytes
+ ...publication-gate-ci-migration-reachability.json |   15 +
+ ...ation-gate-ci-migration-set-order-output.txt.gz |  Bin 0 -> 132 bytes
+ .../publication-gate-ci-migration-set-order.json   |   15 +
+ ...tion-gate-ci-single-native-canvas-output.txt.gz |  Bin 0 -> 79 bytes
+ .../publication-gate-ci-single-native-canvas.json  |   15 +
+ ...ication-gate-ci-sql-interpolation-output.txt.gz |  Bin 0 -> 504 bytes
+ .../publication-gate-ci-sql-interpolation.json     |   15 +
+ ...publication-gate-ci-token-cascade-output.txt.gz |  Bin 0 -> 742 bytes
+ .../publication-gate-ci-token-cascade.json         |   15 +
+ ...ublication-gate-ci-token-contrast-output.txt.gz |  Bin 0 -> 169 bytes
+ .../publication-gate-ci-token-contrast.json        |   15 +
+ .../publication-integration-output.txt.gz          |  Bin 0 -> 17010 bytes
+ .../2026-10-20/publication-integration.json        |   43 +
+ .../2026-10-20/publication-qualification.json      |   31 +
+ .../2026-10-20/publication-reconciliation.json     |   38 +
+ .../2026-10-20/publication-repo-health-report.json | 2967 ++++++++++++++++++++
+ .../2026-10-20/publication-source-freeze.json      |  259 ++
+ .../2026-10-20/publication-static-gates.json       |   86 +
+ .../2026-10-20/publication-test-inputs.json        |   50 +
+ .../2026-10-20/publication-typecheck-output.txt.gz |  Bin 0 -> 146 bytes
+ .../2026-10-20/publication-typecheck.json          |   15 +
+ .../pure-body-identity-green-output.txt.gz         |  Bin 0 -> 3256 bytes
+ .../2026-10-20/pure-body-identity-green.json       |   30 +
+ .../pure-body-identity-red-output.txt.gz           |  Bin 0 -> 1009 bytes
+ .../2026-10-20/pure-body-identity-red.json         |   26 +
+ .../2026-10-20/qualification.json                  |   41 +
+ .../2026-10-20/qualified-build-output.txt.gz       |  Bin 0 -> 4477 bytes
+ .../2026-10-20/qualified-build.json                |   14 +
+ ...ed-gate-audit-repo-health-ceiling-output.txt.gz |  Bin 0 -> 241 bytes
+ .../qualified-gate-audit-repo-health-ceiling.json  |   22 +
+ .../qualified-gate-ci-canvas-path-output.txt.gz    |  Bin 0 -> 166 bytes
+ .../2026-10-20/qualified-gate-ci-canvas-path.json  |   15 +
+ ...ed-gate-ci-check-editor-integrity-output.txt.gz |  Bin 0 -> 281 bytes
+ .../qualified-gate-ci-check-editor-integrity.json  |   15 +
+ ...fied-gate-ci-check-phantom-tokens-output.txt.gz |  Bin 0 -> 102 bytes
+ .../qualified-gate-ci-check-phantom-tokens.json    |   15 +
+ .../qualified-gate-ci-design-system-output.txt.gz  |  Bin 0 -> 125 bytes
+ .../qualified-gate-ci-design-system.json           |   15 +
+ .../qualified-gate-ci-gateway-bypass-output.txt.gz |  Bin 0 -> 94 bytes
+ .../qualified-gate-ci-gateway-bypass.json          |   15 +
+ ...ied-gate-ci-migration-deploy-path-output.txt.gz |  Bin 0 -> 98 bytes
+ .../qualified-gate-ci-migration-deploy-path.json   |   15 +
+ ...ied-gate-ci-migration-drop-safety-output.txt.gz |  Bin 0 -> 218 bytes
+ .../qualified-gate-ci-migration-drop-safety.json   |   15 +
+ ...ied-gate-ci-migration-guard-order-output.txt.gz |  Bin 0 -> 107 bytes
+ .../qualified-gate-ci-migration-guard-order.json   |   15 +
+ ...te-ci-migration-prefix-collisions-output.txt.gz |  Bin 0 -> 101 bytes
+ ...lified-gate-ci-migration-prefix-collisions.json |   15 +
+ ...ed-gate-ci-migration-reachability-output.txt.gz |  Bin 0 -> 154 bytes
+ .../qualified-gate-ci-migration-reachability.json  |   15 +
+ ...ified-gate-ci-migration-set-order-output.txt.gz |  Bin 0 -> 132 bytes
+ .../qualified-gate-ci-migration-set-order.json     |   15 +
+ ...fied-gate-ci-single-native-canvas-output.txt.gz |  Bin 0 -> 79 bytes
+ .../qualified-gate-ci-single-native-canvas.json    |   15 +
+ ...alified-gate-ci-sql-interpolation-output.txt.gz |  Bin 0 -> 504 bytes
+ .../qualified-gate-ci-sql-interpolation.json       |   15 +
+ .../qualified-gate-ci-token-cascade-output.txt.gz  |  Bin 0 -> 742 bytes
+ .../qualified-gate-ci-token-cascade.json           |   15 +
+ .../qualified-gate-ci-token-contrast-output.txt.gz |  Bin 0 -> 169 bytes
+ .../qualified-gate-ci-token-contrast.json          |   15 +
+ .../2026-10-20/qualified-integration-output.txt.gz |  Bin 0 -> 54070 bytes
+ .../2026-10-20/qualified-integration.json          |   59 +
+ .../2026-10-20/qualified-lint-output.txt.gz        |  Bin 0 -> 20 bytes
+ .../2026-10-20/qualified-lint.json                 |   31 +
+ .../2026-10-20/qualified-repo-health-report.json   | 2966 +++++++++++++++++++
+ .../2026-10-20/qualified-static-gates.json         |   86 +
+ .../2026-10-20/qualified-typecheck-output.txt.gz   |  Bin 0 -> 146 bytes
+ .../2026-10-20/qualified-typecheck.json            |   15 +
+ .../qualified-warning-ratchet-output.txt.gz        |  Bin 0 -> 168 bytes
+ .../2026-10-20/qualified-warning-ratchet.json      |   18 +
+ .../2026-10-20/repo-health-report.json             | 2966 +++++++++++++++++++
+ .../2026-10-20/review/README.md                    |   75 +
+ .../2026-10-20/review/candidate-output.txt.gz      |  Bin 0 -> 2168 bytes
+ .../2026-10-20/review/candidate.json               |   28 +
+ .../review/expanded-candidate-output.txt.gz        |  Bin 0 -> 4091 bytes
+ .../2026-10-20/review/expanded-candidate.json      |   38 +
+ .../2026-10-20/review/green-output.txt.gz          |  Bin 0 -> 4064 bytes
+ .../2026-10-20/review/green.json                   |   38 +
+ .../2026-10-20/review/lint-after-scope.json        |   48 +
+ .../2026-10-20/review/lint-candidate.json          |   50 +
+ .../2026-10-20/review/lint.json                    |   37 +
+ .../review/program-scope-red-output.txt.gz         |  Bin 0 -> 1223 bytes
+ .../2026-10-20/review/program-scope-red.json       |   29 +
+ .../2026-10-20/review/red-output.txt.gz            |  Bin 0 -> 2868 bytes
+ .../2026-10-20/review/red.json                     |   27 +
+ .../2026-10-20/review/source-pins-after.json       |   12 +
+ .../2026-10-20/review/source-pins-before.json      |   12 +
+ .../2026-10-20/review/summary.json                 |   52 +
+ .../2026-10-20/root-lint-output.txt.gz             |  Bin 0 -> 20 bytes
+ .../2026-10-20/root-lint.json                      |   20 +
+ .../2026-10-20/source-freeze-final.json            |  251 ++
+ .../2026-10-20/source-freeze-qualified.json        |  254 ++
+ .../2026-10-20/source-freeze.json                  |  246 ++
+ .../2026-10-20/static-gates.json                   |   86 +
+ .../2026-10-20/typecheck-output.txt.gz             |  Bin 0 -> 435 bytes
+ .../2026-10-20/typecheck.json                      |   17 +
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |    6 +
+ .../__tests__/_authoring-assembly-filing-cases.ts  |  152 +
+ .../__tests__/authoring-assembly.pglite.test.ts    |   12 +-
+ .../assembled-template-oversight.pglite.test.ts    |  231 ++
+ server/services/ana/saved-document-critique.ts     |    2 +-
+ server/services/ana/saved-template-review.ts       |  105 +-
+ .../__tests__/assembly-filing-scope.test.ts        |  265 ++
+ .../services/authoring/authoring-assembly-plan.ts  |    5 +-
+ .../authoring/authoring-assembly-source.ts         |  185 +-
+ .../regional-device-document-class.test.ts         |   13 +
+ server/services/c2c/document-class.ts              |   31 +-
+ .../services/market-specs/document-preparation.ts  |    2 +-
+ server/services/regulatory/market-support.ts       |   26 +-
+ 245 files changed, 17665 insertions(+), 67 deletions(-)
+ create mode 100644 docs/design/ASSEMBLY_FILING_SCOPE_AND_REVIEW_2026-10-20.md
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/README.md
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/README.md
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/candidate-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/candidate.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/chosen-operation-red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/chosen-operation-red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/declared-authority-red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/declared-authority-red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/final-source-pins.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/fixed-sql-lint-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/fixed-sql-lint.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/fixed-sql-source-pins.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/green-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/green.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/implicit-regional-scope-red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/implicit-regional-scope-red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/lint-candidate-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/lint-candidate.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/lint-green-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/lint-green.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/regional-review-candidate-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/regional-review-candidate.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/scope-snapshot-red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/assembly/scope-snapshot-red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/canonical-catchup.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/canonical-install-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/canonical-install.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/canonical-prequalification-fetch.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/canonical-prequalification-integration.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/canonical-publication-fetch.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/canonical-publication-integration.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/documentation-check.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/evidence-integrity.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-audit-repo-health-ceiling-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-audit-repo-health-ceiling.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-canvas-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-check-editor-integrity-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-check-phantom-tokens-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-design-system-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-design-system.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-gateway-bypass-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-deploy-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-drop-safety-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-guard-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-prefix-collisions-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-reachability-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-reachability.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-set-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-migration-set-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-single-native-canvas-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-sql-interpolation-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-token-cascade-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-token-contrast-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-repo-health-report.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-static-gates.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-audit-repo-health-ceiling-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-audit-repo-health-ceiling.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-canvas-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-check-editor-integrity-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-check-phantom-tokens-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-design-system-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-design-system.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-gateway-bypass-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-deploy-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-drop-safety-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-guard-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-prefix-collisions-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-reachability-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-reachability.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-set-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-migration-set-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-single-native-canvas-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-sql-interpolation-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-token-cascade-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-token-contrast-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/independent-review.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/integration-suites.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/oversight-handoff-green-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/oversight-handoff-green.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/oversight-handoff-red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/oversight-handoff-red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-build-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-build.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-evidence-integrity.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-final-fetch.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-audit-repo-health-ceiling-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-audit-repo-health-ceiling.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-canvas-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-check-editor-integrity-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-check-phantom-tokens-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-design-system-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-design-system.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-gateway-bypass-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-deploy-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-drop-safety-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-guard-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-prefix-collisions-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-reachability-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-reachability.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-set-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-migration-set-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-single-native-canvas-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-sql-interpolation-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-token-cascade-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-token-contrast-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-integration-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-integration.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-qualification.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-reconciliation.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-repo-health-report.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-source-freeze.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-static-gates.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-test-inputs.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-typecheck-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-typecheck.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/pure-body-identity-green-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/pure-body-identity-green.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/pure-body-identity-red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/pure-body-identity-red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualification.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-build-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-build.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-audit-repo-health-ceiling-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-audit-repo-health-ceiling.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-canvas-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-check-editor-integrity-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-check-phantom-tokens-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-design-system-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-design-system.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-gateway-bypass-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-deploy-path-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-drop-safety-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-guard-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-prefix-collisions-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-reachability-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-reachability.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-set-order-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-migration-set-order.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-single-native-canvas-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-sql-interpolation-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-token-cascade-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-token-contrast-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-integration-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-integration.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-lint-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-lint.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-repo-health-report.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-static-gates.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-typecheck-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-typecheck.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-warning-ratchet-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/repo-health-report.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/README.md
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/candidate-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/candidate.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/expanded-candidate-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/expanded-candidate.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/green-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/green.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/lint-after-scope.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/lint-candidate.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/lint.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/program-scope-red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/program-scope-red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/red-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/red.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/source-pins-after.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/source-pins-before.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/review/summary.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/root-lint-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/root-lint.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/source-freeze-final.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/source-freeze-qualified.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/source-freeze.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/static-gates.json
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/typecheck-output.txt.gz
+ create mode 100644 docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/typecheck.json
+ create mode 100644 server/routes/__tests__/_authoring-assembly-filing-cases.ts
+ create mode 100644 server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts
+ create mode 100644 server/services/authoring/__tests__/assembly-filing-scope.test.ts

@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-20T23:52:56.430123+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "-t",
+    "implicit IND and explicit regional"
+  ],
+  "elapsedSeconds": 3.836,
+  "exitCode": 1,
+  "rawOutput": "implicit-regional-scope-red-output.txt.gz",
+  "outputSha256": "315d9ddaa59a7a34aa232f8b8c92bdf71b9121f57b4451b4dda745dd83a6d3f7",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "65bf9690b1ba0d421c26afe9b36531c69b387597a2c8f8fab0143f5e2c769308",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": "75ab834b9ad09c1ff6d11e79cf0b4686d28be0ed1dbcfe2b00b95743417a67ac"
+  },
+  "sourceDrift": [],
+  "summary": [
+    "Tests 5 \u23af\u23af\u23af\u23af\u23af\u23af\u23af",
+    "Test Files  1 failed (1)",
+    "Tests  5 failed | 2 passed | 55 skipped (62)"
+  ]
+}

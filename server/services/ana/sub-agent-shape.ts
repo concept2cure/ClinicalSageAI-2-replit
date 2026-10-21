@@ -25,6 +25,10 @@ export interface AgentStep {
   input: Record<string, unknown>;
   result: string;
   ok: boolean;
+  /** Server dispatch identity; absent on historical raw-only traces. */
+  toolUseId?: string;
+  /** Exact body staged by the host, not a provider-delivery receipt. */
+  modelContent?: string;
 }
 
 /** One child model call: what served it, and its approved-models standing (D10). */

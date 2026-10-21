@@ -10,6 +10,7 @@ import { RECORDED_LINEAGE_STORES_DDL } from '../../services/document-data-dispos
 import type { AssemblyPlan } from '../../../shared/authoring/assembly';
 import { getIndAuthoringTemplates } from '../../services/authoring/ind-authoring-templates';
 import { builtinAuthoringTemplateId } from '../../services/authoring/builtin-authoring-templates';
+import { registerAssemblyFilingCases } from './_authoring-assembly-filing-cases';
 import { readSelectedAuthoringSources } from '../../services/authoring/authoring-assembly-sources';
 import type { AssemblySourceManifest, AssemblySourceSelector } from '../../../shared/authoring/assembly-sources';
 
@@ -111,7 +112,7 @@ beforeEach(async () => {
   await db.pool.query("UPDATE users SET status='active' WHERE id=$1", [Number(AUTHOR.id)]);
   await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
   await db.pool.query("UPDATE projects SET owner_id=$1,created_by_id=$1 WHERE id=42", [Number(AUTHOR.id)]);
-  await db.pool.query('UPDATE authoring_templates SET template_content=$1::jsonb,is_active=true,metadata=$2::jsonb WHERE id=$3',
+  await db.pool.query("UPDATE authoring_templates SET template_content=$1::jsonb,is_active=true,metadata=$2::jsonb,regions=ARRAY['FDA'] WHERE id=$3",
     [JSON.stringify({ sections: outline() }), '{}', TEMPLATE]);
   docId = randomUUID();
   await db.pool.query(`INSERT INTO authoring_documents(id,title,module,status,created_by,tenant_id,client_program_id,provenance)
@@ -123,7 +124,7 @@ beforeEach(async () => {
 
 const body = (extra: Record<string, unknown> = {}) => ({ programId: PROGRAM, templateId: TEMPLATE, selection: { target: 'document' }, ...extra });
 const preview = (extra: Record<string, unknown> = {}) => author(request(app).post(`/api/authoring/docs/${docId}/assembly/preview`)).send(body(extra));
-const commit = (plan: AssemblyPlan, extra: Record<string, unknown> = {}) => author(request(app).post(`/api/authoring/docs/${docId}/assembly/commit`))
+const commit = (plan: Pick<AssemblyPlan, 'fingerprint'>, extra: Record<string, unknown> = {}) => author(request(app).post(`/api/authoring/docs/${docId}/assembly/commit`))
   .send({ ...body(), fingerprint: plan.fingerprint, reason: 'Assemble the reviewed template structure', ...extra });
 async function plan(extra: Record<string, unknown> = {}): Promise<AssemblyPlan> {
   const response = await preview(extra);
@@ -463,7 +464,8 @@ describe('fresh authorization, structure and regional template scope', () => {
   it('refuses common sections in a bound market copy using the canonical filing rule', async () => {
     await db.pool.query("ALTER TABLE c2c_documents ADD COLUMN IF NOT EXISTS filing_scope text DEFAULT 'home'");
     const filing = `market_${randomUUID()}`;
-    await db.pool.query("INSERT INTO c2c_documents(id,org_id,project_id,filing_scope) VALUES($1,$2,$3,'market')", [filing, ORG, PROGRAM]);
+    await db.pool.query("INSERT INTO c2c_documents(id,org_id,project_id,filing_scope,doc_type,agency) VALUES($1,$2,$3,'market','maa','ema')", [filing, ORG, PROGRAM]);
+    await db.pool.query("UPDATE authoring_templates SET regions=ARRAY['EMA'] WHERE id=$1", [TEMPLATE]);
     await db.pool.query('UPDATE authoring_documents SET c2c_document_id=$1 WHERE id=$2', [filing, docId]);
     const response = await preview();
     expect(response.status).toBe(409);
@@ -471,6 +473,10 @@ describe('fresh authorization, structure and regional template scope', () => {
     expect(await stored()).toHaveLength(1);
   });
 });
+
+registerAssemblyFilingCases({ query: (sql, args) => db.pool.query(sql, args), documentId: () => docId,
+  clearStatements: () => { seam.sql.length = 0; }, getStatements: () => seam.sql,
+  preview, commit, plan, stored, evidenceCounts, captured });
 
 describe('uncertain assembly commit transport', () => {
   it.each(['before', 'after'] as const)('discards the client without rollback/retry when the %s-COMMIT transport fails', async fault => {

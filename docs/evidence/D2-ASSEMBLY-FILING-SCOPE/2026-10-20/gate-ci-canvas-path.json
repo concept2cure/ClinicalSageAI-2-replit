@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-20T23:58:32.100217+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:canvas-path"
+  ],
+  "elapsedSeconds": 0.275,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze.json",
+  "rawOutput": "gate-ci-canvas-path-output.txt.gz",
+  "outputSha256": "1126098236d01b6f1b851e51b650931e7588364f107c6bcbf0c6df314ff9d84e",
+  "stdout": "\u2705 ci:canvas-path \u2014 thread \u2192 canvas \u2192 workbench, surface \u2192 workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project \u2192 agency within its baseline\n"
+}

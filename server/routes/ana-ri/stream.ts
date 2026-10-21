@@ -3177,10 +3177,12 @@ export function mountStreamRoute(router: Router): void {
           // steps that failed, then the steps that returned nothing usable — a
           // search with no hits, a service that could not be reached, a tool
           // that needs input it was not given (tool-outcome.ts, TP-RL-4).
+          const stagedById = new Map(budgeted.map(entry => [entry.tool_use_id, entry.content]));
           pendingAdaptationNote = [
             buildAdaptationNote(roundFailures, calls.length),
             buildShortfallNote(
-              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack, result: r.resultStr })),
+              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack,
+                result: r.toolUse.name === 'search_document_passages' ? stagedById.get(r.toolUse.id) ?? r.resultStr : r.resultStr })),
               calls.length,
             ),
           ]

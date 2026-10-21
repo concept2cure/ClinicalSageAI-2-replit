@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-20T23:58:46.623667+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:sql-interpolation"
+  ],
+  "elapsedSeconds": 5.039,
+  "exitCode": 1,
+  "sourceFreeze": "source-freeze.json",
+  "rawOutput": "gate-ci-sql-interpolation-output.txt.gz",
+  "outputSha256": "a5a8d9b37536d940ff94291821576c9b037fa4c3e36d77ea469149e6de1cb0c3",
+  "stdout": "[ci:sql-interpolation] 16 fixed canonical predicate(s) proved separately; no value allowance added:\n  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility\n  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js\n  server/services/csr/vault-source-input.ts:46:17 supersededSql('d') <- ../vault/vault-version-family.js\n  server/services/csr/vault-source-input.ts:46:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/csr/vault-source-input.ts:46:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/csr/vault-source-input.ts:93:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/csr/vault-source-input.ts:93:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/csr/vault-source-input.ts:102:47 supersededSql('d') <- ../vault/vault-version-family.js\n  server/services/figureGenerationService.ts:561:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility\n  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js\n  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js\n  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility\n  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility\n[ci:sql-interpolation] \u274c 1 problem(s):\n\n  \u2022 server/services/authoring/authoring-assembly-source.ts: 1 value(s) interpolated into SQL text \u2014 not in the baseline\n\n  A value in SQL TEXT is an injection waiting for an input. Pass it as a bind\n  parameter ($1, or drizzle sql`\u2026${x}\u2026`, which parameterizes). For a genuine\n  identifier (a table or column name), take it from a fixed allowlist in code,\n  and raise this file's count in scripts/ci/sql-interpolation-baseline.json in\n  the same change, with the reason in the commit. RLS does not contain injected\n  SQL here (docs/security/C2C_TENANT_ISOLATION_PROOF.md \u00a70).\n\n"
+}

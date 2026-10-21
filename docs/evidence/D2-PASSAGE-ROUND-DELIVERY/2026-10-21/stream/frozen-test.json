@@ -1,0 +1,12 @@
+{
+  "file": "server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts",
+  "sha256": "c8c65be7514e3e843585ef21b5177d0e94d3eddd1295ed18a3372287f6be6582",
+  "tests": 6,
+  "baselineExpectedFailures": 3,
+  "baselinePassingControls": 3,
+  "unchangedInputCount": 19,
+  "productionUnchanged": true,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "scope": "Frozen after final meaningful fail-first run; no production, Git, compiler or live I/O changes."
+}

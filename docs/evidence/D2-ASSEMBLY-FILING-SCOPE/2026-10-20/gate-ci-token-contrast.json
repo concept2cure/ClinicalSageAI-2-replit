@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-20T23:58:33.588481+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-contrast"
+  ],
+  "elapsedSeconds": 0.179,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze.json",
+  "rawOutput": "gate-ci-token-contrast-output.txt.gz",
+  "outputSha256": "c223722bd18d9ab888078fc289f5e22f41064143f46764c833586f04cb8402e6",
+  "stdout": "\u2705 token-contrast: 131 pairs checked \u2014 text \u2265 4.5:1, non-text \u2265 3:1.\n   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.\n"
+}

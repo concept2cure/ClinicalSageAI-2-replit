@@ -1,0 +1,30 @@
+{
+  "scope": "Read-only final source reviews, not additional test executions.",
+  "production": {
+    "server/services/ana/agentic-loop.ts": "23ab7c53361bf36d839a27d9666a6ce6ce2316d96de1a41f319b4dd00e88430d",
+    "server/services/ana/tool-outcome.ts": "0bf780dfb755e773f84e55782a77d43b358522fbf09234262ea19df29cfbf7ae",
+    "server/services/ana/AnaToolExecutor.ts": "09a176505809cc69e63752a09f9c7dbd5a0f50737b62378490d64a7be2bcc096",
+    "server/routes/ana-ri/stream.ts": "464e52eb3f4f5f680f4769e816872f31614cd7dbaa1a4d108e5150bd82395047",
+    "server/services/ana/sub-agent.ts": "a3c7eb48dba9144651a2b97ede7aedd3f1aa206021f70e30f46f4d6ee8321794",
+    "server/services/ana/sub-agent-shape.ts": "6e64dd3f35897cfd198b8f034518b0276468cc9b868f45a3a5b5e6fce341311d",
+    "server/services/ana/sub-agent-stream.ts": "2d2315a232475c6f4a9c5c97896dfdad8969fc7130250043210f0c1dbfa19dea"
+  },
+  "reviews": [
+    {
+      "agent": "round_budget_audit",
+      "result": "clear after correction",
+      "focus": "Legacy read-admission decision across custom ceilings, private-map precedence, replacement reservation, eligibility and exact legacy no-passage branches.",
+      "initialFinding": "Replacing an over-ceiling passage before the read-placement decision could widen admission; separately frozen two-case review regression preceded correction."
+    },
+    {
+      "agent": "round_delivery_audit",
+      "result": "clear",
+      "focus": "Actual staged passage notes, strict outcome priorities/ordinary bytes, helper extraction timing/output and detached fail-safe observer."
+    },
+    {
+      "agent": "round_child_proof",
+      "result": "clear",
+      "focus": "Unique round/id/tool correlation, invalid/missing staged data, conservative legacy replay, stripped trace and host-staging terminology."
+    }
+  ]
+}

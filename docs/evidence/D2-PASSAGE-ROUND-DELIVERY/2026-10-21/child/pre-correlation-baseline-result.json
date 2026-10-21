@@ -1,0 +1,9 @@
+{
+  "exitCode": 1,
+  "completedAt": "2026-10-21T00:23:01.448320+00:00",
+  "unchangedInputCount": 30,
+  "changedInputs": [],
+  "tests": 27,
+  "intendedFailures": 22,
+  "passingControls": 5
+}
