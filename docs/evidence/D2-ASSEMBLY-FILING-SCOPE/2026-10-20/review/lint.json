@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-20T23:44:30.560843+00:00",
+  "argv": [
+    "npx",
+    "eslint",
+    "server/services/ana/saved-template-review.ts",
+    "server/services/ana/saved-document-critique.ts",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "--format",
+    "json",
+    "--max-warnings",
+    "0"
+  ],
+  "exitCode": 0,
+  "files": [
+    {
+      "file": "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ana/saved-document-critique.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ana/saved-template-review.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "stdout": "[{\"filePath\":\"/workspace/ClinicalSageAI/server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/ana/saved-document-critique.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/ana/saved-template-review.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n",
+  "stderr": ""
+}

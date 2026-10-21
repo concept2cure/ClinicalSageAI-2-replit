@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-20T23:45:03.515760+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "server/services/ana/__tests__/saved-template-oversight.pglite.test.ts",
+    "server/services/ana/__tests__/saved-document-critique.test.ts",
+    "server/services/ana/__tests__/saved-document-critique.pglite.test.ts",
+    "server/services/ana/__tests__/ana-document-surgery-loop.e2e.test.ts",
+    "server/services/authoring/__tests__/assembly-template-guidance.test.ts"
+  ],
+  "elapsedSeconds": 33.261,
+  "exitCode": 0,
+  "sources": {
+    "server/services/ana/saved-template-review.ts": "44e01675a2429f97bd03a9843e962ee075432e5071d2afeef342ab9694eb0ac2",
+    "server/services/ana/saved-document-critique.ts": "21c54de1f5f09f8aa5a876f167f1e54e6912a0a48d2431bbeb9d88dbf4505d2a",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts": "a23c7224c2716678416fba95fad5c4c5bbe1ca7b66682d614c073a8da262fa8b",
+    "server/services/ana/__tests__/saved-template-oversight.pglite.test.ts": "bcd24e7daa2487f5db39c9ead8a22301145b3426c624bbfb165387ef89f2434b",
+    "server/services/ana/__tests__/saved-document-critique.test.ts": "5c2f76141cf78da2b971291c10f30fef831207fe303bad4309ac609b632ae8d0",
+    "server/services/ana/__tests__/saved-document-critique.pglite.test.ts": "269d74386ed5a9ebb33ef8167a73ff5428fc31ac723ef89db1b9719492fa64c7",
+    "server/services/ana/__tests__/ana-document-surgery-loop.e2e.test.ts": "8ccbab9084b99fc6d01c8add9ead41f603a29a0bd91e39c422f37bb321c81679",
+    "server/services/authoring/__tests__/assembly-template-guidance.test.ts": "d1f590b56c60d3aa459ea3db944a0187b4508fe81bcc4ed74199cd385864a743"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green-output.txt.gz",
+  "outputSha256": "dd75a13b7f56067aeef54cf6b3a0b06d21303992880ac720bf87ec43ab80e3a1",
+  "summary": [
+    "Test Files  6 passed (6)",
+    "Tests  119 passed (119)"
+  ]
+}

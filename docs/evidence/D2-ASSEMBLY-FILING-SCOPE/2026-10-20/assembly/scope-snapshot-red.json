@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-20T23:46:20.104272+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "-t",
+    "binding class changes"
+  ],
+  "elapsedSeconds": 10.196,
+  "exitCode": 1,
+  "rawOutput": "scope-snapshot-red-output.txt.gz",
+  "outputSha256": "2e4b511cf410b4da16c8563f6749acf450cec70040104adf25507550f7fdda29",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "0e36a72f2dc30082b1351e65e77d742f22ea1609d4a0bb9db3bcf650b1aa5a88",
+    "server/services/authoring/authoring-assembly-plan.ts": "414b3ad4056a9e3c803aac5149c8c5bcc4a082369cc1944cdc3dd38547560916",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "a2f2b7256738022ceabe44aee12109954adc42627ecd6a22fa1ac2ee4a1f263c"
+  },
+  "sourceDrift": [],
+  "summary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 53 skipped (54)"
+  ]
+}

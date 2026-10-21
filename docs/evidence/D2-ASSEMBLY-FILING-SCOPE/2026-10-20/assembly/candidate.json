@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-20T23:50:21.785328+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts"
+  ],
+  "elapsedSeconds": 19.42,
+  "exitCode": 1,
+  "rawOutput": "candidate-output.txt.gz",
+  "outputSha256": "32de6046759d111a1afb01df17629e75b1a5b8ca9c4dfc17d7ec7b8e49de4b9d",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "65bf9690b1ba0d421c26afe9b36531c69b387597a2c8f8fab0143f5e2c769308",
+    "server/services/authoring/authoring-assembly-plan.ts": "cc47f6e9b96d72f15856fbd5c319c3974d94016faff71a80d0a150aa894ae5ee",
+    "server/services/market-specs/document-preparation.ts": "89f691d9f8b4bc6a70c45a582d09891422cef3d536ea138d3c43673dce8b7685",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": "c3f949dadcd08c707313d0d6c35ea5c1a475b145bd9ce388b2c727a189707441",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "a2f2b7256738022ceabe44aee12109954adc42627ecd6a22fa1ac2ee4a1f263c"
+  },
+  "sourceDrift": [],
+  "summary": [
+    "Test Files  1 failed | 1 passed (2)",
+    "Tests  1 failed | 106 passed (107)"
+  ]
+}

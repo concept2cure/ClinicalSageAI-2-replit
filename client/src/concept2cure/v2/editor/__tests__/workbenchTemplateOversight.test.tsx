@@ -95,6 +95,7 @@ describe('saved template facts use the existing editor conversation handoff', ()
     expectScope(onAsk.mock.calls[0]?.[1]);
     expect(onAsk.mock.calls[0]?.[0]).not.toContain(doc.title);
     expect(onAsk.mock.calls[0]?.[0]).toContain('critique_document');
+    expect(onAsk.mock.calls[0]?.[0]).toContain('section-scoped template-source');
   });
 
   it.each(['Review document', 'Prepare targeted fixes'])('prefills the canonical conversation with recorded limits for %s', async label => {
@@ -105,6 +106,7 @@ describe('saved template facts use the existing editor conversation handoff', ()
     expect(handoff()?.sendOnArrival).toBe(false);
     expectScope(handoff()?.origin);
     expect(handoff()?.prefill).toContain('get_document_template');
+    expect(handoff()?.prefill).toContain('section-scoped template-source');
   });
 });
 

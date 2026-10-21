@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-20T23:45:28.829830+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts",
+    "server/services/regulatory/__tests__/market-support.test.ts",
+    "server/services/regulatory/__tests__/market-support-offer.test.ts",
+    "server/services/regulatory/__tests__/regional-device-market-support.test.ts",
+    "server/services/regulatory/registry/__tests__/governed-startability.test.ts"
+  ],
+  "elapsedSeconds": 7.356,
+  "exitCode": 0,
+  "sources": {
+    "server/services/c2c/document-class.ts": "be2587c95089206d94e01213f5857b6112fa66f0752f2737acfb2b2763f63445",
+    "server/services/regulatory/market-support.ts": "f63b4b2bb99a9e1f6e9772b25c7a63aabd6085bf525dfdd7cfa1f44cee001579",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts": "f3a4101d24903ca0c6a425a4f4feeaf261102168bbee747f4724ba43167a0a7b"
+  },
+  "sourceDrift": [],
+  "rawOutput": "pure-body-identity-green-output.txt.gz",
+  "outputSha256": "3475e83ddc66c8246f04521cbb3ac0b5a86a0c260fcd864c56aeb6827d8c6adf",
+  "summary": [
+    "Test Files  5 passed (5)",
+    "Tests  141 passed (141)"
+  ]
+}

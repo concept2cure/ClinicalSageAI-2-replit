@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-21T00:05:37.911251+00:00",
+  "argv": [
+    "npx",
+    "--no-install",
+    "eslint",
+    "--max-warnings",
+    "0",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+    "client/src/concept2cure/v2/editor/authoringOversight.ts",
+    "server/routes/__tests__/_authoring-assembly-filing-cases.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "server/services/ana/saved-document-critique.ts",
+    "server/services/ana/saved-template-review.ts",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/services/authoring/authoring-assembly-plan.ts",
+    "server/services/authoring/authoring-assembly-source.ts",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts",
+    "server/services/c2c/document-class.ts",
+    "server/services/market-specs/document-preparation.ts",
+    "server/services/regulatory/market-support.ts"
+  ],
+  "elapsedSeconds": 2.728,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-qualified.json",
+  "sourceDrift": [],
+  "rawOutput": "qualified-lint-output.txt.gz",
+  "outputSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "stdout": ""
+}

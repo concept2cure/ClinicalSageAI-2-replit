@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-21T00:09:36.095384+00:00",
+  "method": "git merge --ff-only origin/concept2cure-v2",
+  "exitCode": 0,
+  "from": "38c7f16061ae51489354986c0a36e1e5d11f67b8",
+  "to": "6b9b206280bb046f70af7a2a1a9e3e16a6662612",
+  "incomingPaths": [
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/PUBLICATION.md",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-push-command.json",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-push-result.json",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-push.txt",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-verification.json",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/publication-manifest.json"
+  ],
+  "qualificationSourceFreeze": "source-freeze-qualified.json",
+  "sourceDrift": [],
+  "note": "Six passage-publication evidence files only; no code/dependency/config or frozen input changed. Existing qualification inputs remain exact; no tests repeated solely for this documentation fast-forward."
+}
