@@ -108,6 +108,10 @@ gates are required. Human witnessing and agency acceptance remain unexecuted.
 - Extend the existing package/history rendering in `EctdCompile.tsx` and
   preserve its actor/project/request ownership. Status remains live content
   readiness and does not fabricate a package validation execution.
+  Keep the existing DTD rendering and its shared history/package helpers in
+  adjacent `EctdCompileDtdEvidence.tsx` so the compile surface stays within
+  the repository's existing file-size ceiling. This is extraction of the same
+  renderer, with no additional view or policy implementation.
 
 Validator worker owns extracted validator, qualification, checksum and tests.
 Packaging worker owns shared DTO, bundler, STF path, packager, bundle types,
