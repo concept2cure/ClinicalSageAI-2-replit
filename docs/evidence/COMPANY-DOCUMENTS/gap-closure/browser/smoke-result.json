@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-18T00:46:38.427Z",
+  "checkedAt": "2026-10-18T00:52:31.981Z",
   "browser": "Chromium",
   "mockedRequests": false,
   "persistedCompanyWrites": [],
@@ -22,8 +22,8 @@
     "readableTextReflectsDraft": true,
     "unsavedProof": {
       "downloaded": true,
-      "bytes": 10778,
-      "sha256": "fe20c782378c01f5c1d2d50f6bf063605b86c954147a24f9f34a3be0f5c9f5e8",
+      "bytes": 10779,
+      "sha256": "c808ee5cb69117eab1a44c4c4a0a195dfe82c1716a45f5c4671ffbdfa1541e6e",
       "visibleUnsavedDraftLabel": true,
       "noSavedRevisionClaim": true
     },
@@ -75,7 +75,7 @@
   "navigations": [
     {
       "path": "/concept2cure/admin-console",
-      "at": "2026-10-18T00:46:39.346Z"
+      "at": "2026-10-18T00:52:33.095Z"
     }
   ],
   "failedRequests": [
@@ -100,9 +100,9 @@
   "unexpectedFailedRequests": [],
   "passed": true,
   "source": {
-    "baseCommit": "5ebfcfd2c595f44eef79917ec199724082338e69",
+    "baseCommit": "ec6686367a6ac47e349fbd69955c2fbd8a1f489c",
     "workingTree": true,
     "companyUiFiles": 25,
-    "sha256": "f95a1874d7d67507a1bda601ad4845f8df3852726822f8f7b5237f56cf1a82d7"
+    "sha256": "44e0c647b0b591228771db03f0cbf2ce34a99636313b9177632219c23f4f50c5"
   }
 }

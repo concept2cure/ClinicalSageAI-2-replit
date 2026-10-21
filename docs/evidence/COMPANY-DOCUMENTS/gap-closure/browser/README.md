@@ -6,6 +6,14 @@ requests or responses were mocked. The local harness is
 `/workspace/.cloud-setup/company-gap-browser-check.cjs` and uses the existing
 private onboarding configuration without printing credential values.
 
+The final qualification ran on 2026-10-18 at 00:52:31 UTC against commit
+`ec6686367a6ac47e349fbd69955c2fbd8a1f489c`. Its 25 company-document UI source
+files have SHA-256
+`44e0c647b0b591228771db03f0cbf2ce34a99636313b9177632219c23f4f50c5`.
+Those production UI paths were clean against the qualified commit; this run
+refreshes only browser evidence. The private command log is
+`/workspace/.cloud-setup/gap-closure/browser-qualified.txt`.
+
 Verified through the mounted Admin Settings screen:
 
 - The designer renders saved data and an unsaved header draft. Keyboard focus,
@@ -48,7 +56,8 @@ correct those measured failures.
 
 The JSON includes the base Git revision and a deterministic digest of the
 settings component, hook, stylesheet and company-document UI modules present
-at verification. The run observes the working tree before its release commit.
+at verification. The `workingTree` marker means the digest reads the checked-out
+files; those production files match the qualified commit above.
 
 Screenshots retain the designer, review policy, governance panels, real offline refusal and
 recovery, and the Account settings/preview layouts. No password, token or legal

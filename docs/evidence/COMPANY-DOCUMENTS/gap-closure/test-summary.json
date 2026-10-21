@@ -1,0 +1,843 @@
+{
+  "selectedFiles": 102,
+  "latestUniqueCaseResults": {
+    "passed": 1217,
+    "failed": 0,
+    "pending": 0,
+    "other": 0
+  },
+  "runs": [
+    {
+      "id": "aggregate-tests-final",
+      "command": "vitest run [102 exact paths in test-files.json] --reporter=verbose --reporter=json",
+      "passed": 1214,
+      "failed": 3,
+      "reason": "Three failures in a fixture missing the canonical audit table; all other files passed."
+    },
+    {
+      "id": "source-evidence-fixture-final",
+      "command": "vitest run server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts --reporter=verbose --reporter=json",
+      "passed": 21,
+      "failed": 0,
+      "reason": "The two-line fixture correction installs the canonical audit schema; no production code changed. The same 21 cases all passed."
+    }
+  ],
+  "files": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 24,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 18,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 16,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/complianceReports.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 19,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 36,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+      "run": "aggregate-tests-final",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/__tests__/routes/tenant-export.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/__tests__/security/tenant-isolation-client-branding.contract.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 27,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/company-document-actions.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/company-document-designs.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/company-document-governance.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 22,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/company-documents.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 39,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/organizations-profile-settings.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 38,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 21,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 42,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/tenant-config-audit.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/tenant-data-return-authority.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/routes/c2c/__tests__/communication-center.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 20,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/__tests__/generated-pdf-normalization.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 2,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/__tests__/pdf-converter.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/ana-settings-privacy.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/communication-links.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/correspondence.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/designs.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 16,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/governance-store.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/identity.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legacy-adoption.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-inventory.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-readiness.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-registry.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-renewal.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-workflow.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/managed-settings.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/company-documents/__tests__/profile.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 59,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/docx/__tests__/company-letterhead-layout.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.multisource.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 13,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 28,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "run": "source-evidence-fixture-final",
+      "passed": 21,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 16,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/report-os/__tests__/report-package-legal.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 19,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/company-branding.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-source-pin.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/templates/__tests__/clinical-csr-templates.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/templates/__tests__/nonclinical-templates.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/templates/__tests__/template-store-audit-outcome.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/company-document-export.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/company-export-snapshot.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 24,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 21,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 26,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 14,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "server/services/vault/__tests__/company-legal-validity.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "shared/__tests__/company-documents.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 25,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    },
+    {
+      "file": "shared/__tests__/saved-assembly-sources.test.ts",
+      "run": "aggregate-tests-final",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0
+    }
+  ]
+}
