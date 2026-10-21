@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:27:33.366Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > binds current actor, UUID, anchor and workspace and disambiguates only real active candidates
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > exposes no candidate directory or controls to an admitted reader with a stale admin claim
+ × server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > refuses stale management controls when the project is archived during the roster read 143ms
+   → {"success":true,"data":{"projectId":"proj_101","programId":"11111111-1111-4111-8111-111111111111","organizationId":7,"clientWorkspaceId":1,"actorUserId":5,"visibility":"private","legacyFallbackApplied":false,"members":[{"userId":6,"role":"use","status":"active","addedById":5,"addedAt":"2026-01-01T00:00:00.000Z","explicit":true,"implicitSources":[],"canSetRole":true,"canRevoke":true},{"userId":8,"role":"edit","status":"active","addedById":5,"addedAt":"2026-01-02T00:00:00.000Z","explicit":true,"implicitSources":[],"canSetRole":true,"canRevoke":true},{"userId":5,"role":"owner","status":"active","addedById":null,"addedAt":null,"explicit":false,"implicitSources":["project_owner","project_creator"],"canSetRole":false,"canRevoke":false}],"canManage":true,"candidates":[{"userId":5,"label":"Same Name · member5@example.test"},{"userId":6,"label":"Same Name · member6@example.test"},{"userId":7,"label":"Same Name · member7@example.test"},{"userId":8,"label":"Same Name · member8@example.test"},{"userId":9,"label":"Same Name · member9@example.test"}]}}: expected 200 to be 503 // Object.is equality
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > grants a current account despite a stale viewer claim and records the existing audit outcome
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > revokes in place and removes subsequent private read access without erasing attribution
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > allows revocation of a departed account without restoring or exposing its identity
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies a read-only owner on member and visibility operations despite a stale administrator claim
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies an ordinary reader attempting to grant access with a stale administrator claim
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 8
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 11
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses wrong UUID anchors and a second client workspace
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > protects implicit ownership and refuses archived writes
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > reports missing stores and missing request clients as unavailable without a pool fallback
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not acknowledge a zero-row visibility write
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not acknowledge a zero-row revoke write
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > preserves existing truthful best-effort audit failure metadata after a committed grant
+ ↓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not claim rollback after a committed grant loses its acknowledgement
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > refuses stale management controls when the project is archived during the roster read
+AssertionError: {"success":true,"data":{"projectId":"proj_101","programId":"11111111-1111-4111-8111-111111111111","organizationId":7,"clientWorkspaceId":1,"actorUserId":5,"visibility":"private","legacyFallbackApplied":false,"members":[{"userId":6,"role":"use","status":"active","addedById":5,"addedAt":"2026-01-01T00:00:00.000Z","explicit":true,"implicitSources":[],"canSetRole":true,"canRevoke":true},{"userId":8,"role":"edit","status":"active","addedById":5,"addedAt":"2026-01-02T00:00:00.000Z","explicit":true,"implicitSources":[],"canSetRole":true,"canRevoke":true},{"userId":5,"role":"owner","status":"active","addedById":null,"addedAt":null,"explicit":false,"implicitSources":["project_owner","project_creator"],"canSetRole":false,"canRevoke":false}],"canManage":true,"candidates":[{"userId":5,"label":"Same Name · member5@example.test"},{"userId":6,"label":"Same Name · member6@example.test"},{"userId":7,"label":"Same Name · member7@example.test"},{"userId":8,"label":"Same Name · member8@example.test"},{"userId":9,"label":"Same Name · member9@example.test"}]}}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts:109:46
+    107|     archiveOnRoster = true;
+    108|     const r = await request(app()).get(path());
+    109|     expect(r.status, JSON.stringify(r.body)).toBe(503);
+       |                                              ^
+    110|     expect(r.body.error.code).toBe('PROJECT_ACCESS_CHANGED');
+    111|     expect(r.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  01:27:28
+   Duration  13.48s (transform 4.36s, setup 155ms, import 7.39s, tests 5.13s, environment 0ms)

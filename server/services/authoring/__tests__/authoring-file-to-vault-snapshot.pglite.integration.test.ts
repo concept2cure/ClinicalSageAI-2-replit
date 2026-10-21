@@ -12,10 +12,11 @@ import type { AuthoringAuditContext, AuthoringAuditEntry, Queryable } from '../a
 import type { CanonicalStoreDb } from '../../regulatory/canonicalDocumentStore';
 import { sectionsDigest, type ExportSectionRow } from '../authoring-export';
 
-const h = vi.hoisted(() => ({ sql: [] as string[], ingest: vi.fn(), trail: vi.fn(), chain: vi.fn(),
+const h = vi.hoisted(() => ({ sql: [] as string[], ingest: vi.fn(), trail: vi.fn(), chain: vi.fn(), place: vi.fn(), carry: vi.fn(),
+  recording: false, loseCommitReply: false, loseRollbackReply: false,
   pdf: vi.fn(async (html: string) => Buffer.from(`%PDF-1.7\n${html}`)) }));
 vi.mock('../../vault/vault-ingest.service', () => ({ ingestVaultDocument: h.ingest }));
-vi.mock('../../vault/vault-placement.service', () => ({ placeVaultDocument: vi.fn() }));
+vi.mock('../../vault/vault-placement.service', () => ({ placeVaultDocument: h.place }));
 vi.mock('../../vault/vault-filing.service', () => ({ resolveVaultView: vi.fn(), isFolderInView: vi.fn(), folderLabel: vi.fn() }));
 vi.mock('../../../export/renderers', () => ({
   renderHtmlToPdf: h.pdf,
@@ -29,7 +30,7 @@ vi.mock('../authoring-evidence', async importOriginal => {
 });
 vi.mock('../../regulatory/authoring-approval-carryover', () => ({
   readAuthoringSignatures: vi.fn(async () => []),
-  carryAuthoringApproval: vi.fn(async () => ({ carried: false, reason: 'Working draft' })),
+  carryAuthoringApproval: h.carry,
 }));
 
 let harness: DispositionHarness;
@@ -41,7 +42,8 @@ beforeAll(async () => {
   await harness.pg.exec(readFileSync(new URL('../../../../db/migrations/20260725_authoring_audit_trail.sql',import.meta.url),'utf8'));
   await harness.pg.exec(`
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
-      ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now();
+      ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now(),
+      ADD COLUMN locale text, ADD COLUMN product_code text, ADD COLUMN template_id uuid;
     ALTER TABLE authoring_sections ADD COLUMN code text, ADD COLUMN title text,
       ADD COLUMN content text, ADD COLUMN order_index integer, ADD COLUMN created_at timestamptz DEFAULT now();
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
@@ -63,7 +65,14 @@ beforeAll(async () => {
   `);
   const query = async (sql: string, params?: unknown[]) => {
     h.sql.push(sql);
+    if (/^BEGIN ISOLATION LEVEL/.test(sql)) h.recording = true;
     const result = await harness.pg.query(sql, params);
+    if (h.recording && /^(COMMIT|ROLLBACK)$/.test(sql)) {
+      h.recording = false;
+      if ((sql === 'COMMIT' && h.loseCommitReply) || (sql === 'ROLLBACK' && h.loseRollbackReply)) {
+        throw new Error(`${sql} acknowledgement lost after PostgreSQL executed it`);
+      }
+    }
     return { ...result, rowCount: result.rows.length };
   };
   pool = { query, connect: async () => ({ query, release: () => undefined }) } as unknown as AuthoringPool;
@@ -71,7 +80,9 @@ beforeAll(async () => {
 }, 180_000);
 afterAll(async () => { await harness?.close(); });
 beforeEach(() => {
-  h.sql.length = 0; h.ingest.mockReset(); h.pdf.mockClear(); h.trail.mockReset(); h.chain.mockReset();
+  h.recording = false; h.loseCommitReply = false; h.loseRollbackReply = false;
+  h.sql.length = 0; h.ingest.mockReset(); h.pdf.mockClear(); h.trail.mockReset(); h.chain.mockReset(); h.place.mockReset(); h.carry.mockReset();
+  h.carry.mockResolvedValue({ carried: false, reason: 'Working draft' });
   h.trail.mockImplementation(async (ctx: AuthoringAuditContext, entry: AuthoringAuditEntry) => {
     await entry.executor!.query('INSERT INTO test_filing_audit (tenant_id,operation,entry) VALUES ($1,$2,$3)',
       [ctx.tenantId, entry.operationType, JSON.stringify(entry.metadata)]);
@@ -110,7 +121,7 @@ async function workingDraft(): Promise<WorkingDraft> {
   return { f, docId, sections, admittedId: randomUUID() };
 }
 
-function admit(d: WorkingDraft, mutate?: () => Promise<unknown>) {
+function admit(d: WorkingDraft, mutate?: () => Promise<unknown>, admission: unknown = { created: true }) {
   h.ingest.mockImplementation(async (args: { fileBuffer: Buffer }) => {
     // The canonical admission boundary is replaced explicitly; its committed
     // Vault row and the ensuing authoring queries are real PostgreSQL rows.
@@ -119,15 +130,15 @@ function admit(d: WorkingDraft, mutate?: () => Promise<unknown>) {
       VALUES ($1,$2,$3,'Working CSR',$4,'INDEXED','Rendered working draft')`,
     [d.admittedId, d.f.org, d.f.program, createHash('sha256').update(args.fileBuffer).digest('hex')]);
     await mutate?.();
-    return { ok: true, document: { id: d.admittedId }, filing: {
+    return { ok: true, ...(admission === 'missing' ? {} : { admission }), document: { id: d.admittedId }, filing: {
       folderId: null, folderLabel: '', evidenceKind: null, ctdSection: null,
       placementStatus: 'NEEDS_REVIEW', confidence: null, rationale: null, needsReview: true,
     } };
   });
 }
 
-async function file(d: WorkingDraft) {
-  return fileDocument({ pool, tenantId: d.f.org, docId: d.docId, format: 'pdf',
+async function file(d: WorkingDraft, folderId?: string) {
+  return fileDocument({ pool, tenantId: d.f.org, docId: d.docId, format: 'pdf', folderId,
     actor: { id: '42', email: 'author@example.test' }, lifecycleDb: {} as CanonicalStoreDb,
     audit: { pool, tenantId: d.f.org, actorId: '42', actorEmail: 'author@example.test',
       actorRole: 'author', ipAddress: '127.0.0.1', userAgent: 'snapshot-fixture' } });
@@ -205,6 +216,100 @@ describe('file-to-Vault records the same section snapshot it rendered', () => {
     expect(h.pdf.mock.calls[0][0]).not.toContain('Changed endpoint result.');
   });
 
+});
+
+describe('file-to-Vault preserves current document and admission identity', () => {
+  it.each([
+    ['title', 'UPDATE authoring_documents SET title=$3 WHERE id=$1 AND tenant_id=$2', 'Renamed CSR'],
+    ['module', 'UPDATE authoring_documents SET module=$3 WHERE id=$1 AND tenant_id=$2', 'M3'],
+    ['project', 'UPDATE authoring_documents SET client_program_id=$3 WHERE id=$1 AND tenant_id=$2', randomUUID()],
+    ['version', 'UPDATE authoring_documents SET version=$3 WHERE id=$1 AND tenant_id=$2', '2.0'],
+    ['author', 'UPDATE authoring_documents SET created_by=$3 WHERE id=$1 AND tenant_id=$2', 'other@example.test'],
+    ['creation timestamp', 'UPDATE authoring_documents SET created_at=$3 WHERE id=$1 AND tenant_id=$2', '2026-01-01T10:00:00Z'],
+    ['provenance', 'UPDATE authoring_documents SET provenance=$3 WHERE id=$1 AND tenant_id=$2', JSON.stringify({ source: 'manual', moduleDefaulted: true })],
+    ['locale', 'UPDATE authoring_documents SET locale=$3 WHERE id=$1 AND tenant_id=$2', 'ja-JP'],
+    ['product', 'UPDATE authoring_documents SET product_code=$3 WHERE id=$1 AND tenant_id=$2', 'NEW-PRODUCT'],
+    ['template', 'UPDATE authoring_documents SET template_id=$3 WHERE id=$1 AND tenant_id=$2', randomUUID()],
+    ['governed binding', 'UPDATE authoring_documents SET c2c_document_id=$3 WHERE id=$1 AND tenant_id=$2', 'another-filing'],
+    ['lock timestamp', 'UPDATE authoring_documents SET locked_at=$3 WHERE id=$1 AND tenant_id=$2', '2026-10-21T10:00:00Z'],
+  ])('refuses unchanged-status %s header drift before history or approval', async (_label, sql, value) => {
+    const d = await workingDraft();
+    admit(d, () => d.f.pg.query(sql, [d.docId, d.f.org, value]));
+    expect(await file(d)).toMatchObject({ kind: 'refused', status: 409, code: 'DOCUMENT_CHANGED_DURING_FILING' });
+    const after = await facts(d);
+    expect(after.history).toEqual([]);
+    expect(after.vault.deleted_at).not.toBeNull();
+    expect(after.audit).toEqual([{ operation: 'authoring.document.file_to_vault.reverted' }]);
+    expect(h.carry).not.toHaveBeenCalled();
+  });
+
+  it.each([false, 'missing', null, {}, { created: 'true' }])('does not manipulate a reused or unverified admission: %j', async proof => {
+    const d = await workingDraft();
+    const admission = proof === false ? { created: false } : proof;
+    admit(d, () => mutate(d, 'content'), admission);
+    const outcome = await file(d, 'module-5');
+    expect(outcome).toMatchObject(proof === false
+      ? { kind: 'refused', status: 409, code: 'VAULT_VERSION_ALREADY_RECORDED' }
+      : { kind: 'refused', status: 503, code: 'OUTCOME_UNKNOWN' });
+    const after = await facts(d);
+    expect(after.vault.deleted_at).toBeNull();
+    expect(after.history).toEqual([]);
+    expect(after.audit).toEqual([]);
+    expect(h.place).not.toHaveBeenCalled();
+    expect(h.carry).not.toHaveBeenCalled();
+  });
+
+  it('reports an unknown outcome when the real compensation transaction rolls back on audit failure', async () => {
+    const d = await workingDraft();
+    admit(d, () => mutate(d, 'content'));
+    h.chain.mockRejectedValueOnce(new Error('audit unavailable'));
+    const outcome = await file(d);
+    expect(outcome).toMatchObject({ kind: 'refused', status: 503, code: 'OUTCOME_UNKNOWN' });
+    expect('error' in outcome && outcome.error).not.toMatch(/nothing (?:was )?(?:filed|kept)/i);
+    const after = await facts(d);
+    expect(after.vault.deleted_at).toBeNull();
+    expect(after.history).toEqual([]);
+    expect(after.audit).toEqual([]);
+  });
+
+  it.each(['missing row', 'different tenant'])('does not confirm compensation for a %s', async changed => {
+    const d = await workingDraft();
+    admit(d, async () => {
+      await mutate(d, 'content');
+      if (changed === 'missing row') await d.f.pg.query('DELETE FROM vault.documents WHERE id=$1', [d.admittedId]);
+      else await d.f.pg.query('UPDATE vault.documents SET organization_id=$2 WHERE id=$1', [d.admittedId, d.f.org + 9000]);
+    });
+    expect(await file(d)).toMatchObject({ kind: 'refused', status: 503, code: 'OUTCOME_UNKNOWN' });
+    expect((await facts(d)).audit).toEqual([]);
+    expect(h.carry).not.toHaveBeenCalled();
+  });
+
+  it('retains its own committed record when the final COMMIT reply is lost', async () => {
+    const d = await workingDraft();
+    admit(d);
+    h.loseCommitReply = true;
+    expect(await file(d)).toMatchObject({ kind: 'refused', status: 503, code: 'OUTCOME_UNKNOWN' });
+    const after = await facts(d);
+    expect(after.history).toHaveLength(1);
+    expect(after.vault.deleted_at).toBeNull();
+    expect(after.audit).toEqual([{ operation: 'EXPORT' }, { operation: 'authoring.document.file_to_vault' }]);
+    expect(h.carry).not.toHaveBeenCalled();
+  });
+
+  it('does not compensate after an unacknowledged recording rollback', async () => {
+    const d = await workingDraft();
+    admit(d, () => mutate(d, 'content'));
+    h.loseRollbackReply = true;
+    expect(await file(d)).toMatchObject({ kind: 'refused', status: 503, code: 'OUTCOME_UNKNOWN' });
+    const after = await facts(d);
+    expect(after.history).toEqual([]);
+    expect(after.vault.deleted_at).toBeNull();
+    expect(after.audit).toEqual([]);
+    expect(h.carry).not.toHaveBeenCalled();
+  });
+});
+
+describe('file-to-Vault retains the saved filing agreement', () => {
   it('records on the filed rendition that the filing holds other text, without refusing the draft', async () => {
     /* P-29.2. Filing to the Vault is the one exit outside the seal cone: it
        takes working drafts BY DESIGN and stamps "WORKING DRAFT — not a sealed

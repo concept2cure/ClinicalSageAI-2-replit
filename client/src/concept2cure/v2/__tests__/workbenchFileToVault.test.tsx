@@ -87,6 +87,7 @@ afterEach(() => {
 
 describe('DocumentWorkbench — File to vault', () => {
   it('calls the route with the chosen format and renders the server’s folder, hash and id', async () => {
+    fileToVault = () => ok({ ...FILED, data: { ...FILED.data, format: 'docx' } }, 201);
     const dlg = await openDialog();
     expect(dlg.getAttribute('aria-modal')).toBe('true');
     fireEvent.click(within(dlg).getByLabelText(/Word/));
@@ -96,8 +97,8 @@ describe('DocumentWorkbench — File to vault', () => {
     expect(result.textContent).toContain('under module-2');
     expect(result.textContent).toContain('Vault id c4411315-0dd8-4775-9377-d123b9f9d16d');
     expect(result.textContent).toContain('SHA-256 44cf3a1bedc69fc402070838694cd33e02c9c51b0a08c5a0b06706e8ca839b4f');
-    // The result is the server's format, not the radio's.
-    expect(result.textContent).toContain('Filed as PDF');
+    // The receipt confirms the format requested by this filing.
+    expect(result.textContent).toContain('Filed as DOCX');
     expect(within(dlg).queryByTestId('ftv-submit')).toBeNull();
   });
 
@@ -134,7 +135,7 @@ describe('DocumentWorkbench — File to vault', () => {
     fireEvent.click(within(dlg).getByTestId('ftv-submit'));
     const err = await within(dlg).findByTestId('ftv-error');
     expect(err.textContent).toContain('This document is mid-freeze');
-    expect(err.textContent).toContain('Nothing was written to the vault');
+    expect(err.textContent).not.toContain('Nothing was written to the vault');
     expect(within(dlg).queryByTestId('ftv-result')).toBeNull();
     // Still submittable after a refusal — the person may resolve and retry.
     expect((within(dlg).getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(false);
@@ -144,8 +145,10 @@ describe('DocumentWorkbench — File to vault', () => {
     fileToVault = () => ok({ success: true, data: {} }, 201);
     const dlg = await openDialog();
     fireEvent.click(within(dlg).getByTestId('ftv-submit'));
-    expect((await within(dlg).findByTestId('ftv-error')).textContent).toContain('answered without a vault record');
+    expect((await within(dlg).findByTestId('ftv-error')).textContent).toContain('cannot confirm whether this document was filed');
+    expect((within(dlg).getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(true);
   });
+
 
   it('with no program the dialog says so and offers no submit', async () => {
     delete (window as any).C2C_PROJECT;
@@ -183,4 +186,18 @@ describe('DocumentWorkbench — File to vault', () => {
     const next = await within(dlg).findByTestId('ftv-next');
     expect(next.textContent).toBe('Next: review and approve this version in the Vault. It can be placed into a submission before then, but the sequence is not frozen or transmitted until it is approved.');
   });
+});
+
+it('keeps an uncertain filing held when the workbench closes and reopens the existing dialog', async () => {
+  fileToVault = () => { throw new Error('lost filing reply'); };
+  const dlg = await openDialog();
+  fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+  const error = (await within(dlg).findByTestId('ftv-error')).textContent;
+  fireEvent.click(within(dlg).getByLabelText('Close'));
+  expect(screen.queryByTestId('file-to-vault-dialog')).toBeNull();
+  fireEvent.click(screen.getByTestId('file-to-vault-open'));
+  const reopened = await screen.findByTestId('file-to-vault-dialog');
+  expect(within(reopened).getByTestId('ftv-error').textContent).toBe(error);
+  expect((within(reopened).getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(true);
+  expect(apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).endsWith('/file-to-vault'))).toHaveLength(1);
 });

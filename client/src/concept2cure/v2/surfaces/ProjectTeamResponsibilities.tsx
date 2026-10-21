@@ -13,21 +13,24 @@ export const PROJECT_TEAM_AUTHORITY_NOTE = 'Recorded responsibilities describe c
 /** useLiveData retains its previous value during reloads. Retire it synchronously
  * on a program switch, before effects run, and never interpret a missing read as
  * an empty verified roster. Late abandoned responses are cancelled by the hook. */
-export function useProjectTeam(programId: string | null) {
+export function useProjectTeam(programId: string | null, actorScopeKey = '') {
   const [attempt, setAttempt] = useState(0);
   const path = programId ? `/api/c2c/projects/${programId}/team` : null;
-  const read = useLiveData<ProjectTeamResponse>(path, [path, attempt], value => isProjectTeamResponse(value, programId));
-  const scope = useRef<{ programId: string | null; retiredRead: DataState<ProjectTeamResponse> | null }>({ programId, retiredRead: null });
-  if (scope.current.programId !== programId) scope.current = { programId, retiredRead: read };
+  const read = useLiveData<ProjectTeamResponse>(path, [path, actorScopeKey, attempt], value => isProjectTeamResponse(value, programId));
+  const key = `${actorScopeKey}:${programId}`;
+  const scope = useRef({ key, attempt, retiredRead: null as DataState<ProjectTeamResponse> | null, verifiedProjectId: null as number | null });
+  if (scope.current.key !== key) scope.current = { key, attempt, retiredRead: read, verifiedProjectId: null };
+  else if (scope.current.attempt !== attempt) scope.current = { ...scope.current, attempt, retiredRead: read };
   let state: DataState<ProjectTeamResponse>;
   if (!programId || scope.current.retiredRead === read || read.loading) {
     state = { data: null, loading: Boolean(programId), empty: false };
   } else if (read.error || isPendingStore(read) || !isProjectTeamResponse(read.data, programId)) {
     state = { ...read, data: null, loading: false, empty: false, error: read.error || 'Project team verification unavailable' };
   } else {
+    scope.current.verifiedProjectId = read.data.project_id;
     state = read;
   }
-  return { state, reload: () => setAttempt(value => value + 1) };
+  return { state, reload: () => setAttempt(value => value + 1), verifiedProjectId: scope.current.verifiedProjectId };
 }
 
 function TeamMember({ member }: { member: ProjectTeamMember }) {

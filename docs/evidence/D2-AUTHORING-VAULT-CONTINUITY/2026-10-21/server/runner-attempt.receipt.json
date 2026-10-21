@@ -1,0 +1,23 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "argv": [
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts"
+  ],
+  "executable": "vitest (not resolved)",
+  "finishedAtExitFileTimestamp": "2026-10-21T01:09:02.033Z",
+  "startedAt": null,
+  "timingNote": "This intermediate command did not capture its start timestamp; final lint receipts do.",
+  "sourcePinFile": null,
+  "sourcePinNote": "Intermediate diagnostic only; no whole-source snapshot was captured for this command.",
+  "file": "runner-attempt.raw.log.gz",
+  "rawSha256": "87169927f4744b576162e6c4c2e39dc5673b540cb7567a74e5d81762e083d98e",
+  "gzipSha256": "9050418dddaa098e0efaa322e18da58efb155ee06a1c7da5f44f99c1c1b4eaa6",
+  "rawBytes": 45,
+  "exitCode": 127
+}

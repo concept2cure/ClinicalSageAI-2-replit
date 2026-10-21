@@ -6985,13 +6985,14 @@ router.post('/docs/:docId/working-copy', async (req: Request, res: Response) => 
 
 // POST /api/authoring/docs/:docId/file-to-vault — render (the export renderer),
 // ingest (the vault ingest service, in-process), file (the project-vault
-// filing service) and record ONE governed action, or nothing (WM, 2026-09-21).
+// filing service) and record ONE governed action (WM, 2026-09-21).
 //
 // body { format: 'pdf' | 'docx', folderId?, documentType? }
 // → 201 { data: { vaultDocumentId, folder, sha256, format } }
 // 409 DOCUMENT_HAS_NO_PROGRAM / DOCUMENT_MID_FREEZE; the ingest's own refusals
-// (400/403/409/503) pass through with their codes. Never a partial write: a
-// failure after the vault row was admitted reverts it (see the service).
+// (400/403/409/503) pass through with their codes. Only a proven new admission
+// can be compensated; uncertain transaction/cleanup outcomes require review
+// of current Vault records (OUTCOME_UNKNOWN). Existing versions are retained.
 router.post('/docs/:docId/file-to-vault', async (req: Request, res: Response) => {
   try {
     const tenantId = authedOrgId(req);

@@ -31,6 +31,7 @@ let pg: PGlite;
 function app(userId = 7, orgId = 9, claimedRole = 'admin') {
   const a = express(); a.use(express.json()); a.use((req, _res, next) => {
     Object.assign(req, { userId, userRole: claimedRole, userEmail: 'member@example.test',
+      dbClient: { query: (sql: string, params?: unknown[]) => pg.query(sql, params) },
       user: { id: userId, organizationId: orgId, role: claimedRole },
       tenantContext: { organizationId: orgId, clientWorkspaceId: orgId === 9 ? 1 : 2 }, tenantId: orgId }); next();
   }); a.use('/api/concept2cure', routes); return a;

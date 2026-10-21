@@ -1,0 +1,48 @@
+{
+  "frozenAt": "2026-10-21T01:19:53.833Z",
+  "canonicalCommitReportedByRoot": "bd24ecb4c",
+  "nodeVersion": "v22.23.3",
+  "sourcePins": [
+    {
+      "file": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e"
+    },
+    {
+      "file": "server/services/vault/vault-ingest.service.ts",
+      "sha256": "161fb45f4530b1835455007a89d44f0a98b04a29fc417c4b5c26e3a86118b991"
+    },
+    {
+      "file": "server/services/vault/vault-ingest-types.ts",
+      "sha256": "2de6f13da5b667d83440bae480a36d615d06981d17c2b8dc7d775912ff9b01d8"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "sha256": "b6aac219bacc632aabbfc92d0d22ce1e432c2713448cf9fe3fd2d94642cfac3e"
+    },
+    {
+      "file": "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+      "sha256": "dc3ef7fbfecb0e07715cf8fb1c1d832e8614d790b54b076d1742b428357db09a"
+    },
+    {
+      "file": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "sha256": "4ceb6f59070c5fc7dd4d8d7f5de61029b69443f6af9b60a1415c94ef8a3eaa4f"
+    },
+    {
+      "file": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "sha256": "fb2ca8e40c1279018066c5ba4c86e94b05581c704161b186de41ecdebc06e7b6"
+    }
+  ],
+  "productionFiles": [
+    "server/services/authoring/authoring-file-to-vault.ts",
+    "server/services/vault/vault-ingest.service.ts",
+    "server/services/vault/vault-ingest-types.ts"
+  ],
+  "finalVerification": "final-green.receipt.json",
+  "remainingExplicitGap": "Historical edited re-filing does not supersede the hash-version row; Vault compile lineage is not supplied.",
+  "limits": [
+    "PGlite statement-timing seams do not qualify native multi-connection races.",
+    "Storage, OCR and HTML-to-PDF are explicit fixture seams.",
+    "The broader third-party use race during admission-to-recording is not claimed fixed.",
+    "No provider, deployment or agency delivery validation."
+  ]
+}

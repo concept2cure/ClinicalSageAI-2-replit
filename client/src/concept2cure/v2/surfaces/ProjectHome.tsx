@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
+import { useAuthUser } from '@/services/portal/authService';
 import { I } from '../icons';
 import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -34,6 +35,7 @@ import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import type { ProjectTeamResponse } from '@shared/project-team';
 import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
+import { ProjectTeamSharing } from './ProjectTeamSharing';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -1419,7 +1421,7 @@ function ModuleRow({ w, match, onOpen }: {
 }
 
 function AuthorWorkspace({
-  pid, completion, readinessAsOf, onNav, teamState, onRetryTeam, activityState, wsState, docs, onRetryDocs, onOpenDoc,
+  pid, completion, readinessAsOf, onNav, teamState, sharingProjectId, onRetryTeam, activityState, wsState, docs, onRetryDocs, onOpenDoc,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
@@ -1429,6 +1431,7 @@ function AuthorWorkspace({
   readinessAsOf: string | null;
   onNav: (id: string) => void;
   teamState: DataState<ProjectTeamResponse>;
+  sharingProjectId: number | null;
   onRetryTeam: () => void;
   activityState: DataState<{ activity: ActivityRow[] }>;
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
@@ -1491,6 +1494,8 @@ function AuthorWorkspace({
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Team &amp; activity</h2></div>
           <ProjectTeamResponsibilities programId={pid} state={teamState} onRetry={onRetryTeam} />
+          {pid && sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
+            suspended={teamState.loading || Boolean(teamState.error)} onChanged={onRetryTeam} />}
           <div style={{ marginTop: 12 }}>
             <Anchored
               state={activityState}
@@ -1608,7 +1613,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
-  const { state: teamState, reload: reloadTeam } = useProjectTeam(pid);
+  const teamActor = useAuthUser();
+  const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
+  const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
   const wsState = useLiveData<{ workstreams: WorkstreamRow[] }>(pid ? `/api/c2c/projects/${pid}/workstreams` : null);
   /* The project's documents (FILING_SPINE.md F3), read once for the Author
@@ -1992,6 +1999,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               readinessAsOf={readinessAsOf}
               onNav={onNav}
               teamState={teamState}
+              sharingProjectId={sharingProjectId}
               onRetryTeam={reloadTeam}
               activityState={activityState}
               wsState={wsState}

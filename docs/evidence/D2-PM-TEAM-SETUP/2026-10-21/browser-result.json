@@ -1,0 +1,73 @@
+{
+  "fixture": "actual component + request helper/product CSS; synthetic auth/tenant/API",
+  "results": [
+    {
+      "width": 1280,
+      "grant": "passed",
+      "revoke": "passed",
+      "readerControlsHidden": true,
+      "readError": "honest retry",
+      "auditWarning": "shown",
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "grant": "passed",
+      "revoke": "passed",
+      "readerControlsHidden": true,
+      "readError": "honest retry",
+      "auditWarning": "shown",
+      "horizontalOverflow": false,
+      "pageErrors": []
+    }
+  ],
+  "writes": [
+    {
+      "method": "PUT",
+      "userId": 9,
+      "role": "edit",
+      "programBound": true,
+      "workspaceBound": true,
+      "actorHeader": true
+    },
+    {
+      "method": "DELETE",
+      "userId": 9,
+      "programBound": true,
+      "workspaceBound": true,
+      "actorHeader": true
+    },
+    {
+      "method": "PUT",
+      "userId": 9,
+      "role": "use",
+      "programBound": true,
+      "workspaceBound": true,
+      "actorHeader": true
+    },
+    {
+      "method": "PUT",
+      "userId": 9,
+      "role": "edit",
+      "programBound": true,
+      "workspaceBound": true,
+      "actorHeader": true
+    },
+    {
+      "method": "DELETE",
+      "userId": 9,
+      "programBound": true,
+      "workspaceBound": true,
+      "actorHeader": true
+    },
+    {
+      "method": "PUT",
+      "userId": 9,
+      "role": "use",
+      "programBound": true,
+      "workspaceBound": true,
+      "actorHeader": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "argv": [
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/services/authoring/authoring-file-to-vault.ts",
+    "server/services/vault/vault-ingest.service.ts",
+    "server/services/vault/vault-ingest-types.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts"
+  ],
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "finishedAtExitFileTimestamp": "2026-10-21T01:16:17.300Z",
+  "startedAt": null,
+  "timingNote": "This intermediate command did not capture its start timestamp; final lint receipts do.",
+  "sourcePinFile": null,
+  "sourcePinNote": "Intermediate diagnostic only; no whole-source snapshot was captured for this command.",
+  "file": "lint-final.raw.log.gz",
+  "rawSha256": "198f0e3e26c99528d163064aa3d2ef1e0de40af06e09bb6f98fa2a48e71940a0",
+  "gzipSha256": "e8331fc71e523bde711bd5bc82aa2fb41da50e422144e35ad41a76af83e83b24",
+  "rawBytes": 400,
+  "exitCode": 1
+}

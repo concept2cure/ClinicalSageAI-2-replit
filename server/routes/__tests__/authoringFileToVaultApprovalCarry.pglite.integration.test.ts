@@ -74,6 +74,7 @@ beforeAll(async () => {
     // AUTHORING_ACCESS_DDL: the current member and project anchor the authoring
     // access gate reads (authorizeAuthoringProgram, 0e4ccf46f).
     prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}
+      ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::jsonb;
       INSERT INTO users (id, name, email) VALUES
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}'),
         (${APPROVER.id}, '${APPROVER.name}', '${APPROVER.email}'),

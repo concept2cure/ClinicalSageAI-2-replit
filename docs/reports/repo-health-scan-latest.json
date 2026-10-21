@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-21T01:21:56.522Z",
+  "generatedAt": "2026-10-21T01:55:11.948Z",
   "git": {
-    "sha": "bd24ecb4c5dc7ead0a7d61113c53daf8a903df1a",
+    "sha": "924458ef37578e47f144d7aac58f0dd22c656384",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 239,
+    "duplicateBasenames": 240,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -1761,6 +1761,14 @@
         ]
       },
       {
+        "basename": "project-sharing",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/project-sharing.ts",
+          "shared/project-sharing.ts"
+        ]
+      },
+      {
         "basename": "project-team",
         "count": 2,
         "paths": [
@@ -2249,7 +2257,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 416583
+        "bytes": 416656
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2257,7 +2265,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 317635
+        "bytes": 317649
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2412,10 +2420,6 @@
         "bytes": 115858
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 115567
-      },
-      {
         "file": "server/routes/c2c/project-vault.ts",
         "bytes": 115150
       },
@@ -2449,7 +2453,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 103375
+        "bytes": 103982
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 103735
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2475,11 +2483,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8820
+        "lines": 8821
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6403
+        "lines": 6404
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2554,10 +2562,6 @@
         "lines": 3119
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 3061
-      },
-      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3046
       },
@@ -2584,6 +2588,10 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2694
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 2693
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2734,12 +2742,12 @@
         "lines": 2029
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
-        "lines": 2020
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2027
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2019
+        "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+        "lines": 2020
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2923,7 +2931,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 445,
+      "duplicateGroups": 446,
       "largeByBytes": 41,
       "largeByLines": 88
     },
@@ -2935,7 +2943,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 92,
+      "duplicateGroups": 93,
       "largeByBytes": 3,
       "largeByLines": 3
     },
