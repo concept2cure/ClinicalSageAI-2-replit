@@ -63,3 +63,10 @@ every qualified PM source hash unchanged. The intake dependency delta's three
 regional-device suites passed 79 tests. `final-build.txt` records the combined
 production build. The normal pre-push hook repeats whole-repository TypeScript
 on that latest application before a successful source transfer.
+
+The first push passed every normal gate, including full TypeScript at zero
+errors, then Git rejected the transfer because the remote advanced to
+`891104f7c`. `first-push-race.txt` retains that result. Merge `e8dbb3a16`
+preserves the incoming passage-delivery work; all qualified PM hashes remain
+identical. Its six changed regression suites passed 120 tests and the combined
+production build passed again. Publication retries the full normal hook.

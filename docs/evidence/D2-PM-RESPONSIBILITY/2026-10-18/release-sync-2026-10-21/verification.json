@@ -74,7 +74,7 @@
     "errors": 0,
     "log": "typecheck.txt"
   },
-  "publication": "Ready for direct canonical publication; all normal pre-push gates required, no bypass or force",
+  "publication": "Retrying normal canonical push after preserving the concurrent passage delivery update",
   "productionDeployment": "not performed",
   "finalIntegration": {
     "upstream": "463181413e93810938b5cd6d0bed63f7bee1d713",
@@ -91,6 +91,28 @@
       "command": "npm run build",
       "exitCode": 0,
       "log": "final-build.txt"
+    }
+  },
+  "firstPushAttempt": {
+    "allNormalGatesPassed": true,
+    "wholeTreeTypeScriptErrors": 0,
+    "transfer": "rejected because remote advanced from463181413 to891104f7c during checks",
+    "log": "first-push-race.txt"
+  },
+  "retryIntegration": {
+    "upstream": "891104f7ccc4ad8fb776e369e11d86554a954bab",
+    "mergeCommit": "e8dbb3a16",
+    "qualifiedPMSourceHashesUnchanged": true,
+    "review": "Only passage round delivery, staging and framing changed; PM team/access/profile/context source unchanged.",
+    "regressions": {
+      "files": 6,
+      "tests": 120,
+      "exitCode": 0,
+      "log": "retry-incoming-tests.txt"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "retry-build.txt"
     }
   }
 }
