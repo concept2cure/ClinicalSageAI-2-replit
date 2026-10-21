@@ -1,0 +1,182 @@
+{
+  "startingAnchor": "4282257ac3da9b1c5d15b8e7db6c7599f2388f28",
+  "implementationAnchor": "07fbf47d4a561b954d070b979a024da60b9bfd16",
+  "canonicalMergeAnchor": "56176ddf03e6d8195dc8e01b99c081dcf8881205",
+  "runtime": {
+    "node": "v22.23.3",
+    "qualificationNode": "v22.23.3",
+    "vite": "6.4.4",
+    "followRedirects": "1.16.1",
+    "dependencies": "npm ci --no-audit --no-fund completed from merged canonical lockfile"
+  },
+  "broadCohortsAtCanonicalMerge": {
+    "ui": {
+      "passed": 297,
+      "failed": 0,
+      "files": 21,
+      "anchor": "56176ddf03e6d8195dc8e01b99c081dcf8881205"
+    },
+    "backend": {
+      "passed": 100,
+      "failed": 0,
+      "files": 7,
+      "anchor": "56176ddf03e6d8195dc8e01b99c081dcf8881205"
+    }
+  },
+  "finalBuilderAfterLayout": {
+    "passed": 42,
+    "failed": 0,
+    "files": 2,
+    "anchor": "13cb23411240aa569c280a103331907e50ea5104"
+  },
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "nativeIntegrationExecuted": false,
+  "backendEngine": "PGlite ephemeral route/service fixtures",
+  "taskChangedBaselines": false,
+  "build": {
+    "command": "PATH=<Node22> NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exit": 0,
+    "anchor": "359cc9f5e3faf3c2e22f836688803431794624fd",
+    "clientAndServerEmbedAnchor": true,
+    "auditChainVerifierBuilt": true,
+    "sha256": {
+      "dist/index.js": "48fa8b708201b7b1605d381c64e7b5cfcc38f744ab7319e87ef244583fc68807",
+      "dist/ops/verify-audit-chain.mjs": "fcd682e198d1a83380a50414ee90642f9538589d2e650e00a7a94300d0faa791",
+      "dist/public/assets/index-BjK2iAWd.js": "0e38c7e622400c4129caf202e30eaa13a6bd3457636557f6fac1340891b20e41"
+    }
+  },
+  "normalPushGates": {
+    "acceptedSource": "359cc9f5e3faf3c2e22f836688803431794624fd",
+    "typecheckErrors": 0,
+    "tscExit": 0,
+    "typecheckBaseline": 0,
+    "eslintWarningGrowth": -1,
+    "allPrePushGatesPassed": true,
+    "hooksBypassed": false
+  },
+  "browser": {
+    "anchor": "13cb23411240aa569c280a103331907e50ea5104",
+    "status": "pass",
+    "sourcePinsUnchanged": true,
+    "pageErrors": [],
+    "fixtureOnly": true,
+    "humanWitnessed": false,
+    "stages": 19,
+    "cases": 10,
+    "sourcePins": 33,
+    "productionPinsMatchingBuildAnchor": 29,
+    "harnessFilesAddedByEvidenceCommit": 4
+  },
+  "finalLayoutAnchor": "13cb23411240aa569c280a103331907e50ea5104",
+  "buildAnchor": "359cc9f5e3faf3c2e22f836688803431794624fd",
+  "integrationAnchor": "359cc9f5e3faf3c2e22f836688803431794624fd",
+  "testTypingCorrection": "2df9d29b4bc8aabf0d7db666a4c93efa0df954d6",
+  "initialCompiler": {
+    "errors": 2,
+    "baseline": 0,
+    "disposition": "Removed unsupported exact options from two getByRole calls in a new test; no product behavior or baseline changed."
+  },
+  "integratedPlacementAfterTestTypingCorrection": {
+    "anchor": "359cc9f5e3faf3c2e22f836688803431794624fd",
+    "passed": 75,
+    "failed": 0,
+    "files": 3
+  },
+  "reproduction": {
+    "cwd": "repository root",
+    "node": "22.23.3",
+    "installArgv": [
+      "npm",
+      "ci",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "cohorts": {
+      "ui-final": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx",
+        "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
+        "client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx",
+        "client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts",
+        "client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx",
+        "client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx",
+        "client/src/concept2cure/v2/__tests__/filingTargetPreselect.test.tsx",
+        "client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx",
+        "client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx",
+        "client/src/concept2cure/v2/__tests__/studyTaggingPlacement.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderHistory.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts",
+        "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+        "client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx",
+        "client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx",
+        "client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx",
+        "--reporter=verbose"
+      ],
+      "backend-final": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "shared/regulatory/__tests__/ectd-leaf-rules.test.ts",
+        "server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts",
+        "server/services/ectd/__tests__/core-to-packager.test.ts",
+        "server/services/ectd/__tests__/stf-1789-input-path.test.ts",
+        "server/services/ectd/__tests__/stf-coverage-1789.test.ts",
+        "server/services/ectd/__tests__/stf-generator.test.ts",
+        "server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts",
+        "--reporter=verbose"
+      ],
+      "builder-layout-final": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx",
+        "--reporter=verbose"
+      ],
+      "placement-integrated-final": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx",
+        "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx",
+        "--reporter=verbose"
+      ]
+    },
+    "buildArgv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "buildEnv": {
+      "NODE_OPTIONS": "--max-old-space-size=8192"
+    },
+    "typecheckArgv": [
+      "node",
+      "scripts/ci/typecheck-no-regression.mjs",
+      "--incremental"
+    ],
+    "typecheckEnv": {
+      "TYPECHECK_HEAP_MB": "12288"
+    }
+  },
+  "secretScans": {
+    "sourceRange": "6b9b20628..359cc9f5e",
+    "sourceLeaks": 0,
+    "unchangedRepositoryConfiguration": true,
+    "evidenceLeaks": 0
+  },
+  "executionPinsVerifiedAgainstBuildAnchor": 32
+}

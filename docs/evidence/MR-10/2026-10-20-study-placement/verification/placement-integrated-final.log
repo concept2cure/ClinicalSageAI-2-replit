@@ -1,0 +1,167 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > requires both human values before any saved-content read, copy or leaf write
+An update to VaultPlaceIntoSubmissionForDocument inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > requires both human values before any saved-content read, copy or leaf write 587ms
+stderr | client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > rejects an invalid study filename before any copy or write
+An update to VaultPlaceIntoSubmissionForDocument inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > rejects an invalid study filename before any copy or write 236ms
+stderr | client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the target sequence changes
+An update to VaultPlaceIntoSubmissionForDocument inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the target sequence changes 202ms
+stderr | client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the canonical section changes
+An update to VaultPlaceIntoSubmissionForDocument inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the canonical section changes 176ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the target submission changes 175ms
+stderr | client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the source canonical section changes
+An update to VaultPlaceIntoSubmissionForDocument inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the source canonical section changes 156ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > keeps exempt placements free of hidden study metadata 182ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > preserves other regions advisory placement with an empty metadata pair 176ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > omits previously entered metadata when placing a Delete leaf 183ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > requires both human values before any saved-content read, copy or leaf write 177ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > rejects an invalid study filename before any copy or write 166ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the target sequence changes 181ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the canonical section changes 162ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the target submission changes 147ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the source canonical section changes 147ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > keeps exempt placements free of hidden study metadata 158ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > preserves other regions advisory placement with an empty metadata pair 171ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > omits previously entered metadata when placing a Delete leaf 175ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > sends the exact human values through the existing source chain and confirms them 194ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > holds an unconfirmed mismatch receipt with no replay 196ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > holds an unconfirmed missing receipt with no replay 199ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > holds an unconfirmed 204 receipt with no replay 205ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > sends the exact human values through the existing source chain and confirms them 189ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > holds an unconfirmed mismatch receipt with no replay 221ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > holds an unconfirmed missing receipt with no replay 197ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > holds an unconfirmed 204 receipt with no replay 213ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault delayed automatic target selection > resets manual study values entered before the singleton sequence response arrives 134ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring delayed automatic target selection > resets manual study values entered before the singleton sequence response arrives 139ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring snapshot outcome reconciliation > holds a bodyless snapshot204 response without requesting a leaf or replaying the copy 246ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring snapshot outcome reconciliation > keeps an unknown placement held across closing and reopening the same document dialog 244ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > placement chains belong to their initiating session > stops Authoring before any copy or PUT when session changes during the saved-sections read 170ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > placement chains belong to their initiating session > stops Authoring before the leaf PUT when session changes during snapshot creation 223ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > placement chains belong to their initiating session > discards a late Vault receipt after the actor revision changes 189ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > displays recorded metadata even when the sequence is immutable 72ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > requires a reason, sends only metadata plus exact optimistic expectations, and refreshes after confirmation 315ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > sends explicit nulls to clear both values rather than omitting them 81ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > reports a confirmed no-op without claiming a new write 83ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > warns when metadata committed but the audit is not confirmed and propagates sequence demotion 76ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > warns separately when the leaf audit stands but the sequence transition audit is unconfirmed 69ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {"id":999} 101ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {"sequenceId":99} 88ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {"studyId":"OTHER-STUDY"} 95ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging on the existing leaf > does not accept a mismatched or incomplete metadata receipt: {} 83ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > requires explicit reread after a metadata success without a receipt (HTTP 204) 98ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > requires explicit reread after a metadata success without a receipt (HTTP 200) 94ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > holds an unknown outcome until explicit successful reread; preserves inputs and never replays the write 124ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > keeps uncertainty and entered values after an unverifiable reread 123ms
+stderr | client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > rereads parent state on explicit close after an unknown write without silently saving
+An update to RecordHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to BuilderWorkspaceForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > refreshes parent status and history on confirmed no-op after an earlier unknown write 124ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > rereads parent state on explicit close after an unknown write without silently saving 104ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > reviews a concurrently moved or retitled leaf and submits its current identity without losing entered values 120ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging reconciliation > carries the selected submission and project on initial and reconciliation leaf reads 109ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging read ownership > does not fabricate optimistic expectations for legacy rows lacking metadata/timestamps 57ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging read ownership > discards an old write receipt after project A to B to A, even with the same leaf id 63ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx > Builder study tagging read ownership > discards a late refusal after an actor revision change 65ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > requires both values before placing an FDA study report 436ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > places the exact reviewed pair through the existing writer and checks its receipt 254ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > refuses a study id that cannot form the existing STF filename 143ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > clears manually reviewed values when the source or canonical section changes 186ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 4.3 118ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 5.2 67ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 5.3.6 71ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 5.4 63ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > preserves placement without tags for exempt section 2.5 68ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement inputs > retains the existing non-US advisory and delete exemptions 78ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {} 100ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {"studyId":"OTHER"} 92ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {"documentId":9} 101ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds incomplete/mismatched receipts: {"sequenceId":99} 94ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds a bodyless success or an uncertain failure (HTTP 204) 122ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds a bodyless success or an uncertain failure (HTTP 200) 97ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > holds a bodyless success or an uncertain failure (HTTP 408) 96ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > keeps a definite refusal retryable and distinguishes a no-op 84ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > warns independently about unconfirmed sequence-transition audit 64ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder study placement confirmation > does not start placement using an expired actor session 56ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx > Builder placement ownership during a request > keeps inputs inert and discards a late receipt after an actor revision change 59ms
+
+ Test Files  3 passed (3)
+      Tests  75 passed (75)
+   Start at  23:58:22
+   Duration  16.40s (transform 1.38s, setup 410ms, import 2.32s, tests 11.13s, environment 1.97s)
+
+JSON report written to /workspace/scratch/study-placement-20261020/placement-integrated-final.json

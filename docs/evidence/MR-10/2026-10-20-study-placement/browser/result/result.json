@@ -1,0 +1,826 @@
+{
+  "status": "pass",
+  "anchor": "13cb23411240aa569c280a103331907e50ea5104",
+  "nodeVersion": "v22.23.3",
+  "chromiumVersion": "154.0.8037.57",
+  "viteVersion": "6.4.4",
+  "sources": {
+    "package.json": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "b789a7beb74226af28a267c95b0c71fabf99341540c0db67d69e75e7492feafb",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f",
+    "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519",
+    "client/src/concept2cure/v2/surfaces/filingTarget.tsx": "e2a551d94358255c83c13e2363a7f5194fb6a5b0f73f885fecf07623b4379146",
+    "client/src/concept2cure/v2/surfaces/StudyTaggingInputFields.tsx": "c240e089e6580f540e858043cd222dedf379c66441013d03bde5de4997136918",
+    "client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx": "8761c432dec79ef55a965ce01b8ed88217f3af41081e6c09b3b1a8f2555d5691",
+    "client/src/concept2cure/v2/surfaces/VaultPlaceOccupancy.tsx": "58c3f1496c0a9a441c44e6a0c07a3e4e766cf3c2bdee7e0cca0226edeb1d32ee",
+    "client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx": "ac93eee75d1e6a7c77a712896fe7dd0ddcd809abadf27e3dfc9efebf823e1c42",
+    "client/src/concept2cure/v2/surfaces/placeIntoFilingCopy.ts": "f89b24c8c0254082931bc2ac6b17aa0fa94d5019220b8dc5e3ea8f7b241d5e9f",
+    "client/src/concept2cure/v2/dataConnect.tsx": "257bf43ce5a2b3e025916f332c047071fd1310d8ebab94591b91f0f1171d1674",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/concept2cure/v2/RecordHistory.tsx": "4fb11af5cd80d1168eb6455e4c3905eee05e21322129b48cad950f8ce7787579",
+    "shared/regulatory/ectd-leaf-rules.ts": "2f36e258fea4f586df7c45d9d106e886e205d8418584d74ac90d62bfdc1f2413",
+    "shared/regulatory/section-code.ts": "b2d7851b1d949aab8ac94d7aceb70e1d0b0a5607d71b9447f497574f85a86e3b",
+    "shared/regulatory/region-identity.ts": "7c596268954c5c65e48280a354539bd368acc6af77df6bba6976057e411dabe2",
+    "server/routes/submissions.ts": "d20fac35c8dccd2a4a2049656b3dd22fb0047b4f3e171dd0024c93eec1a8b43b",
+    "server/services/submission-service/submission-service.ts": "312c90638c531b71b98118b61b66b6187e39a05c7bbbe43a4acaba3f4b34e2fe",
+    "server/services/part11/signature-persistence.ts": "82f3a41111c1513d3b175d948b7b5ed8170a3cf52490c65bb9cfaa127e26c88c",
+    "server/services/ectd/core-to-packager.ts": "20331233bbad1f34b3c515d803e7151f75a1a3960bbb092159f37c1d13644dba",
+    "server/services/ectd/stf-generator.ts": "937c93bea6985579bf8b190ef08814e2ab7948c3d39f2429ec4faf4a124c8fd6",
+    "server/services/ectd/ectd4-validator.ts": "5dd2025e1e1f43ab4fab0402a9879e9d13b88dd8284f08e400aa732be14f1c6f",
+    "server/services/ectd/ectd-regional-rules.ts": "b3b659d1ecaf72242fd99e4a71943b18da8b1300649ea44542aadac92bf1f2b0",
+    "server/services/submission-gateways/regional-packager.ts": "58c658a5c6c6d9a19263cafe829507df4454dbbd9efe48bfeacb6a06df7929ad",
+    "shared/schema/submissions.ts": "d56dec049ba2389fcfca54450f9975f2353cd6b431d6979c0a7f5a5fb7c62e08",
+    "shared/types/database.d.ts": "38e165080d8b8046d8f3490d67a96ab301315c3891be24fb7bf91f10449159b5",
+    "client/src/concept2cure/v2/styles/submission-v2.css": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c",
+    "docs/evidence/MR-10/2026-10-20-study-placement/browser/probe.tsx": "941c339a138e532fd906de6e25381671576f3345afd25bdf6b329fbb094747a0",
+    "docs/evidence/MR-10/2026-10-20-study-placement/browser/server.mjs": "9cebbb31f8e7ab59cfa7dface11c814361cba8cd89c66279d1a07498ab344570",
+    "docs/evidence/MR-10/2026-10-20-study-placement/browser/check.mjs": "57e0944b75c36ebc5711ccbc67d9bdc9dcb6edb425c362f3573d71b2559bc149",
+    "docs/evidence/MR-10/2026-10-20-study-placement/browser/index.html": "cb1152a865a5986c2f42e61ffaf9f6329ca9482dbdc73ffc95e7453bdfd707a5"
+  },
+  "sourcePinsUnchanged": true,
+  "stages": [
+    {
+      "stage": "vault-01-required-pair-gates",
+      "lane": "vault",
+      "mode": "confirm",
+      "puts": 0,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "vault-02-context-reset",
+      "lane": "vault",
+      "mode": "confirm",
+      "puts": 0,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "vault-03-confirmed-builder-table",
+      "lane": "vault",
+      "mode": "confirm",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "vault-04-frozen-read-only",
+      "lane": "vault",
+      "mode": "confirm",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "authoring-01-required-pair-gates",
+      "lane": "authoring",
+      "mode": "confirm",
+      "puts": 0,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "authoring-02-context-reset",
+      "lane": "authoring",
+      "mode": "confirm",
+      "puts": 0,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "authoring-03-confirmed-builder-table",
+      "lane": "authoring",
+      "mode": "confirm",
+      "puts": 1,
+      "posts": 1,
+      "savedSectionReads": 1
+    },
+    {
+      "stage": "authoring-04-frozen-read-only",
+      "lane": "authoring",
+      "mode": "confirm",
+      "puts": 1,
+      "posts": 1,
+      "savedSectionReads": 1
+    },
+    {
+      "stage": "builder-01-required-pair-gates",
+      "lane": "builder",
+      "mode": "confirm",
+      "puts": 0,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "builder-02-context-reset",
+      "lane": "builder",
+      "mode": "confirm",
+      "puts": 0,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "builder-03-confirmed-builder-table",
+      "lane": "builder",
+      "mode": "confirm",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "builder-04-frozen-read-only",
+      "lane": "builder",
+      "mode": "confirm",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "vault-05-mismatch-held-no-replay",
+      "lane": "vault",
+      "mode": "mismatch",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "vault-05-put204-held-no-replay",
+      "lane": "vault",
+      "mode": "put204",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "authoring-05-mismatch-held-no-replay",
+      "lane": "authoring",
+      "mode": "mismatch",
+      "puts": 1,
+      "posts": 1,
+      "savedSectionReads": 1
+    },
+    {
+      "stage": "authoring-05-put204-held-no-replay",
+      "lane": "authoring",
+      "mode": "put204",
+      "puts": 1,
+      "posts": 1,
+      "savedSectionReads": 1
+    },
+    {
+      "stage": "builder-05-mismatch-held-no-replay",
+      "lane": "builder",
+      "mode": "mismatch",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "builder-05-put204-held-no-replay",
+      "lane": "builder",
+      "mode": "put204",
+      "puts": 1,
+      "posts": 0,
+      "savedSectionReads": 0
+    },
+    {
+      "stage": "authoring-06-snapshot204-held-no-copy-replay",
+      "lane": "authoring",
+      "mode": "snapshot204",
+      "puts": 0,
+      "posts": 1,
+      "savedSectionReads": 1
+    }
+  ],
+  "cases": [
+    {
+      "lane": "vault",
+      "mode": "confirm",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic Vault study report",
+            "lifecycleOp": "new",
+            "documentTable": "vault_documents",
+            "documentUuid": "a1000000-0000-4000-8000-0000000000a1",
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [],
+      "reads": [
+        "/api/submissions",
+        "/api/submissions/9/sequences",
+        "/api/submissions/sequences/21/leaves",
+        "/api/submissions/sequences/22/leaves",
+        "/api/submissions/sequences/21/leaves",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic Vault study report",
+          "lifecycleOp": "new",
+          "documentTable": "vault_documents",
+          "documentUuid": "a1000000-0000-4000-8000-0000000000a1",
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentId": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "uuid",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "authoring",
+      "mode": "confirm",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic saved study report",
+            "lifecycleOp": "new",
+            "documentTable": "coauthor_documents",
+            "documentId": 52,
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [
+        {
+          "path": "/api/coauthor/documents",
+          "body": {
+            "title": "Synthetic saved study report",
+            "moduleNumber": "5.3.5.1",
+            "content": "## 5.3.5.1 — Synthetic study report\n\nSaved synthetic sponsor reviewed study report.",
+            "sourceAuthoringDocId": "D1",
+            "changeReason": "Synthetic sponsor review of this study placement"
+          }
+        }
+      ],
+      "reads": [
+        "/api/submissions",
+        "/api/submissions/9/sequences",
+        "/api/authoring/docs/D1/sections",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic saved study report",
+          "lifecycleOp": "new",
+          "documentTable": "coauthor_documents",
+          "documentId": 52,
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentUuid": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "integer",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "builder",
+      "mode": "confirm",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic Builder study report",
+            "lifecycleOp": "new",
+            "documentTable": "coauthor_documents",
+            "documentId": 8,
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [],
+      "reads": [
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves",
+        "/api/coauthor/documents",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic Builder study report",
+          "lifecycleOp": "new",
+          "documentTable": "coauthor_documents",
+          "documentId": 8,
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentUuid": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "integer",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "vault",
+      "mode": "mismatch",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic Vault study report",
+            "lifecycleOp": "new",
+            "documentTable": "vault_documents",
+            "documentUuid": "a1000000-0000-4000-8000-0000000000a1",
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [],
+      "reads": [
+        "/api/submissions",
+        "/api/submissions/9/sequences",
+        "/api/submissions/sequences/21/leaves"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic Vault study report",
+          "lifecycleOp": "new",
+          "documentTable": "vault_documents",
+          "documentUuid": "a1000000-0000-4000-8000-0000000000a1",
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentId": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "uuid",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "vault",
+      "mode": "put204",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic Vault study report",
+            "lifecycleOp": "new",
+            "documentTable": "vault_documents",
+            "documentUuid": "a1000000-0000-4000-8000-0000000000a1",
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [],
+      "reads": [
+        "/api/submissions",
+        "/api/submissions/9/sequences",
+        "/api/submissions/sequences/21/leaves"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic Vault study report",
+          "lifecycleOp": "new",
+          "documentTable": "vault_documents",
+          "documentUuid": "a1000000-0000-4000-8000-0000000000a1",
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentId": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "uuid",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "authoring",
+      "mode": "mismatch",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic saved study report",
+            "lifecycleOp": "new",
+            "documentTable": "coauthor_documents",
+            "documentId": 52,
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [
+        {
+          "path": "/api/coauthor/documents",
+          "body": {
+            "title": "Synthetic saved study report",
+            "moduleNumber": "5.3.5.1",
+            "content": "## 5.3.5.1 — Synthetic study report\n\nSaved synthetic sponsor reviewed study report.",
+            "sourceAuthoringDocId": "D1",
+            "changeReason": "Synthetic sponsor review of this study placement"
+          }
+        }
+      ],
+      "reads": [
+        "/api/submissions",
+        "/api/submissions/9/sequences",
+        "/api/authoring/docs/D1/sections"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic saved study report",
+          "lifecycleOp": "new",
+          "documentTable": "coauthor_documents",
+          "documentId": 52,
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentUuid": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "integer",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "authoring",
+      "mode": "put204",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic saved study report",
+            "lifecycleOp": "new",
+            "documentTable": "coauthor_documents",
+            "documentId": 52,
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [
+        {
+          "path": "/api/coauthor/documents",
+          "body": {
+            "title": "Synthetic saved study report",
+            "moduleNumber": "5.3.5.1",
+            "content": "## 5.3.5.1 — Synthetic study report\n\nSaved synthetic sponsor reviewed study report.",
+            "sourceAuthoringDocId": "D1",
+            "changeReason": "Synthetic sponsor review of this study placement"
+          }
+        }
+      ],
+      "reads": [
+        "/api/submissions",
+        "/api/submissions/9/sequences",
+        "/api/authoring/docs/D1/sections"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic saved study report",
+          "lifecycleOp": "new",
+          "documentTable": "coauthor_documents",
+          "documentId": 52,
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentUuid": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "integer",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "builder",
+      "mode": "mismatch",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic Builder study report",
+            "lifecycleOp": "new",
+            "documentTable": "coauthor_documents",
+            "documentId": 8,
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [],
+      "reads": [
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves",
+        "/api/coauthor/documents",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic Builder study report",
+          "lifecycleOp": "new",
+          "documentTable": "coauthor_documents",
+          "documentId": 8,
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentUuid": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "integer",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "builder",
+      "mode": "put204",
+      "puts": [
+        {
+          "path": "/api/submissions/sequences/21/leaves",
+          "body": {
+            "sectionCode": "5.3.5.1",
+            "title": "Synthetic Builder study report",
+            "lifecycleOp": "new",
+            "documentTable": "coauthor_documents",
+            "documentId": 8,
+            "reason": "Synthetic sponsor review of this study placement",
+            "studyId": "STUDY-101",
+            "stfFileTag": "human-reviewed-tag"
+          }
+        }
+      ],
+      "posts": [],
+      "reads": [
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves",
+        "/api/coauthor/documents",
+        "/api/submissions/sequences/21/history",
+        "/api/submissions/sequences/21/leaves"
+      ],
+      "leaves": [
+        {
+          "sectionCode": "5.3.5.1",
+          "title": "Synthetic Builder study report",
+          "lifecycleOp": "new",
+          "documentTable": "coauthor_documents",
+          "documentId": 8,
+          "reason": "Synthetic sponsor review of this study placement",
+          "studyId": "STUDY-101",
+          "stfFileTag": "human-reviewed-tag",
+          "id": 62,
+          "sequenceId": 21,
+          "documentUuid": null,
+          "granularity": null,
+          "documentType": "clinical_study_report",
+          "parentLeafId": null,
+          "checksum": null,
+          "documentContentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "documentPinnedAt": "2026-10-20T10:00:00.000Z",
+          "updatedAt": "2026-10-20T11:00:00.000Z",
+          "auditTrail": {
+            "persisted": true,
+            "chained": true
+          },
+          "sourceDocument": {
+            "status": "resolved",
+            "keyKind": "integer",
+            "pinnedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "storedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "pin": "match",
+            "reason": null,
+            "notTransmittable": null,
+            "noContent": false
+          }
+        }
+      ]
+    },
+    {
+      "lane": "authoring",
+      "mode": "snapshot204",
+      "puts": [],
+      "posts": [
+        {
+          "path": "/api/coauthor/documents",
+          "body": {
+            "title": "Synthetic saved study report",
+            "moduleNumber": "5.3.5.1",
+            "content": "## 5.3.5.1 — Synthetic study report\n\nSaved synthetic sponsor reviewed study report.",
+            "sourceAuthoringDocId": "D1",
+            "changeReason": "Synthetic sponsor review of this study placement"
+          }
+        }
+      ],
+      "reads": [
+        "/api/submissions",
+        "/api/submissions/9/sequences",
+        "/api/authoring/docs/D1/sections"
+      ],
+      "leaves": []
+    }
+  ],
+  "pageErrors": [],
+  "fixtureOnly": true,
+  "humanWitnessed": false,
+  "agencyAcceptanceTested": false
+}
