@@ -4510,6 +4510,7 @@ async function loadProjectMemoryEntries(
     `SELECT title, content, category, confidence_score AS confidence, importance_level AS importance
      FROM project_memory_entries
      WHERE project_id = $1 AND organization_id = $2 AND status = 'active' AND category IN (${placeholders})
+       AND source_document_type IS DISTINCT FROM 'report_os_state'
      ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
                   WHEN 'high'     THEN 3

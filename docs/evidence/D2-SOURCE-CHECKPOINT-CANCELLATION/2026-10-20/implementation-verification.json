@@ -1,0 +1,26 @@
+{
+  "checkedAtUtc": "2026-10-20T20:21:43.226899+00:00",
+  "implementationHead": "3b880f96d4a79adbf14f68ce654023fc3256a0b4",
+  "originTrackingRef": "3b880f96d4a79adbf14f68ce654023fc3256a0b4",
+  "localEqualsRemote": true,
+  "gitByteAndWorkingTreeBindings": {
+    "implementationArtifacts": 41,
+    "qualificationInputs": 50
+  },
+  "retainedAncestorInputs": [
+    "0793ee48ecee5dee014b266b2def014c38ea978e",
+    "6ec38926c",
+    "3b880f96d",
+    "b95386545fc3ffc905fd986bb0e1b417e57df156",
+    "2d2ded13856d899257af394c3d8e29698d1034de",
+    "4684ff1d490ae3b1c618d2565cbf36795160e9b1",
+    "f144f22d",
+    "2610ebf1"
+  ],
+  "unmergedPaths": [],
+  "normalPrepushExitCode": 0,
+  "wholeProjectTypeScriptErrors": 0,
+  "finalTests": 318,
+  "finalSuites": 19,
+  "additionalUntrackedFiles": "Only publication transcripts and supplement being committed next"
+}

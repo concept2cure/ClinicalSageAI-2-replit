@@ -528,6 +528,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
       // readability is reported separately above.
       extractionMethod,
       extractionWords,
+      // How much of a scanned PDF OCR read; null when OCR did not run.
+      extractionCoverage: extracted?.coverage ?? null,
       /* What the retrieval corpus actually holds. An upload's atom is ONE
          embedding over a bounded prefix, so for anything longer than a few
          pages `indexedWholeFile` is false — and saying so here is the
@@ -537,7 +539,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
         ? {
             embeddedChars: atomBounds.embeddedChars,
             extractedChars: atomBounds.extractedChars,
-            indexedWholeFile: !atomBounds.truncated,
+            // Not whole when the extraction itself covered only part of the document.
+            indexedWholeFile: !atomBounds.truncated && !extracted?.coverage?.limitedBy,
             embedded: atomBounds.embedded,
           }
         : null,

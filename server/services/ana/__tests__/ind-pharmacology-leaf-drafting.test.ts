@@ -29,6 +29,25 @@ const LEAVES = [
 const promoted = LEAVES.map(([code]) => code as string);
 const fingerprint = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
+// Append-only completions recorded after the original pharmacology snapshot:
+// b724e3fa adds the six 2.4 headings; e1c63ae9 adds the seven 2.5.6 headings.
+// Original rows remain fingerprinted below; these are the only allowed additions.
+const structuralAdditions = [
+  ['2.4.1', 'Overview of the Nonclinical Testing Strategy', 'ICH M4S(R2)'],
+  ['2.4.2', 'Pharmacology', 'ICH M4S(R2)'],
+  ['2.4.3', 'Pharmacokinetics', 'ICH M4S(R2)'],
+  ['2.4.4', 'Toxicology', 'ICH M4S(R2)'],
+  ['2.4.5', 'Integrated Overview and Conclusions', 'ICH M4S(R2)'],
+  ['2.4.6', 'List of Literature References', 'ICH M4S(R2)'],
+  ['2.5.6.1', 'Therapeutic Context', 'ICH M4E(R2)'],
+  ['2.5.6.1.1', 'Disease or Condition', 'ICH M4E(R2)'],
+  ['2.5.6.1.2', 'Current Therapies', 'ICH M4E(R2)'],
+  ['2.5.6.2', 'Benefits', 'ICH M4E(R2)'],
+  ['2.5.6.3', 'Risks', 'ICH M4E(R2)'],
+  ['2.5.6.4', 'Benefit-Risk Assessment', 'ICH M4E(R2)'],
+  ['2.5.6.5', 'Appendix', 'ICH M4E(R2)'],
+] as const;
+
 describe('IND pharmacology exact leaf guidance through existing AnA drafting', () => {
   beforeEach(() => gatewayRoute.mockClear());
 
@@ -115,25 +134,33 @@ describe('IND pharmacology exact leaf guidance through existing AnA drafting', (
 });
 
 describe('IND pharmacology canonical record and hierarchy fidelity', () => {
-  it('preserves every original record and moves exactly seven headings between the canonical halves', () => {
+  it('preserves every original record, the seven promoted leaves and only the reviewed structural additions', () => {
     expect(Object.keys(CTD_AUTHORING_GUIDANCE).filter(code => !promoted.includes(code)))
       .toEqual(preserved.guidance.map(row => row.code));
     for (const row of preserved.guidance) {
       expect(fingerprint(CTD_AUTHORING_GUIDANCE[row.code]), row.code).toBe(row.sha256);
     }
     const remaining = preserved.structural.filter(row => !promoted.includes(row.code));
-    expect(ICH_M4_HEADINGS.map(row => row.code)).toEqual(remaining.map(row => row.code));
+    const additions = new Set<string>(structuralAdditions.map(([code]) => code));
+    const originalHeadings = ICH_M4_HEADINGS.filter(row => !additions.has(row.code));
+    expect(originalHeadings.map(row => row.code)).toEqual(remaining.map(row => row.code));
     for (const [index, row] of remaining.entries()) {
-      expect(fingerprint(ICH_M4_HEADINGS[index]), row.code).toBe(row.sha256);
+      expect(fingerprint(originalHeadings[index]), row.code).toBe(row.sha256);
+    }
+    for (const [code, title, reference] of structuralAdditions) {
+      expect(ICH_M4_HEADINGS.find(row => row.code === code), code).toEqual({
+        code, title, parent: code.split('.').slice(0, -1).join('.'), module: 2,
+        basis: { ref: `${reference} ${code}`, confidence: 'recall', note: expect.stringMatching(/search extract.*(?:not read|itself was not read)/) },
+      });
     }
     const codes = [...Object.keys(CTD_AUTHORING_GUIDANCE), ...ICH_M4_HEADINGS.map(row => row.code)];
     expect(Object.keys(CTD_AUTHORING_GUIDANCE)).toHaveLength(134);
-    expect(ICH_M4_HEADINGS).toHaveLength(115);
-    expect(new Set(codes).size).toBe(249);
+    expect(ICH_M4_HEADINGS).toHaveLength(128);
+    expect(new Set(codes).size).toBe(262);
     const terminal = codes.filter(code => !codes.some(child => child.startsWith(`${code}.`)));
-    expect(terminal).toHaveLength(203);
-    expect(terminal.filter(code => CTD_AUTHORING_GUIDANCE[code])).toHaveLength(110);
-    expect(terminal.filter(code => !CTD_AUTHORING_GUIDANCE[code])).toHaveLength(93);
+    expect(terminal).toHaveLength(213);
+    expect(terminal.filter(code => CTD_AUTHORING_GUIDANCE[code])).toHaveLength(108);
+    expect(terminal.filter(code => !CTD_AUTHORING_GUIDANCE[code])).toHaveLength(105);
   });
 
   it('keeps unsupported deeper numbering inherited and wholly unindexed codes unresolved', () => {

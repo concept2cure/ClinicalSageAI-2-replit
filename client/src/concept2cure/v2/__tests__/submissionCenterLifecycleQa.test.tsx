@@ -305,7 +305,7 @@ describe('the Builder says what the server knows about each leaf', () => {
   });
 
   it('an unapproved Vault version reads "not approved", never "source verified"', async () => {
-    mockApi((method, url) => (method === 'GET' && url === '/api/submissions/sequences/21/leaves' ? ok([LEAF()]) : undefined));
+    mockApi((method, url) => (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7' ? ok([LEAF()]) : undefined));
     await ready();
     openWorkspace('Builder');
     await waitFor(() => expect(document.body.textContent).toContain('not approved: not reviewed'));
@@ -314,7 +314,7 @@ describe('the Builder says what the server knows about each leaf', () => {
 
   it('removes a leaf with its reason, and nothing without one', async () => {
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves') return ok([LEAF()]);
+      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') return ok([LEAF()]);
       if (method === 'DELETE' && url === '/api/submissions/sequences/21/leaves/60') {
         return { ok: true, status: 204, json: async () => { throw new Error('no body'); }, headers: new Headers({ 'X-Sequence-Status-Changed': 'validated->assembling' }) } as unknown as Response;
       }
@@ -334,9 +334,9 @@ describe('the Builder says what the server knows about each leaf', () => {
 
   it('an identical re-placement says nothing was placed, and an original offers only New', async () => {
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves') return ok([]);
+      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') return ok([]);
       if (method === 'GET' && url === '/api/coauthor/documents') return ok({ documents: [{ id: 5, title: 'Cover Letter', moduleNumber: '1.2', status: 'approved' }] });
-      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') return ok({ id: 62, sectionCode: '1.2', unchanged: true, auditTrail: null });
+      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') return ok({ id: 62, sequenceId: 21, sectionCode: '1.2', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5, unchanged: true, auditTrail: null });
       return undefined;
     });
     await ready();

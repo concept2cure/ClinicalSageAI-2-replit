@@ -8,15 +8,24 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const launchScope = vi.hoisted(() => ({ enforced: null as boolean | null }));
 vi.mock('@/lib/queryClient', async (original) => ({
   ...(await original<typeof import('@/lib/queryClient')>()), apiRequest,
 }));
+
+vi.mock('../navEntitlements', async original => {
+  const canonical = await original<typeof import('../navEntitlements')>();
+  return {
+    ...canonical,
+    useNavEntitlements: () => ({ ...canonical.useNavEntitlements(), launchScopeEnforced: launchScope.enforced }),
+  };
+});
 
 import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
 import { PvCockpit } from '../surfaces/PvCockpit';
-import { CmChange, CmPathway } from '../surfaces/CmcModule';
+import { CmChange } from '../surfaces/CmcModule';
 import { CmQuality } from '../surfaces/CmcQuality';
 import { authService } from '@/services/portal/authService';
 import { clearEditorTarget, consumeEditorTarget, peekEditorTarget } from '../editorTarget';
@@ -99,7 +108,6 @@ const ENGINE_DOCUMENT = {
 let createReply: () => Response | Promise<Response>;
 let sectionReply: () => Response | Promise<Response>;
 let sectionCode: string;
-let patchReply: () => Response | Promise<Response>;
 const STRATEGY = {
   scope: 'both', cqas: [], cpps: [], controlElements: [], gaps: [], citations: [], generatedAt: '2026-10-16T12:00:00Z',
   stabilityMonitoring: { longTermCondition: 'Not assessed', acceleratedCondition: 'Not assessed',
@@ -107,19 +115,20 @@ const STRATEGY = {
 };
 const BOARD = {
   portfolio: [], sections: null,
-  kpis: { submissions: 0, rpiAverage: null, irOverdue: 0, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
-  correspondence: [{ id: 9, question: 'Synthetic shelf-life question.', sectionRef: '3.2.P.8.1',
-    priority: 'medium', severity: 'MAJOR', status: 'OPEN', region: 'FDA', dueDate: null, overdue: false, assignedTo: null }],
+  kpis: { submissions: 0, rpiAverage: null, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
   meta: { projectId: PROGRAM, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: '2026-10-16T12:00:00Z' },
 };
 function authoringCalls() {
   return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).startsWith('/api/authoring/'));
 }
 function specialistResponse(method: string, url: string): Response | Promise<Response> {
-  if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') return patchReply();
   if (url.startsWith('/api/cmc/module3-board')) return json(200, { success: true, data: BOARD });
   if (url.startsWith('/api/cmc/quality/qbd/')) return json(200, { success: true, data: {
     cqas: [], cpps: [], inputs: {}, gaps: [], partial: false, unevaluatedInputs: [], analyzedAt: '2026-10-16T12:00:00Z',
+  } });
+  if (url === '/api/cmc/variations/classify') return json(200, { success: true, data: {
+    fdaReportingCategory: 'annual_report', emaVariationCategory: 'type_ia', supacTier: 'level_1', bioequivalence: 'none', rationale: ['Synthetic assessment'],
+    validationRequirements: ['Document comparability'], impactedCtdSections: ['3.2.S.2'], citations: ['SUPAC-IR'],
   } });
   if (url === '/api/cmc/control-strategy') return json(200, { success: true, data: STRATEGY });
   if (url === '/api/biostat/assurance') return json(200, { success: true, data: { assurance: 0.72 } });
@@ -142,13 +151,13 @@ function specialistResponse(method: string, url: string): Response | Promise<Res
   return json(200, { success: true, data: [] });
 }
 beforeEach(async () => {
+  launchScope.enforced = null;
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget();
   await adopt();
   publishShellProject({ id: PROGRAM, title: 'Synthetic specialist project' });
   createReply = () => docReceipt();
   sectionCode = 'recommendations';
   sectionReply = () => sectionReceipt(sectionCode);
-  patchReply = () => json(200, { success: true, data: { id: 9, status: 'DRAFTED' } });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
     if (method === 'POST' && url === '/api/authoring/docs') return createReply();
@@ -289,27 +298,44 @@ describe('Biostatistics distinguishes saved working documents from filed documen
 
 
 async function cmcChange(onNav: (id: string) => void) {
+  launchScope.enforced = false;
   render(<CmChange ask={vi.fn()} nav={onNav} />);
-  fireEvent.change(screen.getByLabelText(/Describe the change/), { target: { value: 'Synthetic supplier change requiring reviewer assessment.' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Simulate change' }));
-  return screen.getByRole('button', { name: 'Open in editor' });
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no');
+  choose('Site change', 'different_site_same_country');
+  choose('Change description', 'Synthetic supplier change requiring reviewer assessment.');
+  fireEvent.click(screen.getByRole('button', { name: 'Assess proposed variation' }));
+  return screen.findByRole('button', { name: 'Open draft assessment in editor' });
 }
 async function cmcQuality(onNav: (id: string) => void) {
   render(<CmQuality ask={vi.fn()} nav={onNav} />);
   fireEvent.click(screen.getByRole('button', { name: 'Generate control strategy' }));
   return screen.findByRole('button', { name: 'Open in editor' });
 }
-async function cmcCorrespondence(onNav: (id: string) => void) {
-  render(<CmPathway ask={vi.fn()} nav={onNav} />);
-  await screen.findByText('Synthetic shelf-life question.');
-  return screen.getByTitle(/Create a governed response draft/);
-}
 
+/* CMC correspondence left this list on 2026-10-19 with the code
+   'agency_question_response', which existed only for its draft: CMC no longer
+   drafts agency responses into Authoring (P-38). A response is written and
+   approved on its letter, in Communication (AgencyResponses.tsx). */
 describe('other existing specialist controls use the exact editor target', () => {
+  it.each([true, null] as const)('CMC change refuses deferred assessment when launch scope is %s', async enforced => {
+    launchScope.enforced = enforced;
+    const onNav = vi.fn();
+    render(<CmChange ask={vi.fn()} nav={onNav} />);
+    await settle();
+    expect(screen.getByText('Postapproval variation assessment is outside this release')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Assess proposed variation' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Open draft assessment in editor' })).toBeNull();
+    expect(apiRequest.mock.calls.some(([, url]) => url === '/api/cmc/variations/classify')).toBe(false);
+    expect(authoringCalls()).toHaveLength(0);
+    expect(onNav).not.toHaveBeenCalled();
+    expect(peekEditorTarget()).toBeNull();
+  });
+
   it.each([
     ['CMC change', cmcChange, 'regulatory_change_impact_assessment'],
     ['CMC quality', cmcQuality, 'cmc_control_strategy'],
-    ['CMC correspondence', cmcCorrespondence, 'agency_question_response'],
   ] as const)('%s retains doc, project and code at actual navigation', async (_name, prepare, code) => {
     const targets: ReturnType<typeof consumeEditorTarget>[] = [];
     const onNav = vi.fn(() => targets.push(consumeEditorTarget()));
@@ -330,20 +356,6 @@ describe('other existing specialist controls use the exact editor target', () =>
     expect(targets[0]).toMatchObject({ docId: DOC_ID, programId: PROGRAM, sectionCode: 'sample_size_rationale' });
   });
 
-  it('a late correspondence lifecycle receipt cannot navigate or show status in the next project', async () => {
-    const pending = deferred<Response>(); patchReply = () => pending.promise;
-    const onNav = vi.fn(); fireEvent.click(await cmcCorrespondence(onNav));
-    await waitFor(() => expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(true));
-    expect(authoringCalls()).toHaveLength(2);
-    await act(async () => {
-      publishShellProject({ id: OTHER_PROGRAM });
-      pending.resolve(json(409, { error: 'Synthetic lifecycle conflict from previous project' }));
-    });
-    await settle();
-    expect(onNav).not.toHaveBeenCalled();
-    expect(document.querySelector('.de-toast')).toBeNull();
-    expect(peekEditorTarget()).toBeNull();
-  });
 });
 
 async function calculatorInsert() {

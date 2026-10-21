@@ -66,7 +66,10 @@ function mockApi() {
     const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
     if (method === 'GET' && url === '/api/submissions') return ok(SUBS);
     if (method === 'GET' && url === '/api/submissions/68/sequences') return ok(SEQS);
-    if (method === 'GET' && url === '/api/submissions/sequences/29/leaves') return ok(LEAVES);
+    if (method === 'GET' && new URL(url, 'https://fixture.invalid').pathname === '/api/submissions/sequences/29/leaves') {
+      expect(new URL(url, 'https://fixture.invalid').searchParams.get('submissionId')).toBe('68');
+      return ok(LEAVES);
+    }
     if (method === 'GET' && url === '/api/510k/estar/submissions') return ok({ submissions: [] });
     return ok([]);
   });

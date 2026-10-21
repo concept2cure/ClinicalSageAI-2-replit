@@ -69,7 +69,8 @@ describe('project parent admission uses the actual request SQL executor', () => 
     await expect(requireProjectRouteAccess(actorRequest(client), res, { kind: 'projects' }))
       .resolves.toMatchObject({ actor: { userId: 5, role: 'member' }, programId: PROGRAM, projectId: 11 });
     expect(client.query).toHaveBeenCalledTimes(4);
-    expect(client.query.mock.calls[1][1]).toEqual([7, 5]);
+    // Current actor reads explicitly refuse pending-deletion organizations.
+    expect(client.query.mock.calls[1][1]).toEqual([7, 5, false]);
     expect(client.query.mock.calls[2][1]).toEqual([PROGRAM, 7]);
     expect(client.query.mock.calls[3][1]).toEqual([7, 5, 11]);
     expect(res.locals.currentProgramAccess).toMatchObject({ projectId: 11 });

@@ -1,0 +1,112 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts > existing placement receipt with expected study metadata > requires the exact fields when metadata was sent 7ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts > existing placement receipt with expected study metadata > checks explicit null metadata and preserves receipt compatibility when no metadata was sent 1ms
+   → expected true to be false // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts > existing placement receipt with expected study metadata > still refuses absent bodies, wrong pointers, sections and sequences 1ms
+ × client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts > existing placement receipt with expected study metadata > reports sequence transition audit uncertainty alongside the placement audit 1ms
+   → expected '' to match /sequence.*audit.*not confirmed/i
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/regulatory/__tests__/ectd-leaf-rules.test.ts [ shared/regulatory/__tests__/ectd-leaf-rules.test.ts ]
+Error: Cannot find module '../ectd-leaf-rules' imported from /workspace/concept2cure/shared/regulatory/__tests__/ectd-leaf-rules.test.ts
+ ❯ shared/regulatory/__tests__/ectd-leaf-rules.test.ts:2:1
+      1| import { describe, expect, it } from 'vitest';
+      2| import { FILENAME_PATTERN, stfFileName, requiresStfReference, STF_NOT_…
+       | ^
+      3| import { FILENAME_PATTERN as serverPattern } from '../../../server/ser…
+      4| import { stfFileName as serverFileName } from '../../../server/service…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/studyTaggingPlacement.test.tsx [ client/src/concept2cure/v2/__tests__/studyTaggingPlacement.test.tsx ]
+Error: Failed to resolve import "../surfaces/StudyTaggingInputFields" from "client/src/concept2cure/v2/__tests__/studyTaggingPlacement.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /workspace/concept2cure/client/src/concept2cure/v2/__tests__/studyTaggingPlacement.test.tsx:5:63
+  2  |  import { afterEach, describe, expect, it, vi } from "vitest";
+  3  |  import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+  4  |  import { StudyTaggingInputFields, studyTaggingPlacement } from "../surfaces/StudyTaggingInputFields";
+     |                                                                  ^
+  5  |  afterEach(cleanup);
+  6  |  const empty = { studyId: "", stfFileTag: "" };
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16
+ ❯ normalizeUrl node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23
+ ❯ node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts > existing placement receipt with expected study metadata > requires the exact fields when metadata was sent
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts:11:75
+      9|   it('requires the exact fields when metadata was sent', () => {
+     10|     expect(matchingLeafReceipt(row, expected)).toBe(true);
+     11|     expect(matchingLeafReceipt({ ...row, studyId: undefined }, expecte…
+       |                                                                           ^
+     12|     expect(matchingLeafReceipt({ ...row, stfFileTag: undefined }, expe…
+     13|     expect(matchingLeafReceipt({ ...row, studyId: 'STUDY-102' }, expec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts > existing placement receipt with expected study metadata > checks explicit null metadata and preserves receipt compatibility when no metadata was sent
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts:18:97
+     16|   it('checks explicit null metadata and preserves receipt compatibilit…
+     17|     expect(matchingLeafReceipt({ ...row, studyId: null, stfFileTag: nu…
+     18|     expect(matchingLeafReceipt({ ...row, studyId: undefined }, { ...ex…
+       |                                                                                                 ^
+     19|     const { studyId: _studyId, stfFileTag: _stfFileTag, ...untagged } …
+     20|     expect(matchingLeafReceipt({ ...row, studyId: undefined, stfFileTa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts > existing placement receipt with expected study metadata > reports sequence transition audit uncertainty alongside the placement audit
+AssertionError: expected '' to match /sequence.*audit.*not confirmed/i
+
+- Expected:
+/sequence.*audit.*not confirmed/i
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts:29:8
+     27|   it('reports sequence transition audit uncertainty alongside the plac…
+     28|     expect(placementAuditWarning({ ...row, sequenceStatusChanged: { fr…
+     29|       .toMatch(/sequence.*audit.*not confirmed/i);
+       |        ^
+     30|     expect(placementAuditWarning({ ...row, sequenceStatusChanged: { fr…
+     31|       .toMatch(/sequence.*audit.*retrievable/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  3 failed | 1 passed (4)
+   Start at  23:38:41
+   Duration  3.00s (transform 371ms, setup 359ms, import 414ms, tests 14ms, environment 1.39s)
+

@@ -48,7 +48,9 @@ import {
   voidSignatureForRefusedAct,
   VOIDED_VERIFICATION_STATUS,
 } from '../part11/signature-persistence';
+import { releaseActMeaningRefusal } from '../part11/signature-meanings';
 import { createScopedLogger } from '../../utils/logger';
+import { isFiledDispatchStatus } from './filed-dispatch';
 import { canMutateProgram, programInOrganization } from '../c2c/program-access';
 import {
   assertSignerIsNotAuthor,
@@ -95,7 +97,9 @@ import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readin
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
+import { regionalDeviceApplicationClassForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
 import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
+import { stfFileName } from '../ectd/stf-generator';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import {
   validateSectionCode,
@@ -116,10 +120,12 @@ export type SubmissionErrorCode =
   | 'FORBIDDEN'
   | 'CROSS_PROJECT'
   | 'ALREADY_PLACED'
+  | 'STALE_LEAF'
   | 'VALIDATION_FAILED'
   | 'UNANCHORED_SUBMISSION'
   | 'APPLICATION_NUMBER_MISMATCH'
   | 'APPLICATION_TYPE_MISMATCH'
+  | 'DEVICE_PREPARATION_ONLY'
   | 'PACKAGE_IDENTITY_MISSING'
   | 'SHADOW_WAIVER_NOT_ELIGIBLE'
   | 'SHADOW_FINDING_NOT_DISPOSABLE';
@@ -152,7 +158,9 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   FORBIDDEN: 403,
   CROSS_PROJECT: 409,
   ALREADY_PLACED: 409,
+  STALE_LEAF: 409,
   VALIDATION_FAILED: 422,
+  DEVICE_PREPARATION_ONLY: 422,
   UNANCHORED_SUBMISSION: 409,
   // The status the eCTD export answers for the same contradiction (ectd-export.ts).
   APPLICATION_NUMBER_MISMATCH: 409,
@@ -223,6 +231,10 @@ async function insertSubmissionRow(
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
+  if (regionalDeviceApplicationClassOf(input.applicationType) || regionalDeviceApplicationClassForFiling(input.applicationType)) {
+    throw new SubmissionError('DEVICE_PREPARATION_ONLY',
+      'Start this filing as an authoring project. Its preparation outline does not support canonical submission creation yet. Nothing was created.');
+  }
   const [row] = await executor
     .insert(submissions)
     .values({
@@ -866,8 +878,14 @@ const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
  * The meanings an intent narrows Gate 1 to, beyond requiresIndependence. A
  * waiver (P-34) and a finding disposition (P-35) are decisions the signer
  * approves or answers for: responsibility or approval, never review or release.
+ * Freeze, dispatch and transmit are approval or release steps
+ * (RELEASE_ACT_MEANINGS). Until 2026-10-19 they had no entry here, so a
+ * signature declaring "review", or no meaning at all, authorized them.
  */
 const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: unknown) => string | null>> = {
+  freeze: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.freeze),
+  dispatch: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.dispatch),
+  transmit: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.transmit),
   [SHADOW_WAIVER_INTENT]: shadowWaiverMeaningRefusal,
   [SHADOW_FINDING_DISPOSITION_INTENT]: shadowFindingDispositionMeaningRefusal,
 };
@@ -1420,7 +1438,7 @@ async function filingOrderRefusal(
     const shared = sharedLifecycleKeys(mine, leavesOf.get(Number(r.id)) ?? [], leafSourceKey);
     if (shared) dependent.push({ ...r, shared_sections: shared });
   }
-  const isFiled = (r: Other) => r.dispatch_status === 'sent' || r.dispatch_status === 'acknowledged';
+  const isFiled = (r: Other) => isFiledDispatchStatus(r.dispatch_status);
   // Zero-padded fixed-width sequence numbers: lexical order is filing order,
   // the same assumption the prior-sequence loaders rely on.
   const lower = dependent.filter((r) => String(r.sequence_number) < seq.sequenceNumber && !isFiled(r));
@@ -2847,6 +2865,14 @@ export interface UpsertLeafInput {
   documentUuid?: string | null;
   documentType?: string | null;
   parentLeafId?: number | null;
+  studyId?: string | null;
+  stfFileTag?: string | null;
+  /** Narrow, compare-and-set metadata edit. Never re-pins or changes a source. */
+  studyTaggingEdit?: {
+    expectedStudyId: string | null;
+    expectedStfFileTag: string | null;
+    expectedUpdatedAt: string;
+  };
   /** MD5 (or other) checksum of the leaf's rendered bytes, for the eCTD index-md5. */
   checksum?: string | null;
   /** Why this placement was made, recorded on its audit row (21 CFR 11.10(e)).
@@ -3349,6 +3375,81 @@ async function recordRevertedValidation(
   return { from: 'validated', to: 'assembling', auditTrail };
 }
 
+/** The generator owns study-id naming. Document tag recall remains advisory. */
+function validatedStudyMetadata(input: UpsertLeafInput): Pick<UpsertLeafInput, 'studyId' | 'stfFileTag'> {
+  const result: Pick<UpsertLeafInput, 'studyId' | 'stfFileTag'> = {};
+  if (input.studyId !== undefined) {
+    if (input.studyId === null) result.studyId = null;
+    else {
+      if (typeof input.studyId !== 'string' || !input.studyId.trim()) {
+        throw new SubmissionError('VALIDATION', 'Study id must be a nonempty string or null.');
+      }
+      result.studyId = input.studyId.trim();
+      try { stfFileName(result.studyId); }
+      catch (err) { throw new SubmissionError('VALIDATION', err instanceof Error ? err.message : 'Invalid study id.'); }
+    }
+  }
+  if (input.stfFileTag !== undefined) {
+    if (input.stfFileTag === null) result.stfFileTag = null;
+    else {
+      if (typeof input.stfFileTag !== 'string' || !input.stfFileTag.trim() || input.stfFileTag.trim().length > 128 ||
+          Array.from(input.stfFileTag).some((char) => char.charCodeAt(0) < 32 || (char.charCodeAt(0) >= 127 && char.charCodeAt(0) <= 159))) {
+        throw new SubmissionError('VALIDATION', 'STF file-tag must be nonempty, at most 128 characters and contain no control characters.');
+      }
+      result.stfFileTag = input.stfFileTag.trim();
+    }
+  }
+  return result;
+}
+
+function studyMetadataOf(leaf: { studyId?: string | null; stfFileTag?: string | null }) {
+  return { studyId: leaf.studyId ?? null, stfFileTag: leaf.stfFileTag ?? null };
+}
+
+function requiredStudyTaggingSnapshot(input: UpsertLeafInput): { expected: NonNullable<UpsertLeafInput['studyTaggingEdit']>; leafId: number } {
+  const expected = input.studyTaggingEdit;
+  const nullableString = (value: unknown) => typeof value === 'string' || value === null;
+  const isoTimestamp = typeof expected?.expectedUpdatedAt === 'string' &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(expected.expectedUpdatedAt) &&
+    Number.isFinite(Date.parse(expected.expectedUpdatedAt));
+  if (!input.leafId || input.studyId === undefined || input.stfFileTag === undefined || !expected ||
+      !nullableString(expected.expectedStudyId) || !nullableString(expected.expectedStfFileTag) || !isoTimestamp ||
+      typeof input.reason !== 'string' || input.reason.trim().length < 8) {
+    throw new SubmissionError('VALIDATION', 'A study metadata edit requires a leaf, both new values, the current metadata and timestamp, and a reason of at least 8 characters.');
+  }
+  return { expected, leafId: input.leafId };
+}
+
+/** Extend the canonical writer without re-attesting a changed source document. */
+async function editLeafStudyTagging(input: UpsertLeafInput, ctx: { organizationId: number; userId: number }): Promise<UpsertedLeaf> {
+  const { expected, leafId } = requiredStudyTaggingSnapshot(input);
+  const where = and(eq(submissionLeaves.id, leafId), eq(submissionLeaves.sequenceId, input.sequenceId),
+    eq(submissionLeaves.organizationId, ctx.organizationId), isNull(submissionLeaves.deletedAt));
+  const { value, revertedFromValidated } = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
+    const [previous] = await tx.select().from(submissionLeaves).where(where).for('update');
+    if (!previous) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
+    if (previous.sectionCode !== input.sectionCode || previous.title !== input.title ||
+        (previous.studyId ?? null) !== expected.expectedStudyId || (previous.stfFileTag ?? null) !== expected.expectedStfFileTag ||
+        previous.updatedAt?.getTime() !== Date.parse(expected.expectedUpdatedAt)) {
+      throw new SubmissionError('STALE_LEAF', 'This leaf changed after it was read. Read the current leaf before saving study metadata again. Nothing was written.');
+    }
+    if ((previous.studyId ?? null) === input.studyId && (previous.stfFileTag ?? null) === input.stfFileTag) {
+      return { previous, row: previous, changed: false };
+    }
+    const [row] = await tx.update(submissionLeaves).set({ studyId: input.studyId, stfFileTag: input.stfFileTag, updatedAt: new Date() })
+      .where(where).returning();
+    return { previous, row, changed: true };
+  }, (result) => result.changed);
+  if (!value.changed) return { ...(value.row as SubmissionLeaf), unchanged: true, auditTrail: null };
+  const auditTrail = await recordAuditRow({ organizationId: ctx.organizationId, userId: ctx.userId,
+    action: 'LEAF_UPDATED', resourceType: 'submission_leaf', resourceId: leafId,
+    details: { sequenceId: input.sequenceId, sectionCode: value.row.sectionCode, lifecycleOp: value.row.lifecycleOp,
+      previousStudyMetadata: studyMetadataOf(value.previous), studyMetadata: studyMetadataOf(value.row),
+      documentChanged: false, reason: input.reason } });
+  const sequenceStatusChanged = revertedFromValidated ? await recordRevertedValidation(input.sequenceId, leafId, ctx) : undefined;
+  return { ...(value.row as SubmissionLeaf), auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
+}
+
 export async function upsertLeaf(
   input: UpsertLeafInput,
   ctx: { organizationId: number; userId: number }
@@ -3357,6 +3458,9 @@ export async function upsertLeaf(
   if (isSequenceLocked(seq.status)) {
     throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
   }
+
+  input = { ...input, ...validatedStudyMetadata(input) };
+  if (input.studyTaggingEdit !== undefined) return editLeafStudyTagging(input, ctx);
 
   /* The leaf's SECTION CODE decides where the document lands in the package:
      the packager derives the leaf's module, its folder and which backbone
@@ -3566,6 +3670,8 @@ export async function upsertLeaf(
           documentId: submissionLeaves.documentId,
           documentUuid: submissionLeaves.documentUuid,
           documentContentSha256: submissionLeaves.documentContentSha256,
+          studyId: submissionLeaves.studyId,
+          stfFileTag: submissionLeaves.stfFileTag,
         })
         .from(submissionLeaves)
         .where(leafWhere)
@@ -3582,6 +3688,8 @@ export async function upsertLeaf(
         documentUuid: input.documentUuid ?? null,
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
+        ...(input.studyId !== undefined ? { studyId: input.studyId } : {}),
+        ...(input.stfFileTag !== undefined ? { stfFileTag: input.stfFileTag } : {}),
         ...(input.checksum !== undefined ? { checksum: input.checksum } : {}),
         /* Re-pinned on every update, because an update can re-point the leaf at
            a different document — carrying the previous pin forward would attest
@@ -3628,6 +3736,8 @@ export async function upsertLeaf(
         ...placedDocument,
         previousDocument,
         documentChanged,
+        previousStudyMetadata: previous ? studyMetadataOf(previous) : null,
+        studyMetadata: studyMetadataOf(row),
         ...(input.reason ? { reason: input.reason } : {}),
       },
     });
@@ -3662,6 +3772,8 @@ export async function upsertLeaf(
         documentUuid: input.documentUuid ?? null,
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
+        studyId: input.studyId ?? null,
+        stfFileTag: input.stfFileTag ?? null,
         checksum: input.checksum ?? null,
         documentContentSha256,
         documentPinnedAt: documentContentSha256 ? new Date() : null,
@@ -3685,6 +3797,7 @@ export async function upsertLeaf(
       sequenceId: input.sequenceId,
       sectionCode: input.sectionCode,
       ...placedDocument,
+      studyMetadata: studyMetadataOf(row),
       ...(input.reason ? { reason: input.reason } : {}),
     },
   });
@@ -3710,6 +3823,11 @@ export async function upsertLeaf(
  * leaf and place again).
  */
 function alreadyPlaced(live: SubmissionLeaf, input: UpsertLeafInput, currentSha256: string | null): UpsertedLeaf {
+  if ((input.studyId !== undefined && (live.studyId ?? null) !== input.studyId) ||
+      (input.stfFileTag !== undefined && (live.stfFileTag ?? null) !== input.stfFileTag)) {
+    throw new SubmissionError('ALREADY_PLACED', `This document is already placed at ${live.sectionCode} (leaf ${live.id}) with different study metadata. ` +
+      'Nothing was written. Edit study metadata on the existing leaf.');
+  }
   const requested = input.lifecycleOp ?? 'new';
   if ((live.lifecycleOp ?? 'new') !== requested) {
     throw new SubmissionError(

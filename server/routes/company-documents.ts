@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { z } from 'zod';
 import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import { governedActorId } from '../middleware/orgMembership';
@@ -9,7 +9,7 @@ import type { CompanyDocumentProfile } from '../../shared/company-documents';
 import { renderDocxWithTemplate } from '../services/templates';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
 import { archiveCompanyLegalDocument, companyDocumentsFailure, companyProfileHash, companyLetterheadForPurpose, readCompanyDocumentProfile,
-  registerCompanyLegalDocument, updateCompanyDocumentProfile, context } from '../services/company-documents/profile';
+  registerCompanyLegalDocument, updateCompanyDocumentProfile, context, requireCompanyDocumentManager } from '../services/company-documents/profile';
 import { parseCompanyInput, profileUpdateSchema, validateCompanyLetterhead } from '../services/company-documents/validation';
 import companyDocumentActions from './company-document-actions';
 import { correspondenceFilingParagraphs, createSubmissionCorrespondenceDraft, prepareSubmissionCorrespondence } from '../services/company-documents/correspondence';
@@ -20,14 +20,15 @@ import companyDocumentGovernance from './company-document-governance';
 import companyLegalWorkflows from './company-legal-workflows';
 import companyDocumentDesigns from './company-document-designs';
 import companyLegalInventory from './company-legal-inventory';
+import { receiveTemplateFile, extractTemplatePreview } from './c2c/template-upload';
 
 const router = Router();
 router.use((req, res, next) => {
   if (!usableOrgId(authedOrgId(req)) || !governedActorId(req)) return res.status(403).json({ error: 'AUTH_REQUIRED', message: 'An authenticated organization member is required.' });
   next();
 });
-const handle = (work: (req: Request, res: Response) => Promise<unknown>) => async (req: Request, res: Response) => {
-  try { await work(req, res); } catch (error) {
+const handle = (work: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) => async (req: Request, res: Response, next: NextFunction) => {
+  try { await work(req, res, next); } catch (error) {
     if (error instanceof SubmissionReadError) return res.status(error.status).json({ error: error.code, message: error.message });
     if (error instanceof AuthoringCreateOutcomeError) return res.status(503).json(authoringCreationRecoveryPayload(error));
     if (isUnauditedExportRefusal(error)) return res.status(503).json({ error: 'UNAUDITED_EXPORT_REFUSED', message: 'The document was not delivered because its export record could not be saved.' });
@@ -36,6 +37,11 @@ const handle = (work: (req: Request, res: Response) => Promise<unknown>) => asyn
     return res.status(failure.status).json({ error: failure.code, message: failure.message });
   }
 };
+
+router.post('/letterhead/extract', handle(async (req, _res, next) => {
+  await requireCompanyDocumentManager(req);
+  next();
+}), receiveTemplateFile, handle(extractTemplatePreview));
 
 router.get('/', handle(async (req, res) => {
   const input = parseCompanyInput(z.object({ includeLegal: z.enum(['true', 'false']).optional() }).strict(), req.query);

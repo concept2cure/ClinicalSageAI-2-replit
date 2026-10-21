@@ -1,0 +1,4 @@
+Warning: modified files without companion tests (non-blocking):
+ - client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+ - server/routes/c2c/project-access.ts
+Companion-file scan complete. This scan does not execute or qualify tests.

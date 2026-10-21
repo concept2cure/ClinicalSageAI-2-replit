@@ -19,8 +19,11 @@ vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: 
 
 import { DocumentWorkbench, type DocumentWorkbenchProps } from '../DocumentWorkbench';
 import { authService } from '@/services/portal/authService';
+import { setAuthToken } from '@/utils/authToken';
 import { publishShellProject } from '../../shellProject';
-import { clearEditorTarget } from '../../editorTarget';
+import { clearEditorTarget, setEditorTarget } from '../../editorTarget';
+import { surfaceLeaveRefusal } from '../../navParams';
+import { registerCeremonyOpen } from '../../ceremony';
 
 const PID = 'bbbbbbbb-0000-4000-8000-000000000181';
 const DOC = 'dddddddd-0000-4000-8000-000000000181';
@@ -31,7 +34,7 @@ const TEMPLATE = 'cccccccc-0000-4000-8000-000000000181';
 const OTHER = 'bbbbbbbb-0000-4000-8000-000000000182';
 const AT = '2026-10-17T20:00:00Z';
 const doc = { id: DOC, title: 'Assembly working document', module: 'M3', product_code: null,
-  section_count: 1, status: 'DRAFT', updated_at: AT };
+  section_count: 1, status: 'DRAFT', updated_at: AT, client_program_id: PID };
 const section = { id: SEC, doc_id: DOC, code: '3.2.P.8.1', title: 'Existing stability summary',
   content: '<p>Existing saved stability evidence.</p>', order_index: 7, updated_at: AT };
 const emptySection = { id: SECOND, doc_id: DOC, code: '3.2.P.8.2', title: 'Post-approval stability protocol',
@@ -67,6 +70,8 @@ const ok = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
 const user = (id = '181', organizationId = '18') => ({ id, organizationId, organizationName: null,
   email: 'assembly@example.test', firstName: 'Synthetic', lastName: 'Author', displayName: 'Synthetic author',
   roles: ['author'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false });
+const bearer = (userId = '181', organizationId = '18', visit = 'original') =>
+  `fixture.${btoa(JSON.stringify({ userId: Number(userId), organizationId: Number(organizationId), visit }))}.synthetic`;
 function editorNode() { return document.querySelector('.tiptap') as HTMLElement & { editor: Editor }; }
 for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
   prototype.getClientRects ??= () => [];
@@ -75,7 +80,7 @@ for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as 
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user: user() })));
-  await authService.adoptSession('synthetic-assembly-session');
+  await authService.adoptSession(bearer());
   publishShellProject({ id: PID });
   savedSections = [section];
   previewReply = input => ok({ success: true, data: plan(input) });
@@ -146,7 +151,7 @@ describe('assembly is reachable in the one existing editor', () => {
     expect(assemblyCalls('commit')[0]).toEqual(['POST', `/api/authoring/docs/${DOC}/assembly/commit`, {
       programId: PID, templateId: TEMPLATE, selection: { target: 'document' }, fingerprint: 'fingerprint-181',
       reason: 'Assemble the selected saved template sections.',
-    }]);
+    }, { Authorization: `Bearer ${bearer()}`, 'x-organization-id': '18' }]);
     expect(editorNode()).toBe(original);
     expect(original.textContent).toContain('Existing saved stability evidence.');
     expect(savedSections[0]).toEqual(section);
@@ -182,6 +187,107 @@ describe('assembly is reachable in the one existing editor', () => {
     expect(assemblyCalls('commit')).toHaveLength(1);
     expect(aiCalls()).toHaveLength(0);
     expect(editorNode().textContent).toContain('Existing saved stability evidence.');
+  });
+});
+
+describe('structural assembly retains the actual editor host', () => {
+  it('refuses Back while the commit is pending and releases a confirmed structure normally', async () => {
+    const onBack = vi.fn(); const pending = deferred<Response>(); commitReply = () => pending.promise;
+    await mounted({ embedded: { onBack }, consumeDeepLinks: true });
+    const original = editorNode(); await buildDocument();
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).not.toHaveBeenCalled(); expect(editorNode()).toBe(original);
+    const input = assemblyCalls('commit')[0][2] as AssemblyPreviewInput;
+    await act(async () => pending.resolve(ok({ success: true, data: commit(input) })));
+    await screen.findByText(/Structure built in this document/);
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).toHaveBeenCalledOnce(); expect(assemblyCalls('commit')).toHaveLength(1);
+  });
+
+  it('refuses Back and an exact linked-section replacement while the commit remains unknown', async () => {
+    const onBack = vi.fn();
+    commitReply = input => { commit(input); throw new TypeError('Synthetic lost assembly response'); };
+    await mounted({ embedded: { onBack }, consumeDeepLinks: true });
+    await buildDocument(); await screen.findByRole('button', { name: 'Check saved document' });
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).not.toHaveBeenCalled();
+    const reads = apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`).length;
+    await act(async () => setEditorTarget({ docType: null, docId: DOC, code: emptySection.code, programId: PID }));
+    expect(apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`)).toHaveLength(reads);
+    expect(editorNode().getAttribute('aria-label')).toContain(section.code);
+    expect(editorNode().textContent).toContain('Existing saved stability evidence.');
+    expect(assemblyCalls('commit')).toHaveLength(1); expect(aiCalls()).toHaveLength(0);
+  });
+
+  it.each(['503', 'malformed'])('retains uncertainty when the actual host recovery read is %s after a verified inspection', async mode => {
+    const onBack = vi.fn();
+    commitReply = input => { commit(input); throw new TypeError('Synthetic lost assembly response'); };
+    await mounted({ embedded: { onBack } }); await buildDocument();
+    const check = await screen.findByRole('button', { name: 'Check saved document' });
+    const normal = apiRequest.getMockImplementation()!; let reads = 0;
+    apiRequest.mockImplementation((method: string, url: string, body?: AssemblyPreviewInput) => {
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections` && ++reads === 2) {
+        return mode === '503' ? ok({ success: false }, 503)
+          : ok({ success: true, sections: [{ ...section, doc_id: 'foreign-document' }] });
+      }
+      return normal(method, url, body);
+    });
+    fireEvent.click(check);
+    await waitFor(() => expect(reads).toBe(2));
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Check saved document' }) as HTMLButtonElement).disabled).toBe(false));
+    expect(surfaceLeaveRefusal()).toMatch(/build|assembly|structur/i);
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).not.toHaveBeenCalled(); expect(assemblyCalls('commit')).toHaveLength(1);
+    expect(aiCalls()).toHaveLength(0);
+  });
+
+  it('refuses a direct project switch without replaying it after the commit finishes', async () => {
+    const pending = deferred<Response>(); commitReply = () => pending.promise;
+    const view = await mounted(); await buildDocument();
+    const onContinue = vi.fn(); const onCancel = vi.fn();
+    view.rerender(<DocumentWorkbench {...view.props} programSwitchHeld pendingProgramSwitch={{ id: OTHER, label: 'Other project', onContinue, onCancel }} />);
+    expect(onCancel).toHaveBeenCalledOnce(); expect(onContinue).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    const input = assemblyCalls('commit')[0][2] as AssemblyPreviewInput;
+    await act(async () => pending.resolve(ok({ success: true, data: commit(input) })));
+    view.rerender(<DocumentWorkbench {...view.props} />);
+    expect(onContinue).not.toHaveBeenCalled(); expect(assemblyCalls('commit')).toHaveLength(1);
+  });
+
+  it.each(['account', 'bearer', 'refresh'] as const)('checks %s ownership before applying a delayed actual host recovery read', async transition => {
+    authService.setToken(bearer(), user(), 'synthetic-refresh', 3600);
+    const onBack = vi.fn();
+    commitReply = input => { commit(input); throw new TypeError('Synthetic lost assembly response'); };
+    await mounted({ embedded: { onBack } }); await buildDocument();
+    const check = await screen.findByRole('button', { name: 'Check saved document' });
+    const pending = deferred<Response>(); const normal = apiRequest.getMockImplementation()!; let reads = 0;
+    apiRequest.mockImplementation((method: string, url: string, body?: AssemblyPreviewInput) =>
+      method === 'GET' && url === `/api/authoring/docs/${DOC}/sections` && ++reads === 2
+        ? pending.promise : normal(method, url, body));
+    fireEvent.click(check); await waitFor(() => expect(reads).toBe(2));
+    const session = authService.captureSessionReadGuard();
+    await act(async () => {
+      if (transition === 'account') authService.setToken(bearer('182'), user('182'), 'replacement-refresh', 3600);
+      else if (transition === 'bearer') setAuthToken(bearer('182'));
+      else {
+        vi.stubGlobal('fetch', vi.fn(async () => ok({ accessToken: bearer('181', '18', 'refreshed'), refreshToken: 'next-refresh', expiresIn: 3600 })));
+        expect(await authService.refreshToken()).toBe(true);
+        expect(session.sameRevision()).toBe(true);
+      }
+    });
+    const content = 'Text returned by the delayed host recovery read.';
+    await act(async () => pending.resolve(ok({ success: true, sections: [{ ...section, content }] })));
+    if (transition === 'refresh') {
+      await screen.findByText(/cannot identify.*interrupted request/i);
+    } else {
+      expect(editorNode().textContent).toContain('Existing saved stability evidence.');
+      expect(editorNode().textContent).not.toContain(content);
+    }
+    fireEvent.click(screen.getByTitle('Read the whole document'));
+    if (transition === 'refresh') expect(await screen.findByText(content)).toBeTruthy();
+    else expect(screen.queryByText(content)).toBeNull();
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).toHaveBeenCalledOnce(); expect(assemblyCalls('commit')).toHaveLength(1);
   });
 });
 
@@ -344,4 +450,23 @@ describe('automatic AnA preparation retains individual review in the existing pa
     expect(apiRequest.mock.calls.some(([, url]) => String(url).endsWith('/accept'))).toBe(false);
     expect(aiCalls()).toHaveLength(2);
   });
+});
+
+it('refuses retained candidate navigation when a governed ceremony opens during its exact read', async () => {
+  await mounted(); await buildDocument(true);
+  await screen.findByText(/2 candidates retained for individual review/);
+  const pending = deferred<Response>(); const normal = apiRequest.getMockImplementation()!;
+  let reading = false;
+  apiRequest.mockImplementation((method: string, url: string, body?: AssemblyPreviewInput) => {
+    if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) { reading = true; return pending.promise; }
+    return normal(method, url, body);
+  });
+  fireEvent.click(screen.getByRole('button', { name: `Review ${emptySection.code}` }));
+  await waitFor(() => expect(reading).toBe(true));
+  const release = registerCeremonyOpen();
+  try {
+    await act(async () => pending.resolve(ok({ success: true, sections: savedSections })));
+    expect(screen.queryByTestId('ai-draft-panel')).toBeNull();
+    expect(editorNode().getAttribute('aria-label')).toContain(section.code);
+  } finally { release(); }
 });

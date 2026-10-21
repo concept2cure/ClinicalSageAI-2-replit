@@ -1,0 +1,219 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:25:14.923Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > binds current actor, UUID, anchor and workspace and disambiguates only real active candidates 67ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > exposes no candidate directory or controls to an admitted reader with a stale admin claim 34ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > grants a current account despite a stale viewer claim and records the existing audit outcome 57ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > revokes in place and removes subsequent private read access without erasing attribution 59ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > allows revocation of a departed account without restoring or exposing its identity 26ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies a read-only owner on member and visibility operations despite a stale administrator claim 28ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies an ordinary reader attempting to grant access with a stale administrator claim 19ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 8 18ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 11 19ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses wrong UUID anchors and a second client workspace 18ms
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > preserves existing truthful best-effort audit failure metadata after a committed grant
+{
+  "timestamp": "2026-10-21T01:25:20.019Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792545920016_ef253dec99e90b2e,7,project,101,UPDATE,data-change,{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"id\":30,\"user_id\":6,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-01T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:25:19.988Z\",\"updated_at\":\"2026-10-21T01:25:19.988Z\"},{\"id\":31,\"user_id\":8,\"role\":\"edit\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-02T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:25:19.988Z\",\"updated_at\":\"2026-10-21T01:25:19.988Z\"}]}},{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"id\":30,\"user_id\":6,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-01T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:25:19.988Z\",\"updated_at\":\"2026-10-21T01:25:19.988Z\"},{\"id\":32,\"user_id\":7,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-10-21T01:25:19.992Z\",\"created_at\":\"2026-10-21T01:25:19.992Z\",\"updated_at\":\"2026-10-21T01:25:19.992Z\"},{\"id\":31,\"user_id\":8,\"role\":\"edit\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-02T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:25:19.988Z\",\"updated_at\":\"2026-10-21T01:25:19.988Z\"}]}},5,a***@example.test,member,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"8ab1c5517e2b338a4659507a175ad41b0a99db61763d89ccc5a24010d5db1f32\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "101"
+  }
+}
+
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > protects implicit ownership and refuses archived writes 67ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > reports missing stores and missing request clients as unavailable without a pool fallback 13ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not acknowledge a zero-row visibility write 19ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not acknowledge a zero-row revoke write 17ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > preserves existing truthful best-effort audit failure metadata after a committed grant 44ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not claim rollback after a committed grant loses its acknowledgement 29ms
+stderr | server/routes/__tests__/o01-core-project-audits.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > create, update, collaborators, export, duplicate, transfer and archive, audit unavailable=true 262ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > create, update, collaborators, export, duplicate, transfer and archive, audit unavailable=false 158ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > audit recovery restores actual persisted history without changing or repeating the prior saved action 49ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > a failed business write returns refusal and emits no successful audit outcome 30ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > an initial owner grant failure rolls back project creation and visibility 23ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > a template visibility failure rolls back the copied project and owner grant 22ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > a conversation archive failure rolls back the project archive too 27ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current active author can create and privately copy under the canonical creation policy 40ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current active tenant_regulatory_scientist can create and privately copy under the canonical creation policy 36ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current viewer cannot create or copy despite a stale administrator claim 15ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current readonly cannot create or copy despite a stale administrator claim 18ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current read_only cannot create or copy despite a stale administrator claim 15ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current guest cannot create or copy despite a stale administrator claim 17ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a pending_deletion tenant cannot create or copy through a read-only recovery grant 12ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a suspended tenant cannot create or copy through a read-only recovery grant 14ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a purged tenant cannot create or copy through a read-only recovery grant 11ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a inactive tenant cannot create or copy through a read-only recovery grant 15ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > foreign and inaccessible private export is refused before disclosure or effects 25ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > foreign and inaccessible private duplicate is refused before disclosure or effects 24ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > foreign and inaccessible private transfer is refused before disclosure or effects 26ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a project read grant permits export and template duplication but not source mutation 89ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a viewer with edit sharing cannot perform a governed write or create a copy 32ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > revoked current membership refuses every action despite retained sharing and an administrator token 23ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a copied template becomes the caller’s private project and carries no source ownership or native identity 42ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > an organization member never shared on the private project is refused, and nothing changes 21ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > user 8, a read ("use") share, is refused, and nothing changes 15ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > user 9, a viewer with an edit share, is refused, and nothing changes 7ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > the owner may change them, and the change is audited (audit unavailable=true) 41ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > the owner may change them, and the change is audited (audit unavailable=false) 33ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > visibility opened to the organization writes an audited UPDATE with the state before and after 28ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > a member granted edit writes an audited UPDATE with the state before and after 26ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > a member removed writes an audited UPDATE with the state before and after 22ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > an audit store that refuses the row is disclosed, not reported as recorded 20ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > a caller who may not manage the project changes nothing and writes no row 15ms
+
+ Test Files  2 passed (2)
+      Tests  50 passed (50)
+   Start at  01:25:12
+   Duration  14.31s (transform 2.16s, setup 132ms, import 5.96s, tests 7.73s, environment 0ms)
+
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization 3ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check" 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > retains an exclusive parent lock with includeDeleted=false 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > retains an exclusive parent lock with includeDeleted=true 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > keeps the exclusive reservation when a composed caller also requests a shared hold 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > keeps ordinary reads free of an exclusive write reservation 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > preserves typed unavailable refusal when the parent reservation fails 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds the live matching row using the supplied transaction executor and bound identity 5ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > refuses a missing, foreign or deleted row in held live mode 4ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds a deleted row only with the explicit retained-record option 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > preserves ordinary behavior when holding is absent or explicitly false 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=false) 5ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=true) 1ms
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+{
+  "timestamp": "2026-10-21T01:25:42.666Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01)
+{
+  "timestamp": "2026-10-21T01:25:44.152Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42P01",
+    "detail": "relation \"projects\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703)
+{
+  "timestamp": "2026-10-21T01:25:44.154Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42703",
+    "detail": "column \"owner_id\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501)
+{
+  "timestamp": "2026-10-21T01:25:44.155Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42501",
+    "detail": "permission denied for table projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006)
+{
+  "timestamp": "2026-10-21T01:25:44.156Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "08006",
+    "detail": "connection failure"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014)
+{
+  "timestamp": "2026-10-21T01:25:44.157Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "57014",
+    "detail": "canceling statement due to statement timeout"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies on a genuine no-match, with no error 4ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies an unparseable project id 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01) 3ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014) 1ms
+ ✓ tests/services/project-sharing-access.test.ts > project-sharing-access > defaults to org_public when no sharing settings are present 2ms
+ ✓ tests/services/project-sharing-access.test.ts > project-sharing-access > honors explicit private sharing for member use access 0ms
+ ✓ tests/services/project-sharing-access.test.ts > project-sharing-access > allows org managers to manage regardless of explicit membership 1ms
+
+ Test Files  3 passed (3)
+      Tests  49 passed (49)
+   Start at  01:25:37
+   Duration  6.97s (transform 1.22s, setup 152ms, import 3.50s, tests 2.62s, environment 0ms)

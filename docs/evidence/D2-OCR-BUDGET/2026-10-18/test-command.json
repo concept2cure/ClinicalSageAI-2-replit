@@ -1,0 +1,20 @@
+[
+  "node", "node_modules/vitest/vitest.mjs", "run", "--config", "vitest.config.ts",
+  "--maxWorkers=1", "--no-file-parallelism",
+  "server/services/ocr/__tests__/ocr-budget.test.ts",
+  "server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts",
+  "server/services/clinical-regulatory-evidence/__tests__/data-room-coverage-surfaces.test.ts",
+  "server/routes/__tests__/chat-upload-extraction-coverage.test.ts",
+  "server/services/ocr/__tests__/documentIntake.test.ts",
+  "server/services/ocr/__tests__/ocr-language-codes.test.ts",
+  "server/services/ocr/__tests__/page-offsets.test.ts",
+  "tests/services/ocr-live.test.ts",
+  "tests/services/scanned-pdf-native-canvas.test.ts",
+  "server/services/ana/__tests__/rasterize-page-honest.test.ts",
+  "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts",
+  "server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts",
+  "server/routes/__tests__/chat-upload-durability.test.ts",
+  "tests/concept2cure/use-chat-upload.test.tsx",
+  "client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx",
+  "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx"
+]

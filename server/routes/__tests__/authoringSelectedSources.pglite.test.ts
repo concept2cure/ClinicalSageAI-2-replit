@@ -244,7 +244,13 @@ describe('uncertain acceptance never claims a confirmed rollback', () => {
     expect(content).toBe(phase === 'after' ? 'Prepared candidate for human review.' : '');
     expect(await parked(draftId)).toBe(phase === 'after' ? 0 : 1);
     expect(response.status, JSON.stringify(response.body)).toBe(503);
-    expect(response.body.error.code).toBe('DRAFT_ACCEPT_UNCONFIRMED');
+    expect(response.body).toMatchObject({ success: false, ok: false,
+      code: 'AUTHORING_AI_ACCEPT_COMMIT_UNCONFIRMED', error: { code: 'AUTHORING_AI_ACCEPT_COMMIT_UNCONFIRMED' },
+      writeOutcome: 'unconfirmed', retryAllowed: false,
+      recovery: { organizationId: ORG, documentId: DOC, sectionId: id, draftId } });
+    expect(response.body.section).toBeUndefined();
+    expect(response.body.saved).toBeUndefined();
+    expect(response.body.filing).toBeUndefined();
     expect(response.body.error.message).not.toMatch(/nothing (?:was )?(?:saved|accepted)|not saved/i);
     expect(h.acceptSql.filter(sql => sql === 'COMMIT')).toHaveLength(1);
     expect(h.acceptSql.filter(sql => sql === 'ROLLBACK')).toHaveLength(0);

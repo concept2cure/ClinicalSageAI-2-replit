@@ -1,0 +1,75 @@
+{
+  "archives": [
+    {
+      "path": "task-handoff-canonical-push-source-final.log.gz",
+      "rawSha256": "c5423824b3fa0dc49cd7193c1602bbd73074b4072fee6bb3232631c9c0dabaa1",
+      "gzipSha256": "172b92590256b4e6ba5c7168c92066f893002825a4d409c67cb355a85287f3d3"
+    },
+    {
+      "path": "task-handoff-final-warning-workbench-lint.json.gz",
+      "rawSha256": "ce16f976a3466ac2cffce0c31c2e1c3ab7e043645ae24d281534cdf65ef205f3",
+      "gzipSha256": "5349c470845baf7b14aa1997afebac65080ebb6a845de5bd0bc71b2cd46efd26"
+    },
+    {
+      "path": "task-handoff-final-warning-navigation.log.gz",
+      "rawSha256": "abdf829a47332f7cd6788cafdcc23d5ae04390a7e4ff68e924a71ef388be16f7",
+      "gzipSha256": "5fc52729a75bcaa8ee1a787607539f7b574d8b82865e0a2fcadb777174a85ac5"
+    },
+    {
+      "path": "task-handoff-final-warning-navigation.json.gz",
+      "rawSha256": "5e0f4b18d0f58cf8f94e218ece6a07ef24f75e8e1df228fe44ea558ed009116d",
+      "gzipSha256": "61fb6da4baf71e411f4689ad5d01fdb974c5635613815ce36dea60962f3019be"
+    },
+    {
+      "path": "task-handoff-final-warning-navigation-files.txt.gz",
+      "rawSha256": "9399e76f35d8c0c1b804917bbcb52a6e817f7e503ef736885d4e5220b4462127",
+      "gzipSha256": "0ae0b925890f7bccf2f1e5debca02875cdf5e90e502891240094bd584cc56678"
+    },
+    {
+      "path": "task-handoff-final-warning-navigation-pins.json.gz",
+      "rawSha256": "ef5aee48c84228f6afb8bafcf24a9e55ef39bfc8dc57551593b86663242791c1",
+      "gzipSha256": "086f668ba1427fc3e8a021884b6d45b671b20169c445ce840f5eb130f7fe3dcb"
+    },
+    {
+      "path": "task-handoff-warning-tests-final.log.gz",
+      "rawSha256": "6204e95432c5d111385e8269f88269ef28a8977f45e6dd7ffd7488a247b759c7",
+      "gzipSha256": "31b9ee03522143e4224da5fb4d1ee823f6ac684fc7ac1a05d8603615d60c3c50"
+    },
+    {
+      "path": "task-handoff-warning-tests-final.json.gz",
+      "rawSha256": "f15a4bec998c7f75cac2ab5065706379a9c705d38a33ccc5283914852f32d0c8",
+      "gzipSha256": "132b5db64dd7394c6a35433cb6bf9c19c68a4b823edb4e9e1ce3fd8732c27342"
+    },
+    {
+      "path": "task-handoff-warning-tests-final-summary.json.gz",
+      "rawSha256": "7765fe2cb89ac69879267e419894d6d3499d4c7fe661a3112478205a77f1134c",
+      "gzipSha256": "0d621956c97106f0d77c81c5e2a18607781a0e6b839d5d27b8b9ce2df8d148b7"
+    },
+    {
+      "path": "task-handoff-warning-tests-final-pins.json.gz",
+      "rawSha256": "90c6ad4c09021a5bbce7e19af3f1e279ac9f00452151eae44c1690dcdd15e278",
+      "gzipSha256": "1066b271c466a869d4e8c7c193d4c0b4b542c3717fc526f8dbb47566a50f34c2"
+    },
+    {
+      "path": "task-handoff-warning-tests-final-lint.json.gz",
+      "rawSha256": "919951899769c0cec58ab8d14b4800172a967d3b76e240fd997ca34901e2b0d7",
+      "gzipSha256": "3d47fb0c4ec95399dfb9ccfdc112e3129f5a6c9577307a3ef40e95aabdb369b6"
+    },
+    {
+      "path": "task-handoff-warning-tests-before-lint.json.gz",
+      "rawSha256": "f3876f8cb45d067ab0413b001116615cc546e0efb822504d6c712630f3ba6477",
+      "gzipSha256": "00d47a84e439c3c3378432a9f39e72712a5821743b4479dfc3d7c79a0e62617c"
+    },
+    {
+      "path": "task-handoff-warning-tests-split-proof.json.gz",
+      "rawSha256": "061523231298423cc045f2cb3c5e6b4605c4940d23278209262fb63df42b6e8d",
+      "gzipSha256": "6d2699af334693bd377a8c050548e4043b9ee26313217ac8dd9fe3997d4de61c"
+    },
+    {
+      "path": "task-handoff-warning-fix-commit.log.gz",
+      "rawSha256": "67e67ccfe89c20d811db5a9490cceaf9a319282b99a2d4eeb8f45c4bbf956b05",
+      "gzipSha256": "634b601c81be776ff9340a4e307008eb28301382e91ee9dd631e0cf8ef96aa3a"
+    }
+  ],
+  "boundary": "First normal push refused net3 new warnings. Fixed production extraction and exact test split at82839d386; no baselines or suppressions changed."
+}

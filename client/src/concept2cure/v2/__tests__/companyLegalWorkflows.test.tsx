@@ -8,7 +8,7 @@ import { DEFAULT_TEMPLATE_SPEC } from '@shared/templates/template-spec';
 const m = vi.hoisted(() => ({ token: 'session-a', api: vi.fn() }));
 vi.mock('@/utils/authToken', () => ({ getAuthToken: () => m.token, getJwtOrgId: () => 7 }));
 vi.mock('../apiCall', () => ({ apiCall: m.api, apiErrorText: (result: { body?: { message?: string } }, fallback: string) => result.body?.message || fallback }));
-vi.mock('../surfaces/company-documents/CompanyVaultPicker', () => ({ CompanyVaultPicker: () => <p>Approved supporting evidence picker</p> }));
+vi.mock('../surfaces/VaultLibraryResults', () => ({ VaultVersionPicker: ({ programId }: { programId?: string }) => <p data-program-id={programId}>Approved supporting evidence picker</p> }));
 import { LegalLifecycleEditor } from '../surfaces/company-documents/LegalLifecycleEditor';
 import { CompanyLegalReadiness } from '../surfaces/company-documents/CompanyLegalReadiness';
 import { PagedCompanyLegalPicker } from '../surfaces/company-documents/PagedCompanyLegalPicker';
@@ -60,6 +60,7 @@ describe('legal lifecycle management', () => {
     const details = screen.getByText('Lifecycle, signing evidence and affected filings').closest('details')!;
     details.open = true; fireEvent(details, new Event('toggle'));
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Record signature verification evidence' }));
+    expect(screen.getByText('Approved supporting evidence picker').getAttribute('data-program-id')).toBe(document.programId);
     expect(screen.getByText(/does not cryptographically validate/)).toBeTruthy();
     expect((screen.getByLabelText('Reported result') as HTMLSelectElement).value).toBe('inconclusive');
   });

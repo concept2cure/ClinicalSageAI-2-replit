@@ -1,5 +1,8 @@
 # Live company-document browser verification
 
+This folder retains the historical October 18 proof. The fresh October 21
+post-merge browser evidence is in [2026-10-21-post443](2026-10-21-post443/README.md).
+
 `smoke-result.json` records an actual Chromium run against the locally running
 application, with password sign-in and the authenticated browser session. No
 requests or responses were mocked. The local harness is

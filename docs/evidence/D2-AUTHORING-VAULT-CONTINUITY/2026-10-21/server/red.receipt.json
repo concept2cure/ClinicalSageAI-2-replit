@@ -1,0 +1,32 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "nodeVersion": "v22.23.3",
+  "argv": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts"
+  ],
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "dateUtc": "2026-10-21",
+  "startTimeReportedByVitest": "01:09:10",
+  "durationSecondsReportedByVitest": 19.39,
+  "finishedAtExitFileTimestamp": "2026-10-21T01:09:29.806Z",
+  "exitCode": 1,
+  "summary": [
+    "Test Files  3 failed (3)",
+    "Tests  24 failed | 45 passed | 2 todo (71)"
+  ],
+  "sourcePinFile": "red-production.sha256",
+  "sourcePinNote": "Original two production hashes captured before the initial RED; 24 target failures.",
+  "rawLog": "red.raw.log.gz",
+  "rawSha256": "5176e1994a636df38b0453d19e5ec97dc09add75862348762bbb02bc09e86ed4",
+  "gzipSha256": "0f5e8c5bdf9816675265e7f7631c28097ddd5d0ef1741c70cf84c38d11db26bf"
+}

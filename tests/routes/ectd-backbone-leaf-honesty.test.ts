@@ -71,6 +71,7 @@ function req(body: Record<string, unknown> = {}) {
 function mockSections(rows: unknown[]) {
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: string) => {
+    if (/FROM projects p/i.test(sql)) return { rows: [{ regulatory_program_id: null, linked_program_id: null, program_type: null, primary_agency: null }], rowCount: 1 };
     if (/FROM project_sections/i.test(sql)) return { rows, rowCount: rows.length };
     return { rows: [], rowCount: 0 };
   });

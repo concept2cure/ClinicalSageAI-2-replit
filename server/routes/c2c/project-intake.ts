@@ -12,6 +12,7 @@
  */
 
 import type { PoolClient } from 'pg';
+import { regionalDeviceApplicationClassTypes, regionalDeviceApplicationClassOf, regionalDeviceApplicationClassForFiling } from '../../../shared/regulatory/filing-catalog.js';
 import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
 import {
   listProductTypes,
@@ -19,11 +20,18 @@ import {
   DEVICE_FAMILY_PRODUCT_TYPES,
   MEDICINAL_PRODUCT_TYPES,
 } from '../../../shared/constants/domain/product-types.js';
+import {
+  filingDocumentClassOf,
+  filingDocumentClassTypes,
+  filingTypeInSentence,
+  productTypeFixedByFiling,
+} from '../../../shared/regulatory/filing-document-classes.js';
 
 /** Canonical program / product types accepted by the create endpoint. Program
  *  types line up with WS_CASE in projects.ts; product types match the store's
  *  CHECK-free but conventional set (drug/biologic/device/ivd). */
 export const VALID_PROGRAM_TYPES = new Set([
+  ...regionalDeviceApplicationClassTypes(),
   '510k', 'de_novo', 'pma', 'ivd', 'device', 'cer', 'ide',
   // 'cta' was mapped in PROGRAM_TO_DOC_TYPE and backed by a rule pack, but was
   // missing here — so the API rejected the one European filing a biotech running
@@ -39,6 +47,12 @@ export const VALID_PROGRAM_TYPES = new Set([
   // authorization; scaffolds against the harmonised Module 3 pack (mod3:ich)
   // through PROGRAM_TO_DOC_TYPE. Before this the wizard filed a DMF as an IND.
   'dmf',
+  // Filings that are a document, not an application: supplements, annual
+  // reports, IND amendments and safety reports, meeting packages, designation
+  // requests, the CSR and the other harmonised documents. Each scaffolds its own
+  // pack and creates no submission spine (it is in no DRUG_APPLICATION_TYPES
+  // row). shared/regulatory/filing-document-classes.ts is the list.
+  ...filingDocumentClassTypes(),
 ]);
 export const VALID_PRODUCT_TYPES = new Set<string>(listProductTypes());
 
@@ -166,6 +180,20 @@ export async function ensureSubmissionSpine(params: {
   return { id: Number(row.id), created: true };
 }
 
+/** Exact regional identities fix a bounded device family, independently of lane. */
+function regionalIntakeDecision(programType: string, stated: string, submissionTypeId?: string | null): { productType: string } | { refusal: string } | null {
+  const regional = regionalDeviceApplicationClassOf(programType);
+  const selectedRegional = regionalDeviceApplicationClassForFiling(submissionTypeId);
+  if ((regional && submissionTypeId && regional !== selectedRegional) || (selectedRegional && !regional)) {
+    return { refusal: 'The selected regional filing must match the project application type.' };
+  }
+  if (!regional) return null;
+  if (stated && !regional.productTypes.includes(stated as never)) {
+    return { refusal: 'The product family must match the selected regional device or diagnostic filing.' };
+  }
+  return { productType: stated || regional.defaultProductType };
+}
+
 /**
  * The product class a create records, or why it is refused (400). Pure.
  *
@@ -182,13 +210,27 @@ export async function ensureSubmissionSpine(params: {
 export function productTypeForIntake(
   programType: string,
   stated: string,
+  submissionTypeId?: string | null,
 ): { productType: string } | { refusal: string } {
-  const implied = productTypeForFilingType(programType);
+  return regionalIntakeDecision(programType, stated, submissionTypeId)
+    ?? nonRegionalProductTypeForIntake(programType, stated, submissionTypeId);
+}
+
+function nonRegionalProductTypeForIntake(
+  programType: string, stated: string, submissionTypeId?: string | null,
+): { productType: string } | { refusal: string } {
+  // A filing document class fixes no class, unless the filing names it: an
+  // sBLA is a biologics licence supplement (filing-document-classes.ts).
+  const byFiling = filingDocumentClassOf(programType) ? productTypeFixedByFiling(submissionTypeId) : null;
+  if (byFiling && stated && stated !== byFiling) {
+    return { refusal: `This filing is for a ${byFiling}, not "${stated}": the class is fixed by the filing chosen.` };
+  }
+  const implied = productTypeForFilingType(programType) ?? byFiling;
   const productType = stated || implied || '';
   if (!productType) {
     return {
       refusal:
-        `State whether the product is a drug or a biologic: a ${programType.toUpperCase()} filing ` +
+        `State whether the product is a drug or a biologic: ${filingTypeInSentence(programType).replace(/^A/, 'a')} filing ` +
         'covers both, and the class is recorded on the program.',
     };
   }

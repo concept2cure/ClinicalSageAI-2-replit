@@ -63,6 +63,7 @@ beforeAll(async () => {
       subcategory text,
       title text NOT NULL,
       content text NOT NULL,
+      source_document_type text,
       confidence_score real DEFAULT 0.8,
       importance_level text DEFAULT 'medium',
       status text DEFAULT 'active',

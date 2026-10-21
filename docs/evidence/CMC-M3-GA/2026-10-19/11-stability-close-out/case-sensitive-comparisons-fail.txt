@@ -1,0 +1,13 @@
+ × server/services/cmc/__tests__/stability-close-out.test.ts > isSigned reads the stored word whatever its case > recognises the register’s own upper-case word 7ms
+ × server/services/cmc/__tests__/stability-close-out.test.ts > isSigned reads the stored word whatever its case > recognises it however it is stored or sent 1ms
+ × server/services/cmc/__tests__/stability-close-out.test.ts > an ordinary edit cannot reach the close-out > refuses the transition into COMPLETED, naming the governed path 1ms
+ × server/services/cmc/__tests__/stability-close-out.test.ts > an ordinary edit cannot reach the close-out > refuses it whatever case the body sends 1ms
+ × server/services/cmc/__tests__/stability-close-out.test.ts > an ordinary edit cannot reach the close-out > refuses returning a closed-out study to a running state 1ms
+ × server/services/cmc/__tests__/stability-close-out.test.ts > a closed-out study is closed to content edits > refuses a new shelf life, naming the state and the way out 0ms
+ × server/services/cmc/__tests__/stability-close-out.test.ts > a closed-out study is closed to content edits > refuses a correction to the recorded series it signed over 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected false to be true // Object.is equality
+AssertionError: completed: expected false to be true // Object.is equality
+AssertionError: completed: expected null not to be null
+AssertionError: expected null not to be null
+      Tests  7 failed | 8 passed (15)

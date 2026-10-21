@@ -133,6 +133,7 @@ function fallbackMessage(status: number): string {
   // Each names the cause AND the next step. A 403 is the one case where "your
   // administrator" is the right actor — org admins really can grant access
   // (services/c2c/program-access.ts) — so it is said here and nowhere else.
+  if (status === 401) return 'Sign in again to continue.';
   if (status === 403) {
     return 'You do not have permission for this action. Contact your administrator if you need access.';
   }
@@ -407,6 +408,26 @@ function inspectWriteResponse(method: ApiRequestMethod, url: string, response: R
     });
 }
 
+/**
+ * Refuse a non-success response with the canonical sanitized server message.
+ * `apiRequest` intentionally returns 401 so session-aware callers can handle
+ * it. A mutation must still check that response before confirming a write.
+ * Successful bodies are left untouched for the caller's receipt reader.
+ */
+export async function assertApiResponseOk(response: Response): Promise<void> {
+  if (response.ok) return;
+  const correlationId = response.headers.get('X-Request-Id') ?? undefined;
+  const contentType = response.headers.get('Content-Type') || '';
+  if (contentType.includes('application/json')) {
+    const errorPayload = await response.json().catch(() => ({}));
+    const { message, code } = extractApiError(errorPayload, response.status);
+    throw new ApiRequestError(message, response.status, errorPayload, code, correlationId);
+  }
+  // A non-JSON body belongs to a failing upstream layer, never to user copy.
+  const errorText = await response.text();
+  throw new ApiRequestError(fallbackMessage(response.status), response.status, errorText, undefined, correlationId);
+}
+
 export const apiRequest = async (
   method: ApiRequestMethod,
   url: string,
@@ -444,26 +465,7 @@ export const apiRequest = async (
   }
 
   if (!response.ok && response.status !== 401) {
-    // Echoed by the server's requestId middleware and exposed to the browser via
-    // Access-Control-Expose-Headers, so it is readable cross-origin.
-    const correlationId = response.headers.get('X-Request-Id') ?? undefined;
-    const contentType = response.headers.get('Content-Type') || '';
-    if (contentType.includes('application/json')) {
-      const errorPayload = await response.json().catch(() => ({}));
-      const { message, code } = extractApiError(errorPayload, response.status);
-      throw new ApiRequestError(message, response.status, errorPayload, code, correlationId);
-    }
-    // A non-JSON body is an upstream page (a proxy error, an HTML login
-    // redirect, a stack trace) — never something to show a user. It is kept on
-    // `payload` for diagnostics and replaced with a generic sentence.
-    const errorText = await response.text();
-    throw new ApiRequestError(
-      fallbackMessage(response.status),
-      response.status,
-      errorText,
-      undefined,
-      correlationId,
-    );
+    await assertApiResponseOk(response);
   }
 
   probeAuditRowOutcome(method, url, response);

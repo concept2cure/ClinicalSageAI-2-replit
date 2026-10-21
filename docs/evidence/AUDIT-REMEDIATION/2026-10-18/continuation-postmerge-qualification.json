@@ -1,0 +1,158 @@
+{
+  "assembledUtc": "2026-10-18T00:53:17.868885+00:00",
+  "sourceAnchor": "b7a2696f9d3b43f69287e287dd26b716a0285bbe",
+  "sourceTree": "5864bc9763a23cd265b09875d4ee5d542c84fa04",
+  "scope": "Postmerge incoming PM and saved-source reuse integration plus criticality remedy. Overlaps prior stable cohort; do not add counts.",
+  "focused": {
+    "passed": 357,
+    "failed": 0,
+    "pending": 0,
+    "distinctTestFiles": 19,
+    "files": [
+      {
+        "path": "shared/__tests__/saved-assembly-sources.test.ts",
+        "passed": 15,
+        "failed": 0
+      },
+      {
+        "path": "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts",
+        "passed": 15,
+        "failed": 0
+      },
+      {
+        "path": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+        "passed": 48,
+        "failed": 0
+      },
+      {
+        "path": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+        "passed": 27,
+        "failed": 0
+      },
+      {
+        "path": "server/routes/__tests__/authoringSelectedSources.pglite.test.ts",
+        "passed": 14,
+        "failed": 0
+      },
+      {
+        "path": "server/routes/__tests__/project-schedule-of-events.test.ts",
+        "passed": 20,
+        "failed": 0
+      },
+      {
+        "path": "server/services/ana/__tests__/batch-draft-concurrency.test.ts",
+        "passed": 18,
+        "failed": 0
+      },
+      {
+        "path": "server/services/ana/__tests__/schedule-generation-reason.test.ts",
+        "passed": 12,
+        "failed": 0
+      },
+      {
+        "path": "server/services/ana/__tests__/tool-authorization.test.ts",
+        "passed": 51,
+        "failed": 0
+      },
+      {
+        "path": "server/services/authoring/__tests__/authoring-section-outcome.test.ts",
+        "passed": 10,
+        "failed": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringSectionCreationRecovery.test.tsx",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/__tests__/preservation.test.ts",
+        "passed": 26,
+        "failed": 0
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/__tests__/schedule-health-not-assessed.test.ts",
+        "passed": 4,
+        "failed": 0
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts",
+        "passed": 16,
+        "failed": 0
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/__tests__/schedule-read-fails-closed.test.ts",
+        "passed": 2,
+        "failed": 0
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+        "passed": 36,
+        "failed": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+        "passed": 12,
+        "failed": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+        "passed": 17,
+        "failed": 0
+      }
+    ]
+  },
+  "nativeSchedule": {
+    "passed": 31,
+    "failed": 0,
+    "pending": 0,
+    "distinctTestFiles": 1,
+    "files": [
+      {
+        "path": "tests/db/project-schedule-atomic.dbtest.ts",
+        "passed": 31,
+        "failed": 0
+      }
+    ],
+    "posture": "Native PostgreSQL verified TLS, production pool instrumentation, restricted runtime and FORCE RLS in isolated fixture. Schedule tables use their creating migration; parent/stage/tenant arbiter fixtures are narrow. Not deployment-schema or private-actor proof."
+  },
+  "criticalitySourceSha256": {
+    "server/services/projects/schedule-of-events/preservation.ts": "07a5324116d62041e3d0d312bb99ab6d057190f9bd67a9a9f2f6c33f5724ee51",
+    "server/services/projects/schedule-of-events/__tests__/preservation.test.ts": "928f873b2f7863c64d30d8829c37623d5543eed4b3f6bbf5f50b508cbe950dff",
+    "tests/db/project-schedule-atomic.dbtest.ts": "e3f8b03e4b104333af98e4980f06299aaec1ad009988de53832220c9bee73ea9"
+  },
+  "security": {
+    "newFindings": 0,
+    "exitCode": 0,
+    "baseline": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+    "partialParseNotices": 2,
+    "checkoutRestored": true,
+    "scope": "Incoming PM and saved-source paths since stable cdd4 qualification, plus criticality remedy and current evidence; isolated scan, no concurrent Git/tests/hooks/builds",
+    "limits": "Scoped differential proof complements previous pinned scans; two partial parses in new saved-source UI test files remain. Not a claim of complete static coverage."
+  },
+  "buildExitCode": 0,
+  "outgoingGitleaksFindings": 0,
+  "companionPresenceExitCode": 0,
+  "outsideArtifactSha256": {
+    "oct18-publication-focused.json": "cb98952e255e3b77e4f4b858d84364e2b29fb4c92a5df5e8ff169c4c2e0cfbb4",
+    "oct18-publication-focused-receipt.json": "a8ad39e683d30f9cb427347d114e7b670c6cd3cea8329e1527f26b8254928eff",
+    "oct18-pm-criticality-final-native.json": "bc58fc27278630a16310d83f85a164245f96a42cecb3ee2dd93f6dd774ad32f2",
+    "oct18-pm-criticality-acceptance.json": "18911cd0399e316de5c9be5ed9ec25eab1e4e1b5d22ab450b241b42111d144c1",
+    "oct18-pm-api-review/review.json": "b7367a4c30259ae2da83876d84869288da850193509399392161733faae400fb",
+    "oct18-saved-source-reuse-ui-readonly-review.json": "fba3cc090efc82fd2e1c7ea0376d9b4cd08e2e8a36572267260408c7c1f3e71c",
+    "oct18-pm-publication-security-metadata.json": "73be71773c9c3f2da8fee23a928657a6bc79ac726feb28cc5f6c9a030a34b0c7",
+    "oct18-publication-build.log": "afbd9a74dd0e7ab66989a82e8394c51fdb4531f7ff1cc9e90afc6aae60f79908",
+    "oct18-publication-gitleaks-private.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "oct18-publication-verify-tests.log": "52bd5702ecbc4f4e71c555f760f208bedf62c48c18477bc20c607e181afa299d"
+  },
+  "retainedLimits": [
+    "Schedule current numeric actor/executor and canonical private-project admission unresolved; org-only ownership is insufficient.",
+    "Generation serialization does not qualify amendment, goal reset or background-review concurrency.",
+    "33 uncomputed reports,5 prediction-unavailable types,digest producer,governed offboarding,external qualification,3 credential rotations and human UAT remain open."
+  ],
+  "finalHookAndPublication": "Recorded separately after this evidence commit; previous full unchanged hook passed on cdd4eba077f8bd1bfde36d2a3faeb31bb9ad3c45."
+}

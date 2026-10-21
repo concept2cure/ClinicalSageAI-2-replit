@@ -1,0 +1,1 @@
+Earlier frozen attempt: late-growth synthetic handler used an unclassified invented name, correctly held by native authorization. Its late-growth qualification is invalid. Parent authorized correction to an existing read-class handler branch before any production edits. Preserve other meaningful baseline failures; the corrected freeze/red run is authoritative.

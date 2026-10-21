@@ -39,7 +39,7 @@ vi.mock('../../../middleware/uploadSafety', () => ({
 
 import {
   archiveCompanyLegalDocument, companyProfileHash, companyLetterheadForPurpose, readCompanyDocumentProfile, readCompanyLegalDocument,
-  registerCompanyLegalDocument, updateCompanyDocumentProfile, writeProfile,
+  registerCompanyLegalDocument, updateCompanyDocumentProfile, writeProfile, requireCompanyDocumentManager,
 } from '../profile';
 import { ProgramReadAccessError } from '../../c2c/current-program-access';
 
@@ -167,6 +167,47 @@ describe('independently reviewed default branding policy', () => {
     }))).rejects.toMatchObject({ status: 400, code: 'INVALID_COMPANY_DOCUMENTS' });
     expect(mocks.write).not.toHaveBeenCalled();
   });
+});
+
+describe('current organization authority for letterhead preview', () => {
+  it('admits letterhead preview through current brand permissions and the request tenant connection', async () => {
+    await expect(requireCompanyDocumentManager(req)).resolves.toBeUndefined();
+    expect(mocks.actor).toHaveBeenCalledWith(q, { organizationId: 7, userId: 3 });
+    expect(mocks.query).not.toHaveBeenCalled();
+    expect(mocks.write).not.toHaveBeenCalled();
+  });
+
+  it('refuses letterhead preview for a current reader despite stale administrator claims', async () => {
+    mocks.actor.mockResolvedValue({ userId: 3, role: 'viewer' });
+    await expect(requireCompanyDocumentManager(req)).rejects.toMatchObject({ status: 403, code: 'COMPANY_PERMISSION_REQUIRED' });
+    expect(mocks.query).toHaveBeenCalledWith('SELECT manage_brand,manage_legal FROM company_document_grants WHERE organization_id=$1 AND user_id=$2', [7, 3]);
+    expect(mocks.source).not.toHaveBeenCalled();
+    expect(mocks.write).not.toHaveBeenCalled();
+  });
+
+  it('admits a currently delegated brand manager without relying on the claimed administrator role', async () => {
+    mocks.actor.mockResolvedValue({ userId: 3, role: 'member' });
+    mocks.query.mockResolvedValue({ rows: [{ manage_brand: true, manage_legal: false }] });
+    await expect(requireCompanyDocumentManager(req)).resolves.toBeUndefined();
+    expect(mocks.query).toHaveBeenCalledWith('SELECT manage_brand,manage_legal FROM company_document_grants WHERE organization_id=$1 AND user_id=$2', [7, 3]);
+    expect(mocks.source).not.toHaveBeenCalled();
+    expect(mocks.write).not.toHaveBeenCalled();
+  });
+
+  it('refuses a legal-only delegate at the brand upload guard', async () => {
+    mocks.actor.mockResolvedValue({ userId: 3, role: 'member' });
+    mocks.query.mockResolvedValue({ rows: [{ manage_brand: false, manage_legal: true }] });
+    await expect(requireCompanyDocumentManager(req)).rejects.toMatchObject({ status: 403, code: 'COMPANY_PERMISSION_REQUIRED' });
+    expect(mocks.source).not.toHaveBeenCalled();
+    expect(mocks.write).not.toHaveBeenCalled();
+  });
+
+  it('refuses letterhead preview when membership was revoked', async () => {
+    mocks.actor.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_ACTOR_ACCESS_DENIED', 'Current membership required.'));
+    await expect(requireCompanyDocumentManager(req)).rejects.toMatchObject({ status: 403, code: 'PROJECT_ACTOR_ACCESS_DENIED' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
 });
 
 describe('current organization authority and atomic profile changes', () => {

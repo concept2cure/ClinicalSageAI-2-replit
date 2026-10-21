@@ -18,9 +18,19 @@ const lib = getDocumentTemplate('pbrer')!;
 
 describe('the PBRER AnA drafts in chat follows ICH E2C(R2)', () => {
   const chat = DOCUMENT_TEMPLATES.psur_pbrer;
-  it('has the nineteen E2C(R2) headings, in order', () => {
-    expect(chat.sections.map((s) => s.heading)).toEqual(lib.sections.map((s) => `${s.number}. ${s.heading}`));
-    expect(chat.sections.map((s) => s.heading)).toContain('13. Lack of Efficacy in Controlled Clinical Trials');
+  // The title page, executive summary, §20 and the E2C(R2) subsections joined
+  // the outline on 2026-10-18; the chat template asks for every one, in order
+  // (completeness critic, 2026-10-19: it listed §1–§20 only).
+  it('has the front matter, the E2C(R2) headings and their subsections, in order', () => {
+    const expected: string[] = (lib.frontMatter ?? []).map((s) => s.heading);
+    const walk = (list: typeof lib.sections) => { for (const s of list) { expected.push(`${s.number}. ${s.heading}`); walk(s.subsections ?? []); } };
+    walk(lib.sections);
+    expect(chat.sections.map((s) => s.heading)).toEqual(expected);
+    expect(chat.sections.map((s) => s.heading)).toEqual(expect.arrayContaining([
+      'Title Page', 'Executive Summary', '13. Lack of Efficacy in Controlled Clinical Trials', '16.2. Signal Evaluation', '20. Appendices to the PBRER',
+    ]));
+    // What the governed pack makes mandatory, the chat template requires.
+    expect(chat.sections.find((s) => s.heading === 'Executive Summary')?.required).toBe(true);
   });
   it('keeps its drafting guidance on the sections it belongs to', () => {
     const ba = chat.sections.find((s) => s.heading.startsWith('18. '))!;

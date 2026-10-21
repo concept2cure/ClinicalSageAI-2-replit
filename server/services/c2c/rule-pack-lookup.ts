@@ -10,6 +10,8 @@
  * cannot disagree about which pack is live.
  */
 
+import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
+
 /** The query surface both node-postgres and PGlite satisfy. */
 export interface RulePackQueryable {
   query(sql: string, params?: unknown[]): Promise<{ rows: unknown[] }>;
@@ -29,6 +31,8 @@ export async function findActiveRulePack(
   docType: string,
   agency: string,
 ): Promise<ActiveRulePack | null> {
+  const regional = regionalDeviceApplicationClassOf(docType);
+  if (regional && regional.packAgency !== agency) return null;
   const { rows } = await client.query(
     `SELECT version, label, required_sections
        FROM c2c_rule_packs

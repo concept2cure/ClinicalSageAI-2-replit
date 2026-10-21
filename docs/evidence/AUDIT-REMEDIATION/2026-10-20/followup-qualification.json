@@ -1,0 +1,169 @@
+{
+  "assembledUtc": "2026-10-20T20:25:56.186809+00:00",
+  "priorCheckpoint": "fb2e75ba9ef5729d2aa6aaed966cf289c209fb63",
+  "scope": "Focused corrections to existing launch paths and fixtures after the initial integrated qualification. Counts overlap earlier cohorts and must not be summed.",
+  "schedule": {
+    "passed": 166,
+    "failed": 0,
+    "productionScope": "AnA required human reason only; HTTP/service optional reason and private-project admission unchanged",
+    "negativeControls": [
+      "missing/undefined",
+      "null",
+      "empty",
+      "whitespace",
+      "number",
+      "object",
+      "short",
+      "short_after_trim",
+      "exact_valid_trimmed_forwarding",
+      "reason_before_confirmation",
+      "reason_tier_confirmation",
+      "existing_editor_role",
+      "active_project",
+      "preservation_conflict_no_success"
+    ]
+  },
+  "session": {
+    "passed": 58,
+    "failed": 0,
+    "productionEdits": false,
+    "negativeStructuralControls": 12,
+    "limit": "Bounded handoff/order recognizer plus existing synthetic runtime companions, not a complete security proof."
+  },
+  "submission": {
+    "passed": 43,
+    "failed": 0,
+    "productionEdits": false,
+    "limit": "Real local CMS and audit-trigger controls accompany an explicitly mocked founder wire; no agency acceptance or closure of retained founder gap baseline."
+  },
+  "clamav": {
+    "image": "clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23",
+    "originalEntrypointRetained": true,
+    "healthCleanEicarReadonlyNnpAndSignatureUpdatePassed": true,
+    "contractControls": {
+      "initialNewNegativesRed": 12,
+      "contradictionNegativesRed": 2,
+      "finalPassed": 52,
+      "finalFailed": 0,
+      "currentComposeContractExitCode": 0
+    },
+    "fullTargetSemgrep": {
+      "before": 26,
+      "after": 22,
+      "clamavBefore": 4,
+      "clamavAfter": 0,
+      "unchangedOtherServiceFindings": 22,
+      "baselineUsed": false,
+      "waiversAdded": false
+    },
+    "limit": "Real local pinned-image scan with environment-specific public CA mount only in disposable probe; no whole-app deployment. Future image updates require writable-path/UID and renewed config-volume qualification."
+  },
+  "originalUnitDiagnostic": {
+    "sha256": "a41912ba80e7a7af5d53786aa413cb6e96ae46ccaa23903898a0f62747d26149",
+    "failed": 110,
+    "failingFiles": 38,
+    "closedPriorFailureIdentities": [
+      {
+        "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+        "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency hop 8 \u00b7 transmit \u2014 the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)"
+      },
+      {
+        "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+        "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency walk back \u00b7 from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project"
+      },
+      {
+        "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+        "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency walk forward \u00b7 from the project and from the source to the transmittal"
+      },
+      {
+        "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+        "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency the baseline names only real checks, each with its verified finding and LX fix, and never grows"
+      },
+      {
+        "path": "server/routes/__tests__/session-open-contract.test.ts",
+        "test": "sign-in mints register their session each sign-in door opens its session through openSession"
+      },
+      {
+        "path": "server/routes/__tests__/session-open-contract.test.ts",
+        "test": "every access token the server signs carries a session (P1-38) a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it"
+      },
+      {
+        "path": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+        "test": "every module that registers a handler \u2014 no ledger write can carry an invented reason every reason carried to a write is the stated one \u2014 no literal, template, fallback helper, ?? / || default, or raw input"
+      },
+      {
+        "path": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+        "test": "every module that registers a handler \u2014 no ledger write can carry an invented reason every tool that carries a reason to a write is asked for it before confirmation, and the set names no other tool"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+        "test": "a transmit that sent nothing voids the signature given for it with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+        "test": "transmit checks the typed application number against the program record the precheck refuses a number that contradicts the record, before anyone signs"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+        "test": "transmit checks the typed application number against the program record a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+        "test": "transmit names the applicant and the application from the record the package sent names the organisation as the applicant, never a placeholder"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+        "test": "transmit names the applicant and the application from the record sequence 64, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+        "test": "transmit names the applicant and the application from the record sequence 65, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void"
+      }
+    ],
+    "residualUnrerunArithmetic": 96,
+    "residualUnrerunFailingFilesArithmetic": 34,
+    "limit": "This source-commit record predates the final40-file rerun; residual arithmetic is not a full-unit pass or a rerun result."
+  },
+  "sourceSha256": {
+    "server/services/ana/stated-reason-input.ts": "7ef9ba2d3677238e9007443cd2777a59dce329b6d690efd56b715f98a7064011",
+    "server/services/ana/AnaToolExecutor.ts": "a85e191bed4f5701b45d22e64962b97a288159ff8632e68f16556aec664e7da7",
+    "server/services/ana/discovery-cheminformatics-tool-defs.ts": "5122e2f492ff8f41937fe4ad63b4e88f84c35a5f3dfc552843b024eb23df1d82",
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts": "863478497da05eeaeedf0a1b0620334690a88f58cb2f3a4fabd9225508210b7d",
+    "server/routes/__tests__/session-open-contract.test.ts": "fdbea381248ad7cd6b5517b61d906dd22051ee315e7beece61afc28b7ab5c327",
+    "server/routes/sso.ts": "7f68f83f96b181ff2d392a1492dc04865b72c3163dd5a413b58a823a8805d853",
+    "server/services/auth/saml-login-challenge.ts": "015a9f4b1b5464074fa96f462ca621e7612dc3d303932b480a611088a8749321",
+    "server/services/session-inactivity.ts": "145a262a04638710a0eb98fdcfc63d5a49cde52b24d3363293bdff2a23b3fc58",
+    "server/services/mfaService.ts": "e4c382168a32298349a4e910239e16e562674a297747c0d55a3a62cfdd69d2e9",
+    "server/services/account-standing.ts": "d9da05dbccf9dacb8eed3a9f0afb8e9ba27ecf2d28a1c9a30e693f0e405f0ec7",
+    "server/routes/auth.ts": "ddbb25b1c5de7cf5a26ad973911426aef4e1b4d4beb51a7ed7465b5e87b382f1",
+    "server/routes/__tests__/ssoRoutes.test.ts": "e0a9e9d25a1b12f0eaf6c4a25a752ce1fa0ebe12be5913683f485931ad916dfb",
+    "server/routes/__tests__/auth-mfa-challenge-factors.test.ts": "a3d5d0eb2f5546d60b147aca1808815e2d62cd763822ad4c2b7f7b153c4f53b6",
+    "tests/lineage/founder-path-lineage.pglite.test.ts": "5614e2b878563fb602049bd4cf1ef29b404a7ae1a49086694ad004a2b4608453",
+    "server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts": "fa5f6a82efdeceafae64c825780a8b030f3409a8e759490f8262cef25d72c70b",
+    "server/services/submission-gateways/__tests__/as2-cms.test.ts": "440ed67eadc35de58d9610f73076284e524dc322b768079df392d46215754b8d",
+    "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts": "a92c8910a8be643ef01b490804d5221d000f822d3074f8d4fe4af918198f7a73",
+    "tests/lineage/founder-path-lineage.hops-filing.ts": "382bf9362a99371f7dc9d3455be2b4ad4b86fbcf5afae0a1f3acca3c28d69c5c",
+    "server/db/pglite-harness.ts": "02a69a857d047a4734d202308bde0b4b110231e60ec083d1cc15b765828fd432",
+    "tests/golden-journeys/harness.ts": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+    "db/migrations/20260813_audit_tamper_proof_log.sql": "5bea04a83860c357b96b106e0acca7367eeb049a70120cb1d9aae064102c7d7c",
+    "server/services/submission-gateways/as2-cms.ts": "fb7d57f85cc9cce897e24384db1daf5b8b3e277e7ddcb54e9163168d87695da9",
+    "server/services/submission-gateways/as2-transport.ts": "987b0a37e45fe6e3ddf17c729eeaf033ba5f83fc7210d924127f4d492ad96105",
+    "server/services/submission-gateways/fda-esg.ts": "97bd78ca13f8dbdeb9d03430f6e0135cb0c97a6e8f033414875280103ef3f22d",
+    "server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts": "f516ba2f2ef4e2df7ac7a1dcc55c4b26d2281ae1a2bbd6380c435feb7f4839b2",
+    "docker-compose.yml": "d1b09e518d9f32821c3aaf1a82512af4b06f53027dce1010ed722b1bea2f1c2d",
+    "docker-compose.beta.yml": "a0f67833f7c526fe126445eb16d06f363ac16c87c439f220f1de0a01cf20c05b",
+    "scripts/ci/check-compose-boot-contract.mjs": "084410570f242435015f9daa6e510e43f60c64425f44b07e3e249f6cf111f06f"
+  },
+  "outsideArtifactSha256": {
+    "oct20-schedule-reason-freeze.json": "91b3e65a294e5565b46bc1f7ec0a8c745b60f36fee4a3ef004fd422704378b4a",
+    "review-session-open-freeze.json": "0e29a1109ea70b3cc6157f5b8722d45ac73e640333bec97de76250f7292241c6",
+    "oct20-lineage-void-remedy-final.json": "bef2acbcdd6dd7256f0962aab9c4827104f206e97cda45c1cf90a60a86349e77",
+    "oct20-clamav-hardening-qualification.json": "8bb116b21892bcb30f870d8afb63fc8daa9f65488fcf260ca291da229238c5b4",
+    "oct20-schedule-reason-green-private.json": "ccba1dbdd1fde6d4c94d6de9a436a38cbdd466a2e225c32317397c55e550d2c3",
+    "oct20-schedule-reason-existing-gates-private.json": "b1bc5e05d9facc877026eec3bab0d758e7971399696d61518485bff619ef0be9",
+    "review-session-open-focused-final.json": "f10f3b3543c4f84341fcce5e1536db3d68a138f58130da016fd1e285fbd75fe2",
+    "oct20-lineage-void-final-private.json": "5126ee93117d95f751f5dc9dd22318138b3319726d6c6590638c76573ec2e144"
+  },
+  "lintGrowth": false,
+  "finalChecks": "The full isolated differential scan, unchanged hook, final bounded diagnostic, full-history secret scan, build and exact publication readback are later external delivery receipts; they are not claimed by this pre-delivery record."
+}

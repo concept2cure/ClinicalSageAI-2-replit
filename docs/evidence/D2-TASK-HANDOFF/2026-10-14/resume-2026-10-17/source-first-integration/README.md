@@ -1,0 +1,17 @@
+Completed source-first checkpoint is `6562dd67aeb13edd17a1d9c62f214163a4e8e6a3`, preserving canonical source-first assembly `e62320e0a` and this lane’s exact-owner recovery and navigation holds. Existing catalogue selections open the exact saved document. A pending or unconfirmed structural build refuses a new source handoff before changing the current intent; after exact-record recovery and actual host acknowledgement, the person can explicitly retry. No refused handoff is queued. Existing writers, authoring state and UI are reused.
+
+| Completed execution | Result | Source-bound receipt |
+| --- | --- | --- |
+| Editor host/navigation controls |61 passed,5 files|[Host proof](host/host-summary.json)|
+| Assembly/source UI controls |97 passed,5 files|[UI proof](ui/ui-summary.json)|
+| Selected-source/backend compatibility |164 passed,14 files|[Backend proof](backend/backend-summary.json)|
+| Source-first Chromium host recovery |One scenario/five stages,one structural request,two recovery reads,zero AI/acceptance/page errors|[Browser proof](browser/browser-summary.json)|
+| Production build and shipped CSS |Both builds embed656;16,479 uses,29 chunks,zero missing classes,baseline0|[Build binding](gates/task-handoff-source-first-build-binding.json.gz)|
+
+The captured frozen test inputs match final656 Git blobs. The host61 run and UI97 run each started from8157 plus the staged final cleanup; backend164 ran from the frozen merged index before8157 and its backend blobs also match8157/656. Initial UI95/2 fixture-placement errors, corrected pre-cleanup97 and pre-cleanup host61 are retained with their own boundaries. These counts are not relabeled as a new717-case or full-CI execution.
+
+[Native impact](native-impact.json) traces the actual incoming878..e623 delta. None of its changed behavior is invoked by the earlier native311/36,affected19 or61 suites; no native replay was needed. Their execution anchors remain in the [earlier integration packet](../assembly-integration/README.md), rather than claiming all old file hashes still match. The actual selected-source behavior is covered here by default/PGlite tests, separately from native PostgreSQL qualification.
+
+The browser’s1,942 before/after module hashes independently match656, including new source helpers. It preserves the rich-editor buffer while the explicit whole-document view shows the refreshed saved sections. One expectedHTTP408 console message is retained; no page errors or unexpected requests occurred. Its isolated server/browser stopped, prior records remain and no DB data was changed.
+
+Design,contrast and canvas gates pass; normal warning ratchet reports net-1. The combined compiler passed at656 with zero errors/exit0/unchanged zero baseline; all normal push gates passed. The ref update was rejected when disjoint batch-concurrency work advanced canonical to61a14c5d9. That historical ref update did not publish. Later supplements and successful publication are recorded in the [current packet](../canonical-2026-10-20/README.md). [Qualification summary](qualification-summary.json) and [source binding](source-binding.json) define that checkpoint scope. The [human beta checklist](../../../../../testing/HUMAN_BETA_CHECKLIST_V1.md) includes explicit catalogue handoff/recovery steps; human witnessing remains unexecuted. Automated and synthetic checks do not establish a live provider, deployed authorization, clinical qualification, regulatory certification or whole-CI completion.

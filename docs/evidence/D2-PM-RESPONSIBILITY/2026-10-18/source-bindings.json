@@ -1,0 +1,17 @@
+{
+  "baseCommit": "3cae08d236ba5be6dd96284bca2c47b4605c007d",
+  "sha256": {
+    "client/src/concept2cure/v2/styles/app-v2.css": "e207f6e5040551fbb043d27549c6bf44b32507d09d5ac3d584074bc59764a41e",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "e6d3414395dc6d9ac9300d49c7d15f9da28231a183e68036a12f12295cd88f5e",
+    "client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx": "f96a3503c09eb54f5d85278da07b05e45dcf916fd7ca1c03d69dec8112ddaa09",
+    "client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx": "3049fbb625df462f39dc640eea475d7899e2c86057616f56d009d26afd3de920",
+    "server/routes/c2c/projects.ts": "f6c5232a14b452c952c0a55ac4179be4c312500a15e87d4a51ea9def9e197e02",
+    "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts": "856e6c8a0e26d940d614250b167019d64523f546d697f9c35c4106fac9f27332",
+    "server/services/c2c/project-team.ts": "a536ea94eee4510cd7e330f6108e1fe70a1237be708046f0b78c7857c340e447",
+    "server/services/c2c/__tests__/project-team.test.ts": "47f6fba47b75e722a30dfe0343cf3b12e3048bb944f533a07794fc63524b03e0",
+    "shared/project-team.ts": "33b7556d97464e1145d9f2eae96a8d14afd1dff160c4a62bb8bc72b7ff355374",
+    "shared/__tests__/project-team.test.ts": "066bd2ee35cdaedfa2615abe52af09b8d85b2e2a8f7cb2a9b30e882095990064",
+    "tests/db/project-team-responsibility.dbtest.ts": "55d47b64f11aca9a9f23d196ecb9afed402c30325601e990d6a0adf86af92ee7",
+    "client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx": "8a2d0b9680d6d1838ad295d1bb4c90a5eb8ad64c8b7f1987669fe74955c5caae"
+  }
+}

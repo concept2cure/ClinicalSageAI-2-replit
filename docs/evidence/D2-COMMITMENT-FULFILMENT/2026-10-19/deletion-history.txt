@@ -1,0 +1,60 @@
+# Deletion record: the history searches CLAUDE.md's working agreement asks for, run 2026-10-19T03:58:03Z at HEAD ae287394.
+# The clone is shallow: 766 commits reachable (git rev-parse --is-shallow-repository: true).
+
+## 1. git log --all --diff-filter=D --oneline -- "client/**/*Editor*" "client/**/*Canvas*"  (editor/canvas generations deleted)
+(lines: 0)
+# This change deletes no file. It replaces code inside files; each replaced piece is below.
+
+## 2. The fulfil drawer in CommunicationCenter.tsx (C2CForm, aria-label 'Record a commitment as fulfilled')
+$ git log --oneline -S "Record a commitment as fulfilled" -- client/
+0308ee25 feat(D2, D5): an answer to an agency is approved by signature, on the project inbox
+# Working tree: the same label is now the CommitmentFulfilDialog drawer:
+client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:131:  return screen.findByRole('dialog', { name: 'Record a commitment as fulfilled' });
+client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:109:  return screen.findByRole('dialog', { name: 'Record a commitment as fulfilled' });
+client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx:14: * Replaces the C2CForm "Record a commitment as fulfilled" drawer that
+client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx:342:      <div className="de" role="dialog" aria-modal="true" aria-label="Record a commitment as fulfilled" tabIndex={-1} ref={panelRef}>
+client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx:346:            <div className="de-h-t">Record a commitment as fulfilled</div>
+
+## 3. VaultDocumentPicker (CompanyDocumentSettings.tsx)
+$ git log --oneline -S "function VaultDocumentPicker" -- client/
+68b3dd62 Add governed company letterhead and legal document reuse
+# Working tree: VaultVersionPicker is the one picker; both callers:
+client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx:173:export function VaultVersionPicker({
+client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx:29:import { VaultVersionPicker, type PickedVaultVersion } from './VaultLibraryResults';
+client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx:153:        <VaultVersionPicker
+client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx:3:import { VaultVersionPicker } from './VaultLibraryResults';
+client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx:164:            <VaultVersionPicker disabled={busy || loading || conflict} onChoose={hit => setLegal(p => ({ ...p, title: hit.title, pro
+
+## 4. lockVersion in server/services/vault/vault-relationships.ts
+$ git log --oneline -S "async function lockVersion" -- server/services/vault/
+8e2d0bd9 Board: release the P-32..P-35 decisions with their commits; claim the agency-questions build (D2)
+# Working tree:
+server/services/vault/vault-version-lock.ts:39:export async function lockLiveVaultVersion(
+server/services/vault/vault-relationships.ts:30:import { lockLiveVaultVersion, type LiveVaultVersion } from './vault-version-lock';
+server/services/vault/vault-relationships.ts:80:/** A related version, as lockLiveVaultVersion (vault-version-lock.ts, moved from here 2026-10-19) reads it. */
+server/services/vault/vault-relationships.ts:162:    const from = await lockLiveVaultVersion(client, { documentId: a.documentId, organizationId: a.organizationId, userId: a.userId, programId: a.progra
+server/services/vault/vault-relationships.ts:164:    const to = await lockLiveVaultVersion(client, { documentId: toId, organizationId: a.organizationId, userId: a.userId });
+server/services/vault/vault-relationships.ts:210:    const from = await lockLiveVaultVersion(client, { documentId: rel.from_id, organizationId: a.organizationId, userId: a.userId });
+server/services/vault/vault-relationships.ts:211:    const to = await lockLiveVaultVersion(client, { documentId: rel.to_id, organizationId: a.organizationId, userId: a.userId });
+server/services/vault/vault-annotations-core.ts:69:export async function lockVersion(client: PoolClient, a: Actor, documentId: string): Promise<VersionRow | null> {
+server/services/ha-interactions/commitment-fulfilment.ts:20: * A Vault version: through lockLiveVaultVersion (the same rule a document
+server/services/ha-interactions/commitment-fulfilment.ts:49:import { lockLiveVaultVersion } from '../vault/vault-version-lock';
+server/services/ha-interactions/commitment-fulfilment.ts:186:    v = await lockLiveVaultVersion(client, {
+
+## 5. agency-responses.ts governedWrite core and fulfilBody; ha-interactions.ts fulfillSchema
+$ git log --oneline -S "const fulfilBody" -- server/routes/
+d8ebc611 fix(D2, D5): what a signature approved stays readable; every door onto an answer is the right one
+$ git log --oneline -S "fulfillSchema" -- server/routes/
+a811b0d8 D2: step 4 safety net; readiness refuses the vault leaves freeze would refuse
+f304c87d chore: land current concept2cure-v2 work
+8e2d0bd9 Board: release the P-32..P-35 decisions with their commits; claim the agency-questions build (D2)
+# Working tree:
+server/routes/commitment-fulfil-route.ts:27: *   7'. any other type: one governed transaction (governedRequestWrite) with
+server/routes/commitment-fulfil-route.ts:138:export async function governedRequestWrite<T>(
+server/routes/commitment-fulfil-route.ts:198:const fulfilBody = z.object({
+server/routes/commitment-fulfil-route.ts:213:type FulfilInput = z.infer<typeof fulfilBody>;
+server/routes/commitment-fulfil-route.ts:295:  const parsed = fulfilBody.safeParse(req.body ?? {});
+server/routes/commitment-fulfil-route.ts:356:    const { body, governance } = await governedRequestWrite(
+server/routes/c2c/agency-responses.ts:86:  governedRequestWrite,
+server/routes/c2c/agency-responses.ts:221: * governedRequestWrite (commitment-fulfil-route.ts, shared with a commitment's
+server/routes/c2c/agency-responses.ts:233:    const { body, governance } = await governedRequestWrite(

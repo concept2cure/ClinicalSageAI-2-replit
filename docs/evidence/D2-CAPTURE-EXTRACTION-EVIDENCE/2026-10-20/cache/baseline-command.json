@@ -1,0 +1,39 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts"
+  ],
+  "cwd": "/workspace/Concept2Cure",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "nodeVersion": "v22.23.3",
+  "startedAtUtc": "2026-10-20T22:02:46.716619+00:00",
+  "completedAtUtc": "2026-10-20T22:02:51.479519+00:00",
+  "exitCode": 1,
+  "before": {
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts": "8750e336d0f9004938fb9614b4833fd0d31442b32d88ca1de693797a6d30d5d6",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "b72a19f20f534a2273d65cf4b649a47096b50f95159c0e109b6bc7ce8d7e418f",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "eb69cebddaf48093854b4f801432e9bb8e726dce8830263892bca65773677f3b",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.fixture.ts": "03e05b08d9367e797b308ce83fabab24b510b821ebf4c8848daed00a15f52cb8",
+    "server/services/ocr/extractDocumentText.ts": "f2c8cb2fe756a915784cb7b495a3f669bfd853b90de241de710d21f0bbd5d25e",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  },
+  "after": {
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts": "8750e336d0f9004938fb9614b4833fd0d31442b32d88ca1de693797a6d30d5d6",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "b72a19f20f534a2273d65cf4b649a47096b50f95159c0e109b6bc7ce8d7e418f",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "eb69cebddaf48093854b4f801432e9bb8e726dce8830263892bca65773677f3b",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.fixture.ts": "03e05b08d9367e797b308ce83fabab24b510b821ebf4c8848daed00a15f52cb8",
+    "server/services/ocr/extractDocumentText.ts": "f2c8cb2fe756a915784cb7b495a3f669bfd853b90de241de710d21f0bbd5d25e",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  }
+}

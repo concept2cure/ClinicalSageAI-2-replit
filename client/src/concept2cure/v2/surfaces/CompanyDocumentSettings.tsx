@@ -1,10 +1,10 @@
 import React from 'react';
 import { getAuthToken } from '@/utils/authToken';
 import { COMPANY_LEGAL_KINDS, companyLegalDocumentRefusal, type CompanyDocumentProfile, type CompanyLegalDocument, type CompanyLegalKind } from '@shared/company-documents';
+import { VaultVersionPicker } from './VaultLibraryResults';
 import { COMPANY_DOCUMENTS_PATH as PATH, useCompanyDocumentSettings, type CompanyDocumentSettingsModel } from './useCompanyDocumentSettings';
 import { CompanyLetterheadPreview } from './company-documents/CompanyLetterheadPreview';
 import { CompanySetupGuide } from './company-documents/CompanySetupGuide';
-import { CompanyVaultPicker } from './company-documents/CompanyVaultPicker';
 import { CompanyLegalInventory } from './company-documents/CompanyLegalInventory';
 import { CompanyLegacyAdoption } from './company-documents/CompanyLegacyAdoption';
 import { CompanyScopePicker } from './company-documents/CompanyScopePicker';
@@ -144,7 +144,7 @@ function CompanyLegalRegistration({ model, saved }: { model: CompanyDocumentSett
   const { busy, loading, conflict, setLegal, legal, legalReason, setLegalReason, mutation } = model;
   return <details className="company-register"><summary>Register a legal document from Vault</summary>
           <fieldset disabled={busy || loading || conflict} className="company-editor">
-            <CompanyVaultPicker disabled={busy || loading || conflict} onChoose={hit => setLegal(p => ({ ...p, title: hit.title, programId: hit.program.id, vaultDocumentId: hit.id }))} />
+            <VaultVersionPicker disabled={busy || loading || conflict} onChoose={hit => setLegal(p => ({ ...p, title: hit.title, programId: hit.programId, vaultDocumentId: hit.id }))} />
             <div className="company-fields">
               <Field label="Legal document title" wide><input value={legal.title} onChange={e => setLegal(p => ({ ...p, title: e.target.value }))} /></Field>
               <Field label="Document kind"><select value={legal.kind} onChange={e => setLegal(p => ({ ...p, kind: e.target.value as CompanyLegalKind }))}>{COMPANY_LEGAL_KINDS.map(k => <option key={k} value={k}>{titleOf(k)}</option>)}</select></Field>

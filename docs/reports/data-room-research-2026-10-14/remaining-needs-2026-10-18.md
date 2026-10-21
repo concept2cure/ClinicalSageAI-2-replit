@@ -14,7 +14,77 @@ Delivery update, 2026-10-18: priority 1's known-cutoff editor defect is fixed in
 [editor termination qualification](../../evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/README.md).
 This covers generation and server-loaded candidate refusal, with legacy-safe
 stored finish metadata. It does not establish unknown-status completion or close
-priority 7's broader save-authority design. The original source observations and
+priority 7's broader save-authority design.
+
+Delivery update, 2026-10-18: priority 2 is delivered in `f144f22d`, tightened
+after independent review in `2610ebf1`; see
+[batch cancellation propagation](../../evidence/D2-BATCH-CANCELLATION/2026-10-18/README.md).
+Stop now reaches AnA batch source reads, later waves and gateway dispatch.
+Late results are refused, completed siblings are kept, and stopped sections are
+reported in `cancelledIndices` rather than offered for automatic retry. It does
+not un-spend an in-flight provider call, tie the HTTP batch route to client
+disconnect, or cover non-batch drafting entrances.
+
+Delivery completion, 2026-10-20: Stop is also checked between the existing
+selected-document metadata/body/current-source and actor/program operations,
+including the service's entry, dispatch and response source checkpoints. Typed
+cancellation is kept out of failed retry slots; genuine source rejections retain
+their classification. See
+[source-operation cancellation qualification](../../evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/README.md).
+An already-started catalog operation and its internal SQL may still finish;
+native SQL cancellation and HTTP disconnect wiring remain outside this increment.
+
+Delivery update, 2026-10-18: the first half of priority 3 is delivered. The
+deterministic source-window selector shared by AnA batch drafting and editor
+assembly now selects Japanese passages; see
+[Japanese window selection](../../evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/README.md).
+The recorded probe now selects `[37501, 38001]`, where it previously selected
+`[0, 500]`. Text without Japanese is unchanged; 230,000 randomized cases showed
+no difference. The fixtures are engineering cases, not expert relevance labels.
+Chunk-boundary context is delivered 2026-10-19; see
+[passage context spans](../../evidence/D2-PASSAGE-CONTEXT/2026-10-19/README.md).
+A vault passage's surrounding text is one exact, verified source span with a
+re-verifiable reference; joined chunk text is no longer produced or quoted.
+Multilingual vector retrieval qualification remains open.
+
+Delivery completion, 2026-10-20: the existing passage-result fitter now bounds
+every registered-handler JSON body, retains complete locators for kept matches,
+and distinguishes matches omitted for space from a search with no matches in
+AnA's adaptation guidance. See
+[passage-result fitting](../../evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/README.md).
+The classic per-result cap leaves these bodies intact; aggregate round
+budgeting and multilingual retrieval qualification remain separate needs.
+
+Delivery completion, 2026-10-21: the existing round budget now keeps passage
+results whole or explicitly withholds them. Private read admission remains
+unchanged; new child traces retain exact host-staged bodies for grounding,
+instead of reconstructing them from raw output and completion order. See
+[passage round delivery](../../evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/README.md).
+This establishes controlled host staging, not provider delivery. General hard
+aggregate size, framing overhead and multilingual retrieval qualification
+remain separate needs.
+
+Delivery update, 2026-10-18: the budget and coverage part of priority 4 is
+delivered; see [OCR budgets](../../evidence/D2-OCR-BUDGET/2026-10-18/README.md).
+Data Room OCR of scanned PDFs is bounded (100 pages, 10 minutes, 40 Mpx per
+page, one page rendered at a time). Every OCR attempt reports coverage, and
+partial reads are recorded and shown (`EXTRACTION_PARTIAL`, upload response,
+source listing, upload chip, recovery CLI). Other extraction callers stay
+unbounded until they can report coverage. Per-page confidence persistence and
+multilingual OCR accuracy remain open.
+
+Delivery completion, 2026-10-20: capture processing now retains already-returned
+verified page spans and actual aggregate OCR confidence in existing provenance,
+bound to original bytes, exact extracted text and method. Replacement, retained
+text and cached-extraction snapshots are qualified; see
+[capture extraction evidence](../../evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/README.md).
+This does not add public page citations or per-page scores/engine identity, and
+does not qualify multilingual OCR accuracy. Those parts of priority 4 remain open.
+
+Reconciliation, 2026-10-18 (priority 8): the
+[launch evidence reconciliation](../launch-evidence-reconciliation-2026-10-18.md)
+finds no D1–D10 row green. All evidence is local, CI or draft; the missing
+pieces are named per row. The original source observations and
 manifest below describe the assessment snapshot; later corrections have their
 own versioned implementation and qualification records.
 
@@ -23,7 +93,7 @@ own versioned implementation and qualification records.
 | Order | Need, status and client benefit | Assessment evidence and boundary | Smallest useful next delivery |
 | --- | --- | --- | --- |
 | 1 | **Delivered: known-cutoff editor candidate protection.** Prevent an interrupted draft being offered as usable regulatory content. | Original source audit found the separate Authoring gap. Subsequent implementation `2d2ded138` is qualified by actual generation/store/acceptance and client controls; the earlier generic BatchDraft fix remains intact. | No longer an open known-cutoff defect. Unknown/legacy completion policy, generic save authority and scientific correctness remain separate; see priority 7. |
-| 2 | **Carry Stop through nested source reads and model work.** Reduce wasted processing and make cancellation reliable during long dossier work. | Source audit: the tool's existing signal stops the outer wait, but batch source loading, draft requests and later service waves do not receive it. The gateway already supports cancellation. | Propagate the existing trusted signal, check before reads/dispatch/waves and after awaits, and suppress late successful outcomes. Hold wave one, abort, then prove no later dispatch or read occurs; preserve completed siblings with explicit cancelled outcomes and intentional retry policy. |
+| 2 | **Delivered: carry Stop through nested source reads and model work.** Reduce wasted processing and make cancellation reliable during long dossier work. | Source audit: the tool's existing signal stops the outer wait, but batch source loading, draft requests and later service waves do not receive it. The gateway already supports cancellation. | Propagate the existing trusted signal, check before reads/dispatch/waves and after awaits, and suppress late successful outcomes. Hold wave one, abort, then prove no later dispatch or read occurs; preserve completed siblings with explicit cancelled outcomes and intentional retry policy. |
 | 3 | **Improve multilingual, table and neighboring-context retrieval.** Help reviewers find the evidence that supports a safety or performance claim. | Japanese embedded-term selection is reproduced; passage search drops the expanded context already produced upstream. Exact Unicode coordinates are fixed. Current source-first assembly shares the selector. | Japanese compound/mixed-script fixtures with expert relevance labels; then a result/header/denominator split across chunks, retaining exact locators, hashes, budgets and withdrawal checks. Do not concatenate expanded text without defining overlap and coordinate identity. |
 | 4 | **Retain extraction evidence and bound OCR work.** Make scanned dossier processing inspectable and predictable. | Capture currently retains text/method/counts but discards available page spans and confidence. Automatic fallback supplies no explicit page budget, and the OCR facade omits the rasterizer's pixel cap. Japanese OCR accuracy is unqualified. | Page/pixel/time budgets, honest partial-coverage receipts, page/confidence/engine identity, and adjudicated multilingual numeric/table fixtures. Keep original-file and extraction identity together; report unprocessed pages explicitly. |
 | 5 | **Qualify exact filing pathways in each market.** Give clients an accurate answer about preparation, validation and transmission for their application. | The registry and drafting context are broader than qualified packaging/transmission. Current eCTD backbone readiness identifies flat EU/Japan/Canada backbones and an Australian placeholder; PMDA and Canada deliberately refuse unverified transport. Credentials alone do not establish a protocol. | One matrix keyed by product, application, jurisdiction, format version, validator and channel. For each claimed pathway, bind validator results and authorized test acknowledgements to exact package bytes. Preserve applicant upload where no sourced API exists. Include EU trial, medicine, MDR and IVDR distinctions rather than one generic Europe label. |

@@ -34,6 +34,26 @@
  * A fixture may legitimately declare MORE (several carry `target_type`,
  * `reason`, `ana_action_id` for other readers); only a missing column is a
  * finding, because only a missing column makes the writer unusable.
+ *
+ * ── What is NOT checked, and it is the worse case ────────────────────────────
+ * This scans fixtures that CREATE `audit_logs`. A fixture that creates none at
+ * all is invisible here, and that fixture fails harder: a missing COLUMN raises
+ * `column … does not exist`, a missing TABLE raises
+ * `relation "audit_logs" does not exist`, and both roll the mutation back.
+ *
+ * Found on 2026-10-18, not by this gate. The chained audit write added to the
+ * CMC register create path (server/services/cmc/register-audit.ts) made
+ * tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts answer
+ * 500 "Failed to create specification" on four create cases, because its PGlite
+ * fixture built the parity migration and `specification_audit_log` — a
+ * different table — and no `audit_logs`. The suite read as a contract failure
+ * about tenant scope; nothing pointed at the fixture.
+ *
+ * Closing this properly needs to know which routes a suite drives and whether
+ * any reaches a chained write — a call-graph question, not a DDL scan, and one
+ * that would misfire across 5,000 test files. So it is written down rather than
+ * guessed at: when a governed write starts returning 500 in a suite that was
+ * green, look for the table before the contract.
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';

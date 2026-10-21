@@ -1,0 +1,23 @@
+# The ESLint warning ratchet over the change, in the review's first gate run (before its lint fixes): it caught 5
+# warnings the review's fixes had added. They were fixed (a focus hook and two helpers extracted from the dialog; the
+# review's describes split; two declarations compacted in the service); gates-review.txt is the run after.
+
+===== ESLint warning ratchet --since HEAD --gate, with this slice added (new files count from zero)
+[ci:eslint-warning-ratchet] --since HEAD (ae2873948) -- 38 lintable file(s) changed; linting both versions of each...
+
+    +2  client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx  (0 -> 2)
+         client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx:341:1  complexity  Function 'useFulfilForm' has a complexity of 17. Maximum allowed is 15.
+         client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx:434:8  max-lines-per-function  Function 'CommitmentFulfilDialog' has too many lines (103). Maximum allowed is 100.
+    +1  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx  (0 -> 1)
+         client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:295:51  max-lines-per-function  Arrow function has too many lines (176). Maximum allowed is 100.
+    +1  server/services/ha-interactions/commitment-fulfilment.ts  (0 -> 1)
+         server/services/ha-interactions/commitment-fulfilment.ts:620:1  max-lines  File has too many lines (508). Maximum allowed is 500.
+    +1  tests/db/commitment-fulfilment-database.dbtest.ts  (0 -> 1)
+         tests/db/commitment-fulfilment-database.dbtest.ts:108:58  max-lines-per-function  Arrow function has too many lines (128). Maximum allowed is 100.
+
+[ci:eslint-warning-ratchet] net +5 warning(s) across the files changed since HEAD.
+  Those lines are what the ratchet is refusing. Fix them -- do not regenerate
+  the baseline to make room.
+
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 5 warning(s) (listed above).
+exit 1 (ESLint warning ratchet --since HEAD --gate, with this slice added (new files count from zero))

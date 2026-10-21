@@ -11,7 +11,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
-import { deriveGovernedTargetBinding } from '../signature-persistence';
+import { deriveGovernedTargetBinding, sha256CanonicalJson } from '../signature-persistence';
 
 let h: IndPgliteDb;
 const ORG = 7;
@@ -36,6 +36,25 @@ afterAll(async () => {
 });
 
 describe('ectd-sequence signature binding', () => {
+  it('preserves the old payload digest when both study metadata fields are null', async () => {
+    await h.pglite.exec('UPDATE submission_leaves SET study_id=NULL, stf_file_tag=NULL WHERE id=1');
+    const seq = await h.pglite.query('SELECT id, submission_id, region, sequence_number, type FROM ectd_sequences WHERE id=1');
+    const leaves = await h.pglite.query(`SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
+      document_content_sha256, checksum, title FROM submission_leaves WHERE sequence_id=1 ORDER BY section_code, id`);
+    expect((await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG)).digest)
+      .toBe(sha256CanonicalJson({ sequence: seq.rows[0], leaves: leaves.rows }));
+  });
+
+  it.each(['study_id', 'stf_file_tag'])('changes when %s changes, including tagged-but-unbound signatures', async (field) => {
+    await h.pglite.exec('UPDATE submission_leaves SET study_id=NULL, stf_file_tag=NULL WHERE id=1');
+    const before = await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG);
+    await h.pglite.query(`UPDATE submission_leaves SET ${field}=$1 WHERE id=1`, ['STUDY-101']);
+    const after = await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG);
+    expect(after.digest).not.toBe(before.digest);
+    await h.pglite.query(`UPDATE submission_leaves SET ${field}=$1 WHERE id=1`, ['STUDY-102']);
+    expect((await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG)).digest).not.toBe(after.digest);
+  });
+
   it('changes when a vault leaf is re-pointed at a different document', async () => {
     const before = await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG);
     await h.pglite.exec(`UPDATE submission_leaves SET document_uuid = '22222222-2222-4222-8222-222222222222' WHERE id = 1`);

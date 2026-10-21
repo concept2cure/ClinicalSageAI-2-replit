@@ -18,7 +18,7 @@
  */
 
 import { extractNumericalFacts } from '../intelligence/cross-artifact-consistency';
-import { checkFigureArithmetic } from './dossierReconciliation';
+import { checkFigureArithmetic } from './figure-arithmetic';
 
 export interface ConsistencyFinding {
   kind: 'value_inconsistency' | 'abbreviation_conflict' | 'term_inconsistency' | 'arithmetic';

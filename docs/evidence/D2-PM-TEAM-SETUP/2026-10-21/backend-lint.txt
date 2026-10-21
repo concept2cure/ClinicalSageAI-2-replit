@@ -1,0 +1,11 @@
+Node 22 scoped ESLint after frozen backend source.
+Command: npx eslint server/routes/c2c/project-sharing.ts server/routes/c2c/project-access.ts server/routes/concept2cure.ts server/routes/__tests__/project-sharing-team-setup.pglite.test.ts server/routes/__tests__/o01-core-project-audits.pglite.test.ts --format json
+
+server/routes/__tests__/o01-core-project-audits.pglite.test.ts: 0 errors, 0 warnings
+server/routes/__tests__/project-sharing-team-setup.pglite.test.ts: 0 errors, 0 warnings
+server/routes/c2c/project-access.ts: 0 errors, 0 warnings
+server/routes/c2c/project-sharing.ts: 0 errors, 0 warnings
+server/routes/concept2cure.ts: 0 errors, 12 warnings
+
+HEAD baseline server/routes/concept2cure.ts: 0 errors, 13 warnings (git show HEAD:... piped to ESLint --stdin --stdin-filename).
+No warning baseline or gate change.

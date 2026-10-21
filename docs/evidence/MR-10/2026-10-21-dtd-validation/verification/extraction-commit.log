@@ -1,0 +1,14 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/v2/surfaces/EctdCompile.tsx (1880 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+✅ Pre-commit checks complete
+[concept2cure-v2 451232eed] refactor(ectd): extract existing compile DTD evidence rendering
+ 3 files changed, 150 insertions(+), 141 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx

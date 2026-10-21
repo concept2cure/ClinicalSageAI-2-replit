@@ -257,6 +257,27 @@ describe('ProjectHome — source searches are completed reads', () => {
     renderOnEvidence(<ProjectHome {...props()} />);
     expect(await screen.findByLabelText('Add sources to this project')).toBeTruthy();
   });
+
+  /* D2 Amendment A (B5): the upload answers the OCR coverage, and a read the
+     page budget stopped was shown as a whole read. The hook is real here; only
+     the network is stubbed. */
+  it('says how many pages OCR read for an upload a budget stopped', async () => {
+    mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => ok({
+      fileId: 'file_9', extractionMethod: 'pdf-ocr', extractionWords: 3120, sourceId: 9,
+      extractionCoverage: { pageCount: 40, pagesRead: 12, limitedBy: 'page_budget' },
+    })) as typeof fetch;
+    try {
+      renderOnEvidence(<ProjectHome {...props()} />);
+      const picker = await screen.findByLabelText('Attach files to this project');
+      fireEvent.change(picker, { target: { files: [new File(['%PDF'], 'batch-record.pdf', { type: 'application/pdf' })] } });
+      await waitFor(() => expect(document.body.textContent ?? '')
+        .toMatch(/batch-record\.pdf · text extracted via OCR from 12 of 40 pages · 3,120 words/));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
 });
 
 describe('ProjectHome — pinning sources as context', () => {

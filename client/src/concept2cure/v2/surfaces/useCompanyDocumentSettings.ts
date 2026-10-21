@@ -101,7 +101,7 @@ function useCompanyDocumentMutation(state: SettingsState) {
 
 async function extractCompanyTemplate(file: File) {
   const form = new FormData(); form.append('file', file, file.name);
-  const response = await apiUpload('POST', '/api/c2c/templates/extract', form);
+  const response = await apiUpload('POST', `${PATH}/letterhead/extract`, form);
   const body = await response.json();
   if (!response.ok || !body?.spec) throw new Error(serverMessage(body) || 'Formatting could not be extracted.');
   return { letterhead: normalizeTemplateSpec(body.spec), warnings: Array.isArray(body.warnings) ? body.warnings.filter((x: unknown) => typeof x === 'string') as string[] : [] };

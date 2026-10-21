@@ -443,6 +443,22 @@ describe('regenerateAffected', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('getRun / getRunAudit — a failed read is not a missing run', () => {
+  it('normalizes driver Date timestamps for persistence and API round trips', async () => {
+    hoisted.poolQuery.mockResolvedValueOnce({ rows: [{
+      run_id: 'run-date', organization_id: 1, submission_id: 'sub-1', application_number: 'IND123456',
+      region: 'US', submission_type: 'IND', status: 'complete', steps: [],
+      started_at: new Date('2026-10-17T00:01:02.003Z'), completed_at: new Date('2026-10-17T00:02:03.004Z'),
+    }] });
+    expect(await getRun('run-date', 1)).toMatchObject({
+      startedAt: '2026-10-17T00:01:02.003Z', completedAt: '2026-10-17T00:02:03.004Z',
+    });
+  });
+
+  it('refuses an unreadable recorded timestamp as a read failure', async () => {
+    hoisted.poolQuery.mockResolvedValueOnce({ rows: [{ started_at: 'invalid-timestamp', steps: [] }] });
+    await expect(getRun('run-date', 1)).rejects.toMatchObject({ name: 'OrchestratorReadError', operation: 'getRun' });
+  });
+
   it('getRun throws OrchestratorReadError on a database failure instead of returning null', async () => {
     hoisted.poolQuery.mockRejectedValueOnce(new Error('connection refused'));
     await expect(getRun('run-x', 1)).rejects.toMatchObject({ name: 'OrchestratorReadError', operation: 'getRun' });

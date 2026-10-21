@@ -1,0 +1,10 @@
+{
+  "recordedAt": "2026-10-20T21:02:43.428869+00:00",
+  "readmeLinksChecked": 12,
+  "missingLinks": [],
+  "ignoredEvidence": [],
+  "workingWhitespaceExitCode": 0,
+  "workingWhitespaceOutput": "",
+  "supersedingRootReceiptExists": true,
+  "qualification": "Link/packaging check only. Earlier focused qualification is superseded for shared registry/bootstrap and the later component compatibility correction; exact raw execution receipts remain unchanged."
+}

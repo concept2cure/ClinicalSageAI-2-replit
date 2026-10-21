@@ -1,0 +1,338 @@
+{
+  "scope": "W1/D2 existing project schedule admission and concrete hosted CI follow-ups. Overlapping scoped cohorts are not summed. Exact-tree release gates and direct publication are later outside delivery receipts.",
+  "canonicalParent": "4282257ac3da9b1c5d15b8e7db6c7599f2388f28",
+  "whatAlreadyExists": "schedule-admission.md and ci-followups.md",
+  "focused": {
+    "servicePolicy": {
+      "passed": 133,
+      "failed": 0,
+      "files": 7
+    },
+    "rest": {
+      "passed": 105,
+      "failed": 0,
+      "files": 2
+    },
+    "anaAdjacentUnified": {
+      "passed": 179,
+      "failed": 0,
+      "files": 7
+    },
+    "existingReviewUi": {
+      "passed": 14,
+      "failed": 0,
+      "files": 2
+    },
+    "sweepUnit": {
+      "passed": 12,
+      "failed": 0,
+      "files": 1
+    },
+    "nativePolicyAtomicScheduler": {
+      "passed": 66,
+      "failed": 0,
+      "files": 3,
+      "skipped": 0,
+      "tls": "verify-full",
+      "restrictedRuntime": true,
+      "fullDeploySchemaClaimed": false
+    },
+    "integratedFounderAndMigration": {
+      "passed": 19,
+      "failed": 0,
+      "files": 2
+    },
+    "incomingCapture": {
+      "passed": 84,
+      "failed": 0,
+      "files": 3
+    },
+    "socketOwnership": {
+      "passed": 11,
+      "failed": 0,
+      "all29PriorAssertionsRetained": true,
+      "controlled275msLatencyOldFailedNewPassed": true
+    },
+    "reachabilityControls": {
+      "passed": 9,
+      "failed": 0,
+      "unreachableBaseline": 0
+    },
+    "dependencyRiskControls": {
+      "passed": 36,
+      "failed": 0,
+      "reviewedHighLeavesUnchanged": 3
+    },
+    "trivy": {
+      "version": "0.70.0",
+      "highCritical": 0,
+      "newExceptions": 0
+    },
+    "incomingBuilderBackend": {
+      "passed": 46,
+      "failed": 0,
+      "files": 3,
+      "sourceBindings": 60,
+      "combinedWithRegionalGuardScope": true
+    },
+    "incomingBuilderUi": {
+      "passed": 65,
+      "failed": 0,
+      "files": 7,
+      "sourceBindings": 39,
+      "independentCohort": true,
+      "notClaimedUpstream82CaseReplay": true,
+      "finalSourceReplayPassed": 65
+    },
+    "incomingRegionalBackend": {
+      "passed": 544,
+      "failed": 0,
+      "skipped": 0,
+      "files": 23,
+      "sourceBindings": 155,
+      "includesFinalPreparation63": true
+    },
+    "incomingRegionalUi": {
+      "passed": 93,
+      "failed": 0,
+      "skipped": 0,
+      "files": 4,
+      "sourceBindings": 155
+    }
+  },
+  "broaderBoundedUnit": {
+    "passed": 372,
+    "failed": 95,
+    "files": 40,
+    "failingFiles": 33,
+    "pending": 0,
+    "newFailureIdentities": [],
+    "remainingFirstDiagnosticsMatchPrior": 95,
+    "unchangedInputBindings": 3354,
+    "notWholeUnitGreen": true,
+    "disposition": "continuation-unit-disposition.json",
+    "outsideReceipt": "oct20-schedule-delivery-unit-disposition.json"
+  },
+  "dependencies": {
+    "follow-redirects": "1.16.1",
+    "vite": "6.4.4",
+    "manifestUnchanged": true,
+    "installedBy": "npm ci --no-audit --no-fund",
+    "hooksEnabled": true
+  },
+  "remaining": [
+    "Direct visual schedule tab remains retired; current Review renders generated work and AnA performs schedule actions",
+    "Other three unified-work/default-database consumers and historical notification/revocation boundaries are separately unqualified",
+    "95 bounded unit failures remain; previous exact67d hosted native40failures/3suiteheadings are a different historical cohort, with only scoped closures claimed",
+    "Report engines, digest producer, governed offboarding write barriers, clinical/external/deployment qualification, three credential-owner rotations and human UAT remain open"
+  ],
+  "outsideArtifactSha256": {
+    "oct20-schedule-root-callers-acceptance.json": "1d384cc0886c773dfe976b906cd53dcbd97f1aaba5aa179273f0a547e67f35ae",
+    "oct20-schedule-service/acceptance.json": "d7f8067f720364c7a87b9da725f84884dd3956d6edbdaf31bfba99b7b0009f6f",
+    "oct20-schedule-native/final-qualification.json": "2235349d8ea1a4df9191c3e6f7328e9bf13c37b7169f62e31af2372783cb50d8",
+    "oct20-schedule-founder-fixture/acceptance.json": "fced8e60dfdde49e85d76b13130e8a3bf90aecdc6d89cf4e8c790c808bc0a2fd",
+    "oct20-schedule-socket-wait/freeze.json": "2dfcffc7044c942ebc0c23edc96df9078d9a172fdf22f10c365a6f0fccb31abf",
+    "oct20-reachability-retired-exemption-freeze.json": "973b5d106790780f037687b54902d2b300ab3817e3ee3f890248eba11fd1eb41",
+    "security-follow-redirects-20261020/freeze.json": "404ea9068dc73b812f94e63115805225c736db3dfc0ddbc8367702a65439f657",
+    "oct20-schedule-npm-ci-receipt.json": "cfa7946e1b2c21c0b0239a505e0625f836a2658534b59f7bf79746304a0a59a2",
+    "oct20-schedule-incoming-capture.json": "c903451d79a4ff2d2b1675e1ca42551f15feb890c7797e67ca49eed015d55756",
+    "oct20-schedule-qualified-unit-disposition.json": "b5565afbf236f75e7d686f2bf5d62d5968b45792289e13fedeb396fb2990485c",
+    "oct20-schedule-builder-unit-disposition.json": "9a778d9cebf11ee28b8a8d5ae361ae24f63abe6aa1dd64e1f82f490ac5a4011b",
+    "oct20-schedule-incoming-builder-backend-receipt.json": "dc8ef1ee8f2f335fc9a59ee4e0797e2eb4dc9ceec14b39c40866633eb6f6bcd3",
+    "oct20-schedule-incoming-builder-ui-closure-receipt.json": "4da22704c3255ef0fd8c81a8a4de64d1d032199de7bbcfd4efb9487c160dda7d",
+    "oct20-schedule-incoming-builder-lint.json": "4d455a25004fb609deb2e369941918e0e6c17a854c8160dae8ab6ed4ae27e4f1",
+    "oct20-schedule-delivery-unit-disposition.json": "e425f00c124d43bbc368abf47a37d10a1d88b682768dd7c9c5cefbfe6e9683a5",
+    "oct20-schedule-final-alias-acceptance.json": "498d06a822bd3edbf53aa13c6f9fd575086dabb3cf17dfe18b76dd582c4ec977",
+    "oct20-schedule-final-alias-green-receipt.json": "41e94982b3ab791d21c54291c63bd5884ebbe27de762abb46a7e9f1f2326c514",
+    "oct20-schedule-final-builder-ui-receipt.json": "c19d4bf54fec90efa1e3df3c2d9414ae015faf06a3c815546b44c408654c39e5",
+    "oct20-schedule-final-incoming-acceptance.json": "8af097907a4a112cd9f8ab1f8f4767c96195ca7af398c052d5f5aab6ad141fed",
+    "oct20-schedule-final-incoming-backend-receipt.json": "e2371d041bf4dba85c970fdd7225986e182f24627bb2926f1067921e3072e914",
+    "oct20-schedule-final-incoming-ui-receipt.json": "fbae00bced72bc52b8f2b9f1b6afc6cd3a6e69fc4a932aa5cbcb5d3776b9ee0e",
+    "oct20-schedule-regional-regexp-red-security-metadata.json": "02b9c96461ef708a6f2e8c949e771a52199a163e8c2cd77a5ee82c2efa69f7a6",
+    "oct20-schedule-regional-regexp-targeted-metadata.json": "a79653de4fcbd027ea7a66d6f9f628e9673e5bcb47aa9648be9a028d9dcd3ac9",
+    "oct20-schedule-regional-regexp-lint-metadata.json": "1fa2b1325798f9a0369e430e57f223ef892f025a11fd4cbef0b65c117b621292",
+    "oct20-schedule-regexp-incoming-ui-receipt.json": "82eaff0226e495631c63c6ae5f1b90f5d393fb16f12477c6a2041f844de96959",
+    "oct20-schedule-regexp-incoming-acceptance.json": "8632bf678de58c3005c4df652d4025ab41f5d14c3c5d0e5447000b0d60d2ec83",
+    "oct20-schedule-regexp-incoming-backend-receipt.json": "85bbc41e2bb94f3bc2cf31af7cbc513c68ea234c746467f3fe4de41d87aadbe1"
+  },
+  "compilerFollowup": {
+    "actualInitialTscErrors": 1,
+    "diagnostic": "TS2571 in new schedule admission test",
+    "remedy": "Typed actual SELECT id row as{id:number}; production and test assertions unchanged; no baseline change",
+    "affectedCohortRerun": {
+      "passed": 133,
+      "failed": 0,
+      "files": 7
+    },
+    "broader3354BindingsUnchanged": true,
+    "outsideReceiptSha256": "ad0bd8bb79291c3a18121e9697c76dbbe7df08859c87de235ba360cae2bf0859",
+    "fullUnchangedHookRerun": "Required before publication; separate exact-tree delivery receipt"
+  },
+  "incomingUiScannerFollowup": {
+    "actualWholeRuntimeWarnings": 2,
+    "path": "client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx",
+    "remedy": "String predicate preserving exact title prefix+whitespace/end boundary; literal product suffix matching",
+    "noProductionOrWaiverChange": true,
+    "actualUiRerunPassed": 16,
+    "targetedScannerFindings": 0,
+    "targetedScannedPaths": 1,
+    "existingMockPartialParsingNotice": 1,
+    "broader3354BindingsUnchanged": true,
+    "outsideReceiptSha256": "650ce03ffbc30da373b9c6a36f42b5b5b1d78f37c95d26357191d9a864526dcc",
+    "wholeUnchangedReleaseGates": "Rerun required on final committed tree before publication"
+  },
+  "previousCanonicalParent": "76c60846d794dd378dde6a44c05e54221b239d75",
+  "incomingBuilderIntegration": {
+    "canonical": "5d18c395084a8decb8514aed586e0c0de8a14ea4",
+    "normalMerge": "dc5f7df193059a2ff51498bf91d8b947cda71828",
+    "incomingPaths": 40,
+    "overlappingImplementationPaths": 0,
+    "nativeDirectBindingsUnchanged": 30,
+    "changedPriorBroaderBindings": [
+      "server/routes/submissions.ts",
+      "server/services/part11/signature-persistence.ts",
+      "server/services/submission-service/submission-service.ts",
+      "shared/types/database.d.ts",
+      "tests/socket-tenant-isolation.contract.test.ts"
+    ],
+    "actualSame40FileRerun": {
+      "passed": 372,
+      "failed": 95,
+      "pending": 0,
+      "newFailureIdentities": [],
+      "remainingFirstDiagnosticsMatchPrior": 95,
+      "unchangedInputBindings": 3354
+    },
+    "qualificationNote": "Current merged-source rerun supersedes older broader byte-equality statements. Other focused receipts retain their own source boundaries; exact merged-tree release gates are separate outside delivery receipts.",
+    "sourceDocumentFixtureClosure": {
+      "actualBefore": {
+        "passed": 62,
+        "failed": 3,
+        "files": 7
+      },
+      "actualAfter": {
+        "passed": 65,
+        "failed": 0,
+        "files": 7
+      },
+      "remedy": "Existing leaf-read mock now validates submissionId=68 on the current guarded request; all source/pin case assertions and original device fixture retained. No production/pathway change.",
+      "lint": {
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  "canonicalParentsObserved": [
+    "76c60846d794dd378dde6a44c05e54221b239d75",
+    "5d18c395084a8decb8514aed586e0c0de8a14ea4",
+    "7b87ad1a4088f04d91e9cb3869781c604170c9e5",
+    "4282257ac3da9b1c5d15b8e7db6c7599f2388f28"
+  ],
+  "incomingRegionalIntegration": {
+    "canonicalProduction": "7b87ad1a4088f04d91e9cb3869781c604170c9e5",
+    "healthDocsOnlyCanonical": "4282257ac3da9b1c5d15b8e7db6c7599f2388f28",
+    "normalMerges": [
+      "7fd1f41f1e3a278927f955262e79d75c880cb11e",
+      "37074f03a0ce941db09bb8699bb33e1f36a86a95"
+    ],
+    "sourceFiles": 21,
+    "migrations": 1,
+    "testFiles": 27,
+    "documentationPaths": 164,
+    "preAliasIncomingCheckpoint": {
+      "backendPassed": 494,
+      "backendFiles": 23,
+      "uiPassed": 93,
+      "uiFiles": 4,
+      "sourceBindings": 155,
+      "zeroSkips": true
+    },
+    "all30NativeDirectInputsUnchanged": true,
+    "preAliasReceiptsRetained": true,
+    "postAliasQualification": {
+      "backendPassed": 544,
+      "backendFiles": 23,
+      "uiPassed": 93,
+      "uiFiles": 4,
+      "independentBuilderUiPassed": 65,
+      "builderUiFiles": 7,
+      "sourceBindings": [
+        155,
+        155,
+        39
+      ],
+      "allStableDuringExecution": true,
+      "combinedDistinctBindingsStillMatch": 173,
+      "zeroSkips": true
+    },
+    "regexpFinalReplay": {
+      "backendPassed": 544,
+      "backendFiles": 23,
+      "uiPassed": 93,
+      "uiFiles": 4,
+      "sourceBindings": [
+        155,
+        155
+      ],
+      "allStableDuringExecution": true,
+      "zeroSkips": true,
+      "noAdditionalProductionChange": true
+    }
+  },
+  "finalPreparationAliasRepair": {
+    "whatAlreadyExists": "Canonical shared insertion guard and regionalDeviceApplicationClassForFiling resolver; see schedule-admission.md",
+    "productionChange": "Existing helper import plus OR in existing preparation-only guard",
+    "retainedOriginalCases": 13,
+    "addedCases": 50,
+    "red": {
+      "passed": 17,
+      "failed": 46,
+      "standaloneFailed": 23,
+      "transactionalFailed": 23,
+      "skipped": 0
+    },
+    "green": {
+      "regionalPassed": 63,
+      "builderBackendPassed": 46,
+      "files": 4,
+      "failed": 0,
+      "skipped": 0,
+      "sourceBindings": 60
+    },
+    "lint": {
+      "serviceErrors": 0,
+      "serviceWarningsBefore": 8,
+      "serviceWarningsAfter": 8,
+      "testErrors": 0,
+      "testWarnings": 0
+    },
+    "reachableHttpBypassClaimed": false,
+    "oldSourceTestsNotPromotedToFinalQualification": true
+  },
+  "regionalUiScannerFollowup": {
+    "actualWholeRuntimeWarnings": 1,
+    "path": "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx",
+    "remedy": "Same exact title-prefix plus whitespace/end boundary string predicate used by the preceding cross-lane fixture repair",
+    "retainedRegionalCases": 9,
+    "retainedOriginalExpectLines": 7,
+    "productionOrIgnoreChanges": false,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "targetedFindings": 0,
+    "targetedScannedPaths": 1,
+    "existingMockPartialParsingNotices": 1,
+    "actualIncomingUiReplayedPassed": 93,
+    "otherScopedPinsStillMatch": {
+      "oct20-schedule-delivery-unit-diagnostic-receipt.json": 3354,
+      "oct20-schedule-native/native-final-source-receipt.json": 30,
+      "oct20-schedule-final-alias-green-receipt.json": 60,
+      "oct20-schedule-final-builder-ui-receipt.json": 39
+    },
+    "fullReleaseGates": "Required again on corrected committed tree; separate outside receipt",
+    "actualSameIncomingBackendReplayedPassed": 544,
+    "freshSourceBindingsStable": [
+      155,
+      155
+    ]
+  }
+}

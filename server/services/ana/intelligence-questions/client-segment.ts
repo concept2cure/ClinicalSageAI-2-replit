@@ -16,6 +16,8 @@
  * @module server/services/ana/intelligence-questions/client-segment
  */
 
+import { regionalDeviceApplicationClassOf } from '../../../../shared/regulatory/filing-catalog.js';
+
 export type InterviewClientType = 'pharma' | 'biotech' | 'medtech' | 'ivd';
 
 /** A segment a caller may pass directly. */
@@ -44,6 +46,8 @@ export function interviewClientType(projectType?: string | null): InterviewClien
   const value = (projectType ?? '').trim().toLowerCase();
   if (!value) return null;
   if (Object.hasOwn(SEGMENT, value)) return SEGMENT[value];
+  const regional = regionalDeviceApplicationClassOf(value);
+  if (regional) return regional.defaultProductType === 'ivd' || regional.defaultProductType === 'cdx' ? 'ivd' : 'medtech';
   if (DEVICE_SUBMISSION.test(value)) return 'medtech';
   if (MEDICINE_SUBMISSION.test(value)) return 'pharma';
   return null;

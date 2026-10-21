@@ -1,0 +1,12 @@
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > EU_PRIME keeps its jurisdiction-neutral outline: unmet need required, no FD&C Act 506 node 22ms
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > EU_ACCEL_ASSESS keeps its jurisdiction-neutral outline: unmet need required, no FD&C Act 506 node 4ms
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > JP_SAKIGAKE keeps its jurisdiction-neutral outline: unmet need required, no FD&C Act 506 node 4ms
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > UK_ILAP keeps its jurisdiction-neutral outline: unmet need required, no FD&C Act 506 node 3ms
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > US_BREAKTHROUGH_DEVICE keeps its jurisdiction-neutral outline: unmet need required, no FD&C Act 506 node 3ms
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > US_PRIORITY_REVIEW keeps its jurisdiction-neutral outline: unmet need required, no FD&C Act 506 node 3ms
+ ✓ tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > US_BTD carries one node per FD&C Act 506 criterion 2ms
+ ✓ tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > US_FAST_TRACK carries one node per FD&C Act 506 criterion 1ms
+ ✓ tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > US_RMAT carries one node per FD&C Act 506 criterion 2ms
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > the EU orphan request carries no 21 CFR 316.20 node; the US request does 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 3 passed (10)

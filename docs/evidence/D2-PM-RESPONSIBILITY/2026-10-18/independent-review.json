@@ -1,0 +1,11 @@
+{
+  "reviewer": "pm_implementation",
+  "scope": [
+    "shared/project-team.ts",
+    "client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx"
+  ],
+  "finding": "AnA team facts initially included email and email-bearing labels, conflicting with the established Projects publisher exclusion.",
+  "resolution": "Omit email and label from AnA team facts, omit names containing @, preserve IDs/identity/sources/responsibilities/sharing and explicit total/truncation. Integration regression added.",
+  "remainingConcreteFindings": []
+}

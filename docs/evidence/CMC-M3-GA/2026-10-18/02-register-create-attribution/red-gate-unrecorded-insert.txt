@@ -1,0 +1,5 @@
+ × server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > stabilityStudies has no insert of its own 50ms
+   → stabilityStudies is inserted directly in server/api/cmc/routes.ts. A register create goes through insertRegisterRow (server/services/cmc/register-audit.ts), which writes the row and the §11.10(e) record of who recorded it on one transaction.: expected [ 'server/api/cmc/routes.ts' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: stabilityStudies is inserted directly in server/api/cmc/routes.ts. A register create goes through insertRegisterRow (server/services/cmc/register-audit.ts), which writes the row and the §11.10(e) record of who recorded it on one transaction.: expected [ 'server/api/cmc/routes.ts' ] to deeply equal []
+      Tests  1 failed | 23 passed (24)

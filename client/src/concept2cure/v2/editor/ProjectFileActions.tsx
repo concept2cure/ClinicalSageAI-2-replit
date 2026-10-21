@@ -3,6 +3,7 @@ import { I } from '../icons';
 import type { VaultDoc } from '../fixtures/vault-data';
 import type { ProjectSource } from './DocumentWorkbench';
 import { SourceImportDialog, sourceImportUnavailableReason } from './SourceImportDialog';
+import { VaultSourceBuildAction } from './VaultSourceBuildAction';
 
 /** The two section actions — cite a source, refer to anything else — which
  *  the viewer pane and the selected row both offer, on the same rule. */
@@ -35,9 +36,10 @@ function PullFileOffer({ doc, onPull }: { doc: VaultDoc; onPull: () => void }) {
  *  why a file that is not a data-room source cannot be cited. */
 export function SelectedFileActions(props: {
   doc: VaultDoc; sectionOpen: boolean; sectionCode: string | null; source: ProjectSource | null;
+  programId: string | null; onNav?: (surfaceId: string) => void;
   busy: boolean; onOpen: () => void; onPull: () => void; onCite: () => void; onInsertRef: () => void; editorAttached: boolean;
 }) {
-  const { doc, busy, onOpen, onPull, editorAttached, ...actions } = props;
+  const { doc, programId, onNav, busy, onOpen, onPull, editorAttached, ...actions } = props;
   const { sectionOpen, source } = props;
   return (
     <div className="pf-sel" data-testid="pf-selected">
@@ -50,6 +52,7 @@ export function SelectedFileActions(props: {
             {I.eye} {busy ? 'Opening…' : 'Open'}
           </button>
         )}
+        <VaultSourceBuildAction source={doc} programId={programId} onNav={onNav} />
         <PullFileOffer doc={doc} onPull={onPull} />
         <SectionActions {...actions} citeTestId="pf-cite" refTestId="pf-insert-reference" />
         {editorAttached && !sectionOpen && <span className="pf-sel-m">Open an editable section to cite or refer to this file.</span>}

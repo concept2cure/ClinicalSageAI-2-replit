@@ -1,0 +1,24 @@
+# Defect 5: does anything set SECURITY_SELF_TEST_NONBLOCKING for a production deploy? (2026-10-18, working tree before the fix)
+# Whole working tree, tracked AND untracked/ignored files (.env, .replit, terraform, charts, app.yaml, workflows, scripts, Dockerfiles, compose), node_modules and .git excluded:
+$ grep -rIn SECURITY_SELF_TEST_NONBLOCKING --exclude-dir=node_modules --exclude-dir=.git . | grep -v ^./docs/evidence/
+./server/startup/security-self-test.ts:9: *     production AND not opted out via SECURITY_SELF_TEST_NONBLOCKING)
+./server/startup/security-self-test.ts:21: * Opt-out: SECURITY_SELF_TEST_NONBLOCKING=true keeps the test
+./server/startup/security-self-test.ts:34:const NONBLOCKING_ENV = 'SECURITY_SELF_TEST_NONBLOCKING';
+./.github/workflows/ci.yml:1977:      # cannot drift. Never SECURITY_SELF_TEST_NONBLOCKING: the boot is what this
+./.github/workflows/ci.yml:2217:      # cannot drift. Never SECURITY_SELF_TEST_NONBLOCKING: the boot is what this
+
+# The deploy surfaces searched, each counted separately (the one workflow hit is ci.yml's two "never set it" comments above):
+terraform: 0 file(s) set or mention it
+charts: 0 file(s) set or mention it
+.replit: 0 file(s) set or mention it
+app.yaml: 0 file(s) set or mention it
+.github/workflows: 1 file(s) set or mention it
+scripts: 0 file(s) set or mention it
+docker-compose.yml: 0 file(s) set or mention it
+docker-compose.beta.yml: 0 file(s) set or mention it
+Dockerfile.optimized: 0 file(s) set or mention it
+docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green: 0 file(s) set or mention it
+
+deploy: 0, infra (incl. k8s): 0, .devcontainer: 0, Makefile: 0
+
+# Verdict: only server/startup/security-self-test.ts reads it, and ci.yml mentions it in two comments that say never to set it. Nothing sets it.

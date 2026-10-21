@@ -1,0 +1,15 @@
+attempt 1: incoming 20 commits; overlap: []
+To https://github.com/concept2cure/ClinicalSageAI-2-replit
+ ! [remote rejected]     HEAD -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at 649d7ccfa2e2b3098ad917c3e131ec39a17223c8 but expected c88b3664128e7b5abd2980d8dca88a6ab32ec52d)
+error: failed to push some refs to 'https://github.com/concept2cure/ClinicalSageAI-2-replit'
+attempt 1: gates passed, ref race; retrying
+attempt 2: incoming 3 commits; overlap: []
+To https://github.com/concept2cure/ClinicalSageAI-2-replit
+ ! [remote rejected]     HEAD -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at afaa0d08a8a93e50ab568cf8a4cb933920baedf7 but expected 649d7ccfa2e2b3098ad917c3e131ec39a17223c8)
+error: failed to push some refs to 'https://github.com/concept2cure/ClinicalSageAI-2-replit'
+attempt 2: gates passed, ref race; retrying
+attempt 3: incoming 2 commits; overlap: []
+✅ Pre-push checks complete — all gates passed.
+To https://github.com/concept2cure/ClinicalSageAI-2-replit
+   afaa0d08a..3e559cc37  HEAD -> concept2cure-v2
+PUSHED on attempt 3

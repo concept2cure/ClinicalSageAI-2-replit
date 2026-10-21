@@ -416,6 +416,25 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+/**
+ * The playwright version the record states, or why it cannot.
+ *
+ * `createRun` takes `needsBrowser: false`, and a protocol whose steps are all
+ * API steps uses it — but `finish` required the package unconditionally, so
+ * such a run died AFTER executing every step, with the record unwritten
+ * (found running OQ-008 on a machine where playwright is not installed:
+ * "Cannot find module 'playwright-core/package.json'" from finish, 2026-10-18).
+ * The record now says the version, or says it was absent, which is the honest
+ * statement for a run that took no screenshot.
+ */
+function playwrightCoreVersion() {
+  try {
+    return require('playwright-core/package.json').version;
+  } catch {
+    return 'not installed (no browser step was executed in this run)';
+  }
+}
+
 export async function createRun({ app, appLabel, protocolId, protocolTitle, needsBrowser = true }) {
   const dir = path.join(EVIDENCE_ROOT, `OQ-${app}`);
   const stepsDir = path.join(dir, 'steps');
@@ -692,7 +711,7 @@ export async function createRun({ app, appLabel, protocolId, protocolTitle, need
         baseUrl: BASE_URL,
         node: process.version,
         chromium: CHROMIUM_PATH,
-        playwrightCore: require('playwright-core/package.json').version,
+        playwrightCore: playwrightCoreVersion(),
         git: readGitHead(),
         testUser: auth.user.email,
         authentication: auth.method,

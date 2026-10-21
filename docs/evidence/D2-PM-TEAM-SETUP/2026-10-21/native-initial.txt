@@ -1,0 +1,175 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-21T01:17:26.756Z","pid":16951,"hostname":"c9501410c5f6","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-21T01:17:26.758Z","pid":16951,"hostname":"c9501410c5f6","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-21T01:17:26.758Z","pid":16951,"hostname":"c9501410c5f6","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/project-sharing-team-setup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-21T01:17:27.915Z","pid":16951,"hostname":"c9501410c5f6","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+stdout | tests/db/project-sharing-team-setup.dbtest.ts
+[database] Database connection successful
+
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reaches actual same-name accounts for the current owner and persists an audited Edit grant 112ms
+   → expected { projectId: 'proj_11', …(3) } to match object { projectId: 'proj_11', …(5) }
+(3 matching properties omitted from actual)
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > revokes the durable share, retains provenance and removes future private program reads 51ms
+   → expected 404 to be 200 // Object.is equality
+{"level":50,"time":"2026-10-21T01:17:32.335Z","pid":16951,"hostname":"c9501410c5f6","context":{"error":"Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792545452325_ba6432a2d911500e,9,project,11,UPDATE,data-change,{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"userId\":8,\"role\":\"use\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"},{\"userId\":12,\"role\":\"owner\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"}],\"legacyFallbackApplied\":false}},{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"userId\":8,\"role\":\"use\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"},{\"userId\":12,\"role\":\"owner\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"},{\"userId\":10,\"role\":\"use\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-21T01:17:32.318Z\"}],\"legacyFallbackApplied\":false}},7,s***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"df76d1e5b872a7fddf274c38aee8b7cd0046e49811e9756b13f49fa24abb9add\"}","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Failed to persist audit entry"}
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > does not mistake a claimed admin role or a read-only owner for current management rights 73ms
+   → expected { projectId: 'proj_11', …(3) } to match object { canManage: false, candidates: [] }
+(4 matching properties omitted from actual)
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 10 without a grant 93ms
+   → expected 200 to be greater than or equal to 400
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 11 without a grant 56ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses a mismatched program/anchor and a second client owned by another current member 71ms
+{"level":50,"time":"2026-10-21T01:17:32.539Z","pid":16951,"hostname":"c9501410c5f6","context":{"error":"Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792545452535_b6b4e42514f0c1f1,9,project,11,UPDATE,data-change,{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"userId\":8,\"role\":\"use\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"},{\"userId\":12,\"role\":\"owner\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"}],\"legacyFallbackApplied\":false}},{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"userId\":8,\"role\":\"use\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"},{\"userId\":12,\"role\":\"owner\",\"status\":\"active\",\"addedById\":7,\"addedAt\":\"2026-10-01T00:00:00.000Z\"}],\"legacyFallbackApplied\":false}},7,s***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"b4a5430128e60eace8f9fe29f07f5cc404629216449f018735dce26d6b39a635\"}","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Failed to persist audit entry"}
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > protects implicit owner/creator access and archived projects 77ms
+   → expected 200 to be 409 // Object.is equality
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses unverified member-store reads instead of returning a verified empty state 57ms
+   → expected 200 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reaches actual same-name accounts for the current owner and persists an audited Edit grant
+AssertionError: expected { projectId: 'proj_11', …(3) } to match object { projectId: 'proj_11', …(5) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "actorUserId": 7,
+-   "canManage": true,
+-   "clientWorkspaceId": 71,
+-   "organizationId": 9,
+-   "programId": "11111111-1111-4111-8111-111111111111",
+    "projectId": "proj_11",
+  }
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:113:29
+    111|     const state = await request(app()).get(sharing());
+    112|     expect(state.status, JSON.stringify(state.body)).toBe(200);
+    113|     expect(state.body.data).toMatchObject({ projectId: 'proj_11', prog…
+       |                             ^
+    114|     const choices = state.body.data.candidates as {userId: number; lab…
+    115|     expect(choices.some(c => c.userId === 8 && c.label.includes('one@e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > revokes the durable share, retains provenance and removes future private program reads
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:127:85
+    125|   });
+    126|   it('revokes the durable share, retains provenance and removes future…
+    127|     expect((await request(app(8)).get(`/api/c2c/projects/${PROGRAM}/te…
+       |                                                                                     ^
+    128|     const before = (await env.owner.query(`SELECT * FROM ${env.t('proj…
+    129|     const removed = await request(app()).delete(member(8));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > does not mistake a claimed admin role or a read-only owner for current management rights
+AssertionError: expected { projectId: 'proj_11', …(3) } to match object { canManage: false, candidates: [] }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "canManage": false,
+-   "candidates": [],
++   "legacyFallbackApplied": false,
++   "members": [
++     {
++       "addedAt": "2026-10-01T00:00:00.000Z",
++       "addedById": 7,
++       "role": "use",
++       "status": "active",
++       "userId": 8,
++     },
++     {
++       "addedAt": "2026-10-01T00:00:00.000Z",
++       "addedById": 7,
++       "role": "owner",
++       "status": "active",
++       "userId": 12,
++     },
++   ],
++   "projectId": "proj_11",
++   "visibility": "private",
+  }
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:139:30
+    137|     const reader = await request(app(8)).get(sharing());
+    138|     expect(reader.status).toBe(200);
+    139|     expect(reader.body.data).toMatchObject({canManage:false,candidates…
+       |                              ^
+    140|     expect((await request(app(8)).put(member(9)).send({role:'edit'})).…
+    141|     expect((await request(app(12)).put(member(9)).send({role:'edit'}))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 10 without a grant
+AssertionError: expected 200 to be greater than or equal to 400
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:147:29
+    145|   it.each([10,11])('refuses inactive/foreign recipient %s without a gr…
+    146|     const response = await request(app()).put(member(id)).send({role:'…
+    147|     expect(response.status).toBeGreaterThanOrEqual(400);
+       |                             ^
+    148|     expect(response.status).toBeLessThan(500);
+    149|     expect((await env.owner.query(`SELECT * FROM ${env.t('project_memb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > protects implicit owner/creator access and archived projects
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:159:61
+    157|   });
+    158|   it('protects implicit owner/creator access and archived projects', a…
+    159|     expect((await request(app()).delete(member(7))).status).toBe(409);
+       |                                                             ^
+    160|     await env.owner.query(`UPDATE ${env.t('projects')} SET status='arc…
+    161|     expect((await request(app()).put(member(9)).send({role:'edit'})).s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses unverified member-store reads instead of returning a verified empty state
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:166:29
+    164|     failMembers = true;
+    165|     const response = await request(app()).get(sharing());
+    166|     expect(response.status).toBe(503);
+       |                             ^
+    167|     expect(response.body.data).toBeUndefined();
+    168|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  01:17:23
+   Duration  8.71s (transform 4.63s, setup 109ms, import 321ms, tests 7.88s, environment 0ms)

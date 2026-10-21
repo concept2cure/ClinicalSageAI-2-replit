@@ -1,0 +1,66 @@
+// @vitest-environment jsdom
+// THROWAWAY PROBE (honest-state review 2026-10-19). Lives in the scratchpad, not the repo.
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+
+const apiRequest = vi.hoisted(() => vi.fn());
+const upload = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+  apiUpload: upload,
+}));
+
+import { GatewayTransmittals } from '@/concept2cure/v2/surfaces/GatewayTransmittals';
+
+const LOG = [
+  { id: 3, region: 'fda', gateway: 'esg', transmission_id: 'ESG-SEQ-3', status: 'acknowledged', submitted_at: '2026-10-01T00:00:00Z', ack_received_at: '2026-10-01T01:00:00Z', submitted_by_name: 'Dr Ada Lovelace', package_id: null, metadata: { sequence: '0001' } },
+  { id: 7, region: 'fda', gateway: 'esg', transmission_id: 'ESG-PKG-7', status: 'received', submitted_at: '2026-09-01T00:00:00Z', ack_received_at: null, package_id: 77 },
+];
+const listResponse = () => ({ ok: true, status: 200, json: async () => ({ data: LOG, meta: { count: LOG.length, signing: { canSign: true } } }) } as Response);
+const props = () => ({ surface: { id: 'gateway-transmittals', label: 'Gateway transmittals' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
+
+afterEach(() => cleanup());
+beforeEach(() => {
+  apiRequest.mockReset(); upload.mockReset();
+  delete (window as any).C2C_NAV_PARAMS;
+});
+
+describe('PROBE: does the As2 receipt outcome survive the log reload that onRecorded triggers?', () => {
+  it('REJECTED + UNRECONCILED receipt: is the outcome sentence ever visible?', async () => {
+    let listCalls = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') { listCalls += 1; if (listCalls >= 2) await new Promise((r) => setTimeout(r, 100)); return listResponse(); }
+      return { ok: true, status: 200, json: async () => ({ data: [] }) } as Response;
+    });
+    upload.mockResolvedValue({ ok: true, json: async () => ({ data: { verified: true, recorded: true, status: 'rejected', sequenceResolution: 'unreconciled' } }) });
+
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-PKG-7');
+    const buttons = screen.getAllByRole('button', { name: 'Record agency MDN' });
+    expect(buttons.length).toBe(2);
+    fireEvent.click(buttons[1]);
+    const file = new File(['bytes'], 'agency.mdn');
+    fireEvent.change(screen.getByLabelText('Signed agency MDN'), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText('Agency response Content-Type'), { target: { value: 'multipart/signed; boundary="b"' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Verify and record receipt' }));
+
+    await waitFor(() => expect(upload).toHaveBeenCalledTimes(1));
+    // wait for the reload that onRecorded() kicks off, and for the table to come back
+    await waitFor(() => expect(listCalls).toBeGreaterThanOrEqual(2));
+    await screen.findByText('ESG-PKG-7');
+    await new Promise((r) => setTimeout(r, 200));
+
+    const seen = {
+      rejectedSentence: !!screen.queryByText(/FDA transport rejected the submission/),
+      unreconciledSentence: !!screen.queryByText(/did not reconcile a sequence attempt/),
+      verifiedSentence: !!screen.queryByText(/Signed agency MDN verified and recorded/),
+      anyAlert: screen.queryAllByRole('alert').map((a) => a.textContent),
+      anyStatus: screen.queryAllByRole('status').map((a) => a.textContent),
+    };
+    console.log('PROBE-RESULT-AS2-REALISTIC-LATENCY ' + JSON.stringify({ listCalls, ...seen }));
+    // The honest expectation: a recorded REJECTION must be visible to the person who recorded it.
+    expect(seen.rejectedSentence, 'the agency-rejection sentence must remain visible after recording').toBe(true);
+  });
+});

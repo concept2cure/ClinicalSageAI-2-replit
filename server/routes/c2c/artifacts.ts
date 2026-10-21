@@ -2781,21 +2781,29 @@ router.put(
           };
         }
       } else {
-        [updated] = await db
-          .update(concept2cureArtifacts)
-          .set(updateData)
-          .where(eq(concept2cureArtifacts.id, artifact.id))
-          .returning();
-        await db.insert(concept2cureProvenanceEvents).values({
-          ...provenanceEvent(
-            {
-              name: (req as any).userName || req.userEmail || 'unknown',
-              email: req.userEmail || 'unknown',
-            },
-            null,
-            null
-          ),
-          organizationId,
+        // 2026-10-18 (D5): the status and its provenance event commit together,
+        // as the signed acts' do above. They were two autocommitted statements,
+        // so a provenance event that failed left the status changed — an unlock
+        // or a return to draft with no record of who made it — and answered 500
+        // over the committed change.
+        updated = await db.transaction(async tx => {
+          const [row] = await tx
+            .update(concept2cureArtifacts)
+            .set(updateData)
+            .where(eq(concept2cureArtifacts.id, artifact.id))
+            .returning();
+          await tx.insert(concept2cureProvenanceEvents).values({
+            ...provenanceEvent(
+              {
+                name: (req as any).userName || req.userEmail || 'unknown',
+                email: req.userEmail || 'unknown',
+              },
+              null,
+              null
+            ),
+            organizationId,
+          });
+          return row;
         });
       }
 

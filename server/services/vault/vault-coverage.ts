@@ -25,6 +25,7 @@ import {
   type RequiredSectionSet,
 } from '../ectd/required-sections.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
 
 export interface FiledSection {
   ctdSection: string | null;
@@ -101,6 +102,15 @@ export async function readVaultCoverage(
       reason: 'This vault is not CTD-numbered, so there is no required-section list to count against.',
     };
   }
+  // A filing document class (a CSR, a supplement, a meeting package) is filed
+  // to its own outline, not to CTD modules (added 2026-10-18).
+  const documentClass = filingDocumentClassOf(input.programType);
+  if (documentClass) {
+    return {
+      state: 'not_applicable',
+      reason: `This project's document is a ${documentClass.label}, not a CTD dossier, so there is no CTD required-section list to count against.`,
+    };
+  }
   let readFailed = false;
   const watched: Queryable = {
     query: async <T = Record<string, unknown>>(text: string, params?: unknown[]) => {
@@ -113,6 +123,9 @@ export async function readVaultCoverage(
     },
   };
   const set = await resolveRequiredSections(watched, { programType: input.programType, primaryAgency: input.primaryAgency });
+  if (set.provenance.source === 'not_applicable') {
+    return { state: 'not_applicable', reason: set.provenance.reason! };
+  }
   if (readFailed) {
     return { state: 'unavailable', reason: set.provenance.reason ?? 'The rule-pack store could not be read.' };
   }

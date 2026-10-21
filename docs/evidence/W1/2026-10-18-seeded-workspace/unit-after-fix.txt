@@ -1,0 +1,90 @@
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > a seeded organisation has its own workspace, so a program can be created > seed-admin: the organisation it writes gets the marked workspace the anchor prefers 433ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > a seeded organisation has its own workspace, so a program can be created > seed-founder: the same 357ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > a seeded organisation has its own workspace, so a program can be created > never gives an organisation that already has a workspace a second one 332ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed-admin.mjs 6ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed-founder.mjs 7ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed-ga-demo.mjs 8ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/10-risk.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/100-agency-meetings.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/101-design-controls.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/102-cro-portfolio.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/103-reg-change.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/104-decision-lineage.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/105-dossier-map.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/106-ind-checklist.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/107-shadow-review.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/108-market-access.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/109-program-journey.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/110-labeling-pi.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/111-ind-program.mjs 6ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/111-protocol-dev.mjs 7ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/112-ind-authoring-doc.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/114-research-admin.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/115-nda-m1-docs.mjs 11ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/116-nda-rtf.mjs 6ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/117-maa-module1.mjs 6ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/118-smpc-sections.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/119-bla-assessments.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/120-lifecycle-obligations.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/121-cmc-changes.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/122-pediatric-orphan-cards.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/123-qms-quality.mjs 7ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/124-investigator-brochure.mjs 8ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/125-demo-scenarios.mjs 7ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/20-tasks-approvals.mjs 8ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/21-task-graph.mjs 7ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/22-task-templates.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/40-submission-udi.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/50-postmarket.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/60-mdx-aggregates.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/65-collab-review.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/80-programs-tlf-pdev.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/90-evidence-objects.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/94-haq.mjs 7ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/95-human-factors.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/96-safety-narrative.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/97-nda-cockpit.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/98-evidence-asks.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/99-doc-journey.mjs 5ms
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > anchors the submission it created before submissions.program_id, instead of creating a second one 1954ms
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing 1624ms
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > never anchors a submission it cannot tell apart — two unanchored look-alikes are left alone 1540ms
+ ✓ tests/seed/seed-admin-provisions-but-never-resets-off-machine.test.ts > seed-admin against a database that is not on this machine > leaves an existing account exactly as it found it, and refuses 32ms
+ ✓ tests/seed/seed-admin-provisions-but-never-resets-off-machine.test.ts > seed-admin against a database that is not on this machine > creates a new account, and does not print the password it was given 816ms
+ ✓ tests/seed/seed-admin-provisions-but-never-resets-off-machine.test.ts > seed-admin against a database that is not on this machine > on another host it names the account it creates: no built-in identity 99ms
+ ✓ tests/seed/seed-admin-provisions-but-never-resets-off-machine.test.ts > seed-admin against a database that is not on this machine > on a production process it names the account it creates: no built-in identity 101ms
+ ✓ tests/seed/seed-admin-provisions-but-never-resets-off-machine.test.ts > seed-admin against a database on this machine > still resets the built-in development account (the documented way back in) 680ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > postgresql://postgres:postgres@127.0.0.1:5432/x → true 2ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > postgresql://postgres@localhost/x → true 0ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > postgresql://postgres@[::1]:5432/x → true 1ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > postgresql:///x?host=/var/run/postgresql → true 0ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > host=/tmp dbname=x → true 0ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > postgresql://u:p@db:5432/x → false 0ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > postgresql://u:p@ep-cool-name.us-east-2.aws.neon.tech/x?sslmode=require → false 0ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > host=10.0.0.5 dbname=x → false 0ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > which databases are on this machine > names the host it refuses 1ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > a seed that writes invented records, pointed at another host > seed-ga-demo refuses before connecting 79ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > a seed that writes invented records, pointed at another host > seed-local-testing refuses before connecting 1295ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > a seed that writes invented records, pointed at another host > refuses in a production process, even against localhost 75ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > seed-admin > refuses the built-in password for a database on another host 75ms
+ ✓ tests/seed/seed-scripts-local-only.test.ts > seed-admin > provisions with an explicit password: the refusal does not apply 95ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-oral-biologics.sh > refuses without DEMO_EMAIL and DEMO_PASSWORD, before any request 8ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-oral-biologics.sh > refuses a server that is not on this machine, before any request 34ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-oral-biologics.sh > with SEED_ALLOW_REMOTE=1 it signs in there as the operator, with no built-in password 135ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-ind-pyramid.sh > refuses without DEMO_EMAIL and DEMO_PASSWORD, before any request 4ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-ind-pyramid.sh > refuses a server that is not on this machine, before any request 33ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-ind-pyramid.sh > with SEED_ALLOW_REMOTE=1 it signs in there as the operator, with no built-in password 81ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-data.sh > refuses without DEMO_EMAIL and DEMO_PASSWORD, before any request 4ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-data.sh > refuses a server that is not on this machine, before any request 29ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-data.sh > with SEED_ALLOW_REMOTE=1 it signs in there as the operator, with no built-in password 64ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-ind-pyramid.sh > names the project it writes into: no built-in project id 4ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-oral-biologics.sh > signs up a labelled, fictional demo organization 117ms
+ ✓ tests/seed/shell-demo-seeds-carry-no-credentials.test.ts > seed-demo-oral-biologics.sh > names no real company, person, institution, contract or identifier 2ms
+ ✓ tests/seed/beta-biotech-pack-carries-no-invented-scores.test.ts > the beta biotech fixture pack > states no score, completeness or export readiness the script did not compute 60ms
+ ✓ tests/seed/launch-demo-requires-the-operator-identity.test.ts > launch-demo connect() > with no token and no email, refuses before any request — no built-in identity 3ms
+ ✓ tests/seed/launch-demo-requires-the-operator-identity.test.ts > launch-demo connect() > signs in as the email the operator passes 47ms
+ ✓ tests/seed/ga-demo-part-order.test.ts > GA demo seed — domain part run order > seeds the regulatory programs before the IND program spine and its authoring document 3ms
+ ✓ tests/seed/ga-demo-part-order.test.ts > GA demo seed — domain part run order > runs every numbered part in the order of its number 1ms
+ Test Files  8 passed (8)
+      Tests  88 passed (88)

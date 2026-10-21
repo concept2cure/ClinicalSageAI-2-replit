@@ -22,6 +22,8 @@
  * so a bare DB degrades this block cleanly instead of aborting the run.
  */
 
+import { ensureOrganizationWorkspace } from '../organization-workspace.mjs';
+
 // [eCTD section code, CTD module, section title, tracking status]. Real eCTD codes
 // (m-prefixed) and real project_sections.status vocabulary; the assembler strips the
 // leading 'm' for display and maps approved/signed/locked → complete.
@@ -70,26 +72,11 @@ async function has(client, table) {
   return !!r.rows[0]?.c;
 }
 
-/** Resolve the org's default client workspace, creating one if needed
+/** Resolve the org's own client workspace, creating it if it has none
  *  (projects.client_workspace_id is NOT NULL). Returns null if the table is absent. */
-async function resolveWorkspaceId(client, org, userId) {
+async function resolveWorkspaceId(client, org) {
   if (!(await has(client, 'client_workspaces'))) return null;
-  let { rows } = await client.query(
-    'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-    [org.id],
-  );
-  if (rows[0]) return rows[0].id;
-  await client.query(
-    `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
-     VALUES ($1, 'Concept2Cure Therapeutics', 'concept2cure', 'active', $2)
-     ON CONFLICT DO NOTHING`,
-    [org.id, userId],
-  );
-  ({ rows } = await client.query(
-    'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-    [org.id],
-  ));
-  return rows[0]?.id ?? null;
+  return ensureOrganizationWorkspace(client, org.id);
 }
 
 export default async function seed(client, { org, admin }) {
@@ -117,7 +104,7 @@ export default async function seed(client, { org, admin }) {
   if (existing.rows[0]) {
     projectId = existing.rows[0].id;
   } else {
-    const wsId = await resolveWorkspaceId(client, org, userId);
+    const wsId = await resolveWorkspaceId(client, org);
     if (wsId === null) {
       console.log('   ⚠ client_workspaces unavailable — cannot create dossier-map project, skipping');
       return;

@@ -58,7 +58,7 @@ import { randomUUID } from 'node:crypto';
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
 // The regulatory-class mapping lives in one module so this path and
 // POST /api/authoring/docs cannot disagree about what a project files.
-import { AGENCY_FALLBACKS, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
+import { documentAgencyCandidates, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
 import { findActiveRulePack } from './rule-pack-lookup.js';
 
 export interface ScaffoldInput {
@@ -126,7 +126,7 @@ export async function scaffoldProjectDocuments(input: ScaffoldInput): Promise<Sc
   // always read from a real row — never constructed.
   let pack: RulePackRow | undefined;
   let resolvedAgency = agency;
-  for (const candidate of [agency, ...AGENCY_FALLBACKS]) {
+  for (const candidate of documentAgencyCandidates(docType, agency)) {
     const found = await findActiveRulePack(client, docType, candidate);
     if (found) { pack = found; resolvedAgency = candidate; break; }
   }

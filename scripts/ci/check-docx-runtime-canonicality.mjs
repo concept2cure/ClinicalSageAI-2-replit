@@ -26,6 +26,7 @@
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { assertAllowlistPathsExist } from './lib/allowlist-paths.mjs';
+import { isReviewedDocumentationRenderer } from './lib/reviewed-documentation-renderers.mjs';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '../..');
 
@@ -44,6 +45,15 @@ const APPROVED_JS = new Set([
   // Imports ONLY the convertInchesToTwip unit helper from 'docx' — no
   // Document generation (AnA integration, 2026-06-29).
   'server/services/templates/templateRenderAdapter.ts',
+  // 2026-10-19 (d8ebc6116, D2/D5): a deliberate second renderer, not a
+  // convenience. docxGenerator.generateDocxBuffer takes Markdown, splits on
+  // blank lines and puts each block in one run — so a line break inside an
+  // APPROVED response vanished and the Markdown's own quote and emphasis marks
+  // printed as characters. Reflowing text a signature approved is a §11.10(e)
+  // problem, not a formatting one, so this module reproduces a signed answer
+  // line for line: one paragraph per line, blank lines kept, nothing re-wrapped.
+  // Reached from server/routes/c2c/agency-responses.ts:539 (the ?docx download).
+  'server/services/agency-responses/response-package-docx.ts',
 ]);
 
 const APPROVED_PYTHON = new Set([
@@ -114,6 +124,29 @@ function isCommentLine(content) {
   return /^\s*(\*|\/\/|\/\*|#)/.test(content);
 }
 
+/**
+ * A published artifact's own renderer is not a runtime of this product.
+ *
+ * `docs/publications/<date>/` holds a finished deliverable — the rendered
+ * PDF/DOCX under `exports/`, a manifest of them, and the portable script that
+ * produced them, committed together so the publication can be re-rendered
+ * byte-for-byte. No server route, worker or user request reaches that script;
+ * it is run by hand, once, by whoever publishes the document.
+ *
+ * Listing it in APPROVED_PYTHON instead would be the wrong answer: that list is
+ * the enumeration of DOCX runtimes the PRODUCT is allowed to generate through,
+ * and this gate's own header counts them. A one-off publication renderer added
+ * there reads as a fourth approved product runtime to everyone after us —
+ * exactly the drift that left runtime #3 in the banner for months after its
+ * file was deleted.
+ *
+ * Deliberately `docs/publications/` and not `docs/`: a DOCX runtime parked
+ * anywhere else under docs/ is still a violation, and so is one under
+ * server/, workers/ or scripts/. The boundary is that a runtime a request can
+ * reach never lives beside the document it rendered.
+ */
+const PUBLICATION_RENDERER = /^docs\/publications\//;
+
 function grepFiles(pattern) {
   try {
     // --exclude-dir keeps installed packages out of the scan: with
@@ -137,7 +170,9 @@ function grepFiles(pattern) {
         return { file, lineNo, content };
       })
       // A quoted example in a docblock is not an entry point.
-      .filter((hit) => !isCommentLine(hit.content));
+      .filter((hit) => !isCommentLine(hit.content))
+      // Nor is the script that rendered an already-published document.
+      .filter((hit) => !PUBLICATION_RENDERER.test(hit.file));
   } catch {
     // grep returns exit 1 when no matches — that's fine
     return [];
@@ -197,8 +232,9 @@ console.log(`\n── Python \`python-docx\` imports (${pyImports.length} found)
 for (const hit of pyImports) {
   // Only check .py files
   if (!hit.file.endsWith('.py')) continue;
-  const approved = APPROVED_PYTHON.has(hit.file) || isTestFile(hit.file);
-  const tag = approved ? '✓ approved' : '✗ VIOLATION';
+  const documentationOnly = isReviewedDocumentationRenderer(ROOT, hit.file);
+  const approved = APPROVED_PYTHON.has(hit.file) || isTestFile(hit.file) || documentationOnly;
+  const tag = documentationOnly ? '✓ reviewed documentation bytes' : approved ? '✓ approved' : '✗ VIOLATION';
   console.log(`  [${tag}] ${hit.file}:${hit.lineNo}`);
   if (!approved) {
     violations.push({
@@ -214,7 +250,7 @@ for (const hit of pyImports) {
 
 console.log('\n══════════════════════════════════════════════════════════════');
 if (violations.length === 0) {
-  console.log('Result: PASS — all DOCX generation is within approved runtimes.\n');
+  console.log('Result: PASS — no unreviewed DOCX entry points; fixed-byte study tools are classified separately.\n');
   console.log('Approved runtimes:');
   console.log('  1. JS docx    → server/services/docx/docxFactory.ts');
   console.log('                  server/services/docxGenerator.ts');

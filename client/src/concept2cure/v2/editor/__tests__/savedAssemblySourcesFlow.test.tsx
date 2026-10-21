@@ -61,10 +61,11 @@ for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as 
   prototype.getBoundingClientRect ??= () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 });
 }
 const user = { id: '381', organizationId: '38', organizationName: null, email: 'saved@example.test', firstName: 'Saved', lastName: 'Author', displayName: 'Saved source author', roles: ['author'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false };
+const sessionToken = (userId: number, visit: string) => `fixture.${btoa(JSON.stringify({ userId, organizationId: 38, visit }))}.synthetic`;
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
-  await authService.adoptSession('synthetic-saved-source-session'); publishShellProject({ id: PROGRAM });
+  await authService.adoptSession(sessionToken(381, 'saved-source')); publishShellProject({ id: PROGRAM });
   storedSections = [section]; savedReply = () => ok({ success: true, data: savedRecord });
   commitReply = input => { storedSections = [section, nextSection]; return ok({ success: true,
     data: { docId: DOC, programId: PROGRAM, plan: plan(input), sections: storedSections } }); };
@@ -75,7 +76,7 @@ beforeEach(async () => {
     if (method === 'POST' && url.endsWith('/assembly/commit')) return commitReply(input!);
     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: 'Fresh selected-source candidate.', draftId: 'fresh-candidate', metadata: {} } });
     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...doc, program_id: PROGRAM }] });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: doc });
+    if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { ...doc, client_program_id: PROGRAM } });
     if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: storedSections });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true, sources: [], comments: [], revisions: [], events: [] });
@@ -227,9 +228,9 @@ describe('late saved references cannot revive a prior scope', () => {
     if (mode === 'project visit') act(() => { publishShellProject({ id: '11111111-1111-4111-8111-111111111382' }); publishShellProject({ id: PROGRAM }); });
     else {
       vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user: { ...user, id: '382' } })));
-      await act(async () => { await authService.adoptSession('another-synthetic-session'); });
+      await act(async () => { await authService.adoptSession(sessionToken(382, 'another-session')); });
       vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
-      await act(async () => { await authService.adoptSession('restored-synthetic-session'); });
+      await act(async () => { await authService.adoptSession(sessionToken(381, 'restored-session')); });
     }
     await act(async () => { pending.resolve(ok({ success: true, data: savedRecord })); await pending.promise; });
     expect(screen.queryByText('Historical retained study')).toBeNull(); noAdoptionOrWrite();

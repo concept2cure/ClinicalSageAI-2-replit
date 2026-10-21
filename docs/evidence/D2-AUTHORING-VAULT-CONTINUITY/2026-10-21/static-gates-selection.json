@@ -1,0 +1,138 @@
+[
+  {
+    "label": "gate-single-native-canvas",
+    "argv": [
+      "npm",
+      "run",
+      "ci:single-native-canvas"
+    ]
+  },
+  {
+    "label": "gate-canvas-path",
+    "argv": [
+      "npm",
+      "run",
+      "ci:canvas-path"
+    ]
+  },
+  {
+    "label": "gate-check-editor-integrity",
+    "argv": [
+      "npm",
+      "run",
+      "ci:check-editor-integrity"
+    ]
+  },
+  {
+    "label": "gate-design-system",
+    "argv": [
+      "npm",
+      "run",
+      "ci:design-system"
+    ]
+  },
+  {
+    "label": "gate-token-cascade",
+    "argv": [
+      "npm",
+      "run",
+      "ci:token-cascade"
+    ]
+  },
+  {
+    "label": "gate-token-contrast",
+    "argv": [
+      "npm",
+      "run",
+      "ci:token-contrast"
+    ]
+  },
+  {
+    "label": "gate-check-phantom-tokens",
+    "argv": [
+      "npm",
+      "run",
+      "ci:check-phantom-tokens"
+    ]
+  },
+  {
+    "label": "gate-gateway-bypass",
+    "argv": [
+      "npm",
+      "run",
+      "ci:gateway-bypass"
+    ]
+  },
+  {
+    "label": "gate-sql-interpolation",
+    "argv": [
+      "npm",
+      "run",
+      "ci:sql-interpolation"
+    ]
+  },
+  {
+    "label": "gate-migration-set-order",
+    "argv": [
+      "npm",
+      "run",
+      "ci:migration-set-order"
+    ]
+  },
+  {
+    "label": "gate-migration-guard-order",
+    "argv": [
+      "npm",
+      "run",
+      "ci:migration-guard-order"
+    ]
+  },
+  {
+    "label": "gate-migration-reachability",
+    "argv": [
+      "npm",
+      "run",
+      "ci:migration-reachability"
+    ]
+  },
+  {
+    "label": "gate-migration-deploy-path",
+    "argv": [
+      "npm",
+      "run",
+      "ci:migration-deploy-path"
+    ]
+  },
+  {
+    "label": "gate-migration-drop-safety",
+    "argv": [
+      "npm",
+      "run",
+      "ci:migration-drop-safety"
+    ]
+  },
+  {
+    "label": "gate-migration-prefix-collisions",
+    "argv": [
+      "npm",
+      "run",
+      "ci:migration-prefix-collisions"
+    ]
+  },
+  {
+    "label": "gate-repo-health",
+    "argv": [
+      "node",
+      "scripts/audits/repo-health-scan.mjs",
+      "--strict",
+      "--ceiling-large-bytes",
+      "57",
+      "--ceiling-large-lines",
+      "114",
+      "--owners",
+      "docs/reports/repo-health-owners.json",
+      "--output",
+      "docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/repo-health-report.json"
+    ]
+  }
+]

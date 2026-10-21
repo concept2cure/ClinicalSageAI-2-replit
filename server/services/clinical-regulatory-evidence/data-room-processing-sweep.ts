@@ -34,18 +34,14 @@ const S=`s.metadata->'dataRoomProcessing'`;
 const text=(field:string)=>`${S}->>'${field}'`;
 const value=(field:string)=>`${S}->'${field}'`;
 const healthy=`${persistedTextAvailableSql('s')} AND s.extraction_status IN ('extracted','reconciled','verified')`;
-/** All numeric casts sit behind the exact ASCII shape. Calendar construction
- * sits behind bounded year/month checks; the final timestamp cast sees only
- * valid dates/times. This works on supported PostgreSQL15 without PG16-only
- * pg_input_is_valid(), and never normalizes hour24 or leap seconds. */
+/** PG15 JSONPath validates the calendar without throwing. It normalizes zero
+ * date fields, so lexical ranges/year must be checked before any raw cast. */
 export function processingTimestampSql(t:string):string {
-  const part=(start:number,size=2)=>`substring(${t},${start},${size})::integer`;
-  const year=part(1,4),month=part(6),day=part(9),hour=part(12),minute=part(15),second=part(18);
-  return `(CASE WHEN ${t} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$' THEN
-    CASE WHEN ${year} BETWEEN 1 AND 9999 AND ${month} BETWEEN 1 AND 12 AND ${day} BETWEEN 1 AND 31
-      AND ${hour} BETWEEN 0 AND 23 AND ${minute} BETWEEN 0 AND 59 AND ${second} BETWEEN 0 AND 59 THEN
-      CASE WHEN ${day} <= extract(day FROM make_date(${year},${month},1) + interval '1 month' - interval '1 day')
-        THEN (${t})::timestamptz END END END)`;
+  return `(CASE WHEN ${t} ~ '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][.][0-9]{3}Z$'
+    AND left(${t},4)<>'0000' THEN
+      CASE WHEN jsonb_path_exists(to_jsonb(left(${t},23)||'+00:00'),'$.datetime()','{}'::jsonb,true) THEN
+        CASE WHEN to_char((${t})::timestamptz AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')=${t}
+          THEN (${t})::timestamptz END END END)`;
 }
 
 function time(field:string):string { return processingTimestampSql(text(field)); }

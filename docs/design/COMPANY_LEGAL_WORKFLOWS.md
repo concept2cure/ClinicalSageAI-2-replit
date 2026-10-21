@@ -5,6 +5,28 @@ replacement and revocation separately from Vault inventory retirement. The
 reachable settings editor also records signing authority, delegated authority,
 reviewed external signature evidence and certified-translation evidence.
 
+## What already exists
+
+- `server/services/company-documents/profile.ts` owns company-document revision,
+  membership and audited settings writes. Lifecycle and requirement reviews use
+  that writer; presentation metadata does not grant legal approval.
+- `server/services/vault/vault-lifecycle.ts` owns exact-version Vault approval,
+  and `vault-where-used.ts` owns affected filing references. This work extends
+  their refusal and display rules; it does not replace their lifecycle.
+- `server/jobs/taskDueSweep.ts` and
+  `server/services/notifications/notification-service.ts` own native scheduling
+  and in-app delivery. Legal renewal uses those paths and does not send email.
+- `server/services/global-ri/regional-module1-requirements.ts` provides regional
+  checklist components. Explicit reviewed legal-kind and version mappings are
+  still necessary; a checklist does not establish agency acceptance.
+- `server/services/ectd/assess-dispatch-readiness.ts`, `assemble-from-core.ts` and
+  `server/services/submission-service/submission-service.ts` own filing verdicts,
+  assembly and placement. Saved legal requirements join those canonical gates.
+- `client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx` provides the shared
+  `VaultVersionPicker`. Company settings and the lifecycle editor use it for
+  version selection; the duplicate company picker was removed. Existing
+  pagination/retry and scoped-read behavior are retained on the shared picker.
+
 ## Governance and identity
 
 - Registered legal identity remains the immutable Vault document ID, version,

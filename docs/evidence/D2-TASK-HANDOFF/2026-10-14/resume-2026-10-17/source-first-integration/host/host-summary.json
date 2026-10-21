@@ -1,0 +1,78 @@
+{
+  "passed": 61,
+  "failed": 0,
+  "files": 5,
+  "source": "6562dd67aeb13edd17a1d9c62f214163a4e8e6a3",
+  "boundary": "Test launched from8157 plus staged exact preflight extraction; its before-pinned worktree bytes match final656 Git blobs. Initial61 pre-extraction pass preserved separately. No717-case replay claimed.",
+  "beforePinsMatchFinalCommit": true,
+  "canonicalWorkbenchWarnings": 13,
+  "finalWorkbenchWarnings": 13,
+  "lintErrors": 0,
+  "archives": [
+    {
+      "path": "task-handoff-source-first-host-pre-extract.log.gz",
+      "rawSha256": "93d72a8220651a44597a25d4aef1de024ebc21536222704ef7a7d84559da8841",
+      "gzipSha256": "8155b62bc4263ad9c3340ad3ef10750660f4da9d66e4f0bf1609b9d0cf1d5d0c"
+    },
+    {
+      "path": "task-handoff-source-first-host-pre-extract.json.gz",
+      "rawSha256": "7e06bd7d866a86bf90efa7dadcce0230b37aa872e5850041fc66a87af7f000ea",
+      "gzipSha256": "0cd75d05754a246e6e5e44af1f6ad94d3def1fc6dabcd62183526dbeeb142790"
+    },
+    {
+      "path": "task-handoff-source-first-host-pre-extract-pins.json.gz",
+      "rawSha256": "58fc06b50a3ff3a809d42f064d6941713a9860d04d6b5a24f43da28c08c1a2a8",
+      "gzipSha256": "41ba04b842e8f8ffd47509b3efec0c5fc5d3d99d4ea41723d7eddacc55269643"
+    },
+    {
+      "path": "task-handoff-source-first-host-final.log.gz",
+      "rawSha256": "e02eedf3dfdc3e71b1d966f99b44c7d187858600fd8b9e000f5864a3e0813906",
+      "gzipSha256": "c3ddb9273f613243a4f004db140b45a3a4b4ebc5438b21b83b8c3c515d811448"
+    },
+    {
+      "path": "task-handoff-source-first-host-final.json.gz",
+      "rawSha256": "081df0f7e639f3bbdb41898a49750d2a6fd9f0eac2f47b4f2e87c0d1ad9aa41e",
+      "gzipSha256": "5af08ab09d142e0804bc495614824efc5cce7c283fe8e6fe577e87ce0e1e0704"
+    },
+    {
+      "path": "task-handoff-source-first-host-final-pins.json.gz",
+      "rawSha256": "832615af05e7b0be38c55b153b59c06decef8483e68692dffa5b52240f9b4302",
+      "gzipSha256": "4219996683b2226620af698d7c6751caf54a3d2c4fc4d134521079e38990e53f"
+    },
+    {
+      "path": "task-handoff-source-first-host-final-files.txt.gz",
+      "rawSha256": "b37ec10a21283a4714d97821c5781cb9783767f8906e4cb4a2f02cc37686ce95",
+      "gzipSha256": "2eb34d8965b4aa74460711f5589a678c9e9def96ffd0be972ca1f3328e18fe28"
+    },
+    {
+      "path": "task-handoff-source-first-workbench-lint.json.gz",
+      "rawSha256": "7d2a02060e6b40c97907fbd6aee74c34c51bccd3fb7741179f72d24ba36eb519",
+      "gzipSha256": "6ded451bd4046684966205f1fb943f05dc69526370dc9a836a3c8050fec77a37"
+    },
+    {
+      "path": "task-handoff-source-first-incoming-workbench-lint.json.gz",
+      "rawSha256": "a63bb755f8df2c01a593c20e716bfc393b467ce5bee4a72a72a7376b0b0a6f20",
+      "gzipSha256": "699fe2ec758217428d785d169342861fff11c6ba4e74b3e5ae443b97071cffa3"
+    },
+    {
+      "path": "task-handoff-source-first-workbench-lint-final.json.gz",
+      "rawSha256": "eeb8836f5953a994b27fac72c32998c9364fb5c756bcf6b1aa2608f6c3bc2ff0",
+      "gzipSha256": "4ce4ec20051b26506a83ddf4716dd844ab2fe21870333572bfe0f9f8ddb0c14b"
+    },
+    {
+      "path": "task-handoff-source-first-merge.log.gz",
+      "rawSha256": "e44a7fc3d103f736d9b05025eb45045c5f54f69be55da46d43098890fc11d67c",
+      "gzipSha256": "c9092b871838eae5f943391fd6d52e1e09f6b59c50b585b6468a8865913bf3b8"
+    },
+    {
+      "path": "task-handoff-source-first-merge-commit.log.gz",
+      "rawSha256": "31a5ccf2f021031e316078d2be019eec1ef0ebac207cefcf33906dbd3079be00",
+      "gzipSha256": "6a3dc210e9888d715ad12adb5a090c7a84fe33bd4c6d7829869ed3ed67346be2"
+    },
+    {
+      "path": "task-handoff-source-first-final-source-commit.log.gz",
+      "rawSha256": "c2db5fd9caa219b0c78ba16c647b3e127afc52ff2f198040130a37bb6eee954c",
+      "gzipSha256": "1c1834c1a88b02f79189b13c34f62ccaf7a574f9b7e24b7568bf7afa51fbdee1"
+    }
+  ]
+}

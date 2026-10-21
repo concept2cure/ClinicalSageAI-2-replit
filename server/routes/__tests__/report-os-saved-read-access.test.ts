@@ -200,7 +200,7 @@ describe('complete retained report packet access', () => {
       if (/select "type_id", "family" from "report_type_registry"/.test(sql)) return [[type.typeId, type.family]];
       if (/select .* from "report_type_registry"/.test(sql)) return [driverRow(reportTypeRegistry, type)];
       if (/SELECT ou.role/.test(sql)) return ++actorReads > denyActorAfter ? [] : [{ role: 'manager' }];
-      if (/SELECT id, run_uuid, organization_id/.test(sql)) return runs.map(run => ({ id: run.id, run_uuid: run.runUuid, organization_id: run.organizationId, report_type_id: run.reportTypeId, scope_type: run.scopeType, scope_id: run.scopeId, access_project_ids: null }));
+      if (/SELECT id, run_uuid, organization_id/.test(sql)) return runs.map(run => ({ id: run.id, run_uuid: run.runUuid, organization_id: run.organizationId, report_type_id: run.reportTypeId, scope_type: run.scopeType, scope_id: run.scopeId, access_project_ids: null, access_project_ids_present: false }));
       if (/SELECT id FROM report_runs/.test(sql)) return runs.map(run => ({ id: run.id }));
       if (arrayMode && /select .* from "report_runs"/.test(sql)) return runs.map(run => driverRow(reportRuns, run));
       if (/SELECT status FROM report_runs/.test(sql)) return runs.filter(run => run.id === values[0]).map(run => ({ status: run.status }));

@@ -1,0 +1,32 @@
+# Review mutation 20 — an options read the server refused shows its sentence and offers nothing (finding 15)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "server's own refusal of the options")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -491,7 +491,7 @@
+   const uid = React.useId();
+   // The server refused the commitment itself (gone, already fulfilled, not
+   // this person's to see): its sentence, and nothing offered.
+-  const optionsRefusal = !options.loading && options.error && [403, 404, 409].includes(options.status ?? 0) ? options.error : null;
++  const optionsRefusal: string | null = null;
+   const vaultScope = vaultScopeOf(door, options);
+   const canSubmit = !send.busy && form.ready && !optionsRefusal;
+   const submit = () => {
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > says the server's own refusal of the options, and offers nothing to record 330ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > says the server's own refusal of the options, and offers nothing to record 5367ms
+   → Unable to find an element with the text: That commitment is already fulfilled, waived or released; there is nothing to fulfil.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > says the server's own refusal of the options, and offers nothing to record
+TestingLibraryElementError: Unable to find an element with the text: That commitment is already fulfilled, waived or released; there is nothing to fulfil.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

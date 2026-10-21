@@ -20,6 +20,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readContradictionRegisters, type RegisterQueryable } from '../contradiction-registers';
+/* The engine the sweep feeds: the point of the batch column is which
+   contradiction it raises, so the test drives both. */
+import { detectContradictions } from '../../cmc-impact-contradiction-engine';
 
 let pglite: PGlite;
 
@@ -67,8 +70,15 @@ beforeAll(async () => {
       -- tenant_id is TEXT here (db/migrations/20260401_cmc_convergence_os.sql:121),
       -- organization_id INTEGER NOT NULL (migrations/0006). The two types are the
       -- point: a single bound param cannot serve both comparisons.
+      --
+      -- BOTH disposition columns, as the real table has them: release_status is
+      -- what the governed release writes under its signature, and disposition
+      -- is a second column for the same fact that nothing writes. The sweep
+      -- reads release_status; the fixture keeps the empty disposition column so
+      -- a query that goes back to it still compiles here and is caught by its
+      -- verdict rather than by a missing-column error.
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id text, organization_id int,
-      project_id uuid, batch_number text, disposition text);
+      project_id uuid, batch_number text, release_status text, disposition text);
     CREATE TABLE cmc_comparability_assessments (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, project_id uuid,
       assessment_name text, regulatory_risk_level text);
@@ -89,7 +99,7 @@ beforeAll(async () => {
       VALUES (${MINE}, 'OTHER PROGRAM METHOD', 'assay', 'development', '${OTHER_PROGRAM}');
     INSERT INTO stability_studies (organization_id, study_title, status, project_id)
       VALUES (${MINE}, 'OTHER PROGRAM STUDY', 'failed', '${OTHER_PROGRAM}');
-    INSERT INTO cmc_batch_records (tenant_id, organization_id, project_id, batch_number, disposition)
+    INSERT INTO cmc_batch_records (tenant_id, organization_id, project_id, batch_number, release_status)
       VALUES ('${THEIRS}', ${THEIRS}, '${THEIR_PROJECT}', 'THEIR-BATCH-001', 'released'),
              ('${MINE}',   ${MINE},   '${MY_PROJECT}',    'MY-BATCH-001',    'released'),
              -- A row that predates the tenant_id column: organization_id names
@@ -176,6 +186,49 @@ describe('readContradictionRegisters — tenant scoping', () => {
     await expect(
       readContradictionRegisters(pool, { organizationId: MINE, projectId: MY_PROJECT }),
     ).resolves.toBeTruthy();
+  });
+
+  /**
+   * The sweep reads the column the SIGNATURE writes.
+   *
+   * `cmc_batch_records` carries two columns for the one fact. The governed
+   * release writes `release_status` (api/cmc/batchRecordRoutes.ts), and the
+   * edit-lock and the already-dispositioned refusal both read it
+   * (services/cmc/signed-record.ts). `disposition` is written by nothing — not
+   * the create's INSERT column list, not the ordinary PUT's field map, not the
+   * release. On the deployment this was found on, 83 batch records held 0
+   * dispositions and 20 release statuses.
+   *
+   * This sweep read the empty one, and `batch_rejected` is the ONLY
+   * critical-severity CMC contradiction while the final-export gate keeps only
+   * critical findings — so the one contradiction that can block an export could
+   * never fire, and a rejected batch was invisible to it.
+   */
+  it('hands the engine the signed release decision, not the column nothing writes', async () => {
+    await pglite.exec(`
+      INSERT INTO cmc_batch_records (tenant_id, organization_id, project_id, batch_number, release_status)
+        VALUES ('${MINE}', ${MINE}, '${MY_PROJECT}', 'MY-REJECTED-004', 'rejected');
+    `);
+    const out = await readContradictionRegisters(pool, { organizationId: MINE, projectId: MY_PROJECT });
+    const rejected = out.batch.find((b) => b.batchNumber === 'MY-REJECTED-004');
+    expect(rejected?.disposition).toBe('rejected');
+    /* ...and the engine's only critical rule now fires on it. */
+    const found = detectContradictions({ batch: out.batch });
+    expect(found.map((c) => [c.contradictionType, c.severity]))
+      .toContainEqual(['batch_rejected', 'critical']);
+  });
+
+  it('does not invent a disposition from the column nothing writes', async () => {
+    /* A row whose `disposition` says rejected and whose signed `release_status`
+       says released is the shape that proves which column is read. Nothing in
+       the product writes the first; a sweep that read it would raise a critical
+       contradiction against a batch that was signed released. */
+    await pglite.exec(`
+      INSERT INTO cmc_batch_records (tenant_id, organization_id, project_id, batch_number, release_status, disposition)
+        VALUES ('${MINE}', ${MINE}, '${MY_PROJECT}', 'MY-PHANTOM-005', 'released', 'rejected');
+    `);
+    const out = await readContradictionRegisters(pool, { organizationId: MINE, projectId: MY_PROJECT });
+    expect(out.batch.find((b) => b.batchNumber === 'MY-PHANTOM-005')?.disposition).toBe('released');
   });
 
   it('a legacy non-uuid project id yields no project-scoped rows instead of aborting the sweep', async () => {

@@ -23,7 +23,8 @@ export type Agency =
   // artefacts (BP-W1-3: a CEP is issued by EDQM, not EMA; a GMP certificate by
   // the national competent authority that inspected, published in EudraGMDP;
   // EU device conformity runs through a Notified Body, not EMA).
-  | 'EDQM' | 'National_Competent_Authority' | 'Notified_Body';
+  | 'EDQM' | 'National_Competent_Authority' | 'Notified_Body'
+  | 'Registered_Certification_Body' | 'EU_Reference_Laboratory';
 
 export type ApplicationFamily =
   | 'clinical_trial' | 'marketing_authorization' | 'variation' | 'renewal'
@@ -224,6 +225,12 @@ export interface SectionDefinition {
   contentType: 'narrative' | 'table' | 'form' | 'data' | 'list' | 'mixed';
   guidance?: string;
   templateId?: string;
+  /**
+   * The titles this row carried before a correction renamed it, so a document
+   * or project section bound to an earlier outline still resolves to it by
+   * title (2026-10-18). The code is unchanged; only the wording moved.
+   */
+  formerTitles?: string[];
 }
 
 // ─── Task Blueprint ───────────────────────────────────────────────────────────

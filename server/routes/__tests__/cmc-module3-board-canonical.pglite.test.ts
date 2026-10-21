@@ -19,8 +19,6 @@ beforeAll(async()=>{
     INSERT INTO regulatory_programs VALUES('${P1}',1,'Program one',NULL),('${P2}',2,'Program two',NULL);`);
   await db.exec(await readFile('migrations/20260604_submission_core_canonical.sql','utf8'));
   await db.exec(`ALTER TABLE submissions ADD COLUMN program_id uuid;
-    CREATE TABLE reg_questions(id serial,organization_id int,question_text text,section_reference text,priority text,severity text,status text,
-      region text,due_date date,assigned_to text,response_doc_id uuid);
     CREATE TABLE cmc_module3_sections(organization_id int,project_id text,section_key text,section_path text,approval_state text,deterministic_json jsonb);
     INSERT INTO submissions(id,title,product_name,application_type,client_type,primary_region,organization_id,created_by,program_id,deleted_at) VALUES
       (1,'Live filing','Product one','ind','pharma','fda',1,7,'${P1}',NULL),
@@ -46,6 +44,9 @@ describe('canonical CMC board with no legacy reg_submissions registry',()=>{
     expect(res.body.data.sections).toHaveLength(1);expect(res.body.data.kpis.sectionsTotal).toBe(1);
     expect(res.body.data.meta.portfolioProvisioned).toBe(true);expect(res.body.data.meta.portfolioUnreadable).toBe(false);
     expect(h.query.mock.calls.some(([sql])=>/reg_submissions|reg_m3_sections|reg_changes/i.test(String(sql)))).toBe(false);
+    // Agency questions live on the letter (P-38); the board reads no earlier CMC question file (2026-10-19).
+    expect(h.query.mock.calls.filter(([sql])=>/reg_questions/i.test(String(sql))).length).toBe(0);
+    expect(res.body.data).not.toHaveProperty('correspondence');
   });
   it('reads only the current tenant and respects a selected canonical program',async()=>{
     const foreign=await request(app(2)).get('/api/cmc/module3-board');

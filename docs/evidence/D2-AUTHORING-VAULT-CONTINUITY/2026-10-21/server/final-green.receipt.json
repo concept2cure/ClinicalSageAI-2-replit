@@ -1,0 +1,40 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "nodeVersion": "v22.23.3",
+  "argv": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+    "server/services/authoring/__tests__/authoring-doc-hash-total-order.pglite.test.ts",
+    "tests/lineage/founder-path-lineage.pglite.test.ts",
+    "server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts",
+    "server/routes/__tests__/vault-ingest-type-binding.test.ts",
+    "server/routes/__tests__/vault-ingest-lineage.test.ts",
+    "server/services/regulatory/__tests__/authoring-approval-carryover.test.ts"
+  ],
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "dateUtc": "2026-10-21",
+  "startTimeReportedByVitest": "01:16:49",
+  "durationSecondsReportedByVitest": 59.75,
+  "finishedAtExitFileTimestamp": "2026-10-21T01:17:48.821Z",
+  "exitCode": 0,
+  "summary": [
+    "Test Files  11 passed (11)",
+    "Tests  136 passed | 1 todo (137)"
+  ],
+  "sourcePinFile": "final-source.sha256",
+  "sourcePinNote": "Final source bytes were unchanged during this run and verified afterwards; root removed the stale placement TODO after its separate composed client proof.",
+  "rawLog": "final-green.raw.log.gz",
+  "rawSha256": "f1459fd71bb22d85786e7343f7c1f0b2f38090867049cb562ecf510bbdd101f7",
+  "gzipSha256": "b424a56bdf8473622c016c108d743848c1e4c47bc2abc24cefe0932206b614aa"
+}

@@ -1,0 +1,70 @@
+{
+  "recordedAt": "2026-10-20T19:34:47.091921+00:00",
+  "node": "v22.23.3",
+  "records": [
+    {
+      "kind": "eslint",
+      "command": [
+        "npx",
+        "eslint",
+        "--no-ignore",
+        "--max-warnings=0",
+        "--format",
+        "json",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/server.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/browser.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/mock-api.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/baseline-entry.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "[{\"filePath\":\"/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/baseline-entry.mjs\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/browser.mjs\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/mock-api.mjs\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/server.mjs\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n",
+      "stderr": "",
+      "stdoutSha256": "7a2e829d918eac8ccfc414662e97e92ad7735d876755cab1022b0bc4b25b6c4f"
+    },
+    {
+      "kind": "node-syntax",
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/server.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "node-syntax",
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/browser.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "node-syntax",
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/mock-api.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "node-syntax",
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/baseline-entry.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

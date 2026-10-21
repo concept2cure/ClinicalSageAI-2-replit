@@ -1,0 +1,9 @@
+{
+  "tests": {
+    "server/services/ana/__tests__/strict-round-body-executor.test.ts": "cd1a1fa98028dfbde595fb448dd525dced57906ccb58434b2e7b7ee314fa15d3",
+    "server/services/ana/__tests__/strict-round-body-read-integrity.test.ts": "e09efdc2f4cef8278d9c3edbbe0a64cba2100c90ea66b13796d564bd162fe226"
+  },
+  "exitCode": 1,
+  "baselineInputsUnchangedBeforeAndAfter": true,
+  "rawLogSha256": "1aabb83012d2bb23211a350cedbcd87f7451d0b578f3a49b56fdf3465e6bfabb"
+}

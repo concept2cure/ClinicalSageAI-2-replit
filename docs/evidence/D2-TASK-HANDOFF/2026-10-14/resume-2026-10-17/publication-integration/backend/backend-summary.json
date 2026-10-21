@@ -1,0 +1,133 @@
+{
+  "status": "completed-green-frozen",
+  "recorded_at_utc": "2026-10-18T00:55:15.705670+00:00",
+  "node_version": "v22.23.3",
+  "default_config": "vitest.config.ts",
+  "command": [
+    "node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+    "shared/__tests__/saved-assembly-sources.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/task-handoff-publication-backend-final.json"
+  ],
+  "result": {
+    "files_passed": 2,
+    "total_cases": 42,
+    "passed": 42,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "exit_code": 0,
+    "duration_seconds": 60.801026643,
+    "cases_per_file": {
+      "shared/__tests__/saved-assembly-sources.test.ts": 15,
+      "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts": 27
+    }
+  },
+  "execution_tree": {
+    "type": "committed frozen merge",
+    "head_at_execution_start": "aa4dd090ffe408b119bf8ed4a842f95f8df71311",
+    "head_at_execution_end": "aa4dd090ffe408b119bf8ed4a842f95f8df71311",
+    "incoming_commit": "3cae08d236ba5be6dd96284bca2c47b4605c007d",
+    "incoming_delta_base": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471"
+  },
+  "source_integrity": {
+    "sha256_pin_count": 8036,
+    "all_before_after_sha256_match": true,
+    "changed_pinned_paths": [],
+    "scope": "all tracked server/shared/tests TS/JS/JSON/SQL plus package manifests and default Vitest config",
+    "incoming_backend_shared_code_test_paths": 5,
+    "all_incoming_backend_shared_blobs_match_merged_commit_and_worktree": true,
+    "blob_bindings": [
+      {
+        "path": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+        "incoming_blob": "e29758c37af58abd5b655d606c0f71f7f28f37c7",
+        "merged_blob": "e29758c37af58abd5b655d606c0f71f7f28f37c7",
+        "worktree_blob": "e29758c37af58abd5b655d606c0f71f7f28f37c7"
+      },
+      {
+        "path": "server/routes/authoring-assembly.ts",
+        "incoming_blob": "211170553e61925a9f1696c233362b8d37905cb3",
+        "merged_blob": "211170553e61925a9f1696c233362b8d37905cb3",
+        "worktree_blob": "211170553e61925a9f1696c233362b8d37905cb3"
+      },
+      {
+        "path": "server/services/authoring/authoring-saved-assembly-sources.ts",
+        "incoming_blob": "4edb9a9676207b81dce91de9117e86af4e0e88a4",
+        "merged_blob": "4edb9a9676207b81dce91de9117e86af4e0e88a4",
+        "worktree_blob": "4edb9a9676207b81dce91de9117e86af4e0e88a4"
+      },
+      {
+        "path": "shared/__tests__/saved-assembly-sources.test.ts",
+        "incoming_blob": "408ae93dc8d912d03b799a5c1d4d85ed1f78db33",
+        "merged_blob": "408ae93dc8d912d03b799a5c1d4d85ed1f78db33",
+        "worktree_blob": "408ae93dc8d912d03b799a5c1d4d85ed1f78db33"
+      },
+      {
+        "path": "shared/authoring/saved-assembly-sources.ts",
+        "incoming_blob": "5c9e0c448eeccd5ca7f2fff4ffcfe04c57b2e074",
+        "merged_blob": "5c9e0c448eeccd5ca7f2fff4ffcfe04c57b2e074",
+        "worktree_blob": "5c9e0c448eeccd5ca7f2fff4ffcfe04c57b2e074"
+      }
+    ]
+  },
+  "scope": "27 actual signed-JWT HTTP/PGlite saved-source cases and 15 shared response-boundary cases. HTTP cases establish saved intent using existing preview/commit, then verify exact ordered mixed manifests, current whole-document/project/source admission, retained-text eligibility, audit integrity/order and explicit late-change refusals. Successful reads return no source text and execute no writes or transaction statements; refusals withhold record/source metadata. Shared cases distinguish explicit empty history from malformed/failed data, reject cross-project or invalid-time receipts, and copy a text-free response. Disjoint PM59, concurrency33 and earlier broad authoring proofs were not replayed.",
+  "findings": "No focused integration failures. All five incoming backend/shared source and test files are preserved byte-for-byte in the frozen merge.",
+  "limits": "PGlite canonical migrations/SQL and signed-JWT HTTP with deterministic late-change seams; not native PostgreSQL concurrency, RLS, serializable snapshot, whole-tenant-chain integrity, live-provider, human-witness or deployment evidence. No source edits, native database commands, compiler/build or commits by this worker.",
+  "credential_scan": {
+    "files_scanned": 5,
+    "findings": 0,
+    "private_env_files_copied": 0
+  },
+  "archives": [
+    {
+      "archive": "task-handoff-publication-backend-final.log.gz",
+      "original_path": "/workspace/scratch/task-handoff-publication-backend-final.log",
+      "original_sha256": "8207683df5cbdab4a19c55cc1026743a8d34ef24fadea7ceffe576c3e9ceaf64",
+      "original_bytes": 36193,
+      "gzip_sha256": "c81f7d2a5e2e0b4e9cdb22310ee0663c3d09d1ccb9156dfcc12a61eef2f2921f",
+      "gzip_bytes": 3593,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-publication-backend-final.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-publication-backend-final.json",
+      "original_sha256": "a6809d26526a31b9ab9b8bd8705d8deebb059b68a7be1975958fb7050e40e26b",
+      "original_bytes": 15978,
+      "gzip_sha256": "1ce2d19050a3e6a38d020beee0d18d940e262f7f6b1d37d76f003b4f601dfb5c",
+      "gzip_bytes": 2305,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-publication-backend-final.pins.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-publication-backend-final.pins.json",
+      "original_sha256": "f14b4edaa1d0b518b99482d70fa73ac1533b40f6df0da98b336142f158a3896e",
+      "original_bytes": 2118188,
+      "gzip_sha256": "f56aee9461c1217e3fa10055bb120bc483494691a26abeb25a7cb77afc78c643",
+      "gzip_bytes": 819270,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-publication-backend-final.files.txt.gz",
+      "original_path": "/workspace/scratch/task-handoff-publication-backend-final.files.txt",
+      "original_sha256": "bec6600ccf67c6bdb8c27762e7e460c38d1a518d5eb302eeae931717aa9442c4",
+      "original_bytes": 117,
+      "gzip_sha256": "b611b4afc160f0a27a488bae3a1e507829a86996dcd4d47c51d02cb55d114933",
+      "gzip_bytes": 103,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-publication-backend-final.command.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-publication-backend-final.command.json",
+      "original_sha256": "3998612eaf421ed6a5d5ad21800445ada72aea509b6ac6fb29c472e9afb28844",
+      "original_bytes": 663,
+      "gzip_sha256": "e9ecbd16fea58b75745283018b40e979ebfea8959a3d179ba3455265f6aafe72",
+      "gzip_bytes": 378,
+      "gzip_mtime": 0
+    }
+  ]
+}

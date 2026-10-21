@@ -25,7 +25,7 @@
 import { refusalOf } from './tool-trace.js';
 
 /** What a step returned instead of a usable result. */
-export type ShortfallKind = 'empty' | 'unavailable' | 'needs_input';
+export type ShortfallKind = 'empty' | 'unavailable' | 'needs_input' | 'omitted' | 'withheld';
 
 export interface Shortfall {
   kind: ShortfallKind;
@@ -105,6 +105,19 @@ function resultObject(resultContent: string): Record<string, unknown> | null {
   }
 }
 
+/** A successful passage search can return known matches without fitting any
+ * complete locator. Its omission count is not a claim of evidence absence. */
+function allPassagesOmitted(r: Record<string, unknown>): boolean {
+  const count = r.omittedPassages;
+  return r.ok === true && Array.isArray(r.passages) && r.passages.length === 0 &&
+    typeof count === 'number' && Number.isSafeInteger(count) && count > 0;
+}
+
+function passageShortfall(r: Record<string, unknown>): 'withheld' | 'omitted' | null {
+  if (r.code === 'PASSAGE_RESULT_WITHHELD' && r.delivered === false) return 'withheld';
+  return allPassagesOmitted(r) ? 'omitted' : null;
+}
+
 /** The shortfall a result declares, or null when it returned something. */
 export function shortfallOf(resultContent: string): Shortfall | null {
   const r = resultObject(resultContent);
@@ -117,6 +130,8 @@ export function shortfallOf(resultContent: string): Shortfall | null {
   if (declared) return { kind: declared, ...(detail && { detail }) };
   const lists = resultLists(r);
   if (lists.anyEntries) return null;
+  const passage = passageShortfall(r);
+  if (passage) return { kind: passage, ...(detail && { detail }) };
   if (detail && OUTAGE_RE.test(detail)) return { kind: 'unavailable', detail };
   const zeroCount = COUNT_KEYS.some((k) => r[k] === 0);
   return zeroCount || lists.present ? { kind: 'empty' } : null;
@@ -126,7 +141,20 @@ const SAID: Record<ShortfallKind, string> = {
   empty: 'returned no results',
   unavailable: 'the service could not be reached',
   needs_input: 'needs input it was not given',
+  omitted: 'matching passages were omitted to fit the result',
+  withheld: 'the passage result was withheld from this round',
 };
+
+function shortfallGuidance(omittedMatches: boolean, withheldResults: boolean): string {
+  if (withheldResults) return 'Withheld results do not establish whether matches exist. Do not quote unseen text: narrow the query or read a known source. ' +
+    (omittedMatches ? 'Omitted matches are not evidence absence. ' : '') +
+    'For other shortfalls, vary the input or source, or ask the person for missing input.';
+  return omittedMatches
+    ? 'Omitted matches are not evidence absence. Do not quote text that was not returned: narrow the query or read the source files. ' +
+      'For other shortfalls, vary the input or source, or ask the person for missing input.'
+    : 'Do not present what these did not return as found: vary the input or try another ' +
+      'source, ask the person for what is missing, or say plainly what could not be found.';
+}
 
 /** One step of a round, as the stream ran it. */
 export interface RoundStep {
@@ -143,16 +171,22 @@ export interface RoundStep {
  */
 export function buildShortfallNote(steps: RoundStep[], totalCalls: number): string {
   const named: string[] = [];
+  let omittedMatches = false;
+  let withheldResults = false;
   for (const step of steps) {
     if (step.status !== 'success' || step.heldBack) continue;
     const s = shortfallOf(step.result);
-    if (s) named.push(`${step.label} — ${SAID[s.kind]}${s.detail ? ` (${s.detail})` : ''}`);
+    if (s) {
+      named.push(`${step.label} — ${SAID[s.kind]}${s.detail ? ` (${s.detail})` : ''}`);
+      omittedMatches ||= s.kind === 'omitted';
+      withheldResults ||= s.kind === 'withheld';
+    }
   }
   if (named.length === 0) return '';
   const plural = totalCalls === 1 ? 'call' : 'calls';
+  const guidance = shortfallGuidance(omittedMatches, withheldResults);
   return (
     `[Adaptation note] ${named.length} of ${totalCalls} tool ${plural} this round returned nothing usable: ` +
-    `${named.join('; ')}. Do not present what these did not return as found: vary the input or try another ` +
-    `source, ask the person for what is missing, or say plainly what could not be found.`
+    `${named.join('; ')}. ${guidance}`
   );
 }

@@ -1,0 +1,489 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > capture extraction evidence from actual returned source text > binds original bytes and exact untrimmed Japanese/emoji text, preserving real blank and nonconsecutive pages 7ms
+   → expected undefined to deeply equal { version: 1, …(5) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > capture extraction evidence from actual returned source text > detaches the page map and each page object from extractor-owned mutable output 1ms
+   → expected undefined to deeply equal { version: 1, …(4) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > capture extraction evidence from actual returned source text > keeps source/text/method binding when the extractor has no located pages or confidence 1ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'no located pages' leaves no repaired or inferred page evidence 1ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page zero' leaves no repaired or inferred page evidence 1ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'fractional page number' leaves no repaired or inferred page evidence 1ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'unsafe page number' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'duplicated page number' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'reversed page order' leaves no repaired or inferred page evidence 1ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'overlapping page text' leaves no repaired or inferred page evidence 1ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'negative text offset' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page beyond extraction' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'reversed text offsets' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'fractional text offset' leaves no repaired or inferred page evidence 1ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'unusable text offset' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'string text offset' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'missing page object' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page starts inside the emoji surrogat…' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page ends inside the emoji surrogate …' leaves no repaired or inferred page evidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'pdf-ocr' score +0 without rescaling or defaulting 0ms
+   → expected undefined to deeply equal { version: 1, …(4) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'pdf-ocr' score 100 without rescaling or defaulting 0ms
+   → expected undefined to deeply equal { version: 1, …(4) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'image-ocr' score +0 without rescaling or defaulting 0ms
+   → expected undefined to deeply equal { version: 1, …(4) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'image-ocr' score 100 without rescaling or defaulting 0ms
+   → expected undefined to deeply equal { version: 1, …(4) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'pdf-ocr' score 83.125 without rescaling or defaulting 0ms
+   → expected undefined to deeply equal { version: 1, …(4) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'missing' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'null' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'NaN' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'infinite' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'negative' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'above 100' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'numeric text' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'object' OCR score rather than inventing a numeric confidence 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a pdf-text extraction as OCR-confident 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a utf8 extraction as OCR-confident 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a docx extraction as OCR-confident 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a xlsx extraction as OCR-confident 0ms
+   → expected undefined to deeply equal { version: 1, …(3) }
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > existing extraction behavior and identity controls > keeps the canonical automatic OCR budget and copies caller bytes before extraction 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > existing extraction behavior and identity controls > keeps absent page counts and coverage absent instead of inferring a full document 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > existing extraction behavior and identity controls > an unreadable extraction "" has no receipt and retains coverage 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > existing extraction behavior and identity controls > an unreadable extraction " \n\t " has no receipt and retains coverage 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > existing extraction behavior and identity controls > extractor rejection remains a failed read without invented receipt or coverage 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > existing extraction behavior and identity controls > retains ill-formed text behavior but issues no lossy UTF-8 receipt 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > existing extraction behavior and identity controls > retains ill-formed text behavior but issues no lossy UTF-8 receipt 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > capture extraction evidence from actual returned source text > binds original bytes and exact untrimmed Japanese/emoji text, preserving real blank and nonconsecutive pages
+AssertionError: expected undefined to deeply equal { version: 1, …(5) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-ocr",
+  "ocrConfidence": 0,
+  "pageSpans": [
+    {
+      "end": 17,
+      "page": 2,
+      "start": 2,
+    },
+    {
+      "end": 18,
+      "page": 5,
+      "start": 18,
+    },
+    {
+      "end": 37,
+      "page": 9,
+      "start": 19,
+    },
+  ],
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:45:39
+     43|   it('binds original bytes and exact untrimmed Japanese/emoji text, pr…
+     44|     const result = await capture({ method: 'pdf-ocr', confidence: 0, p…
+     45|     expect(result.extractionEvidence).toEqual(expected('pdf-ocr', { pa…
+       |                                       ^
+     46|     expect(result.text).toBe(TEXT);
+     47|     expect(result.sourceSha256).toBe(sha(BYTES));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > capture extraction evidence from actual returned source text > detaches the page map and each page object from extractor-owned mutable output
+AssertionError: expected undefined to deeply equal { version: 1, …(4) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-text",
+  "pageSpans": [
+    {
+      "end": 17,
+      "page": 2,
+      "start": 2,
+    },
+    {
+      "end": 18,
+      "page": 5,
+      "start": 18,
+    },
+    {
+      "end": 37,
+      "page": 9,
+      "start": 19,
+    },
+  ],
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:56:39
+     54|     const pages = SPANS.map(page => ({ ...page }));
+     55|     const result = await capture({ pageSpans: pages });
+     56|     expect(result.extractionEvidence).toEqual(expected('pdf-text', { p…
+       |                                       ^
+     57|     expect(result.extractionEvidence?.pageSpans).not.toBe(pages);
+     58|     expect(result.extractionEvidence?.pageSpans?.[0]).not.toBe(pages[0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > capture extraction evidence from actual returned source text > keeps source/text/method binding when the extractor has no located pages or confidence
+AssertionError: expected undefined to deeply equal { version: 1, …(3) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-text",
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:64:50
+     62|
+     63|   it('keeps source/text/method binding when the extractor has no locat…
+     64|     expect((await capture()).extractionEvidence).toEqual(expected('pdf…
+       |                                                  ^
+     65|   });
+     66| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'no located pages' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page zero' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'fractional page number' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'unsafe page number' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'duplicated page number' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'reversed page order' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'overlapping page text' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'negative text offset' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page beyond extraction' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'reversed text offsets' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'fractional text offset' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'unusable text offset' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'string text offset' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'missing page object' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page starts inside the emoji surrogat…' leaves no repaired or inferred page evidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > page maps that would create false source locators are omitted in full > 'page ends inside the emoji surrogate …' leaves no repaired or inferred page evidence
+AssertionError: expected undefined to deeply equal { version: 1, …(3) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-text",
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:89:39
+     87|   it.each(invalidMaps)('$name leaves no repaired or inferred page evid…
+     88|     const result = await capture({ pageSpans: pages });
+     89|     expect(result.extractionEvidence).toEqual(expected('pdf-text'));
+       |                                       ^
+     90|     expect(result.text).toBe(TEXT);
+     91|     // Existing count semantics remain independent of whether locators…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'pdf-ocr' score +0 without rescaling or defaulting
+AssertionError: expected undefined to deeply equal { version: 1, …(4) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-ocr",
+  "ocrConfidence": 0,
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:102:72
+    100|     { method: 'pdf-ocr', confidence: 83.125 },
+    101|   ])('keeps reported $method score $confidence without rescaling or de…
+    102|     expect((await capture({ method, confidence })).extractionEvidence)…
+       |                                                                        ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'pdf-ocr' score 100 without rescaling or defaulting
+AssertionError: expected undefined to deeply equal { version: 1, …(4) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-ocr",
+  "ocrConfidence": 100,
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:102:72
+    100|     { method: 'pdf-ocr', confidence: 83.125 },
+    101|   ])('keeps reported $method score $confidence without rescaling or de…
+    102|     expect((await capture({ method, confidence })).extractionEvidence)…
+       |                                                                        ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'image-ocr' score +0 without rescaling or defaulting
+AssertionError: expected undefined to deeply equal { version: 1, …(4) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "image-ocr",
+  "ocrConfidence": 0,
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:102:72
+    100|     { method: 'pdf-ocr', confidence: 83.125 },
+    101|   ])('keeps reported $method score $confidence without rescaling or de…
+    102|     expect((await capture({ method, confidence })).extractionEvidence)…
+       |                                                                        ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'image-ocr' score 100 without rescaling or defaulting
+AssertionError: expected undefined to deeply equal { version: 1, …(4) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "image-ocr",
+  "ocrConfidence": 100,
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:102:72
+    100|     { method: 'pdf-ocr', confidence: 83.125 },
+    101|   ])('keeps reported $method score $confidence without rescaling or de…
+    102|     expect((await capture({ method, confidence })).extractionEvidence)…
+       |                                                                        ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > keeps reported 'pdf-ocr' score 83.125 without rescaling or defaulting
+AssertionError: expected undefined to deeply equal { version: 1, …(4) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-ocr",
+  "ocrConfidence": 83.125,
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:102:72
+    100|     { method: 'pdf-ocr', confidence: 83.125 },
+    101|   ])('keeps reported $method score $confidence without rescaling or de…
+    102|     expect((await capture({ method, confidence })).extractionEvidence)…
+       |                                                                        ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'missing' OCR score rather than inventing a numeric confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'null' OCR score rather than inventing a numeric confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'NaN' OCR score rather than inventing a numeric confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'infinite' OCR score rather than inventing a numeric confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'negative' OCR score rather than inventing a numeric confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'above 100' OCR score rather than inventing a numeric confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'numeric text' OCR score rather than inventing a numeric confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > omits 'object' OCR score rather than inventing a numeric confidence
+AssertionError: expected undefined to deeply equal { version: 1, …(3) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-ocr",
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:111:83
+    109|     { name: 'numeric text', confidence: '88' }, { name: 'object', conf…
+    110|   ])('omits $name OCR score rather than inventing a numeric confidence…
+    111|     expect((await capture({ method: 'pdf-ocr', confidence })).extracti…
+       |                                                                                   ^
+    112|   });
+    113|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a pdf-text extraction as OCR-confident
+AssertionError: expected undefined to deeply equal { version: 1, …(3) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "pdf-text",
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:115:76
+    113|
+    114|   it.each(['pdf-text', 'utf8', 'docx', 'xlsx'])('does not label a %s e…
+    115|     expect((await capture({ method, confidence: 99 })).extractionEvide…
+       |                                                                            ^
+    116|   });
+    117| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a utf8 extraction as OCR-confident
+AssertionError: expected undefined to deeply equal { version: 1, …(3) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "utf8",
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:115:76
+    113|
+    114|   it.each(['pdf-text', 'utf8', 'docx', 'xlsx'])('does not label a %s e…
+    115|     expect((await capture({ method, confidence: 99 })).extractionEvide…
+       |                                                                            ^
+    116|   });
+    117| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a docx extraction as OCR-confident
+AssertionError: expected undefined to deeply equal { version: 1, …(3) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "docx",
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:115:76
+    113|
+    114|   it.each(['pdf-text', 'utf8', 'docx', 'xlsx'])('does not label a %s e…
+    115|     expect((await capture({ method, confidence: 99 })).extractionEvide…
+       |                                                                            ^
+    116|   });
+    117| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/36]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts > only actual aggregate OCR scores are retained > does not label a xlsx extraction as OCR-confident
+AssertionError: expected undefined to deeply equal { version: 1, …(3) }
+
+- Expected:
+{
+  "extractedTextSha256": "6774b55484666d0d9a76a07e5fb4a336b777f42d5bcbd60d2bb135f4cc7d3715",
+  "method": "xlsx",
+  "sourceSha256": "1b811a6a7fa6b77a4766086a10bcccf787b63c4b2ba85a82f63e2c01ef3c9ee7",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts:115:76
+    113|
+    114|   it.each(['pdf-text', 'utf8', 'docx', 'xlsx'])('does not label a %s e…
+    115|     expect((await capture({ method, confidence: 99 })).extractionEvide…
+       |                                                                            ^
+    116|   });
+    117| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/36]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  36 failed | 7 passed (43)
+   Start at  22:02:03
+   Duration  2.02s (transform 987ms, setup 72ms, import 1.66s, tests 30ms, environment 0ms)
+

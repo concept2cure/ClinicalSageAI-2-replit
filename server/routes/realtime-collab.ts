@@ -1052,16 +1052,82 @@ class DurableLockManager {
 
 const lockManager = new DurableLockManager();
 
+/** One section-lock event, as it is recorded on the governed ledger. */
+export interface LockEvent {
+  tenantId: number;
+  /** The actor's numeric user id (the ledger requires a real one). */
+  userId: number;
+  command: 'collab.lock_acquire' | 'collab.lock_release' | 'collab.lock_takeover';
+  documentId: string;
+  sectionId?: string | null;
+  reason?: string;
+  payload?: Record<string, unknown>;
+}
+
+type TxClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+
+/**
+ * Record one lock event on the audit chain: its audit_logs row and its
+ * c2c_ana_actions row, in ONE transaction on ONE client.
+ *
+ * Until 2026-10-18 the lock path handed `recordGovernedAction` the POOL. That
+ * writer takes the chain position with `pg_advisory_xact_lock` and announces it
+ * in a transaction-local GUC the audit_logs trigger reads, and server/services/
+ * audit/chain.ts states the consequence of skipping the transaction as a MUST:
+ * "outside one, the advisory lock and the announcement both end with the
+ * statement that made them, and the trigger then records the row as legacy."
+ * So every lock event written since the chain_seq migration was recorded as a
+ * pre-migration LEGACY row (chain_seq NULL) — outside the sequenced chain, held
+ * only to the weaker either-predecessor rule — and concurrent lock events were
+ * not serialised at all, because each lock was released the moment it was
+ * taken. Reproduced on the real migration: a pool-style write recorded
+ * chain_seq NULL; the same write in one transaction recorded chain_seq 1.
+ */
+export async function writeLockEventTx(client: TxClient, event: LockEvent): Promise<void> {
+  const [{ setTenantContextTx }, { recordGovernedAction }] = await Promise.all([
+    import('../services/tenant/governed-tenant-context.js'),
+    import('./c2c/actions.js'),
+  ]);
+  await client.query('BEGIN');
+  try {
+    await setTenantContextTx(client, event.tenantId);
+    await recordGovernedAction(client, {
+      orgId: event.tenantId,
+      userId: event.userId,
+      command: event.command,
+      target: `document:${event.documentId}${event.sectionId ? `:${event.sectionId}` : ''}`,
+      // The reason the person gave (a takeover requires one), or null. Until
+      // 2026-10-01 a lock event with none recorded "Section lock acquired via
+      // realtime-collab API"; the command already says what happened (D5).
+      reason: statedReasonOrNull(event.reason),
+      payload: event.payload ?? {},
+      domain: 'collab',
+      surface: 'realtime-collab-api',
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  }
+}
+
 /**
  * Governed-ledger record for a lock event (assessment D28 — acquire, release
  * and takeover were unaudited). Fire-and-forget: the ledger write must never
  * add latency or failure to the lock path. Skipped when the principal id is
  * not numeric (the ledger requires a real user id).
+ *
+ * Fire-and-forget governs WHEN the write happens, not HOW: when it runs it is
+ * one transaction (writeLockEventTx). The client comes from
+ * withTenantConnection, which enters the event's tenant scope BEFORE the
+ * checkout — this runs after the response, inside the request's async context,
+ * and a bare pool.connect() there would borrow the request's scope rather than
+ * the one this event belongs to (server/db/withTenantConnection.ts).
  */
 function auditLockEvent(params: {
   tenantId: number;
   actorUserId: string;
-  command: 'collab.lock_acquire' | 'collab.lock_release' | 'collab.lock_takeover';
+  command: LockEvent['command'];
   documentId: string;
   sectionId?: string | null;
   reason?: string;
@@ -1072,20 +1138,20 @@ function auditLockEvent(params: {
   void (async () => {
     const pool = await getDbPool();
     if (!pool) return; // no ledger without a database — fallback mode
-    const { recordGovernedAction } = await import('./c2c/actions.js');
-    await recordGovernedAction(pool, {
-      orgId: params.tenantId,
+    const { withTenantConnection } = await import('../db/withTenantConnection.js');
+    const event: LockEvent = {
+      tenantId: params.tenantId,
       userId,
       command: params.command,
-      target: `document:${params.documentId}${params.sectionId ? `:${params.sectionId}` : ''}`,
-      // The reason the person gave (a takeover requires one), or null. Until
-      // 2026-10-01 a lock event with none recorded "Section lock acquired via
-      // realtime-collab API"; the command already says what happened (D5).
-      reason: statedReasonOrNull(params.reason),
-      payload: params.payload ?? {},
-      domain: 'collab',
-      surface: 'realtime-collab-api',
-    });
+      documentId: params.documentId,
+      sectionId: params.sectionId,
+      reason: params.reason,
+      payload: params.payload,
+    };
+    await withTenantConnection(
+      { tenantId: params.tenantId, source: 'job', caller: 'realtime-collab:auditLockEvent' },
+      (client) => writeLockEventTx(client as unknown as TxClient, event),
+    );
   })().catch(err => {
     console.warn('[realtime-collab] lock audit failed (non-fatal):', err?.message ?? err);
   });

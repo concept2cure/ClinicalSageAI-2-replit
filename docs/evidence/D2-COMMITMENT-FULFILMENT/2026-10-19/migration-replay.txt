@@ -1,0 +1,86 @@
+# deploy-migrate replayed: migrations/20261019_commitment_fulfilment_evidence.sql
+# PostgreSQL 16 + pgvector at 127.0.0.1:55432/c2c_test. The file was first applied by an earlier deploy-migrate run in this
+# session and re-applied by later ones while the slice was built (Rule 1: every file re-runs on every deploy; a content
+# change after the first apply is journal drift, as Rule 1 describes). The two runs below are on the final file.
+
+## Replay run 1: DATABASE_URL=… APP_SERVICE_DB_PASSWORD=… node scripts/db/deploy-migrate.mjs
+1:▶ 1/5 Preflight — database already provisioned?
+4:▶ 2/5 Acquire migration lock
+7:▶ 3/5 Apply migrations
+550:  ✓ applied: migrations/20261019_commitment_fulfilment_evidence.sql
+709:▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+718:▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+732:✅ Schema migration complete — safe to roll services.
+733:exit 0
+
+## Replay run 2: DATABASE_URL=… APP_SERVICE_DB_PASSWORD=… node scripts/db/deploy-migrate.mjs
+1:▶ 1/5 Preflight — database already provisioned?
+4:▶ 2/5 Acquire migration lock
+7:▶ 3/5 Apply migrations
+550:  ✓ applied: migrations/20261019_commitment_fulfilment_evidence.sql
+709:▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+718:▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+732:✅ Schema migration complete — safe to roll services.
+733:exit 0
+
+## Catalog after both replays
+-- the five columns, each once
+         column_name          |        data_type         | is_nullable 
+------------------------------+--------------------------+-------------
+ fulfilment_sequence_id       | integer                  | YES
+ fulfilment_vault_document_id | uuid                     | YES
+ fulfilment_vault_sha256      | text                     | YES
+ fulfilment_recorded_by       | integer                  | YES
+ fulfilment_recorded_at       | timestamp with time zone | YES
+(5 rows)
+
+-- constraints added by the file, each once
+                        conname                         | contype |                                                                                                                                                                                                                                def                                                                                                                                                                                                                                
+--------------------------------------------------------+---------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ regulatory_commitments_fulfilment_coherent             | c       | CHECK ((((fulfilment_vault_document_id IS NULL) = (fulfilment_vault_sha256 IS NULL)) AND ((fulfilment_vault_sha256 IS NULL) OR (fulfilment_vault_sha256 ~ '^[0-9a-f]{64}$'::text)) AND ((fulfilment_recorded_by IS NULL) = (fulfilment_recorded_at IS NULL)) AND (((fulfilment_sequence_id IS NULL) AND (fulfilment_vault_document_id IS NULL)) OR (fulfilment_recorded_at IS NOT NULL)) AND ((status = 'fulfilled'::text) OR (fulfilment_recorded_at IS NULL))))
+ regulatory_commitments_fulfilment_recorded_by_fkey     | f       | FOREIGN KEY (fulfilment_recorded_by) REFERENCES users(id)
+ regulatory_commitments_fulfilment_sequence_same_org_fk | f       | FOREIGN KEY (fulfilment_sequence_id, organization_id) REFERENCES ectd_sequences(id, organization_id)
+ regulatory_commitments_fulfilment_vault_fkey           | f       | FOREIGN KEY (fulfilment_vault_document_id) REFERENCES vault.documents(id)
+(4 rows)
+
+-- the same-organisation key on ectd_sequences, once
+        indexname         |                                                indexdef                                                 
+--------------------------+---------------------------------------------------------------------------------------------------------
+ ectd_sequences_id_org_uq | CREATE UNIQUE INDEX ectd_sequences_id_org_uq ON public.ectd_sequences USING btree (id, organization_id)
+(1 row)
+
+-- triggers on regulatory_commitments: each name once, enabled (O)
+                      tgname                      | tgenabled | tgdeferrable | tginitdeferred |                                                                                                                                                                                                                                   def                                                                                                                                                                                                                                    
+--------------------------------------------------+-----------+--------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ regulatory_commitments_fulfilment_record_guard   | O         | f            | f              | CREATE TRIGGER regulatory_commitments_fulfilment_record_guard BEFORE INSERT OR UPDATE ON public.regulatory_commitments FOR EACH ROW EXECUTE FUNCTION regulatory_commitments_fulfilment_record_guard()
+ trg_regulatory_commitments_signed_fulfilment_ins | O         | t            | t              | CREATE CONSTRAINT TRIGGER trg_regulatory_commitments_signed_fulfilment_ins AFTER INSERT ON public.regulatory_commitments DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN ((new.status = 'fulfilled'::text)) EXECUTE FUNCTION regulatory_commitments_signed_fulfilment_guard()
+ trg_regulatory_commitments_signed_fulfilment_upd | O         | t            | t              | CREATE CONSTRAINT TRIGGER trg_regulatory_commitments_signed_fulfilment_upd AFTER UPDATE ON public.regulatory_commitments DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN (((new.status = 'fulfilled'::text) AND ((old.status IS DISTINCT FROM new.status) OR (old.commitment_type IS DISTINCT FROM new.commitment_type) OR (old.fulfilment_recorded_at IS DISTINCT FROM new.fulfilment_recorded_at)))) EXECUTE FUNCTION regulatory_commitments_signed_fulfilment_guard()
+(3 rows)
+
+-- the guard functions (SECURITY INVOKER)
+                    proname                     | security_definer |             def_md5              
+------------------------------------------------+------------------+----------------------------------
+ regulatory_commitments_fulfilment_record_guard | f                | 814d9a31d26bff80680a6af2a89d6d7a
+ regulatory_commitments_signed_fulfilment_guard | f                | b5f668ac939308c03e26c827f6823b27
+(2 rows)
+
+-- RLS posture of the table the columns were added to (forced, tenant policy)
+        relname         | relrowsecurity | relforcerowsecurity |        policies         
+------------------------+----------------+---------------------+-------------------------
+ regulatory_commitments | t              | t                   | tenant_isolation_policy
+(1 row)
+
+-- the runtime role
+   rolname   | rolsuper | rolbypassrls | sel | upd | del 
+-------------+----------+--------------+-----+-----+-----
+ app_service | f        | f            | t   | t   | t
+(1 row)
+
+-- the migration journal for the file
+                          file                          |  sha256_prefix   | apply_count | reapplied 
+--------------------------------------------------------+------------------+-------------+-----------
+ migrations/20261019_commitment_fulfilment_evidence.sql | ab97ff77f110c640 |           5 | t
+(1 row)
+
+
+sha256 of the file on disk (prefix): ab97ff77f110c640

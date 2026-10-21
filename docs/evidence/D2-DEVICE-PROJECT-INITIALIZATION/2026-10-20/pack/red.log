@@ -1,0 +1,253 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stdout | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:09:58.757Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T22:09:58.758Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:09:58.759Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+[database] Database connection successful
+
+stderr | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:09:59.063Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > US_HDE has its exact low-confidence, unreviewed-source pack specification 6ms
+   → US_HDE has no governed pack spec: expected undefined to be defined
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > CA_MDL has its exact low-confidence, unreviewed-source pack specification 1ms
+   → CA_MDL has no governed pack spec: expected undefined to be defined
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > CA_IVD_LICENCE has its exact low-confidence, unreviewed-source pack specification 1ms
+   → CA_IVD_LICENCE has no governed pack spec: expected undefined to be defined
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_SHONIN has its exact low-confidence, unreviewed-source pack specification 1ms
+   → JP_SHONIN has no governed pack spec: expected undefined to be defined
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_NINTEI has its exact low-confidence, unreviewed-source pack specification 1ms
+   → JP_NINTEI has no governed pack spec: expected undefined to be defined
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_TODOKEDE has its exact low-confidence, unreviewed-source pack specification 1ms
+   → JP_TODOKEDE has no governed pack spec: expected undefined to be defined
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_IVD_APPROVAL has its exact low-confidence, unreviewed-source pack specification 1ms
+   → JP_IVD_APPROVAL has no governed pack spec: expected undefined to be defined
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_CDX has its exact low-confidence, unreviewed-source pack specification 1ms
+   → JP_CDX has no governed pack spec: expected undefined to be defined
+ ↓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > the new migration is actually on the applier after provenance and prior class packs
+ ↓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > without the migration, an exact admitted class cannot substitute another agency pack
+ ↓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > every exact application starts at zero/draft, binds its source tree and discloses provenance without a transmit channel
+ ↓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > replays old wideners over bound old/new records without narrowing, changing existing provenance or losing review attribution
+ ↓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > a same-length altered regional pack refuses the deploy instead of accepting ON CONFLICT
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > US_HDE has unassessed section requirements, not 100% undefined completeness 8ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_MDL has unassessed section requirements, not 100% undefined completeness 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_IVD_LICENCE has unassessed section requirements, not 100% undefined completeness 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_SHONIN has unassessed section requirements, not 100% undefined completeness 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_NINTEI has unassessed section requirements, not 100% undefined completeness 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_TODOKEDE has unassessed section requirements, not 100% undefined completeness 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_IVD_APPROVAL has unassessed section requirements, not 100% undefined completeness 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_CDX has unassessed section requirements, not 100% undefined completeness 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > US_HDE approved optional authoring groups do not determine an unknown requirement set 2ms
+   → expected undefined to be false // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_MDL approved optional authoring groups do not determine an unknown requirement set 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_IVD_LICENCE approved optional authoring groups do not determine an unknown requirement set 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_SHONIN approved optional authoring groups do not determine an unknown requirement set 0ms
+   → expected undefined to be false // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_NINTEI approved optional authoring groups do not determine an unknown requirement set 0ms
+   → expected undefined to be false // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_TODOKEDE approved optional authoring groups do not determine an unknown requirement set 0ms
+   → expected undefined to be false // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_IVD_APPROVAL approved optional authoring groups do not determine an unknown requirement set 0ms
+   → expected undefined to be false // Object.is equality
+ × server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_CDX approved optional authoring groups do not determine an unknown requirement set 0ms
+   → expected undefined to be false // Object.is equality
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > retains normal assessment for modelled FDA IND sections 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > US_HDE has its exact low-confidence, unreviewed-source pack specification
+AssertionError: US_HDE has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > CA_MDL has its exact low-confidence, unreviewed-source pack specification
+AssertionError: CA_MDL has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > CA_IVD_LICENCE has its exact low-confidence, unreviewed-source pack specification
+AssertionError: CA_IVD_LICENCE has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_SHONIN has its exact low-confidence, unreviewed-source pack specification
+AssertionError: JP_SHONIN has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_NINTEI has its exact low-confidence, unreviewed-source pack specification
+AssertionError: JP_NINTEI has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_TODOKEDE has its exact low-confidence, unreviewed-source pack specification
+AssertionError: JP_TODOKEDE has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_IVD_APPROVAL has its exact low-confidence, unreviewed-source pack specification
+AssertionError: JP_IVD_APPROVAL has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_CDX has its exact low-confidence, unreviewed-source pack specification
+AssertionError: JP_CDX has no governed pack spec: expected undefined to be defined
+ ❯ tests/schema-contract/c2c-regional-device-packs.contract.test.ts:25:61
+     23|   it.each(CASES)('%s has its exact low-confidence, unreviewed-source p…
+     24|     const spec = FILING_CLASS_PACKS.find(p => p.docType === docType);
+     25|     expect(spec, `${registryId} has no governed pack spec`).toBeDefine…
+       |                                                             ^
+     26|     expect(spec).toMatchObject({ agency, sourceBasis: 'reasoned_constr…
+     27|     expect(await filingClassPackUncertainties(spec!)).toMatch(/not rev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > US_HDE has unassessed section requirements, not 100% undefined completeness
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_MDL has unassessed section requirements, not 100% undefined completeness
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_IVD_LICENCE has unassessed section requirements, not 100% undefined completeness
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_SHONIN has unassessed section requirements, not 100% undefined completeness
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_NINTEI has unassessed section requirements, not 100% undefined completeness
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_TODOKEDE has unassessed section requirements, not 100% undefined completeness
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_IVD_APPROVAL has unassessed section requirements, not 100% undefined completeness
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_CDX has unassessed section requirements, not 100% undefined completeness
+AssertionError: expected 100 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 100
+
+ ❯ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts:14:55
+     12|     expect(blueprint.sections.every(s => !s.required)).toBe(true);
+     13|     const result = evaluateReadiness({ registryIdOrLegacy, sections: […
+     14|     expect(result.sectionReadiness.completionPercent).toBe(0);
+       |                                                       ^
+     15|     expect(result.sectionReadiness.assessed).toBe(false);
+     16|     expect(result.score).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > US_HDE approved optional authoring groups do not determine an unknown requirement set
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_MDL approved optional authoring groups do not determine an unknown requirement set
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_IVD_LICENCE approved optional authoring groups do not determine an unknown requirement set
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_SHONIN approved optional authoring groups do not determine an unknown requirement set
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_NINTEI approved optional authoring groups do not determine an unknown requirement set
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_TODOKEDE approved optional authoring groups do not determine an unknown requirement set
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_IVD_APPROVAL approved optional authoring groups do not determine an unknown requirement set
+ FAIL  server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_CDX approved optional authoring groups do not determine an unknown requirement set
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts:27:46
+     25|       sections: blueprint.sections.map(s => ({ code: s.code, title: s.…
+     26|     expect(result.sectionReadiness.required).toBe(0);
+     27|     expect(result.sectionReadiness.assessed).toBe(false);
+       |                                              ^
+     28|     expect(result.sectionReadiness.completionPercent).toBe(0);
+     29|     expect(result.score).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  24 failed | 1 passed | 5 skipped (30)
+   Start at  22:09:55
+   Duration  4.30s (transform 2.23s, setup 108ms, import 3.64s, tests 42ms, environment 0ms)
+
+JSON report written to /workspace/ClinicalSageAI/docs/evidence/D2-DEVICE-PROJECT-INITIALIZATION/2026-10-20/pack/red.json

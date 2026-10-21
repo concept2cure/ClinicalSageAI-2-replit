@@ -1,0 +1,7 @@
+d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e  server/services/authoring/authoring-file-to-vault.ts
+161fb45f4530b1835455007a89d44f0a98b04a29fc417c4b5c26e3a86118b991  server/services/vault/vault-ingest.service.ts
+2de6f13da5b667d83440bae480a36d615d06981d17c2b8dc7d775912ff9b01d8  server/services/vault/vault-ingest-types.ts
+b6aac219bacc632aabbfc92d0d22ce1e432c2713448cf9fe3fd2d94642cfac3e  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+dc3ef7fbfecb0e07715cf8fb1c1d832e8614d790b54b076d1742b428357db09a  server/services/vault/__tests__/vault-ingest-storage.test.ts
+4ceb6f59070c5fc7dd4d8d7f5de61029b69443f6af9b60a1415c94ef8a3eaa4f  server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+fb2ca8e40c1279018066c5ba4c86e94b05581c704161b186de41ecdebc06e7b6  server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts

@@ -1,0 +1,276 @@
+{
+  "capturedAtUtc": "2026-10-20T21:00:01.302130+00:00",
+  "head": "eb4ecf5aca3f171d170ec9051e38371c11bccd76",
+  "scope": "Read-only static audit of pre-QMS-repair staged source. No runtime getters, broad tests, compiler, browser, provider or database used. These hashes are historical audit pins, not final release pins.",
+  "count": 7,
+  "rows": [
+    {
+      "registryId": "QMS_QUALITY_MANUAL",
+      "region": "GLOBAL",
+      "agency": "ISO",
+      "productClass": [
+        "medical_device",
+        "ivd"
+      ],
+      "exactSharedBlueprint": "qms_quality_manual_sections",
+      "sharedSectionArray": "QMS_SECTIONS",
+      "sectionCountBeforeRecordSpecificRepair": 7,
+      "currentBuiltinAvailableBeforeReachabilityFix": false,
+      "directExactRegistryToolOutlineAvailable": true,
+      "projectionAfterReachabilityFix": "bd62b10a-455c-505a-b4d6-74950da045d5",
+      "expectedMode": "manual preparation worksheet; original controlled/source records retained"
+    },
+    {
+      "registryId": "QMS_DESIGN_CONTROLS",
+      "region": "US",
+      "agency": "FDA",
+      "productClass": [
+        "medical_device",
+        "ivd"
+      ],
+      "exactSharedBlueprint": "qms_design_controls_sections",
+      "sharedSectionArray": "QMS_SECTIONS",
+      "sectionCountBeforeRecordSpecificRepair": 7,
+      "currentBuiltinAvailableBeforeReachabilityFix": false,
+      "directExactRegistryToolOutlineAvailable": true,
+      "projectionAfterReachabilityFix": "54b99af2-56df-56fe-8fb3-a8358c6eaeae",
+      "expectedMode": "manual preparation worksheet; original controlled/source records retained"
+    },
+    {
+      "registryId": "QMS_DMR",
+      "region": "US",
+      "agency": "FDA",
+      "productClass": [
+        "medical_device",
+        "ivd"
+      ],
+      "exactSharedBlueprint": "qms_dmr_sections",
+      "sharedSectionArray": "QMS_SECTIONS",
+      "sectionCountBeforeRecordSpecificRepair": 7,
+      "currentBuiltinAvailableBeforeReachabilityFix": false,
+      "directExactRegistryToolOutlineAvailable": true,
+      "projectionAfterReachabilityFix": "3889a423-9f4a-508e-bb98-279bfc28f64d",
+      "expectedMode": "manual preparation worksheet; original controlled/source records retained"
+    },
+    {
+      "registryId": "QMS_DHR",
+      "region": "US",
+      "agency": "FDA",
+      "productClass": [
+        "medical_device",
+        "ivd"
+      ],
+      "exactSharedBlueprint": "qms_dhr_sections",
+      "sharedSectionArray": "QMS_SECTIONS",
+      "sectionCountBeforeRecordSpecificRepair": 7,
+      "currentBuiltinAvailableBeforeReachabilityFix": false,
+      "directExactRegistryToolOutlineAvailable": true,
+      "projectionAfterReachabilityFix": "03da7d87-9d13-5edc-bcdd-f0a0e007357c",
+      "expectedMode": "manual preparation worksheet; original controlled/source records retained"
+    },
+    {
+      "registryId": "QMS_MDSAP",
+      "region": "GLOBAL",
+      "agency": "IMDRF",
+      "productClass": [
+        "medical_device",
+        "ivd"
+      ],
+      "exactSharedBlueprint": "qms_mdsap_sections",
+      "sharedSectionArray": "QMS_SECTIONS",
+      "sectionCountBeforeRecordSpecificRepair": 7,
+      "currentBuiltinAvailableBeforeReachabilityFix": false,
+      "directExactRegistryToolOutlineAvailable": true,
+      "projectionAfterReachabilityFix": "920dcf37-96d8-51db-8089-8acc6741e1ae",
+      "expectedMode": "manual preparation worksheet; original controlled/source records retained"
+    },
+    {
+      "registryId": "QMS_QSR_820",
+      "region": "US",
+      "agency": "FDA",
+      "productClass": [
+        "medical_device",
+        "ivd"
+      ],
+      "exactSharedBlueprint": "qms_qsr_820_sections",
+      "sharedSectionArray": "QMS_SECTIONS",
+      "sectionCountBeforeRecordSpecificRepair": 7,
+      "currentBuiltinAvailableBeforeReachabilityFix": false,
+      "directExactRegistryToolOutlineAvailable": true,
+      "projectionAfterReachabilityFix": "d421269e-73c4-51a1-b35f-504c57dbb678",
+      "expectedMode": "manual preparation worksheet; original controlled/source records retained"
+    },
+    {
+      "registryId": "QMS_ISO_13485",
+      "region": "GLOBAL",
+      "agency": "ISO",
+      "productClass": [
+        "medical_device",
+        "ivd"
+      ],
+      "exactSharedBlueprint": "qms_iso_13485_sections",
+      "sharedSectionArray": "QMS_SECTIONS",
+      "sectionCountBeforeRecordSpecificRepair": 7,
+      "currentBuiltinAvailableBeforeReachabilityFix": false,
+      "directExactRegistryToolOutlineAvailable": true,
+      "projectionAfterReachabilityFix": "75f91c1f-84a8-5214-85eb-a359c6c80e26",
+      "expectedMode": "manual preparation worksheet; original controlled/source records retained"
+    }
+  ],
+  "identityNotes": [
+    "There is no canonical QMS_DHF registry ID. QMS_DESIGN_CONTROLS is the cross-cutting DHF/design-controls identity. US_DHF already belongs to medical_devices and is separately reachable.",
+    "IEC_62304 and ISO_CIP already belong to medical_devices and are not part of this seven-record exclusion.",
+    "No truly absent exact shared blueprint among these seven; dedicated record-specific DHR, DMR and MDSAP content schemas are absent. Seven generic QMS headings are not those actual records."
+  ],
+  "staticTrace": [
+    {
+      "source": "shared/regulatory/global-document-registry.ts",
+      "function": "entry",
+      "detail": "Each active entry has device/ivd-only productClass; defaultSectionBlueprint is exact lowercase registry ID plus _sections."
+    },
+    {
+      "source": "shared/regulatory/project-bootstrap.ts",
+      "lines": [
+        629,
+        637,
+        905,
+        910,
+        997,
+        998
+      ],
+      "detail": "All seven exact blueprint IDs map to QMS_SECTIONS. The generic seven groups include policy, roles, document control, design controls, production, CAPA and audit; source guidance contains legacy QSR citations 820.30/.40/.70/.100."
+    },
+    {
+      "source": "server/services/market-specs/document-template-library.ts",
+      "function": "getRegistryDocumentTemplate",
+      "detail": "No lifecycle/component/dedicated mapping for these exact IDs; exactBlueprint accepts their matching nonempty shared blueprint and projectOutline retains exact registry identity. authoringFamilies is empty because format/standard is none. Coverage excludes them by segment."
+    },
+    {
+      "source": "server/services/authoring/builtin-authoring-templates.ts",
+      "functions": [
+        "regionalEntries",
+        "getBuiltinAuthoringTemplate",
+        "registryTemplate",
+        "projectOutline"
+      ],
+      "detail": "Both roster and UUID lookup share the segment filter that excludes cross_cutting. No exactComponentMetadata maps these IDs, so aiDraftable defaults false; reaching them adds seven manual preparation projections without changing UUID derivation."
+    },
+    {
+      "source": "server/services/market-specs/document-preparation.ts",
+      "functions": [
+        "isDeviceDocumentScope",
+        "assertPreparationScope"
+      ],
+      "detail": "The existing predicate already admits cross_cutting entries whose nonempty productClass is entirely device/ivd. Direct get_document_template registry references therefore already reach device preparation."
+    },
+    {
+      "source": "server/services/ana/builtin-template-reference.ts",
+      "function": "checkedRegistry",
+      "detail": "Already permits these active device-only cross-cutting entries. UUID reference is currently unreachable only because the builtin exact lookup excludes them."
+    },
+    {
+      "source": "server/services/qms/sopTemplates.ts",
+      "detail": "Existing quality_manual template and generic controlled procedure/form/policy/work-instruction templates are separate module-owned identities, not these seven registry records."
+    },
+    {
+      "source": "server/services/qms/controlled-document-service.ts",
+      "functions": [
+        "parseCreate",
+        "seedsFor",
+        "createControlledQmsDocument"
+      ],
+      "detail": "Quality registration uses governed Authoring transactions and QMS registration/signature/revision ownership; ordinary Authoring preparation drafts do not become registered controlled documents."
+    },
+    {
+      "source": "client/src/concept2cure/quality/ControlledDocumentWorkbench.tsx",
+      "detail": "Quality already embeds the same DocumentWorkbench pinned to its controlled version, consumeDeepLinks=false. No new editor or QMS creator is needed."
+    }
+  ],
+  "safeMinimalReachability": [
+    "Admit only the existing cross_cutting entries with a nonempty productClass consisting entirely of medical_device/ivd, within existing supported regions, consistently in builtin listing/exact lookup and coverage. Do not admit arbitrary any-product cross_cutting records.",
+    "Keep all seven manual preparation; original signed DHRs/batch records, specifications/DMR, design reviews/verification, audit reports and certificates remain source records. An authoring scaffold neither fabricates nor replaces their execution/approval.",
+    "Disclose limited scope, sponsor applicability and current QMSR/source versions; repair or explicitly qualify historical QSR citations before new exposure. Root elected record-specific limited groups for exact seven mappings plus US_DHF, preserving generic QMS_SECTIONS.",
+    "Preserve existing Quality module registration, versioning, approval and training paths. Do not present a plain Authoring worksheet as a registered/effective Quality record or certification.",
+    "Seven additions would increase the currently qualified385 builtins to392; this is a static expected count, not a runtime inventory receipt."
+  ],
+  "deletedHistory": [
+    {
+      "argv": [
+        "git",
+        "log",
+        "--all",
+        "--diff-filter=D",
+        "--format=%h %s",
+        "--name-only",
+        "--",
+        "shared/regulatory/global-document-registry.ts",
+        "shared/regulatory/project-bootstrap.ts",
+        "server/services/market-specs/document-template-library.ts",
+        "server/services/authoring/builtin-authoring-templates.ts",
+        "client/src/concept2cure/v2/editor"
+      ],
+      "output": ""
+    },
+    {
+      "argv": [
+        "git",
+        "log",
+        "--all",
+        "--diff-filter=D",
+        "--format=%h %s",
+        "--name-only",
+        "--",
+        "*qms*",
+        "*Qms*",
+        "*QMS*",
+        "*design-history*",
+        "*device-master*",
+        "*device-history*",
+        "*mdsap*",
+        "*iso13485*",
+        "*ISO13485*",
+        "*quality-manual*"
+      ],
+      "output": "a1d522cd4 WF: OQ protocols follow the product's fail-closed behaviour; credentialed e-sign steps; re-executed\n\ndocs/evidence/W3/2026-09-20/OQ-QMS/steps/OQ-QMS-05.at-failure.png\ndocs/evidence/W3/2026-09-20/OQ-QMS/steps/OQ-QMS-09.at-failure.png\nbcf9f7922 WD: runtime-role grants are provisioned by the installers; IQ/OQ re-executed\n\ndocs/evidence/W3/2026-09-20/OQ-QMS/steps/OQ-QMS-05.api-2.json\ndocs/evidence/W3/2026-09-20/OQ-QMS/steps/OQ-QMS-07.api-1.json\ndocs/evidence/W3/2026-09-20/OQ-QMS/steps/OQ-QMS-07.api-2.json\n4aa204390 fix(shell): keep the kits' scope root, and clear the reachability baseline to zero\n\nclient/src/concept2cure/mdx/hooks/useQmsReadiness.ts\n"
+    }
+  ],
+  "deletedHistoryConclusion": "Bounded searches found no deleted dedicated QMS/DMR/DHR/MDSAP/ISO13485 authoring implementation to restore. The only production deletion found was the old MDX useQmsReadiness hook at4aa204390; inspection shows it only reads org-scoped readiness counts, not outlines, editing or record creation. Other hits are historical OQ evidence assets.",
+  "sourcePins": {
+    "shared/regulatory/global-document-registry.ts": "776239d761c6772b7c7763a4b77fcc6b4dc07faf8c4a295befd0b589c75c761a",
+    "shared/regulatory/project-bootstrap.ts": "2e165a264da8eecb27e2f06f854502c759d901d336e701b395973019adcd204c",
+    "server/services/market-specs/document-template-library.ts": "876bd442177d5aec5ce6d44919a86eb1a739cfeb2778ea93a16cc6eac9fcf8f2",
+    "server/services/authoring/builtin-authoring-templates.ts": "09bdceb3070d3e0372ecca0fb46b09ed0fba89c6e4eb8b8add93a37fac3524ff",
+    "server/services/market-specs/document-preparation.ts": "d7a75f8871c741d9b09d79c10653c82091d1ca07f566cacd94599e0d972d41b7",
+    "server/services/ana/builtin-template-reference.ts": "0d97bb5ca61642a5470f5a146306beba5eca9a9a50d5f3783ca266fd73768e72",
+    "server/services/qms/sopTemplates.ts": "e5f11fa7f5cf46b0cd83f28a5746021e09a18de6b05b584f5027f0198fa72146",
+    "server/services/qms/controlled-document-service.ts": "42aa8c235b280777d5d58a36f0b15119d1b2bce1127bb6f35bafd333a5208a38",
+    "client/src/concept2cure/quality/ControlledDocumentWorkbench.tsx": "b4ff05b5f902fd1f63b7d01119ed54e643726f349a687b6c2a6d1142296c91c6"
+  },
+  "postRepairStaticReview": {
+    "capturedAtUtc": "2026-10-20T21:02:31.483884+00:00",
+    "scope": "Read-only source review after root applied the bounded reachability and record-specific outline changes. No runtime/test qualification by this reviewer. These are review-time historical pins, not final release pins.",
+    "findings": [
+      "isDeviceRegistryEntry preserves the nonempty all-device/ivd productClass restriction for cross_cutting entries, excluding arbitrary any-product records.",
+      "Builtin roster and exact UUID lookup share regionalEntries; both selectors and registry coverage now use the same registry predicate. The API integration loop includes the same seven entries.",
+      "Each newly reachable registry identity remains manual preparation with blank content and no inferred CTD module. The exact metadata lookup has no AI-eligible component for these IDs.",
+      "Seven exact QMS mappings plus US_DHF use limited record-specific groups in the existing device source. Generic QMS_SECTIONS remains unchanged.",
+      "New groups use current QMSR820.10 with applicability/source limitations; MDSAP and DHR retain original independent report and executed/signed record limits.",
+      "Existing Quality registration, controlled revisions, approval and embedded single editor remain unchanged. No new creator, editor, transport or authorization path is introduced."
+    ],
+    "preparationMetadataFollowup": {
+      "source": "server/services/market-specs/device-document-preparation.ts",
+      "function": "deviceRoute",
+      "statusAtReview": "Reported to root; not a transmission capability or authorization failure.",
+      "detail": "US quality_system records still inherit generic FDA/eSTAR pathway wording in preparation metadata. An internal-QMS preparation/no-agency-transmission notice would match their existing module/task scope."
+    },
+    "sourcePins": {
+      "shared/regulatory/global-document-registry.ts": "e02ac8e155fcb45a37afc65111c76c7aae7c329ffdfc818d0c3d0b89b647a9cd",
+      "shared/regulatory/device-authoring-sections.ts": "3e32bf73ba586af0460a98eeac64f7372babb637749565792948e7aaf3d43bc0",
+      "shared/regulatory/project-bootstrap.ts": "90529809f94961cd6993b79dd98da5964c75ecd116557a11117ab6900e245e15",
+      "server/services/authoring/builtin-authoring-templates.ts": "ac55ec8d21cdf306c307e8141d60706edbcbb43aa3d2cac8768e0a4b9b207cab",
+      "server/services/market-specs/document-template-library.ts": "ab1d491af23a3d5f30852e2682035bb40e994d5ab061fab212348d975379b6f3",
+      "server/services/market-specs/device-document-preparation.ts": "616064408e52b3bd2af9257e23038301b7054c6a41941912cfd1edc9e80d7339",
+      "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts": "47295379c6eb555e7b80d110076bec4ba3431655e1fad703e200784e6f11a77a"
+    }
+  }
+}

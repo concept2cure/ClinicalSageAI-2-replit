@@ -1,0 +1,37 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/document-passage-tools.ts",
+    "server/services/ana/tool-outcome.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "3d56be53659c581bd27a57874903d752eef39848577bea311a3ec472141dce65",
+  "note": "Summary omits duplicated source fields, not raw output",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/document-passage-tools.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/tool-outcome.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

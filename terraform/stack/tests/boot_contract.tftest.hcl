@@ -295,8 +295,13 @@ run "renders_the_boot_contract" {
     error_message = "The scanner must report a file it could not scan whole (AlertExceedsMax yes), not answer OK for it."
   }
 
-  # The worker has no scanner beside it, so it is given no address for one:
-  # an upload reaching it is refused as unscanned rather than sent nowhere.
+  # The worker has no scanner beside it, so it is given no address for one.
+  # Since MR-08 stage 1 that means the worker cannot boot: a production process
+  # with no CLAMAV_HOST fails the boot security self-test (clamav_connectivity,
+  # server/services/securityHealth.ts) and exits. No worker image exists to run
+  # (deploy-aws.yml, "No worker image"); giving the worker a scanner or retiring
+  # it is MR-14's call. This assertion pins today's definition, not a working
+  # worker.
   assert {
     condition     = length([for e in module.ecs.worker_container.environment : e.name if e.name == "CLAMAV_HOST"]) == 0
     error_message = "The worker task has no scanner; it must not be pointed at one."

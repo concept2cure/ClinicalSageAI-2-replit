@@ -1,0 +1,201 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > POSITIVE CONTROL: a well-formed grouped container reports only its heading children 4ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > sees a stray flat <leaf> AFTER the grouped headings — the exact case the positional regex missed 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > sees a stray flat <leaf> BEFORE the headings too (the one case the old regex did catch) 2ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > a self-closing <leaf/> and a <leaf>…</leaf> pair are both direct children 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS when the container is absent — an unreadable backbone is never a clean one 2ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS when the container is never closed 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS on a non-string / empty document and on an unidentified container 4ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > an EMPTY container is readable, and the emptiness is caught by the non-vacuity assertions, not hidden 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA is NOT conformant by region alone: with no build report it says so 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA requires a current regional DTD result as well as its clean structural report 2ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA with reported gaps is not conformant, and the gaps are the stated reason: the first four, then a count 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > EMA / PMDA / Health Canada are NOT conformant: own root element, but Module 1 is flat — with the gap stated 2ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > the eight widened regions are EMA-structure placeholders, never conformant 2ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > fda: EVERY Module 1 leaf sits under a published heading element — and the status names what the builder cannot stand behind 984ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > ema: NOT conformant — eu-regional.xml really does file EVERY Module 1 leaf flat under <m1-eu> 737ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > pmda: NOT conformant — jp-regional.xml files every Module 1 leaf flat under <m1-jp> 849ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > uk: placeholderOf=ema, and uk-regional.xml carries an <eu-regional> root 843ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a placeholder is ALWAYS surfaced (failing check + warning), even when not enforced 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a flat-Module-1 backbone is ALWAYS surfaced with its specific gap 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > FAILS CLOSED: blocks a production transmit of a placeholder OR a flat backbone when enforcement is on 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > does not block staging even when enforced (report-only there) 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a conformant region passes cleanly 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a malformed placeholderOf on a stored status cannot crash the gate 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a required production flag refuses absent historical evidence 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > the env flag is true only for the literal "true" 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > NO region claims conformance for this fixture, and FDA — the one grouped builder — names its gaps 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > fda: the ROOT ELEMENT in the bytes is the one the conformance report records 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ema: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > pmda: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ca: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > uk: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ch: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > au: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > cn: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > br: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > in: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > kr: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > sg: the ROOT ELEMENT in the bytes is the one the conformance report records 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > fda groups its Module 1 — NO <leaf> is a direct child of its Module 1 container, wherever in the container it sits 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ema claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > pmda claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ca claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > uk claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ch claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > au claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > cn claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > br claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > in claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > kr claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > sg claims to be a placeholder — the bytes must carry the OTHER region's root element 0ms
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-21T00:35:19.708Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:35:19.709Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-21T00:35:19.710Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 11ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 4ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > refuses absent DTD proof when required while preserving PDF/A warning semantics 4ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > forwards the selected external descriptor so a matching clean report can pass the required gate 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > reports a matching external error as a failed assessment and blocks required production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > keeps a clean selected subset from satisfying the required external assessment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > refuses required external clearance without a trusted descriptor despite a clean engine-named report 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in staging 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps advisory unassessed execution distinct from a clean zero-error assessment 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > surfaces an advisory mismatched report as invalid rather than passed 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > retains valid internal subset error diagnostics without calling them an external assessment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > preserves low-level enforceExternal=false even when required with no descriptor 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 758ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > a complete placeholder drop-point proves presence but cannot clear actual DTD validation 748ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 12ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 481ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 4ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the resolver itself distinguishes one level from two (the check is not vacuous) 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > fda: m1/us/us-regional.xml points its DTD at util/dtd/us-regional-v3-3.dtd 228ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ema: m1/eu/eu-regional.xml points its DTD at util/dtd/eu-regional.dtd 319ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > pmda: m1/jp/jp-regional.xml points its DTD at util/dtd/jp-regional.dtd 437ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ca: m1/ca/ca-regional.xml points its DTD at util/dtd/ca-regional.dtd 376ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the ICH index.xml at the root references util/dtd/ directly 208ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > fda: m1/us/us-regional.xml points its stylesheet at util/style/us-regional.xsl 202ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > the ICH index.xml carries a stylesheet PI that resolves to util/style/ectd-2-0.xsl 221ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > bundles vendored *.xsl into util/style/ and checksums them into the MD5 index 198ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > index.xml: <ectd:ectd> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 163ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > m1/us/us-regional.xml: <fda-regional:fda-regional> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 177ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > requiredDtdsForRegion > always includes the ICH backbone plus the regional DTD 2ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > requiredDtdsForRegion > requires eu-regional.dtd for every widened region (they build the EMA backbone) 1ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > listVendoredDtds > returns [] for a missing directory without throwing 2ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > listVendoredDtds > with a populated drop-point > lists only *.dtd files, sorted 3ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > blocks a production FDA package missing the regional DTD when required 1ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > clears when every required DTD is present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > does NOT block when DTDs are not required (graceful default), but still reports missing 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > does NOT block staging even when required 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > blocks a production widened-region (kr) package missing eu-regional.dtd 2ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > assessDtdReadiness > does not claim exact package SYSTEM paths resolve to uppercase filenames 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > dtdRequiredFromEnv > is true only for the literal "true" 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > requires the ICH stylesheet everywhere and the FDA regional stylesheet only for fda 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > listVendoredStylesheets lists only *.xsl and returns [] for a missing directory 4ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > a production package with every DTD but no stylesheet is NOT self-contained when required 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > requires the exact stylesheet case used by package processing instructions 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > stylesheet self-containment — the second hole the DTD gate did not cover > report-only when not required: names the missing stylesheets but does not block 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > fda: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > ema: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > pmda: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > ca: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > uk: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > ch: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > au: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > cn: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > br: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > in: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > kr: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > sg: DTD gate cleared with every required file present 0ms
+ ✓ server/services/ectd/__tests__/dtd-bundler.test.ts > a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant > yet only FDA can be region-conformant — the DTDs do not close the other eleven 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records every generated backbone/STF as unverified when the drop-point is empty 1789ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > validates all captured ZIP XML and checksum-pins its exact supportive bytes 2639ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned 1937ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > refuses to certify changed supportive bytes despite otherwise valid XML 6000ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing 3433ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > does not require an STF DTD when this sequence generates no STF 424ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory xml-errors details 4ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-present details 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-styles-inventory details 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory duplicate-required details 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses absent historical status and presence-only historical status when required 4ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > accepts actual complete proof while preserving the default/report-only posture 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged empty proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged duplicate proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-row proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged skipped proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged doctype proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged integrity proof despite passed:true 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-required-style proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged nonboolean proof despite passed:true 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses omitted STF coverage in a study package 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > does not establish conformance from a clean structural-gap report alone 0ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > accepts a clean structural report only with current complete regional proof 1ms
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > retains structural refusals even with an XML-valid synthetic grammar 2ms
+
+ Test Files  7 passed (7)
+      Tests  165 passed (165)
+   Start at  00:34:57
+   Duration  46.47s (transform 5.80s, setup 265ms, import 9.41s, tests 34.42s, environment 2ms)
+

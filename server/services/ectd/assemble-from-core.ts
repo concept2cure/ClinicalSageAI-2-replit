@@ -524,13 +524,7 @@ export interface AssembleSubmissionResult {
   // `missingStylesheets` travels with `missing`: selfContained is false when
   // EITHER is non-empty, so a consumer that reads only `missing` cannot say
   // which files are absent (see SubmissionBundle['dtdStatus']).
-  dtdStatus?: {
-    required: string[];
-    present: string[];
-    missing: string[];
-    missingStylesheets?: string[];
-    selfContained: boolean;
-  };
+  dtdStatus?: import('../submission-gateways/types').SubmissionBundle['dtdStatus'];
   stats: {
     totalModules: number;
     totalGranules: number;

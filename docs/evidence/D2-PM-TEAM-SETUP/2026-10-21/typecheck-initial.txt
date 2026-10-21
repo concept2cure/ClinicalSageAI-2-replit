@@ -1,0 +1,8 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 1 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 1 exceeds baseline 0 (+1).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    server/routes/__tests__/project-sharing-team-setup.pglite.test.ts(125,35): error TS2698: Spread types may only be created from object types.

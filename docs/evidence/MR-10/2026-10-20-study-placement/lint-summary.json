@@ -1,0 +1,204 @@
+{
+  "sourceAnchor": "56176ddf03e6d8195dc8e01b99c081dcf8881205",
+  "errors": 0,
+  "warnings": 14,
+  "baselineWarnings": 15,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/studyTaggingPlacement.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx",
+      "errors": 0,
+      "warnings": 2,
+      "messages": [
+        {
+          "line": 188,
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AuthoringPlaceIntoFilingForDocument' has too many lines (297). Maximum allowed is 100."
+        },
+        {
+          "line": 188,
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'AuthoringPlaceIntoFilingForDocument' has a complexity of 55. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/StudyTaggingInputFields.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "errors": 0,
+      "warnings": 7,
+      "messages": [
+        {
+          "line": 688,
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1889). Maximum allowed is 500."
+        },
+        {
+          "line": 1215,
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ValidationWorkspace' has too many lines (161). Maximum allowed is 100."
+        },
+        {
+          "line": 1215,
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'ValidationWorkspace' has a complexity of 28. Maximum allowed is 15."
+        },
+        {
+          "line": 1422,
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ShadowReviewWorkspace' has too many lines (198). Maximum allowed is 100."
+        },
+        {
+          "line": 1422,
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'ShadowReviewWorkspace' has a complexity of 23. Maximum allowed is 15."
+        },
+        {
+          "line": 1984,
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DispatchWorkspace' has too many lines (296). Maximum allowed is 100."
+        },
+        {
+          "line": 1984,
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'DispatchWorkspace' has a complexity of 75. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "line": 387,
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'VaultPlaceIntoSubmissionForDocument' has too many lines (213). Maximum allowed is 100."
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/filingTarget.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/placeIntoFilingCopy.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/ectd-regional-rules.ts",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "line": 652,
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (721). Maximum allowed is 500."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ectd/ectd4-validator.ts",
+      "errors": 0,
+      "warnings": 3,
+      "messages": [
+        {
+          "line": 173,
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'ECTD_FILENAME_PATTERN' is assigned a value but never used."
+        },
+        {
+          "line": 274,
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'validatePackage' has too many lines (258). Maximum allowed is 100."
+        },
+        {
+          "line": 274,
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'validatePackage' has a complexity of 56. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ectd/stf-generator.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "shared/regulatory/__tests__/ectd-leaf-rules.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "shared/regulatory/ectd-leaf-rules.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "finalBuilderLayout": {
+    "anchor": "13cb23411240aa569c280a103331907e50ea5104",
+    "errors": 0,
+    "warnings": 7
+  }
+}

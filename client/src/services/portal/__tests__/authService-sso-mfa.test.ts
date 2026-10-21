@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const CHALLENGE = 'eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoibWZhX2NoYWxsZW5nZSJ9.signature';
+// Synthetic envelope: payload parsing only; this placeholder cannot authenticate.
+const CHALLENGE = [{ alg: 'HS256' }, { type: 'mfa_challenge' }]
+  .map(part => Buffer.from(JSON.stringify(part)).toString('base64url')).concat('signature').join('.');
 const json = (status: number, body: unknown): Response => ({
   ok: status < 400, status, statusText: String(status), headers: new Headers({ 'Content-Type': 'application/json' }),
   json: async () => body, text: async () => JSON.stringify(body), clone: () => json(status, body),

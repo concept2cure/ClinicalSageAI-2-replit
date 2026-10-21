@@ -1,0 +1,32 @@
+{
+  "firstBroadRun": {
+    "files": 79,
+    "passed": 1264,
+    "failed": 1,
+    "total": 1265,
+    "pending": 0,
+    "sourceCommit": "e2e4bd0bd2638f62092db52bd354ccab054f61c9"
+  },
+  "focusedCorrection": {
+    "files": 2,
+    "passed": 28,
+    "failed": 0,
+    "pending": 0,
+    "replacedFailedFile": "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx",
+    "replacementPassed": 21,
+    "additionalCanonicalNeighborPassed": 7
+  },
+  "derivedCurrentAcceptance": {
+    "files": 79,
+    "passed": 1267,
+    "failed": 0,
+    "pending": 0,
+    "boundary": "Derived from 78 unchanged passing files (1246 cases) plus the corrected 21-case specialist handoff file, not a single all-green 79-file execution. Seven additional canonical CMC cases passed separately."
+  },
+  "sourceCommit": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
+  "additionalChangesSinceBroadRun": [
+    "client/src/concept2cure/quality/app.css",
+    "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx"
+  ],
+  "productionBehaviorChangeSinceBroadRun": "Only the unrelated Quality notice selector joined an existing style group; no TypeScript production source changed."
+}

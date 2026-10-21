@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:design-system"
+  ],
+  "at": "2026-10-20T22:44:06.138370+00:00",
+  "elapsedSeconds": 1.091,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "stdout": "[design-system] OK \u2014 no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.\n",
+  "stderr": ""
+}

@@ -6,7 +6,7 @@ import type { CompanyDocumentProfile, CompanyLegalDocument } from '@shared/compa
 import { normalizeTemplateSpec } from '@shared/templates/template-spec';
 import { CompanyLetterheadPreview, stationeryContrast } from '../surfaces/company-documents/CompanyLetterheadPreview';
 import { CompanyLegalInventory } from '../surfaces/company-documents/CompanyLegalInventory';
-import { CompanyVaultPicker } from '../surfaces/company-documents/CompanyVaultPicker';
+import { VaultVersionPicker, type PickedVaultVersion } from '../surfaces/VaultLibraryResults';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 const profile = (): CompanyDocumentProfile => ({ version: 1, revision: 1, companyName: 'Readable Company', address: 'A long office address', contact: 'regulatory@example.invalid', registrationDetails: 'Reg-42', letterhead: normalizeTemplateSpec({ header: { text: 'Review every header line' }, footer: { text: 'Review every footer line' } }), importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: false, legalDocuments: [] });
@@ -77,15 +77,15 @@ describe('Company legal inventory tools', () => {
   });
 });
 
-describe('Company Vault picker recovery and paging', () => {
+describe('Canonical Vault picker recovery and paging', () => {
   it('retries the same failed query and reads later results without discarding the selection contract', async () => {
-    const choose = vi.fn(); let failed = true;
+    const choose = vi.fn<(hit: PickedVaultVersion) => void>(); let failed = true;
     apiRequest.mockImplementation(async (_method, url) => {
       if (failed) return json({ message: 'The Vault search is temporarily unavailable.' }, 500);
       const later = String(url).includes('offset=25');
-      return json({ data: { scope: 'verified-accessible-programs', query: 'original', total: 26, limit: 25, results: [{ id: later ? 'last-version' : 'first-version', title: later ? 'Later original' : 'First original', current: true, version: '2', program: { id: 'admitted-project', name: 'Project' } }] } });
+      return json({ data: { scope: 'verified-accessible-programs', query: 'original', total: 26, limit: 25, results: [{ id: later ? 'last-version' : 'first-version', title: later ? 'Later original' : 'First original', current: true, version: '2', snippet: null, documentType: 'OTHER', size: null, program: { id: 'admitted-project', name: 'Project' } }] } });
     });
-    render(<CompanyVaultPicker disabled={false} onChoose={choose} />);
+    render(<VaultVersionPicker disabled={false} onChoose={choose} />);
     fireEvent.change(screen.getByLabelText('Search your accessible Vaults'), { target: { value: 'original' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search Vault' }));
     await screen.findByRole('button', { name: 'Retry Vault search' });
@@ -95,7 +95,7 @@ describe('Company Vault picker recovery and paging', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next Vault results' }));
     await screen.findByText('Later original');
     fireEvent.click(screen.getByRole('button', { name: 'Select document' }));
-    expect(choose).toHaveBeenCalledWith(expect.objectContaining({ id: 'last-version', program: { id: 'admitted-project', name: 'Project' } }));
+    expect(choose).toHaveBeenCalledWith(expect.objectContaining({ id: 'last-version', programId: 'admitted-project', programName: 'Project' }));
     await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => String(url).includes('offset=25'))).toBe(true));
   });
 });

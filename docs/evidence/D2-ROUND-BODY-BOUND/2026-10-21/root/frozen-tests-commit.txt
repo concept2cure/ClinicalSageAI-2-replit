@@ -1,0 +1,56 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3313 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 e26e860d3] Freeze raw-body bound failure and receipt proofs (D2 W2)
+ 47 files changed, 25245 insertions(+)
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/SUMMARY.md
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/baseline-post.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/baseline-pre.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/frozen-hashes.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/node-version.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/red.command.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/red.exit-code.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/budget/red.raw.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/chat/README.md
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/chat/baseline-results.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/chat/baseline-run.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/chat/frozen.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/chat/lint.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/earlier-attempt-command.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/earlier-attempt-freeze.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/earlier-attempt-note.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/earlier-attempt-red.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/earlier-attempt-test.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/freeze.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/red-command.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/red-summary.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/red.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/frozen-tests.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/receipts/README.md
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/receipts/baseline-vitest.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/receipts/baseline-vitest.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/receipts/frozen.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/contract-boundary-commit.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/contract-commit.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/incoming-first.diff.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/incoming-first.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/lint-baseline-stderr.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/lint-baseline-stdout.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/lint-baseline-summary.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/README.md
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/baseline-eslint.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/baseline-input-verification.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/baseline-vitest.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/baseline-vitest.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/earlier-attempt-vitest.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/earlier-attempt-vitest.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/freeze.json
+ create mode 100644 server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+ create mode 100644 server/routes/chat/__tests__/send-message-result-budget.test.ts
+ create mode 100644 server/services/ana/__tests__/strict-round-body-budget.test.ts
+ create mode 100644 server/services/ana/__tests__/strict-round-body-executor.test.ts
+ create mode 100644 server/services/ana/__tests__/strict-round-body-read-integrity.test.ts

@@ -1,0 +1,73 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts",
+    "server/services/clinical-regulatory-evidence/capture-extraction-evidence.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "e7ab040f32ed2d35e973d8511cf34e5ab035aba31766f0ff0416751d3b033ebc",
+  "note": "Summary excludes duplicated source field; not raw output.",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/capture-extraction-evidence.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/data-room-processing.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing 14ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document 19ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map) 3ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project 14ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document 13ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11) 30ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so 62ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a project document placed into a submission that records no project (P-14), and writes nothing 16ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > the leaf ledger records the filing copy’s status > placing and re-placing an authoring copy records the copy’s status at each write (draft, then approved) 27ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > uses all canonical where-used readers with the current actor and exact original version 6ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > resolves approved evidence server-side, retains exact hashes and records a separate external-evidence fact 7ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > refuses evidence from another project or without current Vault approval before metadata is saved 2ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > rechecks exact sources before commit and does not save a workflow when supporting evidence changes 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > refuses forged review fields and preserves revocation through later metadata edits 2ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > treats a notification/projection failure as an uncommitted lifecycle change 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > cannot clear a recorded invalid-signature finding by removing its evidence 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > deduplicates each expiry threshold and custodian using durable notification evidence 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > derives a filing review’s program from admitted sequence data and retains its organization policy 25ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > refuses target spoofing instead of evaluating a client-selected jurisdiction 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > stores the legal custodian’s exact reviewed mapping without inferring approval 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > rejects a regional marketing checklist applied to an investigational filing 1ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > blocks a previously approved copy after its exact private original is archived and revoked 73ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > follows multiple explicit copy generations, including an unregistered copy left after a partial 201 56ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > propagates a recorded invalid signature finding without transferring the original approval 21ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > does not infer lineage from an unrelated upload with identical bytes 8ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > does not treat archived source metadata alone as withdrawal of an independently approved copy 10ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > derives one exact server-only registration reference from legacy audit provenance 18ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed if a known copy loses its audit parent or conflicts with it 9ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor registry identity disappears or drifts 13ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor vault identity disappears or drifts 27ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor hash identity disappears or drifts 8ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor version identity disappears or drifts 13ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > rejects a source registration from another tenant, without disclosing its identity 10ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > rejects malformed, conflicting and cyclic ancestry instead of choosing an arbitrary parent 25ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > allows a normal original with no audit parent, while audit-read failure refuses filing 9ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > blocks readiness and refuses assembly before staging when a required exact companion is not placed 133ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > requires exact approved placement bytes and rechecks later revocation 268ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > does not infer approval from mapped IDs, and keeps a saved unresolved applicability review blocking 101ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > leaves an unconfigured existing filing unchanged and does not apply another sequence’s policy 43ms
+stdout | server/services/company-documents/__tests__/legal-readiness.test.ts
+{
+  "timestamp": "2026-10-21T02:14:39.629Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:39.630Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/company-documents/__tests__/legal-readiness.test.ts
+{
+  "timestamp": "2026-10-21T02:14:39.630Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/company-documents/__tests__/legal-readiness.test.ts
+[database] Database connection successful
+
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > canonical company legal scopes > uses the platform region and submission registries, including aliases 4ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > canonical company legal scopes > keeps unsupported filing checklists unresolved, instead of applying an NDA checklist to an IND 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > canonical company legal scopes > represents generated suggestions with no reviewer or review time and keeps them unresolved 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > requires explicit review, mapping, exact version/hash and correct actual placement 2ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > never infers acceptance from a matching title, and refuses expired/unapproved/wrong-language documents 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > returns no hidden legal IDs and cannot satisfy a mapping with another program’s document 0ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > retains a reasoned not-applicable review and distinguishes this from the overall dispatch assessment 0ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > binds a review to its sequence and specializes an organization policy without changing that policy 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > requires separate current evidence when the reviewed requirement calls for authority or signature verification 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > renewal queue > calculates the task due date and stops renewal for revoked or archived entries 1ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > upserts one native task and one durable notice per exact expiry threshold 78ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > rolls back task and notice delivery when the scheduled audit cannot be written 48ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > skips a withdrawn custodian and still processes another currently admitted document 20ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > resolves a revoked version’s renewal task and sends no further renewal notice 23ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > finds migrated registry tenants without a settings array and skips tenants not entitled to background work 61ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 59ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 19ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 23ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 52ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an expired registered version even though its signature remains approved 8ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > retains approval and current-version gates independently of company settings 1ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not break ordinary approved Vault documents without a company policy 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not silently ignore malformed company validity records 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an approved current PDF outside the actual submission market 22ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > checks target applicability at draft placement without treating placement as approval 1ms
+
+ Test Files  8 passed (8)
+      Tests  65 passed (65)
+   Start at  02:14:04
+   Duration  47.04s (transform 10.21s, setup 316ms, import 21.25s, tests 23.44s, environment 1ms)

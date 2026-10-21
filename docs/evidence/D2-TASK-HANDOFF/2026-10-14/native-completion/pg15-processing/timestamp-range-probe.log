@@ -1,0 +1,4 @@
+{"server_version":"15.19 (Debian 15.19-1.pgdg12+2)","cases":526,"normalization":"fixed canonical Z -> +00:00 for silent JSONPath validation only","year_zero":"rejected before cast"}
+{"dateStyle":"ISO, MDY","timeZone":"UTC","accepted":189,"rejected":337,"mismatches":[]}
+{"dateStyle":"SQL, DMY","timeZone":"Pacific/Honolulu","accepted":189,"rejected":337,"mismatches":[]}
+{"dateStyle":"German, DMY","timeZone":"Asia/Kolkata","accepted":189,"rejected":337,"mismatches":[]}

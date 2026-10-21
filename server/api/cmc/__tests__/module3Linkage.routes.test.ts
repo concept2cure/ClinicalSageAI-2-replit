@@ -22,13 +22,32 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const PROJECT = 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab';
 
+/**
+ * `connect()` serves TWO transactions now, and they must not be confused.
+ *
+ * Since 2026-10-13 a register create writes the row and the §11.10(e) record of
+ * who recorded it on ONE pinned connection (services/cmc/register-audit.ts), so
+ * the batch and specification routes call `pool.connect()` too — where before
+ * only the Module 3 write-through did. The register's own INSERT therefore goes
+ * to `registerQuery`, as it did when it was a `pool.query`; everything else on a
+ * connected client is the canonical write-through's, which is the transaction
+ * these tests make fail.
+ */
 const { inc, registerQuery, canonicalClient, connect } = vi.hoisted(() => {
   const canonicalClient = { query: vi.fn(), release: vi.fn() };
+  const registerQuery = vi.fn();
+  const REGISTER = /INSERT INTO (cmc_batch_records|quality_specifications|specification_audit_log|cmc_comparability_assessments)/;
   return {
     inc: vi.fn(),
-    registerQuery: vi.fn(),
+    registerQuery,
     canonicalClient,
-    connect: vi.fn(async () => canonicalClient),
+    connect: vi.fn(async () => ({
+      /* `params` is forwarded only when the caller passed one, so a bare
+         `query('ROLLBACK')` is still recorded as a one-argument call. */
+      query: (sql: string, ...rest: unknown[]) =>
+        REGISTER.test(sql) ? registerQuery(sql, ...rest) : canonicalClient.query(sql, ...rest),
+      release: canonicalClient.release,
+    })),
   };
 });
 
@@ -38,16 +57,26 @@ vi.mock('../../../metrics.js', () => ({ metrics: { concept2cureErrors: { inc } }
    specification routes. The canonical write-through takes a CLIENT from the
    pool, so its transaction is the one that fails. */
 let insertedRow: Record<string, unknown> = {};
+/* The register insert runs on `db.transaction` now, beside its audit row. */
+const registerTx = {
+  insert: () => ({
+    values: (v: Record<string, unknown>) => ({
+      returning: async () => [{ id: 11, ...v, ...insertedRow }],
+    }),
+  }),
+  execute: async () => ({ rows: [] }),
+};
 vi.mock('../../../db', () => ({
   db: {
-    insert: () => ({
-      values: (v: Record<string, unknown>) => ({
-        returning: async () => [{ id: 11, ...v, ...insertedRow }],
-      }),
-    }),
+    transaction: async <T>(fn: (tx: typeof registerTx) => Promise<T>) => fn(registerTx),
   },
   getPool: () => ({ query: registerQuery, connect }),
 }));
+/* The chained §11.10(e) row has its own suites — register-create-attribution
+   .pglite.integration.test.ts proves it lands, and on the create's transaction,
+   against a real Postgres. Here it must only not need a database: what these
+   tests are about is the Module 3 link the response reports. */
+vi.mock('../../../services/auditService', () => ({ writeChainedAuditRow: async () => undefined }));
 
 import cmcRouter from '../routes';
 import batchRouter from '../batchRecordRoutes';
@@ -58,6 +87,11 @@ app.use(express.json());
 app.use((req: any, _res, next) => {
   req.tenantId = 101;
   req.tenantContext = { organizationId: 101 };
+  /* The session user. A register create is recorded against the person who made
+     it and refuses when the session names nobody (§11.10(e)), so a harness with
+     no user would now get a 500 from every create — which is the refusal
+     working, not a route defect. */
+  req.user = { id: 4242, email: 'recorder@acme.test', role: 'editor', organizationId: 101 };
   next();
 });
 app.use('/api/cmc/batch-records', batchRouter);

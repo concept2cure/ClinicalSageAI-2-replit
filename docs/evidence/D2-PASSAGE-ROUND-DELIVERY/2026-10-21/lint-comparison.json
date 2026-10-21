@@ -1,0 +1,98 @@
+{
+  "newErrors": 0,
+  "newWarnings": 0,
+  "unchangedExistingWarnings": 120,
+  "files": [
+    {
+      "file": "server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/routes/ana-ri/stream.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 25,
+      "finalWarnings": 25
+    },
+    {
+      "file": "server/services/ana/AnaToolExecutor.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 95,
+      "finalWarnings": 95
+    },
+    {
+      "file": "server/services/ana/__tests__/passage-round-budget.test.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/__tests__/passage-round-executor.test.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/__tests__/passage-round-read-priority.test.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/__tests__/sub-agent-passage-staging.test.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/agentic-loop.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/sub-agent-shape.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/sub-agent-stream.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/sub-agent.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/ana/tool-outcome.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "tests/services/tool-outcome-passage-withheld.test.ts",
+      "baselineErrors": 0,
+      "finalErrors": 0,
+      "baselineWarnings": 0,
+      "finalWarnings": 0
+    }
+  ]
+}

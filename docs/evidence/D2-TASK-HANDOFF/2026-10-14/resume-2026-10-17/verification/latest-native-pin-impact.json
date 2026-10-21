@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "ca551f629cf6a7044a456fb7f2d300f603c7439e",
+  "historicalManifest": "native-final-pins.json.gz",
+  "changedPaths": [
+    "server/routes/c2c/project-vault.ts",
+    "server/services/ai-gateway/gateway.ts",
+    "server/services/ai-gateway/types.ts",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+    "server/services/ana/__tests__/draft-project-sources.test.ts",
+    "server/services/ana/draft-project-sources.ts"
+  ],
+  "nativeRerunForHelper": "fixity/version14 passed at b223ad154",
+  "nativeRerunForGatewayContext": "not warranted: executed native embedding methods and MCP provider preflight unchanged"
+}

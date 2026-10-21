@@ -1,5 +1,5 @@
 {
-  "server/api/cmc/routes.ts": 6,
+  "server/api/cmc/routes.ts": 7,
   "server/api/cmc/specificationRoutes.ts": 3,
   "server/api/ectd/routes.ts": 3,
   "server/api/labeling/routes.ts": 8,
@@ -88,7 +88,6 @@
   "server/services/auditService.ts": 2,
   "server/services/authoring/authoring-documents.ts": 2,
   "server/services/authoring/authoring-evidence.ts": 1,
-  "server/services/authoring/authoring-file-to-vault.ts": 1,
   "server/services/authoring/authoring-permissions.ts": 1,
   "server/services/authoring/authoring-record.ts": 1,
   "server/services/authoring/authoring-source-import.ts": 5,
@@ -107,7 +106,7 @@
   "server/services/clinical-regulatory-evidence/citation-source-read.ts": 2,
   "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": 3,
   "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": 9,
-  "server/services/clinical-regulatory-evidence/data-room-processing.ts": 4,
+  "server/services/clinical-regulatory-evidence/data-room-processing.ts": 5,
   "server/services/clinical-regulatory-evidence/data-room-search.ts": 8,
   "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": 27,
   "server/services/clinical-regulatory-evidence/index.ts": 6,

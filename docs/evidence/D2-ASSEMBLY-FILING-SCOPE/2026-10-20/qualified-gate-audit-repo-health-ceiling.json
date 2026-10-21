@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-21T00:05:34.326827+00:00",
+  "argv": [
+    "node",
+    "scripts/audits/repo-health-scan.mjs",
+    "--strict",
+    "--ceiling-large-bytes",
+    "57",
+    "--ceiling-large-lines",
+    "114",
+    "--owners",
+    "docs/reports/repo-health-owners.json",
+    "--output",
+    "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-repo-health-report.json"
+  ],
+  "elapsedSeconds": 1.278,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-qualified.json",
+  "rawOutput": "qualified-gate-audit-repo-health-ceiling-output.txt.gz",
+  "outputSha256": "528a2f3f5092e33d4e3a9023a8b29012134947dd8b0d4f6d59e866147bea2f46",
+  "stdout": "Repo health scan written: docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-repo-health-report.json\n- content-duplicate groups: 0 (0 files)   [gated]\n- duplicate basenames: 237   [reported, not gated]\n- files over byte threshold: 57\n- files over line threshold: 112\n\n\u2705 repo health strict gate passed.\n"
+}

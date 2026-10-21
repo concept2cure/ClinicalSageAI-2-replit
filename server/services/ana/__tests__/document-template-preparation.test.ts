@@ -95,19 +95,21 @@ describe('existing template tool — scope checks and reference lookups', () => 
       if (registry_id === 'ICH_SAP') expect(out.preparation.remainingTopics).not.toContain('statistical_results');
     }
   });
-  it.each(['k510_summary', 'gspr_checklist', 'ivdr_gspr_checklist', 'performance_evaluation_report'])('keeps %s available as an outline but refuses medicinal preparation', async template_id => {
+  it.each(['k510_summary', 'gspr_checklist', 'ivdr_gspr_checklist', 'performance_evaluation_report'])('prepares %s using device evidence instead of medicinal assumptions', async template_id => {
     const reference = await call({ template_id, prepare: false });
     expect(reference.ok).toBe(true);
     expect(reference.preparation).toBeUndefined();
     const prepared = await call({ template_id, prepare: true });
-    expect(prepared.error).toMatch(/biotech medicinal-product/i);
+    expect(prepared.ok).toBe(true);
+    expect(prepared.preparation.questions[0].question).toMatch(/intended use/i);
+    expect(prepared.preparation.applicabilityQuestions.join(' ')).not.toMatch(/iPSP|PIP/);
   });
-  it('preserves an exact device registry outline without allowing a drug preparation plan', async () => {
+  it('preserves an exact device registry outline and requires exact identity for a family preparation plan', async () => {
     const reference = await call({ registry_id: 'US_510K', prepare: false });
     expect(reference.ok).toBe(true);
     expect(reference.preparation).toBeUndefined();
-    expect((await call({ registry_id: 'US_510K', prepare: true })).error).toMatch(/biotech medicinal-product/i);
-    expect((await call({ family: 'estar', prepare: true })).error).toMatch(/biotech medicinal-product/i);
+    expect((await call({ registry_id: 'US_510K', prepare: true })).preparation.registryId).toBe('US_510K');
+    expect((await call({ family: 'estar', prepare: true })).error).toMatch(/exact device registry/i);
   });
   it.each(['smpc', 'impd', 'risk_management_plan', 'rmp'])('requires EU scope for a targeted %s build, including outline-only', async template_id => {
     for (const market of ['US', 'CA', 'JP']) {

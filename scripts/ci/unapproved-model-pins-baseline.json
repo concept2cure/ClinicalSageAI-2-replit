@@ -34,8 +34,8 @@
       "reason": "Unreachable: no importer is reachable from server/index.ts since its route was deleted in 3cc8547d2. Listed for deletion by an owner; if revived it must route as document_drafting / regulatory_review."
     },
     "server/services/keywordExtractionService.ts": {
-      "count": 1,
-      "reason": "Keyword and term extraction for search and linking; regex matches override the model's terms and the result is not a governed record (classified 2026-09-23)."
+      "count": 0,
+      "reason": "Pin removed 2026-10-15 (d968e5f02): extractKeywordsViaAI now calls ai.chat with taskType document_analysis, so the gateway routes it like every other caller instead of pinning OPENAI_MODEL || 'gpt-4o'. Kept at 0 rather than deleted so the file cannot quietly regain a pin without this reason being re-argued. Was: keyword and term extraction for search and linking; regex matches override the model's terms and the result is not a governed record (classified 2026-09-23)."
     },
     "server/services/cognitive-ecosystem/agent-runtime.service.ts": {
       "count": 1,

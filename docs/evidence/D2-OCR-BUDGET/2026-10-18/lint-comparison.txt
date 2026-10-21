@@ -1,0 +1,17 @@
+errors/warnings per file
+client/src/concept2cure/v2/surfaces/ConversationThread.tsx: now 0/5, baseline 0/5
+client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx: now 0/4, baseline 0/4
+client/src/concept2cure/v2/surfaces/ProjectHome.tsx: now 0/7, baseline 0/7
+scripts/process-data-room-captures.mjs: now 0/1, baseline 0/1
+server/routes/c2c/projects.ts: now 0/5, baseline 0/5
+server/routes/chat/upload.ts: now 0/3, baseline 0/3
+server/services/ana/AnaToolExecutor.ts: now 0/95, baseline 0/95
+server/services/ana/page-render.ts: now 0/0, baseline 0/0
+server/services/clinical-regulatory-evidence/data-room-processing.ts: now 0/0, baseline 0/0
+server/services/ocr/extractDocumentText.ts: now 0/0, baseline 0/0
+server/services/ocr/index.ts: now 0/0, baseline 0/0
+server/services/ocr/ocr-budget.ts: now 0/0, baseline new file
+server/services/ocr/ocrService.ts: now 0/0, baseline 0/0
+server/services/ocr/pdfRasterizer.ts: now 0/0, baseline 0/0
+shared/data-room-processing-status.ts: now 0/0, baseline 0/0
+client/src/concept2cure/hooks/useChatUpload.ts: lint-ignored by config; with --no-ignore its one existing function-length warning grows 105 -> 106 lines (client subagent report)

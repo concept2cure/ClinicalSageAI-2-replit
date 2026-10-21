@@ -1,0 +1,51 @@
+# HEAD code (server/services/securityHealth.ts unchanged), new test cases added
+$ npx vitest run server/services/__tests__/securityHealth.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtRotation > passes when no previous secret is set (no rotation) 128ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtRotation > warns (non-critical) when rotation is in progress 2ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > passes when JWT_SECRET is ≥32 chars 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > fails (critical) when JWT_SECRET is short 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > fails (critical) when no JWT secret is set 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > prefers the env-specific variant 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > skips when CLAMAV_HOST is unset 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > skips in development when CLAMAV_HOST is unset 1ms
+ × server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > fails (critical) in production when CLAMAV_HOST is unset 9ms
+   → expected 'skipped' to be 'fail' // Object.is equality
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > fails when daemon is unreachable 5ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > fails when daemon is up but doesnt detect EICAR (signature DB broken) 12ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > passes when daemon detects EICAR (full path working) 5ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkCerReportMigration > passes when no flat-namespace files exist 4ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkCerReportMigration > passes when only tenant directories exist 4ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkCerReportMigration > warns when legacy flat files remain 4ms
+ ✓ server/services/__tests__/securityHealth.test.ts > runSecurityHealthChecks — overall rollup > rolls up to failing when a single critical check fails 82ms
+ ✓ server/services/__tests__/securityHealth.test.ts > runSecurityHealthChecks — overall rollup > rolls up to degraded when only non-critical warnings fire 8ms
+ ✓ server/services/__tests__/securityHealth.test.ts > inactive development audit trail > skips audit-only checks without querying an inactive trail 6ms
+ ✓ server/services/__tests__/securityHealth.test.ts > inactive development audit trail > keeps audit integrity checking active in production 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > fails (critical) in production when CLAMAV_HOST is unset
+AssertionError: expected 'skipped' to be 'fail' // Object.is equality
+
+Expected: "fail"
+Received: "skipped"
+
+ ❯ server/services/__tests__/securityHealth.test.ts:141:22
+    139|     const { __testing } = await import('../securityHealth');
+    140|     const r = await __testing.checkClamavConnectivity();
+    141|     expect(r.status).toBe('fail');
+       |                      ^
+    142|     expect(r.critical).toBe(true);
+    143|     expect(r.reason).toBe(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  18:51:40
+   Duration  685ms (transform 234ms, setup 73ms, import 55ms, tests 284ms, environment 0ms)
+
+exit=1

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "audit:repo-health:ceiling"
+  ],
+  "executionBase": "63374d786f8c2ab3590ec278785c62831b1907e6",
+  "startedAt": "2026-10-20T19:46:08.056236+00:00",
+  "elapsedSeconds": 1.647,
+  "exitCode": 0,
+  "rawSha256": "ec59671eb26e9678dadcb9454d3af90ca19a2702443c8e7164ba49017765e92a",
+  "output": "Repo health scan written: /tmp/repo-health-ceiling-probe.json\n- content-duplicate groups: 0 (0 files)   [gated]\n- duplicate basenames: 236   [reported, not gated]\n- files over byte threshold: 57\n- files over line threshold: 112\n\n\u2705 repo health strict gate passed.\n"
+}

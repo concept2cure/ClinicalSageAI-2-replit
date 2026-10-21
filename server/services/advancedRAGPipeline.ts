@@ -63,6 +63,7 @@ import { missingVectorIndex } from './vault/vector-index-availability.js';
 import type { AdmittedAnaSourceReadScope } from './ana/source-read-scope.js';
 import { revalidateAnaSourceReadScope } from './ana/source-read-scope.js';
 import { pinRetrievalReadScope, withRetrievalReadScope } from './vault/retrieval-source-access.js';
+import { buildPassageContext, type PassageContext } from './vault/passage-context-span.js';
 import {
   hydeRetrieval,
   multiQueryRetrieval,
@@ -240,12 +241,17 @@ export interface RetrievedDocument {
   originalFileAvailable?: boolean;
   compressedContent?: string; // Extracted relevant passage
   /**
-   * Small-to-big context expansion: the retrieved chunk concatenated with its
-   * neighbours in the source document (sentence-window). Set by expandContext
-   * when useContextExpansion is on; generation and compression prefer it over
-   * the bare chunk so the model sees surrounding context the precise chunk omits.
+   * Small-to-big context expansion: the retrieved chunk with its neighbours in
+   * the source document. Set by expandContext when useContextExpansion is on;
+   * generation and compression prefer it over the bare chunk. For a vault
+   * chunk it is the exact source span (`passageContext.text`), never joined
+   * chunk text; when the span cannot be verified it is left unset.
    */
   expandedContent?: string;
+  /** Vault chunks: the hit chunk's own [start, end) in the document's extracted text, when verified. */
+  hitSpan?: { start: number; end: number } | null;
+  /** Vault chunks: the verified surrounding span, or why there is none (passage-context-span.ts). */
+  passageContext?: PassageContext;
   /** Sequential index of this chunk within its document; enables window expansion. */
   chunkIndex?: number;
   pageNumber?: number;
@@ -413,8 +419,32 @@ function readVaultCandidateRow(row: Record<string, unknown>): {
     content_hash: row.content_hash == null ? undefined : vaultText(row.content_hash),
     title: vaultText(row.title), original_file_available: row.original_file_available };
 }
-function readVaultNeighborRow(row: Record<string, unknown>): string | null {
-  return nullableVaultText(row.chunk_text);
+/**
+ * A vault hit with its verified surrounding span (passage-context-span.ts).
+ * No rows drops the candidate, as before: retaining the old chunk would defeat
+ * a withdrawal confirmed after retrieval. Rows that do not verify leave the
+ * hit's own content standing and say why; joined chunk text is never used.
+ */
+function withVaultSpan(doc: RetrievedDocument, rows: Record<string, unknown>[]): RetrievedDocument | null {
+  if (rows.length === 0) return null;
+  const chunks = rows.map(row => ({
+    id: String(row.id ?? invalidVaultRow()),
+    chunkIndex: vaultNumber(row.chunk_index),
+    charStart: nullableVaultNumber(row.char_start),
+    charEnd: nullableVaultNumber(row.char_end),
+    text: nullableVaultText(row.chunk_text) ?? '',
+  }));
+  const textRow = rows.find(row => row.extracted_text !== null && row.extracted_text !== undefined);
+  const { context, hitSpan } = buildPassageContext({
+    documentId: doc.documentId ?? '',
+    contentHash: doc.contentHash ?? '',
+    extractedText: textRow ? vaultText(textRow.extracted_text) : null,
+    hit: { chunkId: String(doc.chunkId ?? doc.id ?? ''), chunkIndex: doc.chunkIndex ?? -1 },
+    chunks,
+  });
+  const hit: RetrievedDocument = { ...doc };
+  delete hit.expandedContent;
+  return { ...hit, hitSpan, passageContext: context, ...(context.status === 'available' ? { expandedContent: context.text } : {}) };
 }
 
 /** The request executor carries session variables and may be in autocommit.
@@ -1209,13 +1239,18 @@ export class AdvancedRAGPipeline {
         try {
           let texts: string[];
           if (doc.atomType === 'vault_chunk') {
-            texts = await this.withVaultReadExecutor(organizationUuid, vaultRead, sourceReadScope, async client => {
-              const params: unknown[] = [doc.documentId, lo, hi, organizationUuid ?? null];
+            return await this.withVaultReadExecutor(organizationUuid, vaultRead, sourceReadScope, async client => {
+              const params: unknown[] = [doc.documentId, lo, hi, organizationUuid ?? null, doc.chunkId ?? doc.id ?? null];
               const filter = buildDocFilterClause(filters, params, VAULT_FILTER_COLUMNS, vaultRead?.verifiedScope.programIds);
-              const identity = sourceReadScope ? `AND d.content_hash = $${params.push(doc.contentHash ?? '')}` : '';
+              const identity = sourceReadScope || doc.contentHash
+                ? `AND d.content_hash = $${params.push(doc.contentHash ?? '')}` : '';
               // Tenant, actor and exact source constraints precede the window.
+              // The document text rides on the hit's row only, so the span is
+              // cut from the same snapshot the neighbours were read in.
               const { rows } = await client.query(
-                `SELECT c.chunk_text FROM vault.document_chunks c
+                `SELECT c.id, c.chunk_index, c.char_start, c.char_end, c.chunk_text,
+                        CASE WHEN c.id::text = $5::text THEN d.extracted_text END AS extracted_text
+                   FROM vault.document_chunks c
                    JOIN vault.documents d ON d.id = c.document_id
                  WHERE c.document_id = $1 AND c.chunk_index BETWEEN $2 AND $3
                    AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${filter} ${identity}
@@ -1226,7 +1261,7 @@ export class AdvancedRAGPipeline {
                  ORDER BY c.chunk_index`,
                 params,
               );
-              return rows.map(readVaultNeighborRow).filter((text): text is string => Boolean(text));
+              return withVaultSpan(doc, rows);
             });
           } else if (doc.atomType === 'rag_chunk') {
             // rag_chunks has no RLS; permit explicit public guidance or the
@@ -1802,6 +1837,7 @@ export class AdvancedRAGPipeline {
          AND project_id = $3
          ${profileClause}
          AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND embedding IS NOT NULL
          AND 1 - (embedding <=> $1::vector) >= $${thresholdIdx}
          ${categoryClause}

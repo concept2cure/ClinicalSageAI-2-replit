@@ -150,7 +150,7 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
     /* Decision P-32, 2026-10-15: 15-day safety reporting and ICSR transmission
        are not in this release. Their routes are refused 403 LAUNCH_SCOPE in
        production, and the card's code is kept in
-       surfaces/indSafetyReportCard.ts. */
+       tests/fixtures/withheld/indSafetyReportCard.ts. */
     withheld:
       'IND safety reports under 21 CFR 312.32 (the 7- and 15-day expedited reports) and ICSR transmission are not in this release.',
   },

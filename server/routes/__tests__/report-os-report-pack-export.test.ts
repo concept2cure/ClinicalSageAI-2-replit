@@ -164,7 +164,8 @@ const parsedPdf = async (bytes: Buffer) => {
   try { return await parser.getText(); } finally { await parser.destroy(); }
 };
 type PacketOptions = { bundle?: ReturnType<typeof pack>; runs?: Array<typeof finalRun>; body?: RenderedReport;
-  legacy?: boolean; failSeal?: boolean; lateBodyChange?: boolean; missingReservation?: boolean };
+  legacy?: boolean; failSeal?: boolean; lateBodyChange?: boolean; missingReservation?: boolean;
+  scopeEvidence?: { present: boolean; value: unknown } };
 function prepare(options: PacketOptions = {}) {
   const bundle = options.bundle ?? pack();
   const runs = options.runs ?? [finalRun, partialRun];
@@ -196,7 +197,8 @@ function prepare(options: PacketOptions = {}) {
     if (/select "type_id", "family" from "report_type_registry"/.test(sql)) return [[type.typeId, type.family]];
     if (/select .* from "report_type_registry"/.test(sql)) return [driverRow(reportTypeRegistry, type)];
     if (/SELECT ou.role/.test(sql)) return [{ role: 'manager' }];
-    if (/SELECT id, run_uuid, organization_id/.test(sql)) return runs.map(run => ({ id: run.id, run_uuid: run.runUuid, organization_id: run.organizationId, report_type_id: run.reportTypeId, scope_type: run.scopeType, scope_id: run.scopeId, access_project_ids: null }));
+    if (/SELECT id, run_uuid, organization_id/.test(sql)) return runs.map(run => ({ id: run.id, run_uuid: run.runUuid, organization_id: run.organizationId, report_type_id: run.reportTypeId, scope_type: run.scopeType, scope_id: run.scopeId,
+      access_project_ids: options.scopeEvidence?.value ?? null, access_project_ids_present: options.scopeEvidence?.present ?? false }));
     if (/SELECT id FROM report_runs/.test(sql)) return (options.missingReservation ? runs.slice(0, 1) : runs).map(run => ({ id: run.id }));
     if (arrayMode && /select .* from "report_runs"/.test(sql)) {
       fullReads += 1;
@@ -336,6 +338,50 @@ describe('retained packet export entitlement and recording', () => {
     expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
   });
 
+});
+
+describe('retained packet source-scope admission before body reads', () => {
+  it.each([
+    { label: 'null', value: null }, { label: 'scalar', value: '11' }, { label: 'object', value: {} },
+    { label: 'zero project ID', value: [0] }, { label: 'mixed project IDs', value: [11, '12'] }, { label: 'negative project ID', value: [-1] },
+  ])('refuses explicit $label historical scope before loading or rendering any report body', async ({ value }) => {
+    prepare({ scopeEvidence: { present: true, value } });
+    const result = await exportReports();
+    expect(result.status).toBe(503);
+    expect(json(result)).toMatchObject({ error: { code: 'REPORT_PACK_SCOPE_CORRUPT' } });
+    expect(h.statements.some(sql => /select .* from "report_runs"|SELECT status FROM report_runs|FROM report_snapshots|public.actor_name/.test(sql))).toBe(false);
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(result.headers['content-disposition']).toBeUndefined();
+  });
+
+  it('retains successful legacy admission for a genuinely absent historical scope key', async () => {
+    prepare({ scopeEvidence: { present: false, value: null } });
+    const result = await exportReports();
+    expect(result.status).toBe(200);
+    expect((await parsedPdf(result.body as Buffer)).text).toContain('SEALED-BODY-41');
+    expect(auditEntry()?.details.content).toBe('reports');
+  });
+
+  it('projects actual JSON key presence separately from SQL/JSON null on PostgreSQL-compatible storage', async () => {
+    prepare();
+    expect((await exportReports()).status).toBe(200);
+    const sql = h.statements.find(statement => /^SELECT id, run_uuid, organization_id/.test(statement));
+    expect(sql).toBeTruthy();
+    const { PGlite } = await import('@electric-sql/pglite');
+    const pg = new PGlite();
+    try {
+      await pg.exec(`CREATE TABLE report_runs(id INTEGER,run_uuid TEXT,organization_id INTEGER,report_type_id TEXT,
+        scope_type TEXT,scope_id TEXT,dependency_summary JSON)`);
+      const sources = [null, {}, { summary: {} }, { summary: { accessProjectIds: null } },
+        { summary: { accessProjectIds: [11] } }, { summary: { accessProjectIds: '11' } }];
+      for (const [index, source] of sources.entries()) {
+        await pg.query('INSERT INTO report_runs(id,organization_id,dependency_summary) VALUES($1,7,$2::json)', [index + 1, JSON.stringify(source)]);
+      }
+      const { rows } = await pg.query<{ id: number; access_project_ids_present: boolean; access_project_ids: unknown }>(sql!, [7, [1, 2, 3, 4, 5, 6]]);
+      expect(rows.sort((a, b) => a.id - b.id).map(row => [row.access_project_ids_present, row.access_project_ids]))
+        .toEqual([[false, null], [false, null], [false, null], [true, null], [true, [11]], [true, '11']]);
+    } finally { await pg.close(); }
+  }, 30_000);
 });
 
 describe('retained packet identity and seal integrity', () => {

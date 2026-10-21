@@ -1,0 +1,13 @@
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_NDA_SUPP: every section the outline serves resolves, asked by code + title or by title 24ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_BLA_SUPP: every section the outline serves resolves, asked by code + title or by title 6ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_CBE: every section the outline serves resolves, asked by code + title or by title 5ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_IND_ANNUAL: every section the outline serves resolves, asked by code + title or by title 2ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_NDA_ANNUAL: every section the outline serves resolves, asked by code + title or by title 2ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_TYPE_A_MEETING: every section the outline serves resolves, asked by code + title or by title 1ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_TYPE_B_MEETING: every section the outline serves resolves, asked by code + title or by title 1ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > US_TYPE_C_MEETING: every section the outline serves resolves, asked by code + title or by title 1ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > the supplement's change section carries the record's brief and its key content 3ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > a CTD section the change updates is answered by the CTD record 1ms
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a lifecycle-record outline is drafted from its own record > a section the outline does not hold is named, never left to memory 9ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  11 failed (11)

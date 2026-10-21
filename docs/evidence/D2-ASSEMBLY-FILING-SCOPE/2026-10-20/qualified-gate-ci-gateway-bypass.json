@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:05:18.655621+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:gateway-bypass"
+  ],
+  "elapsedSeconds": 11.259,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-qualified.json",
+  "rawOutput": "qualified-gate-ci-gateway-bypass-output.txt.gz",
+  "outputSha256": "fd2a888fa4962c2d00b957bff2147e74e6fbd8a6d3088c3e782869ea7ddc510c",
+  "stdout": "[check-gateway-bypass] OK \u2014 no new bypasses (8 baselined site(s) tolerated).\n"
+}

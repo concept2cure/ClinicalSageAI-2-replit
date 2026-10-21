@@ -5,6 +5,25 @@ feature within D2 onboarding/governed documents, D7 Submission Center and
 Reporting. Work remains on `concept2cure-v2`. Evidence belongs under
 `docs/evidence/COMPANY-DOCUMENTS/gap-closure/`.
 
+## What already exists
+
+The 2026-10-18 implementation inventory and 2026-10-21 merge review extend these canonical paths. The limitations below describe the starting behavior, before this completion.
+
+| Existing piece | Existing responsibility | Completion in this work |
+| --- | --- | --- |
+| `client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx`; `server/services/company-documents/profile.ts` | Company identity, logo/letterhead editing and registered legal PDF references. | Reach the same settings from Account; add reviewed designs, retained revisions, permissions and a scalable registry. |
+| `server/routes/client-branding.ts` | Legacy tenant branding and letterhead import. | Explicitly adopt or replace legacy assets; keep delegated brand extraction on the same admission path. |
+| `server/services/tenant/tenant-settings-writer.ts` | Tenant settings, locking and chained audit transaction. | Add registry/history/projection checks to its transaction rather than introducing another settings writer. |
+| `server/services/vault/vault-ingest.service.ts`; `server/services/vault/vault-lifecycle.ts` | Original bytes, project admission, exact versions and current approval. | Retain immutable copied-original lineage and legal lifecycle refusals; reuse native ingest, review and placement. |
+| `server/services/templates/templateStore.ts`; `server/services/docx/docxFactory.ts`; `server/services/pdf-converter.ts` | Canonical template specifications and Word/PDF rendering. | Retain exact approved presentations and render historical correspondence through these engines. |
+| `server/services/authoring/authoring-from-draft.ts`; `server/services/authoring/authoring-file-to-vault.ts` | Authoring creation and governed Vault filing. | Carry admitted filing and company-presentation provenance through the existing creation/review/file workflow. |
+| `server/services/ectd/leaf-source-resolver.ts`; `server/services/submission-gateways/regional-packager.ts` | Admitted sources, package generation and technical checks. | Preserve registered/signed PDF originals through the final ZIP while retaining current regional/DTD gates. |
+| `server/services/global-ri/regional-module1-requirements.ts` | Regional requirement source. | Map legal companions only under explicit customer review; retain unknown coverage honestly. |
+| `server/routes/report-os.ts`; `server/services/export/governedExportConsequence.ts` | Report exports and audited delivery. | Explicit report/legal companion ZIPs with unchanged originals and current source checks. |
+| `server/services/tenant-export/`; `server/services/tenant/tenant-offboarding.ts` | Customer data return, receipts, holds and eligible disposal. | Bind exact company metadata/designs to the same receipt and purge transaction. |
+
+The deletion-history search `git log --all --diff-filter=D -- '*company-document*' '*CompanyDocument*' '*letterhead*'` returned no matching removed implementation. Existing surfaces, storage, approvals and gateways are extended; none is replaced by a parallel implementation.
+
 ## Invariants
 
 - Existing Vault ingest, project admission, approvals, signatures, placement,

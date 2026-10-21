@@ -1,0 +1,1488 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > rereads recovered persisted text for the same source without sending a processing mutation 764ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows persisted retry-needed processing instead of a premature extracted label 295ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > keeps legacy unknown availability ineligible instead of inventing readable text 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows a superseded source as historical even when its persisted text exists 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 94ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 134ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 118ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 92ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > searches the whole room on the server, by title and text, and lists its answer 432ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a pending source search does not report zero matches 448ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":{}} 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":[],"total":null} 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > offers a way to add sources 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 177ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 90ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0} 86ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0} 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0} 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":2,"changedSections":0} 85ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2} 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the affected sections when a source has changed under them 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > shows no change banner when nothing is stale 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > two returned citations of one section are described as citations, not two sections 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 91ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 102ms
+stderr | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:50:20.654Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:50:29.508Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:50:29.509Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:50:29.510Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > reads an all-preserved source-based build after reopen without writing or returning source text
+{
+  "timestamp": "2026-10-18T00:50:30.829Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 8b40b89d-15a0-469c-b53a-516e312fa8c1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > reads an all-preserved source-based build after reopen without writing or returning source text 654ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > returns explicit null only for an admitted exact document with no saved selection 35ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > rechecks and returns the exact ordered mixed Data Room and Vault manifest
+{
+  "timestamp": "2026-10-18T00:50:31.480Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 89a67079-8280-4c71-ae7b-283059d7911a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > rechecks and returns the exact ordered mixed Data Room and Vault manifest 632ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > finds recorded source intent beyond the general audit rail window
+{
+  "timestamp": "2026-10-18T00:50:31.992Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 130cae69-c74e-461a-a640-1c44c5c4ba68 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > finds recorded source intent beyond the general audit rail window 466ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order
+{
+  "timestamp": "2030-01-01T00:00:00.000Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b20ae885-1bf4-41da-b3db-cf9eea337a28 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order
+{
+  "timestamp": "2028-01-01T00:00:00.000Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b20ae885-1bf4-41da-b3db-cf9eea337a28 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order 764ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a current whole-document viewer to read saved references on a frozen document
+{
+  "timestamp": "2026-10-18T00:50:33.247Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 0fa67dc7-0411-46b8-b875-2287f2511568 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a current whole-document viewer to read saved references on a frozen document 459ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=false 17ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=true
+{
+  "timestamp": "2026-10-18T00:50:33.671Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc a0742e4d-71dd-4d82-b55c-9cac8b7bf9a5 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=true 291ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses an exact document under a different project and malformed requests
+{
+  "timestamp": "2026-10-18T00:50:33.977Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 62df7e08-ddae-4a63-a020-ce1e8ee3a747 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses an exact document under a different project and malformed requests 315ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses private-project access despite a retained document owner grant
+{
+  "timestamp": "2026-10-18T00:50:34.408Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 9ef246e4-08b7-48ee-a46a-966b270b4e55 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses private-project access despite a retained document owner grant 426ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent
+{
+  "timestamp": "2026-10-18T00:50:34.820Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 89eab40b-956a-4e5a-9e2d-84ca45fb2846 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent
+{
+  "timestamp": "2026-10-18T00:50:35.205Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 89eab40b-956a-4e5a-9e2d-84ca45fb2846 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent 816ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a source-based build recorded against eligible retained text without reopening original bytes
+{
+  "timestamp": "2026-10-18T00:50:35.518Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 8c5ed9a8-c903-4e90-8806-9d6d0613fe3c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a source-based build recorded against eligible retained text without reopening original bytes 453ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses source withdrawal after a saved build and never returns it as empty history
+{
+  "timestamp": "2026-10-18T00:50:36.191Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 858724a3-4c95-4d0a-98c3-bbd08ec919a8 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses source withdrawal after a saved build and never returns it as empty history 571ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation
+{
+  "timestamp": "2026-10-18T00:50:36.764Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 9915b4ab-de87-429b-9e15-84532e8fd935 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation
+{
+  "timestamp": "2026-10-18T00:50:37.265Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 9915b4ab-de87-429b-9e15-84532e8fd935 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation 1035ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action
+{
+  "timestamp": "2026-10-18T00:50:37.678Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b401e16f-a0c6-41c0-bc5d-ca66ca1345b5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action
+{
+  "timestamp": "2026-10-18T00:50:38.153Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b401e16f-a0c6-41c0-bc5d-ca66ca1345b5 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action 969ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata
+{
+  "timestamp": "2026-10-18T00:50:38.615Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc f7f7ad8a-ac45-4d31-9153-63ce3ee111d7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata
+{
+  "timestamp": "2026-10-18T00:50:38.889Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc f7f7ad8a-ac45-4d31-9153-63ce3ee111d7 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata 627ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time
+{
+  "timestamp": "2026-10-18T00:50:39.159Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 5d080e21-0d71-4ee7-a3db-d88654cb0bb9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time
+{
+  "timestamp": "2026-10-18T00:50:39.416Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 5d080e21-0d71-4ee7-a3db-d88654cb0bb9 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time 525ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence
+{
+  "timestamp": "2026-10-18T00:50:39.692Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 33dcb19f-8ecf-4d02-a357-89f77b68d673 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence
+{
+  "timestamp": "2026-10-18T00:50:39.942Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 33dcb19f-8ecf-4d02-a357-89f77b68d673 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence 523ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses unchained source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:50:40.191Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 98b681c4-99bf-4d7d-b468-9c05ed5e80d9 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses unchained source evidence instead of returning the valid older pair 246ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses orphan source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:50:40.502Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc d7546286-7e60-4ddb-b557-378ab5424a2f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses orphan source evidence instead of returning the valid older pair 315ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses duplicate source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:50:40.782Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc fcd1c326-f368-436c-a310-95bc3ac48a69 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses duplicate source evidence instead of returning the valid older pair 285ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > recognizes damaged unchained reference metadata even when its operation was altered
+{
+  "timestamp": "2026-10-18T00:50:41.079Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 0950692b-555f-428f-aeda-fc1af212dc6a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > recognizes damaged unchained reference metadata even when its operation was altered 294ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=false
+{
+  "timestamp": "2026-10-18T00:50:41.356Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc c514c3d1-2097-4feb-bb73-b9d235e4e03b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=false 268ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true
+{
+  "timestamp": "2026-10-18T00:50:41.634Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 9576d3f3-a174-406a-b1c2-37ec2c13693d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true
+{
+  "timestamp": "2026-10-18T00:50:41.918Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 9576d3f3-a174-406a-b1c2-37ec2c13693d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true 623ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a source change during the late record recheck
+{
+  "timestamp": "2026-10-18T00:50:42.251Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 1e6e657c-b7e8-4f21-b859-854286c1ad8b by a***@canvas.example",
+  "context": {}
+}
+
+(node:18845) TimeoutOverflowWarning: 101171367736 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18845) TimeoutOverflowWarning: 101171367730 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367627 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367617 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367616 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367473 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a source change during the late record recheck 375ms
+(node:18845) TimeoutOverflowWarning: 101171367469 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367469 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses current document grant loss during source verification
+{
+  "timestamp": "2026-10-18T00:50:42.620Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 2bba5e6d-8836-4b21-b221-7b0a7389a3fe by a***@canvas.example",
+  "context": {}
+}
+
+(node:18845) TimeoutOverflowWarning: 101171367361 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367355 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367290 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367284 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:18845) TimeoutOverflowWarning: 101171367275 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses current document grant loss during source verification 336ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > keeps an unavailable history query distinct from successfully empty history 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 1833ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 1249ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text 670ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest 486ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success 1866ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it 2969ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor 1781ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check 1027ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references 2636ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA 314ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA 386ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 1767ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > does not fetch on mount and permits a read-only frozen viewer to inspect historical references 30ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > rechecks the same exact saved record before adopting selectors and never writes or generates 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure 277ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > distinguishes admitted empty history from a later failed read without touching editing state 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > adopts no old build preferences and does not invoke editor refresh or review navigation 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > requires clearing an explicit new selection and checking again before reuse 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no affirmative envelope instead of claiming empty history 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong document instead of claiming empty history 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong project instead of claiming empty history 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses missing record instead of claiming empty history 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid time instead of claiming empty history 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid manifest instead of claiming empty history 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event time between Check and Use without choosing another record 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new manifest between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no latest record between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > checks ownership again after JSON parsing, never publishing a late private result 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > coalesces immediate Check and Use attempts without a second active historical read 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after project ABA and requires a fresh Check 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after document ABA and requires a fresh Check 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after account ABA and requires a fresh Check 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after session ABA and requires a fresh Check 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after source ABA and requires a fresh Check 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after dirty opens and closes during its read 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after review opens and closes during its read 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not let a retired finalizer release a newer Check after a document round trip 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > never lets a pending Use replace a new selection or revive after source ABA 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during dirty 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during sealed 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during view-only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during ceremony 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during building 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during unknown 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during accept-unknown 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during review-pane 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > ignores a late Use when an ordinary build lane started and ended during the read 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 237ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 791ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 254ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 237ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 91ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 137ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > an IND project whose only submission is an MAA shows the MAA as its market, with its own state 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a CER project (no application type is CER) lists its submissions as its markets 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a submission with no project recorded is not gated by name: no verdict, and the panels agree 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 91ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 250ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 596ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 234ms
+   → Found multiple elements with the role "button" and name "Try again"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33mclass[39m=[32m"c2c-error-retry"[39m
+  [33mtype[39m=[32m"button"[39m
+[36m>[39m
+  [0mTry again[0m
+[36m</button>[39m
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33mclass[39m=[32m"c2c-error-retry"[39m
+  [33mtype[39m=[32m"button"[39m
+[36m>[39m
+  [0mTry again[0m
+[36m</button>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Where this filing stands"[39m
+        [33mclass[39m=[32m"pj-status"[39m
+        [33mdata-testid[39m=[32m"pj-status-line"[39m
+        [33mrole[39m=[32m"group"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"idle"[39m
+        [36m>[39m
+          [0mNo market yet[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [0m Reviews could not be read[0m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Retry reading the reviews"[39m
+            [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry[0m
+          [36m</button>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[...
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 169ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list 305ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors 327ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 209ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 214ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen 118ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words, and how many the module holds 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest" 237ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit 141ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and its coming-later line names no IND work 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project still names IND annual-report tracking as coming later 92ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need 525ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved 128ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open document" opens THAT document, by id, in this program 215ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again 120ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > an empty board says so in words 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > never says "aren't wired" and never sends the person to the task-board alias 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open the review board" opens the Review surface when it is available, and is not shown when it is not 227ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > renders disambiguated identities and publishes identity/source facts to AnA without contact details 218ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'wrong program' as unavailable, never an empty roster or identity facts 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'legacy shape' as unavailable, never an empty roster or identity facts 86ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'invalid identity' as unavailable, never an empty roster or identity facts 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'null response' as unavailable, never an empty roster or identity facts 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'missing store' as unavailable, never an empty roster or identity facts 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > distinguishes a verified empty roster from a failed read 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > hides the previous program roster immediately while its replacement loads 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > ignores a late successful roster from an abandoned program 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > keeps email-bearing account names, legacy names and display labels outside AnA facts 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > states the total and truncation when AnA receives a roster excerpt 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > retries the actual scoped GET after an unavailable read 277ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order 171ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > no tab says "Not in this release" 354ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > what Plan and Lifecycle promised is named on Submit as coming later, with no button 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "plan" opens Submit, and says so 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "lifecycle" opens Submit too 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > a message typed in the start box survives switching tabs 440ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > the start box and the conversations come before the tabs and stay on every tab 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 277ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer leads the main column and the readiness ring sits in the aside 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > shows a screenful, then the older ones a screenful at a time, until there are none 1098ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > a screenful exactly offers nothing more 355ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > an older read that fails says so, keeps what is shown, and can be tried again 586ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > opens the exact task handed off by the board, even beyond the list cap or already done 221ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > states when the task no longer belongs to the authorized program work view 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > reads the work view by the program UUID and lists its items with their store 109ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > says the counts are a floor when a store could not be read 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > an empty work view is an honest empty, not a failure 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a program with no project record says so, not "no tasks" and not an error 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a failed read is an error, never an empty list 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and names what comes later in words 179ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit stage offers no locked tool, and names what comes later in words 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 441ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > shows class, regulatory path, product code, regulation, panel, predicate and flags from the row 346ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > states absence for a device field the row lacks — never a placeholder 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > publishes the product type onto the open shell project so the shell can follow it 92ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — drug program is unchanged > renders the drug facts and no device block 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > keeps same-name accounts distinct, sources responsibility and labels sharing separately 249ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > explicitly states unconfirmed membership and name-only records without fabricated assignments 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > keeps creator provenance separate from recorded responsibility 7ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > announces loading and a verified empty roster distinctly 15ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"error":"HTTP 503"} and offers a real read retry 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":null} and offers a real read retry 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"other","project_id":51,"team":[{"user_id":7,"entry_id":"user:7","identity":"active_member","label":"Alex Chen · Account #7","name":"Alex Chen","email":"alex7@example.test","role":"lead","responsibilities":["project_lead"],"sharing_role":"use","sources":["program_lead","project_member"]},{"user_id":8,"entry_id":"user:8","identity":"active_member","label":"Alex Chen · Account #8","name":"Alex Chen","email":"alex8@example.test","role":null,"responsibilities":["project_owner"],"sharing_role":"owner","sources":["project_owner","project_creator"]},{"user_id":9,"entry_id":"user:9","identity":"unconfirmed_account","label":"Account #9 — Current membership not confirmed","name":null,"email":null,"role":"lead","responsibilities":["project_lead"],"sharing_role":null,"sources":["program_lead"]},{"user_id":null,"entry_id":"recorded-name:0","identity":"recorded_name","label":"Alex Chen","name":"Alex Chen","email":null,"role":null,"responsibilities":[],"sharing_role":null,"sources":["recorded_name"]}]}} and offers a real read retry 15ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"11111111-1111-4111-8111-111111111111","project_id":51,"team":[]},"meta":{"pendingStore":true}} and offers a real read retry 11ms
+ ✓ client/src/concept2cure/v2/__tests__/projectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"11111111-1111-4111-8111-111111111111","project_id":51,"team":[{"user_id":7,"entry_id":"user:7","identity":"active_member","label":"Alex Chen · Account #7","name":"Alex Chen","email":"alex7@example.test","role":"lead","responsibilities":["project_lead"],"sharing_role":"approve","sources":["program_lead","project_member"]}]}} and offers a real read retry 15ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent 231ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure 93ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads 0%, the same as its card 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be measured is stated as "not measured", never left out or drawn as 0 158ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > accepts a scoped empty roster, current identities, and explicitly unconfirmed account references 3ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects foreign program 1ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects integer program 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects missing anchor 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects fractional anchor 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects legacy shape 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects missing team 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects duplicate account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects duplicate recorded entry 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects null payload 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"user_id":0} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"user_id":9007199254740992} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"entry_id":"user:99"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"label":" "} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"name":42} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"identity":"approver"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"role":"approver"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"responsibilities":["reviewer"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"responsibilities":["project_lead"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"responsibilities":["project_lead","project_owner","project_owner"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sharing_role":"approve"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":[]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":["program_lead","made_up"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":["project_owner"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"role":null} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":["program_lead","project_owner","recorded_name"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > requires a canonical current program, with no fallback to an anchor or absent selection 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > does not accept sharing inferred from a program lead fact alone 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > does not collapse distinct accounts or recorded names by name/email 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects exposed name on an unconfirmed account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects exposed email on an unconfirmed account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects exposed sharing_role on an unconfirmed account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects personal identity details hidden in an unconfirmed account label 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"user_id":4} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"email":"alex@example.test"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"role":"lead"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"responsibilities":["project_lead"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"sharing_role":"use"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"sources":["recorded_name","project_member"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"entry_id":"user:4"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"name":""} 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > lists the project's vault from the project-scoped read, on the page 227ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a file can be opened here; nothing asks for a section or offers to close a rail 460ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a failed read is a failure with a retry, not an empty vault 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > ProjectFilesPanel beside the editor is unchanged > keeps its rail header and asks for a section before citing 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > marks no stage done on a real project; only the open stage is marked 118ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > opening a later stage does not complete the ones before it 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with no project selected, shows no lifecycle and no placeholder project name 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with a project selected, names it in the crumb and the heading 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id 653ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 157ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 159ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 140ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for sponsor, product or indication the row lacks 161ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > does not offer project settings anywhere on the screen 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 66ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program still reads green — the good state stays reachable
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program still reads green — the good state stays reachable 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a LOW priority is not rendered as a warning 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a CRITICAL priority still warns — the alert stays reachable 86ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > names what it does and speaks in no voice but the page's 402ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > a question typed here starts a new conversation in the project, carrying the words 201ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > Enter with an empty box goes nowhere 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > is styled by one .pj-convo rule, not also by a row rule that centres it 3ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > copies the text-free receipt without preserving extra source or audit content 3ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > distinguishes an explicit empty record from missing or failed data 2ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'unsupported version' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'missing document' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'non-UUID project' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'array body' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'string body' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'invalid event' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'invalid time' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'local date' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'normalized invalid day' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'ambiguous timezone' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'coerced time' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses a valid manifest for a different response project 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses malformed saved excerpts instead of dropping a source 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx > withholds drafting while the refreshed source admission is unknown, then adopts withdrawal 658ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx > retires local and handoff pins on programme change before the new source read resolves 336ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > says in one line that the work is not filtered to this project, and no longer claims readiness is unwired 360ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > "Open My work" opens the task board on the person's own tasks, as the nav does 142ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project 341ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > with no project open, there is no records panel and no records read 6ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again
+TestingLibraryElementError: Found multiple elements with the role "button" and name "Try again"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33mclass[39m=[32m"c2c-error-retry"[39m
+  [33mtype[39m=[32m"button"[39m
+[36m>[39m
+  [0mTry again[0m
+[36m</button>[39m
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33mclass[39m=[32m"c2c-error-retry"[39m
+  [33mtype[39m=[32m"button"[39m
+[36m>[39m
+  [0mTry again[0m
+[36m</button>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Where this filing stands"[39m
+        [33mclass[39m=[32m"pj-status"[39m
+        [33mdata-testid[39m=[32m"pj-status-line"[39m
+        [33mrole[39m=[32m"group"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"idle"[39m
+        [36m>[39m
+          [0mNo market yet[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [0m Reviews could not be read[0m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Retry reading the reviews"[39m
+            [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry[0m
+          [36m</button>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:133:28
+    131|     expect(screen.getByText(/The authoring store is unavailable\. This…
+    132|     expect(screen.queryByText(/No documents in this project yet/)).toB…
+    133|     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+       |                            ^
+    134|     expect(await screen.findByText('Clinical overview (2.5)')).toBeTru…
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 26 passed (27)
+      Tests  1 failed | 293 passed (294)
+   Start at  00:50:08
+   Duration  110.26s (transform 10.51s, setup 2.88s, import 19.45s, tests 65.44s, environment 16.76s)
+

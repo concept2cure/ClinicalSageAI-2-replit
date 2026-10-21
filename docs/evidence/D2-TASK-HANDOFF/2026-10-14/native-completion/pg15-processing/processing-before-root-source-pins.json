@@ -1,0 +1,26 @@
+{
+  "commit": "8d3bd4688f96765bf267be99bfac74ba4034e2a0",
+  "runtime": "PostgreSQL15/actualapp_servicecanonicalfixtures",
+  "files": [
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",
+      "sha256": "b9cae6bb9b9102af929335f0647546d720c338edfb87add543c89d9124c1f931"
+    },
+    {
+      "path": "tests/db/data-room-processing.dbtest.ts",
+      "sha256": "e1639a6a053fc393b5c6087c9640e746ed2c00aa33e5108fcecf6eb3792b59b7"
+    },
+    {
+      "path": "migrations/20261014_ana_source_read_receipts.sql",
+      "sha256": "ec96e38a9cf0466c6abea7c223e0ea715b64bedaccd1b85f43967b462c7cb9dd"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+    },
+    {
+      "path": "docker-compose.beta.yml",
+      "sha256": "d5135d7bff23274a6ff4048a874f13b72b570cc485fa1a210a85f6879fb5f0c0"
+    }
+  ]
+}

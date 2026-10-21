@@ -27,14 +27,17 @@ export function registerDraftSourceToolIdentityControls(c: Controls) {
       const changed = c.sourceText.slice(0, index) + 'X' + c.sourceText.slice(index + 1);
       expect(changed.length).toBe(c.sourceText.length);
       const before = await c.counts();
-      await c.database().pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2', [changed, c.sourceId]);
+      // Tamper with this organization's seeded source to prove an exact
+      // extraction-identity mismatch refuses all authoring writes.
+      await c.database().pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2 AND organization_id=$3', [changed, c.sourceId, c.organizationId]);
       try {
         const out = JSON.parse(await c.call(c.sourcedInput(reference)));
         expect(out.error, JSON.stringify(out)).toMatch(/source references.*could not be verified/i);
         expect(out.saved).toBeUndefined();
         expect(await c.counts()).toEqual(before);
       } finally {
-        await c.database().pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2', [c.sourceText, c.sourceId]);
+        // Restore the same document and organization in the disposable fixture.
+        await c.database().pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2 AND organization_id=$3', [c.sourceText, c.sourceId, c.organizationId]);
       }
     });
 

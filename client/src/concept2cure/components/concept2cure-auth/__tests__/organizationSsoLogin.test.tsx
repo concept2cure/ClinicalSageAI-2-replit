@@ -18,7 +18,9 @@ vi.mock('react-i18next', () => ({
 vi.mock('@/components/i18n/LanguageSwitcher', () => ({ LanguageSwitcher: () => null }));
 import { Concept2CureLogin } from '../Concept2CureLogin';
 const reply = (status: number, body: unknown) => ({ ok: status < 400, status, json: async () => body }) as Response;
-const CHALLENGE = 'eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoibWZhX2NoYWxsZW5nZSJ9.signature';
+// Synthetic envelope: payload parsing only; this placeholder cannot authenticate.
+const CHALLENGE = [{ alg: 'HS256' }, { type: 'mfa_challenge' }]
+  .map(part => Buffer.from(JSON.stringify(part)).toString('base64url')).concat('signature').join('.');
 beforeEach(() => {
   for (const mock of Object.values(auth)) mock.mockReset();
   auth.adoptMfaChallenge.mockReturnValue(true);

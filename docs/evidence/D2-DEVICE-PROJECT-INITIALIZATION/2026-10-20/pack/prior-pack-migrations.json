@@ -1,0 +1,104 @@
+[
+  {
+    "file": "migrations/20260528_phase9_document_schema.sql",
+    "headSha256": "cb413315c15782856f61830c85cdca244f1b196b412a2a89cd35d16aba1fb572",
+    "workingSha256": "cb413315c15782856f61830c85cdca244f1b196b412a2a89cd35d16aba1fb572",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260804_phase9_rule_pack_outlines.sql",
+    "headSha256": "b1e7c9fcb82a84158176766d878ec32bef4a21ae88d1fb87f8112daddd3598e9",
+    "workingSha256": "b1e7c9fcb82a84158176766d878ec32bef4a21ae88d1fb87f8112daddd3598e9",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260806_cta_ema_ctr536_outline.sql",
+    "headSha256": "bd7c9012be9e5736aad706773cf41afff68d9dac31c784792ae99ff5a387bd0f",
+    "workingSha256": "bd7c9012be9e5736aad706773cf41afff68d9dac31c784792ae99ff5a387bd0f",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260806b_anda_ide_filing_types.sql",
+    "headSha256": "2584a6214e0729bc5db8a53e5773dc52dc14f2368a01fb722a35a514ecfec6d4",
+    "workingSha256": "2584a6214e0729bc5db8a53e5773dc52dc14f2368a01fb722a35a514ecfec6d4",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260810_pma_fda_814_20_outline.sql",
+    "headSha256": "d9e802bee6c6e272fbd6cb0f7ffb523df6353c093277429edb74355cbed3e29a",
+    "workingSha256": "d9e802bee6c6e272fbd6cb0f7ffb523df6353c093277429edb74355cbed3e29a",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260810b_eu_mdr_ivdr_outlines.sql",
+    "headSha256": "c82c565284a0f8ed8a2e06cbfd7b9c81f343ed58c4d7f16d134c51c99a6a80ec",
+    "workingSha256": "c82c565284a0f8ed8a2e06cbfd7b9c81f343ed58c4d7f16d134c51c99a6a80ec",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260810c_rule_pack_provenance.sql",
+    "headSha256": "a70dc855874755457714458ea827ab8625c60a128385489e078bdc8db47976e2",
+    "workingSha256": "a70dc855874755457714458ea827ab8625c60a128385489e078bdc8db47976e2",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260810d_rule_pack_review_attribution.sql",
+    "headSha256": "a3c0894fd0b4b6a5436bb36a10cdbf665c264e417e4dda5407e10b28c9ae1626",
+    "workingSha256": "a3c0894fd0b4b6a5436bb36a10cdbf665c264e417e4dda5407e10b28c9ae1626",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260901_ind_fda_m1_v2_3_outline.sql",
+    "headSha256": "5268d181772f328cd88e79430b3d51cc7324142b90b6c33e55015a0186ceb08d",
+    "workingSha256": "5268d181772f328cd88e79430b3d51cc7324142b90b6c33e55015a0186ceb08d",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260901b_estar_510k_denovo_outlines.sql",
+    "headSha256": "c8fa7c11e35267314857d44d2880e5b037c1807e0fb79ec8b6f921e4d0b6700d",
+    "workingSha256": "c8fa7c11e35267314857d44d2880e5b037c1807e0fb79ec8b6f921e4d0b6700d",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql",
+    "headSha256": "a8d21aa8e774ea3850fbbe667aba92c6d89276d2dc217aa2b1a80f9b98b29f92",
+    "workingSha256": "a8d21aa8e774ea3850fbbe667aba92c6d89276d2dc217aa2b1a80f9b98b29f92",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20261005_fda_jnda_m1_outline_v2_2.sql",
+    "headSha256": "9d57b6bd6d513ce08f5f9b7fdec6f86dc4ff880c115e43170644f62a75a128cd",
+    "workingSha256": "9d57b6bd6d513ce08f5f9b7fdec6f86dc4ff880c115e43170644f62a75a128cd",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql",
+    "headSha256": "0099a7a1b2026fea47f96d5e23a448bcdb9d248af103ec3ef6cb260f8167baab",
+    "workingSha256": "0099a7a1b2026fea47f96d5e23a448bcdb9d248af103ec3ef6cb260f8167baab",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20261005c_k510_denovo_estar_outline_v1_1.sql",
+    "headSha256": "de0d8edc1085cd8dbac8e0c3d7dc09c76e4dce8c56e9464e0f0fcb2f6795f570",
+    "workingSha256": "de0d8edc1085cd8dbac8e0c3d7dc09c76e4dce8c56e9464e0f0fcb2f6795f570",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20261018_filing_class_rule_packs.sql",
+    "headSha256": "df0ffb355517a472f9e10e56689903d0993fd783c4afc9d30216def7a71757c8",
+    "workingSha256": "df0ffb355517a472f9e10e56689903d0993fd783c4afc9d30216def7a71757c8",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20261018c_filing_class_packs_review_corrections.sql",
+    "headSha256": "c3b62de7d2d9af1de4bb1bd9ff14bd9672c9e790513f1b0e3ed1c0b2236406b4",
+    "workingSha256": "c3b62de7d2d9af1de4bb1bd9ff14bd9672c9e790513f1b0e3ed1c0b2236406b4",
+    "unchanged": true
+  },
+  {
+    "file": "migrations/20261019b_filing_class_packs_v1_2_critic_followups.sql",
+    "headSha256": "a6e66ab449df7398e5d122af1b7faedcc371643d11ed87c681cc377913dfa43d",
+    "workingSha256": "a6e66ab449df7398e5d122af1b7faedcc371643d11ed87c681cc377913dfa43d",
+    "unchanged": true
+  }
+]

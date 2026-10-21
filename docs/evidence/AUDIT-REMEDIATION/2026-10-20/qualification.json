@@ -1,0 +1,161 @@
+{
+  "assembledUtc": "2026-10-20T20:05:08.425185+00:00",
+  "initialCanonical": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+  "laterCanonical": "0793ee48ecee5dee014b266b2def014c38ea978e",
+  "localCheckpoint": "ec75985155ad297b2d0629587f73d72facb4e90a",
+  "scope": "Current canonical work integrated with the pending audit remedies. Historical and overlapping cohorts are not summed. Final differential scan, unchanged hook and publication are recorded separately.",
+  "proofTier": {
+    "passed": 1551,
+    "failed": 0,
+    "pending": 0,
+    "files": 130,
+    "artifactSha256": "bef5737a63281c9d828fb2c947652ceba2a4f6cce18e2898476fbae4f353c435"
+  },
+  "ciHonesty": {
+    "passed": 53,
+    "failed": 0,
+    "pending": 0,
+    "files": 1,
+    "artifactSha256": "3f3d92f7c9660724a418f2013b40429beb9e6bc646403bef1f6eb1fd2f304666"
+  },
+  "native": {
+    "passed": 52,
+    "failed": 0,
+    "pending": 0,
+    "files": 3,
+    "artifactSha256": "670e7d76686968c15ceb472ddc880a83cfff141ff82a18f01fa33e36dcdf4700",
+    "posture": "Three scoped fixtures on native PostgreSQL after canonical416migration replay; verified TLS and restricted runtime. Thin PM fixtures do not prove private current-actor admission."
+  },
+  "ciScripts": {
+    "tests": 446,
+    "pass": 446,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "wholeTypecheckErrors": 0,
+  "buildExitCode": 0,
+  "authenticatedGoldenBrowserExitCode": 0,
+  "scopedRemedies": [
+    {
+      "scope": "Authoring fixture and cutoff/outline regressions",
+      "passed": 114,
+      "files": 5
+    },
+    {
+      "scope": "Workbench mocked session guards and exact control selection, including unchanged negative recovery controls",
+      "passed": 501,
+      "files": 45
+    },
+    {
+      "scope": "Returned401 action refusals and canonical error/session behavior",
+      "passed": 60,
+      "files": 4
+    },
+    {
+      "scope": "Bundle authorization-before-count and adjacent backend exports",
+      "passed": 121,
+      "files": 6
+    },
+    {
+      "scope": "Existing Insights cap fallback",
+      "passed": 6,
+      "files": 1
+    },
+    {
+      "scope": "Incoming Project files source assembly/current editor guards",
+      "passed": 113,
+      "files": 7
+    },
+    {
+      "scope": "Overlapping post-matcher correction on2newtests",
+      "passed": 26,
+      "files": 2
+    }
+  ],
+  "securityRemedies": {
+    "currentRuntimeCandidates": {
+      "before": 5,
+      "after": 0,
+      "files": 3
+    },
+    "testRegexCandidates": {
+      "before": 4,
+      "after": 0,
+      "files": 3
+    },
+    "newIncomingTestRegex": {
+      "before": 1,
+      "after": 0,
+      "files": 2,
+      "partialParseNotices": 2
+    },
+    "reviewedHistoricalEvidence": {
+      "beforeExactFiles": 22,
+      "afterExactFiles": 25,
+      "preservedBytes": true,
+      "scope": "All rules for each exact whole historical file are excluded only from the runtime diff after fail-closed SHA256 validation. Complete Security scan remains enabled."
+    },
+    "pythonRequirements": {
+      "scanner": "Trivy0.70.0",
+      "packages": 47,
+      "oldPin": "3.14.3",
+      "oldHighFindings": 2,
+      "fixedPin": "3.14.4",
+      "fixedHighCriticalFindings": 0,
+      "ignoresUnchanged": true,
+      "limit": "Manifest-only; no whole-image or installed-transitive qualification."
+    }
+  },
+  "schema": {
+    "manifest": 416,
+    "journal": 416,
+    "missing": 0,
+    "drift": 0,
+    "tlsVerified": true,
+    "runtimeRole": "app_service",
+    "superuser": false,
+    "bypassRls": false
+  },
+  "unresolvedUnitDiagnostic": {
+    "passed": 343,
+    "failed": 110,
+    "files": 40,
+    "failingFiles": 38,
+    "newFailureIdentities": 0,
+    "allFirstDiagnosticsMatchCurrentCi": true,
+    "report": "current-unit-disposition.json",
+    "historicalInitialDiagnostic": true
+  },
+  "outsideArtifactSha256": {
+    "oct20-authoring-regression-acceptance.json": "4a0ebe9a51e73af66b17a89c4d868e6d6a26ec858a02abfb30b2b92e9e10e1b1",
+    "oct20-workbench-auth-mock-acceptance.json": "6389cdb9589150735f0d82a74f86c21090558238d76d96e97c7c3a83bba049a2",
+    "oct20-response-checks/acceptance.json": "93a598b158324297babfdd7a73a1d3c25651bf830f75eb796b850b2ef3d5e3d3",
+    "oct20-report-bundle-admission/acceptance.json": "2fb31024f32506701061534132ef9c7277987befec1314d2e7e95c0f8a4aa855",
+    "oct20-vault-source-ui-acceptance.json": "3d721157611985d14bb191be0d92e44d7679c8780a4813943c6742d6b31bcd8e",
+    "oct20-project-file-newtests-closure-acceptance.json": "70c4fe7bb5fbf16d40c6ff85d15a6563be7dc3453843abf52c8193a49ecd7816",
+    "oct20-journey-integration-review.json": "1fed002e1f5439ff66af1fd47bb7433128296400b4e2372da0a64fe3f0073663",
+    "oct20-scoped-semgrep-remediation-freeze.json": "83c1f2e606020791c3c49a3a6b4a7b90bd3af72e6cdb251bb23781061e6ad976",
+    "oct20-testregex-freeze.json": "ab160e7766b2436ded410f6ae018a102de375bb5104107da80013bc99ede6760",
+    "oct20-writerless-freeze.json": "cb1d9a0a1dc30a8bdff757df26d2121ff6b98a1fe111b61f2ba96a134efb4b7b",
+    "oct20-canonical-deploy-receipt.json": "e4514cf840cbe827e7d971202921ac43a1cf6d1143448a77496fc165a962dff1",
+    "oct20-canonical-deploy-postflight.json": "10714a9a8e86612cd864b33a11c15d5b1372f8ffc2941f1ece81a9448a10dc2d",
+    "oct20-trivy-python-qualification.json": "db17a2e91a6e541d5d85ca73d8d8c8dcce04c0aecc437f55113a1ef4f9b5b1f6",
+    "oct20-trivy-python-provenance.json": "04bbabe9a0a1d6ddecc9c3b39315ff92655846dc0b2a2607215f48475df1181e",
+    "oct20-ci-scripts-final-receipt.json": "6070ced0ddb25495742fedbdede89f2fd0e4dff7d16938beb9096b06961a487c",
+    "oct20-historical-probe-byte-review.json": "7422b495a25084d5928cc975f0938c42f80418ed00b960280446e9811c56e189",
+    "oct20-integrated-typecheck.log": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "oct20-integrated-golden-browser.log": "a98689220c024ffd3be681999a66ba1cb4e76de03cce66f85cebf2ff0606d0ef",
+    "oct20-final-build.log": "7173d6f62ea75fa8e2d6d91ae053666b5f5eea8a8eababc83db765ca5dfc1d68",
+    "oct20-tables-live-schema-final.log": "4c29338c1656dfee0d0003ef2f7c704108c3643c39b645ff24dc839c30fb59db"
+  },
+  "retainedLimits": [
+    "33 uncomputed and5prediction-unavailable report types; no digest producer",
+    "Current numeric-actor/executor and private-project admission in schedules",
+    "Governed offboarding and concurrent-write boundary;685 is a historical census",
+    "Clinical/scientific/external qualification,3credential-owner rotations and humanUAT",
+    "Initial bounded unit diagnostic110 failures is retained;14 exact identities closed in focused follow-ups, with broader failures still requiring an actual rerun or disposition."
+  ],
+  "focusedFollowups": "followup-qualification.json",
+  "lateIntegration": "late-integration-qualification.json"
+}

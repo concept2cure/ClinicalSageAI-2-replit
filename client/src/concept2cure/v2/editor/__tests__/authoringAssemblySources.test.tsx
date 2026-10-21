@@ -4,12 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AssemblyPlan, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
 import type { AssemblySourceManifest, AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 const apiRequest = vi.hoisted(() => vi.fn());
-const actor = vi.hoisted(() => ({ revision: 0 }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ authService: {
-  getUser: () => ({ id: '7', organizationId: '12' }), on: () => () => undefined,
-  captureSessionReadGuard: () => { const revision = actor.revision; return { sameRevision: () => actor.revision === revision }; },
-} }));
+import { authService } from '@/services/portal/authService';
 import { useAuthoringAssemblyBuild } from '../useAuthoringAssemblyBuild';
 import { readAssemblyPlan, readAssemblyCommit } from '../assemblyBuildTransport';
 import { publishShellProject } from '../../shellProject';
@@ -22,25 +18,31 @@ const manifest = (sources = selectors): AssemblySourceManifest => ({ version: 1,
 const section: AssemblySection = { id: SECTION, doc_id: DOC, code: '3.2.S.1', title: 'Scientific summary', content: '', order_index: 0, updated_at: null };
 const plan = (input: AssemblyPreviewInput): AssemblyPlan => ({ version: 1, docId: DOC, programId: PROGRAM, templateId: 'template', selection: input.selection, targetSnapshot: 'target', templateSnapshot: 'template', fingerprint: 'build', templateName: 'Scientific outline', draftRegion: 'FDA', limitations: [], gaps: [], ...(input.sources ? { sources: manifest(input.sources) } : {}), rows: [{ code: section.code, title: section.title, content: '', ordering: 0, disposition: 'append', aiDraftable: true, aiDraftableReason: 'Narrative', gaps: [] }] });
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
-function mount() { return renderHook(() => useAuthoringAssemblyBuild({ docId: DOC, programId: PROGRAM, docSealed: false, editorDirty: false, onStructureBuilt: vi.fn(), onReviewSection: vi.fn() })); }
+function mount() { return renderHook(() => useAuthoringAssemblyBuild({ docId: DOC, programId: PROGRAM, docSealed: false, editorDirty: false, onStructureBuilt: vi.fn(), onReviewSection: vi.fn(), onRecoveryChecked: vi.fn(async () => true) })); }
 function deferred<T>() { let resolve!: (value: T) => void; return { promise: new Promise<T>(done => { resolve = done; }), resolve: (value: T) => resolve(value) }; }
 async function preview(view: ReturnType<typeof mount>) {
   await act(async () => { await view.result.current.loadTemplates(); await view.result.current.chooseTemplate('template'); await view.result.current.preview(); });
 }
-beforeEach(() => {
-  actor.revision = 0; publishShellProject({ id: PROGRAM });
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear();
+  const user = { id: '7', organizationId: '12', organizationName: null, email: 'assembly-sources@example.test',
+    firstName: 'Source', lastName: 'Author', displayName: 'Source author', roles: ['author'], permissions: [],
+    mfaEnabled: false, mfaMethods: [], mustChangePassword: false };
+  vi.stubGlobal('fetch', vi.fn(async () => reply({ authenticated: true, user })));
+  await authService.adoptSession(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`);
+  publishShellProject({ id: PROGRAM });
   apiRequest.mockReset().mockImplementation(async (_method: string, path: string, input: AssemblyPreviewInput) => {
     if (path === '/api/authoring/templates') return reply({ success: true, templates: [{ id: 'template', name: 'Scientific outline' }] });
     if (path.endsWith('/assembly/preview')) return reply({ success: true, data: plan(input) });
     if (path.endsWith('/assembly/commit')) return reply({ success: true, data: { docId: DOC, programId: PROGRAM, plan: plan(input), sections: [section] } });
     if (path.includes('/docs?')) return reply({ success: true, documents: [{ id: DOC, program_id: PROGRAM }] });
-    if (path === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC } });
+    if (path === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
     if (path.endsWith('/sections')) return reply({ success: true, sections: [section] });
     if (path.endsWith('/ai/draft')) return reply({ success: true, draft: { content: 'Retained candidate', draftId: 'candidate' } });
     throw new Error(`Unexpected request ${path}`);
   });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); localStorage.clear(); sessionStorage.clear(); vi.unstubAllGlobals(); });
 describe('explicit selected-source assembly', () => {
   it('adopts exact selectors without a write and carries them through preview and deterministic build', async () => {
     const view = mount(); act(() => { expect(view.result.current.adoptSources(selectors)).toBe(true); });

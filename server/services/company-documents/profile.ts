@@ -78,6 +78,11 @@ export async function context(req: Request, manage: boolean | CompanyCapability 
   return { organizationId, userId, q, canManage, capabilities };
 }
 
+/** Re-read the current actor before accepting a Company settings upload. */
+export async function requireCompanyDocumentManager(req: Request): Promise<void> {
+  await context(req, 'brand');
+}
+
 export async function companyLegalSourceVerdict(q: RequestSqlClient, organizationId: number, document: CompanyLegalDocument): Promise<string | null> {
   const source = await readVaultLifecycleSource(q, organizationId, document.vaultDocumentId);
   if (!source || source.programId !== document.programId) return 'The recorded Vault version is no longer available.';

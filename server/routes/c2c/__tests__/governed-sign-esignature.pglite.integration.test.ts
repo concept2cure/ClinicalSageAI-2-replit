@@ -54,6 +54,10 @@ const D6_MIGRATION = fs.readFileSync(
   path.join(__dirname, '../../../../migrations/20260813d_esignature_governed_unification.sql'),
   'utf8',
 );
+const STF_MIGRATION = fs.readFileSync(
+  path.join(__dirname, '../../../../migrations/20261012_submission_leaf_stf_study_tagging.sql'),
+  'utf8',
+);
 
 // audit_logs + c2c_ana_actions — post-vocab governed shapes (as in the sibling
 // governed-action PGlite suite).
@@ -179,6 +183,7 @@ beforeEach(async () => {
   await pg.exec(USERS_DDL);
   await pg.exec(ORGANIZATION_USERS_DDL);
   await pg.exec(ECTD_DDL);
+  await pg.exec(STF_MIGRATION);
   await pg.exec(D6_MIGRATION); // the REAL migration under test
   await pg.query(
     `INSERT INTO users (id, email, name, title) VALUES ($1, $2, $3, $4)`,

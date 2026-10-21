@@ -3,12 +3,14 @@ import { getDocumentTemplate, getRegistryDocumentTemplate } from '../document-te
 import { getLifecycleDocumentType } from '../../ind/ctd';
 
 describe('regional template source selection', () => {
-  it('EU PSUR uses every numbered section of the canonical PBRER', async () => {
+  it('EU PSUR uses every numbered section of the canonical PBRER, and its front matter', async () => {
     const canonical = getDocumentTemplate('pbrer')!;
     const actual = await getRegistryDocumentTemplate('EU_PSUR');
     expect(actual?.sections).toEqual(canonical.sections);
+    expect(actual?.frontMatter).toEqual(canonical.frontMatter);
+    // §20 Appendices added 2026-10-18 (review finding).
     expect(actual?.sections.map(section => section.number)).toEqual(
-      Array.from({ length: 19 }, (_, index) => String(index + 1)),
+      Array.from({ length: 20 }, (_, index) => String(index + 1)),
     );
   });
 

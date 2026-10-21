@@ -1,0 +1,10 @@
+{
+  "frozenAt": "2026-10-21T01:29:48.269041+00:00",
+  "changedFixture": "client/src/concept2cure/v2/__tests__/documentCanvasFilingBinding.test.tsx",
+  "beforeSha256": "387a2321ce954931e88ce02c2abc195be3f025df52af4b60b9832136175b6973",
+  "afterSha256": "81762a687a59c0bd19fd57e5fdee522f5b264f8dcd21bbb41e5a18a79e935396",
+  "redReceipt": "../../merged-regressions.json",
+  "greenReceipt": "green.json",
+  "strictLintReceipt": "lint-strict.json",
+  "productionChanged": false
+}

@@ -1,0 +1,41 @@
+{
+  "boundary": "Real AuthoringCreateExport, C2CForm, creation ledger, leave registry, TaskTray, AuthProvider, query and router with shipped styles; synthetic intercepted transport/accounts. Verifies refusal and exact scope-bound target, not native detail or deployed writes/login/MFA.",
+  "results": [
+    {
+      "scenario": "confirmed-desktop",
+      "viewport": 1440,
+      "theme": "light",
+      "creationStatus": 201,
+      "writes": 1,
+      "recoveryReads": 0,
+      "pendingRefused": true,
+      "timeoutAndCheckingRefused": false,
+      "exactTaskTarget": {
+        "id": "TASK-B",
+        "actor": "42",
+        "organization": "7"
+      },
+      "overflow": false,
+      "dialogOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "scenario": "timeout-phone",
+      "viewport": 390,
+      "theme": "dark",
+      "creationStatus": 408,
+      "writes": 1,
+      "recoveryReads": 1,
+      "pendingRefused": true,
+      "timeoutAndCheckingRefused": true,
+      "exactTaskTarget": {
+        "id": "TASK-B",
+        "actor": "42",
+        "organization": "7"
+      },
+      "overflow": false,
+      "dialogOverflow": false,
+      "pageErrors": []
+    }
+  ]
+}

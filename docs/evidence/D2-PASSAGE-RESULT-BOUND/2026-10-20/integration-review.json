@@ -1,0 +1,11 @@
+{
+  "agent": "passage_cap_audit",
+  "result": "clear",
+  "mergeCommit": "fbe82999fc9dbca55ef8148b1de7d8376c4dc7a7",
+  "scope": "Read-only source integration review; not a test execution.",
+  "finding": "Incoming AnaToolExecutor changes affect only Schedule of Events imports, helpers and four handlers. Passage registration, executeTools, cap, budgeting, framing and outcome adaptation remain unchanged. New preservation import is pure helpers/classes.",
+  "reviewedProduction": {
+    "server/services/ana/document-passage-tools.ts": "593c291d3a588a9825678cffe98a41a122150b74fa41617d3b9cd83a06bdab9d",
+    "server/services/ana/tool-outcome.ts": "e32bef67da8f61db7b8a15fd636505ae2c572d3830e293e9600cf8de087761ed"
+  }
+}

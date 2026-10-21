@@ -1,0 +1,32 @@
+# Review mutation 28 — the row's tag names the type as the dialog does (finding 21)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentRow.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "row names the type")
+# Restored afterwards: sha256 before 66db6f704a8bce2507f01e9c5a361480839f2462696d8dcefa9ac34b48d297d9, after 66db6f704a8bce2507f01e9c5a361480839f2462696d8dcefa9ac34b48d297d9 (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentRow.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentRow.tsx (mutated)
+@@ -236,7 +236,7 @@
+   return (
+     <div className="cc-row">
+       <span className="cc-row-tag" data-kind={c.commitment_type}>
+-        {c.commitment_type ? typeName(c.commitment_type) : '—'}
++        {c.commitment_type ? c.commitment_type.toUpperCase() : '—'}
+       </span>
+       <div className="cc-row-b">
+         <div className="cc-row-t">{c.description}</div>
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > the row names the type as the dialog does, and the signature's time against the audit trail's UTC 266ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > the row names the type as the dialog does, and the signature's time against the audit trail's UTC 291ms
+   → expected 'MEETING_COMMITMENT' to be 'Meeting commitment' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > the row names the type as the dialog does, and the signature's time against the audit trail's UTC
+AssertionError: expected 'MEETING_COMMITMENT' to be 'Meeting commitment' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

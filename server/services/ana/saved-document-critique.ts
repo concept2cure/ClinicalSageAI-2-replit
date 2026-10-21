@@ -185,7 +185,7 @@ export async function critiqueSavedDocument(input: Record<string, unknown>, ctx?
         if (!(await decideAuthoringPermission({ pool: q, principal: authorized.principal, scope, action: 'view' })).allowed) throw new Error('Document access denied');
         const saved = await sections(q, input.document_id as string, tenantId, userId);
         const header = documentRecord(doc.rows[0]);
-        const template = await savedTemplateReview(q, tenantId, input.document_id as string, header, saved);
+        const template = await savedTemplateReview(q, { tenantId, documentId: input.document_id as string, programId: project.programId }, header, saved);
         const output = report(input.document_id as string, project.programId, saved, input, { header, template });
         await q.query('COMMIT');
         return output;

@@ -9,18 +9,19 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({
   ...(await original<typeof import('@/lib/queryClient')>()), apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...await original<typeof import('@/services/portal/authService')>(),
   useAuth: () => ({ user: { id: '7', organizationId: '9' } }),
-  authService: { getUser: () => ({ id: '7', organizationId: '9' }),
-    captureSessionReadGuard: () => ({ sameRevision: () => true }) },
 }));
 
 import { ApiRequestError } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
 import { AuthoringAiDraft } from '../surfaces/AuthoringAiDraft';
 import { publishShellProject } from '../shellProject';
 import { generateAuthoringDraft } from '../editor/authoringDraftTransport';
 import { runAssemblyDrafts } from '../editor/assemblyDraftQueue';
 import { initialAssemblyState, type AssemblyBucket, type AssemblyBuildOptions } from '../editor/assemblyBuildState';
+import { captureAssemblyHeaders } from '../editor/assemblyBuildTransport';
 import type { AssemblyOperation } from '../editor/useAuthoringAssemblyBuild';
 
 const PROGRAM = 'bbbbbbbb-0000-4000-8000-000000000001';
@@ -46,24 +47,28 @@ function savedSections(): AssemblySection[] {
 }
 function operationFor(sections: AssemblySection[]): AssemblyOperation {
   const token = {};
+  const identity = { generation: 0, retired: false, actor: { userId: '7', organizationId: '9' }, session: authService.captureSessionReadGuard() };
   const options: AssemblyBuildOptions = { docId: DOC, programId: PROGRAM, docSealed: false,
     editorDirty: false, onStructureBuilt: vi.fn(), onReviewSection: vi.fn() };
-  const bucket: AssemblyBucket = { token, stopRequested: false, sourceRevision: 0,
+  const bucket: AssemblyBucket = { token, owner: identity, stopRequested: false, sourceRevision: 0,
     state: { ...initialAssemblyState(), phase: 'built', withAna: true,
       slots: sections.map(section => ({ section, status: 'not-started', draftRegion: 'FDA',
         referenceContext: '', sourceSelectionKey: 'template-only',
         review: { draft: null, body: '', changeReason: '', refusal: null } })) } };
   const owner: AssemblyOperation['owner'] = { options, key: 'current-editor', revision: 0,
-    contextRevision: 0, savedReuseRevision: 0, alive: true, bucket, redraw: vi.fn() };
-  return { owner, bucket, token, options, current: () => true,
+    contextRevision: 0, savedReuseRevision: 0, alive: true, bucket, redraw: vi.fn(),
+    identity, authCurrent: identity.session.sameRevision, headers: captureAssemblyHeaders, leaveRefusal: () => null };
+  return { owner, bucket, token, options, headers: owner.headers(), current: () => true,
     update: patch => { bucket.state = { ...bucket.state, ...patch }; } };
 }
 
 beforeEach(() => {
   apiRequest.mockReset(); fireToast.mockReset(); onAccepted.mockReset(); onClose.mockReset();
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 9 }))}.synthetic`,
+    { id: '7', organizationId: '9', roles: ['author'], permissions: [] }, 'fixture-refresh', 3600);
   publishShellProject({ id: PROGRAM });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); authService.endSession(null); });
 
 describe('editor termination refusal uses the existing actual transport and review hooks', () => {
   it('retains the nested 422 classification through the shared generation transport', async () => {
@@ -116,7 +121,7 @@ describe('actual assembly queue preserves completed work on a termination refusa
     const sections = savedSections();
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return response({ success: true, documents: [{ id: DOC, program_id: PROGRAM }] });
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return response({ success: true, document: { id: DOC } });
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return response({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
       if (method === 'GET' && url.endsWith('/sections')) return response({ success: true, sections });
       if (url === '/api/authoring/sections/first/ai/draft') return candidate('first-candidate', 'Completed first candidate.');
       if (url === '/api/authoring/sections/second/ai/draft') throw cutoff();

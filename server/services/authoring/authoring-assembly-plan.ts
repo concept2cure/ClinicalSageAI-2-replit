@@ -20,6 +20,8 @@ export interface AssemblyTemplate {
   id: string; name: string; snapshot: string; sections: TemplateSectionSeed[];
   aiDraftable: boolean; aiDraftableReason: string; limitations: string[];
   draftRegion: string | null;
+  /** Actual bound filing identity, independent of immutable template provenance. */
+  filingSnapshot?: string;
   /** Server-read immutable source and guide metadata, not accepted from a client. */
   metadataFor: (code: string) => Record<string, unknown>;
   guidanceFor: (code: string) => string | undefined;
@@ -103,7 +105,8 @@ export function buildAssemblyPlan(doc: AssemblyDocument, existing: AssemblyStore
   });
   if (next - 1 > INT32_MAX) throw new AssemblyError(409, 'ASSEMBLY_ORDER_OVERFLOW', 'The document has no remaining section order positions. Review its structure before building. Nothing was changed.');
   const base = { version: 1 as const, docId: doc.id, programId: input.programId, templateId: template.id, selection: input.selection,
-    targetSnapshot: assemblyHash({ document: doc, sections: existing }), templateSnapshot: template.snapshot,
+    targetSnapshot: assemblyHash({ document: doc, sections: existing,
+      ...(template.filingSnapshot ? { filingSnapshot: template.filingSnapshot } : {}) }), templateSnapshot: template.snapshot,
     templateName: template.name, draftRegion: template.draftRegion, limitations: template.limitations, rows,
     gaps: rows.flatMap(row => row.gaps.map(gap => `${row.code}: ${gap}`)), ...(sources ? { sources } : {}) };
   return { ...base, fingerprint: assemblyHash(base) };

@@ -177,7 +177,10 @@ export interface SubmissionBundle {
      * gate must read its absence as "not itemised", never as "none missing".
      */
     missingStylesheets?: string[];
+    requiredStylesheets?: string[];
+    presentStylesheets?: string[];
     selfContained: boolean;
+    validation?: import('../../../shared/regulatory/ectd-dtd-validation').DtdValidationEvidence;
   };
   /**
    * Optional regional Module 1 backbone status: whether the region has its OWN

@@ -15,7 +15,9 @@ type SourceVerification = 'full-recorded' | 'identity-only';
 type ReferenceFields = Record<string, string | string[]>;
 interface SectionReference {
   sectionId: string;
+  templateId: string;
   authority: SavedTemplateGuidanceRead['authority'];
+  assembly?: Record<string, unknown>;
   state?: 'not-recorded';
   sourceVerification?: SourceVerification;
   source?: Record<string, unknown>;
@@ -132,25 +134,34 @@ function textParts(items: Array<Record<string, unknown>>, base: Record<string, u
   } while (offset < text.length);
 }
 
-function reviewItems(templateId: string | null, source: RecordedTemplateSource | null, references: SectionReference[]) {
+function sourceItems(items: Array<Record<string, unknown>>, source: RecordedTemplateSource, sectionId?: string): void {
+  const { limitations, ...identity } = source;
+  const item = { kind: 'template-source', templateId: source.id, ...(sectionId ? { sectionId } : {}),
+    authority: 'recorded', source: identity, limitationCount: limitations.length };
+  if (JSON.stringify(item).length > 2700) throw new Error('Saved template identity exceeds the review item budget.');
+  addItem(items, item);
+  limitations.forEach((text, itemIndex) => textParts(items, { templateId: source.id, sectionId: sectionId ?? null,
+    authority: 'recorded', sourceVerification: 'full-recorded', field: 'limitations', itemIndex }, text));
+}
+
+function reviewItems(source: RecordedTemplateSource | null, references: SectionReference[]) {
   const items: Array<Record<string, unknown>> = [];
-  if (source) {
-    const { limitations, ...identity } = source;
-    const item = { kind: 'template-source', templateId, authority: 'recorded', source: identity, limitationCount: limitations.length };
-    if (JSON.stringify(item).length > 2700) throw new Error('Saved template identity exceeds the review item budget.');
-    addItem(items, item);
-    limitations.forEach((text, itemIndex) => textParts(items, { templateId, sectionId: null, authority: 'recorded',
-      sourceVerification: 'full-recorded', field: 'limitations', itemIndex }, text));
-  }
+  if (source) sourceItems(items, source);
   references.forEach((reference, guideIndex) => {
+    const { templateId, sectionId } = reference;
+    if (reference.assembly) {
+      const recorded = parseRecordedTemplateSource(reference.source, templateId);
+      if (!recorded) throw new Error('The assembled section source could not be verified.');
+      sourceItems(items, recorded, sectionId);
+    }
     if (reference.state === 'not-recorded') {
-      addItem(items, { kind: 'template-reference-gap', templateId, sectionId: reference.sectionId,
+      addItem(items, { kind: 'template-reference-gap', templateId, sectionId,
         authority: reference.authority, state: reference.state,
         message: 'No recorded or current template guidance is available for this saved section.' });
     }
     for (const [field, value] of Object.entries(reference.fields)) {
       const entries = Array.isArray(value) ? value : [value];
-      entries.forEach((text, itemIndex) => textParts(items, { templateId, sectionId: reference.sectionId,
+      entries.forEach((text, itemIndex) => textParts(items, { templateId, sectionId,
         authority: reference.authority, ...(reference.sourceVerification ? { sourceVerification: reference.sourceVerification } : {}),
         guideIndex, field, itemIndex }, text));
     }
@@ -191,37 +202,71 @@ function hasGuidance(fields: ReferenceFields): boolean {
 }
 
 function sectionReferences(sectionId: string, read: SavedTemplateGuidanceRead, templateId: string, source: RecordedTemplateSource | null): SectionReference[] {
-  const references: SectionReference[] = read.rows.map(row => ({ sectionId, authority: read.authority,
+  const references: SectionReference[] = read.rows.map(row => ({ sectionId, templateId, authority: read.authority,
     ...(read.authority === 'recorded' ? auditSource(row.template_source, templateId, source) : {}), fields: referenceFields(row, read.authority) }));
-  if (!references.some(reference => hasGuidance(reference.fields))) references.push({ sectionId, authority: read.authority,
+  if (!references.some(reference => hasGuidance(reference.fields))) references.push({ sectionId, templateId, authority: read.authority,
     state: 'not-recorded', fields: {} });
   return references;
 }
 
+/** Assembly authority comes from the existing receipt validator, never a parent fallback. */
+function assemblySource(metadata: Record<string, unknown>, read: SavedTemplateGuidanceRead, programId: string) {
+  const receipt = metadata.assembly;
+  if (!object(receipt) || receipt.programId !== programId || read.authority !== 'recorded' || read.rows.length !== 1) {
+    throw new Error('The assembled section reference could not be verified.');
+  }
+  const source = parseRecordedTemplateSource(read.rows[0].template_source, read.rows[0].template_id);
+  if (!source) throw new Error('The assembled section has no complete recorded source.');
+  return { source, receipt: { version: receipt.version, docId: receipt.docId, programId: receipt.programId,
+    templateId: receipt.templateId, templateSnapshot: receipt.templateSnapshot, fingerprint: receipt.fingerprint } };
+}
+
+function sectionMetadata(raw: unknown): Record<string, unknown> | null {
+  if (raw === undefined || raw === null) return null;
+  if (!object(raw)) throw new Error('Saved section provenance metadata is malformed.');
+  if (Object.hasOwn(raw, 'assembly') && (!object(raw.templateSource) || !object(raw.templateGuidance))) {
+    throw new Error('The assembled section lacks complete recorded source and guidance.');
+  }
+  return raw;
+}
+
+function hasReferenceIdentity(templateId: string | null, metadata: Record<string, unknown> | null): boolean {
+  if (templateId || (metadata && Object.hasOwn(metadata, 'assembly'))) return true;
+  if (metadata && (Object.hasOwn(metadata, 'templateSource') || Object.hasOwn(metadata, 'templateGuidance'))) {
+    throw new Error('Saved section guidance has no verified parent or assembly identity.');
+  }
+  return false;
+}
+
 /** Called only after current whole-document view admission, on its pinned tenant connection. */
-export async function savedTemplateReview(q: RequestSqlClient, tenantId: number, documentId: string,
+export async function savedTemplateReview(q: RequestSqlClient, scope: { tenantId: number; documentId: string; programId: string },
   header: Record<string, unknown>, sections: Array<{ sectionId: string; code: string | null }>): Promise<SavedTemplateReview> {
+  const { tenantId, documentId, programId } = scope;
   const { id, source, template } = documentTemplate(header);
   const references: SectionReference[] = [];
   let referenceBytes = bytes(source);
   boundedBytes(referenceBytes);
-  if (id) {
-    const metadata = await creationMetadata(q, documentId, tenantId, sections.map(s => s.sectionId));
-    const fallback = new Map<string | null, SavedTemplateGuidanceRead>();
-    for (const section of sections) {
-      const seeded = metadata.get(section.sectionId);
-      let read = seeded === undefined ? fallback.get(section.code) : undefined;
-      if (!read) {
-        read = await templateGuidanceAfterAccess(q, { tenantId, docId: documentId, sectionId: section.sectionId, templateId: id, code: section.code }, { metadata: seeded });
-        if (seeded === undefined) fallback.set(section.code, read);
-      }
-      for (const reference of sectionReferences(section.sectionId, read, id, source)) {
-        referenceBytes += bytes(reference);
-        boundedBytes(referenceBytes);
-        references.push(reference);
-      }
+  const metadata = await creationMetadata(q, documentId, tenantId, sections.map(s => s.sectionId));
+  const fallback = new Map<string | null, SavedTemplateGuidanceRead>();
+  for (const section of sections) {
+    const seeded = sectionMetadata(metadata.get(section.sectionId));
+    if (!hasReferenceIdentity(id, seeded)) continue;
+    const assembled = seeded !== null && Object.hasOwn(seeded, 'assembly');
+    let read = seeded === null ? fallback.get(section.code) : undefined;
+    if (!read) {
+      read = await templateGuidanceAfterAccess(q, { tenantId, docId: documentId, sectionId: section.sectionId, templateId: id, code: section.code }, { metadata: seeded });
+      if (seeded === null) fallback.set(section.code, read);
+    }
+    const assembly = assembled ? assemblySource(seeded, read, programId) : null;
+    const selectedId = assembly?.source.id ?? id;
+    if (!selectedId) throw new Error('Saved section template identity is unavailable.');
+    for (const reference of sectionReferences(section.sectionId, read, selectedId, assembly?.source ?? source)) {
+      if (assembly) reference.assembly = assembly.receipt;
+      referenceBytes += bytes(reference);
+      boundedBytes(referenceBytes);
+      references.push(reference);
     }
   }
   boundedBytes(bytes({ source, references }));
-  return { template, source, references, items: reviewItems(id, source, references) };
+  return { template, source, references, items: reviewItems(source, references) };
 }

@@ -1,0 +1,12 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 a711409a0] Preserve concurrent DTD evidence and strict-bound push replay
+ 7 files changed, 630 insertions(+)
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/qualification-artifact-manifest.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/qualification-source-manifest.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/implementation-push-result.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/implementation-push.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/integration-commit.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/retry-integration.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/retry-merge.txt

@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-21T01:22:10.865Z","pid":17599,"hostname":"c9501410c5f6","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-21T01:22:10.867Z","pid":17599,"hostname":"c9501410c5f6","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-21T01:22:10.867Z","pid":17599,"hostname":"c9501410c5f6","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/project-sharing-team-setup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-21T01:22:11.950Z","pid":17599,"hostname":"c9501410c5f6","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+stdout | tests/db/project-sharing-team-setup.dbtest.ts
+[database] Database connection successful
+
+{"level":20,"time":"2026-10-21T01:22:15.988Z","pid":17599,"hostname":"c9501410c5f6","context":{"auditId":"audit_1792545735967_61127d0de5e1c623","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-21T01:22:16.077Z","pid":17599,"hostname":"c9501410c5f6","context":{"auditId":"audit_1792545736071_c75d1c3494fea592","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reaches actual same-name accounts for the current owner and persists an audited Edit grant 152ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > revokes the durable share, retains provenance and removes future private program reads 126ms
+{"level":20,"time":"2026-10-21T01:22:16.222Z","pid":17599,"hostname":"c9501410c5f6","context":{"auditId":"audit_1792545736214_4ec777b611fa191a","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > can clean up a departed account’s share without erasing its identity or original grant 106ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > does not mistake a claimed admin role or a read-only owner for current management rights 106ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 10 without a grant 58ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 11 without a grant 77ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses a mismatched program/anchor and a second client owned by another current member 82ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > rejects an explicit different client workspace even when the UUID and integer anchor match 63ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > protects implicit owner/creator access and archived projects 70ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reports a lost COMMIT acknowledgement as unconfirmed while the actual saved grant can be re-read 83ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses unverified member-store reads instead of returning a verified empty state 62ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  01:22:08
+   Duration  8.30s (transform 4.19s, setup 81ms, import 264ms, tests 7.63s, environment 0ms)

@@ -1,0 +1,96 @@
+{
+  "status": "completed-green-frozen",
+  "recorded_at_utc": "2026-10-18T00:09:31.154697+00:00",
+  "incoming_commit": "87824205c33c4bc3e586060f61eab62ffb26a852",
+  "head_before": "bea722bd9764529969302ffd19f1f7584ef644ec",
+  "head_after": "bea722bd9764529969302ffd19f1f7584ef644ec",
+  "node_version": "v22.23.3",
+  "default_config": "vitest.config.ts",
+  "result": {
+    "files_passed": 4,
+    "passed": 58,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "total_cases": 58,
+    "exit_code": 0,
+    "duration_seconds": 15.191
+  },
+  "test_files": [
+    {
+      "path": "server/routes/__tests__/batch-draft-termination-boundary.test.ts",
+      "cases": 18,
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/finish-reason.test.ts",
+      "cases": 6,
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx",
+      "cases": 18,
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx",
+      "cases": 16,
+      "status": "passed"
+    }
+  ],
+  "source_integrity": {
+    "pin_count": 13,
+    "before_after_match": true,
+    "changed_paths": [],
+    "old_server_helper_blob": "606895119b67755f51532d7ccf62f4a56cee26b4",
+    "new_shared_helper_blob": "606895119b67755f51532d7ccf62f4a56cee26b4",
+    "helper_byte_identical": true
+  },
+  "impact": "Only BatchDraft UI behavior changes. The server helper is a compatibility reexport of the exact previous implementation, with unchanged sets, trimming and unknown/absent handling. Batch receipt, registered tool, accept route, authoring/native/database runtime are unchanged by this incoming delta.",
+  "retained_proof": "The prior incoming-8d06 49-file proof remains separately recorded (915 passed, 2 existing todo). The finish-reason file overlaps this replay, so counts are not additive. No whole49 or native replay was performed.",
+  "scope_limit": "HTTP controls that pass the cutoff check stop at a request-db sentinel with accepted:false; they do not prove a DB acceptance. Client requests use synthetic fetch fixtures. No live-provider, full-application, browser/native DB or human acceptance claim.",
+  "archives": [
+    {
+      "archive": "task-handoff-incoming-878-final.log.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-878-final.log",
+      "original_sha256": "77ef8550c43bf7c2dd9c3639306896e1c986cf25fc5d5f3029ba8e7c97aca758",
+      "original_bytes": 13667,
+      "gzip_sha256": "b29bbcc444276387d474ba1dec9868a0038d903aedad437c762fd820ab87c779",
+      "gzip_bytes": 2367,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-878-final.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-878-final.json",
+      "original_sha256": "2a0b16900dc3b673efb57684b60245d03d19daaf54769526c5c095e3153a2c62",
+      "original_bytes": 24195,
+      "gzip_sha256": "6bb74f37be265c90f210966bc9321563af6337f92cb6c6a86ae7a85a5560ad27",
+      "gzip_bytes": 3067,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-878-final.pins.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-878-final.pins.json",
+      "original_sha256": "91ad8d599054111f493f72771b674eaede36d654cf9b3213f157e94a589ba067",
+      "original_bytes": 4956,
+      "gzip_sha256": "7297d3b1f5ff9b3b1bf6dbc2bd96097fb8f2092aaa3cf02632b93bbd88858e2f",
+      "gzip_bytes": 1466,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-878-final.files.txt.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-878-final.files.txt",
+      "original_sha256": "4dea53f02c43aea278dc9406a1eec5d991f710e133c1a77d33950ea0fb1bf1ae",
+      "original_bytes": 259,
+      "gzip_sha256": "28410316414f3bf804922fe123d3a4c64316f226ef358a0e8289ced513f8a324",
+      "gzip_bytes": 151,
+      "gzip_mtime": 0
+    }
+  ],
+  "archive_verification": {
+    "all_raw_round_trips_passed": true,
+    "gzip_mtime_zero": true,
+    "embedded_filename_absent": true,
+    "credential_scan_zero_hits": true
+  }
+}

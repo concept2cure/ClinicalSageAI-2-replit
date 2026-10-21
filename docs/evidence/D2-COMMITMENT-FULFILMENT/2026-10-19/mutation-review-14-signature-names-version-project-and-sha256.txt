@@ -1,0 +1,39 @@
+# Review mutation 14 — the picked line and the signature dialog name the version's project and its sha256 (findings 3, 12, 25)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "signs through the project's door|names the version's project and sha256")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -105,9 +105,7 @@
+ 
+ /** A Vault version as the dialog and the signature name it: title, version, its project when the search named one, and its sha256. */
+ export function versionWords(picked: PickedVaultVersion): string {
+-  const where = picked.programName ? ` in ${picked.programName}` : '';
+-  const pin = picked.contentHash ? `, sha256 ${shortSha256(picked.contentHash)}` : ', no sha256 recorded';
+-  return `${picked.title} v${picked.version ?? '?'}${picked.current ? '' : ' (an earlier version)'}${where}${pin}`;
++  return `${picked.title} v${picked.version ?? '?'}${picked.current ? '' : ' (an earlier version)'}, pinned at its sha256 when you sign`;
+ }
+ 
+ /** What the signature will bind, in words, for the signature dialog. */
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > signs through the project's door with the date, the evidence and the signature components 636ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the version's project and sha256 on the picked line and in the signature dialog, on the organisation's door 236ms
+ Test Files  1 passed (1)
+      Tests  2 passed | 21 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > signs through the project's door with the date, the evidence and the signature components 487ms
+   → expected 'Electronic signature21 CFR Part 11 · …' to match /Vault version Final CSR v2\.0, sha256…/
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the version's project and sha256 on the picked line and in the signature dialog, on the organisation's door 144ms
+   → expected 'Chosen: Final CSR v2.0, pinned at its…' to be 'Chosen: Final CSR v2.0 in Project Alp…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > signs through the project's door with the date, the evidence and the signature components
+AssertionError: expected 'Electronic signature21 CFR Part 11 · …' to match /Vault version Final CSR v2\.0, sha256…/
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the version's project and sha256 on the picked line and in the signature dialog, on the organisation's door
+AssertionError: expected 'Chosen: Final CSR v2.0, pinned at its…' to be 'Chosen: Final CSR v2.0 in Project Alp…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 skipped (23)

@@ -1,0 +1,60 @@
+import { describe, expect, it } from 'vitest';
+import { buildDocumentPreparation, PREPARATION_TOPICS } from '../../market-specs/document-preparation';
+import { documentTemplateTool } from '../document-template-tool';
+import { resolveSystemPrompt } from '../AnaDocumentDraftingService';
+
+const devices = ['US_510K', 'US_PMA', 'US_DE_NOVO', 'US_510K_IVD', 'EU_MDR_CLASS_IIA', 'EU_IVDR_CLASS_CD',
+  'CA_MDL', 'CA_IVD_LICENCE', 'JP_SHONIN', 'JP_IVD_APPROVAL', 'JP_CDX', 'ISO_CIP', 'IEC_62304'];
+const call = async (input: Record<string, unknown>) => JSON.parse(await documentTemplateTool(input));
+function questions(registryId: string): string {
+  return PREPARATION_TOPICS.map(topic => buildDocumentPreparation({ registryId,
+    discussedTopics: PREPARATION_TOPICS.filter(t => t !== topic) }).questions).flat().map(q => `${q.question} ${q.requestedEvidence}`).join(' ');
+}
+
+describe('device preparation reaches the existing reference and drafting paths', () => {
+  it.each(devices)('prepares exact %s with source-scoped device questions and no readiness claim', registryId => {
+    const plan = buildDocumentPreparation({ registryId });
+    expect(plan.registryId).toBe(registryId);
+    expect(plan.questions).toHaveLength(3);
+    expect(plan.questions[0].question).toMatch(/intended (use|purpose)/i);
+    expect(plan.questions[1].requestedEvidence).toMatch(/(device|assay|software).*(version|configuration)/i);
+    expect(plan.readiness).toBe('not_assessed');
+    expect(plan.evidenceReviewed).toBe(false);
+    expect(plan.applicabilityQuestions.join(' ')).not.toMatch(/iPSP|PIP|immunogenicity/);
+  });
+  it('the actual template tool prepares a Japanese IVD without medicinal questions or authority to transmit', async () => {
+    const plan = await call({ registry_id: 'JP_IVD_APPROVAL', prepare: true });
+    expect(plan.ok).toBe(true);
+    expect(plan.template.id).toBe('JP_IVD_APPROVAL');
+    expect(plan.preparation.regionalRoute.scope).toMatch(/(no|not).*transmi/i);
+    const text = questions('JP_IVD_APPROVAL');
+    expect(text).toMatch(/analytical.*clinical/i);
+    expect(text).toMatch(/Japanese.*(data|population|evidence)/i);
+    expect(text).not.toMatch(/PK\/PD|Phase I|iPSP|PIP/);
+    expect(plan.preparation.regionalEvidenceSources).toEqual([]);
+  });
+  it.each(['CA_MDL', 'CA_IVD_LICENCE', 'JP_SHONIN'])('%s preparation leaves the unavailable transmit step explicit', registryId => {
+    const route = buildDocumentPreparation({ registryId }).regionalRoute;
+    expect(route?.scope).toMatch(/(no|not).*transmi/i);
+    expect(route?.basis.confidence).toBe('platform-convention');
+  });
+  it('EU device technical documentation and performance studies use their own receiving bodies', () => {
+    expect(buildDocumentPreparation({ registryId: 'EU_IVDR' }).regionalRoute?.channel).toMatch(/Notified Body/);
+    expect(buildDocumentPreparation({ registryId: 'EU_PERF_STUDY' }).regionalRoute?.channel).toMatch(/national competent authority/i);
+    expect(buildDocumentPreparation({ registryId: 'EU_PERF_STUDY' }).regionalRoute?.channel).not.toMatch(/CTIS|EMA/);
+  });
+  it('discussion markers exhaust questions without verifying evidence or permitting a build', () => {
+    const plan = buildDocumentPreparation({ registryId: 'US_510K', discussedTopics: [...PREPARATION_TOPICS] });
+    expect(plan.questions).toEqual([]);
+    expect(plan.readiness).toBe('not_assessed');
+    expect(plan.evidenceReviewed).toBe(false);
+    expect(plan.discussionNotice).toMatch(/do not verify/);
+  });
+  it.each(['JP_SHONIN', 'JP_IVD_APPROVAL', 'CA_MDL', 'EU_IVDR'])('%s section drafting receives device delivery scope', registryId => {
+    const prompt = resolveSystemPrompt(registryId);
+    expect(prompt).toContain('DEVICE AND DIAGNOSTICS EVIDENCE-BASED DRAFTING');
+    expect(prompt).toMatch(/(no|not).*transmi/i);
+    expect(prompt).not.toMatch(/PK\/PD|Phase I|estimands/);
+    expect(prompt).not.toContain('Use none formatting');
+  });
+});

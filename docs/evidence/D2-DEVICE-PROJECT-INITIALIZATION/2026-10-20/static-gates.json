@@ -1,0 +1,86 @@
+{
+  "results": [
+    {
+      "gate": "ci:single-native-canvas",
+      "exitCode": 0,
+      "receipt": "gate-ci-single-native-canvas.json"
+    },
+    {
+      "gate": "ci:canvas-path",
+      "exitCode": 0,
+      "receipt": "gate-ci-canvas-path.json"
+    },
+    {
+      "gate": "ci:check-editor-integrity",
+      "exitCode": 0,
+      "receipt": "gate-ci-check-editor-integrity.json"
+    },
+    {
+      "gate": "ci:design-system",
+      "exitCode": 0,
+      "receipt": "gate-ci-design-system.json"
+    },
+    {
+      "gate": "ci:token-cascade",
+      "exitCode": 0,
+      "receipt": "gate-ci-token-cascade.json"
+    },
+    {
+      "gate": "ci:token-contrast",
+      "exitCode": 0,
+      "receipt": "gate-ci-token-contrast.json"
+    },
+    {
+      "gate": "ci:check-phantom-tokens",
+      "exitCode": 0,
+      "receipt": "gate-ci-check-phantom-tokens.json"
+    },
+    {
+      "gate": "ci:gateway-bypass",
+      "exitCode": 0,
+      "receipt": "gate-ci-gateway-bypass.json"
+    },
+    {
+      "gate": "ci:sql-interpolation",
+      "exitCode": 0,
+      "receipt": "gate-ci-sql-interpolation.json"
+    },
+    {
+      "gate": "audit:repo-health:ceiling",
+      "exitCode": 0,
+      "receipt": "gate-audit-repo-health-ceiling.json"
+    },
+    {
+      "gate": "ci:migration-set-order",
+      "exitCode": 0,
+      "receipt": "gate-ci-migration-set-order.json"
+    },
+    {
+      "gate": "ci:migration-guard-order",
+      "exitCode": 0,
+      "receipt": "gate-ci-migration-guard-order.json"
+    },
+    {
+      "gate": "ci:migration-reachability",
+      "exitCode": 0,
+      "receipt": "gate-ci-migration-reachability.json"
+    },
+    {
+      "gate": "ci:migration-deploy-path",
+      "exitCode": 0,
+      "receipt": "gate-ci-migration-deploy-path.json"
+    },
+    {
+      "gate": "ci:migration-drop-safety",
+      "exitCode": 0,
+      "receipt": "gate-ci-migration-drop-safety.json"
+    },
+    {
+      "gate": "ci:migration-prefix-collisions",
+      "exitCode": 0,
+      "receipt": "gate-ci-migration-prefix-collisions.json"
+    }
+  ],
+  "sourceDrift": [],
+  "sourceFreeze": "source-freeze.json"
+}

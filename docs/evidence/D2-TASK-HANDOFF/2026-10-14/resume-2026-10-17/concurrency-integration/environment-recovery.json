@@ -1,0 +1,12 @@
+{
+  "committedHeadRetained": "22b1f50b964162664791c74638ca2aaedc94e0db",
+  "workspaceMemoryLimitBytes": 17179869184,
+  "defaultCompilerHeapMiB": 24576,
+  "nextMode": {
+    "TYPECHECK_FILES_PER_PROCESS": 1000,
+    "TYPECHECK_HEAP_MB": 8192
+  },
+  "semantics": "Every worker loads the same complete program;all diagnostic targetscheckedexactlyonce;zero baseline/refusedcachebaselinewrites/inputhashverification required by existingofficialscript.",
+  "previousInterruptedAttemptResultNotClaimed": true,
+  "publicationSucceeded": false
+}

@@ -6,6 +6,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const { apiRequest, verifyPassword } = vi.hoisted(() => ({ apiRequest: vi.fn(), verifyPassword: vi.fn() }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
+const actor = vi.hoisted(() => ({ user: { id: 42, organizationId: 7, role: 'admin' } }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: actor.user }), authService: { getUser: () => actor.user } }));
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 // Reauthentication is a test seam; the modal, notification resolver client,
 // ceremony channel, and navigation/program handoff are their actual modules.
 vi.mock('../../hooks/useEsignature', () => ({ useEsignature: () => ({ verifyPassword, verifyMfa: vi.fn() }) }));
@@ -34,11 +37,12 @@ function Harness({ navigate, sign }: { navigate: (id: string) => void; sign: () 
 }
 beforeEach(() => {
   __resetCeremonies(); clearNavParams(); clearEditorTarget(); clearShellProject();
+  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 42, organizationId: 7 }))}.synthetic`);
   publishShellProject({ id: OLD_PROGRAM });
   apiRequest.mockReset(); apiRequest.mockResolvedValue(reply());
   verifyPassword.mockReset(); verifyPassword.mockResolvedValue({ valid: true, mfaRequired: false });
 });
-afterEach(() => { cleanup(); __resetCeremonies(); clearNavParams(); clearEditorTarget(); clearShellProject(); sessionStorage.clear(); localStorage.clear(); });
+afterEach(() => { cleanup(); clearAuthToken(); __resetCeremonies(); clearNavParams(); clearEditorTarget(); clearShellProject(); sessionStorage.clear(); localStorage.clear(); });
 
 it('a target resolved after the real signature form opens cannot change the program or navigate', async () => {
   const pending = deferred<Response>();

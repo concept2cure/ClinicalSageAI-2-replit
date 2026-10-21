@@ -642,6 +642,36 @@ export async function renderAuthoringExport(args: RenderExportArgs): Promise<Ren
  * Was the router's `computeDocHash` (the router keeps a wrapper). Stored as
  * `doc_sha256` on every export record so GET /docs/:docId/exports can answer
  * content_changed_since_last_export source-to-source.
+ *
+ * 2026-10-18 (P-29, D-29-A): the ORDER BY is a TOTAL order, and it is signing's.
+ * This read was `ORDER BY order_index` alone, while everything this digest is
+ * compared against was computed over `order_index, created_at, id`:
+ *
+ *  - GET /docs/:docId/exports compares it with the `doc_sha256` on the last
+ *    export row, and both writers of that column (authoring-file-to-vault.ts
+ *    and the router's controlled export) compute `sectionsDigest` over a read
+ *    in signing's total order;
+ *  - the document-delete audit row records it as "the same section digest the
+ *    signatures store as content_hash".
+ *
+ * `order_index` is `INTEGER DEFAULT 0` with no unique constraint
+ * (db/migrations/20260725_authoring_document_loop_tables.sql:65) and
+ * `placeNewSection` honours a client-supplied index as given, so a tie is
+ * reachable from the product — and over a tie group PostgreSQL may return the
+ * rows in any sequence. So for a tied document the export verdict compared two
+ * different orders and could report a change nobody made, which is the harm the
+ * route's own comment warns of, and the delete row's claim of equivalence was
+ * untrue.
+ *
+ * `order_index, created_at, id` is what `sectionsDigest`'s own contract
+ * requires of every recomputation ("Rows are already in the caller's recorded
+ * order … exports and release checks must recompute the identical bytes") and
+ * what every other reader of these rows already uses: `lockedSigningContent`
+ * (which is where /freeze, /e-sign and /sign get the digest they sign — none of
+ * them calls this function), authoring-file-to-vault.ts,
+ * services/c2c/filing-section-target.ts and the QMS controlled-document read.
+ * This was the one outlier. Pinned by
+ * __tests__/authoring-doc-hash-total-order.pglite.test.ts.
  */
 export async function computeDocHash(
   executor: Queryable,
@@ -649,7 +679,9 @@ export async function computeDocHash(
   tenantId: number,
 ): Promise<string> {
   const sections = await executor.query(
-    'SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+    `SELECT code, content FROM authoring_sections
+      WHERE doc_id = $1 AND tenant_id = $2
+      ORDER BY order_index, created_at, id`,
     [docId, tenantId],
   );
   return sectionsDigest(sections.rows);

@@ -107,6 +107,8 @@ export interface LifecycleComponent {
   code: string;
   /** Component title. */
   title: string;
+  /** Titles a correction replaced, so a document bound to an earlier outline still resolves to this part (2026-10-19). */
+  formerTitles?: string[];
   /** Whether the component is required for this document type. */
   required: boolean;
   /** Predominant content type. */

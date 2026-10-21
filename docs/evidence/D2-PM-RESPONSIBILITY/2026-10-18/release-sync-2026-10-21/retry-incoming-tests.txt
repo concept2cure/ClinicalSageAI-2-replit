@@ -1,0 +1,291 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/passage-round-executor.test.ts
+{
+  "timestamp": "2026-10-21T00:40:27.883Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:40:27.884Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts
+{
+  "timestamp": "2026-10-21T00:40:27.884Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts
+{
+  "timestamp": "2026-10-21T00:40:28.606Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer throw mutation/failure cannot change the already formatted request
+{
+  "timestamp": "2026-10-21T00:40:40.203Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolResultsForModel threw; the loop carries on: observer fixture failure",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > whole passage results in classic model requests > keeps the first three complete 7400-character results and withholds the fourth without its evidence 12ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > whole passage results in classic model requests > keeps private read admission ahead of passages and never cuts the admitted read 6ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > observes exact capped body, call id, tool name and round after formatting 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > captures terminal narration rounds even when tool choice is withdrawn 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > reports every round independently when a call id is reused in a later round 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > observes source-refused handoff content rather than the earlier readable body 2ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer entry mutation/failure cannot change the already formatted request 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer array mutation/failure cannot change the already formatted request 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer throw mutation/failure cannot change the already formatted request 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > small passage rounds reach the gateway unchanged without installing an observer 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > small ordinary results keep their exact bytes 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > an admitted source read keeps exact text and its existing legacy receipt 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > a fast answer has no staged tool-result observation 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > a cancellation after execution but before model handoff has no staged observation 3ms
+stdout | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-21T00:40:41.765Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:40:41.767Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-21T00:40:41.767Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-21T00:40:41.945Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > pins server call identity and exact framed-request body, keeping raw result and public trace boundaries 43ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > records call-order admission when workers finish in another order; withheld raw citations never enter grounding 15ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > correlates a reused id independently in different rounds 3ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > does not assign one ambiguous same-round call id to two different tools 5ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > CONTROL: the currently offered passage tool really executes and its raw data stays in the record 4ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > uses a recorded withheld body rather than full raw source text 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > takes the staged bodies of a mixed private-read round without inferring receipts or replay order 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a"} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":null,"modelContent":"EXACT_HOST_STAGED_BODY"} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"","modelContent":"EXACT_HOST_STAGED_BODY"} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"   ","modelContent":"EXACT_HOST_STAGED_BODY"} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":7,"modelContent":"EXACT_HOST_STAGED_BODY"} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a","modelContent":null} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a","modelContent":7} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"modelContent":"EXACT_HOST_STAGED_BODY"} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"modelContent":null} 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > an empty staged body does not revive raw evidence 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > rejects duplicate same-round ids even under different tools 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > allows the same id in separate rounds without merging their evidence 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > a partly modern round contributes only valid staged rows, never its legacy sibling 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > even an invalid modern field marks its round; legacy siblings cannot downgrade it to replay 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > does not reconstruct a legacy search_document_passages round or its other calls 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > does not reconstruct a legacy read_project_document round or its other calls 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: a failed modern step contributes no evidence 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: payload-nested staging fields remain data, never the trace authority 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: ordinary legacy replay still budgets failed siblings before filtering successes 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: malformed top-level result has no trace evidence 1ms
+stdout | server/services/ana/__tests__/passage-round-budget.test.ts
+{
+  "timestamp": "2026-10-21T00:40:46.211Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:40:46.213Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-budget.test.ts
+{
+  "timestamp": "2026-10-21T00:40:46.213Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > admits the first three 7500-character bodies and withholds the fourth intact 6ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > reserves every later replacement instead of filling the target with four of five 6000-character bodies 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 8001-character over-per-result body even in an otherwise small round 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 12000-character over-per-result body even in an otherwise small round 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > uses one fixed withholding body irrespective of payload fields or search outcome 2ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > does not make an over-custom-ceiling body eligible again after other bodies are withheld 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps an eligible body shorter than its replacement even with negative available room 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=0 cannot promise a hard bound 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=1 cannot promise a hard bound 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=50 cannot promise a hard bound 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=180 cannot promise a hard bound 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps every small success, miss, omission, error and refusal byte-identical 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > reserves the same read floors/admission before allocating non-read passages in call order 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > gives a private-map entry precedence even when its server tool name is passage search 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > keeps ordinary results under their per-result ceiling when passage withholding frees a larger share 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > keeps a small non-passage round byte-identical 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains exact old equal-share slicing without passage calls 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains the old floor even when twenty ordinary calls exceed the total target 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains exact old read placement and ordinary shares when no passage calls are present 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > does not protect an ordinary tool merely because its payload requests protection or forges passage fields 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not "search_document_passages_extra" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not "SEARCH_DOCUMENT_PASSAGES" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not " search_document_passages" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > keeps the existing empty-round result 0ms
+stdout | server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts
+{
+  "timestamp": "2026-10-21T00:40:51.828Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:40:51.831Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts
+{
+  "timestamp": "2026-10-21T00:40:51.831Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > passage bodies survive the actual crowded stream handoff > keeps the first three complete bodies, withholds the fourth and records/cites only staged bodies 70ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > passage bodies survive the actual crowded stream handoff > uses the withheld body, not the raw miss, in adaptation guidance 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > passage bodies survive the actual crowded stream handoff > uses the withheld body, not the raw known-omission, in adaptation guidance 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > ordinary stream controls > CONTROL: a single fitting passage keeps the same body, corpus and recorded result 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > ordinary stream controls > CONTROL: a genuine fitting miss retains its ordinary no-results guidance 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > ordinary stream controls > CONTROL: another tool retains its ordinary raw shortfall note 10ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > recognizes the code and strict false delivery flag without inferring matches 3ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > keeps withholding separate from both a genuine miss and known omitted matches 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > bounds the message using the existing 160-character detail policy 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not turn copied diagnostic prose into a service outage after explicit withholding 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer an empty result from stray zero counters beside the withholding declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer known matches from stray omission metadata on an undelivered result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than undefined 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than true 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than 0 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than "false" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than {} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "passage_result_withheld" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "PASSAGE_RESULT_WITHHELD " 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "OTHER_RESULT_WITHHELD" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than 1 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'top-level array' declarations 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'nested payload' declarations 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'JSON string' declarations 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not interpret ordinary prose about a withheld result as the structured declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not interpret incomplete JSON as withholding authority 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps a true empty list empty when the delivery flag is invalid 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps the ordinary diagnostic outage heuristic when the code is invalid 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps successful known-match omission distinct when there is no withholding declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"error":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"refused":true,"reason":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"ok":false} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'unavailable' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'lookup_failed' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'needs_parameters' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'not_found' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves an explicit unavailable flag 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"passages":[{"documentId":"source-1","locator":"p.3"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"records":[{"id":"record-1"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"molecules":[{"chemblId":"CHEMBL25"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > names the withheld result and guides recovery without asserting matches or a miss 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps mixed-round withholding, known omitted matches, a true miss and returned records distinct 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps ordinary notes byte-identical without a withheld result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps known-omitted notes byte-identical without a withheld result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"status":"error"} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"status":"stopped"} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"heldBack":true} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > adds no note when a structured declaration also returned records 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > adds no note to an empty round 0ms
+stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
+{
+  "timestamp": "2026-10-21T00:40:59.034Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:40:59.036Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-read-priority.test.ts
+{
+  "timestamp": "2026-10-21T00:40:59.037Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves the sixth read as not delivered when a new replacement makes a previously crowded round fit 5ms
+ ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves an admitted read when an irreducible passage replacement makes a previously fitting round crowded 1ms
+
+ Test Files  6 passed (6)
+      Tests  120 passed (120)
+   Start at  00:40:23
+   Duration  35.39s (transform 17.02s, setup 332ms, import 33.37s, tests 306ms, environment 1ms)
+

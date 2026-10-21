@@ -61,6 +61,7 @@
 
 import { db, pool } from '../../db.js';
 import { sql } from 'drizzle-orm';
+import { RELEASE_ACT_MEANINGS } from '../part11/signature-meanings.js';
 import {
   BINDING_BASIS,
   GOVERNED_REVOCATION_SIGNATURE_TYPE,
@@ -114,7 +115,9 @@ function rowsOf(result: unknown): Array<Record<string, unknown>> {
  *     carries the audit chain hash and binds no content at all;
  *   • `signature_type <>` — a revocation is not a signature;
  *   • the join to an EXECUTED `sign` action whose payload declares the release
- *     intent — freeze is not release, and a proposed action is not a signature.
+ *     intent — freeze is not release, and a proposed action is not a signature;
+ *   • its declared meaning is one of RELEASE_ACT_MEANINGS — a signature that
+ *     says "I reviewed" is not a release (2026-10-19, D5: it was counted as one).
  *
  * Newest first by id: `electronic_signatures` has no `created_at` column (the
  * model declares one, no migration creates it — see findActiveReleaseSignature)
@@ -141,6 +144,7 @@ async function findReleaseSignatureRows(
        AND a.command = 'sign'
        AND a.state = 'executed'
        AND (a.payload ->> 'intent') = ${RELEASE_INTENT}
+       AND (a.payload ->> 'meaning') IN (${sql.join(RELEASE_ACT_MEANINGS.map((m) => sql`${m}`), sql`, `)})
      ORDER BY es.id DESC
      LIMIT 10
   `);

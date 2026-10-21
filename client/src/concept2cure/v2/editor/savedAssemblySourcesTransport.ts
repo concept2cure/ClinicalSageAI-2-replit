@@ -6,10 +6,10 @@ const stale = (): SavedReadResult => ({ ok: false, stale: true, message: 'The do
 const object = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
 /** Explicit GET only; null history is accepted only in a valid affirmative receipt. */
-export async function getSavedAssemblySources(docId: string, programId: string, current: () => boolean): Promise<SavedReadResult> {
+export async function getSavedAssemblySources(docId: string, programId: string, current: () => boolean, headers: Record<string, string>): Promise<SavedReadResult> {
   if (!current()) return stale();
   try {
-    const response = await apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/assembly/sources?programId=${encodeURIComponent(programId)}`);
+    const response = await apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/assembly/sources?programId=${encodeURIComponent(programId)}`, undefined, headers);
     if (!current()) return stale();
     const body = object(await response.json().catch(() => null));
     if (!current()) return stale();

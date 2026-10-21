@@ -1,0 +1,28 @@
+# eslint on every .ts file touched or added in Stage 1 and this fix round. 2026-10-18T20:02:38Z
+$ npx eslint server/utils/virusScan.ts server/startup/inline-endpoints.ts server/services/securityHealth.ts server/startup/env.ts server/startup/security-self-test.ts server/utils/__tests__/virusScan.test.ts server/startup/__tests__/readyz-virus-scan.test.ts server/startup/__tests__/readyz-virus-scan-throw.test.ts server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts server/startup/__tests__/security-self-test-no-production-optout.test.ts server/services/__tests__/securityHealth.test.ts
+
+/home/user/ClinicalSageAI-2-replit/server/services/securityHealth.ts
+  55:45  warning  'writeFileSync' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/user/ClinicalSageAI-2-replit/server/startup/env.ts
+  156:7  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/home/user/ClinicalSageAI-2-replit/server/startup/inline-endpoints.ts
+   49:8   warning  Function 'mountFastPathHealthEndpoints' has too many lines (104). Maximum allowed is 100  max-lines-per-function
+   51:40  warning  Async arrow function has a complexity of 29. Maximum allowed is 15                        complexity
+  222:8   warning  Function 'mountDiagnosticEndpoints' has too many lines (362). Maximum allowed is 100      max-lines-per-function
+  282:84  warning  Async arrow function has too many lines (259). Maximum allowed is 100                     max-lines-per-function
+  282:84  warning  Async arrow function has a complexity of 53. Maximum allowed is 15                        complexity
+  315:15  warning  Empty block statement                                                                     no-empty
+  679:14  warning  '_err' is defined but never used                                                          @typescript-eslint/no-unused-vars
+
+/home/user/ClinicalSageAI-2-replit/server/utils/__tests__/virusScan.test.ts
+  200:49  warning  Arrow function has too many lines (138). Maximum allowed is 100  max-lines-per-function
+
+✖ 10 problems (0 errors, 10 warnings)
+
+exit=0
+
+# Warnings only (exit 0). The repo gates warnings by count, not per file; the ratchet over the whole tree:
+$ npm run ci:eslint-ratchet
+[ci:eslint-warning-ratchet] 5894 warning(s) across 1743 file(s), 21 rule(s) (baseline 6090). … OK — warning count did not grow.

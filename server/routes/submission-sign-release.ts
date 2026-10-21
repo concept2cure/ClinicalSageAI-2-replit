@@ -14,10 +14,7 @@
  *      or cross-org both collapse to 404 (existence-leak prevention).
  *   3. Verifies run.status === 'awaiting-signature' (409 otherwise — the
  *      route refuses to attach a signature to a run that isn't expecting one).
- *   4. Re-computes the bound payload digest from the run's stored outputs
- *      (rederived deterministically). If the recomputed digest doesn't match
- *      what the orchestrator persisted, returns 409 `signature_payload_drift`.
- *   5. Re-verifies the signer with the platform's one signing ceremony
+ *   4. Re-verifies the signer with the platform's one signing ceremony
  *      (services/part11/reverify-signer.ts, §11.200): the account is in use
  *      and not locked, the password, and the authenticator code when one is
  *      enrolled; a wrong factor counts against the account. 401 on a wrong
@@ -26,6 +23,9 @@
  *      (part11ComplianceService.verifyUserCredentials, deleted), so a signer
  *      with an authenticator enrolled released a submission on the password
  *      alone and the row said nothing of a second factor.
+ *   5. Verifies current program access and the frozen record's identity,
+ *      recomputed digest and configured seal/signature before admitting a new
+ *      signature or continuing with an existing active signature.
  *   6. Calls part11ComplianceService.createElectronicSignature with what the
  *      ceremony verified, to insert the §11.50 / §11.70-compliant
  *      electronic_signatures row carrying the orchestrator's payload-binding
@@ -213,6 +213,15 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     });
   }
 
+  // A stored signature is evidence of a prior ceremony, not authority for this
+  // request to resume the run. Check standing and factors now, including on an
+  // active-signature hit, before any continuation or new signature write.
+  const reverified = await reverifySigner(signerId, { password, mfaToken }, signerReverificationDeps());
+  if (!reverified.ok) {
+    const error = reverified.status === 401 ? 'invalid_credentials' : reverified.code.toLowerCase();
+    return res.status(reverified.status).json({ error, code: reverified.code });
+  }
+
   // ── Recompute the bound digest from the persisted run ───────────────────
   let boundPayloadDigest: string;
   try { boundPayloadDigest = await prepareOrchestratorRelease(run, signerId); }
@@ -241,18 +250,6 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
       already_signed: true,
       ...await continueAfterSignature(runId, organizationId, signerId),
     });
-  }
-
-  // ── Re-verify the signer (21 CFR Part 11 §11.200) ───────────────────────
-  // The platform's one ceremony: account in use and not locked, password, and
-  // the authenticator code when one is enrolled. The refusal names only the
-  // factor; it never reveals anything about the bound digest.
-  const reverified = await reverifySigner(signerId, { password, mfaToken }, signerReverificationDeps());
-  if (!reverified.ok) {
-    // 401 keeps the error this route has always answered for bad credentials;
-    // the code says which factor, as every other signing surface does.
-    const error = reverified.status === 401 ? 'invalid_credentials' : reverified.code.toLowerCase();
-    return res.status(reverified.status).json({ error, code: reverified.code });
   }
 
   // ── Resolve a documentId for the signature row ──────────────────────────

@@ -1,0 +1,26 @@
+{
+  "unchangedBaselineInputs": 21,
+  "tests": [
+    {
+      "file": "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts",
+      "sha256": "9544137f904f4170f2ba8e23d087d38a640ee7fca28ab89028e88f038410032a",
+      "baselineExpectedFailures": 36,
+      "baselinePassingControls": 7
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts",
+      "sha256": "0b446d881656065f8f17d817fd18149762cf3b4202e87888e9275bc13c45644b",
+      "baselineExpectedFailures": 5,
+      "baselinePassingControls": 9
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts",
+      "sha256": "8750e336d0f9004938fb9614b4833fd0d31442b32d88ca1de693797a6d30d5d6",
+      "baselineExpectedFailures": 22,
+      "baselinePassingControls": 5
+    }
+  ],
+  "expectedFailures": 63,
+  "passingControls": 21,
+  "total": 84
+}

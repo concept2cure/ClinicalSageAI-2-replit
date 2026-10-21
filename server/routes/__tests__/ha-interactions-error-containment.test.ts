@@ -22,7 +22,12 @@ const SENTINEL = 'SENTINEL-DB-DETAIL: relation "set_b_secret_table" does not exi
 const REQUEST_ID = 'req-p117-set-b';
 
 const { svc } = vi.hoisted(() => ({ svc: vi.fn() }));
-vi.mock('../../services/ha-interactions/ha-service', () => ({ listInteractions: (...a: unknown[]) => svc(...a) }));
+// The rest of the service stays real (2026-10-19): the router also mounts the
+// commitment fulfilment routes, which import its refusal class and scope.
+vi.mock('../../services/ha-interactions/ha-service', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/ha-interactions/ha-service')>()),
+  listInteractions: (...a: unknown[]) => svc(...a),
+}));
 vi.mock('../../db', () => ({ pool: { connect: vi.fn(), query: vi.fn() } }));
 vi.mock('../c2c/actions', () => ({ recordGovernedAction: vi.fn(), verifyReauth: vi.fn() }));
 vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn() }));

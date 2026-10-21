@@ -1,0 +1,31 @@
+# REVIEW 2026-10-19: deploy-migrate twice on c2c_test after 20261019b was amended in place (DELETE and TRUNCATE refused). ANSI stripped; middle of each run elided.
+
+$ DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test APP_SERVICE_DB_PASSWORD=… node scripts/db/deploy-migrate.mjs   # run 1
+  ✓ applied: db/migrations/20260830_reg_questions_response_doc.sql
+  ✓ applied: migrations/20261019b_reg_questions_read_only.sql
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 35/35 append-only store(s) present: audit.tamper_proof_log, public.audit_logs, public.audit_log_archives, public.audit_events, public.electronic_signatures, public.ana_turn_records, public.ana_record_blobs, public.ana_source_read_receipts, public.authoring_audit_trail, public.doc_revisions, public.concept2cure_signatures, public.concept2cure_submission_snapshots, public.proof_audit_logs, public.coauthor_validation_history, public.embedding_audit_log, public.ai_provider_audit_log, ai.gateway_audit_log, public.credit_ledger, public.document_audit_trail, public.ectd_submission_status_history, public.specification_audit_log, public.stab_audit, public.ivdr_validation_parameter_history, public.ivdr_evidence_result_history, public.ivdr_cdx_status_history, regulatory_harmonization.export_job_audit_log, public.workflow_history, public.document_audit_logs, public.regulatory_audit_logs, public.c2c_ana_actions, public.authoring_signatures, public.cmc_module3_section_versions, public.cmc_provenance_events, public.agency_question_response_revisions, public.reg_questions; INSERT too where a store's ceiling is SELECT
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+exit 0
+
+$ DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test APP_SERVICE_DB_PASSWORD=… node scripts/db/deploy-migrate.mjs   # run 2
+  ✓ applied: db/migrations/20260830_reg_questions_response_doc.sql
+  ✓ applied: migrations/20261019b_reg_questions_read_only.sql
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 35/35 append-only store(s) present: audit.tamper_proof_log, public.audit_logs, public.audit_log_archives, public.audit_events, public.electronic_signatures, public.ana_turn_records, public.ana_record_blobs, public.ana_source_read_receipts, public.authoring_audit_trail, public.doc_revisions, public.concept2cure_signatures, public.concept2cure_submission_snapshots, public.proof_audit_logs, public.coauthor_validation_history, public.embedding_audit_log, public.ai_provider_audit_log, ai.gateway_audit_log, public.credit_ledger, public.document_audit_trail, public.ectd_submission_status_history, public.specification_audit_log, public.stab_audit, public.ivdr_validation_parameter_history, public.ivdr_evidence_result_history, public.ivdr_cdx_status_history, regulatory_harmonization.export_job_audit_log, public.workflow_history, public.document_audit_logs, public.regulatory_audit_logs, public.c2c_ana_actions, public.authoring_signatures, public.cmc_module3_section_versions, public.cmc_provenance_events, public.agency_question_response_revisions, public.reg_questions; INSERT too where a store's ceiling is SELECT
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+exit 0
+
+$ psql -Atc "SELECT tgname, tgtype, pg_get_triggerdef(oid) FROM pg_trigger WHERE tgrelid='public.reg_questions'::regclass AND NOT tgisinternal ORDER BY 1"
+reg_questions_read_only|31|CREATE TRIGGER reg_questions_read_only BEFORE INSERT OR DELETE OR UPDATE ON public.reg_questions FOR EACH ROW EXECUTE FUNCTION reg_questions_read_only()
+reg_questions_read_only_truncate|34|CREATE TRIGGER reg_questions_read_only_truncate BEFORE TRUNCATE ON public.reg_questions FOR EACH STATEMENT EXECUTE FUNCTION reg_questions_read_only()
+# tgtype 31 = ROW|BEFORE|INSERT|DELETE|UPDATE; 34 = BEFORE|TRUNCATE (statement). One of each.
+
+$ psql -Atc "SELECT has_table_privilege('app_service','public.reg_questions', p) FROM unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE']) p"
+SELECT=true
+INSERT=false
+UPDATE=false
+DELETE=false
+TRUNCATE=false

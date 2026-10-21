@@ -315,13 +315,18 @@ describe('C2C-COLLAB-002: collaboration identity and object binding', () => {
     holder.on('section-unlocked', () => {
       holderSawUnlock = true;
     });
+    const refused = waitFor<{ event: string; code: string }>(
+      thief,
+      'collab-error',
+      error => error.event === 'unlock-section',
+    );
     thief.emit('unlock-section', {
       documentId: String(DOC_A1),
       sectionId: 'lock-theft-section',
       userId: '10',
       userName: 'holder',
     });
-    await sleep(250);
+    expect((await refused).code).toBe('NOT_LOCK_OWNER');
 
     expect(holderSawUnlock).toBe(false);
     expect(thiefErrors.map(e => e.code)).toContain('NOT_LOCK_OWNER');

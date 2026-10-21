@@ -12,7 +12,7 @@ function stored(): StoredScheduleMilestone[] {
     id: index + 10, name: m.title, description: m.description ?? null, order: m.sortOrder,
     status: 'pending', start_date: m.baselineDate, due_date: m.targetDate,
     metadata: { key: m.key, category: m.category, regulatoryBasis: m.regulatoryBasis ?? null,
-      dependsOn: m.dependsOn, scheduleStatus: 'not_started', progress: 0 },
+      dependsOn: m.dependsOn, isCritical: m.isCritical, scheduleStatus: 'not_started', progress: 0 },
   }));
 }
 
@@ -25,6 +25,37 @@ describe('preservation identity guard', () => {
     expect([...decision.matches.values()]).toEqual(rows);
     expect(decision.preservedMilestoneIds).toEqual(rows.map(row => row.id));
     expect(decision.newMilestoneKeys).toEqual([]);
+    expect(rows).toEqual(before);
+  });
+
+  it.each([false, true])('refuses a criticality-only change from %s without modifying retained actuals', isCritical => {
+    const rows = stored();
+    rows[0].metadata = { ...(rows[0].metadata as object), isCritical, progress: 83, completedAt: '2030-12-31T12:34:56.789Z' };
+    const before = globalThis.structuredClone(rows);
+    const next = proposal();
+    next.milestones[0].isCritical = !isCritical;
+    expect(() => planMilestonePreservation(plan, rows, next)).toThrow(SchedulePreservationConflict);
+    expect(rows).toEqual(before);
+  });
+
+  it.each([undefined, null, 'false', 0])('refuses missing or malformed criticality %s rather than assuming noncritical', isCritical => {
+    const rows = stored();
+    rows[0].metadata = { ...(rows[0].metadata as object), isCritical };
+    const next = proposal();
+    next.milestones[0].isCritical = false;
+    expect(() => planMilestonePreservation(plan, rows, next)).toThrow(SchedulePreservationConflict);
+  });
+
+  it.each([false, true])('preserves unchanged criticality %s and the exact recorded completed row', isCritical => {
+    const rows = stored();
+    rows[0].status = 'completed';
+    rows[0].metadata = { ...(rows[0].metadata as object), isCritical, scheduleStatus: 'completed', progress: 83, completedAt: '2030-12-31T12:34:56.789Z' };
+    const before = globalThis.structuredClone(rows);
+    const next = proposal();
+    next.milestones[0].isCritical = isCritical;
+    const decision = planMilestonePreservation(plan, rows, next);
+    expect(decision.matches.get(next.milestones[0].key)).toBe(rows[0]);
+    expect(decision.preservedMilestoneIds).toContain(rows[0].id);
     expect(rows).toEqual(before);
   });
 

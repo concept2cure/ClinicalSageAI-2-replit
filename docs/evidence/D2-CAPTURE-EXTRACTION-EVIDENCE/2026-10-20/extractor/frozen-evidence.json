@@ -1,0 +1,13 @@
+{
+  "test": "9544137f904f4170f2ba8e23d087d38a640ee7fca28ab89028e88f038410032a",
+  "baselineFailures": 36,
+  "baselinePassingControls": 7,
+  "total": 43,
+  "files": {
+    "README.md": "136c1136cad39296145fe49911ffae1a40efc1513fa7396e8843d888341a08c8",
+    "baseline-command.json": "0d2150e9ae1af27b3d0fce935fa9e5f75c593bad0d49cfee9fac17dbf2ff76af",
+    "baseline-red.txt": "238735124800d32d033de746bf37dbae10855a8f1890425da9b82960fadb2674",
+    "lint-command.json": "18c2dbe9f79ae74e11a6f878ffd372e0ca7de228b8267796565f9df389bf9f4d",
+    "lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

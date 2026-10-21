@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-10-20T21:21:17.277881+00:00",
+  "from": "67d96c0601538412789a20da005244432fbacdb2",
+  "to": "3c3227383c2044f6616116f84f4b66b6b616d825",
+  "incomingCommits": 1,
+  "incomingPaths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "allCapturedSourceHashesUnchanged": true,
+  "capturedHashCount": 361,
+  "qualification": "Only existing automatic repository-health reports advanced. The application/compiler/test source bytes remain those qualified on67d96c060; production build and the repository-health gate run after this report refresh."
+}

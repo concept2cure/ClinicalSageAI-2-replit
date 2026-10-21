@@ -1,0 +1,19 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > legal lifecycle management > records an explicit revocation with the saved revision, reason and selected eligible custodian 425ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > legal lifecycle management > keeps external signature reports distinct from application cryptographic verification 66ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > renders an absent review explicitly without inventing a date or reviewer 3ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > shows unresolved coverage and records an explicit mapping bound to the displayed actual sequence 132ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > discards a late response after switching the sequence context 10ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > paged exact-version selection > searches in the admitted program and preserves selected IDs when moving to another server page 48ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Accessible company letterhead review > supports keyboard-addressable scroll, zoom and a readable text view without editing the design 337ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Accessible company letterhead review > uses known contrast extremes and warns when normal text is unreadable on white 12ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Company legal inventory tools > uses server pages and scoped counts, resetting the page when narrowing by language and search 257ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Company legal inventory tools > does not render stale entries or claim an empty inventory when a filtered read fails, and retries the same filter 67ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Canonical Vault picker recovery and paging > retries the same failed query and reads later results without discarding the selection contract 110ms
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  02:15:28
+   Duration  4.53s (transform 924ms, setup 283ms, import 1.19s, tests 1.48s, environment 1.20s)

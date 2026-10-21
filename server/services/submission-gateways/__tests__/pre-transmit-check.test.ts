@@ -189,9 +189,9 @@ describe('evaluatePreTransmit', () => {
     expect(prod.blockers.join(' ')).toMatch(/not itemised/);
   });
 
-  it('warns (does not block) when a required flag is set but the bundle has no evidence', () => {
+  it('refuses absent DTD proof when required while preserving PDF/A warning semantics', () => {
     const r = evaluatePreTransmit({ region: 'fda', bundle: bundle(), environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_PDFA: 'true', ECTD_REQUIRE_DTD: 'true' } });
-    expect(r.cleared).toBe(true);
+    expect(r.cleared).toBe(false);
     // PDF/A, DTD — and the bundle records no region it was built for.
     expect(r.warnings.length).toBe(3);
     expect(r.warnings.some((w) => /no record of the region it was built for/.test(w))).toBe(true);
@@ -423,7 +423,7 @@ describe('guarded transmit', () => {
  * packager and this fails.
  */
 describe('packager → pre-transmit: the stylesheet gap survives the bundle', () => {
-  const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'];
+  const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
   const STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl'];
 
   async function buildFdaBundle(dropFiles: string[]): Promise<SubmissionBundle> {
@@ -483,7 +483,7 @@ describe('packager → pre-transmit: the stylesheet gap survives the bundle', ()
     expect(blocker).not.toMatch(/not itemised/);
   }, 30000);
 
-  it('POSITIVE CONTROL: a complete drop-point clears the same gate', async () => {
+  it('a complete placeholder drop-point proves presence but cannot clear actual DTD validation', async () => {
     const built = await buildFdaBundle([...DTDS, ...STYLESHEETS]);
     expect(built.dtdStatus?.selfContained).toBe(true);
     expect(built.dtdStatus?.missingStylesheets).toEqual([]);
@@ -495,6 +495,8 @@ describe('packager → pre-transmit: the stylesheet gap survives the bundle', ()
       env: { ECTD_REQUIRE_DTD: 'true' },
     });
     expect(r.checks.find((c) => c.name === 'dtd-self-contained')?.passed).toBe(true);
+    expect(r.checks.find((c) => c.name === 'package-dtd-validation')?.passed).toBe(false);
+    expect(r.cleared).toBe(false);
     expect(r.blockers.join(' ')).not.toMatch(/self-contained/);
   }, 30000);
 });

@@ -67,7 +67,6 @@ import { cacheResponse } from '../middleware/enterprise-performance';
 import {
   regulatoryAuditLogs,
   projects,
-  users,
   organizationUsers,
   projectMembers,
   projectVisibilitySettings,
@@ -88,6 +87,7 @@ import {
 } from '../services/project-sharing-access';
 import { readCsrProjectActor } from '../services/csr/project-scope';
 import { canCreateProgram } from '../services/c2c/program-access';
+import { installProjectSharingRoutes } from './c2c/project-sharing';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
@@ -215,16 +215,6 @@ const createProjectSchema = z.object({
 });
 
 const updateProjectSchema = createProjectSchema.partial();
-
-const projectVisibilitySchema = z.object({
-  visibility: z.enum(['private', 'org_public']),
-});
-
-const upsertProjectMemberSchema = z.object({
-  userId: z.number().int().positive(),
-  role: z.enum(['use', 'edit']),
-});
-
 
 const ownershipPreferencesSchema = z
   .object({
@@ -1546,7 +1536,13 @@ router.put('/projects/:id', projectRecordAdmission(true), async (req: Request, r
   }
 });
 
-router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Response) => {
+/* Held to its sibling PUT /projects/:id: same admission, same audit (IAM-31,
+   weekly review 2026-10-19). This writes settings.customInstructions — the
+   text getProjectInstructionsBlock puts into AnA's prompt for every session on
+   the project — and it ran with the router's organization check only, so any
+   member, a viewer included, could rewrite a private project's instructions,
+   unaudited. */
+router.patch('/projects/:id/ownership-preferences', projectRecordAdmission(true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
@@ -1612,6 +1608,10 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
+    // The same Part 11 audit entry the PUT writes, before/after values included;
+    // its outcome is disclosed on the response rather than assumed.
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', String(numericId), existing, updated);
+
     const conversations = await getConversationsFromDb(numericId, organizationId);
     await getOwnershipDerivationData([numericId], organizationId);
     return sendSuccess(res, {
@@ -1629,7 +1629,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1705,65 +1705,8 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
   }
 });
 
-/**
- * GET /api/concept2cure/projects/:id/sharing
- * Retrieve sharing visibility and member assignments for a project.
- */
-router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    const sharing = await loadProjectSharingState(projectAccess.project.id, organizationId);
-    if (
-      !canUseProject({
-        actor: { userId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: applyProjectSharingState(
-            normalizeProjectSettings(projectAccess.project.settings),
-            sharing
-          ),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(
-        projectAccess.project.id,
-        sharing,
-        projectAccess.legacyFallbackApplied
-      )
-    );
-  } catch (error: any) {
-    logger.error('Failed to fetch project sharing', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to fetch project sharing');
-  }
-});
+// Existing sharing paths are registered once through their current-admission helper.
+installProjectSharingRoutes(router);
 
 /**
  * PUT /api/concept2cure/projects/:projectId/collaborators
@@ -1862,292 +1805,6 @@ router.put('/projects/:projectId/collaborators', projectRecordAdmission(true, tr
       projectId: paramStr(req.params.projectId),
     });
     return sendError(res, 500, 'Failed to update project collaborators');
-  }
-});
-
-/**
- * PATCH /api/concept2cure/projects/:id/sharing/visibility
- * Update project visibility policy (private | org_public).
- */
-router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-    const { visibility } = projectVisibilitySchema.parse(req.body);
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    if (
-      !canManageProject({
-        actor: { userId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: normalizeProjectSettings(projectAccess.project.settings),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    const [existingVisibility] = await db
-      .select({
-        id: projectVisibilitySettings.id,
-      })
-      .from(projectVisibilitySettings)
-      .where(
-        and(
-          eq(projectVisibilitySettings.organizationId, organizationId),
-          eq(projectVisibilitySettings.projectId, scope.numericId)
-        )
-      )
-      .limit(1);
-
-    if (existingVisibility) {
-      await db
-        .update(projectVisibilitySettings)
-        .set({
-          visibility,
-          updatedById: userId,
-          updatedAt: new Date(),
-        })
-        .where(eq(projectVisibilitySettings.id, existingVisibility.id));
-    } else {
-      await db.insert(projectVisibilitySettings).values({
-        organizationId,
-        projectId: scope.numericId,
-        visibility,
-        updatedById: userId,
-      });
-    }
-
-    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
-    );
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
-    }
-    logger.error('Failed to update project sharing visibility', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to update project sharing visibility');
-  }
-});
-
-/**
- * PUT /api/concept2cure/projects/:id/sharing/members/:userId
- * Add/update explicit project member with use/edit role.
- */
-router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const actorUserId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-
-    const pathUserId = Number.parseInt(paramStr(req.params.userId), 10);
-    if (!Number.isFinite(pathUserId) || pathUserId <= 0) {
-      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
-    }
-
-    const payload = upsertProjectMemberSchema.parse({
-      userId: pathUserId,
-      role: req.body?.role,
-    });
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId: actorUserId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    if (
-      !canManageProject({
-        actor: { userId: actorUserId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: normalizeProjectSettings(projectAccess.project.settings),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    const [targetUser] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, payload.userId))
-      .limit(1);
-    if (!targetUser) {
-      return sendError(res, 404, 'Target user not found');
-    }
-
-    const [orgMembership] = await db
-      .select({ id: organizationUsers.id })
-      .from(organizationUsers)
-      .where(
-        and(
-          eq(organizationUsers.organizationId, organizationId),
-          eq(organizationUsers.userId, payload.userId)
-        )
-      )
-      .limit(1);
-    if (!orgMembership) {
-      return sendError(
-        res,
-        400,
-        'Target user is not a member of this organization',
-        undefined,
-        'ORG_MEMBERSHIP_REQUIRED'
-      );
-    }
-
-    const [existingMember] = await db
-      .select({ id: projectMembers.id })
-      .from(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.organizationId, organizationId),
-          eq(projectMembers.projectId, scope.numericId),
-          eq(projectMembers.userId, payload.userId)
-        )
-      )
-      .limit(1);
-
-    if (existingMember) {
-      await db
-        .update(projectMembers)
-        .set({
-          role: payload.role,
-          status: 'active',
-          invitedById: actorUserId,
-          acceptedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(projectMembers.id, existingMember.id));
-    } else {
-      await db.insert(projectMembers).values({
-        organizationId,
-        projectId: scope.numericId,
-        userId: payload.userId,
-        role: payload.role,
-        status: 'active',
-        invitedById: actorUserId,
-        acceptedAt: new Date(),
-      });
-    }
-
-    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
-    );
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
-    }
-    logger.error('Failed to upsert project member', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to upsert project member');
-  }
-});
-
-/**
- * DELETE /api/concept2cure/projects/:id/sharing/members/:userId
- * Remove explicit member access from project.
- */
-router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const actorUserId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-    const targetUserId = Number.parseInt(paramStr(req.params.userId), 10);
-
-    if (!Number.isFinite(targetUserId) || targetUserId <= 0) {
-      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
-    }
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId: actorUserId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    if (
-      !canManageProject({
-        actor: { userId: actorUserId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: normalizeProjectSettings(projectAccess.project.settings),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    await db
-      .delete(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.organizationId, organizationId),
-          eq(projectMembers.projectId, scope.numericId),
-          eq(projectMembers.userId, targetUserId)
-        )
-      );
-
-    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
-    );
-  } catch (error: any) {
-    logger.error('Failed to remove project member', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to remove project member');
   }
 });
 

@@ -1,0 +1,33 @@
+Mutant run — POST /templates/seed curator gate
+Target:  server/routes/regulatory-intelligence.ts
+Suite:   server/routes/__tests__/ri-template-seed-needs-curator-standing.test.ts
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <suite>
+
+Run 2 (final), after strengthening the ordering case and fixing M9's anchor:
+
+M1 gate removed entirely                     KILLED  Tests  3 failed | 3 passed (6)
+M2 gate runs AFTER the seed (ordering)       KILLED  Tests  1 failed | 5 passed (6)
+M3 roles widened with org 'admin'            KILLED  Tests  1 failed | 5 passed (6)
+M4 roles widened with 'support'              KILLED  Tests  1 failed | 5 passed (6)
+M5 refusal no longer names the deploy        KILLED  Tests  1 failed | 5 passed (6)
+M6 refusal no longer names the standing      KILLED  Tests  1 failed | 5 passed (6)
+M7 refusal leaks the table name              KILLED  Tests  1 failed | 5 passed (6)
+M8 curator probed before tenant context      KILLED  Tests  1 failed | 5 passed (6)
+M9 403 becomes a silent 200 no-op            KILLED  Tests  1 failed | 5 passed (6)
+
+killed 9/9
+
+Run 1, recorded because two entries were not kills:
+
+M8 ... SURVIVED  Tests 5 passed (5)
+    Not a product defect: the ordering case used an ANONYMOUS caller, and
+    platformCuratorId returns before the role lookup when there is no user id,
+    so probing it first is unobservable on that input. The assertion was true
+    and its comment over-claimed. Test strengthened to a signed-in user with no
+    organization (membership removed), where the lookup does fire.
+
+M9 ... ANCHOR-MISS (count=0) — mutant NOT applied
+    My replacement string had six spaces of indentation where the file has
+    four, so nothing was substituted and the "run" executed the FIXED code.
+    Same shape as the M1 anchor miss earlier this session: the script now
+    asserts the anchor count and reports a miss as a miss, never as a kill.

@@ -142,3 +142,37 @@
 @media (prefers-reduced-motion: reduce) {
   .c2c-v2 .cc-comm[data-fresh] { animation: none; }
 }
+
+/* ── Questions and responses on one agency letter (AgencyResponses.tsx, 2026-10-18) ── */
+.c2c-v2 .cc-qs{ margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:10px; }
+.c2c-v2 .cc-q-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+.c2c-v2 .cc-q{ background:var(--bg-100); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+.c2c-v2 .cc-q[data-state="changed-after-approval"]{ border-left:3px solid var(--error); }
+.c2c-v2 .cc-q-text{ margin:8px 0 0; padding:0 0 0 10px; border-left:2px solid var(--border-strong); font-size:12.5px; color:var(--text-200); line-height:1.5; white-space:pre-wrap; }
+.c2c-v2 .cc-q-resp{ margin-top:9px; }
+.c2c-v2 .cc-q-body{ margin:0; font-size:13px; color:var(--text-100); line-height:1.55; white-space:pre-wrap; }
+.c2c-v2 .cc-q-meta{ margin:5px 0 0; font-size:10.5px; color:var(--text-400); }
+.c2c-v2 .cc-q-note{ margin:0; font-size:11.5px; color:var(--text-300); line-height:1.5; }
+.c2c-v2 .cc-q-sig{ margin:7px 0 0; font-size:11.5px; color:var(--text-200); line-height:1.5; }
+.c2c-v2 .cc-q-sig[data-tone="err"]{ color:var(--error); }
+.c2c-v2 .cc-q-edit{ margin-top:9px; display:flex; flex-direction:column; gap:6px; }
+.c2c-v2 .cc-q-area, .c2c-v2 .cc-q-reason{ width:100%; font:inherit; font-size:13px; color:var(--text-100); background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px 10px; }
+.c2c-v2 .cc-q-area:focus-visible, .c2c-v2 .cc-q-reason:focus-visible{ outline:2px solid var(--accent-100); outline-offset:1px; }
+.c2c-v2 .cc-q[data-state="withdrawn"]{ opacity:.78; }
+.c2c-v2 .cc-q-note[data-tone="err"], .c2c-v2 .cc-comm-issues [data-tone="err"]{ color:var(--error); }
+.c2c-v2 .cc-q-hist{ margin-top:8px; font-size:11.5px; color:var(--text-300); }
+.c2c-v2 .cc-q-hist > summary{ cursor:pointer; color:var(--text-200); }
+.c2c-v2 .cc-q-hist > summary:focus-visible{ outline:2px solid var(--accent-100); outline-offset:2px; border-radius:var(--radius-md); }
+.c2c-v2 .cc-q-hist-list{ margin:6px 0 0; padding:0 0 0 16px; display:flex; flex-direction:column; gap:8px; }
+.c2c-v2 .cc-q-hist-list > li{ padding-left:4px; }
+
+/* A commitment's fulfilment: what met it, who signed, whether it still holds
+   (CommitmentFulfilment.tsx, 2026-10-19). */
+.c2c-v2 .cc-fulfil{ margin-top:6px; display:flex; flex-direction:column; gap:3px; }
+.c2c-v2 .cc-fulfil-line{ font-size:11.5px; color:var(--text-200); line-height:1.5; }
+.c2c-v2 .cc-fulfil-line[data-tone="err"]{ color:var(--error); }
+.c2c-v2 .cc-fulfil-link{ margin-left:8px; padding:0; border:0; background:none; color:var(--accent-strong); font:inherit; font-size:11.5px; cursor:pointer; text-decoration:underline; }
+.c2c-v2 .cc-fulfil-link:focus-visible{ outline:2px solid var(--accent-100); outline-offset:2px; border-radius:var(--radius-md); }
+.c2c-v2 .cf-seq{ border:0; margin:0 0 14px; padding:0; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.c2c-v2 .cf-seq-opt{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-100); }
+.c2c-v2 .cf-picked{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; color:var(--text-100); padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-md); }

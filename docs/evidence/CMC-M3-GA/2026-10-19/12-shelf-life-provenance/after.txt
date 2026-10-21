@@ -1,0 +1,5 @@
+── a running study, shelf life recorded by an ordinary edit ──
+  A shelf life of 24 months at 25C/60%RH is proposed, recorded on a study that has not been closed out under signature, subject to review of the 3 recorded result(s) tabulated in the stability results table.
+
+── the same study, closed out under a signature (HTTP 200) ──
+  A shelf life of 24 months at 25C/60%RH is proposed, accepted on a signed study close-out, subject to review of the 3 recorded result(s) tabulated in the stability results table.

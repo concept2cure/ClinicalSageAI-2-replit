@@ -45,7 +45,7 @@ export function CompanyLegalCommunicationLinks({ projectId, recordId, kind, init
     if (!result.ok || body?.data?.id !== recordId || !Array.isArray(body.data.companyLegalDocuments)) { setError(apiErrorText(result, 'The legal link was not confirmed. Reload the record before retrying.')); return; }
     setLinks(body.data.companyLegalDocuments); setSelected(''); setReason(''); setMessage(body.data.message ?? 'Exact legal version linked.');
   };
-  return <div className="company-register" aria-label="Legal versions linked to this record">
+  return <div className="company-register" role="group" aria-label="Legal versions linked to this record">
     {links.length > 0 && <ul>{links.map(link => <li key={`${link.registryId}:${link.contentHash}:${link.outcome}`}>
       Vault {link.vaultDocumentId} · version {link.version} · {link.outcome.replaceAll('_', ' ')}<br /><span className="mono">SHA-256 {link.contentHash}</span>
     </li>)}</ul>}

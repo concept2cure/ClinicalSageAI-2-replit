@@ -28,6 +28,7 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import type { Region, SubmissionFormat, SubmissionBundle } from './types';
@@ -52,8 +53,15 @@ import {
   listVendoredStylesheets,
   assessDtdReadiness,
   dtdRequiredFromEnv,
+  resolveDtdDir,
+  STF_DTD,
+  hasPassedPackageDtdValidation,
+  type DtdReadinessResult,
   type DtdRegion,
 } from '../ectd/dtd-bundler';
+import { validateBackboneFile } from '../ectd/backbone-validation';
+import { verifyChecksumBuffers } from '../ectd/checksum-manifest';
+import type { DtdValidationEvidence } from '../../../shared/regulatory/ectd-dtd-validation';
 import { classifyRegionalBackbone } from '../ectd/regional-backbone-readiness';
 import {
   resolveApplicationTypeCode,
@@ -901,6 +909,75 @@ export function regionalBackbonePath(region: Region): string {
 
 /* ─── Top-level packager ──────────────────────────────────────────── */
 
+interface CapturedPackageEntry { relPath: string; bytes: Buffer }
+
+async function capturedChecksumManifest(dir: string): Promise<string> {
+  const file = path.join(dir, 'checksums.txt');
+  try {
+    const stat = await fs.lstat(file);
+    return stat.isFile() && !stat.isSymbolicLink() ? await fs.readFile(file, 'utf8') : '';
+  } catch { return ''; }
+}
+
+async function capturePackageEntries(zip: JSZip): Promise<CapturedPackageEntry[]> {
+  const entries: CapturedPackageEntry[] = [];
+  for (const [relPath, file] of Object.entries(zip.files)) {
+    if (file.dir) continue;
+    const bytes = Buffer.from(await file.async('nodebuffer'));
+    entries.push({ relPath, bytes });
+    // Freeze input by replacing original references with the private captured
+    // buffers subsequently materialized for validation and written to the ZIP.
+    zip.file(relPath, bytes, { date: file.date });
+  }
+  return entries;
+}
+
+/** Shared materialization for private validation and optional unzipped output. */
+async function materializePackageEntries(dir: string, entries: CapturedPackageEntry[]): Promise<void> {
+  await fs.mkdir(dir, { recursive: true });
+  for (const { relPath, bytes } of entries) {
+    const dest = path.join(dir, relPath);
+    if (!isPathWithin(dir, dest) || relPath.includes('\\')) {
+      throw new ValidationError(`Package entry '${relPath}' would extract outside its directory.`, [
+        { ruleId: 'PACKAGE-ENTRY-ESCAPES', severity: 'error', filePath: relPath },
+      ]);
+    }
+    await fs.mkdir(path.dirname(dest), { recursive: true });
+    await fs.writeFile(dest, bytes);
+  }
+}
+
+async function validateCapturedPackage(entries: CapturedPackageEntry[], expectedFiles: string[], gate: DtdReadinessResult, manifestText: string): Promise<DtdValidationEvidence> {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-package-validation-'));
+  try {
+    await materializePackageEntries(dir, entries);
+    const results = await Promise.all(expectedFiles.map(relPath => validateBackboneFile(dir, relPath)));
+    const files = results.map(({ relPath, wellFormed, doctype, dtd }) => ({ relPath, wellFormed, doctype, dtd }));
+    const supportive = entries.filter(entry => /^util\/(?:dtd|style)\/[^/]+\.(?:dtd|xsl)$/.test(entry.relPath))
+      .map(entry => ({ fileName: path.posix.basename(entry.relPath), content: entry.bytes }));
+    const integrity = verifyChecksumBuffers(supportive, manifestText, ['.dtd', '.xsl']);
+    const evidence: DtdValidationEvidence = { version: 1, expectedFiles, files, integrity, passed: true };
+    evidence.passed = hasPassedPackageDtdValidation({ ...gate, validation: evidence });
+    return evidence;
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+}
+
+/** Bounded package-relative diagnostics reach the existing compile refusal. */
+function dtdRefusalDetails(validation: DtdValidationEvidence): string[] {
+  const failures = validation.files.flatMap(file => {
+    const diagnostic = !file.wellFormed.ran || !file.wellFormed.valid || file.wellFormed.errors.length
+      ? file.wellFormed.errors[0] ?? 'XML well-formedness did not run or failed'
+      : !file.doctype.valid ? file.doctype.errors[0] ?? 'DOCTYPE dependency verification failed'
+      : !file.dtd.ran || !file.dtd.valid || file.dtd.errors.length ? file.dtd.errors[0] ?? 'DTD validation did not run or failed' : null;
+    return diagnostic ? [`${file.relPath}: ${diagnostic.slice(0, 300)}`] : [];
+  });
+  if (!validation.integrity.ok) {
+    const names = [...validation.integrity.mismatched.map(item => item.fileName), ...validation.integrity.missingFiles, ...validation.integrity.unlistedFiles];
+    failures.push(`Supportive-file checksum verification failed: ${names.slice(0, 8).join(', ') || 'required supportive bytes are unverified'}.`);
+  }
+  return failures.length ? failures.slice(0, 6) : ['Required supportive-file verification or complete XML execution coverage is absent.'];
+}
+
 export async function packageEctdSubmission(input: PackagerInput): Promise<SubmissionBundle> {
   /* Resolve the caller-supplied submission type through the canonical bridge.
      This normalizes any alias/legacy string (e.g. '510k', 'SNDA', 'ind') to
@@ -1134,6 +1211,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
      and pointed at the PDFs relative to the study folder; the name and the
      doc-content -> index.xml#ID shape now come from stf-generator.ts. */
   const stfSyntheticLeaves: EctdLeaf[] = [];
+  const stfPaths: string[] = [];
   /* `untagged` is the 1789 coverage gap found above (stfUncovered): zero for a
      US sequence, which is refused otherwise; for another region the files that
      package with no STF. Absent when the sequence has no study files at all. */
@@ -1175,11 +1253,14 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
           });
         }
       }
-      const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? []);
+      const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? [], {
+        dtdSystemPath: studyId => path.posix.relative(studyFolder.get(studyId)!, `util/dtd/${STF_DTD}`),
+      });
       stfSummary = { studies: stfResult.summary.studies, leaves: stfResult.summary.leaves, untagged: stfUncovered.length };
       for (const file of stfResult.files) {
         const folder = studyFolder.get(file.studyId)!;
         const relPath = `${folder}/${file.fileName}`;
+        stfPaths.push(relPath);
         const bytes = Buffer.from(file.xml, 'utf8');
         const md5 = createHash('md5').update(bytes).digest('hex');
         const section = byStudy.get(file.studyId)![0].leaf.ctdSection;
@@ -1257,7 +1338,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
      are vendored per assets/ectd-dtd/README.md (or come from $ECTD_DTD_DIR), so
      this is a no-op when absent. DTDs are package files, so they are checksummed
      into index-md5.txt alongside the leaves. */
-  const vendoredDtds = await listVendoredDtds();
+  const dtdDir = resolveDtdDir();
+  const vendoredDtds = await listVendoredDtds(dtdDir);
+  const manifestText = await capturedChecksumManifest(dtdDir);
   for (const dtd of vendoredDtds) {
     const relPath = `util/dtd/${dtd.fileName}`;
     zip.file(relPath, dtd.bytes);
@@ -1267,7 +1350,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   /* Bundle vendored stylesheets into util/style/ for the same reason: index.xml
      references util/style/ectd-2-0.xsl and the FDA backbone references
      ../../util/style/us-regional.xsl. Same drop-point, same MD5 treatment. */
-  const vendoredStylesheets = await listVendoredStylesheets();
+  const vendoredStylesheets = await listVendoredStylesheets(dtdDir);
   for (const xsl of vendoredStylesheets) {
     const relPath = `util/style/${xsl.fileName}`;
     zip.file(relPath, xsl.bytes);
@@ -1283,6 +1366,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     presentStylesheets: vendoredStylesheets.map((s) => s.fileName),
     environment: input.environment ?? 'production',
     requireDtd: dtdRequiredFromEnv(),
+    hasStudyTaggingFiles: stfPaths.length > 0,
   });
   if (!dtdGate.cleared) {
     throw new ValidationError(
@@ -1320,6 +1404,16 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   zip.file('index-md5.txt', indexXmlMd5);
   zip.file('util/index-md5.txt', buildMd5Index(checksums));
 
+  // Validate privately captured package entries before publishing its ZIP.
+  // Reuse these same buffers for ZIP output and optional validator extraction.
+  const captured = await capturePackageEntries(zip);
+  const validation = await validateCapturedPackage(captured, ['index.xml', regionalPath, ...stfPaths], dtdGate, manifestText);
+  if (dtdRequiredFromEnv() && (input.environment ?? 'production') === 'production' && !validation.passed) {
+    const reasons = dtdRefusalDetails(validation);
+    throw new ValidationError(`eCTD package DTD validation is incomplete or failed. ${reasons.join(' ')}`,
+      reasons.map(message => ({ ruleId: 'PACKAGE-DTD-VALIDATION', severity: 'error', message })));
+  }
+
   /* Generate the zip + write to disk. */
   if (!isPlainName(input.applicationId) || !isPlainName(input.sequence)) {
     throw new ValidationError(
@@ -1344,22 +1438,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   /* Optionally extract for validator runs. */
   if (input.emitUnzipped) {
     const extractDir = path.join(input.outputDir, `${input.applicationId}-${input.sequence}-${region}`);
-    await fs.mkdir(extractDir, { recursive: true });
-    for (const [relPath, file] of Object.entries(zip.files)) {
-      if (file.dir) continue;
-      const dest = path.join(extractDir, relPath);
-      // Every entry name is built here from plain names and fixed folders, so
-      // this cannot fire today; it is what keeps a future entry from writing
-      // outside the tree it is extracted into.
-      if (!isPathWithin(extractDir, dest)) {
-        throw new ValidationError(`Package entry '${relPath}' would extract outside its directory.`, [
-          { ruleId: 'PACKAGE-ENTRY-ESCAPES', severity: 'error', filePath: relPath },
-        ]);
-      }
-      await fs.mkdir(path.dirname(dest), { recursive: true });
-      const content = await (file as JSZip.JSZipObject).async('nodebuffer');
-      await fs.writeFile(dest, content);
-    }
+    await materializePackageEntries(extractDir, captured);
   }
 
   // Per-sequence leaf manifest for cross-sequence lifecycle diffing: each shipped
@@ -1424,7 +1503,10 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       present: dtdGate.present,
       missing: dtdGate.missing,
       missingStylesheets: dtdGate.missingStylesheets,
+      requiredStylesheets: dtdGate.requiredStylesheets,
+      presentStylesheets: dtdGate.presentStylesheets,
       selfContained: dtdGate.selfContained,
+      validation,
     },
     // Honest regional-M1 status: only fda/ema/pmda/ca have their own backbone
     // builder; the eight widened regions reuse the EMA structure, so their
@@ -1434,6 +1516,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       region,
       regionalPath,
       region === 'fda' ? fdaBackboneGaps(normalizedInput) : undefined,
+      validation,
     ),
     ...(stfSummary ? { stf: stfSummary } : {}),
     ...(input.crossReferences?.length

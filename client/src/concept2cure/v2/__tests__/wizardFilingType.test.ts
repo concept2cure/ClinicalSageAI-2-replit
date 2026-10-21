@@ -138,19 +138,27 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
    * approval, not one enumerated dossier structure — unlike MDR Annex II, there
    * is no single shape to seed. They decline visibly rather than borrowing one.
    */
-  it.each(['uk_ukca', 'pmda_shonin', 'nmpa_device', 'tga_device', 'hc_mdl', 'br_device'])(
+  it.each(['uk_ukca', 'nmpa_device', 'tga_device', 'br_device'])(
     '%s is a device filing with no defined pack and fails closed',
     (id) => {
       expect(programTypeFor(selFor(id), 'biotech')).toBe('device');
     },
   );
 
-  it.each(['pmda_ivd', 'nmpa_ivd', 'tga_ivd', 'hc_ivd', 'ivd_vigilance'])(
+  it.each(['nmpa_ivd', 'tga_ivd', 'ivd_vigilance'])(
     '%s is an IVD filing with no defined pack and fails closed',
     (id) => {
       expect(programTypeFor(selFor(id), 'biotech')).toBe('ivd');
     },
   );
+
+  it.each([
+    ['fda_hde', 'hde'], ['hc_mdl', 'mdl'], ['hc_ivd', 'ivd_licence'],
+    ['pmda_shonin', 'shonin'], ['pmda_nintei', 'ninsho'], ['jp_todokede', 'todokede'],
+    ['pmda_ivd', 'ivd_approval'], ['cdx_pmda', 'jp_cdx'],
+  ])('%s reaches its exact regional application class %s', (id, type) => {
+    expect(programTypeFor(selFor(id), 'biotech')).toBe(type);
+  });
 
   it('no device or IVD filing resolves to a drug marketing application', () => {
     /*
@@ -184,5 +192,35 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
       'a device or IVD filing resolves to a drug marketing application — it will ' +
         'scaffold a CTD dossier for a device',
     ).toEqual([]);
+  });
+});
+
+/*
+ * A filing that is a document, not an application (2026-10-18). A PAS, a CBE,
+ * the annual report, an IND amendment, a meeting package, a designation request
+ * and a PSP had no pathwayKey, defaulted to 'ctd' and were created as NDAs; the
+ * CSR's pathwayKey 'csr' matched nothing and fell to the closing 'ind'. The class
+ * table is read here rather than restated, so a class added there is held to it.
+ */
+import { FILING_DOCUMENT_CLASSES } from '@shared/regulatory/filing-document-classes';
+
+describe('a filing that is a document is created as its own class', () => {
+  const classed = FILING_DOCUMENT_CLASSES.flatMap((c) => c.registryIds.map((id) => [id.toLowerCase(), c.docType] as const));
+
+  it.each(classed)('%s is created as %s', (id, docType) => {
+    expect(selFor(id), `${id} is not in the client registry`).toBeTruthy();
+    expect(programTypeFor(selFor(id), 'biotech')).toBe(docType);
+  });
+
+  it('none of them is created as the application it belongs to', () => {
+    const APPLICATIONS = new Set(['nda', 'bla', 'ind', 'anda', 'maa', 'jnda', 'cta']);
+    const wrong = classed
+      .map(([id]) => [id, programTypeFor(selFor(id), 'biotech')] as const)
+      .filter(([, pt]) => APPLICATIONS.has(pt));
+    expect(wrong).toEqual([]);
+  });
+
+  it('the Pre-IND meeting still creates the IND it is about', () => {
+    expect(programTypeFor(selFor('us_pre_ind'), 'biotech')).toBe('ind');
   });
 });

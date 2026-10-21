@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-20T23:56:43.979891+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "server/services/authoring/__tests__/assembly-plan.test.ts",
+    "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+    "server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts",
+    "server/services/market-specs/__tests__/document-preparation.test.ts"
+  ],
+  "elapsedSeconds": 29.342,
+  "exitCode": 0,
+  "rawOutput": "green-output.txt.gz",
+  "outputSha256": "9c061a425c8a318691d06ab2923711efc3d2f4ff56804baf1f5995122c297a94",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "d957f5ec6cc8866d21e8a25aeeb8105828be9a324553762f126abddd02aae9b9",
+    "server/services/authoring/authoring-assembly-plan.ts": "cc47f6e9b96d72f15856fbd5c319c3974d94016faff71a80d0a150aa894ae5ee",
+    "server/services/market-specs/document-preparation.ts": "89f691d9f8b4bc6a70c45a582d09891422cef3d536ea138d3c43673dce8b7685",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": "3a90cc6f6236452aea72366222df716ad0daacb7b1d6933649b3e0e1e84882e6",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "e0b09adc22de9aee787fd0052f5811a33c6feecd46f48ece203f20244bb80e4a",
+    "server/services/c2c/document-class.ts": "be2587c95089206d94e01213f5857b6112fa66f0752f2737acfb2b2763f63445",
+    "server/services/ana/saved-template-review.ts": "44e01675a2429f97bd03a9843e962ee075432e5071d2afeef342ab9694eb0ac2",
+    "server/services/ana/saved-document-critique.ts": "21c54de1f5f09f8aa5a876f167f1e54e6912a0a48d2431bbeb9d88dbf4505d2a"
+  },
+  "sourceDrift": [],
+  "summary": [
+    "Test Files  6 passed (6)",
+    "Tests  226 passed (226)"
+  ]
+}

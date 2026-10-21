@@ -1,0 +1,532 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+{
+  "timestamp": "2026-10-21T01:27:39.821Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:27:39.843Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+{
+  "timestamp": "2026-10-21T01:27:39.852Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses irreducible passage replacement totals before recording, grounding or another model call
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > caps a 20-call ordinary floor-overflow round without dropping calls or grounding on raw output 197ms
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the guard seam after allocation
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the settlement seam after allocation
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > rejects excessive redirected bodies at the actual stage boundary without running replaced tools
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses irreducible passage replacement totals before recording, grounding or another model call 125ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the guard seam after allocation 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the settlement seam after allocation 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > rejects excessive redirected bodies at the actual stage boundary without running replaced tools 36ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > uses the accepted ordinary envelope rather than a raw zero-result statement in adaptation guidance 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > stages accepted raw bodies exactly without a second cap after recorder and corpus admission 25ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > CONTROL: a fitting ordinary result retains its raw body, corpus and existing miss guidance 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > CONTROL: fitting protected passage strings remain complete with locators and escaped framing 11ms
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:27:53.857Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:27:53.858Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:27:53.859Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > CONTROL: omitted and false keep exact historical floor and marker bytes above 24000 6ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only 9ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > keeps a valid under-budget round byte-identical including whole protected JSON 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > uses a fixed ordinary envelope without copying source-controlled outcome or metadata 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > measures real legacy marker bytes under custom per-result ceiling and ordinary floor 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > keeps short ordinary siblings, then withholds the last passage before any private read 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > gives private-map membership precedence over a passage server name in the strict pass 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > does not enlarge an eligible short passage when ordinary floor output must be reduced 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > preserves exact existing replacement JSON for over-ceiling passages and private reads 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=0 instead of dropping, slicing or enlarging a private outcome 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=1 instead of dropping, slicing or enlarging a private outcome 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=2 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=50 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target 21ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total Infinity even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -Infinity even before an empty-round fast path 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -1 even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > admits exactly empty bodies at zero while preserving each empty call correlation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > accepts exact UTF-16 length and refuses one less without mutating bodies 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > refuses the actual enlarged post-guard array, without a second allocation 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > applies invalid-total and zero rules consistently to empty final arrays 2ms
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:27:56.553Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:27:56.618Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:27:56.619Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:27:56.619Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > denies the unassigned active member while admitting owner/public/explicit member/pending reviewer 104ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > serves the public program through the actual detail and search endpoints 92ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private project metadata for an unassigned same-organization member 47ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private Vault content search before any count, snippet, or document identity 34ms
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project
+{
+  "timestamp": "2026-10-21T01:28:06.535Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > applies sharing before the portfolio page so private newest rows cannot consume public slots 52ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > bounds library search count and page by accessible programs before ranking/pagination 36ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses project detail after organization membership is revoked even with a stale request role 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit program-to-project reconciliation for a missing anchor 24ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project 31ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project  before child content queries 24ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /workstreams before child content queries 16ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /drafts before child content queries 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /team before child content queries 21ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /evidence before child content queries 17ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /activity before child content queries 25ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /records before child content queries 22ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /conversation-files before child content queries 16ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /vault-structure before child content queries 21ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /sources before child content queries 16ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /source-changes before child content queries 26ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /document-dispositions/preview?targetType=vault_document&targetId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa before child content queries 49ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /versions before child content or bytes 21ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /compare before child content or bytes 24ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /history before child content or bytes 31ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /download before child content or bytes 40ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /catalog before child content or bytes 21ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /relationships before child content or bytes 19ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /annotations before child content or bytes 16ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /text before child content or bytes 33ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps an unrelated missing private anchor out of the evaluated public page 51ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > requires reconciliation for a deleted anchor while retaining an archived readable anchor 48ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive user despite a stale request role 16ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive organization despite a stale request role 18ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > reports failed verification as unavailable instead of an empty portfolio 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps public viewer reads while denying a now-viewer lead mutation 76ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > writes only the fields the patch named 5ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > leaves a clearable field absent rather than writing NULL 2ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > drops a key a CALLER passed as undefined, not only one zod omitted 11ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > clears one that was explicitly cleared 2ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > records the submission date as a date, and clears it when it is no longer planned 5ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > takes the agencies beyond the primary one, which the create never writes 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > records a team member’s name and role and NOT a user id 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > is org-scoped and program-scoped on the UPDATE itself 2ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > names the fields an inspector would ask about 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > names WHICH predicate was claimed, and that a claim was withdrawn 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > records the action the caller names, so two callers are told apart 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > reports a lost audit row instead of answering as though it wrote one 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > carries the value each field held BEFORE, which the chain does not 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > refuses a programme this organization does not hold, before writing 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > refuses a zero-row UPDATE rather than auditing a change that did not happen 3ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a patch that names nothing 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses every column on the refusal list, each of which is a real column 2ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > keeps the lifecycle and the two phases out of a profile write 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > every settable field is a real column too 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a column outside the allowlist in the WRITE, not only at the caller 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a date that is not on the calendar 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > keeps the US class US, because the form it is printed on is US 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > takes each European class on its own column, for its own regulation 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > lets a European class be withdrawn, because "no EU filing planned" is an answer 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > accepts the regulatory paths the platform’s own mapping produces 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the device-profile endpoint’s reach > is exactly what it was, and not the whole shape 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > refuses the bare string array the create route used to write 10ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > refuses a predicate with a number and no trade name 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > takes the complete claim, keyed by the submission number 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > takes an empty list, because a programme with no predicate states none 0ms
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:28:16.264Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:16.266Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:28:16.266Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:28:16.540Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > bounds a floor-overflowing ordinary round while preserving every call, raw callback and exact staged body 19ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > stages accepted large-payload cap bytes exactly, without a second cap after allocation 69ms
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+{
+  "timestamp": "2026-10-21T01:28:25.217Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000032",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran 23ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly 4ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > CONTROL: a fitting native read remains exact and writes its existing legacy receipt 2ms
+stderr | server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome
+{
+  "timestamp": "2026-10-21T01:28:26.306Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000002",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged 4ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > retains a fitting read byte for byte and settles only that exact host admission 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > private map identity takes precedence over a passage name without adopting payload offsets 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > passage fields and ordinary fake receipt fields cannot mint private settlement authority 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > cancellation after strict allocation withdraws source context and settles no new receipt 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects actual guard-envelope growth without mutating accepted bodies 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome 4ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps use-only, public and pending-review admission read-only in explicit edit mode 30ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > denies an unassigned same-organization member and viewer while allowing owner and explicit use members 10ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > retains public-project and pending-review access without admitting another organization 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses a writing creator who has no actual access to the private project 12ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > permits scheduling by an explicit project member and delivery to an authorized viewer 9ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > honors project-membership revocation on the next delivery validation 9ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses an unauthorized same-organization recipient before computing or persisting any output 7ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > requires access to every private project referenced by a program-group schedule 7ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps genuine organization registers governed by their existing organization policy 2ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > guards saved account reports by their actual source projects and rechecks a schedule recipient after compute 17ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > rechecks actual source-project recipient access inside the persistence transaction before cursor or delivery effects 24ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence null on direct account reads 0ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence {"invalid":true} on direct account reads 0ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence "11" on direct account reads 0ms
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-10-21T01:28:31.807Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-10-21T01:28:31.851Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:31.852Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-10-21T01:28:31.852Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead 30ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > DENIES an org member who is neither the lead nor a manager 7ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows an org manager who does not lead the program 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > denies when the program has no lead — unowned is not everyone-owned 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > 404s a program outside the caller org — never 403, which would confirm it exists 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > PROGRAM_AUTHZ_MODE=warn does not open a denied mutation — the gate has no soak mode 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > PROGRAM_AUTHZ_MODE=off does not open a denied mutation — the gate has no soak mode 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > DENIES a non-lead, non-manager org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > allows the lead 14ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > program metadata is readable by a non-lead org member 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > team roster is readable by a non-lead org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > pinned evidence is readable by a non-lead org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > activity is readable by a non-lead org member 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > workstreams is readable by a non-lead org member 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > drafts is readable by a non-lead org member 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > a caller who is not a current member is refused, concealed as 404 5ms
+stdout | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-21T01:28:35.302Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:35.306Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-21T01:28:35.307Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-21T01:28:35.449Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > reads current actor, exact anchor and sharing through the pinned client 17ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > retains an explicitly supplied transaction executor instead of substituting the request client 5ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > refuses missing request context before any parent SQL without a pool fallback 1ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 200 for recorded document organization 7 39ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 409 for recorded document organization null 5ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 404 for recorded document organization 8 6ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > returns honest unavailability and no document when request context is absent 4ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > opens one transaction, locks current membership, writes and audits before commit without releasing the request client 4ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > rolls back instead of committing when the actual chained audit writer fails 4ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > refuses a current viewer despite a stale member principal before operation or audit 2ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > refuses a writer with no pinned request context before BEGIN or callback 1ms
+stdout | server/services/c2c/__tests__/project-team.test.ts
+{
+  "timestamp": "2026-10-21T01:28:36.665Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:36.667Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-team.test.ts
+{
+  "timestamp": "2026-10-21T01:28:36.667Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/project-team.test.ts
+[database] Database connection successful
+
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > uses each recorded source and never infers contributor, reviewer, approver, or observer 5ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > deduplicates only IDs while preserving lead, owner, creator, and durable member sources 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > ignores revoked rows but retains an independent owner or lead reference 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > does not take access roles from legacy JSON sharing when durable membership was read 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > keeps same-name accounts and a same-name legacy entry distinct, without matching email 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > retains unconfirmed account references without names, emails, or sharing 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > uses the shared member label convention for same names with distinct email addresses 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > uses an account reference when an active member has no display name or email 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > retains canonical profile object names and legacy strings only as unlinked recorded names 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > never turns freeform profile roles or matching object identity claims into account assignments 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > returns an actual empty roster with canonical scope and skips the account lookup 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > binds the admitted program, organization, project, and subject IDs on the supplied executor 2ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"projectId":12} 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"clientWorkspaceId":72} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"actor":{"userId":5,"role":"viewer"}} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"actor":{"userId":6,"role":"member"}} 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > propagates canonical denial after membership revocation without returning the roster 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed roster verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed members verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed accounts verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses a parent/anchor association that disappeared while loading 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses malformed recorded account IDs rather than publishing an invented account 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses a malformed durable sharing role 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5,"membership_role":""}]} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5,"membership_role":null}]} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5},{"id":5}]} 0ms
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:28:39.961Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:39.962Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:28:39.963Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] AI Gateway call failed: Synthetic provider failure
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] AI Gateway call failed: Untrusted copied code
+
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage 164ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal 8ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path 5ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal 6ms
+
+ Test Files  11 passed (11)
+      Tests  185 passed (185)
+   Start at  01:27:25
+   Duration  74.83s (transform 28.47s, setup 801ms, import 58.40s, tests 10.56s, environment 2ms)

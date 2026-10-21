@@ -149,7 +149,85 @@ const LABELLED_NUMERIC_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
   { label: 'de_novo_number',   pattern: /\b(DEN[0-9]{6})\b/g },
   { label: 'pma_number',       pattern: /\b(P[0-9]{6})\b/g },
   { label: 'rpn',              pattern: /\bRPN\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
+  // ── Trial-design and statistical-plan quantities ─────────────────────────
+  // Folded in from server/services/ana/dossierReconciliation.ts (deleted 2026-10-19),
+  // which mined the same kind of figure out of the same prose for the same reviewer
+  // finding. Its five labels had no counterpart here, and its enrolled-N prose form read
+  // what `sample_size` above could not: that pattern required an `=`, so "randomized 240
+  // patients" was invisible to it. The patterns are that module's, unchanged.
+  { label: 'sample_size',      pattern: /(?:enroll(?:ed|ment of)|randomi[sz]ed|accrued)\s+(?:a\s+total\s+of\s+)?([\d,]{1,9})\s+(?:patients|subjects|participants)/gi },
+  { label: 'sample_size',      pattern: /(?:sample\s+size|target\s+(?:enrol+ment|N)|total\s+N)\s*(?:of|=|:|\bis\b)?\s*([\d,]{1,9})\b/gi },
+  { label: 'sites',            pattern: /([\d,]{1,6})\s+(?:investigational\s+)?(?:sites|centers|centres)\b/gi },
+  { label: 'events',           pattern: /([\d,]{1,7})\s+(?:primary\s+)?(?:events|deaths)\b/gi },
+  { label: 'alpha',            pattern: /(?:alpha|type\s*I\s*error(?:\s*rate)?|significance\s+level)\s*(?:of|=|:|\bis\b)?\s*(0?\.\d{1,4})/gi },
+  { label: 'power',            pattern: /power\s*(?:of|=|:|\bis\b)?\s*((?:0?\.\d{1,4})|(?:\d{1,3})\s*%)/gi },
+  { label: 'hazard_ratio',     pattern: /(?:hazard\s+ratio|\bHR\b)\s*(?:of|=|:|\bwas\b|\bis\b)?\s*(\d?\.\d{1,4})/gi },
+  // From harmonize-engine.ts's inline copy (migrated 2026-10-19), which held these two.
+  { label: 'odds_ratio',       pattern: /(?:odds\s+ratio|\bOR\b)\s*(?:of|=|:|\bwas\b|\bis\b)?\s*(\d?\.\d{1,4})/gi },
+  { label: 'response_rate',    pattern: /(?:\bORR\b|response\s+rate|\bCR\s+rate)\s*(?:of|was|is|=|:)\s*(\d+(?:\.\d+)?)\s*%/gi },
 ];
+
+/**
+ * How a label's written value becomes a number, and at what precision two of them are the
+ * same figure.
+ *
+ * This is the one place per-label numeric normalisation lives. Until 2026-10-19 three
+ * modules each had their own, and a `power` of "90%" was 0.9 in one, the string "90" in
+ * another, and never compared in the third. `dp` is the decimal places at which two
+ * readings count as the same figure: an alpha of 0.0500 and 0.05 agree, and a hazard ratio
+ * is reported to three places, so 0.701 and 0.700 are not made to disagree at five.
+ */
+const NUMERIC_READING: Readonly<Record<string, { parse?: (raw: string) => number | null; dp: number }>> = {
+  sample_size: { dp: 0 },
+  sites: { dp: 0 },
+  events: { dp: 0 },
+  batches: { dp: 0 },
+  duration_weeks: { dp: 0 },
+  shelf_life: { dp: 0 },
+  alpha: { dp: 4 },
+  p_value: { dp: 5 },
+  hazard_ratio: { dp: 3 },
+  odds_ratio: { dp: 3 },
+  response_rate: { dp: 2 },
+  power: {
+    /* "90%" and "0.90" are the same power. A bare number above 1 is a percentage written
+       without its sign, which is how a SAP states it as often as not. */
+    parse: (raw) => {
+      const pct = raw.includes('%');
+      const n = Number(raw.replace(/[%\s,]/g, ''));
+      if (!Number.isFinite(n)) return null;
+      return pct || n > 1 ? n / 100 : n;
+    },
+    dp: 3,
+  },
+};
+
+const DEFAULT_COMPARE_DP = 3;
+
+/** The decimal places at which two readings of `label` count as the same figure. */
+export function compareDecimalsFor(label: string): number {
+  return NUMERIC_READING[label]?.dp ?? DEFAULT_COMPARE_DP;
+}
+
+/**
+ * A fact's value as a number, or null when it is not one.
+ *
+ * Null is an answer, not a zero: `predicate_knumber` is "K123456". A caller that gets null
+ * does not compare the fact, and never coerces it — a NaN or a 0 standing in for a figure
+ * nobody read is how a missing number becomes a false agreement.
+ */
+export function numericValueOf(fact: Pick<NumericalFact, 'label' | 'value'>): number | null {
+  const spec = NUMERIC_READING[fact.label];
+  if (spec?.parse) return spec.parse(fact.value);
+  const n = Number(String(fact.value).replace(/[,\s]/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Round to `dp` places, so two readings of one figure compare as written. */
+export function roundToCompare(n: number, label: string): number {
+  const f = 10 ** compareDecimalsFor(label);
+  return Math.round(n * f) / f;
+}
 
 /** Labels whose second capture is an upper bound, not a unit. */
 const TWO_BOUND_LABELS = new Set(['confidence_interval', 'age_range']);

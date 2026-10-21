@@ -1,0 +1,14 @@
+{
+  "backend": {
+    "baselineWarnings": 11,
+    "finalWarnings": 11,
+    "errors": 0
+  },
+  "ui": {
+    "errors": 0,
+    "warnings": 15,
+    "newMetadataHelpersAndTestsWarnings": 0,
+    "log": "ui-eslint-refactored.log"
+  },
+  "note": "Existing warnings retained. Normal pushed-files warning ratchet still required."
+}

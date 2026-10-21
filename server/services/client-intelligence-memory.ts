@@ -898,6 +898,9 @@ export async function getProjectMemoryEntries(
   const conditions = [
     eq(projectMemoryEntries.projectProfileId, projectProfileId as number),
     eq(projectMemoryEntries.status, 'active'),
+    // Internal ReportOS manifests require admission to every constituent
+    // source. Raw memory admission cannot authorize those records.
+    sql`${projectMemoryEntries.sourceDocumentType} IS DISTINCT FROM 'report_os_state'`,
   ];
   if (options?.category) {
     conditions.push(eq(projectMemoryEntries.category, options.category));
@@ -1177,6 +1180,7 @@ export async function getSharedMemoryPool(
       FROM project_memory_entries
       WHERE organization_id = $1
         AND status ${statusFilter}
+        AND source_document_type IS DISTINCT FROM 'report_os_state'
         ${projectExtra}
     ) shared_pool
     ORDER BY updated_at DESC
@@ -1388,6 +1392,7 @@ async function searchProjectMemoryEntriesSemanticDirect(
        AND project_id = $3
        ${profileClause}
        AND status = 'active'
+       AND source_document_type IS DISTINCT FROM 'report_os_state'
        AND embedding IS NOT NULL
        AND 1 - (embedding <=> $1::vector) >= $${projectProfileId ? 5 : 4}
        ${categoryClause}

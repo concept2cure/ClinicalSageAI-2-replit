@@ -31,7 +31,9 @@ vi.mock('@/components/i18n/LanguageSwitcher', () => ({ LanguageSwitcher: () => n
 
 import { ZenRouter } from '../ZenRouter';
 
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiZW1haWxfdmVyaWZpY2F0aW9uIn0.signature-part-long-enough';
+// Synthetic envelope: payload parsing only; this placeholder cannot authenticate.
+const TOKEN = [{ alg: 'HS256' }, { type: 'email_verification' }]
+  .map(part => Buffer.from(JSON.stringify(part)).toString('base64url')).concat('signature-part-long-enough').join('.');
 
 beforeEach(() => {
   Object.assign(auth, { isAuthenticated: false, isLoading: false, isBootstrapping: false });

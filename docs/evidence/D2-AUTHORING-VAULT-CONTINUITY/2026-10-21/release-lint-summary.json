@@ -1,0 +1,7 @@
+{
+  "files": 15,
+  "errors": 0,
+  "warnings": 40,
+  "warningDelta": "0; release-warning-ratchet.json",
+  "fixtureCorrection": "Existing auth mock preserves actual exports; production unchanged."
+}

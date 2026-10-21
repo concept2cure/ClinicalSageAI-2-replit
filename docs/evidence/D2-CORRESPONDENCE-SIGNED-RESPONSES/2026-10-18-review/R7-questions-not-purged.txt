@@ -1,0 +1,59 @@
+# mutation R7-questions-not-purged
+# file: server/services/tenant/tenant-offboarding.ts
+# replaced: "  'agency_communication_questions',\n"
+# with: ''
+# command: npx vitest run --config vitest.db.config.ts tests/db/agency-response-signed-approval.dbtest.ts -t erased
+# exit: 1
+
+est.ts > the commitments register (Communication, Commitments tab) > lists the commitment under its project, with the letter and question it was made in
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation-wide register does not list a project's commitment (project admission applies)
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it, through either door
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation's door does not reach a project's commitment, even for an editor
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future, and a date that does not exist, with a sentence
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an editor fulfils it from its project under RLS, with its ledger row
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a commitment from a letter the person may not see is not listed to them
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > keeps every text: after an edit, the earlier approved text is in the history, with its signature
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > the history is append-only for the runtime role
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a withdrawn question needs no answer, takes no edit, and is left out of the package
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter with questions recorded cannot be marked as asking nothing
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response cannot be logged as already closed
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a close and a new question cannot both land: the close is checked under the letter lock
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the screen is told what this person may do > a viewer may write nothing and sign nothing; an editor with signing authority may
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the Word package reproduces the signed text line for line > each line of a response is its own paragraph, and no Markdown marks are printed
+ × tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history and the commitments from them; the signatures stay 223ms
+   → update or delete on table "projects" violates foreign key constraint "agency_communication_questions_project_id_fkey" on table "agency_communication_questions"
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  21:48:35
+   Duration  6.04s (transform 3.05s, setup 100ms, import 323ms, tests 5.22s, environment 0ms)
+
+stderr | tests/db/agency-response-signed-approval.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history and the commitments from them; the signatures stay
+error: update or delete on table "projects" violates foreign key constraint "agency_communication_questions_project_id_fkey" on table "agency_communication_questions"
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ purgeChildTable server/services/tenant/tenant-offboarding.ts:424:20
+    422|   await client.query('SAVEPOINT purge_table');
+    423|   try {
+    424|     const result = await client.query(`DELETE FROM ${table} WHERE ${pr…
+       |                    ^
+    425|     await client.query('RELEASE SAVEPOINT purge_table');
+    426|     return result.rowCount ?? 0;
+ ❯ deleteTenantRows server/services/tenant/tenant-offboarding.ts:793:21
+ ❯ purgeInOneTransaction server/services/tenant/tenant-offboarding.ts:875:21
+ ❯ purgeTenant server/services/tenant/tenant-offboarding.ts:951:17
+ ❯ tests/db/agency-response-signed-approval.dbtest.ts:673:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 386, severity: 'ERROR', code: '23503', detail: 'Key is still referenced from table "agency_communication_questions".', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'public', table: 'agency_communication_questions', dataType: undefined, constraint: 'agency_communication_questions_project_id_fkey', file: 'ri_triggers.c', routine: 'ri_ReportViolation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

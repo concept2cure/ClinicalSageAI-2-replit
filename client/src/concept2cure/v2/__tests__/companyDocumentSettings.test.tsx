@@ -38,7 +38,7 @@ function knownRead(url: string): Response | null {
       const data = stored.legalDocuments.filter(document => document.active || url.includes('includeArchived=true'));
       return json({ data, page: { total: data.length, availableTotal: data.length, limit: 10, offset: 0, hasMore: false, nextOffset: null }, facets: { agencies: [], languages: [] } });
     }
-    if (url.startsWith('/api/c2c/project-vault/search')) return searchStatus === 200 ? json({ success: true, data: { scope: 'verified-accessible-programs', query: 'Authorization', total: 1, limit: 25, results: [{ id: DOCUMENT, title: 'Authorization original', version: '2', current: true, program: { id: PROGRAM, name: 'Oncology IND' } }] } }) : json({ message: 'Search service unavailable.' }, searchStatus);
+    if (url.startsWith('/api/c2c/project-vault/search')) return searchStatus === 200 ? json({ success: true, data: { scope: 'verified-accessible-programs', query: 'Authorization', total: 1, limit: 25, results: [{ id: DOCUMENT, title: 'Authorization original', documentType: null, size: null, version: '2', current: true, snippet: null, program: { id: PROGRAM, name: 'Oncology IND' } }] } }) : json({ message: 'Search service unavailable.' }, searchStatus);
   return null;
 }
 
@@ -136,6 +136,7 @@ describe('Company letterhead and legal library', () => {
     expect(await screen.findByText('PDF fonts were approximated.')).toBeTruthy();
     expect((screen.getByLabelText('Page size') as HTMLSelectElement).value).toBe('a4');
     expect(screen.getByLabelText('Letterhead preview').textContent).toContain('Imported legal header');
+    expect(apiUpload).toHaveBeenCalledWith('POST', `${PATH}/letterhead/extract`, expect.any(FormData));
     expect(apiRequest.mock.calls.filter(([m]) => m === 'PUT')).toHaveLength(0);
   });
 
@@ -168,7 +169,7 @@ describe('Company letterhead and legal library', () => {
     fireEvent.click(screen.getByText('Register a legal document from Vault'));
     fireEvent.change(screen.getByLabelText('Search your accessible Vaults'), { target: { value: 'Authorization' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search Vault' }));
-    expect(await screen.findByText('Search service unavailable.')).toBeTruthy();
+    expect(await screen.findByText('The Vault search could not be read. Try another search or open Vault.')).toBeTruthy();
     expect(screen.queryByText('No matching documents in your accessible projects.')).toBeNull();
   });
 

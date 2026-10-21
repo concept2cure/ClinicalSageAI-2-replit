@@ -1,0 +1,6 @@
+{
+  "recordedAt": "2026-10-20T22:21:54.770005+00:00",
+  "reason": "Root-requested scoped error-copy correction after focused green, with no status/code/guard change. Root combined qualification supersedes focused route pin.",
+  "path": "server/routes/ectd-compile.ts",
+  "sha256": "4e7ad373cdf8312a172bbfc9557b3440de51db04af8c12cd642ccf0e821b547d"
+}

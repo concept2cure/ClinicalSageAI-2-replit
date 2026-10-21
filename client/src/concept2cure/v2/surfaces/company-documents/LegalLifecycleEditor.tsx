@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { getAuthToken } from '@/utils/authToken';
 import type { CompanyDocumentProfile, CompanyDocumentsResponse, CompanyLegalDocument } from '@shared/company-documents';
 import { companyLegalRenewal, type CompanyLegalLifecycleResponse, type CompanyLegalWorkflowInput } from '@shared/company-legal-workflows';
-import { CompanyVaultPicker } from './CompanyVaultPicker';
-import type { LibraryHit } from '../VaultLibraryResults';
+import { VaultVersionPicker, type PickedVaultVersion } from '../VaultLibraryResults';
 import { COMPANY_LEGAL_PATH, companyLegalOwner, useCompanyLegalAction, useCompanyLegalResource } from './useCompanyLegalResource';
 import { PagedCompanyLegalPicker } from './PagedCompanyLegalPicker';
 
@@ -62,8 +61,8 @@ function SignatureFields({ value, change, disabled }: { value: CompanyLegalWorkf
 function LegalEvidencePicker({ document, workflow, change, disabled }: { document: CompanyLegalDocument; workflow: CompanyLegalWorkflowInput; change: (value: CompanyLegalWorkflowInput) => void; disabled: boolean }) {
   const [purpose, setPurpose] = useState<'authority' | 'signature' | 'translation'>('authority');
   const [message, setMessage] = useState('');
-  const choose = (hit: LibraryHit) => {
-    if (hit.program.id !== document.programId) { setMessage('Choose approved evidence from the same program as this legal document.'); return; }
+  const choose = (hit: PickedVaultVersion) => {
+    if (hit.programId !== document.programId) { setMessage('Choose approved evidence from the same program as this legal document.'); return; }
     if (purpose === 'authority' && workflow.authority) change({ ...workflow, authority: { ...workflow.authority, evidenceVaultDocumentIds: [...new Set([...workflow.authority.evidenceVaultDocumentIds, hit.id])] } });
     else if (purpose === 'signature' && workflow.signatureEvidence) change({ ...workflow, signatureEvidence: { ...workflow.signatureEvidence, evidenceVaultDocumentId: hit.id } });
     else if (purpose === 'translation' && workflow.translationOfId) change({ ...workflow, certifiedTranslationEvidenceVaultDocumentId: hit.id });
@@ -72,7 +71,7 @@ function LegalEvidencePicker({ document, workflow, change, disabled }: { documen
   };
   return <details className="company-wide"><summary>Add supporting Vault evidence</summary>
     <label className="company-field"><span>Use selected evidence for</span><select value={purpose} disabled={disabled} onChange={event => setPurpose(event.target.value as typeof purpose)}><option value="authority">Signing authority</option><option value="signature">External signature verification</option><option value="translation">Certified translation</option></select></label>
-    <CompanyVaultPicker disabled={disabled} onChoose={choose} />{message && <p role="status">{message}</p>}
+    <VaultVersionPicker programId={document.programId} disabled={disabled} onChoose={choose} />{message && <p role="status">{message}</p>}
   </details>;
 }
 function useLifecycleModel(props: LegalLifecycleEditorProps) {

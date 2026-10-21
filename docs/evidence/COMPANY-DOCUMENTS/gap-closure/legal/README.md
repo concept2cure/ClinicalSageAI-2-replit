@@ -1,5 +1,58 @@
 # Legal workflow verification
 
+## What already exists
+
+The company profile writer (`server/services/company-documents/profile.ts`),
+Vault approval and affected-filing readers (`server/services/vault/vault-lifecycle.ts`
+and `vault-where-used.ts`), native task sweep and notification service, regional
+Module 1 requirements, and canonical submission placement/readiness/assembly
+already own these capabilities. Legal lifecycle and requirement checks extend
+those paths; library registration alone supplies no approval or agency verdict.
+Their focused regressions below exercise those real boundaries.
+
+The existing shared `VaultVersionPicker` in
+`client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx` now serves company
+settings and `surfaces/company-documents/LegalLifecycleEditor.tsx`. The duplicate
+`CompanyVaultPicker.tsx` was removed. `companyDocumentReviewTools.test.tsx` retains
+retry/pagination coverage on the shared picker; `companyLegalWorkflows.test.tsx`
+checks that lifecycle evidence is scoped to the admitted document's program.
+
+## Verification after merging 443 upstream commits
+
+On 2026-10-21, against the resolved working merge of
+`8d688686532d676067e8d199010966a5633c10ff` and
+`30afd3bd17a90c8de4a44098354d9de3a34cb4bc`,
+`post443-native-tests.txt` records **65 passing tests in eight files**. This
+fresh run covers legal readiness and saved review identity, lifecycle/evidence
+composition, native renewal tasks/notifications, actual saved-requirement
+readiness and assembly gates, copied-original ancestry, base Vault validity,
+and canonical cross-project and duplicate-placement checks. No production
+change or gate mock was made for this verification. Command:
+
+```sh
+npx vitest run \
+  server/services/company-documents/__tests__/legal-readiness.test.ts \
+  server/services/company-documents/__tests__/legal-workflow.test.ts \
+  server/services/company-documents/__tests__/legal-renewal.pglite.test.ts \
+  server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts \
+  server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts \
+  server/services/vault/__tests__/company-legal-validity.test.ts \
+  server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts \
+  server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts \
+  --maxWorkers=1
+```
+
+After the shared Vault picker owner froze its source,
+`post443-ui-tests.txt` records **11 passing tests in two files**:
+`companyLegalWorkflows.test.tsx` and `companyDocumentReviewTools.test.tsx`.
+These retain explicit revocation, external-evidence wording, null-review display,
+filing-bound mapping and stale-filing response refusal, scoped exact-version
+selection, accessible letterhead review, real inventory paging/failure recovery,
+and same-query retry plus offset paging on the canonical `VaultVersionPicker`.
+Command: `npx vitest run client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx --maxWorkers=1`.
+
+## Verification before the upstream merge
+
 Run on 2026-10-18 with Node v22.23.3, against source commit
 `5ebfcfd2c595f44eef79917ec199724082338e69`.
 

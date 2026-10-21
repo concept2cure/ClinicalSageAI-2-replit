@@ -1,0 +1,10 @@
+{"lane":"security","batch":"lo-2","checks":[
+{"id":"SEC-21","statusAtHead":"PARTIALLY_FIXED","note":"discarded-audit-write-baseline.json now 119 sites/52 files (was 122/54); submission-service.ts still uses post-write recordAuditRow at :249,:596,:710,:1041."},
+{"id":"SEC-22","statusAtHead":"STILL_OPEN","note":"scripts/ci/gateway-bypass-baseline.json still has 8 entries."},
+{"id":"SEC-23","statusAtHead":"PARTIALLY_FIXED","note":"approval-workflow.ts no longer has the isDev&&!token user-1 bypass but still re-verifies JWT locally (:40 verifyJwtWithRotation)."},
+{"id":"SEC-24","statusAtHead":"UNVERIFIABLE","note":"Not re-checked in this light pass."},
+{"id":"SEC-25","statusAtHead":"STILL_OPEN","note":"server/routes/submissionCenter.routes.ts still exists and imported (register-governance-routes.ts:9,64), unmounted."},
+{"id":"SEC-26","statusAtHead":"STILL_OPEN","note":"ssrfGuard.ts isSafePublicHost still uses startsWith('fc'/'fd') and has no '::' or NAT64/6to4 handling."},
+{"id":"SEC-27","statusAtHead":"STILL_OPEN","note":"audit-trail.ts still uses mount-relative req.path for SKIP patterns and resourceType index [1], and logs req.query."},
+{"id":"SEC-28","statusAtHead":"STILL_OPEN","note":"enterprise-security.ts:51-57 legacy origins remain; operator-endpoints.ts:30 still compares METRICS_TOKEN with ===."}
+]}

@@ -1,0 +1,52 @@
+{
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx"
+  ],
+  "executionBase": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+  "startedAt": "2026-10-20T19:33:53.014326+00:00",
+  "elapsedSeconds": 5.205,
+  "node": "v22.23.3",
+  "exitCode": 0,
+  "rawSha256": "35656d16505d10a09474db71b3cd4feb0061c77788d465df9f9a51a20ea5da26",
+  "output": "\n RUN  v4.1.7 /workspace/ClinicalSageAI\n\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > opens the shared chooser from a retained upload in a local host 457ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > opens the shared chooser from a retained upload in a external host 121ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > hands off an exact upload from a later search page without inventing a checksum 905ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses an upload excluded from active data use: {\"disposition\":\"remove_data\"} 40ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses an upload excluded from active data use: {\"disposition\":\"supersede\"} 36ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses an upload excluded from active data use: {\"earlierVersion\":true} 41ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses malformed source identity without coercion: {\"docId\":\"up-33333333-3333-4333-8333-333333333481\"} 35ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses malformed source identity without coercion: {\"hash\":\"not-a-checksum\"} 33ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > offers no upload build for a row without the exact upload identity: {\"src\":\"authored\"} 31ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > offers no upload build for a row without the exact upload identity: {} 32ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > offers no source build without an explicit effective project 2ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > does not substitute the new shell project for a held effective project 39ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > retires a pending chooser across availability ABA 84ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > retires a pending chooser across disabled ABA 84ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > refuses a delayed target read after the project visit changes 42ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > refuses a delayed target read after the account session changes 44ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > refuses a delayed target read after the selected source changes 40ms\n\n Test Files  1 passed (1)\n      Tests  17 passed (17)\n   Start at  19:33:53\n   Duration  4.32s (transform 714ms, setup 222ms, import 940ms, tests 2.07s, environment 843ms)\n\n",
+  "sourcePinsBefore": {
+    "client/src/concept2cure/v2/editor/ProjectFileActions.tsx": "0168c4be4c6ff9677399bc8fe45c933de925f56509fdf9c46696419f9be0f7d6",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "31da69bf0a1af80a7c548f4affdb841ab0bc245ab242b1e5b6c1ac248b667057",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "3bdc2b83cb0df267ef4b4cdd4105f806a4252cecee1bcc8dc1c2ecf7b51db64e",
+    "client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx": "661aa7bdb6f2f5794f5868d4612268d6000422f57d4b411066bb4e36888598e1",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "349d394df951937e5c87a0ab34af43af4f8f01bff7734c99c6d3db002afb95b5",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx": "c771aa68d5c64ed96fc2e995b9a37b683ec538e4b488597b334ee21592bb0068",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+    "client/src/concept2cure/v2/editorTarget.ts": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "package.json": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+    "package-lock.json": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "sourcePinsAfter": {
+    "client/src/concept2cure/v2/editor/ProjectFileActions.tsx": "0168c4be4c6ff9677399bc8fe45c933de925f56509fdf9c46696419f9be0f7d6",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "31da69bf0a1af80a7c548f4affdb841ab0bc245ab242b1e5b6c1ac248b667057",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "3bdc2b83cb0df267ef4b4cdd4105f806a4252cecee1bcc8dc1c2ecf7b51db64e",
+    "client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx": "661aa7bdb6f2f5794f5868d4612268d6000422f57d4b411066bb4e36888598e1",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "349d394df951937e5c87a0ab34af43af4f8f01bff7734c99c6d3db002afb95b5",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx": "c771aa68d5c64ed96fc2e995b9a37b683ec538e4b488597b334ee21592bb0068",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+    "client/src/concept2cure/v2/editorTarget.ts": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "package.json": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+    "package-lock.json": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "pinsStable": true
+}

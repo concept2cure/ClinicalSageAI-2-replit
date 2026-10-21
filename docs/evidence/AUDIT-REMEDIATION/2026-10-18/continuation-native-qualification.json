@@ -1,0 +1,399 @@
+{
+  "recordVersion": 1,
+  "recordedAtUtc": "2026-10-18T00:08:13.950975+00:00",
+  "scope": "Continuation qualification of recipient digest access, reserved ReportOS memory isolation, and faithful authoring/schema fixtures. This is scoped synthetic qualification, not whole-codebase or production-environment certification.",
+  "environment": {
+    "databaseKind": "Named disposable synthetic PostgreSQL 15.19 fixture",
+    "canonicalMigrationCount": 408,
+    "databaseProvisionArtifact": "oct17-fresh-provision-verification.json",
+    "populatedReplayArtifact": "oct17-populated-replay-verification.json",
+    "applicationRole": "app_service",
+    "superuser": false,
+    "bypassRls": false,
+    "rlsEnforcement": "on (asserted through authenticated actual request SQL)",
+    "transport": {
+      "tls": true,
+      "certificateAuthorized": true,
+      "mode": "verify-full",
+      "postureArtifact": "oct18-report-state-native-posture.json"
+    },
+    "newSchemaOrMigrationChangesInTheseContinuationFixtures": false,
+    "secretMaterialIncluded": false
+  },
+  "cohorts": {
+    "digestRecipientNative": {
+      "runner": "Vitest real PostgreSQL project (vitest.db.config.ts)",
+      "rawArtifact": "oct17-digest-recipient-private-final-native.json",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "fileCount": 1,
+      "files": [
+        {
+          "file": "tests/db/submission-digest-access.dbtest.ts",
+          "passed": 11,
+          "failed": 0,
+          "controls": [
+            "retained digest recipient admission on the actual deployed schema uses authenticated tenant scope, restricted role, configured transport and enforced RLS",
+            "retained digest recipient admission on the actual deployed schema lists only the actual recipient and admitted private parents and discloses generator unavailability",
+            "retained digest recipient admission on the actual deployed schema refuses a other recipient/parent marker without a receipt or audit",
+            "retained digest recipient admission on the actual deployed schema refuses a private recipient/parent marker without a receipt or audit",
+            "retained digest recipient admission on the actual deployed schema conceals an unanchored private parent while its actual owner receives the repair refusal",
+            "retained digest recipient admission on the actual deployed schema commits an own marker and its sealed audit atomically, and does not repeat the audit",
+            "retained digest recipient admission on the actual deployed schema permits a current viewer to mark their own receipt without editing project content",
+            "retained digest recipient admission on the actual deployed schema rejects a still-signed token after its current membership is removed",
+            "retained digest recipient admission on the actual deployed schema rolls the marker back when actual audit SQL is refused",
+            "retained digest recipient admission on the actual deployed schema reports before-COMMIT lost replies without rollback or false confirmation and evicts the connection",
+            "retained digest recipient admission on the actual deployed schema reports after-COMMIT lost replies without rollback or false confirmation and evicts the connection"
+          ]
+        }
+      ],
+      "sourceSnapshot": [
+        {
+          "file": "tests/db/submission-digest-access.dbtest.ts",
+          "sha256AtExecution": "7984a333e5a1dd645c6be31f71dec89a0037a1d51e9c2b3ab59764487cde7b58",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/services/submission-ops/digest-access.ts",
+          "sha256AtExecution": "c62b14f0cf4a3d5a951bbdbd94974605d4a46cfaac76b58ad5dcd2c77f4bc03d",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/routes/submission-ops.ts",
+          "sha256AtExecution": "0f4d131738f65a287bb6a4109b053381b36158457fe670237b7c7c3ab474c847",
+          "matchesSourceAtRecordCreation": true
+        }
+      ],
+      "acceptanceArtifact": "oct17-digest-native-final-acceptance.json",
+      "preservation": "Fresh unique tenant/users/workspaces/programs/digests; all digest/audit history retained. One fresh membership deletion is the revocation test. No immutable/history/byte cleanup, migrations, triggers, grants or production mutations.",
+      "providerCalls": false,
+      "scopeLimits": [
+        "Digest generation was not invoked or qualified.",
+        "Initial setup failure and earlier ten-case runs remain historical artifacts; only the final eleven-case run is counted here."
+      ]
+    },
+    "reportStateMemoryNative": {
+      "runner": "Vitest real PostgreSQL project (vitest.db.config.ts)",
+      "rawArtifact": "oct17-report-state-memory-final-native.json",
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "fileCount": 1,
+      "files": [
+        {
+          "file": "tests/db/report-state-memory-isolation.dbtest.ts",
+          "passed": 10,
+          "failed": 0,
+          "controls": [
+            "reserved ReportOS state stays outside generic native memory readers proves actual JWT tenant scope, restricted role, configured transport and a denied private source",
+            "reserved ReportOS state stays outside generic native memory readers filters before direct raw limits and counts while preserving ordinary NULL/PDF sources",
+            "reserved ReportOS state stays outside generic native memory readers returns ordinary memories and the filtered total from the actual mounted memory endpoint",
+            "reserved ReportOS state stays outside generic native memory readers filters the shared pool before its limit and refuses a search matching only private manifest bytes",
+            "reserved ReportOS state stays outside generic native memory readers builds the mounted project prompt exclusively from ordinary memories",
+            "reserved ReportOS state stays outside generic native memory readers keeps summary counts and the secondary intelligence reader consistent",
+            "reserved ReportOS state stays outside generic native memory readers filters the actual mounted intelligence feed before pagination and source metadata rendering",
+            "reserved ReportOS state stays outside generic native memory readers filters before native pgvector ranking on the router semantic path",
+            "reserved ReportOS state stays outside generic native memory readers filters before native pgvector ranking on the legacy semantic path",
+            "reserved ReportOS state stays outside generic native memory readers retains the complete reserved manifest and all three original embedded rows"
+          ]
+        }
+      ],
+      "sourceSnapshot": [
+        {
+          "file": "server/services/client-intelligence-memory.ts",
+          "sha256AtExecution": "41c6d1ba8077c97ebbedb59593a06b3346718adddda12155c12986878b2cadbd",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/services/intelligence/project-intelligence-service.ts",
+          "sha256AtExecution": "4b859236ae36b704e6173bb3737281d7d80843cb28bae594b21df6cb8a9759b4",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/services/advancedRAGPipeline.ts",
+          "sha256AtExecution": "ff51126658b65263bf8e1e781a81c775fa57c205350c3e60ce074c180baa38a3",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/services/ana-ri/context-enrichment.ts",
+          "sha256AtExecution": "04e97fb6fb17d8665940c4731fc1f5e10c4061a3ed746884d54acceb92339958",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/services/ana-ri/command-executor.ts",
+          "sha256AtExecution": "fb19e27d8a992b1dbc4078f37d40ae9e38fd2ea7de28e0f79832a1d6dc344b37",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/services/memory-consolidation-job.ts",
+          "sha256AtExecution": "3dd1def7aa37544da6b4ba785d52a01c972b448c25214004c23e3e86fd78108c",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "server/routes/ana-features.ts",
+          "sha256AtExecution": "37519d41224be8aa9c3fe94b03d229f09caa538604f0ce8e35a3b86268a6c522",
+          "matchesSourceAtRecordCreation": true
+        },
+        {
+          "file": "tests/db/report-state-memory-isolation.dbtest.ts",
+          "sha256AtExecution": "9b5a5ad15920c08068104ae77562148befcaaa240572f79b0db7aa012d96360a",
+          "matchesSourceAtRecordCreation": true
+        }
+      ],
+      "acceptanceArtifact": "oct18-report-state-memory-native-acceptance.json",
+      "preservation": "All three actual embedded synthetic rows and full original mixed-source manifest retained; no deletion or history mutation.",
+      "providerBoundary": "Only the embedding provider is replaced with deterministic local 1536-dimensional vectors; native vector arithmetic, ranking, runtime SQL, JWT and actual mounted readers run. No external provider call.",
+      "scopeLimits": [
+        "Fixture inserts canonical report_os_state manifest directly; production producer has separate proof.",
+        "Deterministic local vectors replace only embedding provider calls; actual native pgvector arithmetic/ranking, Drizzle/runtime SQL, JWT and route middleware run.",
+        "Does not claim an all-reader or whole-suite native run.",
+        "Hashing seven changed reader files does not assert that every path in all seven ran natively. Mounted raw memory/shared-pool/context/feed, direct counts and the secondary intelligence reader, and default/legacy semantic retrieval are the native scope."
+      ]
+    },
+    "authoringFixtureClosure": {
+      "runner": "Vitest schema-contract project using actual migration DDL in PGlite; not a native PostgreSQL cohort",
+      "rawArtifact": "oct18-authoring-fixture-closure-final.json",
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0,
+      "fileCount": 2,
+      "files": [
+        {
+          "file": "tests/schema-contract/authoring-migration-list-closure.contract.test.ts",
+          "passed": 4,
+          "failed": 0,
+          "controls": [
+            "authoring migration lists in test harnesses are ALTER-closed finds the harnesses at all \u2014 the gate is not vacuous",
+            "authoring migration lists in test harnesses are ALTER-closed and the applier itself still declares files that ALTER what it creates",
+            "authoring migration lists in test harnesses are ALTER-closed no harness builds a table and then skips an applier file that alters it",
+            "authoring migration lists in test harnesses are ALTER-closed lists its migrations as calls or array elements, never as bare strings"
+          ]
+        },
+        {
+          "file": "tests/schema-contract/tenant-isolation-sweep.contract.test.ts",
+          "passed": 20,
+          "failed": 0,
+          "controls": [
+            "C-33: the sweep is positioned to see everything the set creates is in C2C_MIGRATION_FILES, and is the LAST entry",
+            "C-33: the sweep is positioned to see everything the set creates the batch-2 files are wired ahead of it",
+            "C-33: the sweep is positioned to see everything the set creates the once-excluded files are now wired, having been RESOLVED not skipped",
+            "C-33: the sweep is positioned to see everything the set creates still refuses the _consolidated tree, which was never merely unwired",
+            "C-33: the sweep is positioned to see everything the set creates DOES wire enhanced_cortex, whose identity conflict C-36 resolved",
+            "C-36: enhanced cortex keys atoms the way the canonical store does matches the fixture atom key type",
+            "C-36: enhanced cortex keys atoms the way the canonical store does every Cortex atom reference matches its parent key type",
+            "C-36: enhanced cortex keys atoms the way the canonical store does the two previously-impossible foreign keys now exist",
+            "C-36: enhanced cortex keys atoms the way the canonical store does the services' real JOIN typechecks (it could not before)",
+            "C-36: enhanced cortex keys atoms the way the canonical store does matches a UUID-backed atom store without rewriting it",
+            "C-33: the batch applies in set order, twice, and ends fully isolated creates tables and leaves NO integer-keyed tenant table unpoliced",
+            "C-33: the batch applies in set order, twice, and ends fully isolated policies electronic_signatures \u2014 the Part 11 record that had no tenant key",
+            "C-33: the batch applies in set order, twice, and ends fully isolated actually blocks a cross-tenant read on a table it sweeps",
+            "C-33: the sweep is deploy-safe a TEXT tenant key is SKIPPED, not raised \u2014 a deploy must not halt on pre-existing drift",
+            "C-33: the sweep is deploy-safe never clobbers a policy a subsystem installed for itself",
+            "C-33: the sweep is deploy-safe FORCES a table that had the policy but no FORCE (owner-bypass close, C-43)",
+            "C-33: the sweep is deploy-safe leaves a policy-LESS RLS table un-forced (no owner default-deny surprise)",
+            "C-33: the sweep is deploy-safe HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44)",
+            "C-33: the sweep is deploy-safe leaves a clean allowlisted table unpoliced (the first loop honors the allowlist)",
+            "C-33: the sweep is deploy-safe skips the allowlist, tables with no tenant column, and views"
+          ]
+        }
+      ],
+      "sourceSnapshot": [
+        {
+          "file": "tests/schema-contract/tenant-isolation-sweep.contract.test.ts",
+          "sha256AtExecution": "04c21c8a697921f29e1cb685a6857976f78f5c8f4fe6afc9487e822ecc59be82",
+          "matchesSourceAtRecordCreation": true
+        }
+      ],
+      "acceptanceArtifact": "oct18-authoring-fixture-closure-acceptance.json",
+      "actualAlterPrerequisitesAdded": [
+        "db/migrations/20260730_authoring_comments_router_columns.sql",
+        "db/migrations/20260817_doc_revisions_immutable_ledger.sql"
+      ],
+      "closureGuardRelaxed": false,
+      "scopedLint": {
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    "earlierSchemaAndIndJourneyFixtures": {
+      "runner": "Vitest schema-contract and golden HTTP journey fixtures with actual migration DDL in PGlite; not a native PostgreSQL cohort",
+      "rawArtifact": "oct17-schema-journey-fixtures-final.json",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "fileCount": 2,
+      "files": [
+        {
+          "file": "tests/golden-journeys/ind-authoring.journey.test.ts",
+          "passed": 1,
+          "failed": 0,
+          "controls": [
+            "Journey A phase 1 \u2014 authoring loop over HTTP (canonical DDL) runs the authoring spine"
+          ]
+        },
+        {
+          "file": "tests/schema-contract/tenant-isolation-sweep.contract.test.ts",
+          "passed": 20,
+          "failed": 0,
+          "controls": [
+            "C-33: the sweep is positioned to see everything the set creates is in C2C_MIGRATION_FILES, and is the LAST entry",
+            "C-33: the sweep is positioned to see everything the set creates the batch-2 files are wired ahead of it",
+            "C-33: the sweep is positioned to see everything the set creates the once-excluded files are now wired, having been RESOLVED not skipped",
+            "C-33: the sweep is positioned to see everything the set creates still refuses the _consolidated tree, which was never merely unwired",
+            "C-33: the sweep is positioned to see everything the set creates DOES wire enhanced_cortex, whose identity conflict C-36 resolved",
+            "C-36: enhanced cortex keys atoms the way the canonical store does matches the fixture atom key type",
+            "C-36: enhanced cortex keys atoms the way the canonical store does every Cortex atom reference matches its parent key type",
+            "C-36: enhanced cortex keys atoms the way the canonical store does the two previously-impossible foreign keys now exist",
+            "C-36: enhanced cortex keys atoms the way the canonical store does the services' real JOIN typechecks (it could not before)",
+            "C-36: enhanced cortex keys atoms the way the canonical store does matches a UUID-backed atom store without rewriting it",
+            "C-33: the batch applies in set order, twice, and ends fully isolated creates tables and leaves NO integer-keyed tenant table unpoliced",
+            "C-33: the batch applies in set order, twice, and ends fully isolated policies electronic_signatures \u2014 the Part 11 record that had no tenant key",
+            "C-33: the batch applies in set order, twice, and ends fully isolated actually blocks a cross-tenant read on a table it sweeps",
+            "C-33: the sweep is deploy-safe a TEXT tenant key is SKIPPED, not raised \u2014 a deploy must not halt on pre-existing drift",
+            "C-33: the sweep is deploy-safe never clobbers a policy a subsystem installed for itself",
+            "C-33: the sweep is deploy-safe FORCES a table that had the policy but no FORCE (owner-bypass close, C-43)",
+            "C-33: the sweep is deploy-safe leaves a policy-LESS RLS table un-forced (no owner default-deny surprise)",
+            "C-33: the sweep is deploy-safe HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44)",
+            "C-33: the sweep is deploy-safe leaves a clean allowlisted table unpoliced (the first loop honors the allowlist)",
+            "C-33: the sweep is deploy-safe skips the allowlist, tables with no tenant column, and views"
+          ]
+        }
+      ],
+      "sourceSnapshot": [
+        {
+          "file": "tests/schema-contract/tenant-isolation-sweep.contract.test.ts",
+          "sha256AtExecution": "9f872e6ba9803842e6d491fb58a0eaa6b38e4d7a42c6b7c56d488c481e932833",
+          "matchesSourceAtRecordCreation": false,
+          "supersededBy": "authoring-fixture-closure; the earlier source hash is retained without reattribution."
+        },
+        {
+          "file": "tests/golden-journeys/ind-authoring.journey.test.ts",
+          "sha256AtExecution": "bdb22e847601dc7e030a7f177fe53db11ba0a6c7883d955d5a5af971844c9229",
+          "matchesSourceAtRecordCreation": true
+        }
+      ],
+      "acceptanceArtifact": "oct17-schema-journey-fixtures-acceptance.json",
+      "schemaGapChecks": "IND journey afterAll assertNoSchemaGaps/assertNoDegradedTenantEnrichment remained enabled and passed. No schema-gap suppression was added.",
+      "actualPrerequisitesAdded": {
+        "notificationReceiptBase": "Actual mdx_notifications and mdx_notification_subscriptions table DDL extracted from migrations/20260510_notifications_and_clinical.sql",
+        "authoringBase": "Actual db/migrations/20260725_authoring_document_loop_tables.sql before C2C batch, matching real deploy authoring parent lineage",
+        "INDcontrolledContent": [
+          "migrations/20260511_qms_and_labeling.sql",
+          "db/migrations/20261014_qms_controlled_authoring_content.sql"
+        ]
+      },
+      "scopedLint": {
+        "errors": 0,
+        "warnings": 4,
+        "note": "Four inherited IND-journey warnings; tenant fixture clean."
+      },
+      "relationshipToLaterCohort": "The twenty tenant-isolation sweep controls were run in both this 21/2 cohort and the later 24/2 closure cohort. Do not add 21 and 24; the later run uses the completed ALTER lineage. IND journey (one case) was unchanged by that later fixture-only addition."
+    }
+  },
+  "countingRules": [
+    "Native digest eleven and native memory ten are distinct scoped files; this record does not add them to earlier publication totals.",
+    "Fixture 24/2 and earlier 21/2 overlap on all twenty tenant-sweep controls. They are separate successful executions, not forty-five independent cases.",
+    "Fixture PGlite checks are separate from native PostgreSQL checks. No provider or production deployment qualification is inferred from these results."
+  ],
+  "currentSourceHashesRecordedAfterSuccessfulExecution": {
+    "tests/schema-contract/authoring-migration-list-closure.contract.test.ts": "b1b84ea162ca5c54df4967664afc7e4e7be9f336323d14d34091ca588b8b1d74",
+    "db/migrations/20260730_authoring_comments_router_columns.sql": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2",
+    "db/migrations/20260817_doc_revisions_immutable_ledger.sql": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+  },
+  "unresolvedSeparateFinding": {
+    "status": "unresolved; read-only diagnosis only",
+    "area": "Tenant offboarding purge completion",
+    "observedCatalogTablesOutsideExplicitPurgeAndCascadeReach": 685,
+    "countMeaning": "Candidate tenant-keyed tables in the disposable catalog, not 685 proven populated customer residues.",
+    "reachableExamples": [
+      "public.report_runs",
+      "public.submissions",
+      "public.protocol_documents"
+    ],
+    "remainingWork": "Review explicit retention/classification and concurrency barriers before asserting complete purge. No blanket deletion or purge completion remedy is claimed.",
+    "artifact": "oct17-offboarding-readonly-review.json"
+  },
+  "artifactIndex": {
+    "oct17-digest-recipient-private-final-native.json": {
+      "sha256": "752a7f1bb9acdad4b6461b30e6ccb48e043d88f04160fb46447d60f664adf757",
+      "bytes": 5416,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-digest-recipient-private-final-native.log": {
+      "sha256": "7dcd7e3997a282de09323683204ca03c010c37807182460a9ce9a9edd7480775",
+      "bytes": 978,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-digest-native-final-acceptance.json": {
+      "sha256": "7ab7849518412722c44e4179dcfbfee8736b6eb990538dba4a8bfe21eab6705e",
+      "bytes": 2187,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-report-state-memory-final-native.json": {
+      "sha256": "7b1649a708cfa646f0a7ed961696507b6791cf0f069cd5598e19119fabf1f26e",
+      "bytes": 5024,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-report-state-memory-final-native.log": {
+      "sha256": "72a7f5ea3c7b54ad9872011781ffa2e0ea6a109f45b161cebd3e50c00384c925",
+      "bytes": 1295,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct18-report-state-memory-native-acceptance.json": {
+      "sha256": "6f0d315fe0c2123281af007a17146b38ea27cc545dbebf45956d89ea4a5074ed",
+      "bytes": 2012,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct18-report-state-native-posture.json": {
+      "sha256": "a45a987b5cda1834095d2d1e1e43b862c530b89c0f59f68383250f23abef2cc7",
+      "bytes": 251,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct18-authoring-fixture-closure-final.json": {
+      "sha256": "4cf8cc0c6bdd9d6cb85a48ad4a07683b6c1e1191eb4f5d5902d169f6324ba3e7",
+      "bytes": 9890,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct18-authoring-fixture-closure-final.log": {
+      "sha256": "b1958b3a20314715ec3a30cfa932146f4413270fd2e66628c64cace6a26311a8",
+      "bytes": 643,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct18-authoring-fixture-closure-acceptance.json": {
+      "sha256": "3f254cbd1ef171b1550cff6040fac233073c1b2124c8051e9a93353591ed2747",
+      "bytes": 582,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-schema-journey-fixtures-final.json": {
+      "sha256": "8d9703ea12b1230c85c584bef0085d2482fe411cc204f9d8db70f32d6d14243a",
+      "bytes": 8625,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-schema-journey-fixtures-final.log": {
+      "sha256": "5aa5a2d7c353ed587e7933e1d0a6ee8e0a13acd81e68da243ba7533e9e8afa66",
+      "bytes": 7231,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-schema-journey-fixtures-acceptance.json": {
+      "sha256": "3ecd253ad526b0719d5a5c8af44dd92146d965b5a3fb795c2a3ab610fe228bee",
+      "bytes": 1358,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-fresh-provision-verification.json": {
+      "sha256": "522f4a7f7cf31a850073e90b7b38a2d87ad30087aae4c3388ffb1a825118d04c",
+      "bytes": 72285,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-populated-replay-verification.json": {
+      "sha256": "a3c9d8c3899ca039a8724550a071f72a9d9b994ed9966d3d0b6088c9750912ab",
+      "bytes": 3264,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    },
+    "oct17-offboarding-readonly-review.json": {
+      "sha256": "a2bece45ae13d5c74ba6eca8d049404fbdfb1ceccb3597a2316ee7c347641bb5",
+      "bytes": 74869,
+      "availability": "Retained in the original qualification workspace; raw artifact is not embedded in this portable summary."
+    }
+  }
+}

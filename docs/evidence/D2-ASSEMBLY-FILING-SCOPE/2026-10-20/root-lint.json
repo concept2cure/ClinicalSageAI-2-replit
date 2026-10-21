@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-20T23:58:41.055436+00:00",
+  "argv": [
+    "npx",
+    "--no-install",
+    "eslint",
+    "--max-warnings",
+    "0",
+    "client/src/concept2cure/v2/editor/authoringOversight.ts",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+    "server/services/c2c/document-class.ts",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts",
+    "server/services/regulatory/market-support.ts"
+  ],
+  "elapsedSeconds": 3.685,
+  "exitCode": 0,
+  "rawOutput": "root-lint-output.txt.gz",
+  "outputSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "stdout": ""
+}

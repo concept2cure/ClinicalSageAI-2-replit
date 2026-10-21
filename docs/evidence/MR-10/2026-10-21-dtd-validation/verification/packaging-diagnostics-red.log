@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records every generated backbone/STF as unverified when the drop-point is empty
+ ↓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > validates all captured ZIP XML and checksum-pins its exact supportive bytes
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned 4290ms
+   → expected '[{"relPath":"index.xml","wellFormed":…' not to contain '/tmp'
+ ↓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > refuses to certify changed supportive bytes despite otherwise valid XML
+ × server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing 2533ms
+   → expected 'eCTD package DTD validation is incomp…' to match /stf-[^/\s]+\.xml/\s]+\.xml
+ ↓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > does not require an STF DTD when this sequence generates no STF
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned
+AssertionError: expected '[{"relPath":"index.xml","wellFormed":…' not to contain '/tmp'
+
+Expected: "/tmp"
+Received: "[{"relPath":"index.xml","wellFormed":{"ran":true,"valid":true,"errors":[],"mode":"well-formed"},"doctype":{"valid":true,"errors":[]},"dtd":{"ran":true,"valid":true,"errors":[],"mode":"dtd"}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"ran":true,"valid":true,"errors":[],"mode":"well-formed"},"doctype":{"valid":true,"errors":[]},"dtd":{"ran":true,"valid":true,"errors":[],"mode":"dtd"}},{"relPath":"m5/5-3-5-1/study-001/stf-study-001.xml","wellFormed":{"ran":true,"valid":true,"errors":[],"mode":"well-formed"},"doctype":{"valid":true,"errors":[]},"dtd":{"ran":true,"valid":false,"errors":["/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute xmlns:ectd of element study","//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute xmlns:xlink of element study","//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:3: element study: validity error : No declaration for attribute dtd-version of element study","//www.ich.org/ectd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" dtd-version=\"2.2\"","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:5: element title: validity error : No declaration for element title","<title>Pivotal efficacy study</title>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:6: element study-id: validity error : No declaration for element study-id","<study-id>STUDY-001</study-id>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:7: element study-identifier: validity error : No declaration for element study-identifier","</study-identifier>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:9: element doc-content: validity error : No declaration for attribute href of element doc-content","<doc-content xlink:href=\"../../../index.xml#leaf-5-3-5-1-study-report\">","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:10: element title: validity error : No declaration for element title","<title>Pivotal Study Report</title>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for attribute name of element file-tag","<file-tag name=\"study-report-body\" info-type=\"ich\"/>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for attribute info-type of element file-tag","<file-tag name=\"study-report-body\" info-type=\"ich\"/>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:11: element file-tag: validity error : No declaration for element file-tag","<file-tag name=\"study-report-body\" info-type=\"ich\"/>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:12: element doc-content: validity error : No declaration for element doc-content","</doc-content>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:13: element study-document: validity error : No declaration for element study-document","</study-document>","^","/tmp/ectd-package-validation-2HzaX9/m5/5-3-5-1/study-001/stf-study-001.xml:14: element study: validity error : No declaration for element study","</ectd:study>","^"],"mode":"dtd"}}]"
+
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:122:38
+    120|     expect(bundle.dtdStatus?.validation).toMatchObject({ passed: false…
+    121|     const rows = bundle.dtdStatus!.validation!.files;
+    122|     expect(JSON.stringify(rows)).not.toContain(os.tmpdir());
+       |                                      ^
+    123|     expect(rows.find(row => /\/stf-/.test(row.relPath))?.dtd).toMatchO…
+    124|     expect(rows.filter(row => !/\/stf-/.test(row.relPath)).every(row =…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing
+AssertionError: expected 'eCTD package DTD validation is incomp…' to match /stf-[^/\s]+\.xml/\s]+\.xml
+
+- Expected:
+/stf-[^/\s]+\.xml/
+
++ Received:
+"eCTD package DTD validation is incomplete or failed. Review the per-file XML/DTD and supportive-file integrity evidence."
+
+ ❯ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts:147:29
+    145|     expect(failure).toBeInstanceOf(Error);
+    146|     expect(failure.message).toMatch(/DTD.*valid|valid.*DTD/i);
+    147|     expect(failure.message).toMatch(/stf-[^/\s]+\.xml/);
+       |                             ^
+    148|     expect(failure.message).toMatch(/study|wrong-study/);
+    149|     expect(failure.message).not.toContain(os.tmpdir());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 skipped (6)
+   Start at  00:32:56
+   Duration  13.40s (transform 3.71s, setup 273ms, import 4.14s, tests 6.83s, environment 0ms)
+
