@@ -59,6 +59,13 @@ its stopped outcome. A refused gateway invocation did not dispatch a provider,
 but earlier invocations, tool actions and host-admission receipts may exist.
 Do not claim whole-turn rollback, empty results or safe blind repeat.
 
+Qualification-stage clarification: closing the existing `TurnTimeline` can
+write a frame before the catch checks headers. For a typed context refusal
+that arrives before headers only, suppress the timeline sink's socket write
+while retaining its existing recorder/mirror event. This keeps the JSON413
+carrier reachable. Leave timeline emission for all other errors unchanged;
+no new timeline API or record path.
+
 Reach `TOKEN_LIMIT_EXCEEDED` in the existing client recovery helpers. Empty
 replies display the existing sanitized server message for that whitelisted code;
 partial replies preserve their text and add that recovery as a warning. Both

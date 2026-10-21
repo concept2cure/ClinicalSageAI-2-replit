@@ -1,0 +1,24 @@
+{
+  "baseline": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "headAtFreeze": "490d637a2bbd33cb9d8e08da5b748743a5314462",
+  "test": "server/routes/chat/__tests__/send-message-context-window.test.ts",
+  "testSha256": "b00c34256a20ae012cece4006f74e35023d6708e246db51aa7939e7abfdd2a30",
+  "baselineInputsUnchangedBeforeAndAfter": true,
+  "selectedInputCount": 24,
+  "tests": 7,
+  "failed": 3,
+  "passed": 4,
+  "exitCode": 1,
+  "failureReason": "Mounted actual classic catch returns503 provider code/message for real GatewayContextWindowError rather than413 canonical measured guidance plus fixed prior-work suffix. No missing import/export errors.",
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "artifactSha256": {
+    "baseline-run.txt": "81409a07c741026606b0c0230007b2300cc395107018c8c3c0e3329542e37168",
+    "baseline-results.json": "a5dab80551b1959ba9cfba1b08d2ae7b3057dac1929da9dbdd5ab7e3f4445e1b",
+    "baseline-before.json": "879269527ff78a6c43d531472f212e3ae59984403e7ab33b64e7bec957b4ac23",
+    "baseline-after.json": "879269527ff78a6c43d531472f212e3ae59984403e7ab33b64e7bec957b4ac23",
+    "lint-before-freeze.json": "ce4942f75157919b98133906e61c57c7214f0a675a2bc614dc1e600ebd42ca22"
+  }
+}

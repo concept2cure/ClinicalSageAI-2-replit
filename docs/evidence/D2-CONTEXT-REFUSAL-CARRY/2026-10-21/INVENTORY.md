@@ -47,6 +47,13 @@ context-window/gateway-error names found no removed alternative to restore.
 The existing full-request gate is reached through its consumer errors; a new
 arbitrary framed-character ceiling would duplicate policy and is not proposed.
 
+Qualification-stage finding: `server/services/ana/turn-timeline-emitter.ts`
+already writes, records and mirrors each closing timeline event. The stream
+catch calls `timeline.end` before checking `res.headersSent`, which can
+implicitly open a 200 SSE response even for an early context refusal. Keep the
+existing timeline record/mirror; suppress only its socket write for this typed
+pre-header refusal so the existing JSON error carrier can answer 413.
+
 This inventory precedes audit delegation and interface design. Root owns all
 production/Git. Initial read-only auditors inspect the existing gateway and both
 host failure carriers; disjoint test workers follow an approved contract.

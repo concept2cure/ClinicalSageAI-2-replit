@@ -1,0 +1,30 @@
+{
+  "head": "490d637a2bbd33cb9d8e08da5b748743a5314462",
+  "files": {
+    "server/services/ai-gateway/gateway-error-map.ts": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0",
+    "server/services/ai-gateway/context-budget.ts": "c5c9a5d9e2af7443971113af122c908cbfd4d819548904d92f53efeb8c5692ba",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "server/services/ai-gateway/pii-screen.ts": "40853749ad7cc042af769d9523b0a8d6507ecb272e8b121699c1d857ec001b50",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "server/services/ana/agentic-loop.ts": "d3a4a83d11a06425692d315f655fbbb4061a11b098956aeb5c367a47faaccd90",
+    "server/services/ana/read-receipts.ts": "41327c0cd6cabb31eaa82e4ff057caa253548541c38b5b55e48cf63612fa87aa",
+    "server/services/ana/AnaToolExecutor.ts": "f6d455ffd5ab975106d45b8f7334dfcd64aef9e906d0d1f21787b3605abe524a",
+    "server/services/ana/tool-output-frame.ts": "b90e0a4e095e93fb1d8faf23e008906f5e7ab2ea32e802ba59da8ac57c95a5f1",
+    "server/routes/chat/send-message.ts": "b740713ecb0299091c2cd0a3ef32d58e52a24601e4d7acf980b95c1be5628ed3",
+    "server/routes/ana-ri/stream.ts": "e6df204a4aabde2f148fc1e1e7a019f9abf0d7eeac79c9b4f6b3cb7083fe7cc2",
+    "client/src/concept2cure/components/ana/useAnaChat.ts": "89a4c3251bf940cb9275fac51babe928d08a1ded1b66db2a7f22951aef588343",
+    "client/src/concept2cure/components/ana/anaProgress.ts": "d5c3056b12f7b2ce82030e09cbe71d0ca9bec4cd4c35b366e590a5fd5fd22a81",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "server/routes/ana-ri/__tests__/support/stream-route-harness.ts": "16e71e0fca55baffe19925a7d31c6cfcbdb6035de5c6fc862f739ea848071d4b",
+    "server/services/ana/__tests__/support/read-delivery-vault.ts": "5aaac109f5da2a242fadffcb5dfcf73cf810b05c53fb183e23144fb7c71589bc",
+    "package.json": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    ".husky/pre-push": "6e06c1338bebc01155c20eebcf2ebb2bfe474b1656ec920e7c6e7952a23bd053",
+    ".husky/pre-commit": "4d8cde3b21f91140935b021db7861221633d6feb8641fde6f884bae7cd834f40",
+    "AGENTS.md": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4",
+    "CLAUDE.md": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37"
+  },
+  "baselineInputsUnchanged": true
+}

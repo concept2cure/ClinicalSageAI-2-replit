@@ -1,0 +1,31 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "client/src/concept2cure/components/ana/useAnaChat.ts"
+  ],
+  "exitCode": 0,
+  "stdoutSha256": "f592439c8b4ceb2c6bc9e0132f3ba043b22de1a12f64e75ea7106f680d2692f1",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/client/src/concept2cure/components/ana/useAnaChat.ts",
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "warningCount": 1,
+      "fatalErrorCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}
