@@ -1,0 +1,23 @@
+{
+  "files": 14,
+  "errors": 0,
+  "warnings": 40,
+  "warnedFiles": [
+    {
+      "file": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+      "warnings": 2
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "warnings": 13
+    },
+    {
+      "file": "server/routes/authoring.router.ts",
+      "warnings": 23
+    },
+    {
+      "file": "server/services/vault/vault-ingest.service.ts",
+      "warnings": 2
+    }
+  ]
+}
