@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the resolver itself distinguishes one level from two (the check is not vacuous) 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > fda: m1/us/us-regional.xml points its DTD at util/dtd/us-regional-v3-3.dtd 128ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ema: m1/eu/eu-regional.xml points its DTD at util/dtd/eu-regional.dtd 82ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > pmda: m1/jp/jp-regional.xml points its DTD at util/dtd/jp-regional.dtd 76ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ca: m1/ca/ca-regional.xml points its DTD at util/dtd/ca-regional.dtd 73ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the ICH index.xml at the root references util/dtd/ directly 69ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > fda: m1/us/us-regional.xml points its stylesheet at util/style/us-regional.xsl 77ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > the ICH index.xml carries a stylesheet PI that resolves to util/style/ectd-2-0.xsl 71ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > bundles vendored *.xsl into util/style/ and checksums them into the MD5 index 102ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > index.xml: <ectd:ectd> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 93ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > m1/us/us-regional.xml: <fda-regional:fda-regional> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 75ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records every generated backbone/STF as unverified when the drop-point is empty 410ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > validates all captured ZIP XML and checksum-pins its exact supportive bytes 798ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > records an invalid STF even when both backbones validate and all bytes are checksum-pinned 709ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > refuses to certify changed supportive bytes despite otherwise valid XML 721ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > requires actual passing proof in production and cleans its private tree before refusing 688ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts > normal package DTD execution evidence > does not require an STF DTD when this sequence generates no STF 273ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > preserves an admitted registered legal version despite a toolchain that would change it, retaining proof through the persisted manifest 86ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > independently preserves an unregistered PDF with compressed embedded-signature fields without claiming signature trust 32ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > continues normalizing an ordinary unsigned PDF and makes no original-preservation claim 35ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > refuses staged bytes that no longer match the admitted original before invoking conversion 6ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > fails closed when an embedded signature dictionary is malformed 4ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > requires actual validation of the original under mandatory PDF/A, with no preservation exemption 28ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > retains actionable failure evidence for an organization PDF/A policy checked later at transmission 26ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > verifies extracted final ZIP bytes, refusing a missing or overwritten preserved original 32ms
+
+ Test Files  3 passed (3)
+      Tests  25 passed (25)
+   Start at  02:22:40
+   Duration  6.98s (transform 1.07s, setup 103ms, import 1.75s, tests 4.70s, environment 0ms)
+

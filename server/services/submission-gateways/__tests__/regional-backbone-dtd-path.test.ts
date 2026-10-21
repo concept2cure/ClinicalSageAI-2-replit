@@ -23,10 +23,8 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
+import { goldenPdf as pdf } from '../../ectd/qualification/golden-fixtures';
 
-function pdf(label: string): Buffer {
-  return Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
-}
 const md5 = (b: Buffer) => createHash('md5').update(b).digest('hex');
 
 /** Resolve a SYSTEM path the way an XML parser does: relative to the document. */
