@@ -56,3 +56,10 @@ were repeated after their fixture-only changes.
 Full TypeScript and the normal pre-push gates must pass before publication.
 Commands, results and source hashes are recorded in `verification.json` and
 `source-bindings.json`. Production deployment remains a separate workflow.
+
+Full zero-baseline TypeScript passed on the qualified PM source. Final canonical
+integration `65a531060` also preserves incoming work through `463181413`, with
+every qualified PM source hash unchanged. The intake dependency delta's three
+regional-device suites passed 79 tests. `final-build.txt` records the combined
+production build. The normal pre-push hook repeats whole-repository TypeScript
+on that latest application before a successful source transfer.

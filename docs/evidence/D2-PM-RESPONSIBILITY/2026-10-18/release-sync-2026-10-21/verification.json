@@ -74,6 +74,23 @@
     "errors": 0,
     "log": "typecheck.txt"
   },
-  "publication": "Qualified PM source; final canonical integration and normal push pending",
-  "productionDeployment": "not performed"
+  "publication": "Ready for direct canonical publication; all normal pre-push gates required, no bypass or force",
+  "productionDeployment": "not performed",
+  "finalIntegration": {
+    "upstream": "463181413e93810938b5cd6d0bed63f7bee1d713",
+    "mergeCommit": "65a53106042d07392d971bca022a4deda8ad590f",
+    "qualifiedSourceHashesUnchanged": true,
+    "review": "Incoming changes retain roster/access/profile/UI; identical Notified Body mapping moved to existing document-class helper and reused by assembly.",
+    "dependencyRegression": {
+      "files": 3,
+      "tests": 79,
+      "exitCode": 0,
+      "log": "final-incoming-tests.txt"
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "final-build.txt"
+    }
+  }
 }

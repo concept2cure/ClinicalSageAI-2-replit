@@ -1,0 +1,150 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-10-21T00:31:37.991Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-10-21T00:31:41.018Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:31:41.019Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-10-21T00:31:41.019Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > does not use a class-specific EU identity for an FDA application, even with an unconfirmed class 35ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iii' refuses contradictory declared class 'I' 14ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iia' refuses contradictory declared class 'IIb' 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_a' refuses contradictory declared class 'D' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' refuses contradictory declared class 'B' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Is' 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Im' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Ir' 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' retains compatible or unconfirmed class 'C' 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' retains compatible or unconfirmed class 'D' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iii' retains compatible or unconfirmed class null 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > mdr records euMdrClass without polluting the FDA class 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > ivdr records euIvdrClass without polluting the FDA class 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > no stated EU class persists neither a regional nor US class 13ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses invalid MDR class before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses invalid class shape before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses IVDR class on MDR before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses two different regional classes before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA class on an EU filing before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA predicate on an EU filing before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA-specific flags on an EU filing before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses IVD product on MDR before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses conflicting selected registry type before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses a different MDR document class before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses an EU classification on an FDA project 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses a non-IVD product type for IVDR even when no class was stated 2ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > mdr resolves the existing pack key for every recorded body label 4ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > ivdr resolves the existing pack key for every recorded body label 1ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > cer resolves the existing pack key for every recorded body label 1ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > nda does not gain a Notified Body filing identity 1ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > maa does not gain a Notified Body filing identity 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > pma does not gain a Notified Body filing identity 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > mdl does not gain a Notified Body filing identity 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > ivd_licence does not gain a Notified Body filing identity 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > ninsho does not gain a Notified Body filing identity 1ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > Notified Body document identity reuses the existing pure class resolver > device does not gain a Notified Body filing identity 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > hde resolves only its actual authority 1ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > mdl resolves only its actual authority 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > ivd_licence resolves only its actual authority 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > shonin resolves only its actual authority 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > ninsho resolves only its actual authority 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > todokede resolves only its actual authority 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > ivd_approval resolves only its actual authority 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > jp_cdx resolves only its actual authority 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > hde never borrows an ICH pack 1ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > mdl never borrows an ICH pack 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > ivd_licence never borrows an ICH pack 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > shonin never borrows an ICH pack 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > ninsho never borrows an ICH pack 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > todokede never borrows an ICH pack 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > ivd_approval never borrows an ICH pack 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > jp_cdx never borrows an ICH pack 0ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > required-sections never reports a hypothetical ICH pack for regional certification 1ms
+ ✓ server/services/c2c/__tests__/regional-device-document-class.test.ts > exact regional device application classes reuse the governed document path > the raw saved registered-body agency binds only its exact home filing 1ms
+stdout | server/services/regulatory/__tests__/regional-device-market-support.test.ts
+{
+  "timestamp": "2026-10-21T00:31:44.882Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:31:44.886Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/regional-device-market-support.test.ts
+{
+  "timestamp": "2026-10-21T00:31:44.886Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/regional-device-market-support.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > hde offers only its exact outline and no package or transport 5ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > mdl offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_licence offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > shonin offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ninsho offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > todokede offers only its exact outline and no package or transport 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_approval offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > jp_cdx offers only its exact outline and no package or transport 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > hde refuses missing exact outline even if an ICH outline exists 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > mdl refuses missing exact outline even if an ICH outline exists 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_licence refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > shonin refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ninsho refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > todokede refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_approval refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > jp_cdx refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > hde refuses another authority even when that authority has a same-name pack 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > mdl refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_licence refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > shonin refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ninsho refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > todokede refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_approval refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > jp_cdx refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > certification does not become PMDA approval when Japan is selected 0ms
+
+ Test Files  3 passed (3)
+      Tests  79 passed (79)
+   Start at  00:31:34
+   Duration  10.87s (transform 5.55s, setup 162ms, import 9.74s, tests 186ms, environment 0ms)
+
