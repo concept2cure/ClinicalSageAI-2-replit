@@ -21,8 +21,12 @@ import {
 } from '../../services/project-sharing-access';
 import { getOrganizationId, getUserId, sendError } from './shared';
 import { createScopedLogger } from '../../utils/logger';
-import { readCsrProjectActor } from '../../services/csr/project-scope';
+import { CsrScopeError, readCsrProjectActor } from '../../services/csr/project-scope';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { ProgramReadAccessError, requireCurrentProgramAccess, type CurrentProgramAccess } from '../../services/c2c/current-program-access';
+import { programInOrganization } from '../../services/c2c/program-access';
+import { canAccessReportProject } from '../../services/report-os/project-access';
 
 export function normalizeProjectSettings(settings: unknown): Record<string, unknown> {
   return settings && typeof settings === 'object' ? (settings as Record<string, unknown>) : {};
@@ -45,7 +49,7 @@ export function normalizeProjectSettings(settings: unknown): Record<string, unkn
  *     database (deterministic: lowest id);
  *   - no workspace resolvable → error, in every environment.
  */
-export async function resolveClientWorkspaceId(req: Request): Promise<number> {
+export async function resolveClientWorkspaceId(req: Request, executor: RequestSqlClient = pool): Promise<number> {
   const ctx = req.tenantContext as Record<string, unknown> | undefined;
   const orgId = Number(ctx?.organizationId ?? req.user?.organizationId);
   const hasOrg = Number.isInteger(orgId) && orgId > 0;
@@ -57,7 +61,7 @@ export async function resolveClientWorkspaceId(req: Request): Promise<number> {
       if (!hasOrg) {
         throw new Error('Client workspace context requires an authenticated organization');
       }
-      const owned = await pool.query(
+      const owned = await executor.query(
         'SELECT id FROM client_workspaces WHERE id = $1 AND organization_id = $2',
         [id, orgId]
       );
@@ -71,7 +75,7 @@ export async function resolveClientWorkspaceId(req: Request): Promise<number> {
   }
 
   if (hasOrg) {
-    const own = await pool.query(
+    const own = await executor.query(
       'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
       [orgId]
     );
@@ -361,7 +365,9 @@ export async function requireCurrentProjectActor(req: Request, forWrite = false)
 }
 
 /** Add fresh write authority to the existing sharing/read-assignment policy. */
-export async function requireProjectAdmission(req: Request, projectId: string | string[] | undefined, forWrite = false) {
+export async function requireProjectAdmission(req: Request, projectId: string | string[] | undefined, forWrite = false,
+  pinned?: { executor: RequestSqlClient; programId?: string; forShare?: boolean }): Promise<AdmittedProject> {
+  if (pinned) return requirePinnedProjectAdmission(req, projectId, forWrite, pinned);
   const actor = await requireCurrentProjectActor(req, forWrite);
   const scope = getProjectScope(projectId);
   if (!scope) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
@@ -387,6 +393,74 @@ export async function requireProjectAdmission(req: Request, projectId: string | 
     if (error instanceof Error && /Client workspace (does not belong|context)/.test(error.message)) {
       throw new ProjectAdmissionRefusal(403, 'PROJECT_WORKSPACE_PERMISSION_DENIED', 'A current workspace in this organization is required.');
     }
+    throw new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.');
+  }
+}
+
+export type AdmittedProject = NonNullable<Awaited<ReturnType<typeof loadProjectAccessRow>>['project']> & {
+  clientWorkspaceId?: number | null; regulatoryProgramId?: string | null;
+};
+
+async function pinnedProjectRow(q: RequestSqlClient, projectId: number, org: number, forWrite: boolean): Promise<AdmittedProject> {
+  const statement = forWrite
+    ? `SELECT id,name,description,metadata,status,organization_id AS "organizationId",
+      owner_id AS "ownerId",created_by_id AS "createdById",settings,created_at AS "createdAt",updated_at AS "updatedAt",
+      client_workspace_id AS "clientWorkspaceId",regulatory_program_id AS "regulatoryProgramId"
+      FROM projects WHERE id=$1 AND organization_id=$2 FOR UPDATE`
+    : `SELECT id,name,description,metadata,status,organization_id AS "organizationId",
+      owner_id AS "ownerId",created_by_id AS "createdById",settings,created_at AS "createdAt",updated_at AS "updatedAt",
+      client_workspace_id AS "clientWorkspaceId",regulatory_program_id AS "regulatoryProgramId"
+      FROM projects WHERE id=$1 AND organization_id=$2`;
+  const result = await q.query(statement, [projectId, org]);
+  if (result.rows.length !== 1) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  return result.rows[0] as AdmittedProject;
+}
+
+async function pinnedWorkspace(req: Request, q: RequestSqlClient, project: AdmittedProject, current: CurrentProgramAccess | null): Promise<void> {
+  if (current && (current.projectId !== project.id || current.clientWorkspaceId !== project.clientWorkspaceId)) {
+    throw new ProjectAdmissionRefusal(409, 'PROJECT_SCOPE_MISMATCH', 'The project does not identify the selected program. Nothing was changed.');
+  }
+  const claimed = (req.tenantContext as Record<string, unknown> | undefined)?.clientWorkspaceId;
+  const workspace = current ? current.clientWorkspaceId : await resolveClientWorkspaceId(req, q);
+  if (!workspace || project.clientWorkspaceId !== workspace || (current && claimed != null && Number(claimed) !== workspace)) {
+    throw new ProjectAdmissionRefusal(403, 'PROJECT_WORKSPACE_PERMISSION_DENIED', 'The current client workspace does not match this project.');
+  }
+}
+
+function pinnedWritePermission(project: AdmittedProject, role: string, forWrite: boolean): void {
+  if (!forWrite) return;
+  if (!GOVERNED_WRITE_ROLES.has(role)) throw new ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current organization role cannot change this project record.');
+  if (['archived', 'deleted'].includes(project.status)) throw new ProjectAdmissionRefusal(409, 'PROJECT_ARCHIVED', 'This project is archived. Retained records can still be read.');
+}
+
+/** Same current actor and sharing policy, enlisted on a caller's request client. */
+async function requirePinnedProjectAdmission(req: Request, projectId: string | string[] | undefined, forWrite: boolean,
+  options: { executor: RequestSqlClient; programId?: string; forShare?: boolean }): Promise<AdmittedProject> {
+  const scope = getProjectScope(projectId);
+  if (!scope) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  try {
+    const q = options.executor;
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    if (options.programId && options.forShare && !await programInOrganization(q, options.programId, organizationId, { forShare: true })) {
+      throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    }
+    const project = await pinnedProjectRow(q, scope.numericId, organizationId, forWrite);
+    const current = options.programId ? await requireCurrentProgramAccess(q, { organizationId, userId,
+      programId: options.programId, forShare: options.forShare }) : null;
+    const actor = current?.actor ?? await readCsrProjectActor(q, organizationId, userId, { forShare: options.forShare });
+    await pinnedWorkspace(req, q, project, current);
+    if (!await canAccessReportProject(organizationId, actor, project.id, q, { forWrite })) {
+      throw new ProjectAdmissionRefusal(forWrite ? 403 : 404, 'PROJECT_PERMISSION_DENIED', 'Current project permissions do not permit this operation.');
+    }
+    pinnedWritePermission(project, String(actor.role), forWrite);
+    req.userRole = String(actor.role);
+    req.userId = actor.userId;
+    return project;
+  } catch (error) {
+    if (error instanceof ProjectAdmissionRefusal) throw error;
+    if (error instanceof ProgramReadAccessError) throw new ProjectAdmissionRefusal(error.status, error.code, error.message);
+    if (error instanceof CsrScopeError) throw new ProjectAdmissionRefusal(403, 'PROJECT_MEMBERSHIP_REQUIRED', 'Current active organization membership is required.');
     throw new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.');
   }
 }
