@@ -1,0 +1,23 @@
+[
+  {
+    "register": "analytical-methods",
+    "status": "validated",
+    "signer": 3,
+    "signatures": 1,
+    "editAfter": 409
+  },
+  {
+    "register": "process-validation",
+    "status": "approved",
+    "signer": 3,
+    "signatures": 1,
+    "editAfter": 409
+  },
+  {
+    "register": "comparability-studies",
+    "status": "approved",
+    "signer": "JM Smith",
+    "signatures": 1,
+    "editAfter": 409
+  }
+]

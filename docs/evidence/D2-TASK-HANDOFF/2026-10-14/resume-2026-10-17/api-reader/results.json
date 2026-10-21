@@ -1,0 +1,63 @@
+{
+  "runtime": "Node 22.23.3",
+  "red": {
+    "api": {
+      "failed": 1,
+      "filteredOut": 8,
+      "log": "api-red.log.gz",
+      "reason": "document.client_program_id was undefined"
+    },
+    "metadata": {
+      "failed": 8,
+      "filteredOut": 14,
+      "log": "metadata-red.log.gz",
+      "reason": "malformed metadata was accepted, including product_code.trim renderer crash"
+    }
+  },
+  "green": {
+    "numTotalTestSuites": 6,
+    "numPassedTestSuites": 6,
+    "numTotalTests": 31,
+    "numPassedTests": 31,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "success": true,
+    "files": 2,
+    "fileResults": [
+      {
+        "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+        "passed": 9
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+        "passed": 22
+      }
+    ]
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 23,
+    "routerWarningsBefore": 23,
+    "routerWarningsAfter": 23,
+    "routerRuleCountsUnchanged": true
+  },
+  "files": [
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "826a821abc3f70251c8b16bab9f108d114716081afa40fb0a73daebddb6096a6"
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "c0921bcb36a96f4296ba587ea86534b42db19d2c6c43f2e8737d6cffb5fea45d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/documentRecordRead.ts",
+      "sha256": "6632346277be72d64d20c69e9819c159c2f1fb523de1bcbf148ef3f9d5130a63"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+      "sha256": "10cb42b97c87dead6e9d2f7df704a6c228ff7e583033d4db9ee949cbcfae9e72"
+    }
+  ],
+  "boundary": "Real HTTP/router/PGlite access and projection test; native Canvas/Authoring tests with synthetic transport and stubbed Workbench view. No live PostgreSQL, deployed auth/MFA, compiler, build, or hosted CI claim."
+}

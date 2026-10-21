@@ -1,15 +1,33 @@
-/** Genuine loader-issued contexts with explicit synthetic catalog authority.
+/** Genuine loader-issued contexts with canonical admission over explicit SQL rows.
  * These controls do not qualify database policy or provider delivery. */
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn(), actor: vi.fn(), program: vi.fn() }));
-vi.mock('../catalog-scope', async () => ({ catalogScope: mocks.scope,
-  sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
-vi.mock('../../vault/document-catalog.service', () => ({
-  loadDocumentForActor: mocks.load, revalidateActorSourceScope: mocks.actor,
+const mocks = vi.hoisted(() => ({ query: vi.fn(), release: vi.fn(), load: vi.fn(), actor: vi.fn(), program: vi.fn() }));
+vi.mock('../../../db.js', () => ({
+  pool: { connect: async () => ({ query: mocks.query, release: mocks.release }) },
+  getPool: () => ({ query: mocks.query }),
 }));
-vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: mocks.program }));
+vi.mock('../../../db/tenantStore.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../../db/tenantStore.js')>()),
+  getTenantScope: () => ({ tenantId: '7', role: 'member', source: 'request' }),
+}));
+vi.mock('../../vault/document-catalog.service.js', async () => {
+  const actual = await import('../../vault/document-catalog-actor-access.js');
+  return { withAnaSourceReadScope: actual.withAnaSourceReadScope, loadDocumentForActor: mocks.load,
+    revalidateActorSourceScope: async (...args: Parameters<typeof actual.revalidateActorSourceScope>) => {
+      await mocks.actor(...args);
+      await actual.revalidateActorSourceScope(...args);
+    } };
+});
+vi.mock('../../c2c/current-program-access.js', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../c2c/current-program-access.js')>();
+  return { ...actual,
+    requireProgramScopeStillCurrent: async (...args: Parameters<typeof actual.requireProgramScopeStillCurrent>) => {
+      await mocks.program(...args);
+      await actual.requireProgramScopeStillCurrent(...args);
+    } };
+});
 import {
   assertDraftSourceContextCurrent, draftSourceAudit, draftSourcePrompt, loadDraftProjectSources,
   type DraftSourceContext, type DraftSourceContextIdentity,
@@ -17,7 +35,7 @@ import {
 
 const id = '10000000-0000-4000-8000-000000000001';
 const programId = 'abcdefab-0000-4000-8000-000000000001';
-const executor = { query: vi.fn() };
+const executor = { query: mocks.query };
 const ctx = { organizationId: 7, userId: 3, projectRef: programId, sqlClient: executor };
 const consumer = { organizationId: 7, userId: 3, projectId: programId };
 const text = 'Study 🧬 日本語: prespecified endpoint 12 of 30 participants.';
@@ -30,9 +48,40 @@ function document(body = text) {
 }
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.scope.mockResolvedValue({ programId, executor,
-    admittedScope: { organizationId: 7, userId: 3, programId, role: 'member', accessibleProgramIds: [programId] },
-    accessibleScope: { actor: { userId: 3, role: 'member' }, programIds: [programId] } });
+  mocks.query.mockImplementation(async (sql: string, params?: unknown[]) => {
+    const statement = sql.replace(/\s+/g, ' ').trim();
+    if (['BEGIN ISOLATION LEVEL READ COMMITTED', 'COMMIT', 'ROLLBACK'].includes(statement)) return { rows: [] };
+    if (statement.startsWith("SELECT set_config('app.current_tenant_id', $1,")) {
+      expect(params).toEqual(statement.includes("set_config('app.current_user_role', $2, false)") ? ['7', 'member'] : ['7']);
+      return { rows: [] };
+    }
+    if (statement === "SELECT set_config('app.current_user_role', $1, true)") {
+      expect(params).toEqual(['member']);
+      return { rows: [] };
+    }
+    if (statement.startsWith('SELECT ou.role FROM organization_users ou')) {
+      expect(params).toEqual(statement.includes('ou.user_id = $1') ? [3, 7] : [7, 3, false]);
+      return { rows: [{ role: 'member' }] };
+    }
+    if (statement === 'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1') {
+      expect(params).toEqual([programId, 7]);
+      return { rows: [{ id: programId }] };
+    }
+    if (statement.startsWith('SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects')) {
+      expect(params).toEqual([programId, 7]);
+      return { rows: [{ id: 42, clientWorkspaceId: 9 }] };
+    }
+    if (statement === 'SELECT id, regulatory_program_id FROM projects WHERE id = $1 AND organization_id = $2') {
+      expect(params).toEqual([42, 7]);
+      return { rows: [{ id: 42, regulatory_program_id: programId }] };
+    }
+    if (statement.startsWith('SELECT p.id, p.owner_id, p.created_by_id, p.settings, v.visibility,')) {
+      expect(params).toEqual([7, 3, 42]);
+      return { rows: [{ id: 42, owner_id: 8, created_by_id: 8, settings: {}, visibility: 'private',
+        members: [{ userId: 3, role: 'use', status: 'active' }], review_assigned: false }] };
+    }
+    throw new Error(`Unexpected authority fixture query: ${statement}`);
+  });
   mocks.load.mockResolvedValue(document());
 });
 
@@ -59,6 +108,7 @@ describe('private source-context issuer and immutable selection', () => {
     expect(mocks.load).not.toHaveBeenCalled();
     expect(mocks.actor).not.toHaveBeenCalled();
     expect(mocks.program).not.toHaveBeenCalled();
+    expect(mocks.query).not.toHaveBeenCalled();
   });
 
   it.each([null, 1, [], {}, { status: 'loaded', sources: [] }, { status: 'unknown', sources: [] },
@@ -67,6 +117,7 @@ describe('private source-context issuer and immutable selection', () => {
     expect(() => draftSourcePrompt(value as DraftSourceContext)).toThrow('SOURCE_CONTEXT_UNTRUSTED');
     expect(() => draftSourceAudit(value as DraftSourceContext)).toThrow('SOURCE_CONTEXT_UNTRUSTED');
     expect(mocks.load).not.toHaveBeenCalled();
+    expect(mocks.query).not.toHaveBeenCalled();
   });
 
   it.each([undefined, { status: 'unassessed', sources: [] } as DraftSourceContext])('preserves ordinary no-source drafting without requiring actor IDs: %j', async context => {
@@ -74,6 +125,7 @@ describe('private source-context issuer and immutable selection', () => {
     expect(draftSourcePrompt(context)).toContain('UNASSESSED');
     expect(draftSourceAudit(context)).toEqual({ projectSourceStatus: 'unassessed', projectSources: [] });
     expect(mocks.load).not.toHaveBeenCalled();
+    expect(mocks.query).not.toHaveBeenCalled();
   });
 });
 
@@ -102,6 +154,7 @@ describe('source contexts bind the consuming actor and declared project', () => 
     expect(mocks.load).not.toHaveBeenCalled();
     expect(mocks.actor).not.toHaveBeenCalled();
     expect(mocks.program).not.toHaveBeenCalled();
+    expect(mocks.query).not.toHaveBeenCalled();
   });
 
   it('pins the consumer identity synchronously before a current-body await', async () => {

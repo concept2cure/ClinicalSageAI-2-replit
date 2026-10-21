@@ -32,7 +32,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // does not stand up. Stubbed so a failure here is about source context.
 // The surface itself now reads the auth identity too (suggestion attribution),
 // so the auth service is mocked the way the sibling tests mock it.
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));

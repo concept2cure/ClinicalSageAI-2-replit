@@ -1,0 +1,35 @@
+### server/routes/__tests__/collab-lock-audit-chain.pglite.test.ts
+ ✓ CONTROL: written statement by statement, as the pool did it, the row is recorded as legacy
+ ✓ writeLockEventTx records it SEQUENCED: a chain position, taken in the same transaction
+ ✓ consecutive lock events take consecutive positions
+ ✓ keeps the reason the person gave, and records none when none was given (D5)
+ ✓ a failed write rolls back: no half-written event, and the connection is usable afterwards
+      Tests  5 passed (5)
+
+### Shown still to bite -- writeLockEventTx with BEGIN/COMMIT/ROLLBACK removed
+      Tests  3 failed | 2 passed (5)
+# fail: sequenced, consecutive positions, rollback   (the three that pin the property)
+# pass: CONTROL, reason                               (neither depends on the transaction)
+
+### tests/routes/realtime-collab-lock-reason.test.ts
+      Tests  2 passed (2)
+# shown still to bite -- the lock path recording the pre-2026-10-01 fabricated
+# reason 'Section lock acquired via realtime-collab API':
+      Tests  2 failed (2)
+
+### The rest of the realtime-collab surface, original vs fixed
+collab-section-locks.pglite.integration    7/7   |  7/7
+seed-collab-review.pglite.integration     17/17  | 17/17
+realtime-collab-tenancy                   16/16  | 16/16
+realtime-collab-presence-fallback          2/4   |  2/4   identical; both failures
+                                                          'Test timed out in 10000ms'
+                                                          on the ORIGINAL too
+
+### Environment: PGlite boot in this sandbox
+bare waitReady (no vitest, no repo code)   38871 ms, 30014 ms
+under vitest, per run                      54264 .. 83619 ms   (hookTimeout 60000)
+forced hook timeout (--hookTimeout=1000)   Test Files 1 failed, Tests 5 skipped, EXIT CODE 1
+# "skipped" is NOT a silent pass: the file fails and the process exits 1.
+
+### Lint
+eslint server/routes/realtime-collab.ts    0 errors, 5 warnings -- all pre-existing

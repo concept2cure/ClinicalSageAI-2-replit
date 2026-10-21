@@ -1,0 +1,263 @@
+{
+  "scope": "Completed source-bound assembly integration evidence, with a separate completed subset for incoming8d06. No aggregate publication or human acceptance claim.",
+  "recordedAtUtc": "2026-10-18T00:03:44.279692+00:00",
+  "branch": "concept2cure-v2",
+  "sourceAnchors": {
+    "priorQualified": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
+    "assemblyIncoming": "bd1b9ffc9cff286d01019a29a8cd115d4286505e",
+    "assemblyImplementation": "4ca7427dcc07e97b260d45e58077f9c24a6467f5",
+    "finalFixtureCommit": "e92fec4e0cc1ba8b98d1b2d79bb199fb9e485be0",
+    "incomingCompanyAndBatch": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+    "incomingMergedSource": "4b16df8203f3cb5cbaa47faa70cc3f0f9bccf06c",
+    "finalWarningFix": "82839d386",
+    "latestIncoming": "87824205c33c4bc3e586060f61eab62ffb26a852",
+    "finalCombined": "bea722bd9764529969302ffd19f1f7584ef644ec",
+    "documentationOnlyB90": "b90ad42c5"
+  },
+  "assembly": {
+    "ui": {
+      "passed": 717,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "files": 56,
+      "raw": "task-handoff-assembly-ui-final.json.gz",
+      "log": "task-handoff-assembly-ui-final.log.gz",
+      "filesList": "task-handoff-assembly-ui-files.txt.gz",
+      "binding": "assembly-final-fixture-binding.json.gz",
+      "source": "4ca implementation plus 16 fixture corrections later committed at e92; testResults.length identifies 56 files, not the 217 describe-suite groups."
+    },
+    "focusedUi": {
+      "passed": 176,
+      "failed": 0,
+      "files": 10,
+      "components": [
+        65,
+        29,
+        26,
+        56
+      ],
+      "subsetOfFinal717": true,
+      "fileList": "worker-checkpoints/c2c-assembly-client-final-tests.txt.gz",
+      "sourcePins": "worker-checkpoints/c2c-assembly-client-final-pins.json.gz"
+    },
+    "backend": {
+      "passed": 226,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "files": 21,
+      "raw": "task-handoff-assembly-backend-final.json.gz",
+      "log": "task-handoff-assembly-backend-final.log.gz",
+      "fileList": "task-handoff-assembly-backend-files.txt.gz",
+      "source": "Integrated4ca source; bounded fixture corrections retained in worker-checkpoints."
+    },
+    "nativeAffected": {
+      "passed": 19,
+      "failed": 0,
+      "pending": 0,
+      "files": 1,
+      "file": "tests/db/workflow-import-governance.dbtest.ts",
+      "raw": "assembly-19.json.gz",
+      "log": "assembly-19.log.gz",
+      "sourcePins": "assembly-19-pins.json.gz",
+      "pinCount": 4900,
+      "sourceBinding": "Pins identify the unchanged merged index reconstructed after execution; sourceBaseCommit=f05d9f846fd24979d2ed6685c5ebe3c11f5b55eb and incoming=bd1. This is not a claim that the test launched from literal4ca HEAD."
+    },
+    "browser": {
+      "status": "pass",
+      "scenarios": 1,
+      "measuredStages": 5,
+      "report": "browser-current/report.json",
+      "firstFixtureRefusal": "browser-first-fixture-refusal/report.json",
+      "testedHead": "4ca7427dcc07e97b260d45e58077f9c24a6467f5",
+      "frozenPins": 31,
+      "structuralCommits": 1,
+      "generations": 0,
+      "acceptances": 0,
+      "pageErrors": 0,
+      "expectedConsoleErrors": 1,
+      "boundary": "Actual Workbench/Back/shared leave registry with synthetic auth and HTTP; TaskTray/full shell not mounted. Pending,408 unknown and delayed host-read states hold Back; recovery preserves RTE buffer and explicit document view exposes refreshed saved text before callback. One expected HTTP408 console message."
+    },
+    "compiler": {
+      "errors": 0,
+      "exitCode": 0,
+      "log": "task-handoff-assembly-typecheck-final.log.gz",
+      "source": "4ca implementation plus the e92 fixture corrections; not combined4b/next-remote compiler qualification."
+    },
+    "displayFixtureLint": {
+      "files": 16,
+      "errors": 0,
+      "warnings": 2,
+      "raw": "task-handoff-assembly-display-lint.json.gz",
+      "boundary": "Two retained complexity warnings in documentCanvas and workbenchAssignReview fixtures; no all-client lint claim."
+    },
+    "buildAndStyle": {
+      "buildPassed": true,
+      "classesMissing": 0,
+      "literalClassUses": 16304,
+      "builtChunks": 28,
+      "logs": [
+        "task-handoff-assembly-build.log.gz",
+        "task-handoff-assembly-classes.log.gz",
+        "task-handoff-assembly-design.log.gz",
+        "task-handoff-assembly-contrast.log.gz",
+        "task-handoff-assembly-canvas.log.gz"
+      ]
+    }
+  },
+  "retainedHistoricalNative": {
+    "passed": 311,
+    "failed": 0,
+    "pending": 0,
+    "files": 36,
+    "pinCount": 4630,
+    "reference": "../audit-integration/final-qualification.md",
+    "boundary": "Historical configured-HMAC run, retained separately; not repeated or relabeled after subsequent integration. The preceding309/311 HMAC-prerequisite failure is preserved in that phase."
+  },
+  "firstFailureBoundaries": {
+    "ui": {
+      "partial": true,
+      "notAllFilesReached": true,
+      "completeFailureCountClaimed": false,
+      "log": "task-handoff-assembly-ui-partial-red.log.gz",
+      "metadata": "task-handoff-assembly-ui-partial-red-metadata.json.gz",
+      "preCorrectionPins": "c2c-assembly-auth-root56-source-pins.json.gz",
+      "boundary": "Interrupted after incomplete auth mocks caused mount errors. The 16 hashes are pre-correction4ca fixtures; all differ from final e92. Later717/56 completed the full replay."
+    },
+    "backend": {
+      "complete": true,
+      "total": 226,
+      "passed": 222,
+      "failed": 4,
+      "pending": 0,
+      "raw": "worker-checkpoints/task-handoff-assembly-backend-first.json.gz",
+      "boundary": "Two bounded SQL-shape/parent fixture repairs; final226/226 retained independently."
+    },
+    "browser": {
+      "measuredStages": 0,
+      "commits": 0,
+      "boundary": "Unparseable synthetic session disabled Template. Scratch host now creates claims matching fixture actor181/org18 through real AuthService; production guards and original retained harness unchanged."
+    }
+  },
+  "incoming8d06CompletedSubset": {
+    "source": "4b16df8203f3cb5cbaa47faa70cc3f0f9bccf06c",
+    "native": {
+      "passed": 61,
+      "failed": 0,
+      "pending": 0,
+      "files": 6,
+      "raw": "incoming-8d06/company-6-final.json.gz",
+      "log": "incoming-8d06/company-6-final.log.gz",
+      "pins": "incoming-8d06/company-6-pins.json.gz",
+      "verifiedPins": 7364,
+      "postRunVerified": true,
+      "fileList": "incoming-8d06/company-6-files.txt.gz",
+      "container": "Stopped by root with data retained."
+    },
+    "client": {
+      "passed": 45,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "files": 4,
+      "raw": "incoming-8d06/task-handoff-company-ui-final.json.gz",
+      "summary": "incoming-8d06/task-handoff-company-ui-final-summary.json.gz",
+      "sourcePinsMatch": true
+    },
+    "build": {
+      "bothBuildsPassed": true,
+      "serverEmbeddedCommitMatches": true,
+      "clientEmbeddedCommitMatches": true,
+      "binding": "incoming-8d06/task-handoff-company-build-binding.json.gz"
+    },
+    "style": {
+      "designPassed": true,
+      "contrastPassed": true,
+      "canvasPassed": true,
+      "classCoveragePassed": true,
+      "literalClassUses": 16443,
+      "builtChunks": 29,
+      "classesMissing": 0,
+      "baseline": 0
+    },
+    "notEstablishedByThisRecord": [
+      "No company UI browser/session-switch proof is inferred from earlier assembly browser evidence."
+    ],
+    "backend": {
+      "passed": 915,
+      "failed": 0,
+      "pending": 0,
+      "todo": 2,
+      "files": 49,
+      "source": "4b16df820 (source unchanged atb90)",
+      "summary": "incoming-8d06/incoming-backend-summary.json",
+      "pinsMatch": 7121
+    }
+  },
+  "publication": {
+    "status": "pending",
+    "boundary": "First stalepush stopped, first completed push refused lintwarninggrowth beforecompiler; second stale828 attempt stopped before gates. Final combinedbea normalpush active."
+  },
+  "outstandingBeyondThisUnit": [
+    "Individual section-draft acceptance HTTP408 uncertain-result handling is not qualified by assembly structural408 coverage.",
+    "Market-copy creator uncertain-result recovery remains a bounded follow-up.",
+    "Company document/settings session ownership and same-account token-refresh semantics need separate qualification."
+  ],
+  "humanWitness": {
+    "status": "unexecuted",
+    "checklist": "../../../../../testing/HUMAN_BETA_CHECKLIST_V1.md"
+  },
+  "completedArchiveIndex": "completed-artifacts.json",
+  "limits": [
+    "Focused176 is contained in717; overlapping counts are not added.",
+    "Default/PGlite results do not establish native scheduling or deployed RLS for new assembly/company features.",
+    "No live provider/model, clinical validation, regulatory certification, deployment, hosted-CI completion or general release claim."
+  ],
+  "postWarningCleanup": {
+    "navigationPassed": 50,
+    "navigationFiles": 3,
+    "testSplitPassed": 37,
+    "testSplitFiles": 3,
+    "newLintWarnings": 0,
+    "WorkbenchWarnings": 13,
+    "canonicalWorkbenchWarnings": 13,
+    "source": "82839d386",
+    "evidence": "warning-gate/README.md",
+    "boundary": "Existing guard extracted preserving admission/order/text; five exact test cases split. These tests overlap historical717; no new717 full replay is claimed."
+  },
+  "incoming878": {
+    "passed": 58,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "files": 4,
+    "source": "bea722bd9764529969302ffd19f1f7584ef644ec",
+    "pinsMatch": 13,
+    "summary": "incoming-878/incoming-878-summary.json",
+    "classifierBodyBlob": "606895119 (same original server/new shared module)"
+  },
+  "finalBuild": {
+    "bothPassed": true,
+    "embeddedCommitMatches": true,
+    "source": "bea722bd9764529969302ffd19f1f7584ef644ec",
+    "binding": "final-gates/task-handoff-final-build-binding.json.gz",
+    "classCoverage": "passed after normal warning-hook temporary sources were removed; first transient stale-build refusal retained",
+    "classUses": 16443,
+    "chunks": 29,
+    "missing": 0,
+    "baseline": 0
+  },
+  "expandedSecretScan": {
+    "files": 613,
+    "rawBytes": 26908143,
+    "rawScannerFindings": 5,
+    "sourceDigestFalsePositivesVerified": 5,
+    "credentialFindings": 0,
+    "classification": "final-gates/task-handoff-final-expanded-classification.json.gz",
+    "scope": "final-gates/task-handoff-final-expanded-scan-scope.json.gz",
+    "configChanged": false,
+    "allowlistAdded": false,
+    "pending": "Only final publication receipt and final metadata delta remain outside this completed snapshot."
+  }
+}

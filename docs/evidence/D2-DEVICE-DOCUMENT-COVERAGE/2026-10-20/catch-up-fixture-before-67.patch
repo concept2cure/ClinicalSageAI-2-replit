@@ -1,0 +1,23 @@
+diff --git a/client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx b/client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx
+index 856fe1200..05de48960 100644
+--- a/client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx
++++ b/client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx
+@@ -37,7 +37,7 @@ const manifestFor = (sources: AssemblySourceSelector[]): AssemblySourceManifest
+   entries: sources.map(source => ({ source, title: 'Exact retained Vault report', contentHash: HASH, extractedTextSha256: 'd'.repeat(64), version: '2',
+     originalFileAvailable: false, disposition: 'keep_data', span: { start: 11, end: 111, totalChars: 400, sha256: 'e'.repeat(64) } })) });
+ const manifest = manifestFor([selector]);
+-const currentDoc = { id: CURRENT, title: 'Current working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1 };
++const currentDoc = { id: CURRENT, client_program_id: PROGRAM, title: 'Current working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1 };
+ const targetDoc = { ...currentDoc, id: TARGET, title: 'Vault assembly target' };
+ const currentSection: AssemblySection = { id: SECTION, doc_id: CURRENT, code: '3.2.S.1', title: 'Current general information', content: '<p>Existing saved current work.</p>', order_index: 0, updated_at: AT };
+ const targetSection: AssemblySection = { id: NEXT, doc_id: TARGET, code: '3.2.S.1', title: 'Target general information', content: '', order_index: 0, updated_at: AT };
+@@ -66,7 +66,8 @@ const user = { id: '381', organizationId: '38', organizationName: null, email: '
+ beforeEach(async () => {
+   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
+   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
+-  await authService.adoptSession('synthetic-project-files-session'); publishShellProject({ id: PROGRAM, title: 'Source program' });
++  const token = `test.${btoa(JSON.stringify({ userId: Number(user.id), organizationId: Number(user.organizationId) }))}.synthetic`;
++  await authService.adoptSession(token); publishShellProject({ id: PROGRAM, title: 'Source program' });
+   apiRequest.mockReset().mockImplementation(async (method: string, path: string, input?: AssemblyPreviewInput) => {
+     if (readBodies.has(path)) return ok(readBodies.get(path));
+     if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources?`)) return ok({ sources: [], projectId: PROGRAM, total: 0, currentTotal: 0 });

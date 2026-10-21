@@ -1546,7 +1546,13 @@ router.put('/projects/:id', projectRecordAdmission(true), async (req: Request, r
   }
 });
 
-router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Response) => {
+/* Held to its sibling PUT /projects/:id: same admission, same audit (IAM-31,
+   weekly review 2026-10-19). This writes settings.customInstructions — the
+   text getProjectInstructionsBlock puts into AnA's prompt for every session on
+   the project — and it ran with the router's organization check only, so any
+   member, a viewer included, could rewrite a private project's instructions,
+   unaudited. */
+router.patch('/projects/:id/ownership-preferences', projectRecordAdmission(true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
@@ -1612,6 +1618,10 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
+    // The same Part 11 audit entry the PUT writes, before/after values included;
+    // its outcome is disclosed on the response rather than assumed.
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', String(numericId), existing, updated);
+
     const conversations = await getConversationsFromDb(numericId, organizationId);
     await getOwnershipDerivationData([numericId], organizationId);
     return sendSuccess(res, {
@@ -1629,7 +1639,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1905,6 +1915,9 @@ router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Respo
       return sendError(res, 403, 'Forbidden');
     }
 
+    // Recorded before the write so the audit row carries what changed
+    // (DP-80, weekly review 2026-10-19: sharing changes wrote no row).
+    const sharingBefore = await loadProjectSharingState(scope.numericId, organizationId);
     const [existingVisibility] = await db
       .select({
         id: projectVisibilitySettings.id,
@@ -1937,9 +1950,11 @@ router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Respo
     }
 
     const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', String(scope.numericId), { sharing: sharingBefore }, { sharing });
     return sendSuccess(
       res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied),
+      { auditTrail: auditTrailFromEntry(auditOutcome) }
     );
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -2031,6 +2046,9 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
       );
     }
 
+    // Recorded before the write so the audit row carries what changed
+    // (DP-80, weekly review 2026-10-19: sharing changes wrote no row).
+    const sharingBefore = await loadProjectSharingState(scope.numericId, organizationId);
     const [existingMember] = await db
       .select({ id: projectMembers.id })
       .from(projectMembers)
@@ -2067,9 +2085,11 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
     }
 
     const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', String(scope.numericId), { sharing: sharingBefore }, { sharing });
     return sendSuccess(
       res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied),
+      { auditTrail: auditTrailFromEntry(auditOutcome) }
     );
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -2127,6 +2147,9 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
       return sendError(res, 403, 'Forbidden');
     }
 
+    // Recorded before the write so the audit row carries what changed
+    // (DP-80, weekly review 2026-10-19: sharing changes wrote no row).
+    const sharingBefore = await loadProjectSharingState(scope.numericId, organizationId);
     await db
       .delete(projectMembers)
       .where(
@@ -2138,9 +2161,11 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
       );
 
     const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', String(scope.numericId), { sharing: sharingBefore }, { sharing });
     return sendSuccess(
       res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied),
+      { auditTrail: auditTrailFromEntry(auditOutcome) }
     );
   } catch (error: any) {
     logger.error('Failed to remove project member', {

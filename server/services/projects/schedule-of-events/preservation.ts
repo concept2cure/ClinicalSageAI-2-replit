@@ -62,14 +62,14 @@ function existingDefinition(row: StoredScheduleMilestone): string {
   const md = scheduleMetadata(row.metadata);
   return JSON.stringify([
     row.name, row.description ?? null, md.category ?? null,
-    md.regulatoryBasis ?? null, dependencies(md.dependsOn),
+    md.regulatoryBasis ?? null, dependencies(md.dependsOn), md.isCritical,
   ]);
 }
 
 function proposedDefinition(milestone: GeneratedMilestone): string {
   return JSON.stringify([
     milestone.title, milestone.description ?? null, milestone.category,
-    milestone.regulatoryBasis ?? null, dependencies(milestone.dependsOn),
+    milestone.regulatoryBasis ?? null, dependencies(milestone.dependsOn), milestone.isCritical,
   ]);
 }
 

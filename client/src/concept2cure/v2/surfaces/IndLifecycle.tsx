@@ -117,7 +117,7 @@ interface CoverLetterResult {
    The IND safety-report card is withheld from this release (decision P-32,
    2026-10-15): 21 CFR 312.32 reporting and ICSR transmission are refused by
    the API in production, so the card is hidden and its code kept, intact, in
-   ./indSafetyReportCard.ts — which this file must not import (see its header).
+   tests/fixtures/withheld/indSafetyReportCard.ts — which this file must not import (see its header).
    The types and helpers below are exported for that file. */
 export interface DelivView {
   /** The server's model, flattened to readable text — response data only. */
@@ -239,7 +239,7 @@ const FDA_CENTERS = [
   { v: 'CBER', label: 'CBER — Center for Biologics Evaluation and Research' },
 ];
 /* The safety-report option lists (event type, seriousness, causality, outcome,
-   expectedness) moved with the withheld card to ./indSafetyReportCard.ts. */
+   expectedness) moved with the withheld card to tests/fixtures/withheld/indSafetyReportCard.ts. */
 const AMENDMENT_CATEGORIES = OPTS(['protocol', 'protocol_amendment_summary', 'new_investigator', 'cmc', 'pharmacology_toxicology', 'clinical_summary', 'investigators_brochure', 'other']);
 const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 
@@ -1078,7 +1078,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       toView: modelSectionsView,
     },
     /* 'safety-report' is withheld (P-32): its card is hidden and its spec
-       lives in ./indSafetyReportCard.ts, which this file does not import. */
+       lives in tests/fixtures/withheld/indSafetyReportCard.ts, which this file does not import. */
     'annual-report': {
       assemblePath: '/api/ind-lifecycle/annual-report',
       pdf: { path: '/api/ind-lifecycle/annual-report/pdf', filename: 'ind-annual-report.pdf' },

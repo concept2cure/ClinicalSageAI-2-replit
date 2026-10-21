@@ -82,14 +82,20 @@ const STORES = [
   'public.regulatory_audit_logs',
   'public.c2c_ana_actions',
   'public.authoring_signatures',
+  // 2026-10-18: the texts an agency response has had; a signature binds one by digest.
+  'public.agency_question_response_revisions',
+  // 2026-10-19: the earlier CMC question file, read-only since agency questions
+  // moved onto the letter (P-39 item 1; migrations/20261019b_reg_questions_read_only.sql).
+  'public.reg_questions',
 ] as const;
 const WITHHELD = ['UPDATE', 'DELETE', 'TRUNCATE'] as const;
 /**
  * Stores the runtime role may read and not append to (P0-8 follow-up,
  * 2026-10-01): the archive ledger, which only audit_logs_archive_delete()
- * writes, as audit_archiver. Named here, as STORES is.
+ * writes, as audit_archiver; and (2026-10-19) the earlier CMC question file,
+ * which nothing writes any more. Named here, as STORES is.
  */
-const SELECT_ONLY: readonly string[] = ['public.audit_log_archives'];
+const SELECT_ONLY: readonly string[] = ['public.audit_log_archives', 'public.reg_questions'];
 const withheldOn = (store: string): readonly string[] => (SELECT_ONLY.includes(store) ? [...WITHHELD, 'INSERT'] : WITHHELD);
 /** The write-once supersession its trigger admits (signature-persistence.ts revocation). */
 const SUPERSESSION = ['superseded_by', 'is_valid', 'verification_status', 'verification_date', 'updated_at'];

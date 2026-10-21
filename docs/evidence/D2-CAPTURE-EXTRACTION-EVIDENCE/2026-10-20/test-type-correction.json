@@ -1,0 +1,18 @@
+{
+  "reason": "Normal whole-project TypeScript found an unknown-typed deliberately receipt-bearing unauthorized-write fixture after the optional production receipt type was added.",
+  "initialImplementationCommit": "7efdd69d4",
+  "file": "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts",
+  "originalFrozenSha256": "0b446d881656065f8f17d817fd18149762cf3b4202e87888e9275bc13c45644b",
+  "finalSha256": "1dc05c4615e2307a182add0da0c74b17444d1647699cebbab443e6cd19e59f54",
+  "change": "Added import type ExtractedCapture and an erased unknown-to-ExtractedCapture cast on the unauthorized-write probe only. No runtime, assertion or production change.",
+  "initialFrozenTests": "frozen-tests.json remains the original pre-production freeze; final run commands and source pins bind the annotation-only successor.",
+  "failedHookEvidence": "initial-implementation-push.txt",
+  "historicalManifestContext": "initial-artifact-manifest.json and initial-source-input-pins.json describe Git bytes at 7efdd69d4 under their original paths; final manifest covers their retained current bytes.",
+  "erasedChangeVerification": {
+    "typescriptVersion": "5.6.3",
+    "method": "transpileModule target ES2022/module ESNext/no source maps; original Git bytes versus final working file",
+    "identicalJavaScript": true,
+    "emittedJavaScriptSha256": "2d94602f205c6dad8ae2f120f8b1b0b6b4196614d76d0a2bf41f64b9f07572f9",
+    "notWholeProjectTypecheck": true
+  }
+}

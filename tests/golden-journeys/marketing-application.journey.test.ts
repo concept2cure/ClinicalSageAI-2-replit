@@ -33,7 +33,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, extractTableDdl, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 const T = 180_000;
 
@@ -77,7 +77,7 @@ const PREREQ = `
   -- degrades to a membership-only decision with orgUuid = null (ledger L148).
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);
-  CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER REFERENCES organizations(id), name TEXT);
+  ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['projects'])}
   CREATE TABLE ectd_modules (id SERIAL PRIMARY KEY, name TEXT);
   CREATE TABLE concept2cure_artifacts (
     id SERIAL PRIMARY KEY,
@@ -89,9 +89,9 @@ const PREREQ = `
   );
   INSERT INTO organizations (id, name) VALUES (${ORG}, 'journey-b-org'), (${OTHER_ORG}, 'other-org');
   INSERT INTO users (id, email) VALUES (1, 'regops@journey.example');
-  INSERT INTO projects (id, organization_id, name) VALUES
-    (${PROJECT}, ${ORG}, 'NDA 210001'),
-    (${OTHER_PROJECT}, ${OTHER_ORG}, 'Other tenant NDA');
+  INSERT INTO projects (id, organization_id, client_workspace_id, type, name) VALUES
+    (${PROJECT}, ${ORG}, 1, 'regulatory', 'NDA 210001'),
+    (${OTHER_PROJECT}, ${OTHER_ORG}, 2, 'regulatory', 'Other tenant NDA');
 `;
 
 /** ectd_compilations lives in the drizzle baseline; this is that shape. */
@@ -139,8 +139,10 @@ beforeAll(async () => {
     // meant none of them could run: the journey hand-copied two of their
     // statements and silently lacked the rest, and GET /history — which selects
     // sequence_number and leaf_manifest — answered from a swallowed error.
-    prereqSql: PREREQ + ECTD_COMPILATIONS_DDL,
+    prereqSql: PREREQ + ECTD_COMPILATIONS_DDL + extractTableDdl('migrations/20260524_program_workbench_schema.sql', ['regulatory_programs']),
     migrations: [
+      // Numeric projects now read the real nullable program bridge for filing applicability.
+      'migrations/20260814_projects_regulatory_program_anchor.sql',
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
       'db/migrations/20260220_ind_section_tracking.sql',
@@ -333,13 +335,12 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
     });
 
     // ── KNOWN-BAD: another tenant sees none of it ───────────────────────────
-    await R.expectBlocked('cross-tenant-history-is-empty', async () => {
+    await R.expectBlocked('cross-tenant-history-is-not-found', async () => {
       const res = await asOrg(OTHER_ORG)(request(app).get(`/api/ectd-compile/${PROJECT}/history`));
-      // Blocked here means "returns no data", not an error status: the tenant
-      // filter must exclude the row. Before the fix the name-LIKE filter alone
-      // returned another organization's submission history.
+      // Numeric anchors now resolve inside the current tenant before history
+      // is read, so a foreign project is not found and supplies no rows.
       return {
-        blocked: res.status === 200 && (res.body.compilations ?? []).length === 0,
+        blocked: res.status === 404 && (res.body.compilations ?? []).length === 0,
         status: res.status,
         rows: (res.body.compilations ?? []).length,
       };

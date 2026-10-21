@@ -545,6 +545,39 @@ function registerSubmissionSigningCases3() {
 
 function registerSubmissionSigningCases4() {
 
+  it.each([
+    { name: 'locked', account: { locked: true }, status: 423, code: 'ACCOUNT_LOCKED' },
+    { name: 'inactive', account: { active: false }, status: 401, code: 'ACCOUNT_INACTIVE' },
+    { name: 'newly MFA-enrolled', account: { mfa: true }, status: 400, code: 'MFA_TOKEN_REQUIRED' },
+  ])('refuses a $name account before resuming an already signed release', async ({ account, status, code }) => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    const priorSignature = { id: 555, signedAt: '2026-06-29T00:01:00.000Z' };
+    hoisted.findActiveReleaseSignature.mockResolvedValue(priorSignature);
+    Object.assign(hoisted.account, account);
+
+    const res = await request(makeApp()).post('/api/submissions/sub-1/sign-release').send(BODY);
+
+    expect(res.status).toBe(status);
+    expect(res.body.code).toBe(code);
+    expect(res.body.signatureId).toBeUndefined();
+    expect(hoisted.resume).not.toHaveBeenCalled();
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+    expect(hoisted.auditLogAction).not.toHaveBeenCalled();
+    expect(priorSignature).toEqual({ id: 555, signedAt: '2026-06-29T00:01:00.000Z' });
+  });
+
+  it('rejects a wrong password before resuming an already signed release', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue({ id: 555 });
+    const res = await request(makeApp()).post('/api/submissions/sub-1/sign-release')
+      .send({ ...BODY, password: 'wrong-password' });
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    expect(hoisted.failures).toHaveBeenCalledWith(7);
+    expect(hoisted.resume).not.toHaveBeenCalled();
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+
   it('refuses a locked account (423) before its password is compared', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.findActiveReleaseSignature.mockResolvedValue(null);
@@ -572,8 +605,8 @@ function registerSubmissionSigningCases4() {
     expect(res.body.already_signed).toBe(true);
     expect(res.body.signedAt).toBe('2026-06-29T00:01:00.000Z');
     expect(hoisted.resume).toHaveBeenCalledWith('run-123', 100, 7);
-    // No new signature row, no password check (idempotent short-circuit).
-    expect(hoisted.compare).not.toHaveBeenCalled();
+    // A prior signature prevents a duplicate, but does not authorize this request.
+    expect(hoisted.compare).toHaveBeenCalledWith('right-password', 'stored-hash');
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
   });
 
@@ -678,13 +711,14 @@ describe('POST /api/submissions/:submissionId/sign-release — body schema enfor
     expect(res.body).toMatchObject({ signatureId: 999, signedAt: null, runStatus: 'awaiting-signature', continuation: 'retry-required', continuationError: 'CONTINUATION_UNAVAILABLE' });
     expect(hoisted.createElectronicSignature).toHaveBeenCalledTimes(1);
   });
-  it('refuses unavailable release verification before checking credentials or inserting a signature', async () => {
+  it('refuses unavailable release verification before inserting or continuing after valid credentials', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.prepare.mockRejectedValue(new Error('verification unavailable'));
     const res = await request(makeApp()).post('/api/submissions/sub-1/sign-release').send(BODY);
     expect(res.status).toBe(503);
-    expect(hoisted.compare).not.toHaveBeenCalled();
+    expect(hoisted.compare).toHaveBeenCalledWith('right-password', 'stored-hash');
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+    expect(hoisted.resume).not.toHaveBeenCalled();
   });
   it('refuses a source withdrawn during password/MFA after the same-transaction source guard runs', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun()); hoisted.account.mfa = true;

@@ -1,0 +1,17 @@
+# scripts/ci/require-migration-headers.sh, its per-file rule (head -40 | grep 'eCTD REGULATORY AUDIT CONTEXT'),
+# applied to the new file. The script itself diffs base...HEAD, so it sees an uncommitted file only once committed.
+
+## 1. The file with its first 27 lines (the eCTD block) removed — the rule must refuse it
+❌ Missing eCTD header: <scratchpad>/hdr/migrations/20261019_commitment_fulfilment_evidence.sql
+exit 1
+
+## 2. The file as written in this change
+✓ header present: migrations/20261019_commitment_fulfilment_evidence.sql
+exit 0
+
+## 3. The script as CI runs it, at this tree (base HEAD~1; the change is not yet committed)
+🔍 Checking migrations for eCTD regulatory audit headers...
+   (Scope: 2026+ date-prefixed migrations + vault prerequisite, in db/migrations migrations)
+
+✅ No migration changes detected vs HEAD~1.
+exit 0

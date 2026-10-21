@@ -11,7 +11,7 @@ vi.mock('../persistence', () => ({ persistReportRun: stubs.persist }));
 vi.mock('../../notifications/notification-service', () => ({ createNotification: vi.fn() }));
 vi.mock('../../auditService', () => ({ writeChainedAuditRow: vi.fn() }));
 
-import { canAccessReportProject, getAccessibleReportProjectIds } from '../project-access';
+import { canAccessReportProject, canAccessReportScope, getAccessibleReportProjectIds } from '../project-access';
 import { validateSubscriptionConfiguration } from '../scheduling/configuration';
 import { generateAndDeliver } from '../scheduling/generate-deliver';
 import type { CreateSubscriptionInput } from '../scheduling/subscription-service';
@@ -60,6 +60,13 @@ afterAll(async () => { await database?.close(); });
 beforeEach(() => { stubs.persist.mockReset(); stubs.compute.mockReset(); });
 
 describe('reporting reuses the existing project-sharing boundary', () => {
+  it('keeps use-only, public and pending-review admission read-only in explicit edit mode', async () => {
+    expect(await canAccessReportProject(7, {userId:6,role:'member'},11,client,{forWrite:true})).toBe(false);
+    expect(await canAccessReportProject(7, {userId:8,role:'viewer'},12,client,{forWrite:true})).toBe(false);
+    expect(await canAccessReportProject(7, {userId:5,role:'member'},13,client,{forWrite:true})).toBe(false);
+    expect(await canAccessReportProject(7, {userId:99,role:'member'},11,client,{forWrite:true})).toBe(true);
+    expect(await canAccessReportProject(7, {userId:10,role:'manager'},11,client,{forWrite:true})).toBe(true);
+  });
   it('denies an unassigned same-organization member and viewer while allowing owner and explicit use members', async () => {
     expect(await canAccessReportProject(7, { userId: 5, role: 'member' }, 11, client)).toBe(false);
     expect(await canAccessReportProject(7, { userId: 8, role: 'viewer' }, 11, client)).toBe(false);
@@ -97,4 +104,35 @@ describe('reporting reuses the existing project-sharing boundary', () => {
   it('keeps genuine organization registers governed by their existing organization policy', async () => {
     expect(await validateSubscriptionConfiguration({ ...input, createdBy: 5, reportTypeId: 'fcoi.disclosure_register', scopeType: 'account', scopeId: '7' })).toMatchObject({ projectId: null, recipientUserIds: [5] });
   });
+});
+
+
+it('guards saved account reports by their actual source projects and rechecks a schedule recipient after compute', async () => {
+  const scope = { organizationId: 7, scopeType: 'account', scopeId: '7', dependencySummary: { summary: { accessProjectIds: [11] } } };
+  expect(await canAccessReportScope(7, { userId: 5, role: 'member' }, scope, client)).toBe(false);
+  expect(await canAccessReportScope(7, { userId: 9, role: 'viewer' }, scope, client)).toBe(true);
+  expect(await canAccessReportScope(7, { userId: 5, role: 'member' }, { ...scope, dependencySummary: { summary: {} } }, client)).toBe(true);
+  stubs.compute.mockResolvedValue({ computed: { summary: { accessProjectIds: [11] }, providers: [], blockers: [], criticalBlockers: [], confidence: null } });
+  const sub = { ...input, reportTypeId: 'fcoi.disclosure_register', scopeType: 'account', scopeId: '7', id: 51, recipients: ['viewer@example.com'], enabled: true, nextRunAt: new Date('2026-10-10T09:00:00Z'), createdAt: new Date('2026-10-09T10:00:00Z'), updatedAt: new Date('2026-10-09T10:00:00Z'), lastRunAt: null } as ReportSubscriptionRow;
+  await expect(generateAndDeliver(sub, new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'REPORT_RECIPIENT_PROJECT_ACCESS_DENIED', status: 403 });
+  expect(stubs.compute).toHaveBeenCalledOnce(); expect(stubs.persist).not.toHaveBeenCalled();
+});
+
+
+it('rechecks actual source-project recipient access inside the persistence transaction before cursor or delivery effects', async () => {
+  stubs.compute.mockResolvedValue({ computed: { summary: { accessProjectIds: [11] }, providers: [], blockers: [], criticalBlockers: [], confidence: null } });
+  stubs.persist.mockImplementation(async (_rows, _actor, effect) => {
+    await database.exec("UPDATE project_members SET status='revoked' WHERE project_id=11 AND user_id=9");
+    return effect(client, { run: { id: 999 } });
+  });
+  const sub = { ...input, reportTypeId: 'fcoi.disclosure_register', scopeType: 'account', scopeId: '7', id: 52, recipients: ['recipient@example.com'], enabled: true, nextRunAt: new Date('2026-10-10T09:00:00Z'), createdAt: new Date('2026-10-09T10:00:00Z'), updatedAt: new Date('2026-10-09T10:00:00Z'), lastRunAt: null } as ReportSubscriptionRow;
+  try {
+    await expect(generateAndDeliver(sub, new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'REPORT_RECIPIENT_PROJECT_ACCESS_DENIED', status: 403 });
+    expect(stubs.persist).toHaveBeenCalledOnce();
+  } finally { await database.exec("UPDATE project_members SET status='active' WHERE project_id=11 AND user_id=9"); }
+});
+
+
+it.each([null, {invalid:true}, ['11']])('refuses malformed present source evidence %j on direct account reads', async accessProjectIds => {
+  expect(await canAccessReportScope(7,{userId:99,role:'member'},{scopeType:'account',scopeId:'7',dependencySummary:{summary:{accessProjectIds}}},client)).toBe(false);
 });

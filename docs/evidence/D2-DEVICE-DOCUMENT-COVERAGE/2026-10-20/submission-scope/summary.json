@@ -1,0 +1,41 @@
+{
+  "recordedAt": "2026-10-20T20:29:42.289893+00:00",
+  "node": "v22.23.3",
+  "red": {
+    "failed": 4,
+    "executed": 4,
+    "skipped": 42,
+    "exitCode": 1,
+    "receipt": "red.json",
+    "sourcePinsStable": true
+  },
+  "green": {
+    "passed": 46,
+    "suites": 2,
+    "exitCode": 0,
+    "elapsedSeconds": 5.868,
+    "sourceAndDependencyPins": 6,
+    "pinsStableAndCurrent": true,
+    "receipt": "current-tests.json"
+  },
+  "lint": {
+    "files": 4,
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "receipt": "lint.json"
+  },
+  "positiveControls": [
+    "Medicinal EU DCP/NCA remains CESP",
+    "FDA IND remains ESG in the channel registry",
+    "CTIS remains portal-only",
+    "EMA IRIS and centralised-procedure rules remain unconnected",
+    "Notified Body recipients retain their existing unconnected rule",
+    "FDA structured channel diagnostic remains technical and unproven"
+  ],
+  "newRefusals": [
+    "EU device/IVD national authority, reference laboratory and other unmodelled device recipients never inherit a regional gateway",
+    "Registered certification body never inherits PMDA gateway"
+  ],
+  "scope": "This change selects no transport and makes no network call. A gateway registry entry or readable preparation outline never establishes a qualified submission channel."
+}

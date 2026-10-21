@@ -36,7 +36,7 @@
 
 import type { RequestSqlClient } from '../../db/requestDb';
 import { queryRowsClient } from '../../db/queryRowsClient';
-import { AGENCY_FALLBACKS, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
+import { documentAgencyCandidates, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
 
 export interface BindingInput {
   db: RequestSqlClient;
@@ -117,7 +117,7 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
         AND COALESCE(to_jsonb(c2c_documents)->>'filing_scope', 'home') = 'home'
       ORDER BY created_at DESC
       LIMIT 1`,
-    [projectId, orgId, klass.docType, [klass.agency, ...AGENCY_FALLBACKS]],
+    [projectId, orgId, klass.docType, documentAgencyCandidates(klass.docType, klass.agency)],
   );
   if (doc.rows.length === 0) {
     return {

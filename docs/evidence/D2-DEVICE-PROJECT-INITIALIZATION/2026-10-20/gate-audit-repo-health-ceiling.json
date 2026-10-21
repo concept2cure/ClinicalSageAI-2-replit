@@ -1,0 +1,15 @@
+{
+  "gate": "audit:repo-health:ceiling",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "audit:repo-health:ceiling"
+  ],
+  "at": "2026-10-20T22:28:17.619973+00:00",
+  "elapsedSeconds": 4.305,
+  "exitCode": 0,
+  "stdout": "Repo health scan written: /tmp/repo-health-ceiling-probe.json\n- content-duplicate groups: 0 (0 files)   [gated]\n- duplicate basenames: 237   [reported, not gated]\n- files over byte threshold: 57\n- files over line threshold: 112\n\n\u2705 repo health strict gate passed.\n",
+  "stderr": "",
+  "sourceFreeze": "source-freeze.json"
+}

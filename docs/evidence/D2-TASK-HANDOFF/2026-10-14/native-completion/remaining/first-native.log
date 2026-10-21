@@ -1,0 +1,694 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+{"level":30,"time":"2026-10-14T22:32:33.242Z","pid":42015,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:32:33.243Z","pid":42015,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:32:33.243Z","pid":42015,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/cmc-source-evidence.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-14T22:32:37.299Z","pid":42015,"hostname":"a189527a215b","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.379Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 6,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T22:32:37.511Z', poolSize: 1 }
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.546Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5edb3fa7-6d96-4283-a7ee-9878664bd2a8",
+    "code": "DBTEST-CSE-mv8oqrum_b94cd31c-COA",
+    "type": "OTHER",
+    "size": 44,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:32:37.569Z","pid":42015,"hostname":"a189527a215b","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.578Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 27,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.619Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2c155641-b601-4ea4-ac0d-9c1399546ca0",
+    "code": "DBTEST-CSE-mv8oqrum_b94cd31c-STAB",
+    "type": "OTHER",
+    "size": 27,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:32:37.634Z","pid":42015,"hostname":"a189527a215b","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.646Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.678Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b65f74a2-4df2-4696-91c6-676f342de3a2",
+    "code": "DBTEST-CSE-mv8oqrum_b94cd31c-ELSE",
+    "type": "OTHER",
+    "size": 33,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:32:37.695Z","pid":42015,"hostname":"a189527a215b","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.706Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts
+{
+  "timestamp": "2026-10-14T22:32:37.743Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "24026c56-0f92-45ff-95bb-4daf7c952301",
+    "code": "DBTEST-CSE-mv8oqrum_b94cd31c-THEIRS",
+    "type": "OTHER",
+    "size": 18,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > links a record to a current version, and the section lists it with who and why
+[database] Database connection successful { timestamp: '2026-10-14T22:32:37.895Z', poolSize: 2 }
+
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > links a record to a current version, and the section lists it with who and why 423ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses no reason, an unknown record, another program’s or organisation’s document, and a duplicate 155ms
+stdout | tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current
+[database] Database connection successful { timestamp: '2026-10-14T22:32:38.360Z', poolSize: 3 }
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current
+[database] Database connection successful { timestamp: '2026-10-14T22:32:38.361Z', poolSize: 4 }
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current
+[database] Database connection successful { timestamp: '2026-10-14T22:32:38.361Z', poolSize: 5 }
+
+stderr | tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current
+[governed-evaluator] RIM emitter not registered — learning loop inactive
+
+{"level":30,"time":"2026-10-14T22:32:38.416Z","pid":42015,"hostname":"a189527a215b","context":{"code":"governed-fabric:0dee4884-370c-4e2d-92f3-dbda8d3f8d46","project":0},"msg":"[decision-record] Creating decision record"}
+{"level":40,"time":"2026-10-14T22:32:38.426Z","pid":42015,"hostname":"a189527a215b","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names the record’s version as superseded once a later version is filed
+{
+  "timestamp": "2026-10-14T22:32:38.447Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 54,
+    "wordCount": 7,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names the record’s version as superseded once a later version is filed
+{
+  "timestamp": "2026-10-14T22:32:38.491Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "95a05c40-43e4-42bb-ae2b-163ff19a3eb7",
+    "code": "DBTEST-CSE-mv8oqrum_b94cd31c-COA",
+    "type": "OTHER",
+    "size": 54,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses a viewer, and another organisation’s project before anything is read 21ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current 57ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names the record’s version as superseded once a later version is filed 106ms
+{"level":30,"time":"2026-10-14T22:32:38.536Z","pid":42015,"hostname":"a189527a215b","context":{"code":"governed-fabric:9718a815-8437-4c65-a125-c697015893e7","project":0},"msg":"[decision-record] Creating decision record"}
+{"level":30,"time":"2026-10-14T22:32:38.563Z","pid":42015,"hostname":"a189527a215b","context":{"code":"governed-fabric:f2e16b67-daec-496e-bcf2-2478442c6858","project":0},"msg":"[decision-record] Creating decision record"}
+{"level":30,"time":"2026-10-14T22:32:38.705Z","pid":42015,"hostname":"a189527a215b","context":{"code":"governed-fabric:71c3d257-7444-4b0c-8107-63360b0e9825","project":0},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > the export gate refuses the approved section and says which record and document 52ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > refuses a link to the superseded version 10ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > linking the current version moves the link with the same reason, and the hold lifts 133ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names a withdrawn version as withdrawn 124ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > requires a reason, keeps the row, and cannot be done twice 33ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > each link and unlink is a chained row on the document’s own history 210ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > the table refuses every other change, for every role, and another organisation reads none of it 12ms
+{"level":30,"time":"2026-10-14T22:32:40.028Z","pid":42037,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:32:40.030Z","pid":42037,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:32:40.030Z","pid":42037,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful
+
+stderr | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 115ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 23ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > the filing row records the evidence kind before and after (VR-05) 36ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 29ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 8ms
+stdout | tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing
+[database] Database connection successful { timestamp: '2026-10-14T22:32:45.715Z', poolSize: 1 }
+
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 12ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 18ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 5ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 5468ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 13ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 6ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 48ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 21ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing 9ms
+ × tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all 23ms
+   → expected { ok: true, view: 'device', …(3) } to match object { ok: false, status: 403, …(1) }
+(15 matching properties omitted from actual)
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check 15ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns 17ms
+{"level":30,"time":"2026-10-14T22:32:47.008Z","pid":42054,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:32:47.009Z","pid":42054,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:32:47.009Z","pid":42054,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[database] Database connection successful
+
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-14T22:32:48.496Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-14T22:32:49.063Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:49.067Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+{
+  "timestamp": "2026-10-14T22:32:49.124Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1a90e3e2-cd5f-455c-a344-aa5865008766",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-START",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 2113ms
+{"level":40,"time":"2026-10-14T22:32:49.181Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:49.196Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:49.196Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version
+{
+  "timestamp": "2026-10-14T22:32:49.214Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "01f54ab1-fc04-4389-851b-f9b11acedb57",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-THEIRS",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:32:49.242Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:49.252Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:49.253Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 60ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review
+{
+  "timestamp": "2026-10-14T22:32:49.270Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "12171436-6419-400b-bcbc-d68ce510b54e",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-POLICY",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:32:49.344Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:49.353Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:49.354Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-14T22:32:49.372Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fc35ac22-d6a0-4d4c-8502-1d1fcc40df0d",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 102ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+[database] Database connection successful { timestamp: '2026-10-14T22:32:49.498Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-14T22:32:49.527Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:49.547Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:49.548Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-14T22:32:49.567Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6ee4c248-a541-4320-af7a-a448307c33af",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+[database] Database connection successful { timestamp: '2026-10-14T22:32:49.906Z', poolSize: 2 }
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 829ms
+{"level":40,"time":"2026-10-14T22:32:50.175Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:50.189Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:50.190Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-14T22:32:50.234Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "33debfe8-755f-4c5a-9356-62d55fdb65fc",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:32:50.319Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:50.339Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:50.339Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-14T22:32:50.364Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "05bac738-0033-4ba5-8f97-8eb65083d72c",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 236ms
+{"level":40,"time":"2026-10-14T22:32:50.407Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:50.420Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:50.421Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-14T22:32:50.448Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7cc785e3-4ed4-4874-91b5-c3c1cafd2588",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:32:50.529Z","pid":42054,"hostname":"a189527a215b","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:32:50.550Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:32:50.551Z","pid":42054,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-14T22:32:50.571Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9ff37560-bf48-445d-af73-6c9ff6387b56",
+    "code": "DBTEST-VR13-mv8or2xm_4e31c8a7-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":50,"time":"2026-10-14T22:32:50.642Z","pid":42054,"hostname":"a189527a215b","context":{"err":"injected: the superseded audit row could not be written","correlationId":null,"code":null},"msg":"[document-lifecycle] handling the document lifecycle request failed"}
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 250ms
+{"level":30,"time":"2026-10-14T22:32:51.697Z","pid":42108,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:32:51.699Z","pid":42108,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:32:51.699Z","pid":42108,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/data-room-processing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T22:32:51.731Z', poolSize: 1 }
+
+stdout | tests/db/data-room-processing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/data-room-processing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version
+[database] Database connection successful { timestamp: '2026-10-14T22:32:52.884Z', poolSize: 2 }
+
+stdout | tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version
+[database] Database connection successful { timestamp: '2026-10-14T22:32:52.919Z', poolSize: 3 }
+
+ ✓ tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version 222ms
+ ✓ tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > a word only in its body finds it, with a snippet of where 119ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > processes a pending capture from its stored bytes, and names one it cannot read 41ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > reports the real total and pages through it 2007ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > a search never returns another project's source, nor another organization's 90ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > filters by how far a source was read, and refuses a filter it cannot read rather than widening 99ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the Vault lane counts every current source of the project > counts captured, classified, filed and needs-review over the whole room 447ms
+{"level":30,"time":"2026-10-14T22:32:57.393Z","pid":42126,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:32:57.396Z","pid":42126,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:32:57.396Z","pid":42126,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/data-room-catalog-facts.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T22:32:57.468Z', poolSize: 1 }
+
+stdout | tests/db/data-room-catalog-facts.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/data-room-catalog-facts.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > inherits the project facts, finds the labelled facts, and names its study
+[database] Database connection successful { timestamp: '2026-10-14T22:32:59.243Z', poolSize: 2 }
+
+stdout | tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > inherits the project facts, finds the labelled facts, and names its study
+[database] Database connection successful { timestamp: '2026-10-14T22:32:59.299Z', poolSize: 3 }
+
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > inherits the project facts, finds the labelled facts, and names its study 276ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > the Data Room read carries what the catalog found 172ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > two studies of the project with the same protocol id: neither is chosen, both are named 95ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > the database refuses a capture naming another organization's study 10ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > deleting the study design detaches its sources and keeps the capture 110ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a tabular capture is profiled, structure only > an SDTM AE CSV reads as SDTM AE with its columns and rows, and no subject value is kept 458ms
+{"level":30,"time":"2026-10-14T22:33:01.356Z","pid":42148,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:33:01.357Z","pid":42148,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:33:01.357Z","pid":42148,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+[database] Database connection successful
+
+stderr | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-14T22:33:02.413Z","pid":42148,"hostname":"a189527a215b","context":{"filename":"already.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-14T22:33:03.112Z","pid":42148,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:33:03.116Z","pid":42148,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+{
+  "timestamp": "2026-10-14T22:33:03.207Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "321fd1d0-e2bc-482c-a009-2677bea60fb7",
+    "code": "DBTEST-VR11-mv8ore0y_4810e9f1-ALREADY",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+[database] Database connection successful { timestamp: '2026-10-14T22:33:03.276Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-14T22:33:03.482Z","pid":42148,"hostname":"a189527a215b","context":{"filename":"protocol synopsis.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:33:03.561Z","pid":42148,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:33:03.562Z","pid":42148,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+{
+  "timestamp": "2026-10-14T22:33:03.634Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2407a361-8c9f-4f61-9e21-7fc2b5e6b927",
+    "code": "protocol synopsis.pdf",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source 2534ms
+{"level":40,"time":"2026-10-14T22:33:04.145Z","pid":42148,"hostname":"a189527a215b","context":{"filename":"good.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:33:04.226Z","pid":42148,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:33:04.229Z","pid":42148,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > an antivirus refusal on one source leaves the other filed, and the batch is not complete
+{
+  "timestamp": "2026-10-14T22:33:04.303Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fb8b007a-0fd5-4e30-8d8b-3875e019863d",
+    "code": "good.pdf",
+    "type": "OTHER",
+    "size": 76,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:33:04.425Z","pid":42148,"hostname":"a189527a215b","context":{"filename":"infected.pdf","declaredMime":"application/pdf","signature":"Test.Signature"},"msg":"[upload-safety] Upload rejected by virus scanner"}
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > an antivirus refusal on one source leaves the other filed, and the batch is not complete 497ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses bytes that no longer match the checksum recorded at capture, storing nothing 158ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a viewer is refused before anything is filed 28ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a superseded capture, another project’s capture and a source with no file are each refused with a reason 78ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses an empty or oversized selection 28ms
+{"level":30,"time":"2026-10-14T22:33:05.822Z","pid":42262,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:33:05.824Z","pid":42262,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:33:05.824Z","pid":42262,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+[database] Database connection successful
+
+stderr | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+[database] Database connection successful { timestamp: '2026-10-14T22:33:06.921Z', poolSize: 1 }
+
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing 1089ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > confirms each with one chained row carrying the reason, and names the person 102ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a document moved or confirmed since the list was loaded is refused CONFLICT; the others commit 56ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a viewer is refused, and nothing changes 11ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > the Vault counts the suggestions awaiting confirmation over the program 479ms
+{"level":30,"time":"2026-10-14T22:33:08.927Z","pid":42360,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:33:08.931Z","pid":42360,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:33:08.931Z","pid":42360,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+[database] Database connection successful
+
+stderr | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > serves as app_service, not a superuser, without BYPASSRLS, with enforcement on 6ms
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > the setting table is tenant-isolated by the sweep: RLS enabled and forced, tenant_isolation_policy present 3ms
+{"level":40,"time":"2026-10-14T22:33:09.442Z","pid":42360,"hostname":"a189527a215b","context":{"filename":"DBTEST-P122ORG-mv8orkh9_380cb360-1.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-14T22:33:09.995Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:33:10.000Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+{
+  "timestamp": "2026-10-14T22:33:10.070Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "bc04af76-56ae-466e-a053-1557ebb46ce3",
+    "code": "DBTEST-P122ORG-mv8orkh9_380cb360-1",
+    "type": "OTHER",
+    "size": 106,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated 992ms
+{"level":40,"time":"2026-10-14T22:33:10.118Z","pid":42360,"hostname":"a189527a215b","context":{"filename":"DBTEST-P122ORG-mv8orkh9_380cb360-2.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:33:10.127Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:33:10.128Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years
+{
+  "timestamp": "2026-10-14T22:33:10.144Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "802ed2e0-ccfa-4376-947e-dca4b8751551",
+    "code": "DBTEST-P122ORG-mv8orkh9_380cb360-2",
+    "type": "OTHER",
+    "size": 106,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:33:10.158Z","pid":42360,"hostname":"a189527a215b","context":{"filename":"DBTEST-P122ORG-mv8orkh9_380cb360-3.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:33:10.169Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:33:10.170Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > reads 25 years, the default, for an organisation that has set nothing 7ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > an administrator sets 30 years; the change and its chained audit row are one transaction 25ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years 38ms
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS
+{
+  "timestamp": "2026-10-14T22:33:10.200Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a5dc8ed7-f0a6-4409-836f-ceca09e8eb19",
+    "code": "DBTEST-P122ORG-mv8orkh9_380cb360-3",
+    "type": "OTHER",
+    "size": 106,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS
+[database] Database connection successful { timestamp: '2026-10-14T22:33:10.211Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-14T22:33:10.306Z","pid":42360,"hostname":"a189527a215b","context":{"filename":"DBTEST-P122ORG-mv8orkh9_380cb360-4.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:33:10.317Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS 69ms
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > below 25 years without a reason and the governing rule: 400, and nothing changes 16ms
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > the database refuses a shorter period with no reason, whatever path writes it 3ms
+{"level":40,"time":"2026-10-14T22:33:10.318Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins
+{
+  "timestamp": "2026-10-14T22:33:10.352Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3c4131a7-e31b-4493-b051-c5420584b8d2",
+    "code": "DBTEST-P122ORG-mv8orkh9_380cb360-4",
+    "type": "OTHER",
+    "size": 106,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-14T22:33:10.368Z","pid":42360,"hostname":"a189527a215b","context":{"filename":"DBTEST-P122ORG-mv8orkh9_380cb360-5.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-14T22:33:10.378Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-14T22:33:10.379Z","pid":42360,"hostname":"a189527a215b","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins
+{
+  "timestamp": "2026-10-14T22:33:10.396Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0f8ae186-3cde-48e6-9a6a-671fb95c62b0",
+    "code": "DBTEST-P122ORG-mv8orkh9_380cb360-5",
+    "type": "OTHER",
+    "size": 106,
+    "hasText": false
+  }
+}
+
+{"level":50,"time":"2026-10-14T22:33:10.414Z","pid":42360,"hostname":"a189527a215b","context":{"orgId":92,"err":"probe: the audit store refused the row","correlationId":null,"code":null},"msg":"[vault-retention-period] changing the retention period failed"}
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins 164ms
+ ✓ tests/db/org-retention-period.dbtest.ts > authority and atomicity > a member can neither read nor set the period: 403, and nothing changes 7ms
+ ✓ tests/db/org-retention-period.dbtest.ts > authority and atomicity > a refused audit row takes the change down with it, and the 500 carries no error text 12ms
+{"level":40,"time":"2026-10-14T22:33:10.502Z","pid":42360,"hostname":"a189527a215b","context":{"organizationId":94,"purgedByUserId":83,"retentionOverride":null,"finalExportDigest":"dbtest-p122org-42360-digest","deletedRows":{"organization_retention_settings":1},"turnRecordErasure":{"records":0,"blobs":0},"runEventErasure":{"events":0},"artifactRecordErasure":{"signatures":0,"snapshots":0}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/org-retention-period.dbtest.ts > a tenant purge erases the period (GDPR Art. 17) > the purge list reaches the setting row; the organisation row the purge updates survives 87ms
+{"level":30,"time":"2026-10-14T22:33:11.602Z","pid":42414,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:33:11.604Z","pid":42414,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:33:11.604Z","pid":42414,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[database] Database connection successful
+
+stderr | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing 72ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a bare module, which is a container with 422, and writes nothing 2ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses an evidence kind outside the list with 422, and writes nothing 2ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > files a decision inside the vocabulary, as before 33ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored 110ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses an evidence kind outside the list with 400, before any byte is stored 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all
+AssertionError: expected { ok: true, view: 'device', …(3) } to match object { ok: false, status: 403, …(1) }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VAULT_WRITE_ROLE_REQUIRED",
+-   "ok": false,
+-   "status": 403,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-placement.dbtest.ts:518:17
+    516|   it('refuses a scope that carries no role at all', async () => {
+    517|     const out = await place({ folderId: 'eng', note: 'no role' }, unde…
+    518|     expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_W…
+       |                 ^
+    519|     expect((await row()).placement_status).toBe('unfiled');
+    520|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 78 passed (79)
+   Start at  22:32:31
+   Duration  40.60s (transform 7.87s, setup 288ms, import 2.22s, tests 36.58s, environment 1ms)
+
+JSON report written to /workspace/concept2cure/docs/evidence/D2-TASK-HANDOFF/2026-10-14/native-completion/remaining/first-native.json

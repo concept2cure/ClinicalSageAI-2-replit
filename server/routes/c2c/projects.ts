@@ -48,7 +48,9 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
-import { workstreamSqlCase } from '../../../shared/constants/domain/product-types.js';
+import { workstreamSqlCase, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
+import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
+import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
    VALID_PRODUCT_TYPES / DRUG_APPLICATION_TYPES) and its canonical
@@ -67,6 +69,11 @@ import {
   normalizeDeviceClassification,
   usesDeviceClassification,
 } from '../../../shared/constants/domain/device-classification.js';
+import {
+  programmePredicateDevicesColumn,
+  programmeTeamMembersColumn,
+  programmeProfilePatchSchema,
+} from '../../services/c2c/programme-profile-write.js';
 /* Every 5xx on this router goes through the canonical helper. Its job here is
    the one the MDX UAT (item A1) proved was missing: it logs the failure keyed
    by the SAME `X-Request-Id` the user is shown as "Reference <id>", and echoes
@@ -463,7 +470,7 @@ function allowProgramMutation(
  *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
  *  match on lower() — otherwise every real row falls through to the ELSE branch
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
-const WS_CASE = workstreamSqlCase('p.program_type');
+const WS_CASE = workstreamSqlCase('p.program_type', 'p.product_type');
 
 // ── The program DETAIL — one projection, one serializer ──────────────────────
 //
@@ -700,8 +707,11 @@ router.post('/', async (req: Request, res: Response) => {
   const name = str(body.name);
   const productName = str(body.productName) || name;
   const programType = str(body.programType).toLowerCase().replace(/[\s-]+/g, '_');
-  const primaryAgency = str(body.primaryAgency) || 'FDA';
-  const submissionTypeId = str(body.submissionTypeId) || null;
+  const requestedAgency = str(body.primaryAgency) || 'FDA';
+  const primaryAgency = regionalDeviceApplicationClassOf(programType)
+    ? documentAgencyFor({ applicationType: programType, market: requestedAgency }) ?? requestedAgency
+    : requestedAgency;
+  const submissionTypeId = str(body.submissionTypeId) || regionalDeviceApplicationClassOf(programType)?.registryId || null;
   const indication = str(body.indication) || null;
   // Agency-assigned application number (IND / NDA / BLA / MAA). Optional: a
   // program has none until the agency assigns one, and it is never invented.
@@ -711,8 +721,14 @@ router.post('/', async (req: Request, res: Response) => {
   // Accept 'YYYY-MM-DD' (wizard <input type=date>); '' → null.
   const rawDate = str(body.targetSubmissionDate);
   const targetSubmissionDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : null;
-  const teamMembers = Array.isArray(body.teamMembers)
-    ? (body.teamMembers as unknown[]).filter((m) => typeof m === 'string')
+  /* The wizard sends names. `team_members` is a TeamMember[] column and the
+     governed write stores `{ name, role? }` with role OPTIONAL, so a name with
+     no stated role maps onto the canonical shape and asserts nothing extra.
+     Until 2026-10-19 this wrote the bare string array: the service that reads
+     `Array<{ name?, userId?, role? }>` saw `{}` for every member, and the
+     owner initials computed from `teamMembers[].name` came out undefined. */
+  const teamMemberNames = Array.isArray(body.teamMembers)
+    ? (body.teamMembers as unknown[]).filter((m): m is string => typeof m === 'string' && m.trim() !== '')
     : [];
 
   if (!name) return send400(res, 'name is required');
@@ -744,7 +760,7 @@ router.post('/', async (req: Request, res: Response) => {
   // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
   // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
   // not be recorded as medicinal. The rules are productTypeForIntake's.
-  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase());
+  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase(), submissionTypeId);
   if ('refusal' in classDecision) return send400(res, classDecision.refusal);
   const { productType } = classDecision;
 
@@ -796,7 +812,35 @@ router.post('/', async (req: Request, res: Response) => {
      created with an oncology therapeutic area and no product code. Validated
      rather than trusted: an unparseable value is dropped and named, never
      coerced into something that reads as data. */
-  const deviceCls = normalizeDeviceClassification((req.body ?? {}).deviceClassification);
+  const documentAgency = documentAgencyFor(marketInput);
+  const euRegulation = documentAgency === 'EMA'
+    ? programType === 'ivdr' ? 'ivdr' : ['mdr', 'cer'].includes(programType) ? 'mdr' : null
+    : null;
+  const regional = programmeProfilePatchSchema.safeParse({
+    euMdrClass: body.euMdrClass ?? null, euIvdrClass: body.euIvdrClass ?? null,
+  });
+  if (!regional.success) return send400(res, 'EU device classification must use the applicable MDR or IVDR class.');
+  const { euMdrClass = null, euIvdrClass = null } = regional.data;
+  const selectedFiling = submissionTypeId ? resolveFilingCatalogEntry(submissionTypeId) : null;
+  const classScope = deviceClassScopeForFiling(submissionTypeId);
+  const declaredEuClass = euRegulation === 'mdr' ? euMdrClass : euIvdrClass;
+  if (classScope && (classScope.regulation !== euRegulation || (declaredEuClass !== null && !classScope.classes.includes(declaredEuClass)))) {
+    return send400(res, 'The stated EU class conflicts with the selected class-specific filing. Choose the matching filing or leave the class unconfirmed.');
+  }
+  if ((euMdrClass !== null && euRegulation !== 'mdr') || (euIvdrClass !== null && euRegulation !== 'ivdr')
+    || (euRegulation && (euRegulation === 'ivdr') !== isIvdFamily(productType))
+    || (euRegulation && selectedFiling && (selectedFiling.region !== 'EU'
+      || selectedFiling.pathwayKey !== programType))) {
+    return send400(res, 'The EU classification, product type and selected filing must describe the same MDR or IVDR context.');
+  }
+  const rawClassification = body.deviceClassification as Record<string, unknown> | undefined;
+  const fdaFields = ['productCode', 'regulationNumber', 'deviceClass', 'reviewPanel', 'predicateK', 'predicateName', 'flags'];
+  if (usesDeviceClassification(productType) && documentAgency !== 'FDA'
+    && rawClassification && fdaFields.some(key => {
+      const value = rawClassification[key];
+      return Array.isArray(value) ? value.length > 0 : typeof value === 'string' ? value.trim() !== '' : value != null;
+    })) return send400(res, 'FDA device classification and predicate fields apply only to an FDA filing.');
+  const deviceCls = normalizeDeviceClassification(body.deviceClassification);
   if (deviceCls.rejected.length && !usesDeviceClassification(productType)) {
     // A pharma filing sent device fields — ignore them rather than 400.
     deviceCls.rejected.length = 0;
@@ -809,11 +853,26 @@ router.post('/', async (req: Request, res: Response) => {
   }
   const dc = deviceCls.value;
 
+  /* Both json columns through the governed write's own schemas, so a shape it
+     would refuse cannot be written here either. The predicate pair is already
+     enforced by normalizeDeviceClassification, which 400s above when only one
+     half arrives; `id` is the submission number, the key the audit row records
+     the claim under. */
+  const teamMembersColumn = programmeTeamMembersColumn.parse(
+    teamMemberNames.map((name) => ({ name })),
+  ) ?? [];
+  const predicateDevicesColumn = programmePredicateDevicesColumn.parse(
+    dc.predicateK && dc.predicateName
+      ? [{ id: dc.predicateK, name: dc.predicateName, kNumber: dc.predicateK }]
+      : [],
+  ) ?? [];
+
   const targetAgencies = JSON.stringify([primaryAgency]);
   const metadata = JSON.stringify({
     createdVia: 'v2-new-project-wizard',
     ...(submissionTypeId ? { submissionTypeId } : {}),
-    ...(teamMembers.length ? { teamMemberNames: teamMembers } : {}),
+    /* `teamMemberNames` was mirrored here and read by nothing — one capability,
+       one home: the `team_members` column below. */
     /* Review panel and the device flags have no column of their own. The flags
        are load-bearing — each one adds a statutory section, so they drive the
        required-content model rather than describing the product. */
@@ -838,16 +897,16 @@ router.post('/', async (req: Request, res: Response) => {
           target_submission_date, progress_percent, lead_user_id, team_members,
           metadata, created_by, updated_by,
           device_class, regulatory_path, product_code, intended_use, predicate_devices,
-          application_number)
+          application_number, eu_mdr_class, eu_ivdr_class)
        VALUES ($1, $2, $3, $4, $5, $6, $7::json, $8, $9, 'active', 'planning', $10,
                $11::timestamp, 0, $12, $13::json, $14::json, $15, $15,
                $16, $17, $18, $19, $20::json,
-               $21)
+               $21, $22, $23)
        RETURNING id`,
       [
         orgId, name, code, programType, productType, primaryAgency,
         targetAgencies, productName, indication, priority,
-        targetSubmissionDate, userId, JSON.stringify(teamMembers), metadata, createdBy,
+        targetSubmissionDate, userId, JSON.stringify(teamMembersColumn), metadata, createdBy,
         dc.deviceClass ?? null,
         /* The US premarket route, derived from the filing type the user picked
            — not asked for twice. FILING_TYPE_PRODUCT_CLASS already knows a
@@ -855,8 +914,9 @@ router.post('/', async (req: Request, res: Response) => {
         devicePathFor(programType),
         dc.productCode ?? null,
         dc.intendedUse ?? null,
-        JSON.stringify(dc.predicateK ? [{ kNumber: dc.predicateK }] : []),
+        JSON.stringify(predicateDevicesColumn),
         applicationNumber,
+        euMdrClass, euIvdrClass,
       ],
     );
 
@@ -973,6 +1033,8 @@ router.post('/', async (req: Request, res: Response) => {
         program_type: programType,
         product_type: productType,
         primary_agency: primaryAgency,
+        eu_mdr_class: euMdrClass,
+        eu_ivdr_class: euIvdrClass,
         created_via: 'v2-new-project-wizard',
         // The audit row covers EVERY creation this transaction performed: the
         // linked canonical submission is part of the record, whether newly
@@ -1878,6 +1940,8 @@ function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown
     origin: prov.origin ?? null,
     fileUploadId: prov.fileUploadId ?? null,
     extractionMethod: prov.extractionMethod ?? null,
+    // How much of a scanned PDF OCR read; null when not recorded or malformed.
+    extractionCoverage: readExtractionCoverage(prov.extractionCoverage),
     evidenceKind: (meta.dossier?.evidenceKind as string | undefined) ?? null,
   };
 }

@@ -6,6 +6,8 @@ The [October 18 remaining-needs assessment](../../../reports/data-room-research-
 
 ## Editor candidate termination
 
+Status 2026-10-18: known-cutoff generation and stored-candidate acceptance are delivered by `2d2ded13856d899257af394c3d8e29698d1034de`; see [qualification](../../D2-EDITOR-DRAFT-TERMINATION/2026-10-18/README.md). The actual editor refuses before parsing/parking, files a served/failed turn, retains viable server-owned finish metadata and refuses stored cutoffs after rollback. Unknown/legacy policy and generic save authority remain separate. The finding below is historical context for that repair.
+
 Source review at `e62320e0a` found that the actual Authoring generate-draft route parses nonempty gateway content and parks a server-owned candidate without reading the finish reason (`authoring.router.ts:3943`, `:3978`, `:4060`). Current source manifests establish selected-input identity and current use, not completed output. A separate fail-first candidate/accept contract should reuse the canonical classifier and preserve honest failure/turn records. This is separate from the delivered generic BatchDraft handoff. The reachable quick-completion API also drops termination metadata; no current client caller was found. These are source findings, not executed end-to-end qualification.
 
 ## Cancellation propagation

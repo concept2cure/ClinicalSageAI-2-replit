@@ -23,6 +23,7 @@
  * @module server/services/regulatory/sectionBlueprintCatalog
  */
 
+import { deviceAuthoringBlueprintContext } from '../../../shared/regulatory/device-authoring-sections.js';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
@@ -131,9 +132,16 @@ export function requiresSectionApplicabilityAssessment(registryId: string): bool
 
 /** Provenance and limitations travel with the repaired outline through all authoring paths. */
 export function getSectionBlueprintContext(registryId: string): { basis?: RegulatoryBasis; limitations: readonly string[] } {
+  const deviceContext = deviceAuthoringBlueprintContext(getApplicationType(registryId)?.defaultSectionBlueprint ?? '');
+  if (deviceContext) return deviceContext;
   if (registryId === 'ICH_PROTOCOL') return { basis: ICH_M11_PROTOCOL_BASIS, limitations: ICH_M11_PROTOCOL_LIMITATIONS };
   if (registryId === 'US_IND_SR') return {
-    basis: { ref: 'FDA IND Safety Reporting: 21 CFR 312.32 subtype-specific formats, checked 2026-10-07', confidence: 'regulator-text', url: 'https://www.fda.gov/drugs/investigational-new-drug-application-ind/ind-application-reporting-ind-safety-reports', checked: '2026-10-07' },
+    // The outline is the platform's authoring groups; what was checked against
+    // FDA's page on 2026-10-07 is the report subtypes, formats and routes, not
+    // the outline. Read as "checked against the regulator's text", the basis
+    // told every reader — and the governed pack — the outline had been
+    // (review critic, 2026-10-18). Same form as EU_CTA below.
+    basis: { ref: 'Platform IND safety-report authoring groups under 21 CFR 312.32; the report subtypes, formats and routes checked against FDA IND Safety Reporting on 2026-10-07', confidence: 'platform-convention', url: 'https://www.fda.gov/drugs/investigational-new-drug-application-ind/ind-application-reporting-ind-safety-reports', checked: '2026-10-07' },
     limitations: [getApplicationType(registryId)?.moduleAuthority ?? 'Confirm the current FDA IND safety-reporting format before package creation.', 'Select the report subtype, commercial status and follow-up scope before deciding the format or delivery route. This authoring scaffold does not create or validate an E2B message or certify reportability, deadlines or transmission.'],
   };
   if (registryId === 'JP_CTN') return { basis: japanCtn.outlineBasis, limitations: japanCtn.outlineLimitations };

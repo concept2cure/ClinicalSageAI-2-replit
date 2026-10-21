@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   read: vi.fn(), update: vi.fn(), register: vi.fn(), archive: vi.fn(),
   render: vi.fn(), logAction: vi.fn(), load: vi.fn(), purpose: vi.fn(),
   storeQuery: vi.fn(), storeInsert: vi.fn(), storeUpdate: vi.fn(),
+  manager: vi.fn(), extract: vi.fn(), scan: vi.fn(),
 }));
 
 vi.mock('../../services/company-documents/profile', async () => {
@@ -24,6 +25,7 @@ vi.mock('../../services/company-documents/profile', async () => {
     updateCompanyDocumentProfile: mocks.update,
     registerCompanyLegalDocument: mocks.register,
     archiveCompanyLegalDocument: mocks.archive,
+    requireCompanyDocumentManager: mocks.manager,
     loadCompanyDocumentProfile: mocks.load,
     companyLetterheadForPurpose: mocks.purpose,
     companyProfileHash: () => 'a'.repeat(64),
@@ -34,7 +36,10 @@ vi.mock('../../services/company-documents/profile', async () => {
 });
 // The sibling controlled-copy/placement router has its own HTTP suite.
 vi.mock('../company-document-actions', () => ({ default: (_req: Request, _res: Response, next: NextFunction) => next() }));
-vi.mock('../../services/templates', () => ({ renderDocxWithTemplate: mocks.render }));
+vi.mock('../../services/templates', () => ({ renderDocxWithTemplate: mocks.render, extractTemplateFromFile: mocks.extract }));
+vi.mock('../../middleware/uploadSafety', async original => ({
+  ...(await original<typeof import('../../middleware/uploadSafety')>()), assertUploadSafe: mocks.scan,
+}));
 vi.mock('../../utils/feature-persistence', () => ({ createFeatureStore: () => ({
   query: mocks.storeQuery, insert: mocks.storeInsert, update: mocks.storeUpdate,
 }) }));
@@ -46,6 +51,7 @@ vi.mock('../../services/compute/artifactWriteback', () => ({ registerArtifactWit
 import router from '../company-documents';
 import legacyRouter from '../client-branding';
 import { CompanyDocumentsError } from '../../services/company-documents/profile';
+import { UploadSafetyError } from '../../middleware/uploadSafety';
 
 const BASE = '/api/client-branding/company-documents';
 const DOCX = Buffer.from('PK\u0003\u0004 generated company correspondence');
@@ -97,6 +103,65 @@ beforeEach(() => {
   mocks.load.mockResolvedValue(profile.data);
   mocks.purpose.mockResolvedValue(profile.data);
   mocks.storeQuery.mockResolvedValue([]);
+  mocks.manager.mockResolvedValue(undefined);
+  mocks.scan.mockResolvedValue(undefined);
+  mocks.extract.mockResolvedValue({ spec: DEFAULT_TEMPLATE_SPEC, confidence: .8, warnings: ['Review the imported layout.'] });
+});
+
+describe('company letterhead formatting preview', () => {
+  const path = `${BASE}/letterhead/extract`;
+  const file = Buffer.from('%PDF-1.7 company stationery');
+  const upload = (instance = app()) => request(instance).post(path).attach('file', file, { filename: 'letterhead.pdf', contentType: 'application/pdf' });
+
+  it('reuses canonical safety and extraction without saving settings, originals or an export receipt', async () => {
+    const res = await upload();
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ spec: DEFAULT_TEMPLATE_SPEC, warnings: ['Review the imported layout.'] });
+    expect(mocks.manager).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 7, userId: 3 }));
+    expect(mocks.scan).toHaveBeenCalledWith(file, 'application/pdf', 'letterhead.pdf');
+    expect(mocks.extract).toHaveBeenCalledWith(file, 'letterhead.pdf', 'application/pdf');
+    for (const action of [mocks.read, mocks.update, mocks.register, mocks.archive, mocks.logAction, mocks.storeInsert, mocks.storeUpdate]) expect(action).not.toHaveBeenCalled();
+  });
+
+  it('refuses an unauthenticated caller before receiving an unsupported file', async () => {
+    const res = await request(app(false)).post(path).attach('file', Buffer.from('script'), 'letterhead.exe');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('AUTH_REQUIRED');
+    expect(mocks.manager).not.toHaveBeenCalled();
+    expect(mocks.scan).not.toHaveBeenCalled();
+    expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
+  it.each(['ADMIN_REQUIRED', 'PROJECT_ACTOR_ACCESS_DENIED'])('retains %s before upload parsing or extraction', async code => {
+    mocks.manager.mockRejectedValue(new CompanyDocumentsError(403, code, 'Current membership and administrator access required.'));
+    const res = await request(app()).post(path).attach('file', Buffer.from('script'), 'letterhead.exe');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe(code);
+    expect(mocks.scan).not.toHaveBeenCalled();
+    expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
+  it('refuses an absent file and unsupported filename', async () => {
+    expect((await request(app()).post(path)).status).toBe(400);
+    expect((await request(app()).post(path).attach('file', Buffer.from('script'), 'letterhead.exe')).status).toBe(415);
+    expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
+  it('retains the fail-closed upload safety outcome and never calls the extractor', async () => {
+    mocks.scan.mockRejectedValue(new UploadSafetyError(503, 'FILE_SCAN_UNAVAILABLE', 'Upload scanning is unavailable.'));
+    const res = await upload();
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('FILE_SCAN_UNAVAILABLE');
+    expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
+  it('reports an extraction failure without claiming a saved design', async () => {
+    mocks.extract.mockRejectedValue(new Error('Extractor unavailable'));
+    const res = await upload();
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'EXTRACTION_FAILED' });
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
 });
 
 describe('existing client branding routes adopt the governed company profile', () => {

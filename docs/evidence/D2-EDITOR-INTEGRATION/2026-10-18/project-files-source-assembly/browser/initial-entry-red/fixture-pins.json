@@ -1,0 +1,10 @@
+{
+  "qualification": "Computed immediately after baseline, before any fixture edit; these files were unchanged during baseline capture. Production source pin is in receipt.json.",
+  "sha256": {
+    "probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b",
+    "server.mjs": "809d4ff354058c24b2e8a08eabd5c375307e039c667203e0607464305d5de1f0",
+    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36",
+    "mock-api.mjs": "a8a882c793fa8580baff78ba8d95be0949b55a5eba69e63275d636ec4eb371c2",
+    "baseline-entry.mjs": "d10ea0cedb9ec6ffe73689e6c683fec0b270629ec4565cdd1cb75a26ea0b54bc"
+  }
+}

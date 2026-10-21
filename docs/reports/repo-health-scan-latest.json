@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T00:40:56.484Z",
+  "generatedAt": "2026-10-21T00:15:03.839Z",
   "git": {
-    "sha": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+    "sha": "ff0155e5dd964b91c72f1a65eaf20e0debbfa9d8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
-    "largeFilesByLines": 110
+    "largeFilesByLines": 112
   },
   "findings": {
     "duplicateBasenames": [
@@ -239,6 +239,25 @@
         ]
       },
       {
+        "basename": "probe",
+        "count": 13,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx",
+          "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/probe.tsx",
+          "docs/evidence/MR-10/2026-10-20-study-placement/browser/probe.tsx"
+        ]
+      },
+      {
         "basename": "routes",
         "count": 13,
         "paths": [
@@ -272,21 +291,6 @@
           "ui_kits/mdx/icons.jsx",
           "ui_kits/mdx_phase2/Icons.jsx",
           "ui_kits/pdev/Icons.jsx"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 9,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
         ]
       },
       {
@@ -916,14 +920,6 @@
         ]
       },
       {
-        "basename": "analytics-docs",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/data/analytics-docs.ts",
-          "ui_kits/mdx/data/analytics-docs.js"
-        ]
-      },
-      {
         "basename": "api-keys",
         "count": 2,
         "paths": [
@@ -1537,6 +1533,14 @@
         "paths": [
           "client/src/concept2cure/v2/fixtures/licensing.ts",
           "server/routes/licensing.ts"
+        ]
+      },
+      {
+        "basename": "lifecycle-calendar",
+        "count": 2,
+        "paths": [
+          "server/services/report-os/lifecycle-calendar.ts",
+          "server/services/report-os/render/lifecycle-calendar.ts"
         ]
       },
       {
@@ -2216,11 +2220,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1149595
+        "bytes": 1155322
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 862841
+        "bytes": 863374
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2228,19 +2232,19 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 406344
+        "bytes": 416583
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 362185
+        "bytes": 379378
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 312039
+        "bytes": 317635
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 228602
+        "bytes": 228669
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2248,27 +2252,23 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 199216
+        "bytes": 199479
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 188702
+        "bytes": 196279
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 185250
+        "bytes": 185353
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 171784
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 170739
+        "bytes": 172271
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 162639
+        "bytes": 164253
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2276,7 +2276,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 156592
+        "bytes": 157173
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2288,7 +2288,11 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 153059
+        "bytes": 153534
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 151270
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2299,6 +2303,10 @@
         "bytes": 145405
       },
       {
+        "file": "server/routes/report-os.ts",
+        "bytes": 143746
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "bytes": 141216
       },
@@ -2307,8 +2315,8 @@
         "bytes": 138809
       },
       {
-        "file": "server/routes/report-os.ts",
-        "bytes": 137941
+        "file": "shared/regulatory/global-document-registry.ts",
+        "bytes": 137327
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2319,8 +2327,8 @@
         "bytes": 136488
       },
       {
-        "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 135326
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 133828
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2343,68 +2351,72 @@
         "bytes": 125356
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "bytes": 123586
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
         "bytes": 122639
+      },
+      {
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 121186
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 120925
+      },
+      {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "bytes": 119989
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 119982
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 119713
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 119001
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 118342
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "bytes": 117107
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 117084
+        "bytes": 117106
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116979
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 116562
-      },
-      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115858
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 115567
+      },
+      {
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 115150
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 114827
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 113954
-      },
-      {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 113529
+        "file": "server/routes/submissions.ts",
+        "bytes": 111747
       },
       {
         "file": "server/routes/auth.ts",
         "bytes": 110917
       },
       {
-        "file": "server/routes/submissions.ts",
-        "bytes": 110632
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 110618
-      },
-      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 110107
-      },
-      {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 109794
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2416,19 +2428,15 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 107786
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 103651
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 103264
+        "bytes": 108047
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 102484
+        "bytes": 103332
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 101536
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2437,28 +2445,24 @@
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "bytes": 100392
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "bytes": 100085
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21992
+        "lines": 22049
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20247
+        "lines": 20255
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8662
+        "lines": 8820
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6314
+        "lines": 6403
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2466,11 +2470,11 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5704
+        "lines": 5705
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5534
+        "lines": 5535
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2482,19 +2486,19 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4256
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3920
+        "lines": 4264
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 3845
+        "lines": 3963
+      },
+      {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3922
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 3652
+        "lines": 3651
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2502,7 +2506,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3522
+        "lines": 3534
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2514,35 +2518,31 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3364
+        "lines": 3489
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 3248
+        "lines": 3283
       },
       {
         "file": "server/src/routes/stability.router.ts",
         "lines": 3197
       },
       {
+        "file": "server/routes/report-os.ts",
+        "lines": 3135
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
       },
       {
-        "file": "server/routes/report-os.ts",
-        "lines": 3051
+        "file": "server/routes/concept2cure.ts",
+        "lines": 3061
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3046
-      },
-      {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 3036
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3030
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2561,6 +2561,10 @@
         "lines": 2798
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2774
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2694
       },
@@ -2577,6 +2581,10 @@
         "lines": 2609
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2604
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2511
       },
@@ -2585,12 +2593,20 @@
         "lines": 2416
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 2404
+      },
+      {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "lines": 2386
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2380
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2353
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "lines": 2338
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2603,10 +2619,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "lines": 2294
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2289
       },
       {
         "file": "server/routes/c2c/reviews.ts",
@@ -2625,10 +2637,6 @@
         "lines": 2207
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2190
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
         "lines": 2177
       },
@@ -2637,32 +2645,40 @@
         "lines": 2175
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 2167
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/suggestions.ts",
         "lines": 2162
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2156
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 2159
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2142
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 2149
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
         "lines": 2137
       },
       {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 2123
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "lines": 2124
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 2120
+        "lines": 2123
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2115
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2673,6 +2689,10 @@
         "lines": 2089
       },
       {
+        "file": "server/routes/submissions.ts",
+        "lines": 2070
+      },
+      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 2068
       },
@@ -2681,32 +2701,28 @@
         "lines": 2068
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 2053
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 2050
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 2064
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 2040
+        "lines": 2044
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2030
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2021
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 2020
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
+      },
+      {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2016
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2715,14 +2731,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1994
-      },
-      {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1984
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2757,10 +2765,6 @@
         "lines": 1869
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1868
-      },
-      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
       },
@@ -2793,6 +2797,10 @@
         "lines": 1836
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1828
+      },
+      {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
       },
@@ -2817,12 +2825,12 @@
         "lines": 1787
       },
       {
-        "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1775
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1784
       },
       {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1773
+        "file": "server/services/ana/submission-chat-handler.ts",
+        "lines": 1775
       },
       {
         "file": "server/routes/taskManagement.routes.ts",
@@ -2837,8 +2845,8 @@
         "lines": 1698
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1666
+        "file": "shared/navigation/surface-actions.ts",
+        "lines": 1689
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2861,10 +2869,6 @@
         "lines": 1623
       },
       {
-        "file": "shared/navigation/surface-actions.ts",
-        "lines": 1615
-      },
-      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2877,12 +2881,20 @@
         "lines": 1602
       },
       {
+        "file": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+        "lines": 1581
+      },
+      {
         "file": "server/routes/mdx-qms.ts",
-        "lines": 1560
+        "lines": 1562
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",
         "lines": 1555
+      },
+      {
+        "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+        "lines": 1516
       }
     ]
   },
@@ -2890,25 +2902,25 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 441,
+      "duplicateGroups": 443,
       "largeByBytes": 41,
       "largeByLines": 87
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 165,
+      "duplicateGroups": 168,
       "largeByBytes": 0,
-      "largeByLines": 4
+      "largeByLines": 5
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
       "duplicateGroups": 90,
       "largeByBytes": 3,
-      "largeByLines": 2
+      "largeByLines": 3
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 59,
+      "duplicateGroups": 58,
       "largeByBytes": 13,
       "largeByLines": 17
     },

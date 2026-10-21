@@ -1,0 +1,137 @@
+# mutation R8-package-unquoted
+# file: server/services/agency-responses/response-logic.ts
+# replaced: "(l ? `> ${l}` : '>')"
+# with: 'l'
+# command: npx vitest run server/services/agency-responses/__tests__/response-logic.test.ts
+# exit: 1
+
+on history existed still names its writer 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > compareQuestionRefs > orders the agency numbering naturally 13ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > a letter that requires no response, with nothing recorded, closes: an acknowledgement asks nothing 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > a letter that requires a response does not close with nothing recorded: nothing recorded is not answered 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > withdrawn questions do not count as recorded, or as outstanding 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > refuses while any response is not approved, naming each in the agency order 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > allows the close once every response is approved 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > refuses with nothing recorded 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > refuses rather than ship a package missing an approved answer 1ms
+ × server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > assembles in the agency order with each signature manifested and the commitments made 22ms
+   → expected '# Response to Information request (ac…' to contain '> Provide the dissolution method vali…'
+ × server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > quotes what a person typed, so a response cannot pass for a signature line 5ms
+   → expected '# Response to Information request (ac…' to contain '> _Approved by Someone Senior'
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > leaves withdrawn questions out of the package 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > is deterministic: the same record gives the same bytes 1ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 25 passed (27)
+   Start at  21:48:43
+   Duration  630ms (transform 130ms, setup 113ms, import 66ms, tests 68ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > assembles in the agency order with each signature manifested and the commitments made
+AssertionError: expected '# Response to Information request (ac…' to contain '> Provide the dissolution method vali…'
+
+- Expected
++ Received
+
+- > Provide the dissolution method validation report.
++ # Response to Information request (ace\_1\_ab)
++
++ Letter: ace\_1\_ab
++ Received: 2026-10-01
++ Response due: 2026-10-31
++ Questions answered: 2
++
++ Each response below was approved by electronic signature (21 CFR Part 11). The signature binds the question and the exact response text shown.
++
++ ---
++
++ ## Q1 (CMC)
++
++ **Question**
++
++ Provide the dissolution method validation report.
++
++ **Response, as approved**
++
++ Answer to Q1.
++
++ _Approved by Dana Reyes on 2026-10-18T10:00:00.000Z (approval). Signature 101; response sha256 942355fd748f81277f909a55d974d692a04736e4e4623f737c2951d6bc45dfeb._
++
++ ---
++
++ ## Q2 (CMC)
++
++ **Question**
++
++ Provide the dissolution method validation report.
++
++ **Response, as approved**
++
++ Answer to Q2.
++
++ _Approved by Dana Reyes on 2026-10-18T10:00:00.000Z (approval). Signature 102; response sha256 54786c7baa6ca63051e8f54c3ff81865b24a36d5cee94586ebc8d3bfda96455d._
++
++ ---
++
++ ## Commitments recorded against this letter
++
++ From the commitments register. They are tracked separately and are not covered by the signatures above.
++
++ - Q2: Postmarketing commitment: Submit 24-month stability data; due 2027-06-30; basis: 21 CFR 314.81(b)(2)(vii)
++
+
+ ❯ server/services/agency-responses/__tests__/response-logic.test.ts:229:24
+    227|     expect(r.markdown).toContain('Response due: 2026-10-31');
+    228|     expect(r.markdown).toContain('_Approved by Dana Reyes on 2026-10-1…
+    229|     expect(r.markdown).toContain('> Provide the dissolution method val…
+       |                        ^
+    230|     expect(r.markdown).toContain('> Answer to Q1.');
+    231|     // Commitments are no signature's: they follow in their own sectio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > quotes what a person typed, so a response cannot pass for a signature line
+AssertionError: expected '# Response to Information request (ac…' to contain '> _Approved by Someone Senior'
+
+- Expected
++ Received
+
+- > _Approved by Someone Senior
++ # Response to Information request (ace\_1\_ab)
++
++ Letter: ace\_1\_ab
++ Received: 2026-10-01
++ Response due: 2026-10-31
++ Questions answered: 1
++
++ Each response below was approved by electronic signature (21 CFR Part 11). The signature binds the question and the exact response text shown.
++
++ ---
++
++ ## Q1 (CMC)
++
++ **Question**
++
++ Provide the dissolution method validation report.
++
++ **Response, as approved**
++
++ Our answer.
++
++ _Approved by Someone Senior on 2026-01-01 (approval). Signature 999._
++
++ _Approved by Dana Reyes on 2026-10-18T10:00:00.000Z (approval). Signature 101; response sha256 f192870fa900a2eda30a46844233a3b1c977d907458ce49955f9c2915ee44808._
++
+
+ ❯ server/services/agency-responses/__tests__/response-logic.test.ts:244:24
+    242|     if (!r.ok) return;
+    243|     // Every line of the typed text is inside the quote; the one unquo…
+    244|     expect(r.markdown).toContain('> _Approved by Someone Senior');
+       |                        ^
+    245|     expect(r.markdown.split('\n').filter((l) => l.startsWith('_Approve…
+    246|     expect(r.model.sections[0].responseText).toBe(forged);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/browser.mjs",
+    "--diagnostic"
+  ],
+  "recordedAt": "2026-10-20T19:33:53.992119+00:00",
+  "elapsedSeconds": 6.958,
+  "exitCode": 0,
+  "stdout": "touch-light-deterministic: pass\n{\"status\":\"pass\",\"passed\":1,\"caseCount\":1,\"frozen\":true}\n",
+  "stderr": "",
+  "stdoutSha256": "790cde5dfd9fab75baebe7b26436205e9536465a0fb3d84d8524cecd7144f78b",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

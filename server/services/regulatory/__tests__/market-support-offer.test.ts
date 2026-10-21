@@ -167,3 +167,33 @@ describe('Health Canada: the channel says nothing is sent, not that an adapter p
     expect(s.channel.detail).not.toBe(ADAPTER_UNSOURCED);
   });
 });
+
+/* Filing document classes (2026-10-18). A class is authored, never built or
+   sent: the statement must say so as plainly as the offer does. An FDA class
+   read "Module 1 to the agency's headings. Transmit not proven…" and buildable
+   beside an offer saying nothing is built (review finding). */
+describe('a filing document class is stated as authored, and claims no build, Module 1 or channel', () => {
+  const classPacks: ActiveRulePacks = {
+    find: (docType, agency) => (['pas:fda', 'briefing:fda', 'csr:ich', 'psur:ema'].includes(`${docType}:${agency}`)
+      ? { version: 'v-test', label: `${docType}:${agency}` } : null),
+  };
+  it.each([
+    ['pas', 'FDA'], ['briefing', 'FDA'], ['psur', 'EMA'], ['csr', 'ICH / Global'],
+  ])('(%s, %s): an outline, author-only, nothing built or sent', (applicationType, market) => {
+    const s = marketSupport({ applicationType, market }, classPacks, '2026-10-18');
+    expect(s.outline.state).toBe('outline');
+    expect(s.buildable).toBe(false);
+    expect(s.module1.state).toBeNull();
+    expect(s.channel.state).toBe('none');
+    expect(s.summary).toBe('Outline only, no package');
+    expect(s.line).not.toMatch(/Transmit|Module 1 to|eSubmission/);
+    expect(s.offer.tier).toBe('author_only');
+    expect(s.offer.appliesTo).toBeNull();
+  });
+
+  it('a class at an agency with no pack for it is not offered, with the reason', () => {
+    const s = marketSupport({ applicationType: 'pas', market: 'EMA' }, classPacks, '2026-10-18');
+    expect(s.offer.tier).toBe('not_offered');
+    expect(s.offer.reason).toMatch(/^EMA has no governed PAS outline here/);
+  });
+});

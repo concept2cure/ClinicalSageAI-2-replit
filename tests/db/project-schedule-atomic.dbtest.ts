@@ -1,7 +1,7 @@
 /** PM-01/02: native transaction, actuals preservation and concurrency proof.
  * Uses the production pool instrumentation, restricted runtime and FORCE RLS.
  * The three schedule tables use their actual creating migration. Parent/stage
- * tables and tenant-aware keys below are narrow fixtures, not deploy-schema or
+ * tables, current identity/sharing and tenant-aware keys are narrow fixtures, not deploy-schema or
  * 20260728 migration proof. No provider, notification or production data is used.
  */
 import { readFileSync } from 'node:fs';
@@ -9,18 +9,28 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { databaseUrl } from '../setup.db';
 import { setupSchedulerDb, waitFor, type SchedulerDb } from './scheduler-harness';
 import { generateSchedule } from '../../server/services/projects/schedule-of-events/generator';
-import type { GenerateScheduleParams, ScheduleOfEventsView } from '../../server/services/projects/schedule-of-events/service';
+import type { GenerateScheduleParams, ScheduleOfEventsView, ScheduleExecutionContext } from '../../server/services/projects/schedule-of-events/service';
 
 vi.mock('../../server/services/notifications/notification-service', () => ({ createNotification: vi.fn() }));
 
 const SOURCE = 'ana_schedule_of_events';
 const ORG = 71;
 const PROJECT = 710;
+const ACTOR = 71001;
+const OTHER_ACTOR = 72001;
 const TABLES = ['project_schedule_of_events', 'project_workflow_stages', 'project_schedule_goals', 'project_schedule_revisions', 'project_tasks'];
+const ADMISSION_TABLES = ['projects', 'organization_users', 'project_visibility_settings', 'project_members', 'concept2cure_artifacts', 'concept2cure_review_assignments'];
 const migration = readFileSync(new URL('../../db/migrations/20260617_project_schedule_of_events.sql', import.meta.url), 'utf8');
 const DDL = `
-CREATE TABLE organizations (id integer PRIMARY KEY);
-CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL REFERENCES organizations(id), UNIQUE (id, organization_id));
+CREATE TABLE organizations (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+CREATE TABLE organization_users (organization_id integer NOT NULL, user_id integer NOT NULL, role text NOT NULL, UNIQUE (organization_id,user_id));
+CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL REFERENCES organizations(id),
+  status text NOT NULL DEFAULT 'active', owner_id integer, created_by_id integer, settings jsonb NOT NULL DEFAULT '{}', UNIQUE (id, organization_id));
+CREATE TABLE project_visibility_settings (organization_id integer NOT NULL, project_id integer NOT NULL, visibility text NOT NULL);
+CREATE TABLE project_members (organization_id integer NOT NULL, project_id integer NOT NULL, user_id integer NOT NULL, role text NOT NULL, status text NOT NULL);
+CREATE TABLE concept2cure_artifacts (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer NOT NULL);
+CREATE TABLE concept2cure_review_assignments (id serial PRIMARY KEY, organization_id integer NOT NULL, artifact_id integer NOT NULL, reviewer_id integer NOT NULL, status text NOT NULL);
 CREATE TABLE project_workflow_stages (
   id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer NOT NULL,
   name text NOT NULL, description text, "order" integer, status text,
@@ -82,6 +92,7 @@ CREATE POLICY pm01_response_read ON project_schedule_of_events AS RESTRICTIVE FO
 let env: SchedulerDb;
 let runtime: typeof import('../../server/db/runtime');
 let store: typeof import('../../server/db/tenantStore');
+let connections: typeof import('../../server/db/withTenantConnection');
 let service: typeof import('../../server/services/projects/schedule-of-events/service');
 
 const params = (extra: Partial<GenerateScheduleParams> = {}): GenerateScheduleParams => ({
@@ -92,7 +103,11 @@ const params = (extra: Partial<GenerateScheduleParams> = {}): GenerateSchedulePa
 const scoped = <T>(orgId: number, fn: () => T): T => store.runWithTenantScope({
   tenantId: String(orgId), role: 'admin', source: 'test', caller: 'pm01-native-test',
 }, fn);
-const generate = (input = params()) => scoped(input.orgId, () => service.generateProjectSchedule(input));
+const execute = <T>(orgId: number, fn: (context: ScheduleExecutionContext) => Promise<T>) => connections.withTenantConnection({
+  tenantId: orgId, role: null, source: 'test', caller: 'pm01-native-test',
+}, executor => fn({ actorUserId: orgId === 72 ? OTHER_ACTOR : ACTOR, executor }));
+const generate = (input = params()) => execute(input.orgId, context => service.generateProjectSchedule(input, context));
+const read = () => execute(ORG, context => service.getScheduleOfEvents(ORG, PROJECT, context));
 function stableView(view: ScheduleOfEventsView) {
   const { assessedAt, ...health } = view.health;
   expect(Number.isFinite(Date.parse(assessedAt))).toBe(true);
@@ -151,12 +166,18 @@ async function addHistory() {
 }
 
 beforeAll(async () => {
-  env = await setupSchedulerDb(databaseUrl, 'dbpm01', DDL, TABLES);
-  await env.owner.query(`INSERT INTO ${env.t('organizations')} VALUES (71),(72)`);
-  await env.owner.query(`INSERT INTO ${env.t('projects')} VALUES (710,71),(711,71),(720,72)`);
+  env = await setupSchedulerDb(databaseUrl, 'dbpm01', DDL, [...TABLES, ...ADMISSION_TABLES]);
+  await env.owner.query(`INSERT INTO ${env.t('organizations')}(id) VALUES (71),(72)`);
+  await env.owner.query(`INSERT INTO ${env.t('users')}(id) VALUES ($1),($2)`, [ACTOR, OTHER_ACTOR]);
+  await env.owner.query(`INSERT INTO ${env.t('organization_users')} VALUES (71,$1,'member'),(72,$2,'member')`, [ACTOR, OTHER_ACTOR]);
+  await env.owner.query(`INSERT INTO ${env.t('projects')}(id,organization_id,owner_id,created_by_id,settings)
+    VALUES (710,71,$1,$1,'{"projectSharing":{"visibility":"private","members":[]}}'),
+           (711,71,$1,$1,'{"projectSharing":{"visibility":"private","members":[]}}'),
+           (720,72,$2,$2,'{"projectSharing":{"visibility":"private","members":[]}}')`, [ACTOR, OTHER_ACTOR]);
   // The pool reads APP_DATABASE_URL + PGOPTIONS only at import time.
   runtime = await import('../../server/db/runtime');
   store = await import('../../server/db/tenantStore');
+  connections = await import('../../server/db/withTenantConnection');
   service = await import('../../server/services/projects/schedule-of-events/service');
   const proof = await scoped(ORG, () => runtime.getPool().query(
     "SELECT current_user AS role, rolsuper, rolbypassrls, current_setting('app.rls_enforce') AS rls FROM pg_roles WHERE rolname=current_user",
@@ -227,7 +248,7 @@ describe('schedule generation is one native transaction', () => {
       expect(result.goals.find(g => g.title === `Retained ${status}`)?.status).toBe(status);
     }
     expect(result.health.milestones).toHaveLength(expected.milestones.length);
-    expect(stableView(await scoped(ORG, () => service.getScheduleOfEvents(ORG, PROJECT)))).toEqual(stableView(result));
+    expect(stableView(await read())).toEqual(stableView(result));
     expect(await outsideTarget()).toEqual(unrelated);
   });
 
@@ -341,6 +362,8 @@ describe('PM-02 refuses conflicts and rolls back failed replanning', () => {
     { label: 'category', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{category}','\"internal\"')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'regulatory basis', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{regulatoryBasis}','\"Different basis\"')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'dependencies', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{dependsOn}','[]')::json WHERE metadata->>'key'='nonclinical'" },
+    { label: 'criticality false to true', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{isCritical}','false')::json WHERE metadata->>'key'='kickoff'" },
+    { label: 'criticality true to false', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{isCritical}','true')::json WHERE metadata->>'key'='fda_forms'" },
     { label: 'removed key', sql: "UPDATE project_workflow_stages SET metadata=jsonb_set(metadata::jsonb,'{key}','\"removed-key\"')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'missing key', sql: "UPDATE project_workflow_stages SET metadata=(metadata::jsonb-'key')::json WHERE metadata->>'key'='nonclinical'" },
     { label: 'duplicate key', sql: "INSERT INTO project_workflow_stages (organization_id,project_id,name,\"order\",status,metadata) SELECT organization_id,project_id,name,\"order\",status,metadata FROM project_workflow_stages WHERE metadata->>'key'='nonclinical'" },
@@ -424,7 +447,7 @@ describe('same-project generation serializes across actual PostgreSQL clients', 
         }
       }
       const winner = results.reduce((a, b) => a.plan!.version > b.plan!.version ? a : b);
-      const final = await scoped(ORG, () => service.getScheduleOfEvents(ORG, PROJECT));
+      const final = await read();
       expect(stableView(final)).toEqual(stableView(winner));
       const stages = await rows('project_workflow_stages');
       expect(stages).toHaveLength(winner.milestones.length);

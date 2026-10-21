@@ -1,0 +1,39 @@
+D-29-A — MUTANTS
+================
+
+Each mutant replaces the ORDER BY of the one read in
+server/services/authoring/authoring-export.ts `computeDocHash`, runs the suite,
+and is reverted. "killed" = the suite fails.
+
+ M1  ORDER BY order_index                      KILLED (2 cases)  <- the original defect
+ M3  ORDER BY order_index, created_at          KILLED (1 case)   <- see note A
+ M4  ORDER BY order_index, id                  KILLED (1 case)
+ M5  ORDER BY created_at, id                   KILLED (1 case)   <- see note B
+ M6  (no ORDER BY at all)                      KILLED (2 cases)
+ M7  ORDER BY order_index DESC, created_at, id KILLED (2 cases)
+
+ BASE (order_index, created_at, id)            6 passed (6)
+
+TWO MUTANTS SURVIVED A FIRST RUN AND ARE WHY THE SUITE HAS SIX CASES, NOT FOUR.
+
+Note A — M3 (dropping `id`) survived until a case covered the shape the product
+produces most often. The genesis seed loop inserts every section of a new
+document inside ONE transaction (services/authoring/authoring-section-seed.ts),
+so `NOW()` — and therefore `created_at` — is IDENTICAL across them. If the
+order_index ties as well, `id` is the only column left that can settle the
+sequence. Added: "agrees with the signing read when created_at ties as well —
+the genesis shape", with explicit ids ascending in the reverse of insertion
+order.
+
+Note B — M5 (dropping `order_index`) survived until a case covered the ordinary
+one: a section added to the MIDDLE of a document later has a LATER created_at
+and an EARLIER order_index. Nothing in the first four cases distinguished the
+two orders, so nothing pinned that order_index leads. Added: "is led by
+order_index, not by when the section was written".
+
+A FIRST ATTEMPT AT M1 WAS NOT A TEST AT ALL. The perl substitution that was
+meant to revert the ORDER BY did not match, so the "mutant" run executed the
+fixed code and reported 4 passed. It was re-run with an anchored Python
+replacement that asserts the anchor is present before writing. Recorded because
+a mutant that silently fails to apply reads exactly like a mutant that survived
+— and the opposite conclusion was drawn from it for one step.

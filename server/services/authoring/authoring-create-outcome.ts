@@ -30,20 +30,33 @@ export function authoringCreationRecoveryPayload(error: AuthoringCreateOutcomeEr
   };
 }
 
-/** The transaction client is discarded after an unconfirmed COMMIT or rollback. */
-export interface AuthoringCreateTransactionState {
+/** One transaction failure lifecycle for document and section writers. */
+export interface AuthoringTransactionState {
   began: boolean;
   commitAttempted: boolean;
   discardConnection?: Error;
 }
+export type AuthoringCreateTransactionState = AuthoringTransactionState;
+
+export async function rollbackAuthoringTransaction(client: Queryable, state: AuthoringTransactionState): Promise<void> {
+  if (!state.began) return;
+  state.began = false;
+  await client.query('ROLLBACK').catch(() => { state.discardConnection = new Error('Authoring transaction rollback failed'); });
+}
+
+export async function settleAuthoringTransactionFailure(client: Queryable, state: AuthoringTransactionState,
+  error: unknown, unconfirmed: Error): Promise<unknown> {
+  if (state.commitAttempted) {
+    state.discardConnection = unconfirmed;
+    return unconfirmed;
+  }
+  await rollbackAuthoringTransaction(client, state);
+  return error;
+}
+
 export async function rejectAuthoringCreateTransaction(client: Queryable, state: AuthoringCreateTransactionState,
   error: unknown, recovery: AuthoringCreationRecovery): Promise<never> {
-  if (state.commitAttempted) {
-    state.discardConnection = new AuthoringCreateOutcomeError('unconfirmed', recovery);
-    throw state.discardConnection;
-  }
-  if (state.began) await client.query('ROLLBACK').catch(() => { state.discardConnection = new Error('Authoring transaction rollback failed'); });
-  throw error;
+  throw await settleAuthoringTransactionFailure(client, state, error, new AuthoringCreateOutcomeError('unconfirmed', recovery));
 }
 
 /** Both AnA creation forms carry one truthful result when the create/handoff fails. */

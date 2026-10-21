@@ -40,7 +40,7 @@ beforeEach(() => {
       stored = { ...stored, ...settings, revision: expectedRevision + 1 };
       return json({ data: globalThis.structuredClone(stored), canManage });
     }
-    if (url.startsWith('/api/c2c/project-vault/search')) return searchStatus === 200 ? json({ success: true, data: { scope: 'verified-accessible-programs', query: 'Authorization', total: 1, limit: 25, results: [{ id: DOCUMENT, title: 'Authorization original', version: '2', current: true, program: { id: PROGRAM, name: 'Oncology IND' } }] } }) : json({ message: 'Search service unavailable.' }, searchStatus);
+    if (url.startsWith('/api/c2c/project-vault/search')) return searchStatus === 200 ? json({ success: true, data: { scope: 'verified-accessible-programs', query: 'Authorization', total: 1, limit: 25, results: [{ id: DOCUMENT, title: 'Authorization original', documentType: null, size: null, version: '2', current: true, snippet: null, program: { id: PROGRAM, name: 'Oncology IND' } }] } }) : json({ message: 'Search service unavailable.' }, searchStatus);
     if (url === `${PATH}/legal-documents` && method === 'POST') {
       stored = { ...stored, revision: stored.revision + 1, legalDocuments: [{ ...body, id: 'entry-1', contentHash: 'abc123', version: '2', active: true, registeredAt: '2026-10-17T00:00:00Z', registeredBy: 'Owner', transmitRefusal: 'The source document requires approval before filing.' }] };
       return json({ data: globalThis.structuredClone(stored), canManage });
@@ -116,6 +116,7 @@ describe('Company letterhead and legal library', () => {
     expect(await screen.findByText('PDF fonts were approximated.')).toBeTruthy();
     expect((screen.getByLabelText('Page size') as HTMLSelectElement).value).toBe('a4');
     expect(screen.getByLabelText('Letterhead preview').textContent).toContain('Imported legal header');
+    expect(apiUpload).toHaveBeenCalledWith('POST', `${PATH}/letterhead/extract`, expect.any(FormData));
     expect(apiRequest.mock.calls.filter(([m]) => m === 'PUT')).toHaveLength(0);
   });
 

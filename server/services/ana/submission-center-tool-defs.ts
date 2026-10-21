@@ -591,8 +591,8 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   name: 'get_document_template',
   description:
     'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
-    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. ' +
-    '`offset`/`limit` page results. Editor UUIDs read the same outline, exact filing scope and source checks. ' +
+    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. ' +
+    '`offset`/`limit` page results. Editor UUIDs retain exact outline, scope and source checks. ' +
     '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
     '`discussed_topics` only prevents re-asking. ' +
     "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +
@@ -603,7 +603,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
     type: 'object',
     properties: {
       template_id: { type: 'string', description: "An exact editor template UUID or component id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'. Follow all UUID reference pages, including preparation JSON parts when requested." },
-      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, EU_MAA, CA_NDS or JP_MKT_APPROVAL. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
+      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, US_510K, EU_IVDR, CA_MDL, JP_SHONIN or JP_TODOKEDE. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
       market: { type: 'string', enum: ['US', 'EU', 'CA', 'JP'], description: 'Confirmed target jurisdiction for preparation; do not infer from the conversation language.' },
       prepare: { type: 'boolean', description: 'Include a regional route and up to 3 prioritized client questions. This creates an inquiry brief, not a readiness or evidence-sufficiency verdict.' },
       discussed_topics: {
@@ -611,7 +611,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
         description: 'Topics already discussed in this conversation, to avoid asking them again. These are conversational markers only; they never establish that source data are supplied, verified or sufficient.',
         items: { type: 'string', enum: ['scope', 'source_versions', 'data_cutoff', 'statistical_results', 'estimands', 'safety', 'quality', 'local_requirements', 'japan_evidence', 'agency_commitments', 'review_owners'] },
       },
-      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing biotech registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
+      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing medicinal, device and diagnostics registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
       offset: { type: 'integer', minimum: 0, default: 0, description: 'Zero-based catalog/section offset. Continue with nextOffset when one is returned.' },
       limit: { type: 'integer', minimum: 1, maximum: 30, default: 12, description: 'Maximum catalog entries or template sections to return in this page.' },
       family: {

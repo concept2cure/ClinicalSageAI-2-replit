@@ -23,10 +23,12 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId, seedNativeCatalogProject } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime } from './vault-current-access-fixture';
 
 const PROBE = 'dbtest-catfacts';
 /* Captures are append-only (VR-16), so each run uses its own projects. */
-const RUN = Date.now().toString(36);
+const RUN = nativeCatalogRunId();
 
 let owner: Pool;
 let app: express.Express;
@@ -36,7 +38,6 @@ let otherOrgId: number;
 let userId: number;
 let programId: string;
 let studyId: number;
-const written: string[] = [];
 
 const CSR_TEXT = [
   'CLINICAL STUDY REPORT — interim analysis',
@@ -57,7 +58,7 @@ async function buildApp(): Promise<express.Express> {
     r.userId = userId;
     r.tenantId = orgId;
     r.userRole = 'admin';
-    r.user = { id: userId, organizationId: orgId, organizationUuid: orgUuid, role: 'admin', email: 'cf@dbtest.local' };
+    r.user = { id: userId, organizationId: orgId, organizationUuid: orgUuid, role: 'admin', email: `${PROBE}-${RUN}@dbtest.local` };
     next();
   });
   a.use(establishRequestTenantScope);
@@ -71,7 +72,6 @@ async function conversationFile(name: string, body: string, mime: string): Promi
   const dir = path.resolve(process.cwd(), 'uploads', `org-${orgId}`);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, id), bytes);
-  written.push(path.join(dir, id));
   await owner.query(
     `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
@@ -86,7 +86,9 @@ async function program(name: string, org: number): Promise<string> {
      VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', 'Bexotinib', 'Idiopathic pulmonary fibrosis', 'Phase 2') RETURNING id`,
     [`${PROBE} ${name} ${RUN}`, `CF-${name}-${RUN}`.toUpperCase(), org],
   );
-  return String(rows[0].id);
+  const id = String(rows[0].id);
+  await seedNativeCatalogProject(owner, { organizationId: org, userId, programId: id, namespace: `${PROBE}-${RUN}-${name}` });
+  return id;
 }
 
 async function study(org: number, program: string, protocolId: string, suffix: string): Promise<number> {
@@ -102,48 +104,37 @@ const adopt = async (fileId: string) => request(app).post(`/api/c2c/projects/${p
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE} org`, `${PROBE}-org`],
+    [`${PROBE} org ${RUN}`, `${PROBE}-${RUN}-org`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
   const other = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE} other`, `${PROBE}-other`],
+    [`${PROBE} other ${RUN}`, `${PROBE}-${RUN}-other`],
   );
   otherOrgId = Number(other.rows[0].id);
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, 'CF', 'x') ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE}@dbtest.local`],
+    [`${PROBE}-${RUN}@dbtest.local`],
   );
   userId = Number(user.rows[0].id);
+  await owner.query(`INSERT INTO organization_users(organization_id,user_id,role)
+    VALUES($1,$3,'admin'),($2,$3,'admin')`, [orgId, otherOrgId, userId]);
   programId = await program('main', orgId);
-  // The current-access gate (14362ef00, 2026-10-14) admits a current member, through the project
-  // the program is anchored to; the suite predates it and supplied neither.
-  await owner.query(
-    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
-       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
-  const ws = await owner.query(
-    `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id) VALUES ($1, $2, $2, 'active', $3) RETURNING id`,
-    [orgId, `${PROBE}-${RUN}`, userId],
-  );
-  const anchor = await owner.query(
-    `INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, created_by_id, regulatory_program_id, settings)
-     VALUES ($1, $2, $3, 'regulatory', 'active', $4, $4, $5, '{}'::jsonb) RETURNING id`,
-    [orgId, ws.rows[0].id, `${PROBE} ${RUN}`, userId, programId],
-  );
-  await owner.query('INSERT INTO project_visibility_settings (organization_id, project_id, visibility) VALUES ($1, $2, $3)', [orgId, anchor.rows[0].id, 'org_public']);
   const sibling = await program('sibling', orgId);
   studyId = await study(orgId, programId, `BX-${RUN}-02`, 'main');
   // The same protocol id in another project of the organization: never considered.
   await study(orgId, sibling, `BX-${RUN}-02`, 'sibling');
   app = await buildApp();
+  await assertVaultFixtureRuntime({ orgId, orgUuid, programId });
 }, 60_000);
 
 afterAll(async () => {
-  for (const f of written) await fs.rm(f, { force: true });
   await owner?.end();
+  await closeVaultFixtureRuntime();
 });
 
 describe('an adopted CSR is described by rule and by its project', () => {

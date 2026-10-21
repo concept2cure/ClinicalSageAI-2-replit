@@ -7,7 +7,7 @@ import { normalizeTemplateSpec } from '../../../../shared/templates/template-spe
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
 const input = () => ({ metadata: { title: 'Agency correspondence', submissionType: 'Correspondence', sponsor: 'Sponsor Pharma', date: '2026-10-17' },
   includeCover: false, sections: [{ title: 'Agency correspondence', paragraphs: ['Customer-authored text & original wording.'] }] });
-const xml = (zip: AdmZip, part: string) => zip.getEntries().filter(entry => new RegExp(`^word/${part}\\d+\\.xml$`).test(entry.entryName))
+const xml = (zip: AdmZip, part: 'header' | 'footer') => zip.getEntries().filter(entry => /^word\/(header|footer)\d+\.xml$/.exec(entry.entryName)?.[1] === part)
   .map(entry => entry.getData().toString('utf8')).join('\n');
 
 describe('canonical company letterhead DOCX presentation', () => {

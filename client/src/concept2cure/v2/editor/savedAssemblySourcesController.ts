@@ -9,6 +9,7 @@ import { initialSavedAssemblySources, type SavedAssemblySourcesCache, type Saved
 interface Owner {
   options: AssemblyBuildOptions; key: string; revision: number; contextRevision: number; savedReuseRevision: number; alive: boolean;
   bucket: AssemblyBucket; redraw: () => void;
+  authCurrent: () => boolean; headers: () => Record<string, string>;
 }
 type Adopt = (sources: AssemblySourceSelector[] | null) => boolean;
 const running = (cache: SavedAssemblySourcesCache): boolean => cache.view.phase === 'checking' || cache.view.phase === 'reusing';
@@ -18,6 +19,7 @@ function visible(owner: Owner): SavedAssemblySourcesCache | null {
 }
 function readRefusal(owner: Owner): string | null {
   if (!owner.options.docId || !owner.options.programId) return 'Open a document in its project before checking saved sources.';
+  if (!owner.authCurrent()) return 'Your signed-in account or organization changed. Reopen this document before checking saved sources.';
   return !owner.alive || owner.options.isCurrent?.() === false ? 'Finish the project or document change before checking saved sources.' : null;
 }
 function reuseRefusal(owner: Owner): string | null {
@@ -44,12 +46,12 @@ function owns(bucket: AssemblyBucket, cache: SavedAssemblySourcesCache, token: o
 async function check(owner: Owner): Promise<void> {
   const previous = visible(owner);
   if (readRefusal(owner) || previous && running(previous)) return;
-  const bucket = owner.bucket; const token = {}; const currentOwner = captureOwner(owner);
+  const bucket = owner.bucket; const token = {}; const currentOwner = captureOwner(owner); const headers = owner.headers();
   const cache: SavedAssemblySourcesCache = { view: { phase: 'checking', message: 'Checking the last recorded source-based build references…' }, current: currentOwner, attempt: token };
   bucket.savedSourcesCache = cache; owner.redraw();
   const current = () => currentOwner() && owns(bucket, cache, token);
   try {
-    const result = await getSavedAssemblySources(owner.options.docId!, owner.options.programId!, current);
+    const result = await getSavedAssemblySources(owner.options.docId!, owner.options.programId!, current, headers);
     if (!current()) return;
     setView(owner, cache, result.ok ? { phase: result.data.record ? 'recorded' : 'empty', data: result.data,
       message: result.data.record ? 'Last recorded source-based build references. They are historical references, not the current selection or a complete bibliography.' : 'No source-based build references are recorded for this document.' }
@@ -59,12 +61,12 @@ async function check(owner: Owner): Promise<void> {
 async function useSaved(owner: Owner, adopt: Adopt): Promise<void> {
   const cache = visible(owner); const expected = cache?.view.phase === 'recorded' ? cache.view.data : null;
   if (!cache || !expected?.record || reuseRefusal(owner)) return;
-  const bucket = owner.bucket; const token = {}; const revision = owner.revision; const savedReuseRevision = owner.savedReuseRevision; const buildAttempt = bucket.token;
+  const bucket = owner.bucket; const token = {}; const revision = owner.revision; const savedReuseRevision = owner.savedReuseRevision; const buildAttempt = bucket.token; const headers = owner.headers();
   cache.attempt = token;
   const current = () => cache.current() && owns(bucket, cache, token) && owner.revision === revision && owner.savedReuseRevision === savedReuseRevision && bucket.token === buildAttempt && reuseRefusal(owner) === null;
   setView(owner, cache, { phase: 'reusing', data: expected, message: 'Checking that the displayed saved references are still the latest exact record before reuse…' });
   try {
-    const result = await getSavedAssemblySources(expected.docId, expected.programId, current);
+    const result = await getSavedAssemblySources(expected.docId, expected.programId, current, headers);
     if (!current()) return;
     if (!result.ok) { setView(owner, cache, { phase: 'failed', message: result.message }); return; }
     if (JSON.stringify(result.data.record) !== JSON.stringify(expected.record)) {

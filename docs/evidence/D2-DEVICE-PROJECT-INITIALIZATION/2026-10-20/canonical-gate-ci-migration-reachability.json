@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-reachability"
+  ],
+  "at": "2026-10-20T22:44:10.453383+00:00",
+  "elapsedSeconds": 2.544,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "stdout": "[ci:migration-reachability] 1365 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined\n[ci:migration-reachability] \u2705 no new unreachable table references.\n",
+  "stderr": ""
+}

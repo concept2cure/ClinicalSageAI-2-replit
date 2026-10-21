@@ -18,14 +18,14 @@ export function SourceAssemblyAction({ programId, sources, titles, onNav, disabl
   disabled?: boolean; unavailable?: string | null;
 }) {
   const reasonId = useId();
-  const key = `${programId}:${JSON.stringify(sources)}`;
-  const scope = useRef({ key });
-  if (scope.current.key !== key) scope.current = { key };
-  const [launch, setLaunch] = useState<{ scope: object; current: () => boolean } | null>(null);
   const parsed = readAssemblySourceSelectors(sources);
   const reason = unavailable ?? (sources.length > ASSEMBLY_SOURCE_LIMIT
     ? `Select up to ${ASSEMBLY_SOURCE_LIMIT} sources to build in the editor. ${sources.length} are selected.`
     : !parsed ? 'The selected source identities could not be verified. Refresh the catalogue and select them again.' : null);
+  const key = JSON.stringify([programId, sources, disabled, reason ?? null]);
+  const scope = useRef({ key });
+  if (scope.current.key !== key) scope.current = { key };
+  const [launch, setLaunch] = useState<{ scope: object; current: () => boolean } | null>(null);
   const start = () => {
     if (disabled || reason || !parsed) return;
     const token = scope.current;

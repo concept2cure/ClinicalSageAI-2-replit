@@ -1,0 +1,33 @@
+Mutant run — the QMS approval's filing agreement check
+Target:  server/services/qms/document-approval-signature.ts
+Suite:   server/services/qms/__tests__/qms-approval-checks-the-filing.pglite.test.ts
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <suite>
+
+Final run:
+
+P1 the check is removed                          KILLED  Tests  3 failed | 2 passed (5)
+P2 refuses on 'empty' instead of 'different'     KILLED  Tests  3 failed | 2 passed (5)
+P3 refuses on every divergence, unfiled included KILLED  Tests  1 failed | 4 passed (5)
+P4 names only the filing node, not the section   KILLED  Tests  1 failed | 4 passed (5)
+P5 the check runs AFTER the signature is written KILLED  Tests  1 failed | 4 passed (5)
+P6 the check is asked about the wrong document   KILLED  Tests  1 failed | 4 passed (5)
+
+killed 6/6
+
+P5 SURVIVED TWICE BEFORE IT WAS KILLED, and the two failed attempts are the
+useful record:
+
+  Attempt 1 — no signature spy. Every assertion was a post-rollback read, so
+  the mutant passed 5/5.
+
+  Attempt 2 — spy on persistGovernedActionSignature, asserted not-called.
+  Still 5/5: moving the check to just after applyApproval leaves it BEFORE the
+  signature, so the spy proves nothing about it.
+
+  Attempt 3 — read the register row INSIDE the still-open transaction, before
+  ROLLBACK. applyApproval stamps that row, so it is the only observable that
+  distinguishes check-before-write from check-after-write once a rollback is
+  in play. KILLED.
+
+The lesson, recorded because it generalises: in a test that rolls back, every
+assertion made after the rollback is blind to ordering inside the transaction.

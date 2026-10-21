@@ -836,12 +836,14 @@ export function mountStreamRoute(router: Router): void {
       // during context assembly (orchestration + intelligence/memory/enrichment).
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
+        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
         'X-Accel-Buffering': 'no',
       });
 
       if (injectionGuard.auditTrail && (!injectionGuard.auditTrail.persisted || !injectionGuard.auditTrail.chained)) {
+        // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write -- SSE with nosniff; the entire payload is JSON encoded, escaping frame delimiters and never interpreted as HTML.
         res.write(`data: ${JSON.stringify({ type: 'warning',
           code: injectionGuard.auditTrail.persisted ? 'AUDIT_ROW_NOT_RETRIEVABLE' : 'AUDIT_ROW_NOT_PERSISTED',
           message: injectionGuard.auditTrail.persisted

@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-20T22:42:11.062348+00:00",
+  "from": "e79626c0849f0f8c2338b32f85d4bc69bccef8f5",
+  "to": "76c60846d794dd378dde6a44c05e54221b239d75",
+  "mode": "Fast-forward of canonical branch; staged device work preserved",
+  "productionChanges": {
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts": "8750e336d0f9004938fb9614b4833fd0d31442b32d88ca1de693797a6d30d5d6",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts": "1dc05c4615e2307a182add0da0c74b17444d1647699cebbab443e6cd19e59f54",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts": "9544137f904f4170f2ba8e23d087d38a640ee7fca28ab89028e88f038410032a",
+    "server/services/clinical-regulatory-evidence/capture-extraction-evidence.ts": "281e3f7ddfb773f972d8fd37420d7fc4188503d6deadce035645cbaacf9f7c1b",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "2054682c485173a5cf79dd8a5d234755cd67ba83d05cc8addb612417da1c1e2a"
+  },
+  "review": "Exact-text-bound capture extraction page/OCR evidence, cache validation and persistence; no device/template/class/UI overlap. Incoming tests and full combined editor regression will run on final sources."
+}

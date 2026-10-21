@@ -1,0 +1,45 @@
+# The defects, before and after
+
+Each was found by probing the rule with register-shaped data, not by reading it.
+Run the probe from the repo root: npx tsx <this directory>/probe-q1e-edges.ts
+
+## After
+```
+── the parser ──
+monthsIn("1.5 years")                        18
+monthsIn("0.5 years")                        6
+monthsIn("1000 months")                      null
+monthsIn("24M")                              null
+monthsIn("2-year")                           null
+monthsIn("18 months")                        18
+monthsIn("24 months")                        24
+monthsIn("36 mo")                            36
+monthsIn("NMT 24 months")                    24
+monthsIn("at least 24 months")               24
+── time points ──
+latestTimePoint("0,3,6,12,24")               24
+latestTimePoint("[0,3,6,12,24]")             24
+latestTimePoint("0, 3, 6, 9, 12")            12
+latestTimePoint("0,6,12,18,24M")             18
+latestTimePoint("T0,T3,T6")                  null
+
+── a refrigerated product: long term 5C, accelerated 25C ──
+longTermCoverage                             0
+verdict                                      [["Q1E_EXTRAPOLATION_BEYOND_LIMIT","fail"]]
+
+── intermediate only, 30C (Zone II: intermediate, NOT long term) ──
+longTermCoverage                             null
+verdict                                      [["Q1E_NO_LONG_TERM_STUDY","not_evaluated"]]
+
+── a DS retest period beside a DP shelf life ──
+statedClaim                                  {"months":60,"study":"DS retest","raw":"60 months"}
+verdict                                      [["Q1E_EXTRAPOLATION_WITHOUT_ACCELERATED","fail"],["Q1E_EXTRAPOLATION_BEYOND_LIMIT","fail"],["Q1E_EXTRAPOLATION_BEYOND_LIMIT","fail"]]
+
+── a readable 12-month claim beside an UNREADABLE larger one ──
+statedClaim                                  {"months":null,"raw":["thirty-six months"]}
+verdict                                      [["Q1E_CLAIM_NOT_READABLE","not_evaluated"]]
+
+── a nonsense 1000-month claim ──
+statedClaim                                  {"months":null,"raw":["1000 months"]}
+verdict                                      [["Q1E_CLAIM_NOT_READABLE","not_evaluated"]]
+```

@@ -60,6 +60,8 @@ export interface ReadinessResult {
     inProgress: number;
     notStarted: number;
     completionPercent: number;
+    /** False when no section is known to be required; optional groups establish no requirement set. */
+    assessed?: boolean;
   };
   /** Artifact readiness */
   artifactReadiness: {
@@ -143,6 +145,11 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
   // Identify gaps
   const gaps = identifyGaps(sectionBlueprint.sections, input.sections, requiredArtifacts, input.artifacts);
 
+  if (sectionReadiness.assessed === false) {
+    gaps.push({ type: 'section', code: 'SECTION_REQUIREMENTS_NOT_MODELLED', title: 'Section requirements not assessed', severity: 'critical',
+      message: `No required-section set is modelled for "${entry.displayName}" (${registryId}). Optional working authoring groups do not establish regulatory requirements or filing readiness; assess applicability and current recipient requirements before relying on this outline.` });
+  }
+
   if (!artifactsAssessed) {
     gaps.push({
       type: 'artifact',
@@ -217,7 +224,8 @@ function evaluateSections(
     notStarted,
     completionPercent: requiredSections.length > 0
       ? Math.round((completed / requiredSections.length) * 100)
-      : 100,
+      : 0,
+    ...(requiredSections.length === 0 ? { assessed: false } : {}),
   };
 }
 

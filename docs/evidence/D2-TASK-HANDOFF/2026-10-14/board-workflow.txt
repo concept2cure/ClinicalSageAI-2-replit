@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > exact retained task target > opens the requested business ID rather than another task with the same title 252ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > exact retained task target > refreshes and focuses an exact target hidden by filters while Tasks is already mounted 114ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > exact retained task target > refuses another store’s ID rather than opening it through unified-task controls 37ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > keeps cached matching rows closed until the requested refresh settles 85ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > discards an earlier target read when a later exact target is requested 89ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a target when the 'unread unified store' cannot support it 39ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a target when the 'unprovisioned store' cannot support it 36ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > allows a verified native task while honestly retaining an unrelated partial-store notice 47ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'forbidden' without falling back to a title match 16ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'missing task' without falling back to a title match 26ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'archived task' without falling back to a title match 29ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'duplicate exact ID' without falling back to a title match 31ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B&taskActor=8&taskOrg=7 without opening a detail 23ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B&taskActor=7&taskOrg=8 without opening a detail 21ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B&taskActor=7&taskOrg=7&taskId=TASK-A without opening a detail 20ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B without opening a detail 22ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses an identity token swap before React has published the new actor 31ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses a token swap while the fresh target read is pending 56ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > permits a refreshed bearer for the same actor and organization 57ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > retires old-owner reads and forms immediately on an actor or organization replacement 110ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > does not publish a late old-owner response under a replacement account 36ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > preserves an open task and its archive reason without deferred replacement 94ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > preserves an unfinished create form and refuses its target without a delayed opening 139ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > preserves the native workflow picker 73ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > rechecks native ownership if a form opens during the fresh read 88ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > consumes only the task target and can reopen the same exact task after closing 96ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > does not call AnA after the bearer changes before React rerenders 136ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > does not resurrect an original actor callback after A→B→A replacement 139ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > does not call the shell after its board has unmounted 101ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > preserves an in-progress native signature when another task is requested 97ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > refuses the initial workflow write after a same-tick token replacement 95ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > does not auto-assign original tasks under an account that replaced the actor during creation 104ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > does not resurrect auto-assignment after the original actor returns 114ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > rechecks the actor after awaiting the creation response body 93ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > allows same-actor refresh and pins the matched bearer for each workflow write 85ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > says the session expired when the DELETE comes back 401 562ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > shows a viewer the server’s refusal, in the panel they are looking at 209ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > refuses a reason over 1000 characters with a sentence that says so, and sends nothing 186ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > shows an unrecorded archive as a failure in the server’s words 180ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > §11.50 signing — an expired session is not a silent reset > reports a 401 on the signed completion inside the ceremony 203ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > §11.50 signing — an expired session is not a silent reset > shows the sign-off’s own 401 sentence when the server sent one 174ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > stale board — a completion someone else already made is not reported as this user's > shows the server's CONFLICT_STALE sentence and re-reads the board 102ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > an unknown outcome — a move whose COMMIT was lost is not reported as failed > a board move shows the server’s sentence and re-reads the board 103ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > an unknown outcome — a move whose COMMIT was lost is not reported as failed > a signed completion says it is unknown, not "not completed", and closing the dialog re-reads the board 215ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > new task — a refusal is not a "network error" > shows a viewer’s 403 in the server’s words 145ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > surfaces a 401 on the auto-assign step after the tasks were created 113ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > reports the tasks auto-assign did not assign when it answers 200 with fewer than it was sent 126ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > keeps a thrown auto-assign refusal visible after the dialog closes 118ms
+
+ Test Files  2 passed (2)
+      Tests  48 passed (48)
+   Start at  22:00:32
+   Duration  8.61s (transform 908ms, setup 319ms, import 1.36s, tests 5.08s, environment 1.42s)
+

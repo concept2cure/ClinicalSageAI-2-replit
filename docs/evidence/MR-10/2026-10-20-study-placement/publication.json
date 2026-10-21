@@ -1,0 +1,14 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "sourceAccepted": "359cc9f5e3faf3c2e22f836688803431794624fd",
+  "sourceCommitUrl": "https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/359cc9f5e3faf3c2e22f836688803431794624fd",
+  "buildAnchor": "359cc9f5e3faf3c2e22f836688803431794624fd",
+  "browserAnchor": "13cb23411240aa569c280a103331907e50ea5104",
+  "artifactScope": "Evidence files are added by the subsequent evidence commit; the source acceptance and normal gate log above are retained without self-referential document commit hashes.",
+  "pullRequestCreated": false,
+  "forcePushUsed": false,
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "sourceAcceptanceObservedUtc": "2026-10-21T00:10:45.487787+00:00"
+}

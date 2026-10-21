@@ -1,0 +1,32 @@
+{
+  "unchangedBaselineInputs": 19,
+  "tests": [
+    {
+      "file": "server/services/ana/__tests__/document-passage-result-bound.test.ts",
+      "sha256": "f44a4a9276210278cdfeae37dc621d5ea5fd9f3b2bc58e73133cca740f5cf880",
+      "baselineExpectedFailures": 18,
+      "baselinePassingControls": 6
+    },
+    {
+      "file": "server/services/ana/__tests__/document-passage-result-cap.test.ts",
+      "sha256": "80d5129c5ce062ea870129992d9df762e3b84f665462dd4738c4328c7ae85a2e",
+      "baselineExpectedFailures": 6,
+      "baselinePassingControls": 8
+    },
+    {
+      "file": "server/services/ana/__tests__/document-passage-result-references.test.ts",
+      "sha256": "ce0e392385c17eb328bccbf1c433afeb2fbdaaf41c11c26f9107f00e4604a836",
+      "baselineExpectedFailures": 4,
+      "baselinePassingControls": 5
+    },
+    {
+      "file": "tests/services/tool-outcome-passage-omission.test.ts",
+      "sha256": "44480dd94dc578e0b5fafd46b6827accc11c145d90de10f84c1fc25003a609cf",
+      "baselineExpectedFailures": 8,
+      "baselinePassingControls": 38
+    }
+  ],
+  "total": 93,
+  "expectedFailures": 36,
+  "passingControls": 57
+}

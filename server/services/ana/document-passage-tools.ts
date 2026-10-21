@@ -28,6 +28,104 @@
 import type { ToolContext } from './AnaToolExecutor.js';
 import { requireDocumentAccess, withCaughtErrors, type RegisterFn } from './document-tools-shared.js';
 import { catalogScope } from './catalog-scope.js';
+import type { PassageCoverage, PassageHit } from '../vault/document-passage-search.js';
+
+/**
+ * Below the classic per-result 8,000-character cut (P-24). This handler fits
+ * its body and says what it left out; aggregate round budgeting is separate.
+ */
+export const PASSAGE_RESULT_BUDGET = 7500;
+const PASSAGE_METADATA_BUDGET = 1000;
+
+type PassageDetail = 'full' | 'no_context_text' | 'locator_only';
+type ModelCoverage = PassageCoverage & { failureReasonsOmitted?: true };
+
+/** Keep counts/unknowns intact; diagnostic text must not consume the evidence budget. */
+function modelCoverage(coverage: PassageCoverage | null): ModelCoverage | null {
+  if (!coverage || JSON.stringify(coverage.failureReasons ?? []).length <= PASSAGE_METADATA_BUDGET) return coverage;
+  return { ...coverage, failureReasons: [], failureReasonsOmitted: true };
+}
+
+function modelCoverageNote(coverage: ModelCoverage | null): string {
+  return 'Within the current actor’s accessible source scope: ' + coverageNote(coverage) +
+    (coverage?.failureReasonsOmitted ? ' Detailed indexing failure reasons were omitted to fit this result.' : '');
+}
+
+/** Last guard follows the caught-error wrapper, covering every return branch. */
+function boundPassageResult(result: string): string {
+  if (result.length <= PASSAGE_RESULT_BUDGET) return result;
+  let unavailable = false;
+  try { unavailable = (JSON.parse(result) as { unavailable?: unknown } | null)?.unavailable === true; }
+  catch { /* Defensive non-JSON wrapper output is omitted too. */ }
+  return JSON.stringify({ ok: false, code: 'PASSAGE_RESULT_TOO_LARGE', resultOmitted: true,
+    ...(unavailable ? { unavailable: true } : {}),
+    message: 'The passage-search response could not be shown intact within this result. ' +
+      'Do not treat this omitted response as evidence absence. Use a narrower query or ' +
+      'search_project_documents and read_project_document in the current source scope.' });
+}
+
+/** One passage as the model reads it, at a level of detail. */
+function modelPassage(hit: PassageHit, detail: PassageDetail): Record<string, unknown> {
+  const { text, context: given, ...meta } = hit;
+  // A hit with no context recorded was not expanded; say so rather than assume.
+  const context: PassageHit['context'] = given ?? { status: 'unavailable', reason: 'not_expanded' };
+  if (context.status !== 'available') {
+    return detail === 'locator_only' ? { ...meta, textOmitted: true, context } : { ...meta, text, context };
+  }
+  const { text: contextText, ...reference } = context;
+  if (detail === 'full') {
+    // The hit is inside the context; sending it twice would only cost budget.
+    const base = reference.reference.span.start;
+    const hitWithinText = hit.hitSpan ? { start: hit.hitSpan.start - base, end: hit.hitSpan.end - base } : null;
+    return { ...meta, context: { ...reference, text: contextText, hitWithinText } };
+  }
+  const shortened = { ...reference, textOmitted: true };
+  return detail === 'no_context_text'
+    ? { ...meta, text, context: shortened }
+    : { ...meta, textOmitted: true, context: shortened };
+}
+
+/**
+ * The passages that fit the budget, most relevant first. Lowest-ranked first,
+ * each pass finished before the next: drop surrounding text, then the hit's
+ * own text, then whole passages. A locator that cannot fit is omitted whole.
+ */
+function fitPassages(
+  hits: PassageHit[],
+  render: (passages: Record<string, unknown>[], levels: PassageDetail[], omitted: number) => string,
+): string {
+  const levels: PassageDetail[] = hits.map(() => 'full');
+  let kept = hits.length;
+  // Each render carries its own note, so what is measured is what is sent.
+  const out = () => render(hits.slice(0, kept).map((h, i) => modelPassage(h, levels[i])), levels.slice(0, kept), hits.length - kept);
+  let result = out();
+  for (const step of ['no_context_text', 'locator_only'] as const) {
+    for (let i = kept - 1; i >= 0 && result.length > PASSAGE_RESULT_BUDGET; i--) {
+      levels[i] = step;
+      result = out();
+    }
+  }
+  while (result.length > PASSAGE_RESULT_BUDGET && kept > 0) {
+    kept--;
+    result = out();
+  }
+  return result;
+}
+
+/** What the fitting left out, said plainly, with the exact way to read it. */
+function fittingNote(levels: PassageDetail[], omitted: number): string {
+  const contextOmitted = levels.filter((l) => l === 'no_context_text').length;
+  const textOmitted = levels.filter((l) => l === 'locator_only').length;
+  const notes: string[] = [];
+  if (contextOmitted + textOmitted > 0) {
+    notes.push(`${contextOmitted + textOmitted} passage(s) are shown without their surrounding text` +
+      (textOmitted ? ` (${textOmitted} without their own text either)` : '') + ' to fit this result. ' +
+      'Read exactly that text with read_project_document: offset = context.reference.span.start, ' +
+      'max_chars = context.reference.span.end - context.reference.span.start (or hitSpan for the passage alone).');
+  }
+  if (omitted > 0) notes.push(`${omitted} ${levels.length ? 'lower-ranked' : 'matched'} passage(s) were left out to fit; ask again with a smaller limit or a narrower query.`);
+  return notes.length ? ` ${notes.join(' ')}` : '';
+}
 
 /**
  * What sits OUTSIDE this index no matter how complete the vault side is.
@@ -139,26 +237,34 @@ async function handleSearchDocumentPassages(
       { organizationId: orgId, userId:scope.accessibleScope.actor.userId, organizationUuid: ctx?.organizationUuid, query },
       { limit, programId: scope.programId, sourceReadScope: scope.admittedScope },
     );
-    const note = 'Within the current actor’s accessible source scope: ' + coverageNote(result.coverage);
+    const queryOmitted = JSON.stringify(query).length > PASSAGE_METADATA_BUDGET;
+    const queryEcho = queryOmitted ? { queryOmitted: true, queryChars: query.length } : { query };
+    const coverage = modelCoverage(result.coverage);
+    const note = modelCoverageNote(coverage);
     // Ranked by text alone: no embedding provider answered. The model says so
     // rather than implying a meaning-based search ran.
     const ranked = result.ranking === 'text'
       ? ' Ranked by text match (no embedding is configured, so the search matched words, not meaning; ' +
         'try the terms a document would use).'
       : '';
-    return JSON.stringify({
-      ok: true,
-      query,
-      scope: { actorFiltered: true, ...(scope.programId ? { programId: scope.programId } : scope.admittedScope.projectId !== null ? { openProject: true, programId: null } : { accessibleProjects: true }) },
-      passages: result.hits,
-      coverage: result.coverage,
-      ranking: result.ranking,
-      message:
-        result.hits.length === 0
-          ? `No passage matched "${query}". ${note}`
-          : `${result.hits.length} passage(s).${ranked} ${note} Quote them with their document title and locator; ` +
-            'open the whole file with read_project_document when the answer needs the surrounding context.',
-    });
+    const scopeNote = { actorFiltered: true, ...(scope.programId ? { programId: scope.programId } : scope.admittedScope.projectId !== null ? { openProject: true, programId: null } : { accessibleProjects: true }) };
+    const message = (shown: number, fitted: string) => {
+      if (result.hits.length === 0) return queryOmitted
+        ? `No passage matched this query (query echo omitted to fit). ${note}`
+        : `No passage matched "${query}". ${note}`;
+      if (shown === 0) return `This search returned ${result.hits.length} matching passage(s), but none fit with complete source locators.${ranked} ${note} ` +
+        'These are omitted matches, not evidence absence. Narrow the query or use search_project_documents and read_project_document.' + fitted;
+      return `${shown} passage(s).${ranked} ${note} Quote them with their document title and locator. ` +
+          'Where a passage has context.status "available" and context.text, that is the exact surrounding source text ' +
+          '(context.hitWithinText marks the passage inside it): quote surrounding wording only from it, never by joining ' +
+          'passages yourself. Where it is "unavailable", open the whole file with read_project_document when the answer ' +
+          'needs the surrounding context.' + fitted;
+    };
+    return fitPassages(result.hits, (passages, levels, omitted) => JSON.stringify({
+      ok: true, ...queryEcho, scope: scopeNote, passages, ...(omitted ? { omittedPassages: omitted } : {}),
+      coverage, ranking: result.ranking,
+      message: message(passages.length, fittingNote(levels, omitted)),
+    }));
   } catch (err) {
     if (err instanceof PassageSearchUnavailableError) {
       // Unavailable is not "no passages" — say which it is, and route onward.
@@ -176,8 +282,9 @@ async function handleSearchDocumentPassages(
 }
 
 export function registerDocumentPassageHandlers(register: RegisterFn): void {
+  const handler = withCaughtErrors('search_document_passages', handleSearchDocumentPassages, { safeOutcome: true });
   register(
     'search_document_passages',
-    withCaughtErrors('search_document_passages', handleSearchDocumentPassages, { safeOutcome: true }),
+    async (input, ctx) => boundPassageResult(await handler(input, ctx)),
   );
 }

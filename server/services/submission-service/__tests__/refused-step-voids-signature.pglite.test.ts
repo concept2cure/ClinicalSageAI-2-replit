@@ -19,6 +19,7 @@
  * gateway (so nothing leaves the process) are stubbed.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 const holder = vi.hoisted(() => ({
   db: null as any,
@@ -29,11 +30,12 @@ const holder = vi.hoisted(() => ({
   applicants: [] as string[],
 }));
 
-vi.mock('../../../db', () => {
-  const run = async (sql: string, params?: unknown[]) => {
-    const r = await holder.pglite.query(sql, params);
-    return { ...r, rowCount: r.affectedRows ?? r.rows.length };
-  };
+vi.mock('../../../db', async () => {
+  const { makeRequestDbClient } = await import('../../../../tests/golden-journeys/harness');
+  // Production callers pass both SQL strings and pg query configs. Reuse the
+  // canonical PGlite adapter rather than sending a config object to its parser.
+  const run = (textOrConfig: unknown, params?: unknown[]) =>
+    makeRequestDbClient(holder.pglite).query(textOrConfig, params);
   return {
     get db() { return holder.db; },
     pool: { query: run, connect: async () => ({ query: run, release: () => {} }) },
@@ -105,6 +107,9 @@ beforeAll(async () => {
   holder.db = h.db;
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  // The real audit service also writes this append-only store; console fallback
+  // cannot stand in for the durable evidence a refused signature requires.
+  await h.pglite.exec(readFileSync(new URL('../../../../db/migrations/20260813_audit_tamper_proof_log.sql', import.meta.url), 'utf8'));
   await h.pglite.exec(FREEZE_GATE_SEED_SQL);
   await h.pglite.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [ORG, SPONSOR]);
   await h.pglite.query(

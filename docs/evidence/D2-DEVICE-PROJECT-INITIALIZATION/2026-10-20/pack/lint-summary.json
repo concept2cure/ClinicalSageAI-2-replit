@@ -1,0 +1,16 @@
+{
+  "strict": {
+    "files": 5,
+    "errors": 0,
+    "warnings": 0
+  },
+  "scriptManualAudit": {
+    "files": 2,
+    "errors": 0,
+    "warnings": 9,
+    "baselineErrors": 0,
+    "baselineWarnings": 9,
+    "sameRuleCounts": true,
+    "note": "scripts/** is excluded by canonical ESLint config; manual --no-ignore warnings compared against HEAD, not waived in strict production/test lint."
+  }
+}

@@ -1,0 +1,42 @@
+# BEFORE: server/startup/inline-endpoints.ts as the first implementer left it (no guard around the scanner branch); the ping replaced by one that rejects. 2026-10-18T19:52:50Z
+$ npx vitest run server/startup/__tests__/readyz-virus-scan-throw.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/readyz-virus-scan-throw.test.ts > /readyz when the scanner check throws > answers 503 with virusScan down, not a bare 500
+RangeError: Port should be >= 0 and < 65536
+    at pingClamdCached (/home/user/ClinicalSageAI-2-replit/server/startup/__tests__/readyz-virus-scan-throw.test.ts:19:41)
+    at /home/user/ClinicalSageAI-2-replit/server/startup/inline-endpoints.ts:99:58
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ × server/startup/__tests__/readyz-virus-scan-throw.test.ts > /readyz when the scanner check throws > answers 503 with virusScan down, not a bare 500 24ms
+   → expected 500 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/readyz-virus-scan-throw.test.ts > /readyz when the scanner check throws > answers 503 with virusScan down, not a bare 500
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/startup/__tests__/readyz-virus-scan-throw.test.ts:52:24
+     50|     mountFastPathHealthEndpoints(app, okPool);
+     51|     const res = await request(app).get('/readyz');
+     52|     expect(res.status).toBe(503);
+       |                        ^
+     53|     expect(res.body.dependencies.virusScan).toBe('down');
+     54|     expect(res.body.dependencies.database).toBe('ok');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:52:51
+   Duration  710ms (transform 192ms, setup 109ms, import 229ms, tests 28ms, environment 0ms)
+
+exit=1

@@ -1,0 +1,203 @@
+{
+  "commit": "6bc0027fe3733ae6ccd08a72adf126ed0ee71c15",
+  "fileCount": 32,
+  "passed": 292,
+  "failed": 0,
+  "pending": 0,
+  "allPinsStillMatch": true,
+  "scope": "Previously failing32 physical files, not the entire native suite. Uses actual canonical db config and fresh retained synthetic records; no mock pg, skip, test authority or production gate change.",
+  "cases": [
+    {
+      "path": "tests/db/actor-displays.dbtest.ts",
+      "status": "passed",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "status": "passed",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/c2c-project-persistence.dbtest.ts",
+      "status": "passed",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/cmc-source-evidence.dbtest.ts",
+      "status": "passed",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/data-room-catalog-facts.dbtest.ts",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/data-room-processing.dbtest.ts",
+      "status": "passed",
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/document-catalog-governed.dbtest.ts",
+      "status": "passed",
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/document-catalog-recall.dbtest.ts",
+      "status": "passed",
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/document-catalog-role.dbtest.ts",
+      "status": "passed",
+      "passed": 2,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/document-catalog.dbtest.ts",
+      "status": "passed",
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/org-retention-period.dbtest.ts",
+      "status": "passed",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "status": "passed",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-data-room-file.dbtest.ts",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "status": "passed",
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-filing-vocabulary.dbtest.ts",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "status": "passed",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-ingest.dbtest.ts",
+      "status": "passed",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "status": "passed",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-lifecycle.dbtest.ts",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "status": "passed",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-placement-batch.dbtest.ts",
+      "status": "passed",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-placement.dbtest.ts",
+      "status": "passed",
+      "passed": 19,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "status": "passed",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-version-annotations-record.dbtest.ts",
+      "status": "passed",
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-version-annotations.dbtest.ts",
+      "status": "passed",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-version-checkin.dbtest.ts",
+      "status": "passed",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-version-compare.dbtest.ts",
+      "status": "passed",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "status": "passed",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/vault-where-used.dbtest.ts",
+      "status": "passed",
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "path": "tests/db/workflow-import-governance.dbtest.ts",
+      "status": "passed",
+      "passed": 19,
+      "failed": 0
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "status": "passed",
+      "passed": 11,
+      "failed": 0
+    }
+  ]
+}

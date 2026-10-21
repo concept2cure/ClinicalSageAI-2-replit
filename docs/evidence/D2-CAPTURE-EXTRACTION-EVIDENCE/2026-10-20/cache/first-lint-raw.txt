@@ -1,0 +1,7 @@
+
+/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts
+  181:22  warning  'structuredClone' is not defined  no-undef
+
+✖ 1 problem (0 errors, 1 warning)
+
+ESLint found too many warnings (maximum: 0).

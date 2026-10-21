@@ -2,10 +2,11 @@
  * no client files read, no evidence certified, no readiness verdict minted.
  * Discussion markers avoid repeat questions; they are never proof of an answer.
  */
-import { getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { getApplicationType, isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
 import type { RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 import { componentTemplateIdForRegistry, getDocumentTemplate } from './document-template-library';
+import { buildDeviceDocumentPreparation } from './device-document-preparation';
 
 export const PREPARATION_MARKETS = ['US', 'EU', 'CA', 'JP'] as const;
 export type PreparationMarket = typeof PREPARATION_MARKETS[number];
@@ -31,13 +32,20 @@ export interface DocumentPreparationScope {
   templateId?: string;
 }
 
+/** Shared conversation instructions also reach device clients through the same
+ * preparation tool. Device-specific evidence replaces medicinal assumptions. */
+export const DEVICE_AUTHORING_GUIDANCE = `DEVICE AND DIAGNOSTICS DOCUMENT PREPARATION:
+For a device, IVD, CDx or medical-device software build, request get_document_template with the exact registry_id or template_id and prepare:true. Confirm US/EU/CA/JP scope. Ask one to three source-scoped questions at a time about intended use, configuration, classification facts, performance, risk, software/cybersecurity, manufacturing and current regional requirements as applicable. Read existing project sources before asking again. Drug PK/PD, pediatric drug plans and medicinal-product filing routes are not default device requirements. Use the returned device preparation plan and the current agency/client outline; preparation, AnA drafting, approval and transmission are separate. Never claim that this authoring tool submits a filing.`;
+
 /** Shared by conversation and drafting, so preparation is not just a tool the
  * model never knows to call. Questions belong in chat, never governed prose. */
 export const BIOTECH_AUTHORING_GUIDANCE = `BIOTECH DOCUMENT PREPARATION:
 Before a medicinal-product document build, use get_document_template with the exact template_id or registry_id and prepare:true. Pass the confirmed US/EU/CA/JP market when the document is global; never infer a jurisdiction from 'CTA', 'marketing application' or 'biologic'. Read every outline page using nextOffset. Use coverage:true to discover which existing filing outlines are indexed; an unavailable outline needs the current agency/client template, not a fabricated CTD fallback.
 Read current project documents and prior client answers first. Ask one to three decisive preparation questions at a time, explain why each matters, integrate the reply and continue only where a material gap remains. discussed_topics only avoid repeated questions; they never verify evidence. Apply them to the current document, source versions and filing scope; revisit affected topics when those change. Reconcile protocol/SAP versions and prespecification, cutoffs, estimands, validated analyses and TLFs, missing data, deviations, adverse results, safety exposure, manufacturing changes and agency commitments. Use deterministic tools for numbers; never manufacture a study finding. Link every scientific claim to the actual source/version and distinguish observation, inference, uncertainty and unresolved evidence.
 EU trials use CTIS Part I/II; Canada CTA is not a full marketing dossier; Japan trial notifications differ from marketing approval. Establish local evidence, language, consent and disclosure requirements, and verify current guidance, adoption/effective dates and technical versions. Dedicated safety-message, dataset and package engines remain necessary.
-For an incomplete draft, write supported portions with clearly marked unresolved facts. Keep preparation questions outside the formal document. Save through draft_authoring_document. An outline, draft, saved file, scientific review, approval and technically validated package are distinct; none alone proves filing readiness.`;
+For an incomplete draft, write supported portions with clearly marked unresolved facts. Keep preparation questions outside the formal document. Save through draft_authoring_document. An outline, draft, saved file, scientific review, approval and technically validated package are distinct; none alone proves filing readiness.
+
+${DEVICE_AUTHORING_GUIDANCE}`;
 
 /** Section drafting has no conversation channel and may have no tools enabled.
  * Its contract is supported prose plus explicit gaps, not a promised interview. */
@@ -231,15 +239,23 @@ function preparationTemplateId(input: PreparationInput): string | undefined {
   return named?.id ?? component ?? input.templateId;
 }
 
-/** The one regional identity of a standalone component, including its aliases. */
-export function documentComponentRegion(templateId: string | undefined): 'EU' | 'GLOBAL' {
+/** The one regional/body identity of a standalone component, including aliases. */
+export function documentComponentContext(templateId: string | undefined): { region: 'US' | 'EU' | 'GLOBAL'; agency: string } {
   const canonical = templateId ? getDocumentTemplate(templateId)?.id ?? templateId : undefined;
-  return canonical && ['smpc', 'impd', 'risk_management_plan', 'pil'].includes(canonical) ? 'EU' : 'GLOBAL';
+  if (canonical === 'k510_summary') return { region: 'US', agency: 'FDA' };
+  if (canonical && ['gspr_checklist', 'ivdr_gspr_checklist', 'performance_evaluation_report'].includes(canonical)) return { region: 'EU', agency: 'Notified_Body' };
+  return canonical && ['smpc', 'impd', 'risk_management_plan', 'pil'].includes(canonical)
+    ? { region: 'EU', agency: 'EMA' } : { region: 'GLOBAL', agency: 'ICH' };
+}
+
+export function documentComponentRegion(templateId: string | undefined): 'US' | 'EU' | 'GLOBAL' {
+  return documentComponentContext(templateId).region;
 }
 
 function assertRegionalComponentScope(templateId: string | undefined, market: PreparationMarket | undefined): void {
-  if (documentComponentRegion(templateId) === 'EU' && market && market !== 'EU') {
-    throw new Error('This outline represents an EU document. Confirm the current regional and client template before a targeted non-EU build; reference use or a regional addendum is not represented by this API.');
+  const region = documentComponentRegion(templateId);
+  if (region !== 'GLOBAL' && market && market !== region) {
+    throw new Error(`This outline represents a ${region} document. Confirm the current regional and client template before a targeted build for another market; reference use or a regional addendum is not represented by this API.`);
   }
 }
 
@@ -253,18 +269,58 @@ export function resolveDocumentPreparationScope(input: PreparationInput): Docume
 }
 
 const DEVICE_FAMILIES = ['estar', 'eu_mdr', 'eu_ivdr'];
+export function isDeviceDocumentScope(scope: DocumentPreparationScope): boolean {
+  const entry = scope.entry;
+  if (entry && isDeviceRegistryEntry(entry)) return true;
+  const template = scope.templateId ? getDocumentTemplate(scope.templateId) : undefined;
+  return Boolean(template?.families.length && template.families.every(family => DEVICE_FAMILIES.includes(family)));
+}
 function isMedicinalRegistryEntry(entry: RegulatoryApplicationType): boolean {
   return entry.segment === 'pharma_biotech'
     || (entry.region === 'GLOBAL' && entry.segment === 'cross_cutting'
       && ['clinical_document', 'dossier_module', 'safety_report', 'quality_cmc'].includes(entry.applicationFamily));
 }
 
-function assertMedicinalPreparation(scope: DocumentPreparationScope, family: string | undefined): void {
-  const template = scope.templateId ? getDocumentTemplate(scope.templateId) : undefined;
-  const deviceTemplate = template && template.families.length > 0 && template.families.every(f => DEVICE_FAMILIES.includes(f));
-  if ((scope.entry && !isMedicinalRegistryEntry(scope.entry)) || deviceTemplate || (family && DEVICE_FAMILIES.includes(family))) {
-    throw new Error('This preparation plan is for biotech medicinal-product documents; confirm the product pathway.');
+function isMedicinalTemplate(template: ReturnType<typeof getDocumentTemplate>): boolean {
+  return Boolean(template?.families.length && template.families.every(family => family === 'ectd' || family === 'ctis'));
+}
+
+/** Component families describe a regulation, not interchangeable device filings.
+ * Exact registry mappings and declared parent relationships supply the scope;
+ * a broad eSTAR format alone never establishes 510(k) applicability. */
+function deviceComponentFitsFiling(template: NonNullable<ReturnType<typeof getDocumentTemplate>>, entry: RegulatoryApplicationType): boolean {
+  if (componentTemplateIdForRegistry(entry.id) === template.id) return true;
+  if (template.id === 'k510_summary') {
+    return entry.region === 'US' && entry.agency === 'FDA' && /510\(k\)/i.test(entry.applicationType);
   }
+  const base = template.families.includes('eu_mdr') ? 'EU_MDR_TECHDOC'
+    : template.families.includes('eu_ivdr') ? 'EU_IVDR' : null;
+  return entry.region === 'EU' && base !== null && (entry.id === base || entry.parentApplicationType === base);
+}
+
+function assertDeviceComponentFiling(scope: DocumentPreparationScope): void {
+  const template = scope.templateId ? getDocumentTemplate(scope.templateId) : undefined;
+  if (!scope.entry || !template || !isDeviceDocumentScope({ templateId: scope.templateId })) return;
+  if (!deviceComponentFitsFiling(template, scope.entry)) {
+    throw new Error('The selected device component conflicts with this exact filing scope. Confirm the applicable component, or request an explicit outline-only reference without preparation.');
+  }
+}
+
+function assertPreparationScope(scope: DocumentPreparationScope, family: string | undefined): void {
+  const template = scope.templateId ? getDocumentTemplate(scope.templateId) : undefined;
+  const device = isDeviceDocumentScope(scope);
+  const entryDevice = scope.entry && isDeviceDocumentScope({ entry: scope.entry });
+  if (device && scope.entry && !entryDevice) throw new Error('The device template conflicts with the registry product pathway.');
+  if (entryDevice && isMedicinalTemplate(template)) {
+    throw new Error('The medicinal-product template conflicts with the device registry pathway. Confirm the applicable device outline.');
+  }
+  if (family && DEVICE_FAMILIES.includes(family) && !device) {
+    throw new Error('Use an exact device registry id or component template before preparing this family.');
+  }
+  if (scope.entry && !entryDevice && !isMedicinalRegistryEntry(scope.entry)) {
+    throw new Error('This preparation plan covers medicinal-product, device and diagnostics documents; confirm the exact product pathway.');
+  }
+  assertDeviceComponentFiling(scope);
 }
 
 function discussedPreparationTopics(input: PreparationInput): PreparationTopic[] {
@@ -295,9 +351,10 @@ function regionalQuestion(topic: PreparationTopic, scope: DocumentPreparationSco
 /** Scope validation fails on ambiguity; never use the registry's fuzzy search. */
 export function buildDocumentPreparation(input: PreparationInput) {
   const scope = resolveDocumentPreparationScope(input);
-  assertMedicinalPreparation(scope, input.family);
+  assertPreparationScope(scope, input.family);
   const { entry, market } = scope;
   const discussedTopics = discussedPreparationTopics(input);
+  if (isDeviceDocumentScope(scope)) return buildDeviceDocumentPreparation(scope, discussedTopics);
   const japaneseMarketingApplication = market === 'JP' && entry?.applicationFamily === 'marketing_authorization';
   const remaining = preparationTopics(scope).filter(t => !discussedTopics.includes(t));
   const questions = remaining.slice(0, 3).map(t => regionalQuestion(t, scope));

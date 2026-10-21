@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "8d4a451058713e9e9f61fa5c9dd755b497714f2769e58c14065f36ce363ded70",
+  "note": "ESLint summary omits duplicated source field; not raw output.",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/data-room-processing.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

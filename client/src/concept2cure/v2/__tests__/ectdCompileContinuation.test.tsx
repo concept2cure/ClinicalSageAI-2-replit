@@ -28,7 +28,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); apiRequest.mockReset(); sign.mockReset(); delete (window as any).C2C_PROJECT; });
 const mount = () => render(<EctdCompile {...({ onAsk: vi.fn() } as unknown as SurfaceViewProps)} />);
 async function chooseRun(id: string) {
-  await screen.findByRole('option', { name: new RegExp(id) });
+  await screen.findByRole('option', { name: name => name.includes(id) });
   fireEvent.change(screen.getByLabelText('Saved package runs'), { target: { value: id } });
 }
 it('discovers saved runs for the open UUID program without requiring a pasted id', async () => {

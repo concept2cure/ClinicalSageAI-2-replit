@@ -62,6 +62,7 @@ import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../s
 import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
+import { stfFileName } from '../services/ectd/stf-generator';
 import {
   listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
   readSubmissionLeavesForRequest, requireSubmissionReadStillCurrent, readDeliverableEvaluationInput, SubmissionReadError,
@@ -236,6 +237,22 @@ const upsertLeafSchema = z.object({
   documentUuid: z.string().uuid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
+  studyId: z.string().trim().min(1).refine((value) => {
+    try { stfFileName(value); return true; } catch { return false; }
+  }, 'Study id must form a valid Study Tagging File name.').nullable().optional(),
+  stfFileTag: z.string().refine((value) =>
+    !Array.from(value).some((char) => char.charCodeAt(0) < 32 || (char.charCodeAt(0) >= 127 && char.charCodeAt(0) <= 159)),
+  'STF file-tag must contain no control characters.').transform((value) => value.trim()).pipe(z.string().min(1).max(128)).nullable().optional(),
+  studyTaggingEdit: z.object({
+    expectedStudyId: z.string().nullable(),
+    expectedStfFileTag: z.string().nullable(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+  }).optional(),
+}).superRefine((value, ctx) => {
+  if (value.studyTaggingEdit && (!value.leafId || value.studyId === undefined || value.stfFileTag === undefined)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['studyTaggingEdit'],
+      message: 'A study metadata edit requires leafId and explicit studyId and stfFileTag values.' });
+  }
 });
 
 const AUTHOR = 'regulatory-author';

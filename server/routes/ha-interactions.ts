@@ -6,6 +6,11 @@
  * → COMMIT, org-scoped from the verified request context. Commitments thread onto
  * the provenance spine in the service. Mounted at /api/ha-interactions.
  *
+ * A commitment's fulfilment (2026-10-19, P-41) and its options read are
+ * commitment-fulfil-route.ts, mounted here for the organisation's own
+ * commitments: a PMR, PMC or REMS is fulfilled by a Part 11 signature naming
+ * the sequence or Vault version that met it.
+ *
  * @module server/routes/ha-interactions
  */
 
@@ -18,19 +23,35 @@ import {
   updateInteractionStatusTx,
   addQuestionTx,
   createCommitmentTx,
-  fulfillCommitmentTx,
   addMilestoneTx,
   listInteractions,
   listCommitments,
   getInteractionReadinessInput,
+  ORG_LEVEL,
 } from '../services/ha-interactions/ha-service';
-import { evaluateMeetingReadiness, deriveCommitmentStatus, summarizeCommitmentPortfolio } from '../services/ha-interactions/ha-logic';
-import { recordHaInteractionCreated, recordHaCommitmentCreated, recordHaCommitmentFulfilled } from '../services/ha-metrics';
+import { evaluateMeetingReadiness } from '../services/ha-interactions/ha-logic';
+import { recordHaInteractionCreated, recordHaCommitmentCreated } from '../services/ha-metrics';
+import { requestPgClient } from '../db/requestDb';
+import {
+  answerFulfilmentFailure,
+  commitmentsForRequest,
+  fulfilCommitmentRoute,
+  fulfilmentOptionsRoute,
+  organisationViewerCapabilities,
+  type CommitmentDoor,
+} from './commitment-fulfil-route';
 import { serverError } from '../lib/api-response';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
 const log = createScopedLogger('ha-interactions');
+// A viewer reads meetings and commitments and writes none of them: one gate for
+// every write, as rim.ts (2026-10-18; until then any member could record or
+// fulfil a postmarketing commitment). Communication's commitments tab writes
+// through here.
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -53,10 +74,14 @@ function fail(res: Response, err: unknown): void {
   }
   serverError(res, log, 'handling the health-authority interaction request', err);
 }
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
+/** A refused body, said as a sentence naming the field, so the person reads what to fix. */
+function validationRefusal(res: Response, err: z.ZodError) {
+  const first = err.issues[0];
+  return res.status(400).json({
+    error: { code: 'VALIDATION', message: `${first?.message ?? 'Invalid input.'} (${first?.path?.join('.') || 'request'}) Nothing was changed.`, details: err.flatten() },
+  });
+}
 
 async function governedMutation(
   req: Request,
@@ -74,6 +99,9 @@ async function governedMutation(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // The tenant scope on the transaction itself, as rim.ts sets it: the writes
+    // below are checked by the tables' tenant policy under RLS_ENFORCE=on.
+    await setTenantContextTx(client, orgId);
     const { target, payload, body } = await run(client, orgId, userId);
     const gov = await recordGovernedAction(client, { orgId, userId, command, target, reason: reasonText, payload, domain: 'ha' });
     await client.query('COMMIT');
@@ -101,7 +129,7 @@ const interactionSchema = z.object({
 
 router.post('/interactions', async (req, res) => {
   const parsed = interactionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id } = await createInteractionTx(client, orgId, userId, parsed.data);
     recordHaInteractionCreated();
@@ -132,7 +160,7 @@ router.patch('/interactions/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await updateInteractionStatusTx(client, orgId, id, parsed.data.status, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
@@ -152,7 +180,7 @@ router.post('/interactions/:id/questions', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = questionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: qid } = await addQuestionTx(client, orgId, userId, id, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { questionId: qid }, body: { interactionId: id, questionId: qid } };
@@ -189,7 +217,7 @@ const commitmentSchema = z.object({
 
 router.post('/commitments', async (req, res) => {
   const parsed = commitmentSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id, provenanceLinkIds } = await createCommitmentTx(client, orgId, userId, parsed.data);
     recordHaCommitmentCreated(parsed.data.commitmentType);
@@ -202,32 +230,31 @@ router.get('/commitments', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const submissionId = req.query.submissionId ? Number(req.query.submissionId) : undefined;
   try {
-    const rows = await listCommitments(orgId, Number.isFinite(submissionId) ? submissionId : undefined);
-    const t = today();
-    const commitments = rows.map((r) => ({
-      ...r,
-      effectiveStatus: deriveCommitmentStatus({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date }, t),
-    }));
-    const summary = summarizeCommitmentPortfolio(rows.map((r) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), t);
-    res.json({ commitments, summary });
+    // On the request's tenant-pinned connection, projected per reader
+    // (2026-10-19): evidence in a program this person cannot open is said to
+    // exist and not named, and no raw fulfilment column is sent.
+    const rows = await listCommitments(orgId, Number.isFinite(submissionId) ? submissionId : undefined, ORG_LEVEL, requestPgClient(req) as never);
+    res.json(await commitmentsForRequest(req, orgId, rows));
   } catch (err) {
-    fail(res, err);
+    answerFulfilmentFailure(res, err);
   }
 });
 
-const fulfillSchema = z.object({ fulfilledDate: z.string().optional(), reason });
+/* The organisation's door onto a commitment's fulfilment (P-41, 2026-10-19):
+   its own commitments only (project_id IS NULL). A PMR, PMC or REMS is
+   fulfilled by a signature naming what met it; anything else with a reason.
+   The rules, the order of refusals and the body are commitment-fulfil-route.ts,
+   shared with the project's door. requireEditorAccessForWrites above still
+   gates the POST. */
+const ORG_DOOR: CommitmentDoor = {
+  scope: ORG_LEVEL,
+  idParam: 'id',
+  visible: () => true,
+  viewer: organisationViewerCapabilities,
+};
 
-router.post('/commitments/:id/fulfill', async (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = fulfillSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governedMutation(req, res, 'resolve', parsed.data.reason, async (client, orgId) => {
-    await fulfillCommitmentTx(client, orgId, id, parsed.data.fulfilledDate ?? null);
-    recordHaCommitmentFulfilled();
-    return { target: `regulatory-commitment:${id}`, payload: { status: 'fulfilled' }, body: { id, status: 'fulfilled' } };
-  });
-});
+router.post('/commitments/:id/fulfill', (req, res) => fulfilCommitmentRoute(req, res, ORG_DOOR));
+router.get('/commitments/:id/fulfilment-options', (req, res) => fulfilmentOptionsRoute(req, res, ORG_DOOR));
 
 const milestoneSchema = z.object({ title: z.string().min(1).max(500), dueDate: z.string().optional(), reason });
 
@@ -235,7 +262,7 @@ router.post('/commitments/:id/milestones', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = milestoneSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (!parsed.success) return validationRefusal(res, parsed.error);
   await governedMutation(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: mid } = await addMilestoneTx(client, orgId, userId, id, parsed.data);
     return { target: `regulatory-commitment:${id}`, payload: { milestoneId: mid }, body: { commitmentId: id, milestoneId: mid } };

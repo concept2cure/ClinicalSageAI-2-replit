@@ -1,0 +1,37 @@
+# Review mutation 16 — on a project's door the Vault is searched only once the project's program is read (findings 8 and 23)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "could not be read, distinct|offers no Vault search until")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -189,7 +189,7 @@
+ type VaultScope = { kind: 'ready'; programId?: string } | { kind: 'waiting' | 'unavailable' | 'unlinked' };
+ 
+ function vaultScopeOf(door: 'org' | 'project', options: { loading: boolean; data: FulfilmentOptions | null }): VaultScope {
+-  if (door === 'org') return { kind: 'ready' };
++  if (door === 'org' || door === 'project') return { kind: 'ready', programId: options.data?.vault.programId ?? undefined };
+   const programId = options.data?.vault.programId;
+   if (typeof programId === 'string' && programId) return { kind: 'ready', programId };
+   if (options.loading) return { kind: 'waiting' };
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says the submissions could not be read, distinct from there being none, and offers no other project's Vault in their place 286ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > on a project's door, offers no Vault search until the project's program is read 80ms
+ Test Files  1 passed (1)
+      Tests  2 passed | 21 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says the submissions could not be read, distinct from there being none, and offers no other project's Vault in their place 297ms
+   → Unable to find an element with the text: /This project's Vault could not be identified, so no document can be named\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > on a project's door, offers no Vault search until the project's program is read 5087ms
+   → Unable to find an element with the text: /Reading which Vault this project's documents are in/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says the submissions could not be read, distinct from there being none, and offers no other project's Vault in their place
+TestingLibraryElementError: Unable to find an element with the text: /This project's Vault could not be identified, so no document can be named\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > on a project's door, offers no Vault search until the project's program is read
+TestingLibraryElementError: Unable to find an element with the text: /Reading which Vault this project's documents are in/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 skipped (23)

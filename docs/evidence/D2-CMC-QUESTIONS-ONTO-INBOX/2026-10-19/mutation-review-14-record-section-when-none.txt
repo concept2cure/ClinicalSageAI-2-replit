@@ -1,0 +1,71 @@
+# MUTATION-REVIEW 14 'Correct section' offered for a question with no section, and CMC's 'Record the section on the letter'
+# Finding: Finding 17: CMC sent people to record a section 'on the letter', where the only control said 'Correct section' for a section never recorded.
+# File: client/src/concept2cure/v2/surfaces/AgencyResponses.tsx
+# Replaced:
+#   -               {q.ctdSection ? 'Correct section' : 'Record section'}
+# With:
+#   +               {'Correct section'}
+# File: client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx
+# Replaced:
+#   - "Record each question's CTD section on its letter in Communication."
+# With:
+#   + 'Record the section on the letter in Communication.'
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored client/src/concept2cure/v2/surfaces/AgencyResponses.tsx: sha256 a2774d49ee4caa45… before = a2774d49ee4caa45… after (byte-identical)
+# Restored client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx: sha256 a31ea16180b5819e… before = a31ea16180b5819e… after (byte-identical)
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a positive count is a button that opens the Module 3 questions 418ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > shows the server's figure: an approved answer on an overdue letter is not counted, a zero is a plain figure 40ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a read that failed is unknown, never zero, and the lead says so 67ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > with no program open it claims no count and issues no read 26ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > its action opens the overdue letter in Communication; it neither drafts nor promises sign-offs 76ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > says what it did not count, each as what it counts: questions as questions, letters as letters, and the earlier file as organization-wide 24ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a failed read of the earlier file is said on the Overview, never taken for "nothing open" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero is green only as an all-clear: never over letters withheld from this person 29ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero over a measured, complete figure is green 28ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > an approved Module 3 answer on a letter overdue only on a Clinical question: no Module 3 overdue, no "no question recorded" 58ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > a Module 3 letter with nothing recorded, past its date: said as that, and the action opens that letter 57ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > one question overdue on one letter, and another letter overdue only on a Clinical question: "on 1 letter" 32ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > names the section, and opens the question on its letter 137ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > counts by the server's "outstanding", and says "at least" when the server listed a page 130ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > matches whole segments: a question at 3.2.S.20 is not about 3.2.S.2 130ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > with no program open it asks for one and reads nothing 20ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > lists each question with the server's state and one door: open it on its letter 106ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > offers no working act of its own 248ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > a failed read is an error, never the empty list 42ms
+ × client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > says what it did not count, and names a Module 3 letter with no question recorded 56ms
+   → Unable to find an element with the text: /Record each question's CTD section on its letter in Communication\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty program says where questions are recorded 37ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty list over letters withheld from this person speaks only for the letters read 23ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a letter overdue on its other questions is said, and its approved answer is not overdue 40ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a Module 3 letter whose only question is withdrawn is named once, and not "not counted" 34ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > renders nothing when the file holds nothing 23ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > says what each row holds, and nothing it does not 46ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > a failed read of the earlier file is said, not hidden 33ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > tells the author, before any dialog, that they cannot approve their own answer 272ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > approves through the Part 11 dialog, forwarding meaning, reason, password and the revision read 205ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > says when a response changed after approval, and names the earlier approval 12ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > offers the package only when the server says every response is approved 30ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the questions on an agency letter > says so when the questions cannot be read, rather than showing none 7ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > offers a viewer no write or sign control, and says why once 18ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > tells an editor without signing authority why they cannot approve, before the dialog 31ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > a second Save after a refusal still sends the revision the edit started from 73ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > a refused signature reloads the record when the dialog closes 87ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > reads back the approved text of an edited response in its history 15ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > withdraws a question with a reason, and shows it withdrawn 71ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > a letter that requires a response and records no question says why it cannot close, and can be marked as asking nothing 34ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > after the review of 0308ee25 > shows a commitment's status as the register reads it: past due reads overdue 11ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > records a question with the section it concerns 67ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > shows the section on the question, and corrects it with a reason 78ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > offers no section correction on a closed letter or a withdrawn question 15ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > says the letter is overdue when the server says so, and only then 24ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > on a letter with no question recorded, the overdue note says that, not "responses not approved" 7ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > with questions recorded, it keeps the server's reason: responses not approved as they stand 11ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > sets who owns a response, with a reason, from the organisation's members, and shows it 106ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > offers no owner change on a closed letter 14ms
+ × client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx > the CTD section on a question, and the letter's overdue verdict > a question with no section is offered "Record section", and the form records one 5010ms
+   → Unable to find role="button" and name "Record section"
+ Test Files  2 failed (2)
+      Tests  2 failed | 47 passed (49)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

@@ -35,6 +35,7 @@ vi.mock('../../../middleware/uploadSafety', () => ({
 import {
   archiveCompanyLegalDocument, companyProfileHash, companyLetterheadForPurpose, readCompanyDocumentProfile,
   registerCompanyLegalDocument, updateCompanyDocumentProfile,
+  requireCompanyDocumentManager,
 } from '../profile';
 import { ProgramReadAccessError } from '../../c2c/current-program-access';
 
@@ -103,6 +104,28 @@ beforeEach(() => {
     settings = structuredClone(next);
     return structuredClone(settings);
   });
+});
+
+describe('current organization authority for letterhead preview', () => {
+  it('admits letterhead preview only through the current administrator and request tenant connection', async () => {
+    await expect(requireCompanyDocumentManager(req)).resolves.toBeUndefined();
+    expect(mocks.actor).toHaveBeenCalledWith(q, { organizationId: 7, userId: 3 });
+    expect(mocks.query).not.toHaveBeenCalled();
+    expect(mocks.write).not.toHaveBeenCalled();
+  });
+
+  it('refuses letterhead preview for a current reader despite stale administrator claims', async () => {
+    mocks.actor.mockResolvedValue({ userId: 3, role: 'viewer' });
+    await expect(requireCompanyDocumentManager(req)).rejects.toMatchObject({ status: 403, code: 'ADMIN_REQUIRED' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
+  it('refuses letterhead preview when membership was revoked', async () => {
+    mocks.actor.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_ACTOR_ACCESS_DENIED', 'Current membership required.'));
+    await expect(requireCompanyDocumentManager(req)).rejects.toMatchObject({ status: 403, code: 'PROJECT_ACTOR_ACCESS_DENIED' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
 });
 
 describe('current organization authority and atomic profile changes', () => {

@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+{"level":30,"time":"2026-10-14T22:54:58.110Z","pid":50698,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:54:58.111Z","pid":50698,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:54:58.111Z","pid":50698,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/data-room-processing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T22:54:58.172Z', poolSize: 1 }
+
+stdout | tests/db/data-room-processing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/data-room-processing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version
+[database] Database connection successful { timestamp: '2026-10-14T22:55:00.974Z', poolSize: 2 }
+
+stdout | tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version
+[database] Database connection successful { timestamp: '2026-10-14T22:55:01.051Z', poolSize: 3 }
+
+ ✓ tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version 498ms
+ ✓ tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > a word only in its body finds it, with a snippet of where 196ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > processes a pending capture from its stored bytes, and names one it cannot read 265ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > repairs legacy extracted-without-text and a same-identity rerun does not create an attempt 167ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the sweep validates timestamp metadata on PostgreSQL 15 > safely classifies UTC calendar boundaries and hostile stage timestamps without a dry-run write 1344ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > reports the real total and pages through it 3194ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > a search never returns another project's source, nor another organization's 97ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > filters by how far a source was read, and refuses a filter it cannot read rather than widening 117ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the Vault lane counts every current source of the project > counts captured, classified, filed and needs-review over the whole room 580ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  22:54:54
+   Duration  13.18s (transform 3.36s, setup 116ms, import 344ms, tests 12.25s, environment 0ms)
+
+JSON report written to /workspace/scratch/task-handoff-native/pg15-processing-after.json

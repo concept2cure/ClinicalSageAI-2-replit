@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()),apiRequest }));
+const actor = vi.hoisted(() => ({ user: { id: 42, organizationId: 7, role: 'admin' } }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: actor.user }), authService: { getUser: () => actor.user } }));
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 import { TaskTray } from '../TaskTray';
 import { clearNavParams } from '../navParams';
 import { clearEditorTarget } from '../editorTarget';
@@ -33,10 +36,11 @@ async function open(onNav = vi.fn()) {
 }
 beforeEach(() => {
   apiRequest.mockReset(); __resetCeremonies(); clearNavParams(); clearEditorTarget(); clearShellProject();
+  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 42, organizationId: 7 }))}.synthetic`);
   publishShellProject({id:OLD,title:'Previously open program'});
   targetReply = async () => reply({data:{surface:'insights',label:'Open saved report',params:{reportRunId:'41'},programId:PROGRAM}});
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); __resetCeremonies(); clearNavParams(); clearEditorTarget(); clearShellProject(); sessionStorage.clear(); localStorage.clear(); });
+afterEach(() => { cleanup(); clearAuthToken(); vi.restoreAllMocks(); __resetCeremonies(); clearNavParams(); clearEditorTarget(); clearShellProject(); sessionStorage.clear(); localStorage.clear(); });
 describe('F19 actual notification-to-owning-record journey', () => {
   it('waits for authorized resolution, switches to the actual UUID program and opens the exact record without marking read', async () => {
     let resolve!: (response:Response)=>void;

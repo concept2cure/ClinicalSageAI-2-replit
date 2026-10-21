@@ -691,11 +691,46 @@ describe('freeze and dispatch refuse a signature that declares authorship', () =
     expect((await statusOf(602)).status).toBe('dispatched');
   });
 
-  it('a signature recording no meaning is unchanged — it was checked for independence when signed', async () => {
-    // The sign route requires independence whenever the meaning is not an
-    // authorship one, absent included. Every existing case above signs this way.
+  // 2026-10-19 (D5, Part 11 audit): the authorship refusal above left every
+  // other meaning open, so a freeze, dispatch or transmit signed "review" was
+  // accepted, and the release resolver counted a "review" dispatch signature as
+  // the §11.70 release. Each step now takes approval, responsibility or release
+  // (RELEASE_ACT_MEANINGS), the three its own refusal text always named.
+  it('refuses a freeze signed as "review", and accepts the same freeze signed as approval', async () => {
+    await validatedSequence(604, 604);
+    const err = await outcome(freezeSequence(604, ctx, await sign(604, 'freeze', 'review')));
+    expect(err, 'a freeze signed "I reviewed" was accepted as an approval').toMatchObject({
+      code: 'GOVERNED_REQUIRED',
+      message: expect.stringMatching(/meaning 'review'/),
+    });
+    expect((await statusOf(604)).status).toBe('validated');
+
+    await freezeSequence(604, ctx, await sign(604, 'freeze', 'approval'));
+    expect((await statusOf(604)).status).toBe('frozen');
+  });
+
+  it('refuses a dispatch signed as "review" (the resolver half: sequence-release-signature.pglite)', async () => {
+    await validatedSequence(605, 605);
+    await freezeSequence(605, ctx, await sign(605, 'freeze', 'approval'));
+    const review = await sign(605, 'dispatch', 'review');
+
+    const err = await outcome(dispatchSequence(605, ctx, review));
+    expect(err, 'a dispatch signed "I reviewed" released the sequence').toMatchObject({
+      code: 'GOVERNED_REQUIRED',
+      message: expect.stringMatching(/meaning 'review'/),
+    });
+    expect((await statusOf(605)).status).toBe('frozen');
+
+    await dispatchSequence(605, ctx, await sign(605, 'dispatch', 'release'));
+    expect((await statusOf(605)).status).toBe('dispatched');
+  });
+
+  it('a signature recording no meaning is refused — no meaning is not an approval', async () => {
+    // Fail closed. The sign route has required a meaning since P1-21
+    // (2026-09-25); an unspent signature older than that is signed again.
     await validatedSequence(603, 603);
-    await freezeSequence(603, ctx, await sign(603, 'freeze'));
-    expect((await statusOf(603)).status).toBe('frozen');
+    const err = await outcome(freezeSequence(603, ctx, await sign(603, 'freeze', null)));
+    expect(err).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/meaning 'none'/) });
+    expect((await statusOf(603)).status).toBe('validated');
   });
 });

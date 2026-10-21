@@ -830,6 +830,20 @@ jobs:
           npm run ci:sign-ceremony:selftest
           npm run ci:sign-ceremony
 
+      - name: Guardrails — a seal asks whether the filing holds the document's text (P-29.2)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # An exit attests to the editing layer and the filing is a derived
+        # projection, so a seal, a signature, or a device package built from the
+        # filing must first prove the two agree (filingAgreesWithEditing). Round
+        # 16 shipped that check at the freeze and left /e-sign as APPROVER — the
+        # path a client actually uses — passing no check at all for a round,
+        # with every test green: an absent gate at the next door, invisible
+        # because every door that has it keeps working. The selftest runs first
+        # because this gate's value is in a branch a healthy tree never fires.
+        run: |
+          npm run ci:filing-exit-agreement:selftest
+          npm run ci:filing-exit-agreement
+
       - name: Guardrails — only named writers change a recorded Vault version (Part 11)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The record guard (migrations/20260926_vault_documents_record_immutability.sql)
@@ -1969,6 +1983,38 @@ jobs:
           npm run ci:server-bundle-prod-imports
           npm run ci:server-bundle-prod-imports:selftest
 
+      # Production refuses to boot without a virus scanner (MR-08:
+      # services/securityHealth.ts, clamav_connectivity) and refuses every upload it
+      # cannot scan (middleware/uploadSafety.ts), and /readyz reports it. So this job
+      # runs the scanner production runs: the image Terraform pins beside the API
+      # (terraform/stack/variables.tf, scanner_image), read from there so the two
+      # cannot drift. Never SECURITY_SELF_TEST_NONBLOCKING: the boot is what this
+      # job proves. clamd answers only once its signature database has loaded.
+      - name: Start the pinned virus scanner (clamd) and wait for it
+        run: |
+          IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf)
+          if ! echo "$IMAGE" | grep -Eq '@sha256:[0-9a-f]{64}$'; then
+            echo "::error::terraform/stack/variables.tf scanner_image default is not digest-pinned: '$IMAGE'"; exit 1
+          fi
+          # Configured as Terraform configures it: StreamMaxLength is the largest
+          # upload (server/config/platform-limits.ts), AlertExceedsMax reports a
+          # file it could not scan whole.
+          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+' || true)
+          if [ -z "$MB" ]; then echo "::error::FILE_LIMITS.maxUploadBytes not found in server/config/platform-limits.ts"; exit 1; fi
+          echo "scanner image: $IMAGE (StreamMaxLength ${MB}M)"
+          docker run -d --name clamav -p 127.0.0.1:3310:3310 \
+            -e CLAMD_CONF_StreamMaxLength="${MB}M" -e CLAMD_CONF_AlertExceedsMax=yes "$IMAGE"
+          for i in $(seq 1 300); do
+            if docker exec clamav clamdcheck.sh >/dev/null 2>&1; then echo "clamd ready after ${i}s"; exit 0; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' clamav)" != "true" ]; then
+              docker logs --tail 80 clamav; echo "::error::the clamav container exited before clamd answered."; exit 1
+            fi
+            if [ $((i % 30)) -eq 0 ]; then echo "…clamd still loading its database at ${i}s"; fi
+            sleep 1
+          done
+          docker logs --tail 80 clamav
+          echo "::error::clamd did not answer within 300s."; exit 1
+
       # The assertion: the built server, in production mode, under the only RLS
       # value production accepts, as the least-privilege role, reaches ready.
       - name: Boot in production mode and require /readyz=200
@@ -2017,6 +2063,10 @@ jobs:
           NODE_ENV: production
           RLS_ENFORCE: 'on'
           PORT: '5199'
+          # The scanner started above (MR-08). Boot scans the EICAR test string
+          # through it, and /readyz pings it.
+          CLAMAV_HOST: 127.0.0.1
+          CLAMAV_PORT: '3310'
           # Migrations/admin keep the owner URL; the request-serving pool is the
           # least-privilege role. This split is the whole point of the job.
           DATABASE_URL: postgresql://postgres@localhost:5432/c2c_boot
@@ -2090,9 +2140,15 @@ jobs:
           AI_SENSITIVE_DATA_POLICY_MODE: enforce
           AI_PROVIDER_PLACEMENT_APPROVALS: '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}'
 
-      - name: Tear down PostgreSQL
+      # The scanner's own account of a boot that could not reach it, before the
+      # teardown below deletes the container that holds it.
+      - name: Scanner log on failure
+        if: failure()
+        run: docker logs --tail 60 clamav || true
+
+      - name: Tear down PostgreSQL and the scanner
         if: always()
-        run: docker rm -f pgboot || true
+        run: docker rm -f pgboot clamav || true
 
   # The image itself, not the source (launch row D1; evidence
   # docs/evidence/W2/2026-10-01-image-boot/). production-boot-smoke above runs
@@ -2102,6 +2158,8 @@ jobs:
   # starts the production image as `appuser` under RLS_ENFORCE=on as app_service,
   # requires /healthz and /readyz to answer 200, and signs a person in, second
   # factor included, from inside the image (scripts/ci/image-boot-signin.mjs).
+  # Since MR-08 it runs beside the pinned clamd, as production does, and that
+  # person uploads an EICAR file (400 FILE_SCAN_REJECTED) and a clean PDF (201).
   # The session that wrote it could not build the image (its network refuses
   # Debian's mirrors); GitHub's runners reach them, as deploy-aws.yml's build does.
   production-image-boot:
@@ -2171,6 +2229,38 @@ jobs:
             -e PGSSLROOTCERT=/ca/server.crt \
             c2c-provision:ci
 
+      # Production refuses to boot without a virus scanner (MR-08:
+      # services/securityHealth.ts, clamav_connectivity) and refuses every upload it
+      # cannot scan (middleware/uploadSafety.ts), and /readyz reports it. So this job
+      # runs the scanner production runs: the image Terraform pins beside the API
+      # (terraform/stack/variables.tf, scanner_image), read from there so the two
+      # cannot drift. Never SECURITY_SELF_TEST_NONBLOCKING: the boot is what this
+      # job proves. clamd answers only once its signature database has loaded.
+      - name: Start the pinned virus scanner (clamd) and wait for it
+        run: |
+          IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf)
+          if ! echo "$IMAGE" | grep -Eq '@sha256:[0-9a-f]{64}$'; then
+            echo "::error::terraform/stack/variables.tf scanner_image default is not digest-pinned: '$IMAGE'"; exit 1
+          fi
+          # Configured as Terraform configures it: StreamMaxLength is the largest
+          # upload (server/config/platform-limits.ts), AlertExceedsMax reports a
+          # file it could not scan whole.
+          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+' || true)
+          if [ -z "$MB" ]; then echo "::error::FILE_LIMITS.maxUploadBytes not found in server/config/platform-limits.ts"; exit 1; fi
+          echo "scanner image: $IMAGE (StreamMaxLength ${MB}M)"
+          docker run -d --name clamav -p 127.0.0.1:3310:3310 \
+            -e CLAMD_CONF_StreamMaxLength="${MB}M" -e CLAMD_CONF_AlertExceedsMax=yes "$IMAGE"
+          for i in $(seq 1 300); do
+            if docker exec clamav clamdcheck.sh >/dev/null 2>&1; then echo "clamd ready after ${i}s"; exit 0; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' clamav)" != "true" ]; then
+              docker logs --tail 80 clamav; echo "::error::the clamav container exited before clamd answered."; exit 1
+            fi
+            if [ $((i % 30)) -eq 0 ]; then echo "…clamd still loading its database at ${i}s"; fi
+            sleep 1
+          done
+          docker logs --tail 80 clamav
+          echo "::error::clamd did not answer within 300s."; exit 1
+
       - name: Start the production image and require /healthz and /readyz = 200
         run: |
           # The production posture production-boot-smoke runs, as an env file.
@@ -2203,6 +2293,8 @@ jobs:
           AI_SENSITIVE_DATA_POLICY_MODE=enforce
           AI_PROVIDER_PLACEMENT_APPROVALS={"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}
           ALLOWED_ORIGINS=https://image-boot.invalid
+          CLAMAV_HOST=127.0.0.1
+          CLAMAV_PORT=3310
           ENV
           docker run -d --name c2c-app --network host \
             -v "$RUNNER_TEMP/ca:/ca:ro" --env-file "$RUNNER_TEMP/app.env" c2c-app:ci
@@ -2231,7 +2323,10 @@ jobs:
           echo "/healthz=$HEALTH"
           if [ "$HEALTH" != "200" ]; then echo "::error::/healthz answered $HEALTH"; exit 1; fi
 
-      - name: Sign a person in to the running image, second factor included
+      # Then, as that person: a project, an EICAR test file refused (400
+      # FILE_SCAN_REJECTED) and a clean one-page PDF filed (201), through the
+      # scanner above, on the shipped image (MR-08 stage 1).
+      - name: Sign a person in to the running image, second factor included, and upload through the scanner
         run: |
           docker run --rm --network host -w /app \
             -v "$PWD/scripts/ci/image-boot-signin.mjs:/app/image-boot-signin.mjs:ro" \
@@ -2243,11 +2338,14 @@ jobs:
 
       - name: Container log on failure
         if: failure()
-        run: docker logs --tail 200 c2c-app || true
+        run: |
+          docker logs --tail 200 c2c-app || true
+          echo "──────── clamav ────────"
+          docker logs --tail 60 clamav || true
 
       - name: Tear down
         if: always()
-        run: docker rm -f c2c-app pgimage || true
+        run: docker rm -f c2c-app pgimage clamav || true
 
   aios-audit-assets:
     name: AIOS Audit Assets

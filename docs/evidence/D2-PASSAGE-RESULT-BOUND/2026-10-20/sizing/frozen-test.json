@@ -1,0 +1,11 @@
+{
+  "file": "server/services/ana/__tests__/document-passage-result-bound.test.ts",
+  "sha256": "f44a4a9276210278cdfeae37dc621d5ea5fd9f3b2bc58e73133cca740f5cf880",
+  "lines": 236,
+  "baselineExpectedFailures": 18,
+  "baselinePassingControls": 6,
+  "totalTests": 24,
+  "baselineExitCode": 1,
+  "unchangedInputCount": 19,
+  "frozen": true
+}

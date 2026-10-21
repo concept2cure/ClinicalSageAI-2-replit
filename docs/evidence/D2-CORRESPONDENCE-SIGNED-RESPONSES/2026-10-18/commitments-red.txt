@@ -1,0 +1,9 @@
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > lists the commitment with the letter and question it was made in 28ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it 38ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future 18ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an editor fulfils it under RLS, with its ledger row 23ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed | 21 skipped (25)
+AssertionError: expected 201 to be 403 // Object.is equality
+AssertionError: expected 409 to be 400 // Object.is equality
+AssertionError: {"error":{"code":"INVALID_STATE","message":"Commitment not found, or already in a terminal state."}}: expected 409 to be 201 // Object.is equality

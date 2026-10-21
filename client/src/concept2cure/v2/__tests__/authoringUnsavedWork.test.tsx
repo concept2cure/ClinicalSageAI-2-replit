@@ -29,11 +29,16 @@ vi.mock('@/lib/queryClient', async importOriginal => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-  // The editor keys its device draft by the signed-in account (SEC-A-5).
-  authService: { getUser: () => null },
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual,
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+    // The editor keys its device draft by the signed-in account (SEC-A-5).
+    authService: { getUser: () => null,
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService) },
+  };
+});
 
 /* jsdom implements no layout; ProseMirror's scroll-into-view asks for client
    rects and crashes the worker when a node type lacks the method. */
@@ -57,6 +62,8 @@ import { publishShellProject } from '../shellProject';
 import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { surfaceLeaveRefusal } from '../navParams';
+import { clearEditorTarget } from '../editorTarget';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
@@ -188,6 +195,7 @@ async function renderDirty() {
 
 beforeEach(() => {
   apiRequest.mockReset();
+  clearEditorTarget();
   mockApi();
   try {
     localStorage.clear();
@@ -201,12 +209,22 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  clearEditorTarget();
   vi.unstubAllGlobals();
   vi.useRealTimers();
   delete window.C2C_PROJECT;
 });
 
 describe('the tab cannot be closed over unsaved work', () => {
+  it('refuses the task drawer exit without saving or unmounting the dirty canvas', async () => {
+    await renderDirty();
+    expect(surfaceLeaveRefusal()).toMatch(/unsaved edits.*3\.2\.S\.1/i);
+    expect(contentPatches()).toHaveLength(0);
+    expect(canvasText()).toBe('Half-written sentence that');
+    cleanup();
+    expect(surfaceLeaveRefusal()).toBeNull();
+  });
+
   it('holds embedded Back to Quality for the existing unsaved-work decision', async () => {
     const onBack = vi.fn();
     render(<DocumentWorkbench onNav={vi.fn()} docs={DOCS.documents} docsState="ready" status="all"
@@ -217,9 +235,42 @@ describe('the tab cannot be closed over unsaved work', () => {
     fireEvent.click(screen.getByTestId('workbench-back'));
     expect(onBack).not.toHaveBeenCalled();
     expect(await screen.findByRole('alertdialog', { name: /Unsaved/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Cancel$/ }));
+    expect(onBack).not.toHaveBeenCalled();
+    expect(canvasText()).toBe('An unfinished controlled procedure.');
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    await screen.findByRole('alertdialog', { name: /Unsaved/i });
     fireEvent.click(screen.getByRole('button', { name: /Leave without saving/i }));
     expect(onBack).toHaveBeenCalledOnce();
     expect(contentPatches()).toHaveLength(0);
+  });
+
+  it('keeps embedded Back in place until an ordinary header save finishes', async () => {
+    const onBack = vi.fn();
+    render(<DocumentWorkbench onNav={vi.fn()} docs={DOCS.documents} docsState="ready" status="all"
+      reloadDocs={async () => {}} programId={null} pinnedDocId="D1" embedded={{ onBack, backLabel: 'Back to Quality' }} />);
+    await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
+    act(() => { canvasEditor().chain().focus().insertContent('Pending revision. ').run(); });
+    fireEvent.change(screen.getByTestId('change-reason'), { target: { value: 'Reviewing the controlled procedure.' } });
+    const save = heldResponse();
+    const baseline = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) =>
+      method === 'PATCH' && url.endsWith('/S1') ? save.promise : baseline(method, url, body));
+    await waitFor(() => expect(headerSave().disabled).toBe(false));
+    fireEvent.click(headerSave());
+    await waitFor(() => expect(headerSave().textContent).toContain('Saving'));
+
+    fireEvent.click(screen.getByTestId('workbench-back'));
+
+    expect(await screen.findByText(/A save is in progress/)).toBeTruthy();
+    expect(onBack).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    const content = canvasEditor().getHTML();
+    await act(async () => { save.resolve(ok({ section: { ...SECTIONS.sections[0], content } })); await save.promise; });
+    await waitFor(() => expect(headerSave().textContent).toContain('Saved'));
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(contentPatches()).toHaveLength(1);
   });
 
   it.each([

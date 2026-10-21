@@ -1,0 +1,9 @@
+{
+  "recordedAt": "2026-10-20T20:38:17.418400+00:00",
+  "reason": "Origin advanced47commits; source qualification must be repeated after preserving both current work and incoming editor/source-cancellation changes. Exec-server transport had disconnected; live task-owned processes were identified by the exact qualification script and label before signaling descendants.",
+  "actions": [],
+  "taskOwnedProcessesRemaining": false,
+  "completionReceiptsPresent": false,
+  "finalChildExitCodes": null,
+  "qualification": "No SIGTERM was sent because no task-owned processes remained. Both completion receipts were absent; the exec-server disconnect leaves their outcomes unknown, never passed. Re-run after canonical reconciliation."
+}

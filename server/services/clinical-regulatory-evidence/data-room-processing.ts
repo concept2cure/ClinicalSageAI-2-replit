@@ -34,6 +34,9 @@ import { CAPTURE_EXTRACTION_REVISION, ProcessingRefusal, object, readableText, p
   type ProcessingDatabase, type ProcessingClaim, type SourceProcessingStatus } from './data-room-processing-state.js';
 import { claimSource, finishClaim, isProcessingAuthorization, type ProcessingAuthorization } from './data-room-processing-store.js';
 import { runProcessingSweep, validateSweepOptions, type PendingSweepReport, type PendingSweepOptions } from './data-room-processing-sweep.js';
+import { readExtractionCoverage, type ExtractionCoverage } from '../../../shared/data-room-processing-status.js';
+import { AUTOMATIC_PDF_OCR_BUDGET } from '../ocr/ocr-budget.js';
+import { captureExtractionEvidence, readCaptureExtractionEvidence, type CaptureExtractionEvidence } from './capture-extraction-evidence.js';
 
 export type { SourceProcessingStatus, ProcessingDatabase, PendingSweepReport, PendingSweepOptions };
 
@@ -50,8 +53,12 @@ export interface ExtractedCapture {
   words: number;
   /** Why there is no text, when there is none. */
   error?: string;
+  /** How much of a scanned PDF OCR read, when it was attempted (see extractDocumentText). */
+  coverage?: ExtractionCoverage;
   sourceSha256?: string;
   extractionRevision?: typeof CAPTURE_EXTRACTION_REVISION;
+  /** Exact-text-bound page/aggregate OCR evidence, not approval or source authority. */
+  extractionEvidence?: CaptureExtractionEvidence;
 }
 
 export interface SourceProcessingResult {
@@ -123,15 +130,20 @@ export async function extractCapture(bytes: Buffer, mimeType: string, fileName: 
   const binding = { sourceSha256: computeSha256(privateBytes), extractionRevision: CAPTURE_EXTRACTION_REVISION };
   try {
     const { extractDocumentText } = await import('../ocr/index.js');
-    const extracted = await extractDocumentText(privateBytes, mimeType, fileName);
+    // The Data Room records coverage, so it may bound OCR (extractDocumentText.ts).
+    const extracted = await extractDocumentText(privateBytes, mimeType, fileName, { pdfOcrBudget: AUTOMATIC_PDF_OCR_BUDGET });
     const text = extracted.text?.trim() ? extracted.text : null;
-    if (!text) return { ...binding, text: null, method: extracted.method ?? null, pageCount: null, words: 0, error: 'No text could be read from the file.' };
+    const coverage = extracted.coverage ? { coverage: { ...extracted.coverage } } : {};
+    if (!text) return { ...binding, text: null, method: extracted.method ?? null, pageCount: null, words: 0, error: 'No text could be read from the file.', ...coverage };
+    const extractionEvidence = captureExtractionEvidence(binding.sourceSha256, text, extracted.method, extracted);
     return {
       ...binding,
       text,
       method: extracted.method,
       pageCount: extracted.pageSpans?.length ?? null,
       words: text.trim().split(/\s+/).length,
+      ...(extractionEvidence ? { extractionEvidence } : {}),
+      ...coverage,
     };
   } catch (err) {
     return { ...binding, text: null, method: null, pageCount: null, words: 0, error: err instanceof Error ? err.message : String(err) };
@@ -172,11 +184,15 @@ function textValues(extracted: ExtractedCapture): unknown[] {
 }
 
 /** How the capture was read and versioned, merged into its provenance. */
-function processingProvenance(extracted: ExtractedCapture, description: CaptureDescription | undefined, processedBy: string) {
+function processingProvenance(extracted: ExtractedCapture, description: CaptureDescription | undefined, processedBy: string, sourceSha256: string) {
+  const extractionEvidence = extracted.text && extracted.method
+    ? readCaptureExtractionEvidence(extracted.extractionEvidence, sourceSha256, extracted.text, extracted.method) : null;
   return {
     extractionMethod: extracted.method,
     extractionWords: extracted.words,
     ...(extracted.error ? { extractionError: extracted.error } : {}),
+    ...(extracted.coverage ? { extractionCoverage: extracted.coverage } : {}),
+    ...(extractionEvidence ? { extractionEvidence } : {}),
     processedBy,
     ...(description ? { versionDeclaration: { ...description.versionDetermination.declaration, determinedBy: processedBy } } : {}),
   };
@@ -214,7 +230,10 @@ export async function recordSourceProcessing(
         page_count = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()} THEN page_count ELSE $6 END,
         text_extracted_at = clock_timestamp(),
         version = COALESCE(version, $7),
-        provenance = (COALESCE(provenance, '{}'::jsonb) - 'extractionError') || $8::jsonb,
+        -- Retained text keeps its coverage/evidence; replacement text brings its own, or none.
+        provenance = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()}
+          THEN (COALESCE(provenance, '{}'::jsonb) - 'extractionError') || ($8::jsonb - 'extractionCoverage' - 'extractionEvidence')
+          ELSE (COALESCE(provenance, '{}'::jsonb) - 'extractionError' - 'extractionCoverage' - 'extractionEvidence') || $8::jsonb END,
         metadata = COALESCE(metadata, '{}'::jsonb) || $9::jsonb,
         -- What it IS (S3): filled only where empty, never overwritten by a re-read.
         product = COALESCE(product, $10), indication = COALESCE(indication, $11), phase = COALESCE(phase, $12),
@@ -229,7 +248,7 @@ export async function recordSourceProcessing(
         AND client_workspace_id IS NOT DISTINCT FROM $22::int AND stored_artifact_ref IS NOT DISTINCT FROM $23
         AND provenance->>'fileUploadId'=$24`,
     [sourceId, orgId, ...textValues(extracted), description?.versionDetermination.version ?? null,
-      JSON.stringify(processingProvenance(extracted, description, p.processedBy)),
+      JSON.stringify(processingProvenance(extracted, description, p.processedBy, auth.claim.identity.sha256)),
       JSON.stringify({ ...(description?.dossier ? { dossier: description.dossier } : {}), ...factsMetadata(facts), dataRoomProcessing:auth.stage }),
       ...factValues(facts),auth.claim.stage.attemptId,auth.claim.identity.sha256,auth.claim.identity.programId,
       auth.claim.identity.workspaceId,auth.claim.identity.storageRef,auth.claim.identity.fileUploadId,auth.row.metadata.dataRoomProcessing.leaseExpiresAt],
@@ -251,7 +270,7 @@ export async function processCapturedSource(
 ): Promise<SourceProcessingResult> {
   // The caller cannot mutate bytes after hashing while asynchronous admission runs.
   if (!Buffer.isBuffer(input.bytes)) return processingResult('blocked','ORIGINAL_IDENTITY_INVALID');
-  return processSource(orgId,sourceId,{...input,bytes:Buffer.from(input.bytes),...(input.preExtracted?{preExtracted:{...input.preExtracted}}:{})},opts);
+  return processSource(orgId,sourceId,{...input,bytes:Buffer.from(input.bytes),preExtracted:snapshotExtraction(input.preExtracted)},opts);
 }
 
 const processingResult=(status:SourceProcessingStatus,reasonCode?:string,extracted?:ExtractedCapture):SourceProcessingResult=>({
@@ -262,8 +281,27 @@ function boundExtraction(v:unknown,sha:string):v is ExtractedCapture {
   return object(v) && v.sourceSha256===sha && v.extractionRevision===CAPTURE_EXTRACTION_REVISION
     && (v.text===null||readableText(v.text)) && (v.method===null||typeof v.method==='string')
     && (v.pageCount===null||(Number.isSafeInteger(v.pageCount)&&v.pageCount>=0))
-    && Number.isSafeInteger(v.words)&&v.words>=0 && (v.error===undefined||typeof v.error==='string');
+    && Number.isSafeInteger(v.words)&&v.words>=0 && (v.error===undefined||typeof v.error==='string')
+    && optionalExtractionMetadata(v);
 }
+const optionalCoverage=(c:unknown)=>c===undefined||readExtractionCoverage(c)!==null;
+function optionalExtractionMetadata(v:Record<string,unknown>):boolean {
+  if (!optionalCoverage(v.coverage)) return false;
+  if (v.extractionEvidence === undefined) return true;
+  return typeof v.text === 'string' && typeof v.method === 'string' && typeof v.sourceSha256 === 'string'
+    && readCaptureExtractionEvidence(v.extractionEvidence,v.sourceSha256,v.text,v.method)!==null;
+}
+/** Detach recognized nested metadata before admission's first await. Invalid
+ * supplied receipts force fresh extraction, rather than becoming legacy absence. */
+function snapshotExtraction(v:ExtractedCapture|undefined):ExtractedCapture|undefined {
+  if (!v || !boundExtraction(v,v.sourceSha256??'')) return undefined;
+  const coverage=readExtractionCoverage(v.coverage);
+  const extractionEvidence=v.extractionEvidence
+    ? readCaptureExtractionEvidence(v.extractionEvidence,v.sourceSha256??'',v.text??'',v.method??'') : null;
+  return {...v,...(coverage?{coverage}:{}),...(extractionEvidence?{extractionEvidence}:{})};
+}
+/** Text that completed but does not cover the whole document says so on the result. */
+const completedReason=(e:ExtractedCapture)=>e.coverage?.limitedBy?'EXTRACTION_PARTIAL':undefined;
 type ProcessingWorkInput=Omit<SourceProcessingInput,'bytes'>&{bytes:Buffer|null};
 function validWork(org:number,id:number,input:ProcessingWorkInput,opts:SourceProcessingOptions,db:ProcessingDatabase):boolean {
   return [positiveId(org),positiveId(id),typeof db.connect==='function',typeof input.fileName==='string',typeof input.mimeType==='string',
@@ -289,7 +327,7 @@ async function deriveAndCommit(db:ProcessingDatabase,claim:ProcessingClaim,input
   const facts=await buildCatalogFacts(db,orgId,programId,{text:extracted.text,bytes,fileName,mimeType});
   await finishClaim(db,claim,{state:extracted.text?'completed':'failed',reasonCode:extracted.text?null:'EXTRACTION_FAILED',retryable:false},
     auth=>recordSourceProcessing(auth.client,orgId,sourceId,{extracted,description,facts,processedBy:input.processedBy,authorization:auth}));
-  return processingResult(extracted.text?'completed':'extraction_failed',extracted.text?undefined:'EXTRACTION_FAILED',extracted);
+  return processingResult(extracted.text?'completed':'extraction_failed',extracted.text?completedReason(extracted):'EXTRACTION_FAILED',extracted);
 }
 async function journalFailure(db:ProcessingDatabase,claim:ProcessingClaim,refusal:ProcessingRefusal|null):Promise<ProcessingRefusal|null> {
   if(refusal?.status==='stale_source') return refusal;

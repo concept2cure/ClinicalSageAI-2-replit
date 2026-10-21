@@ -61,19 +61,48 @@ author documented it; none has been re-argued from scratch here, and each is
 listed with its owner so it can be. The value delivered today is that no NEW
 escape can be added silently.
 
-| File | Entries | What the null case means, per the code | Disposition |
-|---|---|---|---|
-| `server/services/kernel-observability.ts` | 4 | Aggregate `COUNT`/`AVG` over `ai_kernel_decision_records`; a null org is the platform-wide observability roll-up. | Frozen. Aggregates, not row reads — but the roll-up should say whether it is platform-wide or one tenant's. Kernel stream. |
-| `server/services/deep-research-orchestrator.ts` | 1 | `getJobStatus`; its comment states org is "optional only for internal callers that just created the job" and that "Route handlers MUST pass the authenticated org". | Frozen. The MUST is a convention, not enforcement — a required parameter would make it one. Research stream. |
-| `server/services/kernel-adaptive-policy.ts` | 1 | Policy read with the same optional-org shape. | Frozen. Kernel stream. |
-| `server/routes/module-access-requests.ts` | 1 | The administrator's access-request queue. The null `$1` appears **only** when `scope=all`, and `denyQueueRead(actor, scope)` refuses that scope for anybody but the platform owner — a console whose heading says every workspace while it shows one is worse than one that refuses. | Frozen — genuinely authorized, and the narrowest form of it: the escape is reachable only behind an explicit scope refusal. It became visible to the gate only once `expandLocalInterpolations` landed, because the literal begins with `${SELECT_REQUEST}` and so matched no SQL keyword before. |
-| `server/services/advancedRAGPipeline.ts` | 1 | Pre-existing entry, unrelated to this rule (a raw `rag_chunks` join with no tenant column mentioned at all). | Frozen, pre-dates this change. |
+No files remain in the raw-SQL baseline. The historical five-file table below
+was retired on 2026-10-17 after current source and the zero-entry baseline were checked.
 
 Every previously-justified entry from before this date is dispositioned inline
 (grep `tenant-isolation-safe:`) or via the file allowlist; see the 2026-08-07
 Resolved subsection for the per-file mapping.
 
 ## Resolved (no longer in baseline)
+
+### 2026-10-17 — retire five stale file justifications from the empty baseline
+
+The optional-tenant-predicate entries below no longer appear in the current
+baseline. Their historical reasons remain here for traceability; they grant
+no active exemption. Current suppression decisions are at the actual query
+site and remain subject to the raw-SQL gate.
+
+| File | Entries | What the null case means, per the code | Disposition |
+|---|---|---|---|
+**None. The baseline reached zero on 2026-10-14 (`docs/reports/tenant-isolation-baseline.json`, `fingerprints: []`), and the five rows that stood here are retired below.**
+
+
+### 2026-10-18 — the last five frozen entries retired; the baseline is zero
+
+`ci:tenant-isolation-justifications` was red on trunk: all five rows above named
+files that are no longer in `tenant-isolation-baseline.json`, which has been
+`fingerprints: []` since 2026-10-14. The gate exists to stop exactly this — a
+justification outliving the escape it justified, so the table reads as live debt
+when the debt is paid. Retired here with how each one closed, checked at
+`15578388` rather than taken from the rows:
+
+| File | Was | How it closed |
+|---|---|---|
+| `server/services/kernel-observability.ts` (4) | `WHERE ($1::int IS NULL OR organization_id = $1)` — a null lifted the predicate over every tenant's rows | **Fixed.** The organisation is required and validated as a positive integer (`:58-59`); both aggregates read `WHERE organization_id = $1` unconditionally (`:71`, `:80`). The old shape is recorded in the docblock at `:40`. |
+| `server/services/deep-research-orchestrator.ts` (1) | `getJobStatus` took the org as optional "only for internal callers"; the SQL read `($2::int IS NULL OR organization_id = $2)` | **Fixed.** `getJobStatus(jobId, organizationId: number)` (`:414`) — required, predicate unconditional, and the function's own comment records that `GET /jobs/:id/stream` used to pass a null whenever it could not resolve an organisation (D3, 2026-10-11). |
+| `server/services/kernel-adaptive-policy.ts` (1) | the same optional-org shape, `AND ($3::int IS NULL OR organization_id = $3)` | **Fixed.** `AND organization_id = $3` (`:108`), with the old form and its two callers named at `:78-79`. |
+| `server/routes/module-access-requests.ts` (1) | the administrator queue's null `$1`, reachable only behind `denyQueueRead` | **Dispositioned inline.** One `tenant-isolation-safe:` marker at the call site, which the gate's header prefers over a file allowlist entry. |
+| `server/services/advancedRAGPipeline.ts` (1) | a raw `rag_chunks` join naming no tenant column | **Dispositioned inline.** Four `tenant-isolation-safe:` markers; the pipeline's tenant key itself was closed separately (`docs/evidence/D3/2026-09-24-rag-pipeline-tenant/`). |
+
+Three were fixed rather than blessed, which is why the table is now empty rather
+than shorter. Evidence, with both gates shown failing first:
+`docs/evidence/D3/2026-10-18-gate-suite-green/`.
+
 
 ### 2026-09-28 — `admin/licensing-history.ts` (1): dispositioned inline, and the baseline ratcheted 9 → 8
 

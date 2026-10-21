@@ -14,7 +14,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 /* The real class. The mock below spreads `importOriginal`, so this is the
    same ApiRequestError the transport actually throws — which is the point:
    the fixture has to fail the way production fails. */
@@ -28,9 +28,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // The collab presence layer (AuthoringCollab) reads the auth identity; give it
 // a real-shaped user so the surface renders (it still joins no room here —
 // these tests set no C2C_PROJECT, so the collab layer honestly renders null).
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: () => ({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+  };
+});
 
 
 /* jsdom implements no layout: ProseMirror's scroll-into-view (scheduled by
@@ -154,7 +163,8 @@ describe('DocumentAuthoring — real editable canvas', () => {
       target: { value: 'Corrected the substance description.' },
     });
     // The header Save button enables once the dirty state propagates.
-    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const saveBtn = within(screen.getByRole('group', { name: 'Save and sign' }))
+      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 
@@ -206,7 +216,8 @@ describe('DocumentAuthoring — real editable canvas', () => {
     fireEvent.change(screen.getByTestId('change-reason'), {
       target: { value: 'Reworded the opening paragraph.' },
     });
-    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const saveBtn = within(screen.getByRole('group', { name: 'Save and sign' }))
+      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 

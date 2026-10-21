@@ -25,7 +25,7 @@
  * failed filing in the server's words, no submission id → nothing filed) is
  * now proved on the annual report, which files the same way; what it proved
  * about the safety intake (P-20, P-21, QA j7) is proved on the withheld card
- * itself (surfaces/indSafetyReportCard.ts), so it returns as it was; and the
+ * itself (tests/fixtures/withheld/indSafetyReportCard.ts), so it returns as it was; and the
  * screen is shown offering no safety report and calling no safety route.
  */
 import React from 'react';
@@ -42,7 +42,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { IndLifecycle, NOT_STATED } from '../surfaces/IndLifecycle';
-import { safetyEventPayload, safetyReportDeliverable, safetyReportView } from '../surfaces/indSafetyReportCard';
+import { safetyEventPayload, safetyReportDeliverable, safetyReportView } from '../../../../../tests/fixtures/withheld/indSafetyReportCard';
 
 const props = () => ({ onAsk: vi.fn(), onNav: vi.fn() }) as any;
 
@@ -278,6 +278,7 @@ describe('IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence
     const src = fs.readFileSync(path.join(REPO, 'client/src/concept2cure/v2/surfaces/IndLifecycle.tsx'), 'utf8');
     const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     expect(code).not.toMatch(/from\s+['"]\.\/indSafetyReportCard['"]/);
+    expect(code).not.toMatch(/import[^;]*tests\/fixtures\/withheld/);
     expect(code).not.toMatch(/['"`]\/api\/ind-lifecycle\/(safety-reports?|icsr-transmissions)/);
   });
 
@@ -491,7 +492,7 @@ const SAFETY_OK = {
 const fvOf = (vals: Record<string, string>) => (k: string) => (vals[k] ?? '').trim();
 const fmt = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : '--');
 
-describe('the withheld safety-report card (surfaces/indSafetyReportCard.ts): its intake', () => {
+describe('the withheld safety-report card (tests/fixtures/withheld/indSafetyReportCard.ts): its intake', () => {
   it('only what was entered goes up — nothing invented', () => {
     const body = safetyEventPayload(
       fvOf({
@@ -551,7 +552,7 @@ describe('the withheld safety-report card (surfaces/indSafetyReportCard.ts): its
 
 });
 
-describe('the withheld safety-report card (surfaces/indSafetyReportCard.ts): its view of the server verdict', () => {
+describe('the withheld safety-report card (tests/fixtures/withheld/indSafetyReportCard.ts): its view of the server verdict', () => {
   it('renders the server classification, and a reportable event can be filed', () => {
     const view = safetyReportView(SAFETY_OK, fmt)!;
     expect(view.text).toContain('Expedited verdict: 15-calendar-day IND safety report');

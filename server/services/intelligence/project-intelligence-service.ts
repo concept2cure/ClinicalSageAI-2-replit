@@ -147,7 +147,10 @@ export async function getProjectIntelligence(
   const [memCount] = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(projectMemoryEntries)
-    .where(eq(projectMemoryEntries.projectProfileId, profile.id));
+    .where(and(
+      eq(projectMemoryEntries.projectProfileId, profile.id),
+      sql`${projectMemoryEntries.sourceDocumentType} IS DISTINCT FROM 'report_os_state'`,
+    ));
 
   const risks = Array.isArray(profile.riskFactors) ? profile.riskFactors as unknown as RiskFactor[] : [];
   const questions = Array.isArray(profile.openQuestions) ? profile.openQuestions as unknown as OpenQuestion[] : [];
@@ -278,6 +281,7 @@ export async function getProjectMemory(
       eq(projectMemoryEntries.projectId, projectId),
       eq(projectMemoryEntries.organizationId, organizationId),
       eq(projectMemoryEntries.status, 'active'),
+      sql`${projectMemoryEntries.sourceDocumentType} IS DISTINCT FROM 'report_os_state'`,
       ...(options?.category ? [eq(projectMemoryEntries.category, options.category)] : []),
     ))
     .orderBy(desc(projectMemoryEntries.createdAt))

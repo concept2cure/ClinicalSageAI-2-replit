@@ -72,6 +72,8 @@
  * case, no emoji.
  */
 
+import { ensureOrganizationWorkspace } from '../organization-workspace.mjs';
+
 /* Deterministic program UUIDs — the ones the removed scripts/seed-mdx-beta.mjs
    used, so this part, 10-risk.mjs and a database that seed wrote converge on
    one row set. */
@@ -210,26 +212,7 @@ async function resolveProjectId(client, org) {
   return runPart(client, 'demo project bootstrap', async () => {
     let workspaceId = null;
     if (await tableExists(client, 'client_workspaces')) {
-      const wf = await client.query(
-        `SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1`,
-        [org.id],
-      );
-      if (wf.rows[0]) {
-        workspaceId = wf.rows[0].id;
-      } else {
-        const ins = await client.query(
-          `INSERT INTO client_workspaces (organization_id, name, slug, status, created_at, updated_at)
-           VALUES ($1, 'Concept2Cure demo workspace', 'concept2cure-demo', 'active', NOW(), NOW())
-           ON CONFLICT (organization_id, slug) DO NOTHING
-           RETURNING id`,
-          [org.id],
-        );
-        workspaceId = ins.rows[0]?.id
-          ?? (await client.query(
-                `SELECT id FROM client_workspaces WHERE organization_id = $1 AND slug = 'concept2cure-demo' LIMIT 1`,
-                [org.id],
-              )).rows[0]?.id ?? null;
-      }
+      workspaceId = await ensureOrganizationWorkspace(client, org.id);
     }
 
     const cols = await columnSet(client, 'projects');

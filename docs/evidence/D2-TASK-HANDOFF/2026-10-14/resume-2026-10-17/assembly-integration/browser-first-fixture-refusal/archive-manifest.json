@@ -1,0 +1,26 @@
+{
+  "browser.mjs": {
+    "bytes": 10506,
+    "sha256": "e7a92a2a05a2dad259c0022c0913f03a4ffa701e5d99fc1632b3ad7fd37263ae"
+  },
+  "failure.png": {
+    "bytes": 138201,
+    "sha256": "b4b8ceb89141a8cdd2842199149cc7ca5941e4913534036dfc1a1a20913c4f6f"
+  },
+  "report.json": {
+    "bytes": 14350,
+    "sha256": "22b82ab63d8951def3f48446f8ff2f568443de0fa18d112a2217aa37c816ebb8"
+  },
+  "server.mjs": {
+    "bytes": 1663,
+    "sha256": "26ec58b926ad2f0287682fbcdf00c516e31bd4c4e13525dd433270dc3212e979"
+  },
+  "task-handoff-assembly-browser-server.log": {
+    "bytes": 150,
+    "sha256": "810a84d555783a0058ae750fd9eea153c1bcb790148f418098ea99fd361743f9"
+  },
+  "task-handoff-assembly-browser.log": {
+    "bytes": 1175,
+    "sha256": "b04901f7ef4c5d556dca33304bcc3f0b5dc60c58e412171990b6caf0df28e583"
+  }
+}

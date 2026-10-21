@@ -88,6 +88,7 @@ CREATE TABLE project_memory_entries (
   subcategory text,
   title text NOT NULL,
   content text NOT NULL,
+  source_document_type text,
   confidence_score real DEFAULT 0.8,
   importance_level text DEFAULT 'medium',
   is_verified_by_user boolean DEFAULT false,
@@ -229,6 +230,29 @@ describe('the live AnA chat path can finally reach durable memory', () => {
 });
 
 describe('promotion is embedded and gated, not "write everything"', () => {
+  it('does not use reserved ReportOS state as a duplicate-memory comparison', async () => {
+    const cwmId = await seedWorkingMemory({ threadId: 't_reserved_state', projectId: PROFILE_PROJECT });
+    const content = [
+      'Objective: Assemble the stability narrative for the Module 3 filing',
+      'Key facts: Batch 7 long-term data runs through month 18',
+      'Decisions: Use the 25C/60RH arm as the primary claim basis',
+    ].join('\n');
+    await pg.query(
+      `INSERT INTO project_memory_entries
+       (project_profile_id, project_id, organization_id, category, title, content, status, source_document_type)
+       VALUES (1,$1,$2,'regulatory','Internal ReportOS state',$3,'active','report_os_state')`,
+      [PROFILE_PROJECT, ORG, content]);
+
+    const result = await runConsolidation();
+
+    expect(result.memoriesConsolidated).toBe(1);
+    expect(result.rejectedByGate).toBe(0);
+    expect((await promotedEntries())[0].title).toContain(`[cwm_${cwmId}]`);
+    const retained = await pg.query<{ content: string }>(
+      `SELECT content FROM project_memory_entries WHERE source_document_type = 'report_os_state'`);
+    expect(retained.rows).toEqual([{ content }]);
+  });
+
   it('writes the embedding, so semantic recall (embedding IS NOT NULL) can see the memory', async () => {
     await seedWorkingMemory({ threadId: 't_embed', projectId: PROFILE_PROJECT });
 

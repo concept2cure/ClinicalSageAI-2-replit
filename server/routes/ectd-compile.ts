@@ -58,6 +58,7 @@ import {
 } from '../services/ectd/required-sections';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
 
 const router = Router();
 const log = createScopedLogger('ectd-compile');
@@ -197,6 +198,27 @@ interface CompileAnchor {
   label: string;
 }
 
+/** A numeric PM anchor may belong to a program; only a recorded null is legacy. */
+async function numericCompileAnchor(numeric: number, orgId: number): Promise<CompileAnchor | null> {
+  const { rows } = await pool.query(
+    `SELECT p.regulatory_program_id, r.id AS linked_program_id, r.program_type, r.primary_agency
+       FROM projects p
+       LEFT JOIN regulatory_programs r ON r.id = p.regulatory_program_id
+         AND r.organization_id = p.organization_id AND r.deleted_at IS NULL
+      WHERE p.id = $1 AND p.organization_id = $2 AND p.status IS DISTINCT FROM 'deleted'
+      LIMIT 1`,
+    [numeric, orgId],
+  );
+  const row = rows[0];
+  if (!row || (row.regulatory_program_id !== null && (!row.linked_program_id || !row.program_type))) return null;
+  return {
+    numericProjectId: numeric, programId: null, programCode: null, applicationNumber: null,
+    title: null, productName: null,
+    programType: row.program_type ?? null, primaryAgency: row.primary_agency ?? null,
+    label: `Project ${numeric}`,
+  };
+}
+
 /**
  * Resolve the route's `:projectIdent`, org-scoped, mirroring the eSTAR ident
  * contract: numeric → the legacy project id (pass-through — every section query
@@ -207,18 +229,8 @@ interface CompileAnchor {
 async function resolveCompileAnchor(ident: string, orgId: number): Promise<CompileAnchor | null> {
   if (/^\d+$/.test(ident)) {
     const numeric = parseInt(ident, 10);
-    if (!Number.isInteger(numeric) || numeric <= 0) return null;
-    return {
-      numericProjectId: numeric,
-      programId: null,
-      programCode: null,
-      applicationNumber: null,
-      title: null,
-      productName: null,
-      programType: null,
-      primaryAgency: null,
-      label: `Project ${numeric}`,
-    };
+    if (!Number.isSafeInteger(numeric) || numeric <= 0) return null;
+    return numericCompileAnchor(numeric, orgId);
   }
   const byUuid = UUID_RE.test(ident);
   try {
@@ -289,12 +301,29 @@ async function anchorFromRequest(
     res.status(401).json({ error: 'Organization context required' });
     return null;
   }
-  const anchor = await resolveCompileAnchor(ident, orgId);
+  let anchor: CompileAnchor | null;
+  try {
+    anchor = await resolveCompileAnchor(ident, orgId);
+  } catch (err) {
+    log.error('Project compilation applicability could not be read', { orgId, ident, err });
+    res.status(503).json({ error: { code: 'PROJECT_APPLICABILITY_UNAVAILABLE', message: 'This project’s filing context could not be checked. Try again shortly.' } });
+    return null;
+  }
   if (!anchor) {
     res.status(404).json({ error: 'Project not found in your organization' });
     return null;
   }
   return { orgId, anchor, ident };
+}
+
+/** Regional working documents cannot enter medicinal compilation or validation. */
+function refuseRegionalDeviceEctd(res: Response, anchor: CompileAnchor): boolean {
+  if (!regionalDeviceApplicationClassOf(anchor.programType)) return false;
+  res.status(422).json({ error: {
+    code: 'ECTD_NOT_APPLICABLE',
+    message: 'Device preparation projects are not eCTD applications. No submission package is built or transmitted for this preparation pathway.',
+  } });
+  return true;
 }
 
 /**
@@ -530,6 +559,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
@@ -1279,6 +1309,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   try {
     // Get project sections (tenant-scoped — readiness is tenant data). A failed
@@ -1452,6 +1483,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   // An agency-validator report run outside the product, imported against the
   // compilation whose package it covered (WO-9 Click 6). Same route: it is a

@@ -2,7 +2,7 @@
  * to a project or document the caller cannot use through its canonical workspace. */
 import { getPool } from '../../db';
 import type { RequestSqlClient } from '../../db/requestDb';
-import { applyProjectSharingState, canUseProject, getProjectSharingState, hasOrganizationProjectManagementRole } from '../project-sharing-access';
+import { applyProjectSharingState, canUseProject, canEditProject, getProjectSharingState, hasOrganizationProjectManagementRole } from '../project-sharing-access';
 
 export interface ReportProjectActor { userId: number; role: string | null | undefined }
 
@@ -11,7 +11,7 @@ function positiveId(value: unknown): number {
   return value;
 }
 
-function allowedByProjectPolicy(row: Record<string, unknown>, actor: ReportProjectActor): boolean {
+function allowedByProjectPolicy(row: Record<string, unknown>, actor: ReportProjectActor, forWrite = false): boolean {
   const settings = row.settings && typeof row.settings === 'object' ? row.settings as Record<string, unknown> : {};
   const ownerId = typeof row.owner_id === 'number' ? row.owner_id : null;
   const createdById = typeof row.created_by_id === 'number' ? row.created_by_id : null;
@@ -21,11 +21,12 @@ function allowedByProjectPolicy(row: Record<string, unknown>, actor: ReportProje
     settings: { projectSharing: { visibility: row.visibility ?? fallback.visibility, members: row.members } },
     ownerId, createdById,
   });
-  return canUseProject({ actor: { userId: actor.userId, orgRole: actor.role },
-    project: { ownerId, createdById, settings: applyProjectSharingState(settings, sharing) } }) || row.review_assigned === true;
+  const input = { actor: { userId: actor.userId, orgRole: actor.role },
+    project: { ownerId, createdById, settings: applyProjectSharingState(settings, sharing) } };
+  return forWrite ? canEditProject(input) : canUseProject(input) || row.review_assigned === true;
 }
 
-async function accessibleProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient, projectId?: number): Promise<number[]> {
+async function accessibleProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient, projectId?: number, forWrite = false): Promise<number[]> {
   positiveId(organizationId);
   positiveId(actor.userId);
   if (projectId !== undefined) positiveId(projectId);
@@ -39,7 +40,7 @@ async function accessibleProjectIds(organizationId: number, actor: ReportProject
     FROM projects p LEFT JOIN project_visibility_settings v ON v.project_id = p.id AND v.organization_id = p.organization_id
     WHERE p.organization_id = $1 AND ($3::int IS NULL OR p.id = $3)
     ORDER BY p.id`, [organizationId, actor.userId, projectId ?? null]);
-  return rows.filter(row => allowedByProjectPolicy(row, actor)).map(row => positiveId(row.id));
+  return rows.filter(row => allowedByProjectPolicy(row, actor, forWrite)).map(row => positiveId(row.id));
 }
 
 /** Read failures throw; [] means an actual evaluated denial/empty set. */
@@ -47,20 +48,32 @@ export function getAccessibleReportProjectIds(organizationId: number, actor: Rep
   return accessibleProjectIds(organizationId, actor, client);
 }
 
-export async function canAccessReportProject(organizationId: number, actor: ReportProjectActor, projectId: number, client: RequestSqlClient = getPool()): Promise<boolean> {
-  return (await accessibleProjectIds(organizationId, actor, client, projectId)).includes(projectId);
+export async function canAccessReportProject(organizationId: number, actor: ReportProjectActor, projectId: number, client: RequestSqlClient = getPool(), options: { forWrite?: boolean } = {}): Promise<boolean> {
+  if (options.forWrite === true) {
+    positiveId(organizationId); positiveId(actor.userId); positiveId(projectId);
+    // A writer retains the edit membership it actually evaluated until commit.
+    // Owner/creator state is retained by the caller's parent-project lock; a
+    // read-only review assignment never participates in this edit decision.
+    await client.query(`SELECT user_id FROM project_members
+      WHERE organization_id=$1 AND project_id=$2 AND user_id=$3 FOR SHARE`, [organizationId, projectId, actor.userId]);
+  }
+  return (await accessibleProjectIds(organizationId, actor, client, projectId, options.forWrite === true)).includes(projectId);
 }
 
 export interface ReportAccessScope {
   scopeType: string; scopeId: string; organizationId?: number;
-  /** Saved program output is bound to the projects actually computed then. */
+  /** Saved output is bound to the source projects actually computed then. */
   recorded?: boolean; dependencySummary?: unknown; accessProjectIds?: readonly number[];
 }
 
-export function recordedReportProjectIds(scope: ReportAccessScope): readonly number[] | null {
+function recordedProjectEvidence(scope: ReportAccessScope): { present: boolean; value: unknown } {
   const dependencies = scope.dependencySummary && typeof scope.dependencySummary === 'object' ? scope.dependencySummary as Record<string, unknown> : {};
   const summary = dependencies.summary && typeof dependencies.summary === 'object' ? dependencies.summary as Record<string, unknown> : {};
-  const ids = scope.accessProjectIds ?? summary.accessProjectIds;
+  if (Object.prototype.hasOwnProperty.call(scope, 'accessProjectIds')) return { present: true, value: scope.accessProjectIds };
+  return { present: Object.prototype.hasOwnProperty.call(summary, 'accessProjectIds'), value: summary.accessProjectIds };
+}
+export function recordedReportProjectIds(scope: ReportAccessScope): readonly number[] | null {
+  const ids = recordedProjectEvidence(scope).value;
   return Array.isArray(ids) && ids.every(id => typeof id === 'number' && Number.isSafeInteger(id) && id > 0) ? ids : null;
 }
 
@@ -80,8 +93,18 @@ async function canAccessProgramScope(organizationId: number, actor: ReportProjec
  * audit. Scope existence and project permission are different checks. */
 export async function canAccessReportScope(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, client: RequestSqlClient = getPool(), accessibleIds?: readonly number[]): Promise<boolean> {
   if (scope.organizationId !== undefined && scope.organizationId !== organizationId) return false;
-  if (scope.scopeType === 'account') return scope.scopeId === String(organizationId);
+  const sourceIds = recordedReportProjectIds(scope);
+  if (recordedProjectEvidence(scope).present && sourceIds === null) return false;
+  if (scope.scopeType === 'account' && !sourceIds?.length) return scope.scopeId === String(organizationId);
   const allowed = new Set(accessibleIds ?? await getAccessibleReportProjectIds(organizationId, actor, client));
+  if (sourceIds && !sourceIds.every(id => allowed.has(id))) return false;
+  return canAccessAdmittedReportScope(organizationId, actor, scope, allowed, client);
+}
+
+/** Scope-specific parents are checked only after saved source admission. The
+ * same caller-owned executor and evaluated project set reach every branch. */
+async function canAccessAdmittedReportScope(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, allowed: Set<number>, client: RequestSqlClient): Promise<boolean> {
+  if (scope.scopeType === 'account') return scope.scopeId === String(organizationId);
   if (scope.scopeType === 'project') return allowed.has(Number(scope.scopeId));
   if (scope.scopeType === 'document' || scope.scopeType === 'submission') {
     const document = scope.scopeType === 'document';

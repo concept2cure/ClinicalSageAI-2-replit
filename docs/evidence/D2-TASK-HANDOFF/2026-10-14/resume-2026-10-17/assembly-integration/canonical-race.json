@@ -1,0 +1,8 @@
+{
+  "qualifiedSource": "bea722bd9764529969302ffd19f1f7584ef644ec",
+  "allPrePushGatesPassed": true,
+  "compilerErrors": 0,
+  "publicationSucceeded": false,
+  "reason": "Remote advanced to e62320e0a9555188a08ce426d7c16c72d372d824 with source-first assembly before Git ref update. Normalmergepreservesboth;notforce.",
+  "evidence": "final-gates/task-handoff-canonical-push-qualified-final.log.gz"
+}

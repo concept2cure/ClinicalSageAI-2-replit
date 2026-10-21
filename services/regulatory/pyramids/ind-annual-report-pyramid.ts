@@ -203,7 +203,7 @@ export function buildIndAnnualReportPyramid(): SubmissionPyramid {
       timeline: { typicalStartWeek: 3, typicalDurationWeeks: 2 },
       deliverables: ['Individual study information summaries'],
       documentBindings: [
-        { ctdSection: '5.3.5', sectionTitle: 'Individual Study Information — Annual Report', ectdLifecycleOp: 'append', artifactTypes: ['annual_report_study_summary'] },
+        { ctdSection: '5.3.5', sectionTitle: 'Individual Study Information (21 CFR 312.33(a))', ectdLifecycleOp: 'append', artifactTypes: ['annual_report_study_summary'] },
       ],
     },
     {
@@ -236,7 +236,7 @@ export function buildIndAnnualReportPyramid(): SubmissionPyramid {
       timeline: { typicalStartWeek: 3, typicalDurationWeeks: 2 },
       deliverables: ['AE summary by body system', 'Serious adverse experience narrative summaries'],
       documentBindings: [
-        { ctdSection: '2.7.4', sectionTitle: 'Summary of Clinical Safety — Annual Report', ectdLifecycleOp: 'append', artifactTypes: ['safety_summary'] },
+        { ctdSection: '2.7.4', sectionTitle: 'Summary of Clinical Safety (annual update)', ectdLifecycleOp: 'append', artifactTypes: ['safety_summary'] },
       ],
     },
     {
@@ -380,6 +380,10 @@ export function buildIndAnnualReportPyramid(): SubmissionPyramid {
       timeline: { typicalStartWeek: 4, typicalDurationWeeks: 2 },
       deliverables: ['General investigational plan update narrative'],
       documentBindings: [
+        /* These bindings carry the report's Module 2 and Module 5 CONTENT. The titles no longer
+           end in "— Annual Report": the annual report itself is one document and it files at
+           1.13 (21 CFR 312.33), so a Module 2 or Module 5 node whose title named it read as the
+           report misfiled outside Module 1 — which the contract said, correctly. */
         ...m1Binding('general_investigational_plan', { ectdLifecycleOp: 'append' }, 'General Investigational Plan — Annual Update'),
       ],
     },

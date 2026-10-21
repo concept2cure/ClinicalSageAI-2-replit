@@ -1,0 +1,7 @@
+# Canonical auth fixture reconciliation
+
+The completed initial40-file execution on `ec57b5519f8765096f79d437ffcdaeff40a016b4` records348 passed and21 failed of369 cases. All2,043 tracked client/shared/config pins and HEAD stayed unchanged. It preserves the30 auth-mock conflict resolutions, nine additional real-auth import repairs, and the incoming termination fixture aligned with the existing exact-owner contract. Original expectation statements were retained.
+
+The seven-file correction ran separately on `c24db62ac5dce1b5007d1cbc67981dd5a462b757`: **45/45 passed**, zero failures/pending, all2,043 before/after pins and HEAD unchanged. Five files select the exact existing Save or Check control; the termination fixture supplies captured operation headers required by the existing type. The conversation refusal file is unchanged and passed, with no timeout increase or assertion removal. No production file changed between those commits.
+
+The remaining33 whole green files contain324 cases; their exact test hashes match the corrected commit. Combined coverage of369 cases across40 files is derived from those separately recorded executions. It is not a new single green40-file run. [Structured summary](fixture-summary.json) records the exact counts, sources, retained-file pins and raw evidence. The initial failures and reconciliation patches remain alongside the corrected receipts. No human/native/live-provider acceptance is claimed.

@@ -84,8 +84,13 @@ describe('a Pass-8 detector whose read fails does not report "no findings"', () 
   });
 
   it('returns findings normally when the read succeeds', async () => {
-    // The fix removes the swallow, not the detector.
+    // The fix removes the swallow, not the detector. Since 2026-10-19 a detector returns its
+    // coverage beside its findings, so a bounded or empty comparison cannot read as a clean
+    // one (contradiction-detector-coverage.test.ts).
     findMany.mockResolvedValue([]);
-    await expect(service.detectApprovedVsWorkingDrift(9901, 1)).resolves.toEqual([]);
+    await expect(service.detectApprovedVsWorkingDrift(9901, 1)).resolves.toMatchObject({
+      findings: [],
+      coverage: { detector: 'approved_vs_working_drift', comparedNothing: true },
+    });
   });
 });

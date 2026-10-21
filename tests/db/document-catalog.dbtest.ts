@@ -337,6 +337,7 @@ describe('a listing reports the scope, not the page it happened to return', () =
       svc.getCatalogBootstrapDigest(sqlClient, orgId, { userId, programId, limit: 1 }),
     );
     expect(digest.files).toHaveLength(1);
+    expect(digest.actorFiltered).toBe(true);
     expect(digest.total).toBeGreaterThan(1);
     expect(digest.withheld).toBe(digest.total - 1);
 
@@ -344,7 +345,8 @@ describe('a listing reports the scope, not the page it happened to return', () =
       '../../server/services/ana-session-bootstrap-format'
     );
     const line = formatVaultScopeLine(digest);
-    expect(line).toContain(`Showing 1 of ${digest.total} files on record`);
+    expect(line).toContain(`Showing 1 of ${digest.total} files in your accessible source scope`);
+    expect(line).not.toContain('files on record');
     expect(line).toContain('no such document');
   });
 });
@@ -455,11 +457,14 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       { id: otherOrgId, uuid: otherOrgUuid },
     );
     // Refused, and the refusal must not confirm the document exists elsewhere:
-    // "no vault document with this id is in YOUR programs" is all a foreign
-    // caller may learn.
+    // A foreign caller learns only that no actor-accessible record was returned.
     expect(read.ok).toBe(false);
-    expect(read.error).toMatch(/No vault document with id/);
+    expect(read.idSpace).toBe('unknown');
+    expect(read.error).toContain(`No accessible vault document with id ${txtDocId} was returned for this actor’s source scope.`);
     expect(read.error).not.toMatch(/another organization|belongs to|exists/i);
+    const missingId = '00000000-0000-4000-8000-000000000000';
+    const missing = await callTool('read_project_document', { document_id: missingId }, { id: otherOrgId, uuid: otherOrgUuid });
+    expect({ ...read, error: read.error.replace(txtDocId, missingId) }).toEqual(missing);
   });
 });
 

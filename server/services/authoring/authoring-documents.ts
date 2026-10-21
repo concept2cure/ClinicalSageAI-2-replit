@@ -17,7 +17,8 @@
  */
 
 import crypto from 'crypto';
-import { rejectAuthoringCreateTransaction, type AuthoringCreateTransactionState } from './authoring-create-outcome';
+import { rejectAuthoringCreateTransaction, rollbackAuthoringTransaction, settleAuthoringTransactionFailure, type AuthoringCreateTransactionState } from './authoring-create-outcome';
+import { AuthoringSectionWriteOutcomeError } from './authoring-section-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
@@ -652,7 +653,9 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
   // the gate.
   const client: TxClient = await pool.connect();
   let section: Record<string, unknown>;
+  const transaction: AuthoringCreateTransactionState = { began: false, commitAttempted: false };
   try {
+    transaction.began = true;
     await client.query('BEGIN');
     // Canonical parent reservation coordinates all child writers with sealing.
     await reserveWritableDocument(client, String(doc_id), tenantId);
@@ -661,7 +664,7 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
        conflict before anything moves (QA 2026-10-08, j4; section-placement.ts). */
     const placed = await placeNewSection(client, { docId: doc_id, tenantId, code: String(code), requestedOrderIndex });
     if (placed.kind === 'duplicate') {
-      await client.query('ROLLBACK');
+      await rollbackAuthoringTransaction(client, transaction);
       return sectionCodeExists(String(code));
     }
     const orderIndex = placed.orderIndex;
@@ -671,9 +674,13 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
       changeReason: (input.changeReason as string | undefined) ?? null, metadata: { code, title },
       lineage: { machineDraft: null },
     }, { sectionId });
+    transaction.commitAttempted = true;
     await client.query('COMMIT');
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
+    transaction.began = false;
+  } catch (caught) {
+    const recovery = { organizationId: tenantId, documentId: String(doc_id), sectionId };
+    const err = await settleAuthoringTransactionFailure(client, transaction, caught, new AuthoringSectionWriteOutcomeError('section-create', recovery));
+    if (err instanceof AuthoringSectionWriteOutcomeError) throw err;
     if (err instanceof DocumentWriteReservationError) return { kind: 'refused', status: err.status, code: err.code, error: err.message };
     // A concurrent create of the same code passes the check above and loses at
     // the unique index: still a conflict, not a lineage failure.
@@ -685,7 +692,7 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     });
     return { kind: 'lineage_failed' };
   } finally {
-    client.release();
+    client.release(transaction.discardConnection);
   }
 
   return { kind: 'created', section };

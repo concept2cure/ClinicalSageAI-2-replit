@@ -26,6 +26,17 @@ vi.mock('../../server/routes/c2c/actions.js', () => ({
 vi.mock('../../server/db.js', () => ({
   pool: { query: async () => ({ rows: [], rowCount: 0 }) },
 }));
+/* The lock event is written in one transaction on a client withTenantConnection
+   checks out under the event's tenant (writeLockEventTx; until 2026-10-18 it was
+   handed the pool, and the chain recorded every lock event as a legacy row).
+   That transaction is proven on the real migration in
+   server/routes/__tests__/collab-lock-audit-chain.pglite.test.ts. THIS suite is
+   about the reason, so the connection is a stand-in that accepts BEGIN, the
+   tenant stamp and COMMIT, and the ledger write is captured as before. */
+vi.mock('../../server/db/withTenantConnection.js', () => ({
+  withTenantConnection: async (_opts: unknown, fn: (client: unknown) => Promise<unknown>) =>
+    fn({ query: async () => ({ rows: [], rowCount: 0 }) }),
+}));
 
 import realtimeCollabRouter from '../../server/routes/realtime-collab';
 

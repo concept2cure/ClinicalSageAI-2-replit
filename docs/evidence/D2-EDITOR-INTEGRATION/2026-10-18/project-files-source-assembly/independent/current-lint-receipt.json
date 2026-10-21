@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "executionBase": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+  "command": [
+    "npx",
+    "eslint",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx",
+    "--max-warnings",
+    "0",
+    "--format",
+    "json"
+  ],
+  "startedAt": "2026-10-20T19:33:46.597020+00:00",
+  "elapsedSeconds": 1.846,
+  "exitCode": 0,
+  "sourcePath": "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx",
+  "sourceSha256Before": "c20fac115fba7df48a2cd569795ddbed3692ce91cac98dbf9d77a3fa7d456f9c",
+  "sourceSha256After": "c20fac115fba7df48a2cd569795ddbed3692ce91cac98dbf9d77a3fa7d456f9c",
+  "pinsStable": true,
+  "errorCount": 0,
+  "warningCount": 0,
+  "stdoutSha256": "b6512ba0bca43bd76c144c1b783ced4d108b3aa23aa99b317a5226ec9dafeb91",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rawStdout": "[{\"filePath\":\"/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n",
+  "rawStderr": ""
+}

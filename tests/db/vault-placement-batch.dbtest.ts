@@ -21,14 +21,18 @@ import request from 'supertest';
 import { Pool } from 'pg';
 import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-vr11b ';
-const CODE = 'DBTEST-VR11B';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-vr11b ${RUN} `;
+const CODE = `DBTEST-VR11B-${RUN}`;
 const REASON = 'Checked each against its study report';
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 let owner: Pool;
 let userId: number;
+let viewerId: number;
 let mine: Tenant;
 let n = 0;
 
@@ -36,13 +40,14 @@ async function appFor(t: Tenant, role = 'admin'): Promise<express.Express> {
   const createProjectVaultRoutes = (await import('../../server/routes/c2c/project-vault')).default;
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
   const a = express();
+  const actorId = role === 'viewer' ? viewerId : userId;
   a.use(express.json());
   a.use((req, _res, next) => {
     const r = req as unknown as Record<string, unknown>;
-    r.userId = userId;
+    r.userId = actorId;
     r.tenantId = t.orgId;
     r.userRole = role;
-    r.user = { id: userId, organizationId: t.orgId, organizationUuid: t.orgUuid, role };
+    r.user = { id: actorId, organizationId: t.orgId, organizationUuid: t.orgUuid, role };
     next();
   });
   a.use(establishRequestTenantScope);
@@ -71,40 +76,21 @@ const placement = async (id: string) =>
 const fileRows = async (id: string) =>
   (await owner.query(`SELECT user_id, new_values AS details FROM audit_logs WHERE action = 'vault.document.file' AND record_id = $1`, [id])).rows;
 
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action LIKE 'vault.document.%'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-}
-
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-vr11b@example.test', 'Connie Confirmer', 'not-a-real-hash'],
+    [`dbtest-vr11b-${RUN}@example.test`, 'Connie Confirmer', 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
+  viewerId = Number((await owner.query(`INSERT INTO users(email,name,password_hash)
+    VALUES($1,'Connie Viewer','not-a-real-hash') RETURNING id`, [`dbtest-vr11b-viewer-${RUN}@example.test`])).rows[0].id);
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, 'dbtest-vr11b')
+    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}org`],
+    [`${PROBE}org`, `dbtest-vr11b-${RUN}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
@@ -112,11 +98,14 @@ beforeAll(async () => {
     [`${PROBE}program`, `${CODE}-P`, org.rows[0].id],
   );
   mine = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, mine, { userId, namespace: CODE });
+  await seedVaultFixtureViewer(owner, mine, { userId: viewerId, invitedBy: userId });
+  await assertVaultFixtureRuntime(mine);
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
   await owner.end().catch(() => {});
+  await closeVaultFixtureRuntime();
 });
 
 describe('Confirm N suggested (VR-11b)', () => {

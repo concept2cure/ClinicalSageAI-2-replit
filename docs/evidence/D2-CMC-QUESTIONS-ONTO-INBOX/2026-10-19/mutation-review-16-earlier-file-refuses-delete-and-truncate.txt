@@ -1,0 +1,62 @@
+# MUTATION-REVIEW 16 the guard as first written: BEFORE INSERT OR UPDATE only, no TRUNCATE trigger (file and database)
+# Finding: Finding 5: URS-CMC-030 said the file refuses every write; an owner DELETE ran.
+# File: migrations/20261019b_reg_questions_read_only.sql
+# Replaced:
+#   -     BEFORE INSERT OR UPDATE OR DELETE ON public.reg_questions
+#   -     FOR EACH ROW EXECUTE FUNCTION public.reg_questions_read_only();
+#   -   CREATE OR REPLACE TRIGGER reg_questions_read_only_truncate
+#   -     BEFORE TRUNCATE ON public.reg_questions
+#   -     FOR EACH STATEMENT EXECUTE FUNCTION public.reg_questions_read_only();
+# With:
+#   +     BEFORE INSERT OR UPDATE ON public.reg_questions
+#   +     FOR EACH ROW EXECUTE FUNCTION public.reg_questions_read_only();
+# Before the run: psql postgresql://postgres@127.0.0.1:55432/c2c_test -c 'DROP TRIGGER reg_questions_read_only_truncate ON public.reg_questions' -c 'CREATE OR REPLACE TRIGGER reg_questions_read_only BEFORE INSERT OR UPDATE ON public.reg_questions FOR EACH ROW EXECUTE FUNCTION public.reg_questions_read_only()'
+# After the run (restore): DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test APP_SERVICE_DB_PASSWORD=ci-dbtest-app-service-password node scripts/db/deploy-migrate.mjs
+# Command: npx vitest run server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts; (database env) npx vitest run --config vitest.db.config.ts tests/db/cmc-agency-questions-converged.dbtest.ts
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored migrations/20261019b_reg_questions_read_only.sql: sha256 2db4344b1ac02d54… before = 2db4344b1ac02d54… after (byte-identical)
+
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > ctd_section on the canonical question (20261018b, amended in place) > admits every form the repository's CTD rule stores, and no section at all 20ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > ctd_section on the canonical question (20261018b, amended in place) > refuses, in the database, what the rule would never store 7ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > ctd_section on the canonical question (20261018b, amended in place) > is declared once, however many times the file runs 2ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > refuses an INSERT, for every role, and names where agency questions are recorded now 2ms
+ ✓ server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > refuses an UPDATE of any column, the status included 5ms
+ × server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > refuses a DELETE and a TRUNCATE too, the owner included 6ms
+   → expected undefined to be 'P0001' // Object.is equality
+ × server/routes/c2c/__tests__/cmc-questions-migration.pglite.test.ts > the earlier CMC question file is read-only in the database (20261019b) > has one guard of each kind however many times the file runs, and replays on a database without the table 5ms
+   → expected [ 'reg_questions_read_only' ] to deeply equal [ 'reg_questions_read_only', …(1) ]
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the setting > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > records a question with its section in the repository's one spelling, with the section in its ledger row 232ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > refuses a section that is not a CTD code, and records nothing 58ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > corrects a section with a reason, records from and to, and refuses what it should 408ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > who owns a question's response is set on the letter, through the governed write > sets, refuses and clears an owner with a reason, records from and to, and Module 3 shows it 271ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > who owns a question's response is set on the letter, through the governed write > a person who may not change the project is refused 67ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > lists the Module 3 questions with the server's state and overdue, and an approved answer is never overdue 261ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > counts from every row it read, and keeps the earlier CMC file out of the count 20ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > a Module 3 question on a letter the person may not see is neither listed nor counted; the letter is counted as withheld 121ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > refuses a module that is not one of the five 15ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > another organisation's member is refused by project admission; the runtime role in their scope reads none of these rows 23ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > GET lists the organisation's rows as they are stored, with counts from the store 14ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > POST and PATCH answer 410 and change nothing 17ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the runtime role is refused INSERT, UPDATE, DELETE and TRUNCATE by the privilege, before any trigger, even WHERE false 11ms
+ × tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the owner too is refused an INSERT, an UPDATE, a DELETE and a TRUNCATE by the guard 25ms
+   → expected { ok: true, rowCount: 1 } to match object { ok: false, code: 'P0001' }
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'P0001' // Object.is equality
+- Expected:
++ Received:
+AssertionError: expected [ 'reg_questions_read_only' ] to deeply equal [ 'reg_questions_read_only', …(1) ]
+- Expected
++ Received
+-   "reg_questions_read_only_truncate",
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { ok: true, rowCount: 1 } to match object { ok: false, code: 'P0001' }
+- Expected
++ Received
+-   "code": "P0001",
+-   "ok": false,
++   "ok": true,

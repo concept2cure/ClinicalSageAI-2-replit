@@ -265,6 +265,7 @@ async function consolidateMemoryInner(
     const existing = await client.query<{ id: number; content: string; category: string }>(
       `SELECT id, content, category FROM project_memory_entries
         WHERE project_id = $1 AND organization_id = $2 AND status IN ('active', 'pending_review')
+          AND source_document_type IS DISTINCT FROM 'report_os_state'
         ORDER BY created_at DESC
         LIMIT $3`,
       [memory.project_id, memory.organization_id, GATE_COMPARISON_LIMIT]

@@ -65,7 +65,6 @@
 .qms-signed-version { border-top: 1px solid var(--border-subtle); padding: 12px 0; }
 .qms-signed-version summary { cursor: pointer; font-weight: 600; }
 .qms-signed-version h3 { font-size: 14px; margin: 16px 0 8px; }
-.qms-shell button:disabled { cursor: not-allowed; opacity: .55; }
 
 /* ─── Header ───────────────────────────────────────────────────── */
 .qms-head { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 22px; }
@@ -187,7 +186,6 @@
 .qms-train-row .qms-link { grid-column: 1 / -1; justify-self: start; }
 .qms-train-unavailable { grid-column: 2 / -1; color: var(--text-300); text-align: right; }
 .qms-training-summary { color: var(--text-300); margin: 0 0 var(--space-4); }
-.qms-shell button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 /* Native controlled-text reader; shared dialog behaviour owns focus/Escape. */
 .qms-training-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: var(--space-5); background: var(--bg-200); }
@@ -199,7 +197,7 @@
 .qms-training-content h3, .qms-training-receipt h3 { font-size: inherit; margin: 0 0 var(--space-2); }
 .qms-training-content p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; margin: 0; }
 .qms-training-error { color: var(--error); border: 1px solid var(--error); padding: var(--space-3); border-radius: var(--radius-md); }
-.qms-training-notice, .qms-training-unavailable, .qms-training-receipt { background: var(--bg-100); padding: var(--space-4); border: 1px solid var(--border-100); border-radius: var(--radius-md); }
+.qms-notice, .qms-training-notice, .qms-training-unavailable, .qms-training-receipt { background: var(--bg-100); padding: var(--space-4); border: 1px solid var(--border-100); border-radius: var(--radius-md); }
 .qms-training-receipt { margin-top: var(--space-6); }
 .qms-training-receipt p { color: var(--text-200); }
 .qms-training-receipt dl { margin-bottom: 0; display: grid; gap: var(--space-3); }

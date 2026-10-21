@@ -1,0 +1,19 @@
+{
+  "previousQualifiedSource": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
+  "incomingCanonical": "bd1b9ffc9cff286d01019a29a8cd115d4286505e",
+  "changedPriorNativePins": [
+    "server/routes/authoring.router.ts",
+    "server/services/authoring/authoring-documents.ts",
+    "server/services/authoring/authoring-template-guidance.ts",
+    "server/services/authoring/authoring-template-sections.ts",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts"
+  ],
+  "priorPinCount": 4630,
+  "currentFrozenIndexPins": 4900,
+  "nativeAffectedFile": "tests/db/workflow-import-governance.dbtest.ts",
+  "passed": 19,
+  "failed": 0,
+  "pending": 0,
+  "unchangedNativeFiles": 35,
+  "boundary": "Retain prior311/36 proof; current19-case slice executes changed document/section seed transactions. New assembly endpoints, AI draft/accept and template creation were not invoked by the native36 set; their default/PGlite controls are separate."
+}

@@ -5,12 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initialAssemblyState, type AssemblyBucket, type AssemblyBuildOptions } from '../assemblyBuildState';
 import type { SavedAssemblySources } from '@shared/authoring/saved-assembly-sources';
 const apiRequest = vi.hoisted(() => vi.fn());
-const identity = vi.hoisted(() => ({ revision: 0, actor: { id: '7', organizationId: '12' } }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ authService: {
-  getUser: () => identity.actor, on: () => () => undefined,
-  captureSessionReadGuard: () => { const revision = identity.revision; return { sameRevision: () => identity.revision === revision }; },
-} }));
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
+import { captureAssemblyHeaders } from '../assemblyBuildTransport';
 import { useAuthoringAssemblyBuild } from '../useAuthoringAssemblyBuild';
 import { AuthoringAssemblyBuild } from '../AuthoringAssemblyBuild';
 import { publishShellProject } from '../../shellProject';
@@ -21,6 +19,9 @@ const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
 const DOC = '33333333-3333-4333-8333-333333333333';
 const EVENT = '44444444-4444-4444-8444-444444444444';
+const actor = (id = 7) => ({ id: String(id), organizationId: '12', roles: ['author'], permissions: [] });
+const bearer = (userId = 7, visit = 'original') => `fixture.${btoa(JSON.stringify({ userId, organizationId: 12, visit }))}.synthetic`;
+const headers = (visit = 'original') => ({ Authorization: `Bearer ${bearer(7, visit)}`, 'x-organization-id': '12' });
 const saved: SavedAssemblySources = { version: 1, docId: DOC, programId: PROGRAM, record: { eventId: EVENT, recordedAt: '2026-10-18T01:00:00.000Z', manifest: {
   version: 1, programId: PROGRAM, fingerprint: 'f'.repeat(64), limitations: ['A bounded historical reference, not a citation.'], entries: [{ source: { kind: 'data-room', sourceId: 41 }, title: 'Recorded stability report', contentHash: 'a'.repeat(64), extractedTextSha256: 'b'.repeat(64), version: '2', disposition: 'current', originalFileAvailable: false, span: { start: 10, end: 60, totalChars: 100, sha256: 'c'.repeat(64) } }],
 } } };
@@ -30,24 +31,27 @@ function mount(initial = options()) { return renderHook(props => useAuthoringAss
 function Ui() { return <AuthoringAssemblyBuild controller={useAuthoringAssemblyBuild(options())} />; }
 function deferred<T>() { let resolve!: (value: T) => void; return { promise: new Promise<T>(done => { resolve = done; }), resolve }; }
 function own() {
-  const bucket: AssemblyBucket = { state: initialAssemblyState(), token: null, stopRequested: false, sourceRevision: 0 };
-  return { options: options(), key: 'owner', revision: 0, contextRevision: 0, savedReuseRevision: 0, alive: true, bucket, redraw: vi.fn() };
+  const bucket: AssemblyBucket = { state: initialAssemblyState(), token: null, stopRequested: false, sourceRevision: 0, owner: {} };
+  return { options: options(), key: 'owner', revision: 0, contextRevision: 0, savedReuseRevision: 0, alive: true, bucket, redraw: vi.fn(),
+    authCurrent: () => { try { captureAssemblyHeaders(); return true; } catch { return false; } }, headers: captureAssemblyHeaders };
 }
 beforeEach(() => {
-  __resetCeremonies(); identity.revision = 0; identity.actor = { id: '7', organizationId: '12' }; publishShellProject({ id: PROGRAM });
+  clearAuthToken(); localStorage.clear(); sessionStorage.clear(); __resetCeremonies();
+  authService.setToken(bearer(), actor(), 'fixture-refresh', 3600); publishShellProject({ id: PROGRAM });
   apiRequest.mockReset().mockImplementation(async (_method: string, path: string) => {
     if (path.includes('/assembly/sources?')) return reply({ success: true, data: saved });
     if (path === '/api/authoring/templates') return reply({ success: true, templates: [] });
     throw new Error(`Unexpected request ${path}`);
   });
 });
-afterEach(() => { cleanup(); __resetCeremonies(); });
+afterEach(() => { cleanup(); __resetCeremonies(); authService.endSession(null); clearAuthToken();
+  localStorage.clear(); sessionStorage.clear(); delete window.C2C_PROJECT; vi.unstubAllGlobals(); });
 describe('explicit saved source reference checks', () => {
   it('does not fetch on mount and permits a read-only frozen viewer to inspect historical references', async () => {
     const view = mount(options({ docSealed: true, editRefusal: 'Viewing only', editorDirty: true }));
     expect(apiRequest).not.toHaveBeenCalled();
     await act(async () => { await view.result.current.checkSavedSources(); });
-    expect(apiRequest).toHaveBeenCalledExactlyOnceWith('GET', `/api/authoring/docs/${DOC}/assembly/sources?programId=${PROGRAM}`);
+    expect(apiRequest).toHaveBeenCalledExactlyOnceWith('GET', `/api/authoring/docs/${DOC}/assembly/sources?programId=${PROGRAM}`, undefined, headers());
     expect(view.result.current.savedSources).toMatchObject({ phase: 'recorded', data: saved });
     expect(view.result.current.sourceSelection).toBeUndefined();
   });
@@ -126,7 +130,7 @@ describe('exact historical read receipts', () => {
   it('checks ownership again after JSON parsing, never publishing a late private result', async () => {
     const parsed = deferred<unknown>(); let current = true;
     apiRequest.mockResolvedValueOnce({ ok: true, status: 200, json: () => parsed.promise });
-    const read = getSavedAssemblySources(DOC, PROGRAM, () => current);
+    const read = getSavedAssemblySources(DOC, PROGRAM, () => current, headers());
     await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(1)); current = false; parsed.resolve({ success: true, data: saved });
     expect(await read).toMatchObject({ ok: false, stale: true });
   });
@@ -149,8 +153,8 @@ describe('saved-reference ownership and synchronous lanes', () => {
     const view = mount(); await act(async () => { await view.result.current.checkSavedSources(); });
     if (kind === 'project') act(() => { publishShellProject({ id: OTHER }); publishShellProject({ id: PROGRAM }); });
     if (kind === 'document') { view.rerender(options({ docId: OTHER })); view.rerender(options()); }
-    if (kind === 'account') { identity.actor = { id: '8', organizationId: '12' }; view.rerender(options()); identity.actor = { id: '7', organizationId: '12' }; view.rerender(options()); }
-    if (kind === 'session') { identity.revision += 1; view.rerender(options()); }
+    if (kind === 'account') act(() => { authService.setToken(bearer(8), actor(8), 'other-refresh', 3600); view.rerender(options()); authService.setToken(bearer(), actor(), 'restored-refresh', 3600); view.rerender(options()); });
+    if (kind === 'session') act(() => { authService.setToken(bearer(7, 'replacement'), actor(), 'replacement-refresh', 3600); view.rerender(options()); });
     if (kind === 'source') act(() => { view.result.current.adoptSources([{ kind: 'data-room', sourceId: 42 }]); view.result.current.adoptSources(null); });
     expect(view.result.current.savedSources).toMatchObject({ phase: 'idle', message: '' });
     await act(async () => { await view.result.current.useSavedSources(); }); expect(apiRequest).toHaveBeenCalledTimes(1);
@@ -211,5 +215,40 @@ describe('historical reads do not release write or review holds', () => {
     owner.bucket.token = {}; owner.bucket.state.phase = 'idle';
     pending.resolve(reply({ success: true, data: saved })); await use;
     expect(adopt).not.toHaveBeenCalled(); expect(savedAssemblySourcesControls(owner, adopt).savedSources.phase).toBe('failed');
+  });
+});
+
+describe('saved reference native credential ownership', () => {
+  it('refuses a mismatched bearer before a new Check can start without rerendering', async () => {
+    const view = mount(); const previous = view.result.current;
+    setAuthToken(bearer(8));
+    await act(async () => { await previous.checkSavedSources(); });
+    expect(apiRequest).not.toHaveBeenCalled(); expect(view.result.current.savedSources.data).toBeUndefined();
+  });
+  it.each(['check', 'reuse'] as const)('hides a late %s after bearer claims change before rerendering', async stage => {
+    const view = mount();
+    if (stage === 'reuse') await act(async () => { await view.result.current.checkSavedSources(); });
+    const pending = deferred<Response>(); apiRequest.mockReturnValueOnce(pending.promise); let request!: Promise<void>;
+    act(() => { request = stage === 'check' ? view.result.current.checkSavedSources() : view.result.current.useSavedSources(); });
+    setAuthToken(bearer(8));
+    await act(async () => { pending.resolve(reply({ success: true, data: saved })); await request; });
+    expect(view.result.current.savedSources.data).toBeUndefined(); expect(view.result.current.sourceSelection).toBeUndefined();
+    const count = apiRequest.mock.calls.length;
+    await act(async () => { await view.result.current.checkSavedSources(); await view.result.current.useSavedSources(); });
+    expect(apiRequest).toHaveBeenCalledTimes(count);
+  });
+  it.each(['check', 'reuse'] as const)('keeps a pending %s through genuine same-revision refresh with captured credentials', async stage => {
+    const view = mount();
+    if (stage === 'reuse') await act(async () => { await view.result.current.checkSavedSources(); });
+    const pending = deferred<Response>(); apiRequest.mockReturnValueOnce(pending.promise); let request!: Promise<void>;
+    act(() => { request = stage === 'check' ? view.result.current.checkSavedSources() : view.result.current.useSavedSources(); });
+    const session = authService.captureSessionReadGuard();
+    vi.stubGlobal('fetch', vi.fn(async () => reply({ accessToken: bearer(7, 'refreshed'), refreshToken: 'next-refresh', expiresIn: 3600 })));
+    await act(async () => { expect(await authService.refreshToken()).toBe(true); });
+    expect(session.sameRevision()).toBe(true);
+    await act(async () => { pending.resolve(reply({ success: true, data: saved })); await request; });
+    for (const call of apiRequest.mock.calls) expect(call[3]).toEqual(headers());
+    if (stage === 'check') expect(view.result.current.savedSources).toMatchObject({ phase: 'recorded', data: saved });
+    else expect(view.result.current.sourceSelection).toEqual(saved.record!.manifest.entries.map(entry => entry.source));
   });
 });

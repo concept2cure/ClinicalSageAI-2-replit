@@ -49,7 +49,7 @@
  */
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { captureDocumentRecordReadOwner, readDocumentRecord, type DocRow, type SectionRow } from './documentRecordRead';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
@@ -75,28 +75,6 @@ import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDo
 import { useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
 import type { AskOrigin } from './askAnaToDraft';
 import { originForSavedSection } from './authoringConversationOrigin';
-
-/** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
-/* c2c_document_id: the filing this is the editing copy of, or null (F4). */
-interface DocRow extends Pick<AuthDoc, 'created_by' | 'c2c_document_id'> {
-  id: string;
-  title: string;
-  module: string | null;
-  product_code: string | null;
-  status: string;
-  updated_at: string | null;
-  section_count: number | string | null;
-  provenance?: unknown;
-}
-
-interface SectionRow {
-  id: string;
-  code: string;
-  title: string;
-  content: string | null;
-  order_index: number | null;
-  updated_at?: string | null;
-}
 
 export interface DocumentCanvasProps {
   docId: string;
@@ -166,41 +144,6 @@ export function documentTypeLabel(code: string | null | undefined): string | nul
   if (!c) return null;
   const words = c.replace(/[_-]+/g, ' ').trim();
   return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
-}
-
-/** One read of the record: the document row, the caller's access, the sections. */
-type RecordRead =
-  | { ok: true; doc: DocRow; access: unknown; sections: SectionRow[] }
-  | { ok: false; message: string; doc?: DocRow };
-
-/**
- * GET /docs/:id and /sections, together. A failure is the sentence to show,
- * never an empty document: a missing row, a row whose sections did not read,
- * or a store that could not be reached each say which.
- */
-async function readDocumentRecord(docId: string): Promise<RecordRead> {
-  try {
-    const [d, s] = await Promise.all([
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}`),
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
-    ]);
-    const dj = (await d.json().catch(() => null)) as { document?: DocRow; access?: unknown } | null;
-    const sj = (await s.json().catch(() => null)) as { sections?: SectionRow[] } | null;
-    if (!d.ok || !dj?.document) {
-      return {
-        ok: false,
-        message: serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`),
-      };
-    }
-    if (!s.ok || !sj) {
-      /* The document row is real; its sections did not read. Say that,
-         rather than rendering a document with no sections. */
-      return { ok: false, doc: dj.document, message: `“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).` };
-    }
-    return { ok: true, doc: dj.document, access: dj.access, sections: Array.isArray(sj.sections) ? sj.sections : [] };
-  } catch (e) {
-    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
-  }
 }
 
 /** The codes of sections that are new, or whose stored text changed, between two reads. */
@@ -276,23 +219,37 @@ export function DocumentCanvas({
      controls (`aria-controls`) rather than only that it is expanded. */
   const expandedId = useId();
 
-  const load = useCallback(async (quiet = false) => {
+  const loadScopeKey = `${docId}:${programId}`;
+  const loadScope = useRef({ key: loadScopeKey });
+  if (loadScope.current.key !== loadScopeKey) loadScope.current = { key: loadScopeKey };
+  const loadSequence = useRef(0);
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const load = useCallback(async (quiet = false, recovery = false) => {
+    const scope = loadScope.current;
+    if (scope.key !== `${docId}:${programId}`) return false;
+    const owner = recovery ? captureDocumentRecordReadOwner() : null;
+    if (recovery && !owner) return false;
+    const sequence = ++loadSequence.current;
+    const currentRead = () => alive.current && loadScope.current === scope && loadSequence.current === sequence
+      && owner?.current() !== false;
     if (!quiet) {
       setState('loading');
       setError(null);
     }
-    const read = await readDocumentRecord(docId);
+    const read = await readDocumentRecord(docId, recovery, programId, owner?.headers);
+    if (!currentRead()) return false;
     if (!read.ok) {
       /* A refresh that failed is not an empty document: keep the record on
          screen and say the refresh did not land. */
       if (quiet) {
         setRefreshFailed(true);
-        return;
+        return false;
       }
       setState('error');
       setError(read.message);
       if (read.doc) setDoc(read.doc);
-      return;
+      return false;
     }
     if (quiet) setUpdatedCodes(changedSectionCodes(sectionsRef.current, read.sections));
     setRefreshFailed(false);
@@ -301,7 +258,8 @@ export function DocumentCanvas({
     sectionsRef.current = read.sections;
     setSections(read.sections);
     setState('ready');
-  }, [docId]);
+    return true;
+  }, [docId, programId]);
 
   useEffect(() => {
     void load();
@@ -400,6 +358,7 @@ export function DocumentCanvas({
   const reloadDoc = useCallback(async () => {
     await load();
   }, [load]);
+  const refreshCreationContext = useCallback(() => load(true, true), [load]);
 
   const [bridge, setBridge] = useState<EditorBridge | null>(null);
 
@@ -648,6 +607,7 @@ export function DocumentCanvas({
               docsState="ready"
               status="all"
               reloadDocs={reloadDoc}
+              refreshCreationContext={refreshCreationContext}
               programId={programId}
               pinnedDocId={doc.id}
               embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection }}

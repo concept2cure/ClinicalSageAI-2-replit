@@ -1,0 +1,44 @@
+[
+  {
+    "file": "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts",
+    "errors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0
+  },
+  {
+    "file": "server/services/ana/AnaDocumentDraftingService.ts",
+    "errors": 0,
+    "beforeWarnings": 6,
+    "afterWarnings": 6
+  },
+  {
+    "file": "server/services/ana/AnaToolExecutor.ts",
+    "errors": 0,
+    "beforeWarnings": 95,
+    "afterWarnings": 95
+  },
+  {
+    "file": "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+    "errors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0
+  },
+  {
+    "file": "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+    "errors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0
+  },
+  {
+    "file": "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+    "errors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0
+  },
+  {
+    "file": "server/services/ana/draft-project-sources.ts",
+    "errors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0
+  }
+]

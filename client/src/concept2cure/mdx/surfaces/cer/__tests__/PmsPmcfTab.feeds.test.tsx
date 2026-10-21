@@ -107,6 +107,44 @@ describe('PmsPmcfTab — live complaint and PMCF feeds', () => {
     expect(screen.getByTestId('pms-pmcf-error')).toBeTruthy();
   });
 
+  /**
+   * The documentation-status request carries the regulation and nothing else.
+   * This panel used to send `profile.deviceClass` — the US 21 CFR 860 class —
+   * as the class an MDR assessment was computed from, so a European programme
+   * was told `"class II" is not an MDR device class` while its MDR class sat
+   * unread in `eu_mdr_class`. The class, implantable and custom-made now come
+   * from the programme record server-side; the product type picks which
+   * regulation this panel reports against, because a device is classified
+   * under the MDR and a diagnostic under the IVDR.
+   */
+  const profileOf = (over: Record<string, unknown>) =>
+    ({ id: PROGRAM, name: null, code: null, productName: 'Acme', productType: null, deviceClass: null,
+       regulatoryPath: null, productCode: null, intendedUse: null, indication: null, predicateDevices: null,
+       commonName: null, classificationName: null, regulationNumber: null, associatedProductCodes: null,
+       indicationsForUseCitation: null, ...over }) as never;
+
+  const statusUrl = () =>
+    (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
+      .map(c => String(c[0]))
+      .find(u => u.includes('/documentation-status'))!;
+
+  it.each([
+    ['device', 'MDR'],
+    ['ivd', 'IVDR'],
+  ])('a %s program asks for its own regulation, and sends no class', async (productType, regulation) => {
+    stubFetch(() => json(200, { rows: [], count: 0 }), () => json(200, PMCF));
+    render(
+      <PmsPmcfTab
+        programId={PROGRAM}
+        profile={profileOf({ productType, deviceClass: 'class_ii' })}
+        onAskAna={() => {}}
+      />,
+    );
+    await waitFor(() => expect(statusUrl()).toBeTruthy());
+    const query = new URLSearchParams(statusUrl().split('?')[1] ?? '');
+    expect(Object.fromEntries(query)).toEqual({ regulation });
+  });
+
   it('without a program the feeds are not requested', () => {
     stubFetch(() => json(200, { rows: ROWS, count: 3 }), () => json(200, PMCF));
     render(<PmsPmcfTab programId={null} profile={null} onAskAna={() => {}} />);

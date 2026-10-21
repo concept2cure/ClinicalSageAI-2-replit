@@ -37,6 +37,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { recordedRegisterInserts } from './lib/recorded-register-inserts.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASELINE = path.join(repoRoot, 'scripts/ci/writerless-stores-baseline.json');
@@ -61,7 +62,7 @@ function walk(dir, out = []) {
  * learn to skip, which is the failure mode this whole gate exists to prevent.
  */
 function knownTables() {
-  const out = new Set();
+  const out = new Map();
   const roots = [path.join(repoRoot, 'shared')];
   const stack = [...roots];
   while (stack.length) {
@@ -73,17 +74,22 @@ function knownTables() {
       if (e.isDirectory()) { stack.push(p2); continue; }
       if (!/\.ts$/.test(e.name)) continue;
       const src = fs.readFileSync(p2, 'utf8');
-      for (const m of src.matchAll(/export\s+const\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*pgTable\(/g)) out.add(m[1]);
+      for (const m of src.matchAll(/export\s+const\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*pgTable\(/g)) {
+        if (!out.has(m[1])) out.set(m[1], new Set());
+        out.get(m[1]).add(path.relative(repoRoot, p2).split(path.sep).join('/'));
+      }
     }
   }
   return out;
 }
-const TABLES = knownTables();
+const TABLE_DEFINITIONS = knownTables();
+const TABLES = new Set(TABLE_DEFINITIONS.keys());
 
 const files = walk(path.join(repoRoot, 'server'));
 const reads = new Map();   // table -> Set(file)
 const inserts = new Set(); // table — something can CREATE a row here
 const updates = new Set(); // table — something changes rows, which need not exist
+const sources = new Map();
 
 const READ_RE  = /\.from\(\s*([a-zA-Z_][a-zA-Z0-9_]*)/g;
 const INSERT_RE = /\.insert\(\s*([a-zA-Z_][a-zA-Z0-9_]*)/g;
@@ -92,6 +98,7 @@ const UPDATE_RE = /\.(?:update|delete)\(\s*([a-zA-Z_][a-zA-Z0-9_]*)/g;
 for (const f of files) {
   const src = fs.readFileSync(f, 'utf8');
   const rel = path.relative(repoRoot, f).split(path.sep).join('/');
+  sources.set(rel, src);
   for (const m of src.matchAll(READ_RE)) {
     if (!TABLES.has(m[1])) continue; // not a table — Array.from and friends
     if (!reads.has(m[1])) reads.set(m[1], new Set());
@@ -100,6 +107,10 @@ for (const f of files) {
   for (const m of src.matchAll(INSERT_RE)) if (TABLES.has(m[1])) inserts.add(m[1]);
   for (const m of src.matchAll(UPDATE_RE)) if (TABLES.has(m[1])) updates.add(m[1]);
 }
+
+// The CMC recorded writer now accepts a table parameter. Credit its actual
+// schema-backed callers only while its executed INSERT contract still holds.
+for (const table of recordedRegisterInserts(sources, TABLE_DEFINITIONS)) inserts.add(table);
 
 // Raw SQL writes count too — a table written by a service using raw SQL is
 // written, however it got there.

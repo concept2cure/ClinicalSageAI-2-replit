@@ -1,0 +1,104 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/document-passage-result-references.test.ts
+{
+  "timestamp": "2026-10-20T23:38:39.093Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T23:38:39.095Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-result-references.test.ts
+{
+  "timestamp": "2026-10-20T23:38:39.095Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-result-references.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "\"quoted\" \\ path" 8ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "\u0000\u0001\n\t" 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "結果🧬有害事象" 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "</data><script>text</script>" 3ms
+ × server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references when a long escaped query echo must be omitted 9ms
+   → expected 18388 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references and coverage counts when diagnostic reasons are enormous 13ms
+   → expected 69729 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (0) 4ms
+   → expected 14324 to be less than or equal to 7500
+ × server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (1) 3ms
+   → expected 11924 to be less than or equal to 7500
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > CONTROL: a genuine miss stays distinct from matched-but-omitted evidence and keeps unknown outside coverage 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references when a long escaped query echo must be omitted
+AssertionError: expected 18388 to be less than or equal to 7500
+ ❯ exactReferences server/services/ana/__tests__/document-passage-result-references.test.ts:86:22
+     84| /** Independent observable oracle: no reconstruction of the fitter's p…
+     85| function exactReferences(raw: string, out: Result, hits: PassageHit[],…
+     86|   expect(raw.length).toBeLessThanOrEqual(7500);
+       |                      ^
+     87|   expect(out.ok).toBe(true);
+     88|   expect(out.ranking).toBe('meaning_and_text');
+ ❯ server/services/ana/__tests__/document-passage-result-references.test.ts:145:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references and coverage counts when diagnostic reasons are enormous
+AssertionError: expected 69729 to be less than or equal to 7500
+ ❯ exactReferences server/services/ana/__tests__/document-passage-result-references.test.ts:86:22
+     84| /** Independent observable oracle: no reconstruction of the fitter's p…
+     85| function exactReferences(raw: string, out: Result, hits: PassageHit[],…
+     86|   expect(raw.length).toBeLessThanOrEqual(7500);
+       |                      ^
+     87|   expect(out.ok).toBe(true);
+     88|   expect(out.ranking).toBe('meaning_and_text');
+ ❯ server/services/ana/__tests__/document-passage-result-references.test.ts:154:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (0)
+AssertionError: expected 14324 to be less than or equal to 7500
+ ❯ exactReferences server/services/ana/__tests__/document-passage-result-references.test.ts:86:22
+     84| /** Independent observable oracle: no reconstruction of the fitter's p…
+     85| function exactReferences(raw: string, out: Result, hits: PassageHit[],…
+     86|   expect(raw.length).toBeLessThanOrEqual(7500);
+       |                      ^
+     87|   expect(out.ok).toBe(true);
+     88|   expect(out.ranking).toBe('meaning_and_text');
+ ❯ server/services/ana/__tests__/document-passage-result-references.test.ts:163:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (1)
+AssertionError: expected 11924 to be less than or equal to 7500
+ ❯ exactReferences server/services/ana/__tests__/document-passage-result-references.test.ts:86:22
+     84| /** Independent observable oracle: no reconstruction of the fitter's p…
+     85| function exactReferences(raw: string, out: Result, hits: PassageHit[],…
+     86|   expect(raw.length).toBeLessThanOrEqual(7500);
+       |                      ^
+     87|   expect(out.ok).toBe(true);
+     88|   expect(out.ranking).toBe('meaning_and_text');
+ ❯ server/services/ana/__tests__/document-passage-result-references.test.ts:163:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  23:38:37
+   Duration  1.93s (transform 861ms, setup 87ms, import 1.52s, tests 51ms, environment 0ms)
+

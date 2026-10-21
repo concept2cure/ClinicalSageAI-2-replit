@@ -37,6 +37,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest, ApiRequestError, serverMessage, redactInternals } from '@/lib/queryClient';
@@ -178,6 +179,41 @@ function rejectionRecordedMessage(id: number, r: RejectionRecorded, signer: stri
     + `and the next assembly reuses sequence ${r.sequence}.${moved}${cleared}${signed}`;
 }
 
+/**
+ * How a refusal names the transmittals on screen: the log number exactly as the
+ * `#` column renders it, with the Gateway ref beside it when the row has one.
+ * AnA cannot see this table, so a miss that lists these turns a dead end into a
+ * retry with a real number (listedChoices, surfaceActions.ts).
+ */
+function transmittalChoices(rows: ReadonlyArray<Transmittal>): string[] {
+  return rows.map((t) => `#${t.id}${t.transmission_id ? ` · ${t.transmission_id}` : ''}`);
+}
+
+/**
+ * The transmittal a name picks out of the log on screen — log number first
+ * ("#12" or "12"), then an exact gateway reference, then a unique containment
+ * on the reference. Resolved against the rows the table renders and nothing
+ * else: this is the person's own table, not a lookup over anything they cannot
+ * see. A miss returns the candidates it did match so the caller can say how
+ * many, and never guesses between them.
+ */
+function resolveTransmittal(
+  rows: ReadonlyArray<Transmittal>,
+  raw: string,
+): { match: Transmittal } | { hits: Transmittal[] } {
+  const wanted = raw.trim().replace(/^#/, '').trim();
+  const lower = wanted.toLowerCase();
+  const byNumber = rows.find((t) => String(t.id) === wanted);
+  if (byNumber) return { match: byNumber };
+  // Only a non-empty name matches a reference: a row whose Gateway ref column
+  // reads '—' holds null, and an empty name would otherwise equal it and pick
+  // that row — a bare "#" would silently resolve to whichever row has no ref.
+  const byRef = lower ? rows.find((t) => (t.transmission_id ?? '').toLowerCase() === lower) : undefined;
+  if (byRef) return { match: byRef };
+  const hits = lower ? rows.filter((t) => (t.transmission_id ?? '').toLowerCase().includes(lower)) : [];
+  return hits.length === 1 ? { match: hits[0] } : { hits };
+}
+
 export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
   /* Whether this person may sign the technical rejection, as the server's
@@ -315,11 +351,83 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
       availableActions: [
         'Explain why a transmittal failed, from its error class',
         'Explain which transmittals are still awaiting acknowledgement',
+        // The one operation she can take here (submission-gateway.show-status):
+        // the row's own Status control. Everything else on the log is a read she
+        // explains, or a signed technical rejection that stays a person's act.
+        "Show one transmittal's gateway status, by its log number or gateway reference",
       ],
     }),
     [state, rows],
   );
   usePublishSurfaceContext('gateway-transmittals', anaContext);
+
+  /* AnA operates this log through the row's own Status control (checkStatus).
+     The screen is read-only since the 2026-10-17 audit (FILING_SPINE F12):
+     transmit, assemble and unsigned rollback left it for the sequence's
+     Dispatch tab, and with them the refusal card the old
+     `submission-gateway.reload-findings` action drove — so that action left the
+     registry in the same change that brought this one onto the new screen. The
+     signed technical rejection stays a person's own click. The handler is
+     synchronous and the read is not, so the detail says what was STARTED; the
+     card and the toast carry the server's answer. */
+  useSurfaceActionHandlers('gateway-transmittals', {
+    'submission-gateway.show-status': (params) => {
+      const raw = (params.transmittal ?? '').trim();
+      // `logRows`, not `rows`: a transmittal linked from another screen is
+      // pinned at the top of the table even when the log read does not carry
+      // it, and a person can press its Status button — so AnA can name it too.
+      const logged = () => listedChoices(transmittalChoices(logRows), 'Transmittals logged');
+      if (!raw) {
+        return {
+          ok: false,
+          reason: 'Name a transmittal to show — its log number as listed (e.g. "#12") or its gateway reference.' + logged(),
+        };
+      }
+      if (state === 'loading') return { ok: false, reason: 'The transmittal log is still loading.', retry: true };
+      if (state === 'error') {
+        // Never reported as an empty log: this is the table an operator reads to
+        // confirm what has or has not already been sent to an agency.
+        return {
+          ok: false,
+          reason:
+            'The transmittal log could not be read, so no transmittals are listed to show a status for. ' +
+            'That is not the same as this organization having none.',
+        };
+      }
+      if (logRows.length === 0) {
+        return { ok: false, reason: 'No transmittals have been logged for this organization yet, so there is none to show a status for.' };
+      }
+      const found = resolveTransmittal(logRows, raw);
+      if (!('match' in found)) {
+        return {
+          ok: false,
+          reason:
+            found.hits.length > 1
+              ? `"${raw}" matches ${found.hits.length} transmittals — name one exactly.` +
+                listedChoices(transmittalChoices(found.hits), 'Matched')
+              : `No transmittal "${raw}" in this log.` + logged(),
+        };
+      }
+      const t = found.match;
+      // The card for this row is already on screen, and the Status control
+      // re-reads the whole log on success; say so rather than re-polling the
+      // agency for what the person is looking at.
+      if (statusView?.id === t.id) return { ok: true, detail: `Already showing the gateway status for transmittal #${t.id}` };
+      void checkStatus(t.id);
+      return {
+        ok: true,
+        detail:
+          `Showing the gateway status for transmittal #${t.id} — the card appears below when the gateway ` +
+          'answers, and a gateway that refuses reports its reason instead.',
+      };
+    },
+  });
+  /* The ready signal for the hold above. Gated on the read SETTLING and nothing
+     else: a failed read must reach a held action as the handler's own refusal,
+     not as a twenty-second timeout (surfaceReadySignal.test.ts). */
+  useEffect(() => {
+    if (state !== 'loading') notifySurfaceActionReady('gateway-transmittals');
+  }, [state]);
 
   return (
     <div className="cm-body">

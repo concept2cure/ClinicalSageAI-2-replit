@@ -472,6 +472,18 @@ agency is assembled from those approvals. It opens when approval is a signed act
 are also third in the beta's job order (`WORKFLOW_DECISION_2026-10-08.md` §1). Its claim is narrowed to the one
 prefix it calls and its catalog copy no longer says "signed".
 
+**2026-10-18: approval is a signed act, on the project inbox (rows D2, D5).** The questions on an agency letter
+are now `agency_communication_questions` on the project's inbox, worked in Communication and Project home's
+Respond, both already in the catalog. A response is approved through the one signing ceremony
+(`governed-signed-act.ts`), by someone other than its author, and the signature binds the question and the exact
+response text (`agency-response-content-sha256`); approval is read from the signature table, so an edit after
+signing ends it. The response package assembles only when every response is approved, through the audited export,
+and a letter with recorded questions closes only then. Commitments made in a response name their letter and
+question. The `/api/haq-manager` store is deleted; the `haq-manager` screen is a view of the same inbox, claims no
+prefix and stays outside the catalog. Opening it as a second home is a catalog decision, not taken here.
+Evidence: `docs/evidence/D2-CORRESPONDENCE-SIGNED-RESPONSES/2026-10-18/`. Map of the remaining RIM gaps and
+duplicates: `docs/design/RIM_GAP_ANALYSIS_2026-10-18.md`.
+
 **What stays shut, by name.** 15-day safety reporting and ICSR transmission (21 CFR 312.32): every
 `/api/ind-lifecycle/safety-report*`, `/safety-reports*` and `/icsr-transmissions*` route is claimed by an
 out-of-scope pharmacovigilance surface, so it is refused 403 `LAUNCH_SCOPE` even when unattributed paths are
@@ -556,6 +568,108 @@ module move into Submission Center unchanged. The surfaces a client can reach an
 is granted are the same sets as before (`server/services/entitlements/__tests__/launch-scope.test.ts`). The name
 stays as a catalog and entitlement entry. The left rail is not changed: the founder kept Home, Apps catalog,
 Tasking and Communication on it (request of 2026-10-16, reconfirmed 2026-10-17).
+
+## Product decisions, 2026-10-18 (under the founder's delegation of that day)
+
+The founder, on the open questions of `docs/design/RIM_GAP_ANALYSIS_2026-10-18.md`: "I will follow you guidance
+and SME level intelligence and allow you do make these product level choices." Each is decided on what the launch
+customer files (P-28: a sponsor composing small-molecule Module 3 for a US IND) and on Rule 2.
+
+### P-37 — Regulatory information management at launch is the IND sponsor's RIM; registrations, labels and a multi-region planner wait for a marketing application
+
+In the launch catalog, and finished in this order (gap analysis, "Next in-catalog work"): correspondence with the
+agency and the signed answer to each question (P-32), the commitments made in those answers and their fulfilment,
+submission assembly and the eCTD viewer Submission Center already has (`EctdCompile.tsx`, completed, not
+rebuilt: CLAUDE.md RULE 3), and the dossier templates the project wizard
+scaffolds.
+
+**Not in the launch catalog: registrations and labels** (`server/routes/rim.ts`, `rim_*`). A launch customer holds
+no marketing authorisation and has no approved label: the register would be empty for every one of them, and the
+signed label approval would have nothing to approve. `migrations/20260610_rim_lite.sql` stays off the deploy path
+and no session builds on it. **Not in the launch catalog: a multi-region submission planner.** P-28 refuses a non-US
+clinical-trial application by name, so a plan across markets has one market. Both are reopened together with any
+widening of the P-28 boundary to a marketing application or a non-US application, which is the founder's decision.
+**A workflow designer** is new capability under Rule 2: the platform's governed acts (signatures, reasons, the
+ledger) are fixed and validated, and a configurable one would need its own validation for every configuration.
+
+### P-38 — Agency questions have one home: the letter they came in
+
+`haq-manager` does not reopen as a screen. P-32's condition is met (approval is a signed act), but the same record
+is worked on the letter, in Communication and in Project home's Respond, and a second screen would give one
+capability two homes (the P-36 reasoning). Its catalog entry keeps no API prefix; the HAQ view inside Communication
+reads the project inbox.
+
+### P-39 — The duplicate correspondence and commitment stores converge in this order
+
+Each store moves onto its canonical record and is retired in the same change (zero duplication), with the
+deletion record the working agreement requires:
+
+1. **`reg_questions`** (`/api/cmc/agency-questions`), onto `agency_communication_questions`. It is the one inside a
+   launch app (CMC / Module 3), and closing a question there is a status update, not a signature.
+   *2026-10-19:* converged, and the file made read-only rather than retired: CMC reads a program's Module 3 questions
+   from the letters and opens each on its letter, writing none; `/api/cmc/agency-questions` answers 410 to a write and
+   the database refuses one (`migrations/20261019b_reg_questions_read_only.sql`); its rows stay as history. The act
+   that moves a row not closed there onto a letter is owed, deferred until a deployed estate shows such rows
+   (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`).
+2. **`c2c_commitments`** (`/api/c2c/commitments`), onto `regulatory_commitments`: an AI extraction with an
+   ungoverned create.
+3. **The `c2c_correspondence` family** (`/api/regulatory-correspondence`), onto the project inbox, keeping its issue
+   parser and response clock as the inbox's.
+4. **`haq_session`**, **`lifecycle_obligations`** and the **`c2c_agency_meetings`** minutes, onto the inbox,
+   `regulatory_commitments` and `ha_interactions` respectively.
+
+### P-40 — A sealed editing copy is revisable, and the refusal says so
+
+Decided 2026-10-19 under the founder's delegation of 2026-10-13 (document creation and editing).
+
+A QMS register entry at `draft` whose bound editing copy had been frozen or approved could go **nowhere**. It
+could not be sent for review — correctly, because `decideAuthoringPermission` refuses an edit of an immutable
+document ahead of every grant and bypass, which is what keeps the freeze meaningful. And it could not be revised:
+`reviseControlledQmsDocument` admitted `effective`, `retired`, `superseded` and `in_review`, not `draft`. There is
+no unfreeze anywhere (a freeze is the platform's one signing ceremony, DP-35 / P1-32) and no new-version route on
+the authoring side at all, so the frozen message's own remedy — "Create a new version to make further changes" —
+had nothing behind it.
+
+**A `draft` whose editing copy is sealed is revisable, and nothing else about `draft` is.** A revision is what
+"create a new version" means here: the sealed text is copied onto a new editing copy, the version is bumped, the
+old document id is retained in `metadata.retainedAuthoringDocuments`, and the seal and every signature over it are
+untouched. The condition is the seal, because without it this would be a free version bump on any draft — a new
+door, not a remedy.
+
+**The refusal names it.** `requireContentAccess` collapsed every permission outcome into 403
+`QMS_DOCUMENT_PERMISSION_DENIED`, "You do not have permission to read or change this authored document" — said to
+the owner-administrator of a sealed document, which is false and names no way forward. The decider already returns
+`document-immutable` separately; that is now a 409 `QMS_DOCUMENT_SEALED` which says the text is sealed and points at
+the controlled revision. Naming a remedy that did not exist would have repeated a mistake this lane had already
+made once, so the two halves ship together.
+
+**What was NOT changed, deliberately.** The seal still refuses the send-for-review and the rename; `IN_REVIEW`
+remains a non-sealing status, because review is a state a document is edited during and the review board finds its
+work by `upper(d.status) = 'IN_REVIEW'`. The two disagreeing definitions of which statuses seal content —
+`LOCKED_DOCUMENT_STATUSES` (two) in `document-lock.ts` against `IMMUTABLE_DOCUMENT_STATUSES` (eight) in
+`authoring-permissions.ts` — are recorded as open, not reconciled here: both are load-bearing in different places
+and each list has mutants that open a real hole.
+
+### P-41 — A PMR, PMC or REMS is recorded fulfilled by a signature that names what met it
+
+Decided 2026-10-19 under the founder's delegation of 2026-10-18. Recording a postmarketing requirement, a
+postmarketing commitment or a REMS as fulfilled takes the obligation off the overdue register and out of the annual
+status report (21 CFR 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1). It is an attestation, so it is a Part 11
+signed act, as the platform's comparable acts are (label approval, a QMS document becoming effective, the Shadow
+dispositions of P-34 and P-35, an agency response's approval under P-32): meaning approval or responsibility, the
+signer's reason, password and second factor, through the one ceremony (`server/routes/governed-signed-act.ts`
+signGovernedAct). The signature names the dispatched sequence the agency received (sent or acknowledged), or the
+Vault version that met it at its sha256, or both, and the date, and binds them
+(`BINDING_BASIS.COMMITMENT_FULFILMENT_CONTENT`). The database holds it: a fulfilled PMR, PMC or REMS commits only with
+such a signature written by the same transaction, by the person recorded, over the same evidence and date; a
+commitment's type never changes, so a PMR cannot be retyped out of its signature; and a recorded fulfilment cannot
+change or be hidden by an UPDATE (`migrations/20261019_commitment_fulfilment_evidence.sql`). It does not hold the
+record against a hard DELETE by the runtime role, which the tenant purge needs; a delete guard needs a purge door
+with it.
+A meeting commitment or other is fulfilled by a governed write with a reason; what met it may be named. AnA cannot
+sign, so its fulfil tool refuses a PMR, PMC or REMS and points to Communication, Meetings & commitments. There is no
+separation of duties: the signer attests to the record, not to another person's work. Correcting a fulfilment
+signed in error (§11.70 supersession, or a reopen) is owed. Evidence: `docs/evidence/D2-COMMITMENT-FULFILMENT/2026-10-19/`.
 
 ## How sessions run under this file
 

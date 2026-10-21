@@ -9,6 +9,7 @@ export interface AssemblyBuildOptions {
   savedSourceReuseRefusal?: string | null;
   isCurrent?: () => boolean;
   onStructureBuilt: (data: AssemblyCommitData) => void | Promise<void>;
+  onRecoveryChecked?: (current: () => boolean, headers: Record<string, string>) => boolean | Promise<boolean>;
   onReviewSection: (sectionId: string) => void;
 }
 export interface AssemblyTemplate { id: string; name: string }
@@ -38,11 +39,12 @@ export interface AssemblyBuildController extends AssemblyBuildState, SavedAssemb
   preview: () => Promise<void>; build: () => Promise<void>; check: () => Promise<void>; retryDrafts: () => Promise<void>;
   stop: () => void; review: (sectionId: string) => void; markAccepted: (sectionId: string) => void;
   loadTemplates: () => Promise<void>;
+  leaveRefusal: () => string | null;
   adoptSources: (sources: AssemblySourceSelector[] | null) => boolean;
 }
 export interface AssemblyBucket {
   state: AssemblyBuildState; token: object | null; stopRequested: boolean;
-  reviewToken?: object;
+  reviewToken?: object; owner: object;
   sourceRevision: number;
   savedSourcesCache?: SavedAssemblySourcesCache;
 }

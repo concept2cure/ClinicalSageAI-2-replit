@@ -1,0 +1,10 @@
+{
+  "files": {
+    "README.md": "c56428cf1e7eb327c63f6600164548824f6953b5f4a57ca89dd8b22a0a384cc4",
+    "baseline-command.json": "c0e72ec6d700534584d69f28b3d8a405a33dd4c369383d2a73effaa8a1b707aa",
+    "baseline-red.txt": "069d361bde0a22744a4a5b293ad534392fc7743a973830f7447c923902b78421",
+    "frozen-test.json": "dee9e7dda989f1ce52818e9f99bb0f6ef9dd6b9885faab03408aff9e8d77eb47",
+    "lint-command.json": "2d44db8f303e4fed30a3817c05dfabaf784bb8e7ad22b677e8c6c039ca4137e3",
+    "lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

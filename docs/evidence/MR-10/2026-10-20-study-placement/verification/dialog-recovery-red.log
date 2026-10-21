@@ -1,0 +1,99 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > requires both human values before any saved-content read, copy or leaf write
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > rejects an invalid study filename before any copy or write
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the target sequence changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the canonical section changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the target submission changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > resets manual study values when the source canonical section changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > keeps exempt placements free of hidden study metadata
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > preserves other regions advisory placement with an empty metadata pair
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault placement study input gates > omits previously entered metadata when placing a Delete leaf
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > requires both human values before any saved-content read, copy or leaf write
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > rejects an invalid study filename before any copy or write
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the target sequence changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the canonical section changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the target submission changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > resets manual study values when the source canonical section changes
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > keeps exempt placements free of hidden study metadata
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > preserves other regions advisory placement with an empty metadata pair
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring placement study input gates > omits previously entered metadata when placing a Delete leaf
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > sends the exact human values through the existing source chain and confirms them
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > holds an unconfirmed mismatch receipt with no replay
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > holds an unconfirmed missing receipt with no replay
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault exact study placement receipt > holds an unconfirmed 204 receipt with no replay
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > sends the exact human values through the existing source chain and confirms them
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > holds an unconfirmed mismatch receipt with no replay
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > holds an unconfirmed missing receipt with no replay
+ ↓ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring exact study placement receipt > holds an unconfirmed 204 receipt with no replay
+ × client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault delayed automatic target selection > resets manual study values entered before the singleton sequence response arrives 629ms
+   → expected <input id="vpf-study-id" …(3)></input> to have property "value" with value ''
+ × client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring delayed automatic target selection > resets manual study values entered before the singleton sequence response arrives 237ms
+   → expected <input id="apf-study-id" …(3)></input> to have property "value" with value ''
+ × client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring snapshot outcome reconciliation > holds a bodyless snapshot204 response without requesting a leaf or replaying the copy 290ms
+   → expected <button …(2)>…(1)</button> to have property "disabled" with value true
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > vault delayed automatic target selection > resets manual study values entered before the singleton sequence response arrives
+AssertionError: expected <input id="vpf-study-id" …(3)></input> to have property "value" with value ''
+
+- Expected
++ Received
+
++ STUDY-101
+
+ ❯ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx:163:48
+    161|     await screen.findByRole('option', { name: /0000/ });
+    162|     expect(screen.getByLabelText('Sequence')).toHaveProperty('value', …
+    163|     expect(screen.getByLabelText(/^Study id/)).toHaveProperty('value',…
+       |                                                ^
+    164|     expect(screen.getByLabelText(/^STF file-tag/)).toHaveProperty('val…
+    165|     expect(posts()).toHaveLength(0); expect(puts()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring delayed automatic target selection > resets manual study values entered before the singleton sequence response arrives
+AssertionError: expected <input id="apf-study-id" …(3)></input> to have property "value" with value ''
+
+- Expected
++ Received
+
++ STUDY-101
+
+ ❯ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx:163:48
+    161|     await screen.findByRole('option', { name: /0000/ });
+    162|     expect(screen.getByLabelText('Sequence')).toHaveProperty('value', …
+    163|     expect(screen.getByLabelText(/^Study id/)).toHaveProperty('value',…
+       |                                                ^
+    164|     expect(screen.getByLabelText(/^STF file-tag/)).toHaveProperty('val…
+    165|     expect(posts()).toHaveLength(0); expect(puts()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx > authoring snapshot outcome reconciliation > holds a bodyless snapshot204 response without requesting a leaf or replaying the copy
+AssertionError: expected <button …(2)>…(1)</button> to have property "disabled" with value true
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/studyPlacementDialogs.test.tsx:175:38
+    173|     await screen.findByText(/filing snapshot could not/i);
+    174|     expect(posts()).toHaveLength(1); expect(puts()).toHaveLength(0);
+    175|     expect(placeButton('authoring')).toHaveProperty('disabled', true);
+       |                                      ^
+    176|     fireEvent.click(placeButton('authoring')); expect(posts()).toHaveL…
+    177|     expect(screen.getByLabelText(/^Study id/)).toHaveProperty('value',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 26 skipped (29)
+   Start at  23:43:35
+   Duration  5.26s (transform 1.92s, setup 340ms, import 2.28s, tests 1.16s, environment 1.05s)
+

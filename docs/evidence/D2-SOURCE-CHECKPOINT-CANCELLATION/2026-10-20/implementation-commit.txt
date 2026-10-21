@@ -1,0 +1,63 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/ana/AnaDocumentDraftingService.ts (1494 lines)
+  server/services/ana/AnaToolExecutor.ts (22065 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3305 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 3b880f96d] fix(ana): stop between selected-source operations
+ 49 files changed, 8703 insertions(+), 17 deletions(-)
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/baseline-source-pins.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/contract-commit.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/frozen-tests.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/baseline-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/baseline-pins.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/baseline-raw.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/frozen-evidence-sha256.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/lint-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/lint-raw.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/gateway/lint-result.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/green-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/green-tests.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/independent-review.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/initial-implementation-green-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/initial-implementation-green-tests.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/lint-baseline-stderr.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/lint-baseline-summary.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/lint-comparison.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/lint-final-stderr.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/lint-final-summary.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/lint-initial-implementation-stderr.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/lint-initial-implementation-summary.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader-regression-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader-regression.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/baseline-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/baseline-red.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/fixture-import-diagnostic-baseline-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/fixture-import-diagnostic-baseline-red.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/frozen-sha256.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/service/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/service/baseline-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/service/baseline-red.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/source-input-pins.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/tool/baseline-command.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/tool/baseline-summary.json
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/tool/frozen-test.ts.txt
+ create mode 100644 docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/tool/initial-red.txt
+ create mode 100644 server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts
+ create mode 100644 server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts
+ create mode 100644 server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts
+ create mode 100644 server/services/ana/__tests__/draft-source-operation-cancellation.test.ts

@@ -6,7 +6,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import type { Editor } from '@tiptap/core';
 const request = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: request }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: 10, displayName: 'Quality author', email: 'quality@example.test' } }) }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(),
+  useAuth: () => ({ user: { id: 10, displayName: 'Quality author', email: 'quality@example.test' } }) }));
 vi.mock('../../v2/surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../../v2/surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../../v2/surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));

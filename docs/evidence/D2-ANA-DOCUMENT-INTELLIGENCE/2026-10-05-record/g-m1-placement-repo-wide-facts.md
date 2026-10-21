@@ -118,8 +118,78 @@ files above were fixed, not listed.
 - **Regions other than US are unchecked, not held.** The scan skips non-US pairs because there is no
   EU or JP Module 1 contract yet. Thirteen EU and JP headings in the record are correct as far as
   this gate knows and as far as it can say.
-- **Modules 2–5 are not scanned repo-wide.** The registered copies are held to the Module 2–5
-  contract; this gate adds only Module 1 everywhere. The same scanner would extend to it, and the
-  five wrong Module 5 headings found on 2026-10-12 suggest it should. **Owed.**
+- **Modules 2–5 are deliberately not held repo-wide.** This was built, measured and removed — see
+  below. The registered copies are still held to the Module 2–5 contract.
 - `advise_ctd_structure` still answers from five hardcoded modules, and placements already stored in
   client databases are still uncorrected. **Owed, unchanged.**
+
+
+---
+
+# Second round, same day: the Module 2–5 extension, built and removed
+
+The note above originally read *"the same scanner would extend to Modules 2–5 … owed"*. It was
+built. The reasoning was sound — Modules 2–5 are the **common** technical document, so unlike
+Module 1 the check needs no region: 2.7.3 is Summary of Clinical Efficacy in Tokyo, Amsterdam and
+Silver Spring alike (ICH M4E(R2)). The measurement was not.
+
+**Twenty-eight findings, and almost none was a CTD defect.** The digits `4.x` and `5.x` belong to
+three other numbering systems this platform legitimately holds:
+
+| Source | What its `4.x` / `5.x` / `2.x` means |
+|---|---|
+| `server/services/labeling/smpc-qrd-catalog.ts` | **EU SmPC sections** — 4.4 Special warnings, 4.5 Interactions, 4.8 Undesirable effects, 4.9 Overdose. The QRD template, not CTD Module 4. |
+| `scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs` | **ISO 15223-1 symbols** — 5.1.1 Manufacturer, 5.1.4 Use-by date, 5.4.3 Consult instructions for use. Device labelling, not CTD Module 5. |
+| `server/services/csr-builder.ts` | a **CSR outline's own numbering** — 2.8 Efficacy Results, 2.9 Safety Results, 2.10 Conclusions. |
+
+A gate whose baseline would hold twenty-eight rows of other people's numbering is a gate nobody
+reads. So it is **not shipped**, and `m1-placement-repo-wide.test.ts` says so in a named test
+rather than leaving the absence to be rediscovered — the same discipline the claims engine used
+when it deleted a rule the corpus could not make fail.
+
+The Module 1 half is viable for a reason worth writing down: a `1.x` code under a section key is
+almost always an eCTD regional placement, and the region heuristic has real markers to work from.
+The `4.x` and `5.x` digits have neither property.
+
+## Two things the measurement produced, which are kept
+
+**A real defect.** `violationsFor`'s *Module 1 document filed outside Module 1* rule now runs on the
+widened code key, repository-wide, and found
+`services/regulatory/pyramids/ind-amendment-pyramid.ts:285 — 5.3.5.4 "Investigator's Brochure"` —
+the same Module 5 misfiling `ind-pyramid.ts` carried until 2026-10-12. The sibling pyramid kept it
+a day longer. It is now on the record through `m1Binding()`.
+
+**A gap in the record itself.** Six rows reported as *"not an ICH M4 heading"* were **correct**:
+ICH M4S(R2) **2.4.1–2.4.6** — the Nonclinical Overview's own subsections (Overview of the
+Nonclinical Testing Strategy, Pharmacology, Pharmacokinetics, Toxicology, Integrated Overview and
+Conclusions, List of Literature References). `server/services/market-specs/document-template-library.ts`
+stated them correctly and `ich-m4-headings.ts` did not hold them at all. The record was the half
+that was wrong, and it now carries them with the file's own `M4S(R2)` recall basis.
+
+## One refinement attempted and reverted, because a proven rule caught it
+
+Two annual-report bindings also fired the outside-Module-1 rule:
+`2.7.4 "Summary of Clinical Safety — Annual Report"` and
+`5.3.5 "Individual Study Information — Annual Report"`. Both are the annual report's Module 2 and
+Module 5 **content**, not the report misfiled.
+
+The first attempt stood the rule down whenever the pair agreed with the Module 2–5 record. That
+**broke the rule for the case it was built for**: the Vault mutation — the IB put back at 5.3 —
+started passing, because 5.3 *is* a modelled heading ("Clinical Study Reports") and
+"investigator's brochure" does not *contradict* that title by any term pair. The permanent
+revert-mutation from 2026-10-12 is what caught it, within one test run.
+
+So the refinement was reverted and the two titles were fixed instead — they no longer end in
+"— Annual Report", because the annual report is one document and it files at 1.13 (21 CFR 312.33).
+The rule stays as proven.
+
+## Green, second round
+
+- `tests/regulatory/` — **69 files, 1395 tests** (two more than the first round: the removed
+  check's reason, and the record's six new headings).
+- `tests/services/regulatory/` + `server/services/ind/__tests__` + `server/services/market-specs` —
+  33 files, 533 tests.
+- `tsc --noEmit` clean.
+
+The record's new rows had to move: `ich-m4-headings.test.ts` requires CTD order, and inserting
+2.4.1–2.4.6 after 2.5.7 failed it. That gate was not written by this change and it worked.

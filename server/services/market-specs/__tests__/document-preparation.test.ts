@@ -80,7 +80,7 @@ describe('biotech document preparation — exact scope and document-specific inq
     expect(() => buildDocumentPreparation({ templateId: 'protocol', registryId: 'EU_CTA', market: 'US' })).toThrow(/market/i);
   });
   it('does not assume a drug pathway for a device entry', () => {
-    expect(() => buildDocumentPreparation({ templateId: 'protocol', registryId: 'US_510K' })).toThrow(/biotech/i);
+    expect(() => buildDocumentPreparation({ templateId: 'protocol', registryId: 'US_510K' })).toThrow(/medicinal-product template conflicts/i);
   });
   it('routes all four marketing regions with independent regional requirements', () => {
     for (const id of ['US_NDA', 'US_BLA', 'EU_MAA', 'CA_NDS', 'JP_MKT_APPROVAL']) {
@@ -103,8 +103,11 @@ describe('biotech document preparation — exact scope and document-specific inq
       if (registryId === 'ICH_SAP') expect(p.remainingTopics).not.toContain('statistical_results');
     }
   });
-  it('refuses device component preparation without requiring a registry id', () => {
-    expect(() => buildDocumentPreparation({ templateId: 'k510_summary' })).toThrow(/biotech medicinal-product/i);
+  it('prepares an exact device component without inventing a medicinal pathway', () => {
+    const plan = buildDocumentPreparation({ templateId: 'k510_summary' });
+    expect(plan.questions[0].question).toMatch(/intended use/i);
+    expect(plan.registryId).toBeNull();
+    expect(plan.evidenceReviewed).toBe(false);
   });
   it.each(['smpc', 'impd', 'risk_management_plan', 'rmp'])('refuses %s as a direct non-EU build', templateId => {
     expect(() => buildDocumentPreparation({ templateId, market: 'US' })).toThrow(/current regional.*client template/i);
@@ -207,8 +210,11 @@ describe('biotech preparation — lifecycle inquiry depth', () => {
     const p = buildDocumentPreparation({ registryId: 'CA_CTA_A', templateId: 'protocol', discussedTopics: [...continuation] });
     expect(p.questions[0].topic).toBe('estimands');
   });
-  it('rejects a global device clinical-investigation entry instead of treating its family as a medicinal product', () => {
-    expect(() => buildDocumentPreparation({ registryId: 'ISO_CIP', market: 'EU' })).toThrow(/biotech medicinal-product/);
+  it('prepares a global device clinical-investigation entry using its confirmed device market', () => {
+    const plan = buildDocumentPreparation({ registryId: 'ISO_CIP', market: 'EU' });
+    expect(plan.regionalRoute?.channel).not.toBe('CTIS');
+    expect(plan.questions[0].question).toMatch(/device.*intended use/i);
+    expect(plan.questions[2].question).toMatch(/clinical investigation/i);
   });
   it('does not turn complete lifecycle discussion markers into qualified evidence', () => {
     const p = buildDocumentPreparation({ registryId: 'JP_MINOR_CHANGE', discussedTopics: [...PREPARATION_TOPICS] });

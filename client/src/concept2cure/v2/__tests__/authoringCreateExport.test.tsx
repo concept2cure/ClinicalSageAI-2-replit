@@ -11,6 +11,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -31,6 +33,8 @@ function ok(payload: unknown, status = 200) {
 }
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
+const ACTOR = { id: '7', organizationId: '12', email: 'author@example.test', roles: ['admin'], permissions: ['governed:write'] };
+const BEARER = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
 
 /* The export formats are items of the one Download menu (editor/DownloadMenu.tsx). */
 function controlledItem(format: 'Word' | 'PDF' | 'XML'): HTMLElement {
@@ -42,6 +46,10 @@ function exportAs(format: 'Word' | 'PDF' | 'XML') {
 }
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
+  clearAuthToken();
+  localStorage.clear();
+  sessionStorage.clear();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
 
@@ -164,6 +172,10 @@ describe('Authoring export context isolation', () => {
   });
 });
 beforeEach(() => {
+  clearAuthToken();
+  localStorage.clear();
+  sessionStorage.clear();
+  authService.setToken(BEARER, ACTOR, 'fixture-refresh', 3600);
   // A document is created in the open project (PF-07).
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROJECT, title: 'BX-204 IND' };
   apiRequest.mockReset();

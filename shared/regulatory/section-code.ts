@@ -121,6 +121,19 @@ export function normalizeCtdCode(value: string | null | undefined): string | nul
 }
 
 /**
+ * Whether `code` is `ancestor` or lies under it, by whole segments, both read
+ * through {@link normalizeCtdCode}: 3.2.P.5.1 is under 3.2.P.5, and 3.2.P.50 is
+ * not (a string prefix would say it is). False when either is not code-shaped.
+ * A Module is its single-digit code ('3').
+ */
+export function ctdCodeWithin(code: string | null | undefined, ancestor: string | null | undefined): boolean {
+  const c = normalizeCtdCode(code);
+  const a = normalizeCtdCode(ancestor);
+  if (c === null || a === null) return false;
+  return c === a || c.startsWith(`${a}.`);
+}
+
+/**
  * Compare two section codes for display and assembly order.
  * Suitable directly as an `Array.prototype.sort` comparator.
  */

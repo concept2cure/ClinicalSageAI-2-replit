@@ -1,0 +1,150 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > exact retained task target > opens the requested business ID rather than another task with the same title
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > exact retained task target > refreshes and focuses an exact target hidden by filters while Tasks is already mounted
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > exact retained task target > refuses another store’s ID rather than opening it through unified-task controls
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > keeps cached matching rows closed until the requested refresh settles
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > discards an earlier target read when a later exact target is requested
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a target when the 'unread unified store' cannot support it
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a target when the 'unprovisioned store' cannot support it
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > allows a verified native task while honestly retaining an unrelated partial-store notice
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'forbidden' without falling back to a title match
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'missing task' without falling back to a title match
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'archived task' without falling back to a title match
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > task targets require a fresh readable unified-store result > refuses a 'duplicate exact ID' without falling back to a title match
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B&taskActor=8&taskOrg=7 without opening a detail
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B&taskActor=7&taskOrg=8 without opening a detail
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B&taskActor=7&taskOrg=7&taskId=TASK-A without opening a detail
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses malformed or foreign target ?taskId=TASK-B without opening a detail
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses an identity token swap before React has published the new actor
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > refuses a token swap while the fresh target read is pending
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > permits a refreshed bearer for the same actor and organization
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > retires old-owner reads and forms immediately on an actor or organization replacement
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > target scope and retained ownership > does not publish a late old-owner response under a replacement account
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > preserves an open task and its archive reason without deferred replacement
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > preserves an unfinished create form and refuses its target without a delayed opening
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > preserves the native workflow picker
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > rechecks native ownership if a form opens during the fresh read
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native work owns its task screen > consumes only the task target and can reopen the same exact task after closing
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > does not call AnA after the bearer changes before React rerenders
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > does not resurrect an original actor callback after A→B→A replacement
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > does not call the shell after its board has unmounted
+ ↓ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > native callbacks cannot outlive their actor session > preserves an in-progress native signature when another task is requested
+ × client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > refuses the initial workflow write after a same-tick token replacement 624ms
+   → expected 'Could not create the tasks (HTTP 200).' to match /account or organization changed/
+ × client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > does not auto-assign original tasks under an account that replaced the actor during creation 190ms
+   → expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > does not resurrect auto-assignment after the original actor returns 236ms
+   → expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > rechecks the actor after awaiting the creation response body 155ms
+   → expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > allows same-actor refresh and pins the matched bearer for each workflow write 176ms
+   → expected undefined to deeply equal { …(2) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > refuses the initial workflow write after a same-tick token replacement
+AssertionError: expected 'Could not create the tasks (HTTP 200).' to match /account or organization changed/
+
+- Expected:
+/account or organization changed/
+
++ Received:
+"Could not create the tasks (HTTP 200)."
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx:338:60
+    336|     render(view()); await settleBoard(); const button = await workflow…
+    337|     setAuthToken(token(8, 7)); fireEvent.click(button);
+    338|     expect((await screen.findByRole('alert')).textContent).toMatch(/ac…
+       |                                                            ^
+    339|     expect(mocks.apiRequest.mock.calls.filter(call => call[0] === 'POS…
+    340|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > does not auto-assign original tasks under an account that replaced the actor during creation
+AssertionError: expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx:346:27
+    344|     render(view()); await settleBoard(); await startWorkflow(true);
+    345|     setAuthToken(token(8, 7)); await act(async () => pending.resolve(w…
+    346|     expect(assignments()).toHaveLength(0);
+       |                           ^
+    347|     expect((await screen.findByRole('alert')).textContent).toMatch(/ta…
+    348|     expect(mocks.onAsk).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > does not resurrect auto-assignment after the original actor returns
+AssertionError: expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx:359:27
+    357|     mounted.rerender(view()); await settleBoard();
+    358|     await act(async () => pending.resolve(workflowCreated()));
+    359|     expect(assignments()).toHaveLength(0); expect(mocks.onAsk).not.toH…
+       |                           ^
+    360|   });
+    361|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > rechecks the actor after awaiting the creation response body
+AssertionError: expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx:368:27
+    366|     setAuthToken(token(8, 7));
+    367|     await act(async () => body.resolve({ success: true, data: [{ taskI…
+    368|     expect(assignments()).toHaveLength(0);
+       |                           ^
+    369|     expect((await screen.findByRole('alert')).textContent).toMatch(/ta…
+    370|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx > workflow follow-up writes stay with their captured actor > allows same-actor refresh and pins the matched bearer for each workflow write
+AssertionError: expected undefined to deeply equal { …(2) }
+
+- Expected:
+{
+  "Authorization": "Bearer fixture.eyJ1c2VySWQiOjcsIm9yZ2FuaXphdGlvbklkIjo3fQ==.fixture",
+  "x-organization-id": "7",
+}
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx:376:24
+    374|     render(view()); await settleBoard(); await startWorkflow(true);
+    375|     const initial = mocks.apiRequest.mock.calls.find(call => call[1].i…
+    376|     expect(initial[3]).toEqual({ Authorization: `Bearer ${token()}`, '…
+       |                        ^
+    377|     const refreshed = `refresh.${btoa(JSON.stringify({ userId: 7, orga…
+    378|     setAuthToken(refreshed); await act(async () => pending.resolve(wor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 30 skipped (35)
+   Start at  21:59:25
+   Duration  4.58s (transform 992ms, setup 236ms, import 1.23s, tests 1.39s, environment 1.37s)
+

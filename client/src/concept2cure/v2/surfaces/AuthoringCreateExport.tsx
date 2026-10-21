@@ -51,7 +51,7 @@ export interface AuthoringCreateExportProps {
   programId?: string | null;
   programSwitchHeld?: boolean;
   /** Show/refresh the existing host only after an explicit scoped recovery read. */
-  onCheckCreation?: (kind: CreationKind) => void | Promise<void>;
+  onCheckCreation?: (kind: CreationKind) => boolean | Promise<boolean>;
   /** Existing workbench notice area, outside its touch toolbar scroller. */
   noticeContainer?: HTMLElement | null;
   /** The document's lifecycle status. Export of a filing artifact is refused
@@ -267,7 +267,7 @@ function CreationRecoveryNotice({ kind, state, disabled, onCheck, onOpen }: {
     label: state.checking ? 'Checking…' : kind === 'document' ? 'Check working documents' : 'Check document sections',
     onClick: onCheck, disabled: disabled || state.checking,
   });
-  if (state.canOpenRecovered) actions.push({ label: 'Open identified document', onClick: onOpen, disabled });
+  if (state.canOpenRecovered) actions.push({ label: `Open identified ${kind}`, onClick: onOpen, disabled });
   if (state.phase === 'created') actions.push({ label: `Open created ${kind}`, onClick: onOpen, disabled });
   return <AuthoringRecoveryNotice role={state.phase === 'created' ? 'status' : 'alert'} actions={actions}
     message={state.phase === 'created' ? `${kind === 'document' ? 'Document' : 'Section'} created.` : state.message} />;
