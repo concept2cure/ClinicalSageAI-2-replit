@@ -49,8 +49,9 @@ structural refreeze, original sources, diffs and baseline replay;
 [frozen-tests.json](frozen-tests.json) pins the final layouts. Earlier flawed
 fixture attempts remain separately labeled in each owner's evidence.
 
-Final regression and publication results are recorded with their commands under
-`root/` and in the publication supplement. Scoped lint across all nine changed
+The final canonical Node 22 regression passed **613 tests / 37 suites, with zero
+skips**. Commands and raw output are under `root/`; publication results are in
+the publication supplement. Scoped lint across all nine changed
 TypeScript files has **zero errors and no warning growth**: the same 138 existing
 warnings in the large stream, executor and chat hosts, zero in every other file.
 No suppressions or warning baselines changed. Three independent production
