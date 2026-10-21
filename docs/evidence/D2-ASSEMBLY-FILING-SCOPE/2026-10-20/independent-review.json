@@ -61,5 +61,19 @@
       "Commit retains FOR SHARE OF d,p; preview has no lock clause"
     ],
     "sourceSha256": "9b88fa8db2a9868506a0f549bba81dcabc13349b602bd31e01cbe2e3df4c5bf2"
+  },
+  "publicationIntegration": {
+    "at": "2026-10-21T00:18:29.795328+00:00",
+    "reviewer": "/root/regional_authoring_audit",
+    "mode": "Read-only incoming code/integration review, no edits/tests/Git mutations",
+    "incomingCanonical": "cb4065898efa6c1422ea5fb3b3a995de069e7569",
+    "conclusion": "No blockers",
+    "findings": [
+      "Placement occurs downstream of existing saved-content/copy chain and does not alter assembly source/receipts/binding/review",
+      "Exact manually supplied study metadata participates in confirmed leaf receipt",
+      "Bodyless/mismatched outcomes hold rather than replay",
+      "Session/current guards preserve chain ownership"
+    ],
+    "regressionSelection": "publication-test-inputs.json"
   }
 }

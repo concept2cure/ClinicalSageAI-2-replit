@@ -102,3 +102,28 @@ qualified freeze support the results above. No baseline was increased.
 Human acceptance, live AnA/provider behavior, full fresh PostgreSQL installation,
 official form adequacy and agency transmission remain unverified. This is a
 local/Codespaces authoring increment, not a commercial-launch or filing verdict.
+
+## Canonical reconciliation before publication
+
+The first direct push of implementation `9a4da8500` passed every normal pre-push
+gate, then Git refused a non-fast-forward update because canonical had advanced
+to `cb4065898`. A normal conflict-free merge `270cb8e88` integrates that study
+placement work in Authoring, Vault, Builder and the shared STF helpers. All 14
+assembly/review code files and all 232 original qualification pins remain exact;
+see [reconciliation](publication-reconciliation.json) and the appended independent
+review. No force push, hook bypass or baseline increase was used.
+
+[Merged qualification](publication-qualification.json) records **412 passed across
+21 suites**, zero failures and two pre-existing TODOs. The TODOs are the existing
+approved-Vault-version leaf path and superseding a prior Vault version when
+re-filing edited text; both were verified present at `9a4da8500`. They remain open
+work, not passing tests. The original 1,101 and this 412 are overlapping cohorts
+and must not be summed.
+
+The [merged compiler](publication-typecheck.json) reports zero errors;
+[merged build](publication-build.json) exits 0; all
+[16 merged static gates](publication-static-gates.json) pass. The
+[248-input publication freeze](publication-source-freeze.json), separate focused
+test pins and all checks report no source drift. The final fetch found no further
+incoming commits. This reconciliation changes evidence only after the merge;
+the authoring implementation is preserved.
