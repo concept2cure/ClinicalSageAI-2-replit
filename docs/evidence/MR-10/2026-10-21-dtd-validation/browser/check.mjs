@@ -49,7 +49,7 @@ const exampleFor = mode => examples[({ 'invalid-stf': 'invalid-stf', 'missing-dt
 const paths = examples['synthetic-valid'].evidence.dtdStatus.validation.expectedFiles;
 function statusFor(mode) {
   if (mode === 'legacy') return undefined;
-  const status = structuredClone(exampleFor(mode).evidence.dtdStatus);
+  const status = globalThis.structuredClone(exampleFor(mode).evidence.dtdStatus);
   if (mode === 'missing-tool') status.validation.files.forEach(file => Object.assign(file.dtd, { ran: false, valid: false, errors: ['xmllint not available'] }));
   if (mode === 'empty-proof') Object.assign(status.validation, { files: [], expectedFiles: [], passed: true });
   if (!['pass', 'empty-proof'].includes(mode)) status.validation.passed = false;

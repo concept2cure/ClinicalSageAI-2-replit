@@ -115,3 +115,11 @@ was verified clear. CI runs are separate from these local/normal push checks.
 every archived file except itself. Primary input manifests bind the tests and
 browser results to the source tree; the final evidence tree is checked after
 commit. Human witnessing and agency acceptance are unexecuted.
+
+The evidence-only push caught one checker lint warning for the unqualified
+Node structuredClone global. Qualifying it with globalThis removed the warning;
+all three checker files then linted with zero errors/warnings and all eight
+Chromium scenarios passed again. Product code, test counts, build and source
+qualification were unchanged. Browser anchor records the Git base; dated
+fixture inputs were qualified before their final evidence commit, and their
+exact hashes are verified against the published tree.

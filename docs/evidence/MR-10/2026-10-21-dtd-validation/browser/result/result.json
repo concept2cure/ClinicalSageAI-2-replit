@@ -1,7 +1,7 @@
 {
   "status": "pass",
-  "executedAt": "2026-10-21T00:46:15.629Z",
-  "anchor": "218e49eb8898015938bf0a6603f077a1543f46af",
+  "executedAt": "2026-10-21T00:59:18.381Z",
+  "anchor": "fb4216144c98c020a4fb672056075e8efc42239a",
   "fixtureOnly": true,
   "humanWitnessed": false,
   "agencyAcceptance": false,
@@ -308,7 +308,7 @@
     "docs/evidence/MR-10/2026-10-21-dtd-validation/package-examples/tampered-support.zip": "716c3b5d765dd7fde8d2fd4cce8cee604502f5a2515ef611751c7a84cd3362c5",
     "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/probe.tsx": "c843ddbf06dc6804364947886781adabaf9887e164db118ba621131841db5bac",
     "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/server.mjs": "ad2c66c4df4f343feb3d4b2aabab067cd3e4dea98b6a41fe931705a49629eac0",
-    "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/check.mjs": "e9cb1f2749ef291706abdcea5317d7e9d11cf2f26e448f3923b25cbd5fe8dc8f",
+    "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/check.mjs": "1f2560e610763dbff117b30c9b20543dea97b672ca6e65383da8a79633353944",
     "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/index.html": "57a8dae0df8d54c848d28ae36b5d90464047cbbfe1a3be4867cdbd2eba37d70a"
   }
 }
