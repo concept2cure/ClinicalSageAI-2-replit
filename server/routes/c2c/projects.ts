@@ -21,6 +21,7 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import type { PoolClient } from 'pg';
 import {
@@ -89,6 +90,7 @@ import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, Prog
 import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 import { AnaProjectScopeError } from '../../services/ana/project-scope-admission';
 import { readProjectAuthoringRecords } from '../../services/c2c/project-authoring-records';
+import { readProjectTeam } from '../../services/c2c/project-team';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
 
 /** A filing the market verdict does not offer, found once the scaffold has
@@ -1169,79 +1171,20 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
 
 // ── GET /api/c2c/projects/:id/team ───────────────────────────────────────────
 //
-// The roster comes from `regulatory_programs` itself: lead_user_id resolved
-// against `users`, plus whatever the wizard stored in team_members.
-//
-// It used to read `project_members` — and could never return a row. That table
-// keys on project_id INTEGER (projects.id), while this surface's :id is a
-// regulatory_programs UUID, so the join raised 42883 (operator does not exist:
-// uuid = integer) on every request; it also selected pm.added_at, a column the
-// table does not have (it has created_at / accepted_at). Both errors landed in
-// a bare `catch { team: [] }`, so the panel rendered "no members" forever with
-// nothing logged. project_members cannot hold membership for a uuid-keyed
-// program at all, so the fix is to stop pretending it does.
-//
-// team_members entries are surfaced name-only with a null user_id: the create
-// handler stores bare strings there (it filters the wizard payload to
-// `typeof m === 'string'`), and a name is not an identity — inventing a user id
-// or an email to fill the shape would be fabricating a person.
+// Recorded responsibilities and current sharing are independent facts. The
+// admitted integer anchor joins the durable roster; recorded names stay
+// unlinked. The service rechecks current project admission before returning.
 
 router.get('/:id/team', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
-    const { rows } = await pool.query(
-      `SELECT p.lead_user_id, p.team_members, u.name, u.email
-         FROM regulatory_programs p
-         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
-        WHERE p.id = $1 AND p.organization_id = $2
-        LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (rows.length === 0) return send404(res);
-
-    const program = rows[0] as {
-      lead_user_id: number | null;
-      team_members: unknown;
-      name: string | null;
-      email: string | null;
-    };
-
-    const team: Array<{
-      user_id: number | null;
-      role: string | null;
-      name: string | null;
-      email: string | null;
-    }> = [];
-
-    if (program.lead_user_id != null) {
-      team.push({
-        user_id: Number(program.lead_user_id),
-        role: 'lead',
-        name: program.name ?? null,
-        email: program.email ?? null,
-      });
-    }
-
-    const named = Array.isArray(program.team_members) ? program.team_members : [];
-    for (const member of named) {
-      if (typeof member !== 'string') continue;
-      const memberName = member.trim();
-      if (!memberName) continue;
-      team.push({ user_id: null, role: null, name: memberName, email: null });
-    }
-
-    return res.json({ team });
+    const access = res.locals.currentProgramAccess;
+    if (!access) throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    return res.json(await readProjectTeam(requestPgClient(req), { organizationId: orgId, access }));
   } catch (err: unknown) {
-    // Only an undefined table degrades to an empty roster — that is a
-    // not-yet-provisioned store, not a failure. Anything else is a real error
-    // and is logged and reported; the previous silent swallow is what let the
-    // uuid/integer join fail unnoticed for the life of this endpoint.
-    if ((err as { code?: string })?.code === '42P01') {
-      return res.json({ team: [] });
-    }
-    return serverError(res, logger, 'loading the project team', err, { programId: String(req.params.id) });
+    return sendProjectAccessFailure(res, err, true);
   }
 });
 
