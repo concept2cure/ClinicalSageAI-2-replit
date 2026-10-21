@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-21T00:15:03.839Z",
+  "generatedAt": "2026-10-21T01:03:32.229Z",
   "git": {
-    "sha": "ff0155e5dd964b91c72f1a65eaf20e0debbfa9d8",
+    "sha": "218e49eb8898015938bf0a6603f077a1543f46af",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,11 +12,11 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 237,
+    "duplicateBasenames": 239,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
-    "largeFilesByLines": 112
+    "largeFilesByLines": 113
   },
   "findings": {
     "duplicateBasenames": [
@@ -1760,6 +1760,22 @@
         ]
       },
       {
+        "basename": "project-team",
+        "count": 2,
+        "paths": [
+          "server/services/c2c/project-team.ts",
+          "shared/project-team.ts"
+        ]
+      },
+      {
+        "basename": "project-team.test",
+        "count": 2,
+        "paths": [
+          "server/services/c2c/__tests__/project-team.test.ts",
+          "shared/__tests__/project-team.test.ts"
+        ]
+      },
+      {
         "basename": "projecthome",
         "count": 2,
         "paths": [
@@ -2220,7 +2236,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1155322
+        "bytes": 1156053
       },
       {
         "file": "shared/schema.ts",
@@ -2252,7 +2268,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 199479
+        "bytes": 199686
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2363,10 +2379,6 @@
         "bytes": 121186
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 120925
-      },
-      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 119989
       },
@@ -2377,6 +2389,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "bytes": 119001
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 118827
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
@@ -2432,7 +2448,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 103332
+        "bytes": 103375
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2450,7 +2466,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22049
+        "lines": 22058
       },
       {
         "file": "shared/schema.ts",
@@ -2494,7 +2510,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3922
+        "lines": 3924
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2601,10 +2617,6 @@
         "lines": 2386
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2353
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 2338
       },
@@ -2615,6 +2627,10 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2324
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2296
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2681,6 +2697,10 @@
         "lines": 2115
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2101
+      },
+      {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
         "lines": 2095
       },
@@ -2709,10 +2729,6 @@
         "lines": 2044
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2030
-      },
-      {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
       },
@@ -2721,8 +2737,8 @@
         "lines": 2020
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 2016
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2019
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2755,6 +2771,10 @@
       {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1881
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
@@ -2795,10 +2815,6 @@
       {
         "file": "server/services/vaccine/vaccine-knowledge.ts",
         "lines": 1836
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1828
       },
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
@@ -2893,6 +2909,10 @@
         "lines": 1555
       },
       {
+        "file": "server/services/submission-gateways/regional-packager.ts",
+        "lines": 1517
+      },
+      {
         "file": "shared/constants/ui-surface-registry.ui-v2.ts",
         "lines": 1516
       }
@@ -2902,9 +2922,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 443,
+      "duplicateGroups": 445,
       "largeByBytes": 41,
-      "largeByLines": 87
+      "largeByLines": 88
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2914,7 +2934,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 90,
+      "duplicateGroups": 92,
       "largeByBytes": 3,
       "largeByLines": 3
     },

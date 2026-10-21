@@ -49,6 +49,7 @@
  */
 
 import { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
+import { STF_DTD } from './dtd-bundler';
 export { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
 import { FDA_STUDY_DATA_TRC, recall } from '../ind/ctd/regulatory-basis';
 import type { RegulatoryBasis } from '../ind/ctd/types';
@@ -202,7 +203,7 @@ function checkStfLeaf(leaf: StfLeaf, warnings: string[]): void {
 }
 
 /** The STF document for one study: study-identifier, then a doc-content per tagged leaf. */
-function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]): string {
+function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[], dtdSystemPath = STF_DTD): string {
   const docContents = tagged.map(
     (l) =>
       `    <doc-content xlink:href="${escapeXml(`${l.indexRelPath}#${l.indexLeafId}`)}">\n` +
@@ -213,7 +214,7 @@ function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]): 
 
   return (
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<!DOCTYPE ectd:study SYSTEM "ich-stf-v2-2.dtd">\n` +
+    `<!DOCTYPE ectd:study SYSTEM "${escapeXml(dtdSystemPath)}">\n` +
     `<ectd:study xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="${STF_DTD_VERSION}">\n` +
     `  <study-identifier>\n` +
     `    <title>${escapeXml(title)}</title>\n` +
@@ -236,7 +237,7 @@ function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]): 
  *   1735 list; when a study id cannot form an eCTD file name; or when two study
  *   ids fold to the same file name.
  */
-export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = []): StfResult {
+export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = [], options: { dtdSystemPath?: (studyId: string) => string } = {}): StfResult {
   const metaById = new Map(studyMeta.map((m) => [m.studyId, m]));
   const byStudy = new Map<string, StfLeaf[]>();
   const warnings: string[] = [];
@@ -280,7 +281,7 @@ export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = 
     // A study whose leaves are all deleted in this sequence has nothing to tag.
     if (tagged.length === 0) continue;
 
-    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged);
+    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged, options.dtdSystemPath?.(studyId));
     files.push({ studyId, fileName, xml, leafCount: tagged.length });
   }
 

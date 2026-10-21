@@ -45,6 +45,9 @@ import { downloadBlob, downloadText, safeFileName } from '../download';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
 import { OrchestratorRunControls } from './OrchestratorRunControls';
+import { captureShellProjectGuard, useShellProject, type ShellProject } from '../shellProject';
+import { useSubmissionReadSession } from './submissionScopedRead';
+import { PackageDtdValidation, RegionalPackageFact, type PackageDtdStatus } from './EctdCompileDtdEvidence';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -150,6 +153,8 @@ interface CompiledPackage {
     /** FDA forms shipped with FDA's own security settings — never converted, by rule. */
     agencyFormsAsIssued?: string[];
   } | null;
+  dtdStatus?: PackageDtdStatus;
+  regionalStatus?: { region: string; file: string; regionConformant: boolean; conformanceGap?: string; placeholderOf?: string };
 }
 interface CompilationRow {
   id: number | string;
@@ -163,6 +168,7 @@ interface CompilationRow {
   has_manifest?: boolean;
   /** An agency-validator report run outside the product, imported against this compilation. */
   external_validation?: ImportedReport | null;
+  packageDtdValidation?: { packageSha256: string; dtdStatus: PackageDtdStatus } | null;
 }
 
 /** A LORENZ eValidator report as the server keeps it (ectd_compilations.external_validation). */
@@ -525,6 +531,7 @@ function PackageFacts({ result }: { result: CompileResult }) {
       </li>
       {result.recorded === true && <li>Recorded — its leaf manifest is what the next sequence is diffed against.</li>}
       {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
+      {pkg && <RegionalPackageFact pkg={pkg} />}
       {pdfa && <PdfaFacts pdfa={pdfa} />}
     </ul>
   );
@@ -554,7 +561,7 @@ function reportCounts(r: Pick<ImportedReport, 'errorCount' | 'warningCount' | 'i
  * focusable button (the input itself is not in the tab order). A refused report
  * is shown in the server's words.
  */
-function EvalidatorImport({ identPath, row, onImported, seqBody }: { identPath: string; row: CompilationRow; onImported: () => void; seqBody: { sequenceId?: number } }) {
+function EvalidatorImport({ identPath, row, onImported, seqBody, isScopeCurrent }: { identPath: string; row: CompilationRow; onImported: () => void; seqBody: { sequenceId?: number }; isScopeCurrent: () => boolean }) {
   const picker = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -562,9 +569,12 @@ function EvalidatorImport({ identPath, row, onImported, seqBody }: { identPath: 
   const seq = row.sequence_number ?? String(row.id);
   const current = row.external_validation ?? null;
   const verb = current ? 'Replace eValidator report' : 'Import eValidator report';
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const stillCurrent = () => mounted.current && isScopeCurrent();
 
   const onFile = async (file: File | undefined) => {
-    if (!file) return;
+    if (!file || !stillCurrent()) return;
     if (file.size > 2 * 1024 * 1024) { setError('This report is larger than 2 MB, the most one import carries.'); return; }
     setBusy(true); setError(null);
     let text: string;
@@ -576,13 +586,16 @@ function EvalidatorImport({ identPath, row, onImported, seqBody }: { identPath: 
         reader.readAsText(file);
       });
     } catch {
+      if (!stillCurrent()) return;
       setBusy(false); setError('The file could not be read.');
       return;
     }
+    if (!stillCurrent()) return;
     const { ok, body } = await readJson<{ error?: { message?: string } }>('POST', `/api/ectd-compile/${identPath}/validate`, {
       evalidatorReport: { compilationId: Number(row.id), fileName: file.name, text },
       ...seqBody,
     });
+    if (!stillCurrent()) return;
     setBusy(false);
     if (!ok) { setError(serverMessage(body) ?? 'The report was not imported.'); return; }
     onImported();
@@ -669,7 +682,7 @@ function EvalidatorReportView({ row }: { row: CompilationRow }) {
 }
 
 /** The compilation history, with each packaged compilation's imported agency-validator report. */
-function CompilationHistoryTable({ history, identPath, onImported, seqBody }: { history: CompilationRow[]; identPath: string | null; onImported: () => void; seqBody: { sequenceId?: number } }) {
+function CompilationHistoryTable({ history, identPath, onImported, seqBody, isScopeCurrent }: { history: CompilationRow[]; identPath: string | null; onImported: () => void; seqBody: { sequenceId?: number }; isScopeCurrent: () => boolean }) {
   return (
     <>
       <table className="reg-tbl"><thead><tr><th>Name</th><th>Sequence</th><th>Leaf manifest</th><th>Type</th><th>Version</th><th>Status</th><th>Agency validator</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
@@ -682,11 +695,13 @@ function CompilationHistoryTable({ history, identPath, onImported, seqBody }: { 
             <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
             <td>
               {h.external_validation && <div>{reportCounts(h.external_validation)}</div>}
-              {h.has_manifest && identPath != null ? <EvalidatorImport identPath={identPath} row={h} onImported={onImported} seqBody={seqBody} /> : (!h.external_validation && '—')}
+              {h.has_manifest && identPath != null ? <EvalidatorImport identPath={identPath} row={h} onImported={onImported} seqBody={seqBody} isScopeCurrent={isScopeCurrent} /> : (!h.external_validation && '—')}
             </td>
             <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
           </tr>))}</tbody></table>
       {history.map((h) => <EvalidatorReportView key={`report-${String(h.id)}`} row={h} />)}
+      {history.map(h => <PackageDtdValidation key={`dtd-${String(h.id)}`} status={h.packageDtdValidation?.dtdStatus}
+        packageSha256={h.packageDtdValidation?.packageSha256} label={`DTD validation for ${h.compilation_name}`} />)}
     </>
   );
 }
@@ -701,6 +716,21 @@ function exportRequestBody(result: CompileResult | null, regionBody: Record<stri
     ...(result?.sequenceNumber ? { sequenceNumber: result.sequenceNumber } : {}),
     ...(result?.lifecycle?.priorState === 'rehearsal' ? { rehearsal: true } : {}),
   };
+}
+
+function exportedPackageName(response: Response, ident: string | null, result: CompileResult | null): string {
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  return /filename="([^"]+)"/.exec(disposition)?.[1] ??
+    safeFileName(`ectd-${ident}-seq-${result?.sequenceNumber ?? 'package'}`) + '.zip';
+}
+
+function compilationNotice(body: CompileResult): { text: string; tone: 'ok' | 'error' } {
+  // Compilation and submission readiness remain separate server facts.
+  if (body.status === 'completed') return {
+    text: `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`,
+    tone: 'ok',
+  };
+  return { text: `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`, tone: 'error' };
 }
 
 /** What a rehearsal was bound against, and what it is for. */
@@ -785,6 +815,7 @@ function CompiledPackageView({ result, ident }: { result: CompileResult; ident: 
   return (
     <div style={{ marginTop: 10 }}>
       <PackageFacts result={result} />
+      <PackageDtdValidation status={pkg.dtdStatus} packageSha256={pkg.sha256} label="Package DTD validation" />
       <LifecycleView result={result} />
       <section aria-label="Leaf hierarchy" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Leaf hierarchy</div>
@@ -819,8 +850,7 @@ function CompiledPackageView({ result, ident }: { result: CompileResult; ident: 
  * org-scoped; this surface never demands a numeric id (that demand was a
  * permanent dead-end: window.C2C_PROJECT.id is a program UUID).
  */
-function readProjectIdent(): { ident: string | null; title?: string; code?: string } {
-  const p = (window as unknown as { C2C_PROJECT?: { id?: unknown; title?: string; code?: string } }).C2C_PROJECT;
+function readProjectIdent(p: ShellProject | null): { ident: string | null; title?: string; code?: string } {
   if (!p || p.id == null) return { ident: null };
   const ident = String(p.id).trim();
   return { ident: ident !== '' ? ident : null, title: p.title, code: p.code };
@@ -830,24 +860,44 @@ const REGIONS = ['FDA', 'EMA'] as const;
 const SUB_TYPES = ['initial', 'amendment'] as const;
 
 export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+  const project = useShellProject();
+  const session = useSubmissionReadSession();
+  const proj = readProjectIdent(project);
+  const context = JSON.stringify([session.key, proj.ident]);
+  const visit = useRef({ context, generation: 0, projectCurrent: captureShellProjectGuard() });
+  if (visit.current.context !== context || !visit.current.projectCurrent()) {
+    visit.current = { context, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  }
+  const owner = visit.current;
+  // The navigation handoff belongs to the visit that consumed it, including A → B → A.
+  const [opened] = useState(() => {
+    const id = consumeNavParams('ectd-compile')?.sequenceId;
+    return { owner, sequence: id && /^\d+$/.test(id) ? id : null };
+  });
+  const isScopeCurrent = useCallback(() => visit.current === owner && session.sameRevision() && owner.projectCurrent(), [owner, session]);
+  return <EctdCompileForScope key={`${context}:${owner.generation}`} onAsk={onAsk} onNav={onNav}
+    proj={proj} openedSequence={opened.owner === owner ? opened.sequence : null} isScopeCurrent={isScopeCurrent} />;
+}
+
+function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurrent }: Pick<SurfaceViewProps, 'onAsk' | 'onNav'> & {
+  proj: ReturnType<typeof readProjectIdent>; openedSequence: string | null; isScopeCurrent: () => boolean;
+}) {
   /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
      so a publisher staring at a validation finding — the moment they most need
      to know what a rule means and whether it blocks the filing — had no way to
      ask. The prompts name the artefact on screen rather than the page. */
   const ask = onAsk;
-  const proj = readProjectIdent();
   const ident = proj.ident;
   const identPath = ident != null ? encodeURIComponent(ident) : null;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const current = useCallback(() => mounted.current && isScopeCurrent(), [isScopeCurrent]);
 
   /* Opened on a sequence (F14, the Dispatch tab's door): every read and write
      here names it, so this is that sequence's compile, not the one the
      project's application type would pick. The server refuses a sequence the
      project does not own. Read once, on mount, as the Submission Center reads
      its own (F10). */
-  const [openedSequence] = useState(() => {
-    const id = consumeNavParams('ectd-compile')?.sequenceId;
-    return id && /^\d+$/.test(id) ? id : null;
-  });
   const seqQuery = openedSequence ? `?sequenceId=${openedSequence}` : '';
   const seqBody = useMemo(() => (openedSequence ? { sequenceId: Number(openedSequence) } : {}), [openedSequence]);
 
@@ -870,6 +920,9 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
   // outcome is kept, exactly like statusState.
   const [historyState, setHistoryState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [busy, setBusy] = useState<'validate' | 'compile' | 'export' | null>(null);
+  const readRevision = useRef({ status: 0, history: 0 });
+  const actionRevision = useRef(0);
+  const actionCurrent = useCallback((request: number) => current() && actionRevision.current === request, [current]);
   const [toast, fireToast] = useToast();
 
   // ── Orchestrator pipeline state (folded in from the deleted duplicate) ──
@@ -977,20 +1030,24 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
   }, [orchRun]);
 
   const loadStatus = useCallback(async () => {
-    if (identPath == null) return;
+    if (identPath == null || !current()) return;
+    const request = ++readRevision.current.status;
     setStatusState('loading');
     const { ok, body } = await readJson<StatusView>('GET', `/api/ectd-compile/${identPath}/status${seqQuery}`);
+    if (!current() || readRevision.current.status !== request) return;
     if (!ok || !body) { setStatusState('error'); setStatus(null); return; }
     setStatus(body); setStatusState('ready');
-  }, [identPath, seqQuery]);
+  }, [identPath, seqQuery, current]);
 
   const loadHistory = useCallback(async () => {
-    if (identPath == null) return;
+    if (identPath == null || !current()) return;
+    const request = ++readRevision.current.history;
     setHistoryState('loading');
     const { ok, body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${identPath}/history`);
+    if (!current() || readRevision.current.history !== request) return;
     if (!ok || !body || !Array.isArray(body.compilations)) { setHistoryState('error'); setHistory([]); return; }
     setHistory(body.compilations); setHistoryState('ready');
-  }, [identPath]);
+  }, [identPath, current]);
 
   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
 
@@ -1008,12 +1065,14 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
   const [rehearsal, setRehearsal] = useState(false);
 
   const doValidate = useCallback(async () => {
-    if (identPath == null) return;
+    if (identPath == null || !current()) return;
+    const request = ++actionRevision.current;
     setBusy('validate');
     try {
       const { ok, status: st, body } = await readJson<{ valid: boolean; results: ValidationResult[]; summary: { pass: number; warnings: number; errors: number } }>(
         'POST', `/api/ectd-compile/${identPath}/validate`, { ...regionBody, ...seqBody },
       );
+      if (!actionCurrent(request)) return;
       if (!ok || !body) {
         fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
         // Do NOT collapse a failed run into an empty findings list — that reads
@@ -1023,8 +1082,8 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
       setValidationFailed(false);
       setFindings(body.results ?? []);
       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
-    } finally { setBusy(null); }
-  }, [identPath, regionBody, seqBody, fireToast]);
+    } finally { if (actionCurrent(request)) setBusy(null); }
+  }, [identPath, regionBody, seqBody, fireToast, current, actionCurrent]);
 
   /* The actual deliverable. The compile proves the package exists (leaf
      counts, sha256) — this hands the publisher its BYTES through the governed
@@ -1034,33 +1093,36 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
      button never renders for them. */
   const doExport = useCallback(async () => {
     const subId = compileResult?.submissionId;
-    if (subId == null) return;
+    if (subId == null || !current()) return;
+    const request = ++actionRevision.current;
     setBusy('export');
     try {
       const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
+      if (!actionCurrent(request)) return;
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (!actionCurrent(request)) return;
         fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
         return;
       }
       const blob = await res.blob();
-      const cd = res.headers.get('Content-Disposition') ?? '';
-      const name =
-        /filename="([^"]+)"/.exec(cd)?.[1] ??
-        safeFileName(`ectd-${ident}-seq-${compileResult?.sequenceNumber ?? 'package'}`) + '.zip';
+      if (!actionCurrent(request)) return;
+      const name = exportedPackageName(res, ident, compileResult);
       downloadBlob(name, blob);
       fireToast(`eCTD package downloaded — ${name}.`);
     } catch (e) {
+      if (!actionCurrent(request)) return;
       // apiRequest throws on a refused build (422: validation failure or the
       // completeness gate) with the server's own sentence — say it verbatim.
       fireToast('The package was not returned — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.', 'error');
     } finally {
-      setBusy(null);
+      if (actionCurrent(request)) setBusy(null);
     }
-  }, [compileResult, regionBody, ident, fireToast]);
+  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent]);
 
   const doCompile = useCallback(async () => {
-    if (identPath == null) return;
+    if (identPath == null || !current()) return;
+    const request = ++actionRevision.current;
     setBusy('compile');
     try {
       const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
@@ -1069,6 +1131,7 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
         ...seqBody,
         ...(followUp && rehearsal ? { rehearsal: true } : {}),
       });
+      if (!actionCurrent(request)) return;
       if (!ok || !body) {
         const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
         fireToast(
@@ -1080,21 +1143,11 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
       setCompileResult(body);
       setValidationFailed(false);
       setFindings(body.validationResults ?? null);
-      fireToast(
-        body.status === 'completed'
-          // The backbone compiled; that is what the toast reports. It does not
-          // claim the package can be submitted — that is the blockers panel's job,
-          // and saying "submission-ready" in a toast over an unrendered package is
-          // the claim this surface got wrong.
-          ? `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`
-          : `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`,
-        // One call, two opposite outcomes: the tone has to follow the same
-        // branch the sentence does, or a blocked compile keeps the tick.
-        body.status === 'completed' ? 'ok' : 'error',
-      );
+      const notice = compilationNotice(body);
+      fireToast(notice.text, notice.tone);
       void loadStatus(); void loadHistory();
-    } finally { setBusy(null); }
-  }, [identPath, submissionType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory]);
+    } finally { if (actionCurrent(request)) setBusy(null); }
+  }, [identPath, submissionType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory, current, actionCurrent]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
      `usePublishSurfaceContext` is a hook and a hook below a conditional return
@@ -1589,7 +1642,7 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
           ) : history.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No compilations yet" hint="Each Compile run is recorded here with its status and version." /></div>
           ) : (
-            <CompilationHistoryTable history={history} identPath={identPath} seqBody={seqBody} onImported={() => { void loadHistory(); }} />
+            <CompilationHistoryTable history={history} identPath={identPath} seqBody={seqBody} onImported={() => { void loadHistory(); }} isScopeCurrent={current} />
           )}
         </div>
       </div>

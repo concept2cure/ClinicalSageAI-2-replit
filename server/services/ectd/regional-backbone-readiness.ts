@@ -33,6 +33,8 @@
  */
 
 import type { Region } from '../submission-gateways/types';
+import type { DtdValidationEvidence } from '../../../shared/regulatory/ectd-dtd-validation';
+import { dtdFileValidationPassed, dtdIntegrityPassed, requiredDtdsForRegion } from './dtd-bundler';
 
 /**
  * Regions whose builder writes the agency's own Module 1 structure AND reports
@@ -118,6 +120,7 @@ export function classifyRegionalBackbone(
   region: Region,
   file: string,
   buildGaps?: readonly string[],
+  validation?: DtdValidationEvidence,
 ): RegionalBackboneStatus {
   if (STRUCTURE_REPORTING_REGIONS.has(region)) {
     if (!buildGaps) {
@@ -126,12 +129,22 @@ export function classifyRegionalBackbone(
         conformanceGap: 'its builder reported nothing about the Module 1 structure it wrote, so conformance cannot be claimed for the region alone',
       };
     }
-    if (!buildGaps.length) return { region, file, regionConformant: true };
+    if (!buildGaps.length) return regionalDtdVerified(region, file, validation)
+      ? { region, file, regionConformant: true }
+      : { region, file, regionConformant: false, conformanceGap: 'current regional DTD execution and supportive-file integrity are not verified' };
     return { region, file, regionConformant: false, conformanceGap: summariseBuildGaps(buildGaps) };
   }
   const gap = FLAT_MODULE1_GAP[region];
   if (gap) return { region, file, regionConformant: false, conformanceGap: gap };
   return { region, file, regionConformant: false, placeholderOf: PLACEHOLDER_OF[region] ?? 'ema' };
+}
+
+function regionalDtdVerified(region: Region, file: string, validation: DtdValidationEvidence | undefined): boolean {
+  if (validation?.version !== 1 || !Array.isArray(validation.expectedFiles) || !validation.expectedFiles.includes(file) ||
+      !Array.isArray(validation.files) || !dtdIntegrityPassed(validation.integrity)) return false;
+  const regionalRows = validation.files.filter(row => row?.relPath === file);
+  return regionalRows.length === 1 && dtdFileValidationPassed(regionalRows[0]) &&
+    requiredDtdsForRegion(region).every(name => validation.integrity.verified.includes(name));
 }
 
 /** Read the opt-in enforcement flag (mirrors dtdRequiredFromEnv / pdfaRequiredFromEnv). */
@@ -144,6 +157,7 @@ export interface RegionalBackboneGateInput {
   environment: 'staging' | 'production';
   /** Wire from regionalBackboneRequiredFromEnv(); false ⇒ report-only. */
   required: boolean;
+  validation?: DtdValidationEvidence;
 }
 
 export interface RegionalBackboneGateResult {
@@ -177,18 +191,20 @@ export function evaluateRegionalBackboneGate(input: RegionalBackboneGateInput): 
       warnings.push(
         'ECTD_REQUIRE_REGIONAL_BACKBONE is set but the bundle carries no regional-backbone status — cannot prove Module 1 conformance at transmit time.',
       );
+      if (input.environment === 'production') blockers.push('Required regional backbone conformance has no current validation evidence. Re-assemble and validate the package.');
     }
     return { blockers, warnings };
   }
   const R = status.region.toUpperCase();
+  const conformant = status.regionConformant === true && regionalDtdVerified(status.region, status.file, input.validation);
   const check = {
     name: 'regional-backbone-conformant',
-    passed: status.regionConformant,
-    detail: status.regionConformant
+    passed: conformant,
+    detail: conformant
       ? `${status.region} Module 1 backbone is region-conformant (${status.file})`
       : `${status.region} Module 1 backbone is not region-conformant: ${nonConformanceReason(status)} (${status.file})`,
   };
-  if (!status.regionConformant) {
+  if (!conformant) {
     const msg =
       `${status.file} is NOT an ${R}-conformant Module 1 backbone — ${nonConformanceReason(status)}. ` +
       `A regional validator will not accept it as ${R} Module 1.`;
