@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-21T01:55:11.948Z",
+  "generatedAt": "2026-10-21T02:31:19.825Z",
   "git": {
-    "sha": "924458ef37578e47f144d7aac58f0dd22c656384",
+    "sha": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2245,7 +2245,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1156296
+        "bytes": 1156408
       },
       {
         "file": "shared/schema.ts",
@@ -2276,12 +2276,12 @@
         "bytes": 221837
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 200247
+        "file": "server/services/submission-service/submission-service.ts",
+        "bytes": 204181
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 196279
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 200247
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2304,16 +2304,16 @@
         "bytes": 157173
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 156427
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 155148
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 154069
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 153534
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2405,7 +2405,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "bytes": 117107
+        "bytes": 118776
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2429,7 +2429,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "bytes": 111747
+        "bytes": 111986
       },
       {
         "file": "server/routes/auth.ts",
@@ -2475,7 +2475,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22062
+        "lines": 22064
       },
       {
         "file": "shared/schema.ts",
@@ -2515,7 +2515,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 3963
+        "lines": 4058
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2526,12 +2526,12 @@
         "lines": 3651
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "lines": 3564
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3578
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3534
+        "file": "server/services/intelligent-report-engine.ts",
+        "lines": 3564
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2627,7 +2627,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2338
+        "lines": 2359
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2719,7 +2719,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 2070
+        "lines": 2076
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
