@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-21T01:03:32.229Z",
+  "generatedAt": "2026-10-21T01:21:56.522Z",
   "git": {
-    "sha": "218e49eb8898015938bf0a6603f077a1543f46af",
+    "sha": "bd24ecb4c5dc7ead0a7d61113c53daf8a903df1a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -220,6 +220,26 @@
         ]
       },
       {
+        "basename": "probe",
+        "count": 14,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx",
+          "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/probe.tsx",
+          "docs/evidence/MR-10/2026-10-20-study-placement/browser/probe.tsx",
+          "docs/evidence/MR-10/2026-10-21-dtd-validation/browser/probe.tsx"
+        ]
+      },
+      {
         "basename": "data",
         "count": 13,
         "paths": [
@@ -236,25 +256,6 @@
           "ui_kits/risk/data.jsx",
           "ui_kits/submission/data.jsx",
           "ui_kits/tasking/data.jsx"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 13,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx",
-          "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/probe.tsx",
-          "docs/evidence/MR-10/2026-10-20-study-placement/browser/probe.tsx"
         ]
       },
       {
@@ -2236,7 +2237,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1156053
+        "bytes": 1156296
       },
       {
         "file": "shared/schema.ts",
@@ -2268,7 +2269,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 199686
+        "bytes": 200247
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2466,7 +2467,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22058
+        "lines": 22062
       },
       {
         "file": "shared/schema.ts",
@@ -2510,7 +2511,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3924
+        "lines": 3933
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2928,7 +2929,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 168,
+      "duplicateGroups": 169,
       "largeByBytes": 0,
       "largeByLines": 5
     },
