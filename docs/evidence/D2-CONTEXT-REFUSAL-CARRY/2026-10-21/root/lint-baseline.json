@@ -1,0 +1,528 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ai-gateway/gateway-error-map.ts",
+    "server/routes/chat/send-message.ts",
+    "server/routes/ana-ri/stream.ts"
+  ],
+  "exitCode": 0,
+  "stdoutSha256": "1be5ce5016e2c5193615879002d4b08e5c3da6b5e743a77931c0c67de25ba658",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/routes/ana-ri/stream.ts",
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'dbPool' is assigned a value but never used.",
+          "line": 247,
+          "column": 7,
+          "messageId": "unusedVar",
+          "endLine": 247,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'mountStreamRoute' has too many lines (2146). Maximum allowed is 100.",
+          "line": 553,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 553,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (2077). Maximum allowed is 100.",
+          "line": 554,
+          "column": 62,
+          "messageId": "exceed",
+          "endLine": 554,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 297. Maximum allowed is 15.",
+          "line": 554,
+          "column": 62,
+          "messageId": "complex",
+          "endLine": 554,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (2560). Maximum allowed is 500.",
+          "line": 737,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 3933,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1623,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 1623,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1674,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 1674,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 1676,
+          "column": 15,
+          "messageId": "tooDeeply",
+          "endLine": 1676,
+          "endColumn": 18
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (7). Maximum allowed is 4.",
+          "line": 1684,
+          "column": 17,
+          "messageId": "tooDeeply",
+          "endLine": 1684,
+          "endColumn": 19
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (7). Maximum allowed is 4.",
+          "line": 1689,
+          "column": 17,
+          "messageId": "tooDeeply",
+          "endLine": 1689,
+          "endColumn": 19
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (108). Maximum allowed is 100.",
+          "line": 2418,
+          "column": 37,
+          "messageId": "exceed",
+          "endLine": 2418,
+          "endColumn": 39
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (463). Maximum allowed is 100.",
+          "line": 2544,
+          "column": 39,
+          "messageId": "exceed",
+          "endLine": 2544,
+          "endColumn": 41
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 87. Maximum allowed is 15.",
+          "line": 2544,
+          "column": 39,
+          "messageId": "complex",
+          "endLine": 2544,
+          "endColumn": 41
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 2640,
+          "column": 27,
+          "messageId": "complex",
+          "endLine": 2640,
+          "endColumn": 29
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 2913,
+          "column": 19,
+          "messageId": "tooDeeply",
+          "endLine": 2913,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 2914,
+          "column": 21,
+          "messageId": "tooDeeply",
+          "endLine": 2914,
+          "endColumn": 23
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 2915,
+          "column": 21,
+          "messageId": "tooDeeply",
+          "endLine": 2915,
+          "endColumn": 23
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 2926,
+          "column": 19,
+          "messageId": "tooDeeply",
+          "endLine": 2926,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 2941,
+          "column": 19,
+          "messageId": "tooDeeply",
+          "endLine": 2941,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 2948,
+          "column": 21,
+          "messageId": "tooDeeply",
+          "endLine": 2948,
+          "endColumn": 23
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 2971,
+          "column": 19,
+          "messageId": "tooDeeply",
+          "endLine": 2971,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 2982,
+          "column": 19,
+          "messageId": "tooDeeply",
+          "endLine": 2982,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 2989,
+          "column": 21,
+          "messageId": "tooDeeply",
+          "endLine": 2989,
+          "endColumn": 23
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15.",
+          "line": 3276,
+          "column": 31,
+          "messageId": "complex",
+          "endLine": 3276,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 3872,
+          "column": 77,
+          "messageId": "complex",
+          "endLine": 3872,
+          "endColumn": 79
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 25,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/routes/chat/send-message.ts",
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (993). Maximum allowed is 100.",
+          "line": 99,
+          "column": 71,
+          "messageId": "exceed",
+          "endLine": 99,
+          "endColumn": 73
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 220. Maximum allowed is 15.",
+          "line": 99,
+          "column": 71,
+          "messageId": "complex",
+          "endLine": 99,
+          "endColumn": 73
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 166,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 166,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 376,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 376,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 380,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 380,
+          "endColumn": 16
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 404,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 404,
+          "endColumn": 16
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 415,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 415,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 561,
+          "column": 7,
+          "messageId": "limited",
+          "endLine": 561,
+          "endColumn": 18,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  25053,
+                  25328
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1067). Maximum allowed is 500.",
+          "line": 655,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1371,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 679,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 679,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 741,
+          "column": 7,
+          "messageId": "limited",
+          "endLine": 741,
+          "endColumn": 18,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  33217,
+                  33306
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 911,
+          "column": 7,
+          "messageId": "limited",
+          "endLine": 911,
+          "endColumn": 18,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  42574,
+                  42690
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1101,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1101,
+          "endColumn": 14
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 1103,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 1103,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1123,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1123,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1146,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1146,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 1149,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 1149,
+          "endColumn": 16
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1171,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1171,
+          "endColumn": 13
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 18,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ai-gateway/gateway-error-map.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}
