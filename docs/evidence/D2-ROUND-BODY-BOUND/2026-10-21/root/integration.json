@@ -1,0 +1,10 @@
+{
+  "implementation": "7780de83f",
+  "incoming": "d0ca34715fb0691d89a484cf76505c37b1435b16",
+  "mergedHead": "679557d17ecd217127a7564c41f25cf36fa56af3",
+  "conflicts": 0,
+  "qualifiedProductionAnd37TestHashesUnchanged": true,
+  "otherSelectedInputHashesUnchanged": true,
+  "incomingScope": "Reviewed eCTD DTD/backbone/compile/packager metadata, shellProject guard/tests and repo-health reports. No direct overlap; indirect package_ectd_for_region behavior remains outside current synthetic fixtures.",
+  "decision": "Qualification inputs unchanged; no redundant repeat test. Normal pre-push whole-project TypeScript verifies combined types."
+}

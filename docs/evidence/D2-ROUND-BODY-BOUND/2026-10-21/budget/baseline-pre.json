@@ -1,0 +1,112 @@
+{
+  "baseline": "8c6bd712ecbf0e8e6a62cd581d1b1f7186b98aaf",
+  "baseline_inputs_sha256": "312804a9ec66cb23cc9be9520488a581f7feced05fcef5158e548145166139d8",
+  "files": {
+    "server/services/ana/agentic-loop.ts": {
+      "expected": "23ab7c53361bf36d839a27d9666a6ce6ce2316d96de1a41f319b4dd00e88430d",
+      "actual": "23ab7c53361bf36d839a27d9666a6ce6ce2316d96de1a41f319b4dd00e88430d",
+      "unchanged": true
+    },
+    "server/services/ana/read-receipts.ts": {
+      "expected": "41327c0cd6cabb31eaa82e4ff057caa253548541c38b5b55e48cf63612fa87aa",
+      "actual": "41327c0cd6cabb31eaa82e4ff057caa253548541c38b5b55e48cf63612fa87aa",
+      "unchanged": true
+    },
+    "server/services/ana/source-read-receipt.ts": {
+      "expected": "acb08a8e5a05334e005f4452b88ee1fd2d487b0bd18147288af137d047558097",
+      "actual": "acb08a8e5a05334e005f4452b88ee1fd2d487b0bd18147288af137d047558097",
+      "unchanged": true
+    },
+    "server/services/ana/AnaToolExecutor.ts": {
+      "expected": "09a176505809cc69e63752a09f9c7dbd5a0f50737b62378490d64a7be2bcc096",
+      "actual": "09a176505809cc69e63752a09f9c7dbd5a0f50737b62378490d64a7be2bcc096",
+      "unchanged": true
+    },
+    "server/routes/ana-ri/stream.ts": {
+      "expected": "464e52eb3f4f5f680f4769e816872f31614cd7dbaa1a4d108e5150bd82395047",
+      "actual": "464e52eb3f4f5f680f4769e816872f31614cd7dbaa1a4d108e5150bd82395047",
+      "unchanged": true
+    },
+    "server/routes/chat/send-message.ts": {
+      "expected": "4369d26f74e345d22bb89efc9038f4ea1eebf99a37a9faf8108bf5a54c8c0781",
+      "actual": "4369d26f74e345d22bb89efc9038f4ea1eebf99a37a9faf8108bf5a54c8c0781",
+      "unchanged": true
+    },
+    "server/services/ana/tool-outcome.ts": {
+      "expected": "0bf780dfb755e773f84e55782a77d43b358522fbf09234262ea19df29cfbf7ae",
+      "actual": "0bf780dfb755e773f84e55782a77d43b358522fbf09234262ea19df29cfbf7ae",
+      "unchanged": true
+    },
+    "server/services/ana/sub-agent.ts": {
+      "expected": "a3c7eb48dba9144651a2b97ede7aedd3f1aa206021f70e30f46f4d6ee8321794",
+      "actual": "a3c7eb48dba9144651a2b97ede7aedd3f1aa206021f70e30f46f4d6ee8321794",
+      "unchanged": true
+    },
+    "server/services/ana/sub-agent-shape.ts": {
+      "expected": "6e64dd3f35897cfd198b8f034518b0276468cc9b868f45a3a5b5e6fce341311d",
+      "actual": "6e64dd3f35897cfd198b8f034518b0276468cc9b868f45a3a5b5e6fce341311d",
+      "unchanged": true
+    },
+    "server/services/ana/sub-agent-stream.ts": {
+      "expected": "2d2315a232475c6f4a9c5c97896dfdad8969fc7130250043210f0c1dbfa19dea",
+      "actual": "2d2315a232475c6f4a9c5c97896dfdad8969fc7130250043210f0c1dbfa19dea",
+      "unchanged": true
+    },
+    "server/services/ana/tool-output-frame.ts": {
+      "expected": "b90e0a4e095e93fb1d8faf23e008906f5e7ab2ea32e802ba59da8ac57c95a5f1",
+      "actual": "b90e0a4e095e93fb1d8faf23e008906f5e7ab2ea32e802ba59da8ac57c95a5f1",
+      "unchanged": true
+    },
+    "server/routes/ana-ri/__tests__/support/stream-route-harness.ts": {
+      "expected": "16e71e0fca55baffe19925a7d31c6cfcbdb6035de5c6fc862f739ea848071d4b",
+      "actual": "16e71e0fca55baffe19925a7d31c6cfcbdb6035de5c6fc862f739ea848071d4b",
+      "unchanged": true
+    },
+    "server/services/ana/__tests__/support/read-delivery-vault.ts": {
+      "expected": "5aaac109f5da2a242fadffcb5dfcf73cf810b05c53fb183e23144fb7c71589bc",
+      "actual": "5aaac109f5da2a242fadffcb5dfcf73cf810b05c53fb183e23144fb7c71589bc",
+      "unchanged": true
+    },
+    "package.json": {
+      "expected": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+      "actual": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+      "unchanged": true
+    },
+    "package-lock.json": {
+      "expected": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+      "actual": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+      "unchanged": true
+    },
+    "vitest.config.ts": {
+      "expected": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "actual": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "unchanged": true
+    },
+    "tsconfig.json": {
+      "expected": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+      "actual": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+      "unchanged": true
+    },
+    ".husky/pre-push": {
+      "expected": "6e06c1338bebc01155c20eebcf2ebb2bfe474b1656ec920e7c6e7952a23bd053",
+      "actual": "6e06c1338bebc01155c20eebcf2ebb2bfe474b1656ec920e7c6e7952a23bd053",
+      "unchanged": true
+    },
+    ".husky/pre-commit": {
+      "expected": "4d8cde3b21f91140935b021db7861221633d6feb8641fde6f884bae7cd834f40",
+      "actual": "4d8cde3b21f91140935b021db7861221633d6feb8641fde6f884bae7cd834f40",
+      "unchanged": true
+    },
+    "AGENTS.md": {
+      "expected": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4",
+      "actual": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4",
+      "unchanged": true
+    },
+    "CLAUDE.md": {
+      "expected": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37",
+      "actual": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37",
+      "unchanged": true
+    }
+  },
+  "all_unchanged": true
+}

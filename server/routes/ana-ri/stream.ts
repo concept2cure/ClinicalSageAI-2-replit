@@ -91,7 +91,8 @@ import {
   runAgenticToolLoop,
   resolveMaxRounds,
   resolveRoundBudget,
-  capToolResultForModel,
+  assertToolResultBodyBudget,
+  ToolResultBudgetExceededError,
   assistantTurnContent,
   budgetToolResultsForModel,
   buildAdaptationNote,
@@ -3135,12 +3136,15 @@ export function mountStreamRoute(router: Router): void {
           // carry all prior results forward). Small rounds pass through under the
           // classic per-result caps, byte-identical to before. A read goes whole
           // or not at all, and its receipt is written only if it went whole.
-          const staged = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+          const staged = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts, strictTotal: true });
           const budgeted = await guardReadResultsForHandoff(entries, staged, readReceipts, { signal: runSignal });
           const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
           await settleReadReceipts(entries, budgeted, readReceipts, undefined, {
             signal: runSignal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(budgeted, id, { signal: runSignal })),
           });
+          // Late source refusal can grow bodies after allocation. Do not trim
+          // after receipt settlement or claim earlier outcomes were rolled back.
+          assertToolResultBodyBudget(budgeted);
           // What the model will read of each result, where the budget or the
           // drive-budget amendment changed it from what the tool returned.
           turnRecorder?.setSentToModel(budgeted);
@@ -3182,7 +3186,7 @@ export function mountStreamRoute(router: Router): void {
             buildAdaptationNote(roundFailures, calls.length),
             buildShortfallNote(
               ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack,
-                result: r.toolUse.name === 'search_document_passages' ? stagedById.get(r.toolUse.id) ?? r.resultStr : r.resultStr })),
+                result: stagedById.get(r.toolUse.id) ?? '' })),
               calls.length,
             ),
           ]
@@ -3219,13 +3223,15 @@ export function mountStreamRoute(router: Router): void {
            live; reading them interleaved made both harder to follow, and the
            mix pushed callModel past the complexity limit. */
         const stageRound = (results: ToolResultEntry[], priorText: string, round: number): void => {
+          // Replan control results bypass executeTools; all staged rounds fit.
+          assertToolResultBodyBudget(results);
           const stagedFrom = loopMessages.length;
           loopMessages.push({
             role: 'assistant',
             content: assistantTurnContent(priorText, results),
           });
-          // Entries arrive pre-budgeted from executeTools, so the per-result cap
-          // here is a no-op safety net. The adaptation note (when a tool failed
+          // Preserve accepted body bytes after corpus/recorder admission.
+          // The adaptation note (when a tool failed
           // last round) rides the same user turn so the model course-corrects
           // instead of retrying the identical call.
           const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
@@ -3237,7 +3243,7 @@ export function mountStreamRoute(router: Router): void {
                 .map(
                   tr =>
                     `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(
-                      capToolResultForModel(tr.content)
+                      tr.content
                     )}`
                 )
                 .join('\n\n') + adaptationSuffix,
@@ -3769,17 +3775,20 @@ export function mountStreamRoute(router: Router): void {
       }
       timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, turnPolicyOf?.stoppedReason('cancelled')) : null);
       const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
+      const budgetRefusal = error instanceof ToolResultBudgetExceededError ? error : null;
       if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({
             type: 'error',
-            error: 'An error occurred while generating the response',
+            error: budgetRefusal?.message ?? 'An error occurred while generating the response',
+            ...(budgetRefusal ? { code: budgetRefusal.code } : {}),
             turnRecord,
           })}\n\n`
         );
         res.end();
       } else {
-        sendError(res, 500, 'Internal server error');
+        if (budgetRefusal) sendError(res, 422, budgetRefusal.message, { turnRecord }, budgetRefusal.code);
+        else sendError(res, 500, 'Internal server error');
       }
     } finally {
       // Close the run. Guarded on a live status inside endRun, so a turn that
