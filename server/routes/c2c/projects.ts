@@ -21,6 +21,7 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
+import { readProjectActivity } from '../../services/c2c/project-activity.js';
 import { requestPgClient } from '../../db/requestDb';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import type { PoolClient } from 'pg';
@@ -1368,36 +1369,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   try {
     if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
-    // Columns aliased from what audit_logs ACTUALLY has (table_name /
-    // record_id / new_values — see migrations/0000_sweet_joseph.sql plus the
-    // chain fields from 20260527_mutation_primitives.sql) to the names the
-    // client's ActivityRow reads. The projection previously named
-    // resource_type / resource_id / details, none of which are columns, so
-    // every request raised 42703 into the catch below and the feed rendered
-    // empty no matter how much audited activity a project had.
-    const { rows } = await pool.query(
-      `SELECT
-         al.id, al.action, al.table_name AS resource_type, al.record_id AS resource_id,
-         COALESCE(al.actor_id, al.user_id) AS actor_id, al.new_values AS details,
-         COALESCE(u.name, u.email) AS actor_name,
-         al.occurred_at, al.ip_address
-       FROM audit_logs al
-       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
-       WHERE al.tenant_id = $2
-         AND (al.record_id = $1
-              OR al.target = 'regulatory_program:' || $1
-              OR al.new_values->>'project_id' = $1
-              OR al.new_values->>'programId' = $1
-              -- A governed action on one of the project's own filing documents
-              -- names its target (document:<id>), not the project (PF-17): the
-              -- scaffold that created the project's dossier was invisible here.
-              OR (al.target_type = 'document' AND al.target_id IN (
-                    SELECT d.id::text FROM c2c_documents d WHERE d.project_id = $1::uuid AND d.org_id = $2)))
-       ORDER BY al.occurred_at DESC NULLS LAST
-       LIMIT $3`,
-      [req.params.id, orgId, limit],
-    );
-
+    const rows = await readProjectActivity(pool, String(req.params.id), orgId, limit);
     return res.json({ activity: rows });
   } catch (err: unknown) {
     // The activity feed is an audit-log read; a caught failure must not render
