@@ -48,7 +48,8 @@ export interface IbcCompletenessInput {
 }
 
 const CHECK_AGENT_LEVEL = "each agent registered at or above its risk group's containment (NIH Guidelines Appendix B; BMBL)";
-const CHECK_CONTAINMENT = 'declared containment at or above the highest level the agents require (BMBL)';
+// Worded without "require (" (2026-10-15): ci:commonjs-require reads that as a require() call.
+const CHECK_CONTAINMENT = 'declared containment at or above the highest BMBL level the agents require';
 const CHECK_CONVENED = 'whether the work needs convened-IBC review (NIH Guidelines III-A/B/C, human gene transfer)';
 
 /**

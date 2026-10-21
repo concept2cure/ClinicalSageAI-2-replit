@@ -55,7 +55,7 @@ export interface IvdrClassificationInput {
   analytes?: string[];
 }
 
-export interface RuleTraceEntry {
+export interface IvdrRuleTraceEntry {
   /** Canonical row id in `EU_IVDR_RULES`. */
   id: string;
   rule: string;
@@ -69,8 +69,8 @@ export interface IvdrClassificationResult {
   classification: IvdrClass;
   /** The canonical rule(s) that gave the class. */
   ruleApplied: string;
-  ruleTrace: RuleTraceEntry[];
-  matchedRules: RuleTraceEntry[];
+  ruleTrace: IvdrRuleTraceEntry[];
+  matchedRules: IvdrRuleTraceEntry[];
   /** Class A (non-sterile) self-declares; B/C/D require a notified body. */
   notifiedBodyRequired: boolean;
   /** Confidence in the classification given the completeness of the inputs. */
@@ -314,7 +314,7 @@ function resultNotes(input: IvdrClassificationInput, byCatchAll: boolean): strin
   return notes;
 }
 
-function confidenceOf(input: IvdrClassificationInput, matched: RuleTraceEntry[], byCatchAll: boolean): IvdrClassificationResult['confidence'] {
+function confidenceOf(input: IvdrClassificationInput, matched: IvdrRuleTraceEntry[], byCatchAll: boolean): IvdrClassificationResult['confidence'] {
   if (matched.some((r) => /^Annex VIII, Rule [123]\b/.test(r.rule))) return 'high';
   if (!byCatchAll) return 'moderate';
   const booleanInputs = [
@@ -366,7 +366,7 @@ export function classifyIvdrAnnexVIII(input: IvdrClassificationInput): IvdrClass
   }
   const cls = canonical.class;
   const fired = new Set(canonical.ruleTrace.map((t) => t.id));
-  const ruleTrace: RuleTraceEntry[] = EU_IVDR_RULES.map((row) => ({
+  const ruleTrace: IvdrRuleTraceEntry[] = EU_IVDR_RULES.map((row) => ({
     id: row.id,
     rule: `Annex VIII, ${row.rule} (Class ${row.class})`,
     description: row.ruleText,

@@ -35,9 +35,9 @@
  */
 import { isSignatureWithdrawn } from '../part11/signature-persistence';
 import { DECISION_ACT_MEANINGS } from '../part11/signature-meanings';
-
-/** Where the reads run: the pool, or a transaction's client. */
-export type DispositionQueryable = { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+// Where the reads run: the pool, or a transaction's client. The same one-method executor the
+// document-data disposition declares; this module declared an identical copy until 2026-10-15.
+import type { DispositionQueryable } from '../document-data-disposition/types';
 
 /** The declared intent of a disposition signature (c2c_ana_actions.payload.intent). */
 export const SHADOW_FINDING_DISPOSITION_INTENT = 'shadow-finding-disposition' as const;

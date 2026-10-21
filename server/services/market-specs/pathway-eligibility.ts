@@ -158,7 +158,7 @@ export function designationIds(): Designation[] {
   return DESIGNATIONS.map((d) => d.id);
 }
 
-export interface EligibilityAssessment {
+export interface DesignationEligibilityAssessment {
   designation: Designation;
   label: string;
   /** True only when every criterion is answered and met. */
@@ -177,7 +177,7 @@ export interface EligibilityAssessment {
 export function assessEligibility(
   id: string,
   answers: Record<string, boolean>
-): EligibilityAssessment | undefined {
+): DesignationEligibilityAssessment | undefined {
   const d = getDesignation(id);
   if (!d) return undefined;
 

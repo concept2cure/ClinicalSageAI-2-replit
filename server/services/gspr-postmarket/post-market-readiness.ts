@@ -63,13 +63,13 @@ export type DocLifecycleStatus =
  * - undetermined: a fact the rule depends on was not stated (implantable), or
  *   the device class is not recognised. Never counted as satisfied.
  */
-export type ObligationStatus = 'required' | 'required-or-justified' | 'not-required' | 'undetermined';
+export type PostMarketObligationStatus = 'required' | 'required-or-justified' | 'not-required' | 'undetermined';
 
 export interface DocTypeStatus {
   documentType: PostMarketDocumentType;
   /** true for 'required' and 'required-or-justified'. */
   required: boolean;
-  obligation: ObligationStatus;
+  obligation: PostMarketObligationStatus;
   present: boolean;
   status: DocLifecycleStatus;
   latestVersion?: number;
@@ -390,7 +390,7 @@ export function normaliseEuDeviceClass(
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ResolvedObligation {
-  obligation: ObligationStatus;
+  obligation: PostMarketObligationStatus;
   basis: RegulatoryBasis[];
   citation: string;
   cadence?: string;

@@ -48,22 +48,15 @@ import {
   type StepSource,
   type StepTense,
 } from '@shared/ana/step-verbs';
+import type { StepStatus } from '@shared/ana/turn-timeline';
 import { stepPresentationOf } from './tool-authorization.js';
 import { agentEndedByHoldExpiry, agentResultSummary } from './sub-agent-result.js';
 import { refusalOf } from './tool-trace.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
-/**
- * How a step ended, as the stream knows it.
- *
- * 'incomplete' is a sub-agent (`run_agent`) that stopped before it finished its
- * brief — at a budget (rounds, tokens, time) or at a step it kept repeating
- * (row 74, S5). What it found is usable, so it is neither a success nor a
- * failure, and the model is not told to try something else. Only that tool
- * produces it.
- */
-export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run' | 'incomplete';
+// How a step ended is the timeline's StepStatus ('incomplete': a sub-agent that stopped before
+// finishing its brief). This module declared an identical copy until 2026-10-15.
 
 export interface StepOutcome {
   status: StepStatus;

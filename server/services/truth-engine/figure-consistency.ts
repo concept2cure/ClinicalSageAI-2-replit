@@ -25,7 +25,7 @@
 
 import { reconcileDossierNumbers, type ExtractedFact } from '../ana/dossierReconciliation';
 
-export interface FigureFinding {
+export interface FigureConsistencyFinding {
   leftRef: string;
   rightRef: string;
   status: 'match' | 'conflict';
@@ -40,7 +40,7 @@ export interface FigureNotCompared {
 }
 
 export interface FigureComparison {
-  findings: FigureFinding[];
+  findings: FigureConsistencyFinding[];
   /** Each figure of the claim that got no verdict against a source, and why. */
   notCompared: FigureNotCompared[];
 }
@@ -106,7 +106,7 @@ export function compareLabelledFigures(
   left: { ref: string; text: string },
   right: ReadonlyArray<{ ref: string; text: string }>,
 ): FigureComparison {
-  const findings: FigureFinding[] = [];
+  const findings: FigureConsistencyFinding[] = [];
   const notCompared: FigureNotCompared[] = [];
 
   for (const source of right) {

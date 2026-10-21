@@ -14,7 +14,7 @@
  */
 import { GREY, ReportingPdfError, Writer, iso } from './writer';
 import { writeRunPdfContent, type RunPdfContent } from './run-pdf';
-import type { SealVerdict } from '../sealing/run-seal';
+import type { RunSealVerdict } from '../sealing/run-seal';
 
 export interface BundlePdfItem {
   runId: number;
@@ -83,7 +83,7 @@ export interface ReportPackPdfConstituent {
   bundledStatus: string;
   statusAtRead: string;
   sourceDocument: ReportPackPdfItem['sourceDocument'];
-  sealVerdict: SealVerdict | null;
+  sealVerdict: RunSealVerdict | null;
   sealHash: string | null;
   firstPage: number;
   lastPage: number;

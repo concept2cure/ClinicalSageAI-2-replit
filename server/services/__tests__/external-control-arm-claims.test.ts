@@ -14,11 +14,12 @@
  * No propensity scores were necessarily estimated. Selecting that method runs
  * propensityScoreMatching(), which calls naivePooling() and attaches baseline
  * covariate MEANS — no scores, no matching, no weighting. It says so in its own
- * `note` ("Initial synthesis. Call fitPropensityModel for full propensity-score
- * adjustment."), but that note sat inside synthesisParameters, two levels below
- * a paragraph asserting the opposite, and no reader weighs a nested field
- * against the prose. Only fitPropensityModel() estimates scores, and it records
- * that by inserting a propensityModels row.
+ * `note` ("No propensity model is fitted by this service ..."), but that note
+ * sat inside synthesisParameters, two levels below a paragraph asserting the
+ * opposite, and no reader weighs a nested field against the prose. A recorded
+ * propensityModels row is the only evidence of a fitted model, and nothing in
+ * the service writes one: its one writer, fitPropensityModel(), simulated
+ * patients from arm means and was removed on 2026-10-15.
  *
  * The output is persisted to syntheticControls.regulatoryJustification and
  * returned as a submission-facing methods statement. An unadjusted pooled
