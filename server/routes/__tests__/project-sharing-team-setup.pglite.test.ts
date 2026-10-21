@@ -118,10 +118,10 @@ describe('current management read and membership setup', () => {
       .toEqual([{ user_id: 7, role: 'edit', status: 'active', invited_by_id: 5 }]);
   });
   it('revokes in place and removes subsequent private read access without erasing attribution', async () => {
-    const before = (await pg.query('SELECT * FROM project_members WHERE project_id=101 AND user_id=6')).rows[0];
+    const before = (await pg.query<Record<string, unknown>>('SELECT * FROM project_members WHERE project_id=101 AND user_id=6')).rows[0];
     const r = await request(app()).delete(memberPath(6));
     expect(r.status, JSON.stringify(r.body)).toBe(200);
-    const after = (await pg.query('SELECT * FROM project_members WHERE project_id=101 AND user_id=6')).rows[0];
+    const after = (await pg.query<Record<string, unknown>>('SELECT * FROM project_members WHERE project_id=101 AND user_id=6')).rows[0];
     expect(after).toMatchObject({ ...before, status: 'revoked', updated_at: expect.anything() });
     expect([403, 404]).toContain((await request(app(6)).get(path())).status);
     expect((await request(app()).delete(memberPath(6))).status).toBe(409);
