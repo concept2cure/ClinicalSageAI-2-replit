@@ -1,0 +1,25 @@
+{
+  "branch": "concept2cure-v2",
+  "sourceCommit": "957c3cfe34d28d03f8d73764a2681564ce837cfe",
+  "integratedRemote": "440a1d0061aed53ef8a3e0772ef8c94351875880",
+  "sha256": {
+    "client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx": "075968680e07a5134fd5db1f991a9364c7c45c1bf066d8635369ed1d259e974a",
+    "client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx": "3e69e080b18b5ceb28e5d66806221aebd4431e191262319c8b65832d44748008",
+    "client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts": "2558e2c365a912124f05bebf2300904a4ca4fff1355879f3c545f36412104f9a",
+    "client/src/concept2cure/v2/styles/app-v2.css": "debde4aa374c854438ac31b30738fa32c638afe761446aedb98bd97f83be648e",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "b926bf2eb6b30f5819a5f45f6f2d1f1462d474628224426ecc93d74aabee5f2f",
+    "client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx": "25fa96c1b861ec9e7d90f460f6020efce4e5ed76be2162128cbe705f36f7b5d6",
+    "client/src/concept2cure/v2/surfaces/ProjectTeamSharing.tsx": "2017a2462f7e8e952ef2b2569666cd9107f8d1f735e483731f0559fbadd7c691",
+    "client/src/concept2cure/v2/surfaces/projectSharingRequest.ts": "92eefe96255fa1c463f75540dcd42d1556deb61fb479b0b8c2440367437c69a2",
+    "server/routes/__tests__/o01-core-project-audits.pglite.test.ts": "753090eb8c2d263b4e9f3ac09512e7f9650190324bda0a50b1e842fa5933baa5",
+    "server/routes/__tests__/project-sharing-team-setup.pglite.test.ts": "30920368f850962c4a2bfe4318251d226678f17d5416240a4a09088e8f4695f8",
+    "server/routes/c2c/project-access.ts": "882b671fcbef70172e7d9bc6c67d009f4b8289fb30d5753afc57e678824105e9",
+    "server/routes/c2c/project-sharing.ts": "8113db55f74beb04ec30c52f4e151352230225087f2a01fd3af3799000ee403e",
+    "server/routes/concept2cure.ts": "1a8f63b4176bfe7a12eaa867c152e9ce03c290d49d3e8911d7ee64149743d1c4",
+    "shared/__tests__/project-sharing.test.ts": "d82d794e61a719b31ebc7c6b1513af2f4520345d30a28833d5b89e296d9de0ce",
+    "shared/project-sharing.ts": "4beb123de1f0887715cd85af56611969ec830f361898163d17c1ac491108587e",
+    "tests/db/project-sharing-team-setup.dbtest.ts": "35439852e488d76da83301e561ec92e07cbafbc6fd02ce1f6dc1bb164b7cf322",
+    "docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/browser-check.mjs": "3bfe3a245249f48f9de76e5de032c3332425e20d8bfd7c794a4e5671b560d79b"
+  },
+  "typeOnlyTestCorrection": "Explicit PGlite row generic; runtime assertions unchanged; rerun backend-type-fix-green.txt"
+}

@@ -2,6 +2,8 @@
 
 ## What already exists
 
+Inventory captured before implementation at `b9a48ce7136b8eecb076126d22e387d4d1b0ba84`; the limits below describe that starting state.
+
 - `server/routes/concept2cure.ts`: canonical integer-project sharing GET, member PUT/DELETE and visibility PATCH; existing audit outcome metadata. Member controls are not reached from the v2 ProjectHome. These handlers still use claimed actor role and legacy workspace/access helpers; membership removal currently deletes the share row.
 - `server/routes/c2c/project-access.ts`: existing integer-project admission and durable sharing loader, including a missing-table legacy fallback. `server/services/project-sharing-access.ts` is the single canonical owner/edit/use and visibility policy. Neither freeform responsibilities nor task assignment constitute access grants.
 - `server/services/c2c/current-program-access.ts`, `server/routes/c2c/project-route-access.ts`: UUID program admission against a unique integer-project anchor and current actor; client workspace and read/write boundaries are explicit. Do not add a second program-to-project resolver.

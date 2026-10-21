@@ -1,0 +1,9 @@
+
+> concept2cure-riai@1.0.0 ci:pushed-lint-warnings
+> node scripts/ci/check-pushed-lint-warnings.mjs
+
+[ci:eslint-warning-ratchet] --since 440a1d0061aed53ef8a3e0772ef8c94351875880 (440a1d006) -- 16 lintable file(s) changed; linting both versions of each...
+
+    -1  server/routes/concept2cure.ts  (13 -> 12)
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since 440a1d0061aed53ef8a3e0772ef8c94351875880.

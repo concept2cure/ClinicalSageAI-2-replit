@@ -1,0 +1,84 @@
+{
+  "sourceBindings": "source-bindings.json",
+  "checks": {
+    "ui": {
+      "command": "npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/projectHome*.test.tsx client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts shared/__tests__/project-sharing.test.ts shared/__tests__/project-team.test.ts",
+      "files": 27,
+      "tests": 263,
+      "exitCode": 0,
+      "log": "ui-integration.txt"
+    },
+    "backendIntegration": {
+      "command": "npx vitest run --config vitest.config.ts server/services/c2c/__tests__/project-team.test.ts server/services/c2c/__tests__/programme-profile-write.test.ts server/services/report-os/__tests__/project-access-integration.test.ts server/routes/c2c/__tests__/projects-authorization.test.ts server/routes/c2c/__tests__/project-route-access-requestdb.test.ts server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts server/routes/chat/__tests__/send-message-result-budget.test.ts server/services/ana/__tests__/strict-round-body-budget.test.ts server/services/ana/__tests__/strict-round-body-executor.test.ts server/services/ana/__tests__/strict-round-body-read-integrity.test.ts",
+      "files": 11,
+      "tests": 185,
+      "exitCode": 0,
+      "log": "backend-integration.txt"
+    },
+    "backendFocused": {
+      "command": "npx vitest run --config vitest.config.ts server/routes/__tests__/project-sharing-team-setup.pglite.test.ts server/routes/__tests__/o01-core-project-audits.pglite.test.ts server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts server/services/c2c/__tests__/program-access.test.ts tests/services/project-sharing-access.test.ts",
+      "log": "backend-final-focused.txt",
+      "files": 5,
+      "tests": 100,
+      "exitCode": 0
+    },
+    "native": {
+      "command": "vitest run --config vitest.db.config.ts tests/db/project-sharing-team-setup.dbtest.ts tests/db/project-team-responsibility.dbtest.ts",
+      "files": 2,
+      "tests": 31,
+      "exitCode": 0,
+      "log": "native-final.txt",
+      "fixture": "PostgreSQL16 actual HTTP/SQL/regulatory audit, restricted role and FORCE RLS; synthetic authentication/tenant middleware, narrow tables, no full deploy or independent-session concurrency proof"
+    },
+    "browser": {
+      "command": "PLAYWRIGHT_CORE=/path/to/existing/playwright-core/index.mjs node docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/browser-check.mjs",
+      "exitCode": 0,
+      "log": "browser-final.txt",
+      "result": "browser-result.json",
+      "fixture": "Actual component/request helper/CSS; synthetic auth/tenant/API; desktop1280/mobile390"
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "build.txt",
+      "finalArchiveFingerprintPresentInBundle": true
+    },
+    "lintErrors": {
+      "command": "npm run ci:pushed-lint-errors",
+      "exitCode": 0,
+      "log": "lint-errors.txt"
+    },
+    "lintWarnings": {
+      "command": "npm run ci:pushed-lint-warnings",
+      "exitCode": 0,
+      "netWarnings": -1,
+      "log": "lint-warnings.txt"
+    },
+    "presence": {
+      "command": "GITHUB_BASE_REF=concept2cure-v2 VERIFY_TESTS_STRICT=true bash scripts/ai/verify-tests.sh",
+      "exitCode": 0,
+      "log": "verify-tests.txt",
+      "note": "Two nonblocking companion filename warnings; actual behavior tests above execute."
+    },
+    "backendTypeCorrection": {
+      "command": "vitest run17sharingroutecases + scoped ESLint",
+      "tests": 17,
+      "exitCode": 0,
+      "log": "backend-type-fix-green.txt",
+      "note": "Type-only row annotation; these cases repeat the 17 in backendFocused."
+    }
+  },
+  "typecheck": {
+    "command": "node scripts/ci/typecheck-no-regression.mjs --incremental",
+    "log": "typecheck.txt",
+    "exitCode": 0,
+    "errors": 0
+  },
+  "publication": {
+    "branch": "concept2cure-v2",
+    "pullRequest": false,
+    "productionDeploy": false,
+    "receipt": "/workspace/outputs/concept2cure_pm04_publication_receipt.json",
+    "note": "Ordinary pre-push outcomes and final remote identity retained outside the commit after publication."
+  }
+}
