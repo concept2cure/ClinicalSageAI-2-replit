@@ -176,14 +176,7 @@ const signEnvelope = (target: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-beforeEach(async () => {
-  pg = new PGlite();
-  await pg.exec(AUDIT_LOGS_DDL);
-  await pg.exec(ANA_ACTIONS_DDL);
-  await pg.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
-  await pg.exec(USERS_DDL);
-  await pg.exec(ORGANIZATION_USERS_DDL);
-  await pg.exec(ECTD_DDL);
+async function applyApplicantIdentityFixture() {
   await pg.exec(PROGRAM_SPINE_PGLITE_DDL);
   await pg.exec(SUBMISSION_CORE_PGLITE_DDL);
   for (const file of ['20260609_ind_master_data.sql', '20261021_regulatory_programs_applicant_sponsor.sql']) {
@@ -192,6 +185,17 @@ beforeEach(async () => {
   await pg.query('INSERT INTO organizations(id,name) VALUES($1,$2)', [ORG, 'Recorded organization']);
   await pg.query(`INSERT INTO submissions(id,title,application_type,client_type,primary_region,organization_id,created_by)
     VALUES(1,'Recorded submission','ind','biotech','fda',$1,$2)`, [ORG, SIGNER]);
+}
+
+beforeEach(async () => {
+  pg = new PGlite();
+  await pg.exec(AUDIT_LOGS_DDL);
+  await pg.exec(ANA_ACTIONS_DDL);
+  await pg.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
+  await pg.exec(USERS_DDL);
+  await pg.exec(ORGANIZATION_USERS_DDL);
+  await pg.exec(ECTD_DDL);
+  await applyApplicantIdentityFixture();
   await pg.exec(STF_MIGRATION);
   await pg.exec(D6_MIGRATION); // the REAL migration under test
   await pg.query(
