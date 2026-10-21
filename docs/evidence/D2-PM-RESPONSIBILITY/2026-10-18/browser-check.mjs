@@ -4,13 +4,15 @@
  */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { launchChromium } from '../../../../scripts/visual-qa/playwright.mjs';
 
 const repo = fileURLToPath(new URL('../../../../', import.meta.url));
-const out = fileURLToPath(new URL('./', import.meta.url));
+const out = process.argv[2] ? resolve(process.argv[2]) + '/' : fileURLToPath(new URL('./', import.meta.url));
+mkdirSync(out, { recursive: true });
 const require = createRequire(new URL('../../../../package.json', import.meta.url));
 const { build } = require('esbuild');
 const fixture = {
@@ -71,8 +73,8 @@ try {
     assert.equal(await page.locator('.pj-team-person').count(), 4);
     assert.equal(await page.getByText('Client contact', { exact: true }).count(), 1);
     const layout = await page.evaluate(() => ({
-      viewport: innerWidth, scroll: document.documentElement.scrollWidth,
-      border: getComputedStyle(document.querySelector('.pj-team-person')).borderTopWidth,
+      viewport: window.innerWidth, scroll: document.documentElement.scrollWidth,
+      border: window.getComputedStyle(document.querySelector('.pj-team-person')).borderTopWidth,
     }));
     assert.ok(layout.scroll <= layout.viewport, JSON.stringify(layout));
     assert.equal(layout.border, '1px');
@@ -89,7 +91,7 @@ try {
     await page.close();
   }
   writeFileSync(out + 'browser-result.json', JSON.stringify({ scope: 'isolated actual component, synthetic data', results }, null, 2) + '\n');
-  console.log(JSON.stringify(results));
+  console.info(JSON.stringify(results));
 } finally {
   await browser?.close();
   await new Promise(done => server.close(done));

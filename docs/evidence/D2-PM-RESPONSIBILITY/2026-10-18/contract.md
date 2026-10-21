@@ -4,6 +4,31 @@ Scope: the existing Projects Team & activity read. All client segments use the
 same identity, sharing, review, and signing boundaries. No assignment, access,
 delegation, or signing policy changes; no new surface, dependency, or migration.
 
+## What already exists
+
+- `server/routes/c2c/projects.ts` already serves the reachable team endpoint;
+  this slice completes that read rather than adding another team endpoint.
+- `server/services/c2c/project-team.ts` is the extracted PM-03 projection for
+  that same endpoint; it is extended for current name-object records here.
+- `server/services/c2c/programme-profile-write.ts` owns current `{name, role?}`
+  contact writes and strips user IDs. Historical intake wrote bare strings.
+  Neither format links a person to an account. Freeform profile roles remain
+  profile facts and do not become project account assignments in this slice.
+- `server/services/c2c/current-program-access.ts` and
+  `server/routes/c2c/project-route-access.ts` already enforce current actor,
+  unique anchor, tenant and sharing admission; the roster reuses them.
+- `server/services/project-sharing-access.ts` owns sharing normalization and
+  access roles. `shared/utils/member-labels.ts` owns identity disambiguation.
+- `client/src/concept2cure/v2/surfaces/ProjectHome.tsx` already renders Team &
+  activity and publishes project facts. Its extracted team component completes
+  that existing surface; review and signing retain their existing workflows.
+
+The code search covered team, membership, responsibility, sharing, assignment,
+profile writers and the existing Projects surfaces. The scoped
+`git log --all --diff-filter=D` search for project-team, ProjectTeam,
+programme-profile, project-sharing, member-labels, project-route-access and
+current-program-access returned no deleted matches (resumed 2026-10-21).
+
 ## Frozen read interface
 
 `GET /api/c2c/projects/:id/team` retains `team` and the legacy row fields

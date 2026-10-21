@@ -140,6 +140,22 @@ describe('identity-backed team read through native HTTP and tenant SQL', () => {
     expect(new Set(body.team.map((r: { entry_id: string }) => r.entry_id)).size).toBe(body.team.length);
   });
 
+  it('reads current contact objects as unlinked names without trusting their identity or role claims', async () => {
+    await env.owner.query(`UPDATE ${env.t('regulatory_programs')} SET team_members=$1 WHERE id=$2`, [JSON.stringify([
+      'Historical contact', { name: '  Current contact  ', role: 'approver', userId: 20, email: 'claim@example.test' },
+      { name: 'Same Name', role: 'reviewer' }, { userId: 20, role: 'owner' }, { name: ' ' },
+    ]), PROGRAM]);
+    const result = await read();
+    expect(result.status, JSON.stringify(result.body)).toBe(200);
+    const contacts = result.body.team.filter((r: { identity: string }) => r.identity === 'recorded_name');
+    expect(contacts.map((r: { entry_id: string; name: string }) => [r.entry_id, r.name])).toEqual([
+      ['recorded-name:0', 'Historical contact'], ['recorded-name:1', 'Current contact'], ['recorded-name:2', 'Same Name'],
+    ]);
+    for (const contact of contacts) expect(contact).toMatchObject({ user_id: null, email: null, role: null,
+      responsibilities: [], sharing_role: null, sources: ['recorded_name'] });
+    expect(JSON.stringify(contacts)).not.toMatch(/approver|reviewer|claim@example/);
+  });
+
   it('withholds inactive/foreign account details and excludes revoked sharing-only members', async () => {
     const result = await read();
     expect(result.status).toBe(200);
@@ -171,6 +187,9 @@ describe('identity-backed team read through native HTTP and tenant SQL', () => {
       identity: 'unconfirmed_account', name: null, email: null, sharing_role: null });
   });
 
+});
+
+describe('current admission before and after roster loading', () => {
   it.each(['unassigned', 'foreign', 'revoked actor', 'inactive actor', 'inactive organization', 'deleted program'])('conceals %s before roster queries', async kind => {
     if (kind === 'revoked actor') await env.owner.query(`DELETE FROM ${env.t('organization_users')} WHERE user_id=20`);
     if (kind === 'inactive actor') await env.owner.query(`UPDATE ${env.t('users')} SET status='inactive' WHERE id=20`);

@@ -1,0 +1,23 @@
+{
+  "scope": "isolated actual component, synthetic data",
+  "results": [
+    {
+      "width": 1280,
+      "rows": 4,
+      "horizontalOverflow": false,
+      "border": "1px",
+      "retry": "passed",
+      "empty": "passed",
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "rows": 4,
+      "horizontalOverflow": false,
+      "border": "1px",
+      "retry": "passed",
+      "empty": "passed",
+      "pageErrors": []
+    }
+  ]
+}

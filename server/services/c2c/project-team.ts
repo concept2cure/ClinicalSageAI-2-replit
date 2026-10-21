@@ -74,7 +74,10 @@ function linkedMember(id: number, sources: AccountSource[], account: Row | undef
 function recordedNames(raw: unknown): ProjectTeamMember[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((value, position) => {
-    const name = text(value);
+    // Current profile writes record { name, role? }; historical intake used
+    // strings. Read only the name: neither shape establishes account identity.
+    const rawName = value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Row).name : value;
+    const name = text(rawName);
     return name ? [{ entry_id: `recorded-name:${position}`, user_id: null, role: null, name, email: null,
       identity: 'recorded_name' as const, label: name, responsibilities: [], sharing_role: null, sources: ['recorded_name' as const] }] : [];
   });

@@ -6,6 +6,23 @@ from sharing membership, and carries those distinctions into AnA's project
 facts. The [frozen contract](contract.md) defines the response and the
 responsibility/authority matrix.
 
+## What already exists
+
+| Path | Existing behavior and limit |
+| --- | --- |
+| `server/routes/c2c/projects.ts` | Existing team read, extended here; its old projection exposed a lead and string contacts, without current identity/sharing distinctions. |
+| `server/services/c2c/project-team.ts` | PM-03 extraction for the same route, completed during integration for current object-name contacts; no parallel endpoint. |
+| `server/services/c2c/programme-profile-write.ts` | Canonical contact writer accepts `{name, role?}` and strips user IDs; contacts and freeform profile roles are not account assignments. Historical string contacts remain readable. |
+| `server/services/c2c/current-program-access.ts`, `server/routes/c2c/project-route-access.ts` | Current actor, tenant, unique anchor and sharing admission; reused without policy changes. |
+| `server/services/project-sharing-access.ts` | Canonical sharing role normalization, including owner/creator behavior; not business responsibility or signing authority. |
+| `shared/utils/member-labels.ts` | Existing same-name identity disambiguation; reused. |
+| `client/src/concept2cure/v2/surfaces/ProjectHome.tsx` | Existing Team & activity and AnA facts; the extracted component completes the same reachable surface. |
+
+Discovery searched team/membership/responsibility/sharing/profile/assignment
+paths, routes and source tables. A scoped deleted-code search across these
+capability names returned no deleted matches. The resumed integration preserves
+the existing profile, review, approval and signing implementations.
+
 ## Client value
 
 - Sponsor teams (biotech/pharma) can distinguish the coordinating lead, recorded

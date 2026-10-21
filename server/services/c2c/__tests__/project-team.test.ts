@@ -104,11 +104,33 @@ describe('current identity and recorded names', () => {
     expect(result.team[0]).toMatchObject({ identity: 'active_member', name: null, email: null, label: 'Account #5' });
   });
 
-  it('ignores objects and blank legacy names rather than trusting unwritten TeamMember shapes', async () => {
-    const result = await ask(fixture({ roster: [{ lead_user_id: null, owner_id: null, created_by_id: null,
-      team_members: [{ userId: 99, name: 'Invented identity', role: 'approver' }, ' ', '  Actual recorded name  '], settings: {} }],
-      members: [], people: [] }));
-    expect(result.team).toEqual([expect.objectContaining({ entry_id: 'recorded-name:2', user_id: null, name: 'Actual recorded name' })]);
+  it('retains canonical profile object names and legacy strings only as unlinked recorded names', async () => {
+    const q = fixture({ roster: [{ lead_user_id: null, owner_id: null, created_by_id: null,
+      team_members: [{ name: '  Canonical contact  ' }, { userId: 99, name: 'Named contact', role: 'approver', email: 'claim@example.test' },
+        { name: ' ' }, '  Legacy contact  ', { name: 99 }, null, [], {}], settings: {} }], members: [], people: [] });
+    const result = await ask(q);
+    expect(result.team).toEqual([
+      { entry_id: 'recorded-name:0', user_id: null, role: null, name: 'Canonical contact', email: null,
+        identity: 'recorded_name', label: 'Canonical contact', responsibilities: [], sharing_role: null, sources: ['recorded_name'] },
+      { entry_id: 'recorded-name:1', user_id: null, role: null, name: 'Named contact', email: null,
+        identity: 'recorded_name', label: 'Named contact', responsibilities: [], sharing_role: null, sources: ['recorded_name'] },
+      { entry_id: 'recorded-name:3', user_id: null, role: null, name: 'Legacy contact', email: null,
+        identity: 'recorded_name', label: 'Legacy contact', responsibilities: [], sharing_role: null, sources: ['recorded_name'] },
+    ]);
+    expect(q.query).toHaveBeenCalledTimes(2);
+  });
+
+  it('never turns freeform profile roles or matching object identity claims into account assignments', async () => {
+    const q = fixture({ roster: [{ lead_user_id: 5, owner_id: null, created_by_id: null, settings: {},
+      team_members: [{ name: 'Jordan', role: 'Project owner', userId: 5, email: 'same@example.test', permissions: ['approve'] },
+        { name: 'Jordan', role: 'reviewer', userId: 5 }],
+    }], members: [], people: [{ id: 5, name: 'Jordan', email: 'same@example.test' }] });
+    const result = await ask(q);
+    expect(result.team.map(row => row.entry_id)).toEqual(['user:5', 'recorded-name:0', 'recorded-name:1']);
+    expect(result.team[0]).toMatchObject({ user_id: 5, role: 'lead', responsibilities: ['project_lead'],
+      sharing_role: null, sources: ['program_lead'] });
+    for (const member of result.team.slice(1)) expect(member).toMatchObject({ user_id: null, role: null,
+      identity: 'recorded_name', email: null, responsibilities: [], sharing_role: null, sources: ['recorded_name'] });
   });
 
   it('returns an actual empty roster with canonical scope and skips the account lookup', async () => {
