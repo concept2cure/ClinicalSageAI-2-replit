@@ -31,6 +31,10 @@ on:
       - '.github/workflows/provision-database.yml'
       - 'scripts/ops/ecs-one-off-task.sh'
       - 'scripts/ci/check-terraform-backend.mjs'
+      # The guard also holds every workflow's and compose stack's Postgres
+      # image to production's major (DATA-13).
+      - '.github/workflows/*.yml'
+      - 'docker-compose*.yml'
   workflow_dispatch:
 
 permissions:

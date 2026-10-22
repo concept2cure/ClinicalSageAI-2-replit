@@ -24,6 +24,11 @@ resource "aws_db_instance" "this" {
   instance_class              = var.instance_class
   allocated_storage           = var.allocated_storage
   max_allocated_storage       = var.max_allocated_storage
+  # MR-03 Stage 1 (OPS-04), set before the first apply: changing storage type
+  # afterwards is a storage-optimisation window. Snapshots carry the instance's
+  # tags (Part11Control, BackupRetention), so each is identifiable on its own.
+  storage_type          = var.storage_type
+  copy_tags_to_snapshot = true
 
   db_name  = var.database_name
   username = var.master_username
@@ -56,8 +61,12 @@ resource "aws_db_instance" "this" {
   performance_insights_enabled = true
   # Performance Insights keeps query text; on the instance's own key, not aws/rds.
   performance_insights_kms_key_id = var.kms_key_id
-  monitoring_interval             = 60
-  monitoring_role_arn             = aws_iam_role.rds_monitoring.arn
+  # Database Insights is AWS's successor console for Performance Insights
+  # (MR-03 OPS-30). Standard mode sits on Performance Insights, which stays on:
+  # it is the database-load data, kept on the instance's own key above.
+  database_insights_mode = "standard"
+  monitoring_interval    = 60
+  monitoring_role_arn    = aws_iam_role.rds_monitoring.arn
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 

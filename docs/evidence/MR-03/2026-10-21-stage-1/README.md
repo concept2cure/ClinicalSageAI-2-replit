@@ -11,7 +11,7 @@ AWS account (F-4). This folder holds one slice per finding group:
 | Slice | Findings | State |
 |---|---|---|
 | A | OPS-03 (state bucket), OPS-26 (locking, provider bounds, lock files, task-role grant, staging secret recovery) | done |
-| B | OPS-04, OPS-30 (RDS storage, snapshot tags, Database Insights), DATA-13 (Postgres major, instance class) | next |
+| B | OPS-04, OPS-30 (RDS storage, snapshot tags, Database Insights), DATA-13 (Postgres major, instance class) | done |
 | C | OPS-08 (the worker), after decision NEW-1 | next |
 
 ## Re-confirmed at head before starting
@@ -166,6 +166,72 @@ Overall: 61 passed, 2 failed.
   `vpc-secure`) had whitespace-only drift, fixed here; `git diff -w` is empty
   for both.
 - `grep -rn c2c-terraform-state terraform/` returns nothing.
+
+## Slice B — RDS before the first apply, and CI on production's Postgres
+
+**What changed.**
+
+- **`terraform/modules/rds`:**
+  - `storage_type` defaults to `gp3` and is validated to gp3, io1 or io2. The
+    provider's default is gp2, whose IOPS burst and then fall to 3 per GB.
+  - `copy_tags_to_snapshot = true`: snapshots carry `Part11Control` and
+    `BackupRetention`, so each is identifiable on its own.
+  - `database_insights_mode = "standard"` (OPS-30), with an
+    `instance_settings` output for the tests.
+- **Performance Insights stays on.** This departs from the work order's
+  wording, which said to replace it. Standard Database Insights is built on
+  Performance Insights; turning PI off would drop the database-load data and
+  the CMK the instance puts on its query text.
+- **DATA-13, instance class:** production's `rds_instance_class` is
+  `db.m6g.large` (default and `terraform.tfvars.example`).
+  `terraform/stack/variables.tf` refuses a `db.t*` class in production through
+  a cross-variable validation (Terraform ≥ 1.9; the floor is now 1.11).
+  Staging keeps `db.t3.small`. A burstable instance throttles to its baseline
+  when its CPU credits run out, under exactly a filing day's PDF/A, OCR and
+  compile load.
+- **DATA-13, Postgres major:**
+  - `db-schema-validation.yml` moves from `pgvector/pgvector:pg16` to `pg15`,
+    and `database-dr-restore-proof.yml` from `postgres:16` to `postgres:15`.
+  - `ci:terraform-backend` now also refuses any Postgres image in
+    `.github/workflows/*.yml` or a root `docker-compose*.yml` whose major
+    differs from `rds_engine_version`, and requires both roots to agree.
+  - `terraform-tests.yml` runs the guard when a workflow or compose file
+    changes.
+- **Cross-region snapshot copy is MR-04's** (OPS-14), as the work order says.
+  It is not added here.
+
+**Verified by making it fail.**
+
+- **The new runs before the fix** (`raw/10`):
+  - `rds_is_gp3_with_tagged_snapshots_and_database_insights` and
+    `refuses_a_burstable_production_database` fail on the pre-change module;
+  - `staging_may_run_a_burstable_database` passes there, as it should.
+- **After:** stack 66/66, modules 26/26, the three roots validate (`raw/11`).
+- **Mutants** (`raw/15`), each caught:
+  - `storage_type` removed;
+  - `storage_type = "gp2"`;
+  - `copy_tags_to_snapshot` removed;
+  - `database_insights_mode` removed;
+  - the production class validation removed.
+- **The guard:**
+  - self-test 12 cases, including a `postgres:16` workflow, a
+    `pgvector/pgvector:pg16` workflow, and a `postgres:5432` host that is not
+    an image (`raw/12`);
+  - refused head's two Postgres 16 workflows (`raw/13`);
+  - passes after with 16 images checked (`raw/14`).
+
+## Trivy (both slices)
+
+The scan used `trivy config` with CI's exact settings: HIGH and CRITICAL,
+`exit-code 1`, the same skip-files, over the whole tree (`raw/16`).
+
+- Exit 0, and every Terraform file shows 0 findings, including
+  `terraform/bootstrap`, `modules/rds` and `modules/secrets`.
+- **Control** (`raw/17`): the same binary and filter on a planted open-SSH
+  security group exit 1 with AWS-0107 (HIGH). The checks were loaded; the
+  clean result is a real one.
+- The binary is v0.69.3, built from the Go module proxy because GitHub release
+  downloads are not reachable from here.
 
 ## Not shown here
 

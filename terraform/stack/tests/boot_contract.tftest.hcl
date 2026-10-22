@@ -101,7 +101,7 @@ variables {
   public_subnets                  = ["10.10.101.0/24", "10.10.102.0/24"]
   private_subnets                 = ["10.10.1.0/24", "10.10.2.0/24"]
   azs                             = ["us-east-1a", "us-east-1b"]
-  rds_instance_class              = "db.t3.medium"
+  rds_instance_class              = "db.m6g.large"
   rds_engine_version              = "15"
   db_credentials_rotation         = "initial"
   rds_allocated_storage           = 50
@@ -1130,6 +1130,57 @@ run "refuses_a_pinned_rds_minor_version" {
     rds_engine_version = "15.4"
   }
   expect_failures = [var.rds_engine_version]
+}
+
+# MR-03 Stage 1 (OPS-04, OPS-30, DATA-13), cheap before the first apply and a
+# replacement or a storage-optimisation window after it:
+#   - gp3, not the provider's gp2 default: the same price per GB with a 3,000
+#     IOPS baseline instead of IOPS that scale with size and burst;
+#   - snapshots carry the instance's tags (Part11Control, BackupRetention), so
+#     a snapshot is as identifiable as the instance it came from;
+#   - Database Insights in standard mode, Performance Insights kept on (it
+#     carries the database-load data, on the instance's own key);
+#   - production is not on a burstable class: a db.t* instance throttles to its
+#     baseline when its CPU credits run out, under exactly the PDF/A, OCR and
+#     compile load a filing day brings.
+run "rds_is_gp3_with_tagged_snapshots_and_database_insights" {
+  command = plan
+  assert {
+    condition     = module.rds.instance_settings.storage_type == "gp3"
+    error_message = "RDS storage must be gp3: ${jsonencode(module.rds.instance_settings)}"
+  }
+  assert {
+    condition     = module.rds.instance_settings.copy_tags_to_snapshot == true
+    error_message = "RDS snapshots must carry the instance's tags: ${jsonencode(module.rds.instance_settings)}"
+  }
+  assert {
+    condition     = module.rds.instance_settings.database_insights_mode == "standard" && module.rds.instance_settings.performance_insights == true
+    error_message = "RDS must run Database Insights (standard) on Performance Insights: ${jsonencode(module.rds.instance_settings)}"
+  }
+  assert {
+    condition     = !startswith(module.rds.instance_settings.instance_class, "db.t")
+    error_message = "Production RDS must not be a burstable db.t* class: ${module.rds.instance_settings.instance_class}"
+  }
+}
+
+run "refuses_a_burstable_production_database" {
+  command = plan
+  variables {
+    rds_instance_class = "db.t3.medium"
+  }
+  expect_failures = [var.rds_instance_class]
+}
+
+run "staging_may_run_a_burstable_database" {
+  command = plan
+  variables {
+    environment        = "staging"
+    rds_instance_class = "db.t3.small"
+  }
+  assert {
+    condition     = module.rds.instance_settings.instance_class == "db.t3.small"
+    error_message = "Staging may size its database down to a burstable class."
+  }
 }
 
 # ── The self-hosted embedding lane (P1-54, ADR-0014 §1.5) ────────────────────

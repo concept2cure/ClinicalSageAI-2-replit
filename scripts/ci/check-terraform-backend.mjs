@@ -20,6 +20,13 @@
  *   - an `aws_dynamodb_table` in bootstrap (nothing locks with it any more);
  *   - the old name, `c2c-terraform-state`, anywhere.
  *
+ * And that what CI tests is the database production runs (DATA-13): every
+ * Postgres image in .github/workflows/*.yml and the root docker-compose*.yml
+ * files — the stacks CI and human testers run — has the major both
+ * environment roots give `rds_engine_version`. Two workflows ran 16 against
+ * production's 15 until 2026-10-21, so a schema or restore proven there was
+ * proven on a server production does not run.
+ *
  *   node scripts/ci/check-terraform-backend.mjs              # the repository
  *   node scripts/ci/check-terraform-backend.mjs --self-test  # proves it refuses
  */
@@ -116,6 +123,34 @@ export function problemsIn(rel, text) {
   return out;
 }
 
+// ── Postgres major ───────────────────────────────────────────────────────────
+
+/** The `rds_engine_version` a root gives the stack, or null. */
+export function rdsMajorOf(text) {
+  const m = stripComments(text).match(/^\s*rds_engine_version\s*=\s*"(\d+)"/m);
+  return m ? m[1] : null;
+}
+
+/**
+ * Every Postgres image named in a workflow or compose file: `postgres:16`,
+ * `postgres:15-alpine`, `pgvector/pgvector:pg15`. A host:port such as
+ * `@postgres:5432` is not an image and is not matched.
+ */
+export function postgresImagesIn(text) {
+  const found = [];
+  const re = /(?<![\w@/.-])(postgres|pgvector\/pgvector):(?:pg)?(\d{2})(?!\d)[\w.-]*/g;
+  for (const m of text.matchAll(re)) {
+    found.push({ image: m[0], major: m[2], line: text.slice(0, m.index).split('\n').length });
+  }
+  return found;
+}
+
+export function postgresMajorProblems(rel, text, major) {
+  return postgresImagesIn(text)
+    .filter((i) => i.major !== major)
+    .map((i) => `${rel}:${i.line}: runs ${i.image}, but production runs Postgres ${major} (rds_engine_version): what it proves is not what production runs.`);
+}
+
 function tfFiles(dir, root) {
   const out = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -132,7 +167,30 @@ export function problemsInRepo(root) {
   const problems = files.flatMap((rel) => problemsIn(rel, fs.readFileSync(path.join(root, rel), 'utf8')));
   const backends = files.filter((rel) => /backend\s+"s3"/.test(stripComments(fs.readFileSync(path.join(root, rel), 'utf8'))));
   if (backends.length === 0) problems.push('no backend "s3" block found under terraform/: nothing was checked.');
-  return { problems, backends };
+
+  const majors = ['production', 'staging'].map((env) => {
+    const rel = `terraform/environments/${env}/main.tf`;
+    return { rel, major: rdsMajorOf(fs.readFileSync(path.join(root, rel), 'utf8')) };
+  });
+  for (const m of majors) if (!m.major) problems.push(`${m.rel}: no rds_engine_version major found.`);
+  if (new Set(majors.map((m) => m.major)).size > 1) {
+    problems.push(`production and staging run different Postgres majors (${majors.map((m) => `${m.rel}=${m.major}`).join(', ')}).`);
+  }
+  const major = majors[0].major;
+  const imageFiles = [
+    ...fs.readdirSync(path.join(root, '.github', 'workflows')).filter((f) => /\.ya?ml$/.test(f)).map((f) => `.github/workflows/${f}`),
+    ...fs.readdirSync(root).filter((f) => /^docker-compose.*\.ya?ml$/.test(f)),
+  ];
+  let images = 0;
+  if (major) {
+    for (const rel of imageFiles) {
+      const text = fs.readFileSync(path.join(root, rel), 'utf8');
+      images += postgresImagesIn(text).length;
+      problems.push(...postgresMajorProblems(rel, text, major));
+    }
+    if (images === 0) problems.push('no Postgres image found in any workflow or compose file: nothing was checked.');
+  }
+  return { problems, backends, major, images };
 }
 
 // ── Self-test ────────────────────────────────────────────────────────────────
@@ -164,7 +222,27 @@ const LITERAL_IN_STRING = FIXED_ROOT.replace('key          = "production/terrafo
 const BOOTSTRAP_VARS = (def) => `variable "state_bucket_name" {\n  type    = string\n  default = ${def}\n}\n`;
 const BOOTSTRAP_LOCK_TABLE = 'resource "aws_dynamodb_table" "tflock" {\n  name = "c2c-tflock"\n}\n';
 
+const WORKFLOW_PG16 = `
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          DATABASE_URL: postgresql://postgres@postgres:5432/db
+`;
+const WORKFLOW_PGVECTOR16 = '        image: pgvector/pgvector:pg16\n';
+const WORKFLOW_ALIGNED = `
+        image: pgvector/pgvector:pg15
+          docker run -d pgvector/pgvector:pg15 \\
+    image: postgres:15-alpine
+      DATABASE_URL: postgresql://u@postgres:5432/db
+`;
+
 function selfTest() {
+  const imageCases = [
+    ['a workflow on postgres:16 (database-dr-restore-proof.yml before)', WORKFLOW_PG16, 1],
+    ['a workflow on pgvector/pgvector:pg16 (db-schema-validation.yml before)', WORKFLOW_PGVECTOR16, 1],
+    ['images on 15, a docker run line, and a postgres:5432 host that is not an image', WORKFLOW_ALIGNED, 0],
+  ];
   const cases = [
     ['the pre-fix production backend (literal bucket, DynamoDB, no lock file)', 'terraform/environments/production/main.tf', PRE_FIX_ROOT, 4],
     ['the fixed backend (bucket from backend.hcl, use_lockfile)', 'terraform/environments/production/main.tf', FIXED_ROOT, 0],
@@ -177,6 +255,13 @@ function selfTest() {
     ['bootstrap still creating a lock table', 'terraform/bootstrap/main.tf', BOOTSTRAP_LOCK_TABLE, 1],
   ];
   let ok = true;
+  for (const [label, text, want] of imageCases) {
+    const got = postgresMajorProblems('.github/workflows/fixture.yml', text, '15');
+    const pass = got.length === want;
+    ok &&= pass;
+    console.log(`${TAG} self-test ${pass ? 'ok  ' : 'FAIL'} — ${label}: ${got.length} problem(s), expected ${want}`);
+    if (!pass) for (const p of got) console.log(`    ${p}`);
+  }
   for (const [label, rel, text, want] of cases) {
     const got = problemsIn(rel, text);
     const pass = got.length === want;
@@ -190,10 +275,10 @@ function selfTest() {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv.includes('--self-test')) process.exit(selfTest() ? 0 : 1);
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-  const { problems, backends } = problemsInRepo(root);
+  const { problems, backends, major, images } = problemsInRepo(root);
   if (problems.length) {
     for (const p of problems) console.error(`${TAG} FAIL — ${p}`);
     process.exit(1);
   }
-  console.log(`${TAG} ok — ${backends.length} S3 backend(s) take the bucket from backend.hcl and lock with S3 lock files; bootstrap names the bucket per account.`);
+  console.log(`${TAG} ok — ${backends.length} S3 backend(s) take the bucket from backend.hcl and lock with S3 lock files; bootstrap names the bucket per account; ${images} Postgres image(s) in workflows and compose files run production's major, ${major}.`);
 }
