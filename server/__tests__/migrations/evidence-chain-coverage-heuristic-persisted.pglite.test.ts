@@ -59,7 +59,7 @@ describe(FILE, () => {
 
   it('persists the coverage heuristic and the relevance basis; confidence stays unmeasured', async () => {
     const chain: EvidenceChain = {
-      primarySource: { sourceType: 'regulation', sourceId: 'r1', sourceTitle: 'Rule', relevance: 0.8, relevanceBasis: 'fixed_weight' } as EvidenceChain['primarySource'],
+      primarySource: { sourceType: 'regulatory_reference', sourceId: 'r1', sourceTitle: 'Rule', relevance: 0.8, relevanceBasis: 'fixed_weight' },
       supportingSources: [],
       confidenceBasis: 'ai_inferred',
       confidenceScore: null,
