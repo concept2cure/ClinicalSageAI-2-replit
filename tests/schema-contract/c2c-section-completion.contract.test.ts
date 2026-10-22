@@ -35,6 +35,8 @@ import { fileURLToPath } from 'node:url';
 
 import {
   C2C_SECTION_COMPLETE_STATUSES,
+  countedSectionSql,
+  markCountedSections,
   sectionCompletionPct,
 } from '../../server/services/c2c/section-content';
 
@@ -89,5 +91,50 @@ describe('the definition matches the trigger that maintains readiness', () => {
     // readiness beside them start disagreeing again — quietly, and in the
     // direction that overstates.
     expect(fromTs).toEqual(fromSql);
+  });
+});
+
+/* F23 (8/9): readiness counts the sections that hold no other section. The
+   rule is written once in SQL (countedSectionSql) and the trigger must carry
+   that exact text; the TypeScript twin over rows already read
+   (markCountedSections, used by dossier-read) must agree with it. */
+describe('readiness counts sections, not headings, on one rule', () => {
+  const squash = (t: string) => t.replace(/\s+/g, ' ').trim();
+
+  it('the readiness function carries countedSectionSql(\'s\') verbatim', () => {
+    const sql = squash(fs.readFileSync(SCHEMA, 'utf8'));
+    const fn = /CREATE OR REPLACE FUNCTION c2c_document_counted_readiness\(p_document_id text\)[\s\S]*?\$\$ LANGUAGE sql STABLE;/.exec(sql);
+    expect(fn, 'c2c_document_counted_readiness not found — did the trigger move?').not.toBeNull();
+    expect(fn![0]).toContain(squash(countedSectionSql('s')));
+    // The trigger and the backfill both go through that one function.
+    expect(sql).toMatch(/SET readiness = c2c_document_counted_readiness\(d\.id\), updated_at = now\(\)/);
+    // The backfill recounts only documents with sections, and only where the
+    // stored value differs; it does not touch updated_at.
+    expect(sql).toMatch(/SET readiness = c2c_document_counted_readiness\(d\.id\) WHERE EXISTS \(SELECT 1 FROM c2c_document_sections s WHERE s\.document_id = d\.id\) AND d\.readiness IS DISTINCT FROM c2c_document_counted_readiness\(d\.id\);/);
+    expect(sql).toMatch(/ALTER TABLE c2c_documents DISABLE TRIGGER set_updated_at[\s\S]*ALTER TABLE c2c_documents ENABLE TRIGGER set_updated_at/);
+    // The trigger fires on what the counted set depends on, and the heading
+    // probe has an index.
+    expect(sql).toMatch(/AFTER INSERT OR UPDATE OF status, parent_key ON c2c_document_sections/);
+    expect(sql).toMatch(/CREATE INDEX IF NOT EXISTS c2c_doc_sections_parent_idx ON c2c_document_sections \(document_id, parent_key\);/);
+  });
+
+  it('the TypeScript twin marks a heading uncounted and a section counted, per document', () => {
+    const rows = markCountedSections([
+      { document_id: 'a', section_key: 'M2', parent_key: null, status: 'todo' },
+      { document_id: 'a', section_key: '2.5', parent_key: 'M2', status: 'todo' },
+      // Another document's child does not make a's 2.5 a heading.
+      { document_id: 'b', section_key: '2.5.1', parent_key: '2.5', status: 'todo' },
+      // A heading someone has written in is counted (review of F23 8/9).
+      { document_id: 'c', section_key: '3.2.S', parent_key: null, status: 'drafted' },
+      { document_id: 'c', section_key: '3.2.S.1', parent_key: '3.2.S', status: 'approved' },
+    ]);
+    expect(rows.map((r) => [r.document_id, r.section_key, r.counted])).toEqual([
+      ['a', 'M2', false], ['a', '2.5', true], ['b', '2.5.1', true], ['c', '3.2.S', true], ['c', '3.2.S.1', true],
+    ]);
+  });
+
+  it('refuses an alias it could not safely place in SQL', () => {
+    expect(() => countedSectionSql("s; DROP TABLE x")).toThrow();
+    expect(() => countedSectionSql('held')).toThrow();
   });
 });

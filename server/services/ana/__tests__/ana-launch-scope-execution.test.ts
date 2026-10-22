@@ -14,7 +14,14 @@
  * toolset entirely. That tool was the hidden probe here until the CMC surface
  * joined the launch catalog on 2026-10-12 (decision P-28); it is in scope now,
  * so it is the probe for "an in-scope tool reached by the fast path runs", and
- * the hidden probes are the agency-meetings pair, which no fast path calls.
+ * the hidden probes are agency-meetings tools, which no fast path calls.
+ *
+ * The write probe was create_ha_interaction until Communication Center joined
+ * the launch catalog on 2026-10-16 (327bc9fb6); that tool serves it, so it is in
+ * scope and moved to inScope in the inventory (0bce953b4). The write probe is
+ * now create_regulatory_commitment (agency-meetings + lifecycle-mgmt, both
+ * hidden), also class `confirm` and also a governed change that asks for a
+ * stated reason, so the refusal is still seen to come first.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -28,12 +35,12 @@ const run = async (tool: string, ctx: Record<string, unknown> = CTX) =>
 /* Real tool names, their handlers replaced by probes so "it did not run" can be seen.
    answer_intelligence_question: IN SCOPE since P-28 (cmc), class `self` — the fast path's tool.
    review_ha_interaction:        hidden (agency-meetings), class `read`.
-   create_ha_interaction:        hidden (agency-meetings), class `confirm`.
+   create_regulatory_commitment: hidden (agency-meetings, lifecycle-mgmt), class `confirm`.
    search_literature:            in scope (AnA's own knowledge). */
 const probes = {
   answer_intelligence_question: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
   review_ha_interaction: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
-  create_ha_interaction: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
+  create_regulatory_commitment: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
   search_literature: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
 };
 for (const [name, fn] of Object.entries(probes)) registerToolHandler(name, fn);
@@ -51,7 +58,9 @@ const production = () => {
 describe('a hidden-app tool reached by name', () => {
   it('the probes stand for hidden tools and two in-scope tools', () => {
     expect(HIDDEN_APP_TOOLS.has('review_ha_interaction')).toBe(true);
-    expect(HIDDEN_APP_TOOLS.has('create_ha_interaction')).toBe(true);
+    expect(HIDDEN_APP_TOOLS.has('create_regulatory_commitment')).toBe(true);
+    // Communication Center joined the catalog (327bc9fb6): no longer a hidden probe.
+    expect(HIDDEN_APP_TOOLS.has('create_ha_interaction')).toBe(false);
     expect(HIDDEN_APP_TOOLS.has('search_literature')).toBe(false);
     // The CMC interview joined the catalog with its surface (P-28).
     expect(HIDDEN_APP_TOOLS.has('answer_intelligence_question')).toBe(false);
@@ -59,7 +68,7 @@ describe('a hidden-app tool reached by name', () => {
 
   it('in production, is refused and its handler never runs', async () => {
     production();
-    for (const tool of ['review_ha_interaction', 'create_ha_interaction']) {
+    for (const tool of ['review_ha_interaction', 'create_regulatory_commitment']) {
       const out = await run(tool);
       expect(out.error, tool).toBe('LAUNCH_SCOPE');
       expect(out.tool).toBe(tool);
@@ -77,9 +86,10 @@ describe('a hidden-app tool reached by name', () => {
 
   it('in production, a hidden write is refused before a person is asked to confirm it', async () => {
     production();
-    const out = await run('create_ha_interaction');
+    const out = await run('create_regulatory_commitment');
     expect(out.error).toBe('LAUNCH_SCOPE');
-    expect(probes.create_ha_interaction).not.toHaveBeenCalled();
+    expect(out.tool).toBe('create_regulatory_commitment');
+    expect(probes.create_regulatory_commitment).not.toHaveBeenCalled();
   });
 
   it('in production, an in-scope tool still runs', async () => {

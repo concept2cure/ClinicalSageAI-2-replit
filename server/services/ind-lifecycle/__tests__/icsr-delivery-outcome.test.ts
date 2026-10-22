@@ -16,7 +16,17 @@
  *
  * node:https is real on both ends (./support/mtls-pki.ts builds a throwaway
  * CA). Only the drizzle db (an in-memory row) and the audit writer are stubbed.
+ *
+ * 2026-10-22 (MR-02 Stage 1): the AS2 body is now a signed-and-encrypted CMS
+ * envelope (as2-cms.ts, e1f3fd425), and TLS trust (tlsCaPath) is configured
+ * apart from the agency AS2 certificate (agencyCertPath). The fake gateway
+ * decrypts and verifies every request with the agency key and the sponsor
+ * certificate (support/as2-cms-fixture.ts), asserts the verified payload is
+ * exactly the ICSR, and answers with an MDN signed by the pinned agency key
+ * that carries the MIC of what it received.
  */
+import { createHash } from 'node:crypto';
+import { join } from 'node:path';
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { MtlsPki, MtlsServer } from '../../submission-gateways/__tests__/support/mtls-pki';
 
@@ -56,6 +66,7 @@ vi.mock('../../audit/audit-write-outcome', () => ({
 }));
 
 import { makeMtlsPki, startMtlsServer, startTcpProxy } from '../../submission-gateways/__tests__/support/mtls-pki';
+import { as2CmsFixture, receiptReport } from '../../submission-gateways/__tests__/support/as2-cms-fixture';
 import { transmitIcsr, IcsrGatewayTransmitError, type IcsrGatewayConfig } from '../icsr-gateway-transport';
 import type { IcsrTransmissionResult } from '../e2b-icsr-message';
 import {
@@ -69,24 +80,37 @@ const built = (): IcsrTransmissionResult => ({ message: MESSAGE, transmitReady: 
 
 let pki: MtlsPki;
 let server: MtlsServer;
+let cmsFixture: ReturnType<typeof as2CmsFixture>;
+
+/** Decrypt with the agency key, verify against the sponsor certificate, return the signed MIME entity. */
+const verifiedEntity = (wire: Buffer): Buffer => cmsFixture.roundtrip(wire, 'agency', pki.clientCertPem);
+/** The ICSR bytes inside the verified entity, after its MIME headers — exact, not a substring. */
+const verifiedPayload = (wire: Buffer): string => {
+  const entity = verifiedEntity(wire);
+  return entity.subarray(entity.indexOf('\r\n\r\n') + 4).toString('utf8');
+};
 
 const as2Config = (client: 'trusted' | 'rogue' = 'trusted'): IcsrGatewayConfig => ({
   url: `https://127.0.0.1:${server.port}/as2`,
   username: 'SPONSOR-AS2',
   certPath: client === 'trusted' ? pki.paths.clientCert : pki.paths.rogueCert,
   keyPath: client === 'trusted' ? pki.paths.clientKey : pki.paths.rogueKey,
-  agencyCertPath: pki.paths.ca,
+  agencyCertPath: join(cmsFixture.directory, 'agency.pem'),
+  mdnCertPath: join(cmsFixture.directory, 'agency.pem'),
+  tlsCaPath: pki.paths.ca,
   as2To: 'FDA-FAERS',
   protocol: 'as2',
 });
 
 beforeAll(async () => {
   pki = makeMtlsPki();
+  cmsFixture = as2CmsFixture();
   server = await startMtlsServer(pki);
-});
+}, 60_000);
 afterAll(async () => {
   await server.close();
   pki.cleanup();
+  cmsFixture.cleanup();
 });
 beforeEach(() => {
   server.seen.length = 0;
@@ -99,9 +123,10 @@ beforeEach(() => {
     transportReceiptId: null, transmittedAt: null, errors: [],
   };
   server.respond = (req, res) => {
-    const mid = String(req.headers['message-id']);
-    res.writeHead(200, { 'Content-Type': 'message/disposition-notification', 'Message-ID': '<mdn-icsr@FDA>' });
-    res.end(`Original-Message-ID: ${mid}\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n`);
+    const mic = createHash('sha256').update(verifiedEntity(req.body)).digest('base64');
+    const receipt = cmsFixture.signedReceipt(receiptReport(String(req.headers['message-id']), mic));
+    res.writeHead(200, { 'Content-Type': receipt.contentType, 'Message-ID': '<mdn-icsr@FDA>' });
+    res.end(receipt.body);
   };
 });
 
@@ -123,6 +148,7 @@ describe('ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED,
     const out = await transmitIcsr(built(), { config: as2Config() });
     expect(out.status).toBe('transmitted');
     expect(server.seen).toHaveLength(1);
+    expect(verifiedPayload(server.seen[0].body)).toBe(MESSAGE);
   });
 });
 
@@ -136,7 +162,7 @@ describe('ICSR AS2 — an authenticated gateway read the whole message and reset
     server.respond = (_req, res) => { res.socket?.destroy(); };
     const err = await attempt(as2Config());
     expect(server.seen).toHaveLength(1);
-    expect(server.seen[0].body.toString('utf8')).toBe(MESSAGE);
+    expect(verifiedPayload(server.seen[0].body)).toBe(MESSAGE);
     expect((err as IcsrGatewayTransmitError).stage).toBe('receipt-unproven');
     expect((err as IcsrGatewayTransmitError).transportMessageId).toBe(server.seen[0].headers['message-id']);
     expect((err as Error).message).toMatch(/may hold it/);
@@ -221,7 +247,7 @@ describe('ICSR AS2 — through a proxy: corrupted answers and WAN latency', () =
     try {
       const err = await attempt({ ...as2Config(), url: `https://127.0.0.1:${proxy.port}/as2` });
       expect(server.seen).toHaveLength(1);
-      expect(server.seen[0].body.toString('utf8')).toBe(MESSAGE);
+      expect(verifiedPayload(server.seen[0].body)).toBe(MESSAGE);
       expect((err as IcsrGatewayTransmitError).stage).toBe('receipt-unproven');
       expect((err as Error).message).not.toMatch(/NOT transmitted/);
     } finally {

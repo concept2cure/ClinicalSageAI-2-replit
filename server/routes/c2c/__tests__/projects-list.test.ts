@@ -61,7 +61,10 @@ describe('GET /api/c2c/projects', () => {
     for (const k of KEYS) expect(res.body.data[0]).toHaveProperty(k);
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('regulatory_programs');
-    expect(sql).toContain('progress_percent');
+    // F23 (3/9): readiness is the home filing's measured figure, set after
+    // this read (projects-readiness.test.ts); the stored progress_percent,
+    // written once as 0 and never updated, is not read.
+    expect(sql).not.toContain('progress_percent');
     // Paged: org, then the default page size + 1 (the extra row is how hasMore
     // is decided without a second COUNT(*)), then the offset, the archived
     // flag, and (since 14362ef00) the programs the caller can currently access.

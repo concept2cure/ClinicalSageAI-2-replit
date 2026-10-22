@@ -12,6 +12,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { UI_V2_SURFACES } from '@shared/constants/ui-surface-registry.ui-v2';
 import {
   UI_SURFACES,
   CROSS_CUTTING_CONCERNS,
@@ -58,9 +59,15 @@ describe('ui-surface-registry — structural validity', () => {
     }
   });
 
-  it('every surface binds to at least one REST prefix shaped /api/...', () => {
+  it('every surface binds to at least one REST prefix shaped /api/..., or says in words why not', () => {
+    const reasons = new Map(UI_V2_SURFACES.map((s) => [s.id, s.noApiPrefixReason]));
     for (const s of UI_SURFACES) {
-      expect(s.apiPrefixes.length, `apiPrefixes for ${s.id}`).toBeGreaterThan(0);
+      const reason = reasons.get(s.id);
+      if (s.apiPrefixes.length === 0) {
+        expect(reason?.trim().length ?? 0, `apiPrefixes for ${s.id} is empty with no noApiPrefixReason`).toBeGreaterThan(40);
+      } else {
+        expect(reason, `${s.id} claims prefixes and also a reason for claiming none`).toBeUndefined();
+      }
       for (const p of s.apiPrefixes) {
         expect(p, `prefix ${p} on ${s.id}`).toMatch(/^\/api(\/|$)|^SUBMISSION/);
       }

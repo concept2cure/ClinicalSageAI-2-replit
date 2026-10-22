@@ -40,6 +40,9 @@ vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
 import { runConsistencyCheck } from '../truth-engine-service';
+// Imported at collection, not inside a test: loading the AnA tool registry takes
+// longer than one test's budget, and that cost is not what these tests measure.
+import { getToolHandler } from '../../ana/AnaToolExecutor';
 
 const CTX = { organizationId: 7, userId: 3 };
 const LEFT = { ref: '2.7.3', text: 'The study randomized 186 subjects at 42 sites; the hazard ratio was 0.71.' };
@@ -67,10 +70,10 @@ describe('runConsistencyCheck', () => {
     expect(h.route).not.toHaveBeenCalled();
     const byRef = (ref: string) => r.findings.filter((f) => f.rightRef === ref).map((f) => [f.status, f.detail]);
     expect(byRef('CSR-001')).toEqual([
-      ['conflict', 'enrolled_n: 2.7.3 gives 186; CSR-001 gives 120.'],
+      ['conflict', 'sample_size: 2.7.3 gives 186; CSR-001 gives 120.'],
       ['match', 'sites: 2.7.3 gives 42; CSR-001 gives 42.'],
     ]);
-    expect(byRef('CSR-002')).toEqual([['match', 'enrolled_n: 2.7.3 gives 186; CSR-002 gives 186.']]);
+    expect(byRef('CSR-002')).toEqual([['match', 'sample_size: 2.7.3 gives 186; CSR-002 gives 186.']]);
     expect(r.notCompared).toEqual([
       { rightRef: 'CSR-001', label: 'hazard_ratio', reason: 'not stated in the source' },
       { rightRef: 'CSR-002', label: 'hazard_ratio', reason: 'not stated in the source' },
@@ -85,8 +88,8 @@ describe('runConsistencyCheck', () => {
     );
     expect(r.findings).toEqual([]);
     expect(r.notCompared.map((n) => [n.rightRef, n.label])).toEqual([
-      ['Label', 'enrolled_n'],
       ['Label', 'hazard_ratio'],
+      ['Label', 'sample_size'],
       ['Label', 'sites'],
     ]);
     expect(h.inserted).toEqual([]);
@@ -106,7 +109,6 @@ describe('runConsistencyCheck', () => {
 
 describe("AnA's check_consistency", () => {
   it('tells AnA which figures were not compared, and that this is not a finding of consistency', async () => {
-    const { getToolHandler } = await import('../../ana/AnaToolExecutor');
     const res = JSON.parse(
       await getToolHandler('check_consistency')!(
         { submission_id: 11, dimension: 'label-vs-safety', left: LEFT, right: [{ ref: 'Label', text: 'No figures here.' }] },
@@ -120,7 +122,6 @@ describe("AnA's check_consistency", () => {
   });
 
   it('refuses a source without a ref before writing anything', async () => {
-    const { getToolHandler } = await import('../../ana/AnaToolExecutor');
     const res = JSON.parse(
       await getToolHandler('check_consistency')!(
         { submission_id: 11, dimension: 'x', left: LEFT, right: [{ text: 'The study randomized 186 subjects.' }] },

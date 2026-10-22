@@ -127,7 +127,7 @@ describe('F18: each finding’s act opens where it is fixed', () => {
     serve();
     const { onNav } = renderScreen();
     await waitFor(() => expect(marketRow(61)).toBeTruthy());
-    await screen.findByRole('button', { name: 'Place a leaf at 1.2 for IND · FDA (US)' });
+    await screen.findByRole('button', { name: 'Place a leaf at 1.2 for IND · FDA (US), BX-512 IND' });
     expect(await click(61, /^Place a leaf at 1\.2 /)).toEqual({ submissionId: '61', sequenceId: '905', ws: 'builder', builderAct: 'place', sectionCode: '1.2' });
     expect(onNav).toHaveBeenCalledWith('submission-center');
   });
@@ -182,7 +182,7 @@ describe('F18: a cleared gate opens the sequence’s Dispatch tab, named for wha
   it('before dispatch: "Open Dispatch for sequence 0000", and transmit is not promised', async () => {
     serve({ ind: cleared(905, 'validated') });
     renderScreen();
-    const b = await screen.findByRole('button', { name: 'Open Dispatch for sequence 0000 of IND · FDA (US)' });
+    const b = await screen.findByRole('button', { name: 'Open Dispatch for sequence 0000 of IND · FDA (US), BX-512 IND' });
     expect(within(marketRow(61)).getByText(/Transmit opens once sequence 0000 is dispatched/)).toBeTruthy();
     expect(within(marketRow(61)).queryByRole('button', { name: /governed transmit/ })).toBeNull();
     fireEvent.click(b);
@@ -192,7 +192,7 @@ describe('F18: a cleared gate opens the sequence’s Dispatch tab, named for wha
   it('once dispatched: "Open governed transmit"', async () => {
     serve({ ind: cleared(905, 'dispatched'), indStatus: 'dispatched' });
     renderScreen();
-    expect(await screen.findByRole('button', { name: 'Open governed transmit for IND · FDA (US)' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Open governed transmit for IND · FDA (US), BX-512 IND' })).toBeTruthy();
   });
 
   it('a blocked gate offers neither', async () => {
@@ -213,7 +213,12 @@ describe('F18: what AnA is told', () => {
     }
     render(<><DispatchReadiness surface={{ id: 'dispatch-readiness', label: 'Submission Readiness' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="regulatory" /><Probe /></>);
     await waitFor(() => expect((seen.ctx?.facts?.markets as unknown[] | undefined)?.length).toBe(2));
-    await waitFor(() => expect((seen.ctx?.facts?.markets as Array<Record<string, unknown>>)[1].readState).toBe('verdict-failed'));
+    // The two verdict reads settle in either order; wait for both.
+    await waitFor(() => {
+      const m = seen.ctx?.facts?.markets as Array<Record<string, unknown>>;
+      expect(m[0].answered).toBe(true);
+      expect(m[1].readState).toBe('verdict-failed');
+    });
     const [ind, maa] = seen.ctx!.facts!.markets as Array<Record<string, unknown>>;
     expect(ind).toMatchObject({ submissionId: 61, answered: true, cleared: true, sequenceNumber: '0000' });
     expect(maa).toMatchObject({ submissionId: 62, answered: false });
@@ -241,5 +246,91 @@ describe('F18 end to end: the act lands on the Builder at the section', () => {
     await waitFor(() => expect((document.getElementById('sc-leaf-section') as HTMLInputElement | null)?.value).toBe('1.2'));
     expect(screen.getByRole('tab', { name: 'Builder' }).getAttribute('aria-selected')).toBe('true');
     expect(document.activeElement?.getAttribute('data-testid')).toBe('sc-builder-arrival');
+  });
+});
+
+describe('F18 review: the release signature dispatch applies is not a dead end', () => {
+  const RELEASE = 'This submission type requires a 21 CFR Part 11 release signature, and none has been applied.';
+  const awaiting = (sequenceId: number, sequenceStatus: string, over: Record<string, unknown> = {}) => ({
+    ...cleared(sequenceId, sequenceStatus),
+    gate: { cleared: false, blockers: [RELEASE] },
+    freezeGate: { cleared: true, blockers: [] },
+    dispatchGateOnSigning: { cleared: true, blockers: [] },
+    ...over,
+  });
+
+  it('a frozen sequence waiting only for its own release signature says so, and opens Dispatch (at head: "Dispatch blocked", no door)', async () => {
+    serve({ ind: awaiting(905, 'frozen'), indStatus: 'frozen' });
+    renderScreen();
+    await waitFor(() => expect(within(marketRow(61)).getByTestId('pj-market-verdict').textContent).toContain('Clear except for the release signature, which the dispatch e-signature applies'));
+    const b = await screen.findByRole('button', { name: 'Open Dispatch for sequence 0000 of IND · FDA (US), BX-512 IND' });
+    expect(within(marketRow(61)).getByText(/the dispatch e-signature on the Dispatch tab records it/)).toBeTruthy();
+    fireEvent.click(b);
+    expect(consumeNavParams('submission-center')).toEqual({ submissionId: '61', sequenceId: '905', ws: 'dispatch' });
+  });
+
+  it('a validated sequence whose freeze is clear opens Dispatch, where it is frozen', async () => {
+    serve({ ind: awaiting(905, 'validated'), indStatus: 'validated' });
+    renderScreen();
+    expect(await screen.findByRole('button', { name: 'Open Dispatch for sequence 0000 of IND · FDA (US), BX-512 IND' })).toBeTruthy();
+  });
+
+  it('a dispatched sequence whose release must be signed again opens Dispatch to re-sign, never transmit', async () => {
+    serve({ ind: awaiting(905, 'dispatched', { dispatchAuthorization: { reauthorizing: true, eligible: true, refusal: null } }), indStatus: 'dispatched' });
+    renderScreen();
+    expect(await screen.findByRole('button', { name: 'Open Dispatch for sequence 0000 of IND · FDA (US), BX-512 IND' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /governed transmit/ })).toBeNull();
+    expect(within(marketRow(61)).getByText(/The earlier release signature does not cover the current recorded facts/)).toBeTruthy();
+  });
+
+  it('an older server that sends no step verdicts gets no door: missing fails closed', async () => {
+    serve({ ind: { ...cleared(905, 'frozen'), gate: { cleared: false, blockers: [RELEASE] } }, indStatus: 'frozen' });
+    renderScreen();
+    await waitFor(() => expect(within(marketRow(61)).getByTestId('pj-market-verdict').textContent).toContain('Dispatch blocked · 1 blocker'));
+    expect(screen.queryByRole('button', { name: /Open Dispatch|governed transmit/ })).toBeNull();
+  });
+
+  it('the door names every signed step and no signer: freeze, dispatch and transmit, by a person permitted to sign them', async () => {
+    serve({ ind: cleared(905, 'validated') });
+    renderScreen();
+    await screen.findByRole('button', { name: /Open Dispatch for sequence 0000/ });
+    const note = within(marketRow(61)).getByText(/Transmit opens once sequence 0000 is dispatched/).textContent ?? '';
+    expect(note).toContain('Freeze, dispatch and transmit are each signed on the Dispatch tab');
+    expect(note).not.toMatch(/\byour\b/i);
+    expect(document.body.textContent).not.toMatch(/wire transmit/);
+  });
+});
+
+describe('F18 review: acts on a sequence the Builder cannot change', () => {
+  it('a frozen sequence’s findings open Validation, never a placement the Builder refuses', async () => {
+    serve({ ind: { ...blocked(905, IND_FINDINGS), sequenceStatus: 'frozen' }, indStatus: 'frozen' });
+    renderScreen();
+    await waitFor(() => expect(within(marketRow(61)).getAllByRole('button', { name: /^Open in Validation/ }).length).toBe(4));
+    expect(within(marketRow(61)).queryByRole('button', { name: /^Place a leaf|^Open the leaf/ })).toBeNull();
+  });
+});
+
+describe('F18 review: names and lists a screen reader can tell apart', () => {
+  it('two markets of the same type and agency have different accessible names', async () => {
+    apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
+      const url = String(raw ?? '');
+      if (url === `/api/c2c/projects/${PROGRAM_UUID}`) return json(PROGRAM);
+      if (url === `/api/submissions?programId=${PROGRAM_UUID}`) return json([IND, { ...IND, id: 63, title: 'BX-512 IND (second indication)' }]);
+      if (url === '/api/submissions/61/sequences') return json([{ id: 905, sequenceNumber: '0000', status: 'draft' }]);
+      if (url === '/api/submissions/63/sequences') return json([{ id: 907, sequenceNumber: '0000', status: 'draft' }]);
+      if (url.endsWith('/dispatch-readiness')) return json(blocked(Number(url.split('/')[4]), [IND_FINDINGS[0]]));
+      return json([]);
+    });
+    renderScreen();
+    await screen.findByRole('button', { name: 'Place a leaf at 1.2 for IND · FDA (US), BX-512 IND' });
+    expect(screen.getByRole('button', { name: 'Place a leaf at 1.2 for IND · FDA (US), BX-512 IND (second indication)' })).toBeTruthy();
+  });
+
+  it('the gates and findings are announced as lists', async () => {
+    serve();
+    renderScreen();
+    await screen.findByRole('button', { name: /^Place a leaf at 1\.2 / });
+    const findings = within(marketRow(61)).getByRole('list', { name: /^Structural findings for/ });
+    expect(findings.getAttribute('role')).toBe('list');
   });
 });

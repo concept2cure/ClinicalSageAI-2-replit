@@ -21014,6 +21014,21 @@ registerToolHandler('list_governed_documents', async (input, ctx) => {
   }
 });
 
+/**
+ * What a governed document's outline holds, in the readiness figure's own
+ * terms: every row, the rows the figure counts, how many of those are approved
+ * or locked, and the headings left out. Stated, so the model narrates it and
+ * does not divide.
+ */
+function outlineDenominator(rows: Array<{ counted: boolean; status: string }>, readiness: unknown, complete: ReadonlySet<string>): string {
+  const counted = rows.filter((r) => r.counted);
+  const done = counted.filter((r) => complete.has(r.status)).length;
+  const figure = typeof readiness === 'number' ? `readiness ${readiness}%` : 'readiness (not computed)';
+  const left = rows.length - counted.length;
+  const headings = left === 0 ? '' : ` ${left} ${left === 1 ? 'heading' : 'headings'} not yet worked ${left === 1 ? 'is' : 'are'} not counted.`;
+  return `Outline with ${rows.length} sections; ${figure} counts ${counted.length} of them (${done} approved or locked).${headings}`;
+}
+
 registerToolHandler('read_governed_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'read_governed_document requires tenant context.' });
   const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
@@ -21030,17 +21045,23 @@ registerToolHandler('read_governed_document', async (input, ctx) => {
     const sectionKey = typeof input.section_key === 'string' ? input.section_key.trim() : '';
     if (!sectionKey) {
       const outline = await getPool().query(
-        `SELECT section_key, parent_key, label, status, mandatory, version, path_order
+        `SELECT document_id, section_key, parent_key, label, status, mandatory, version, path_order
            FROM c2c_document_sections
           WHERE document_id = $1
           ORDER BY path_order`,
         [documentId],
       );
+      // Each row says whether the readiness figure counts it (F23 hand-on,
+      // 2026-10-22): the figure leaves out a heading that holds other sections
+      // and has not been worked, so "N sections" beside it named the wrong
+      // denominator. The rule is the trigger's own (markCountedSections).
+      const { markCountedSections, C2C_SECTION_COMPLETE_STATUSES } = await import('../c2c/section-content.js');
+      const rows = markCountedSections(outline.rows);
       return JSON.stringify({
         ok: true,
         document: doc.rows[0],
-        outline: outline.rows,
-        message: `Outline with ${outline.rows.length} sections. Call again with section_key to read a section's content.`,
+        outline: rows,
+        message: `${outlineDenominator(rows, doc.rows[0].readiness, C2C_SECTION_COMPLETE_STATUSES)} Call again with section_key to read a section's content.`,
       });
     }
 

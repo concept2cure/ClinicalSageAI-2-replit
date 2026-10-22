@@ -155,8 +155,8 @@ describe('current parent privacy through actual HTTP and SQL', () => {
 });
 
 describe('every existing read family and current actor boundary', () => {
-  const projectSuffixes = ['', '/workstreams', '/drafts', '/team', '/evidence', '/activity', '/records',
-    '/conversation-files', '/vault-structure', '/sources', '/source-changes',
+  const projectSuffixes = ['', '/dossier', '/drafts', '/team', '/evidence', '/activity', '/records',
+    '/conversation-files', '/sources', '/source-changes',
     '/document-dispositions/preview?targetType=vault_document&targetId='+PRIVATE_DOC];
   it.each(projectSuffixes)('protects private project %s before child content queries', async suffix => {
     const denied = await request(app()).get(`/api/c2c/projects/${PRIVATE}${suffix}`);

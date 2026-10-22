@@ -777,10 +777,12 @@ function CoauthorDocField({ list, doc, onChoose, disabled }: { list: CoauthorDoc
 /** Place a Co-Author document into the sequence as a leaf — a REAL persisted
  *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
  *  document, no leaf: the picker never invents a document to place. */
-function AddLeafForm({ seq, onDone, isCurrent, placeAt }: {
+function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
   seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void; isCurrent: () => boolean;
   /** Open at this section: the Builder was sent here by a readiness finding (F18). */
   placeAt?: { code: string | null } | null;
+  /** The person closed the form without placing. */
+  onCancel?: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const list = useCoauthorDocList(open);
@@ -848,7 +850,7 @@ function AddLeafForm({ seq, onDone, isCurrent, placeAt }: {
           {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
         </button>
         {unconfirmed && <button type="button" className="sc-trans-b" onClick={() => onDone({ tone: 'warn', text: 'Checking the current sequence leaves and audit history. Review them before another placement; this read does not confirm the earlier write or its audit.' }, { changed: false, sequenceChanged: false, reconcile: true })}>Check sequence leaves</button>}
-        <button type="button" className="sc-trans-b" onClick={() => setOpen(false)} disabled={disabled}>Cancel</button>
+        <button type="button" className="sc-trans-b" onClick={() => { setOpen(false); onCancel?.(); }} disabled={disabled}>Cancel</button>
       </div>}
   </div>;
 }
@@ -1035,6 +1037,8 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
   const arrival = useBuilderSectionArrival({ section, leaves, seq, locked, onApplied: onSectionApplied });
   const afterWrite = (n: Notice, effect: LeafWriteEffect) => {
     if (!isScopeCurrent() || !leaves.isCurrent()) return;
+    // A write the arrival led to, or any other, retires it (F18 review).
+    if (effect.changed || effect.reconcile) arrival.done();
     // A sequence refresh unmounts this pane; keep its confirmed state-change
     // verdict in the existing parent notice, rather than losing it with the pane.
     if ((effect.sequenceChanged || effect.reconcile) && onSequenceChanged) onSequenceChanged(n);
@@ -1050,7 +1054,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
       </div>
       <div className="pj-card-b">
         <VerdictNote notice={notice} />
-        {arrival.line}
+        {arrival.lineAt === 'top' && arrival.line}
         {leaves.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading the sequence&#39;s leaves…
@@ -1076,7 +1080,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
                 <tr key={l.id} data-section-target={arrival.marks(l.sectionCode) ? 'true' : undefined}>
                   <td className="sc-mono">
                     {l.sectionCode}
-                    {arrival.marks(l.sectionCode) && <span className="sp-row-s"> · Named by readiness</span>}
+                    {arrival.marks(l.sectionCode) && <span className="sp-row-s"> · {arrival.markLabel}</span>}
                   </td>
                   <td>
                     <b>{l.title}</b>
@@ -1102,6 +1106,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
             </tbody>
           </table>
         )}
+        {arrival.lineAt === 'form' && arrival.line}
         {locked ? (
           <div className="scaf-note sc-mt">
             Sequence {seq.sequenceNumber} is {SC_SEQ_STATUS[seq.status]?.l.toLowerCase() ?? seq.status} —
@@ -1109,7 +1114,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           </div>
         ) : !leaves.loading && !leaves.error ? (
           <>
-            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} />
+            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} onCancel={arrival.done} />
             <BuilderSources onNav={onNav} />
           </>
         ) : null}

@@ -11,10 +11,14 @@
  *    words, that no cause is recorded.
  * 2. One program's readiness read four ways across screens. The one figure
  *    the server computes for a program is its dossier readiness (the share of
- *    its governed sections approved or locked — readinessByProject,
- *    server/routes/c2c/projects.ts). The card printed it as "N% ready" or
- *    "Readiness not measured", unlabelled; it now says which readiness it is,
- *    in the words Project home uses for the same figure.
+ *    its home filing's governed sections approved or locked,
+ *    server/services/c2c/dossier-read.ts since F23). The card printed it as
+ *    "N% ready" or "Readiness not measured", unlabelled; it now says which
+ *    readiness it is, in the words Project home uses for the same figure.
+ * 3. (F23 3/9) A card with no figure drew an empty bar, `width: 0%`, beside
+ *    "not measured": the bar said 0 while the words said nothing was counted.
+ *    And a figure the server could not read was "not measured" too. Now no
+ *    figure draws no bar, and an unavailable figure says so, with the reason.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -109,5 +113,55 @@ describe('Projects card — readiness is named as the dossier readiness', () => 
     expect(card('Program bx256').textContent).toContain('Dossier readiness not measured');
     // Never a bare, unlabelled "N% ready".
     expect(card('Program hlv').textContent).not.toMatch(/\d+% ready/);
+  });
+});
+
+describe('Projects card — no figure draws no bar (F23)', () => {
+  const stated = (id: string, readiness: number | null, readinessState: string, readinessReason?: string) =>
+    ({ ...row(id, 'active', readiness), readinessState, ...(readinessReason ? { readinessReason } : {}) });
+  const READ_FAILED = 'The governed sections could not be read.';
+  beforeEach(() => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === '/api/c2c/projects'
+        ? ok({ data: [stated('zero', 0, 'measured'), stated('none', null, 'no_sections'), stated('down', null, 'unavailable', READ_FAILED), stated('half', 50, 'measured')] })
+        : ok({ data: [] }),
+    );
+  });
+  const bar = (el: HTMLElement) => el.querySelector('.ph-bar-track');
+
+  it('a measured 0 draws its empty bar; no sections and an unavailable figure draw none', async () => {
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
+    expect(bar(card('Program zero'))).not.toBeNull();
+    expect(bar(card('Program half'))).not.toBeNull();
+    expect(bar(card('Program none'))).toBeNull();
+    expect(bar(card('Program down'))).toBeNull();
+  });
+
+  it('an unavailable figure says so, and why, never "not measured"', async () => {
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program down')).toBeTruthy());
+    const c = card('Program down');
+    expect(c.textContent).toContain('Dossier readiness unavailable');
+    expect(c.querySelector(`[title="${READ_FAILED}"]`)).not.toBeNull();
+    expect(card('Program none').textContent).toContain('Dossier readiness not measured');
+  });
+
+  it('the list view draws the same bars', async () => {
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    await waitFor(() => expect(listRow('Program zero')).toBeTruthy());
+    expect(bar(listRow('Program zero'))).not.toBeNull();
+    expect(bar(listRow('Program none'))).toBeNull();
+    expect(bar(listRow('Program down'))).toBeNull();
+    expect(listRow('Program down').textContent).toContain('Dossier readiness unavailable');
+  });
+
+  it('the portfolio mean says how many programs it covers when some are not measured', async () => {
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
+    // (0 + 50) / 2, over the two measured of four.
+    expect(document.querySelector('.pj-summary')?.textContent).toContain('25% average readiness, 2 of 4 measured');
   });
 });

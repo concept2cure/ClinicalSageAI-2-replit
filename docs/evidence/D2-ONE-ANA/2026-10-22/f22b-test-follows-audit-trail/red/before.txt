@@ -1,0 +1,11 @@
+ ✓ tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > binds a new document to the market's governed document when it is named 72ms
+ ✓ tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > naming the home filing is refused, and nothing is created 15ms
+ ✓ tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > naming another project's market is refused, and nothing is created 14ms
+ ✓ tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > naming an unknown document is refused, and nothing is created 18ms
+ ✓ tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > a market's copy starts without a template, and nothing is created 14ms
+ ✓ tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > refuses a common section in the market's copy, and creates nothing 14ms
+ × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > creates the market's own Module 1 section 42ms
+   → expected 500 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+    "err": "relation \"authoring_audit_trail\" does not exist"

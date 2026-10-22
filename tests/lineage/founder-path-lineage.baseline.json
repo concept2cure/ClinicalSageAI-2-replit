@@ -109,16 +109,6 @@
         ],
         "observed": "false",
         "why": "submission_transmittals has no sequence_id column (migrations/20260509_submission_gateways.sql); the transmittal joins its sequence only through the ECTD_TRANSMITTED audit row. Its project is now recorded (transmit/transmittal-names-project, LX-22)."
-      },
-      "transmit-record-names-bundle": {
-        "findings": [
-          "SUB-2"
-        ],
-        "closedBy": [
-          "LX-12"
-        ],
-        "observed": "false",
-        "why": "ECTD_TRANSMITTED records transmittalId, status and gateway but not the bundle sha256 or where the bytes are kept (submission-service.ts:1440-1458)."
       }
     },
     "walk-back": {
