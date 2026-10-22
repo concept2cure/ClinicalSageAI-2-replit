@@ -74,8 +74,11 @@ id = "generic-api-key"
   # value — 690 findings on 2026-10-14 alone. The whole line must be one JSON
   # pair keyed by a file path with a source or document extension, valued by
   # exactly 64 lowercase hex digits; `"api_key": "<hex>"` or
-  # `"token": "<hex>"` is still a finding.
+  # `"token": "<hex>"` is still a finding. A compressed copy of one of those
+  # files (`gate-x.log.gz`) is the same pair: the 2026-10-20/21 manifests keyed
+  # seven of them, and the full-history scan was red on nothing else (MR-02,
+  # 2026-10-22). The value must still be exactly a 64-hex digest.
   [[rules.allowlists]]
   description = "file digests in evidence manifests"
   regexTarget = "line"
-  regexes = ['''^\s*"[^"\s]*\.(?:ts|tsx|js|jsx|mjs|cjs|json|md|sql|txt|html|css|yml|yaml|toml|sh|py|csv|xml|pdf|docx|log)"\s*:\s*"[0-9a-f]{64}",?\s*$''']
+  regexes = ['''^\s*"[^"\s]*\.(?:ts|tsx|js|jsx|mjs|cjs|json|md|sql|txt|html|css|yml|yaml|toml|sh|py|csv|xml|pdf|docx|log)(?:\.gz)?"\s*:\s*"[0-9a-f]{64}",?\s*$''']
