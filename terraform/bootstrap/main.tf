@@ -1,13 +1,25 @@
-// Bootstrap: Create the S3 bucket + DynamoDB table used for Terraform remote state.
-// Run this ONCE manually before any other terraform apply:
-//   cd terraform/bootstrap && terraform init && terraform apply
+// Bootstrap: create the S3 bucket that holds Terraform remote state.
+// Run this ONCE per AWS account, before any other terraform apply:
+//   terraform -chdir=terraform/bootstrap init && terraform -chdir=terraform/bootstrap apply
+// then give each root the bucket's name (terraform/README.md, step 1):
+//   terraform -chdir=terraform/bootstrap output -raw state_bucket
+//
+// 2026-10-21 (MR-03 Stage 1, OPS-03 and OPS-26; never applied before this):
+//   - The bucket had a fixed default name. S3 names are global and that one
+//     belongs to another account (it answers 403 from eu-west-1), so the first
+//     apply would fail with BucketAlreadyExists. The name is now the account's
+//     own: c2c-tfstate-<account id>-<region>.
+//   - The DynamoDB lock table is gone. Terraform 1.11 made S3-native locking
+//     (`use_lockfile = true`, a lock object beside the state) generally
+//     available and deprecated DynamoDB locking; both roots use the lock file.
+//   Guarded by scripts/ci/check-terraform-backend.mjs (ci:terraform-backend).
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.11"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0"
+      version = "~> 5.93"
     }
   }
 }
@@ -16,10 +28,16 @@ provider "aws" {
   region = var.region
 }
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  state_bucket = coalesce(var.state_bucket_name, "c2c-tfstate-${data.aws_caller_identity.current.account_id}-${var.region}")
+}
+
 # ── S3 bucket for state files ────────────────────────────────────────────────
 
 resource "aws_s3_bucket" "tfstate" {
-  bucket = var.state_bucket_name
+  bucket = local.state_bucket
 
   lifecycle {
     prevent_destroy = true
@@ -40,13 +58,13 @@ resource "aws_s3_bucket_versioning" "tfstate" {
 # which is granted and logged separately from s3:GetObject (TRIVY-01,
 # 2026-09-24; previously the AWS-managed aws/s3 key).
 resource "aws_kms_key" "tfstate" {
-  description         = "Terraform remote state (${var.state_bucket_name})"
+  description         = "Terraform remote state (${local.state_bucket})"
   enable_key_rotation = true
   tags                = merge(var.tags, { Purpose = "terraform-state" })
 }
 
 resource "aws_kms_alias" "tfstate" {
-  name          = "alias/${var.state_bucket_name}"
+  name          = "alias/${local.state_bucket}"
   target_key_id = aws_kms_key.tfstate.key_id
 }
 
@@ -98,29 +116,10 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
   restrict_public_buckets = true
 }
 
-# ── DynamoDB table for state locking ─────────────────────────────────────────
-
-resource "aws_dynamodb_table" "tflock" {
-  name         = var.lock_table_name
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = merge(var.tags, { Purpose = "terraform-lock" })
-}
-
 # ── Outputs ──────────────────────────────────────────────────────────────────
 
 output "state_bucket" {
   value = aws_s3_bucket.tfstate.id
-}
-
-output "lock_table" {
-  value = aws_dynamodb_table.tflock.name
 }
 
 output "state_kms_key_arn" {

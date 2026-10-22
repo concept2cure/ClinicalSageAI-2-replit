@@ -1,0 +1,2 @@
+[terraform-backend] FAIL — .github/workflows/database-dr-restore-proof.yml:32: runs postgres:16, but production runs Postgres 15 (rds_engine_version): what it proves is not what production runs.
+[terraform-backend] FAIL — .github/workflows/db-schema-validation.yml:38: runs pgvector/pgvector:pg16, but production runs Postgres 15 (rds_engine_version): what it proves is not what production runs.

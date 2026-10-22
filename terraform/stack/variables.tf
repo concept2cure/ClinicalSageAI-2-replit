@@ -35,6 +35,13 @@ variable "azs" {
 
 variable "rds_instance_class" {
   type = string
+  # A burstable db.t* instance throttles to its baseline when its CPU credits
+  # run out, under exactly the PDF/A, OCR and compile load a filing day brings
+  # (MR-03 DATA-13). Staging may size down; production may not.
+  validation {
+    condition     = var.environment != "production" || !startswith(var.rds_instance_class, "db.t")
+    error_message = "Production's database must not be a burstable db.t* class; use a general-purpose class such as db.m6g.large."
+  }
 }
 
 variable "rds_allocated_storage" {

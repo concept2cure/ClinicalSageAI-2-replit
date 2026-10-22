@@ -30,7 +30,7 @@ variable "azs" {
 
 variable "rds_instance_class" {
   type    = string
-  default = "db.t3.medium"
+  default = "db.m6g.large" # not burstable: terraform/stack refuses db.t* in production
 }
 
 variable "api_cpu" {

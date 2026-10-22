@@ -125,6 +125,7 @@ import {
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
 import { saveQmsControlledText } from '../services/qms/training-controlled-text';
 import { describeQmsTrainingDocument } from '../services/qms/training-content';
+import { inForceSummary, readInForceReleases } from '../services/qms/in-force-release';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -209,6 +210,32 @@ async function readinessBlock<T extends Record<string, unknown>>(req: Request, o
     }
 }
 
+/* Controlled documents for readiness, decided by the version in force
+   (in-force-release.ts): `effective` counts the documents in force, including
+   those whose successor is in draft or review (`under_revision`); `draft`
+   counts working copies with nothing in force yet; `review_overdue` is the
+   in-force versions past their scheduled periodic review. Only overdue reviews
+   are a readiness problem. Null when the read fails, as the other blocks. */
+async function readinessDocuments(req: Request, orgId: number): Promise<{ effective: number; under_revision: number; review_overdue: number; draft: number } | null> {
+  try {
+    const client = qmsClient(req);
+    const { rows } = await client.query(`SELECT * FROM qms_documents WHERE organization_id = $1 AND deleted_at IS NULL
+        AND status IN ('effective', 'draft', 'in_review')`, [orgId]);
+    const inForce = await readInForceReleases(client, orgId, rows as QmsDocumentRow[]);
+    const today = new Date().toISOString().slice(0, 10);
+    const day = (value: unknown) => (value instanceof Date ? value.toISOString() : String(value ?? '')).slice(0, 10);
+    const releases = [...inForce.values()];
+    return {
+      effective: releases.length,
+      under_revision: releases.filter((entry) => entry.underRevision).length,
+      review_overdue: releases.filter(({ release }) => release.next_review_date && day(release.next_review_date) < today).length,
+      draft: rows.filter((row) => !inForce.has(Number(row.id))).length,
+    };
+  } catch (err) {
+    log.warn('qms readiness block documents failed', { err: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+}
 
 router.get('/qms/readiness', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -219,21 +246,7 @@ router.get('/qms/readiness', async (req: Request, res: Response) => {
 
   try {
     const [docs, suppliers, training, audits, nonconforming] = await Promise.all([
-      /* Controlled documents: effective set, and how many of those are
-         past their scheduled periodic review. Drafts are counted so the
-         panel can show work-in-flight, but only overdue reviews are a
-         readiness problem. */
-      readinessBlock<{ effective: number; review_overdue: number; draft: number }>(req, orgId,
-        'documents',
-        `SELECT
-            COUNT(*) FILTER (WHERE status = 'effective')::int AS effective,
-            COUNT(*) FILTER (WHERE status = 'effective'
-                               AND next_review_date IS NOT NULL
-                               AND next_review_date < CURRENT_DATE)::int AS review_overdue,
-            COUNT(*) FILTER (WHERE status IN ('draft','in_review'))::int AS draft
-           FROM qms_documents
-          WHERE organization_id = $1 AND deleted_at IS NULL`,
-      ),
+      readinessDocuments(req, orgId),
       /* Suppliers: the two readiness killers are an unapproved critical
          supplier and an overdue supplier audit. */
       readinessBlock<{ total: number; critical_unapproved: number; audit_overdue: number }>(req, orgId,
@@ -287,7 +300,7 @@ router.get('/qms/readiness', async (req: Request, res: Response) => {
       res,
       {
         documents: docs
-          ? { available: true, effective: docs.effective, reviewOverdue: docs.review_overdue, draft: docs.draft }
+          ? { available: true, effective: docs.effective, underRevision: docs.under_revision, reviewOverdue: docs.review_overdue, draft: docs.draft }
           : { available: false, effective: 0, reviewOverdue: 0, draft: 0 },
         suppliers: suppliers
           ? {
@@ -332,11 +345,14 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
   if (status)   { args.push(status);   filters.push(`status = $${args.length}`); }
   if (category) { args.push(category); filters.push(`category = $${args.length}`); }
   try {
-    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_documents WHERE ${filters.join(' AND ')}
+    const client = qmsClient(req);
+    const { rows } = await client.query(`SELECT * FROM qms_documents WHERE ${filters.join(' AND ')}
         ORDER BY doc_number`,
       args,
     );
-    return ok(res, rows.map(qmsRegisterRow), { count: rows.length });
+    // A row under revision names the signed version still in force beside its draft.
+    const inForce = await readInForceReleases(client, orgId, rows as QmsDocumentRow[]);
+    return ok(res, rows.map((row) => ({ ...qmsRegisterRow(row), in_force: inForceSummary(inForce.get(row.id)) })), { count: rows.length });
   } catch (err) { return serverError(res, log, 'doc-list', err); }
 });
 
@@ -434,16 +450,21 @@ router.get('/qms/documents/review-due', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 30));
   try {
-    const { rows } = await qmsClient(req).query(`SELECT *, (next_review_date < CURRENT_DATE) AS overdue
+    const client = qmsClient(req);
+    const { rows: candidates } = await client.query(`SELECT *, (next_review_date < CURRENT_DATE) AS overdue
          FROM qms_documents
         WHERE organization_id = $1 AND deleted_at IS NULL
-          AND status IN ('effective','in_review')
+          AND status IN ('effective','in_review','draft')
           AND next_review_date IS NOT NULL
           AND next_review_date < CURRENT_DATE + ($2 || ' days')::interval
         ORDER BY next_review_date ASC LIMIT 500`,
       [orgId, withinDays],
     );
-    return ok(res, rows.map(qmsRegisterRow), { count: rows.length, withinDays });
+    // A draft is due only as the revision of a version in force; a document
+    // in review stays listed, as it was (in-force-release.ts).
+    const inForce = await readInForceReleases(client, orgId, candidates as QmsDocumentRow[]);
+    const rows = candidates.filter((row) => row.status !== 'draft' || inForce.has(Number(row.id)));
+    return ok(res, rows.map((row) => ({ ...qmsRegisterRow(row), in_force: inForceSummary(inForce.get(Number(row.id))) })), { count: rows.length, withinDays });
   } catch (err) { return serverError(res, log, 'doc-review-due', err); }
 });
 

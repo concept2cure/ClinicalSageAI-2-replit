@@ -1,0 +1,12 @@
+[terraform-backend] self-test ok   — a workflow on postgres:16 (database-dr-restore-proof.yml before): 1 problem(s), expected 1
+[terraform-backend] self-test ok   — a workflow on pgvector/pgvector:pg16 (db-schema-validation.yml before): 1 problem(s), expected 1
+[terraform-backend] self-test ok   — images on 15, a docker run line, and a postgres:5432 host that is not an image: 0 problem(s), expected 0
+[terraform-backend] self-test ok   — the pre-fix production backend (literal bucket, DynamoDB, no lock file): 4 problem(s), expected 4
+[terraform-backend] self-test ok   — the fixed backend (bucket from backend.hcl, use_lockfile): 0 problem(s), expected 0
+[terraform-backend] self-test ok   — use_lockfile beside a DynamoDB table: 1 problem(s), expected 1
+[terraform-backend] self-test ok   — a backend with no locking at all: 1 problem(s), expected 1
+[terraform-backend] self-test ok   — a literal bucket whose value contains a #: 1 problem(s), expected 1
+[terraform-backend] self-test ok   — bootstrap defaulting to the taken name: 2 problem(s), expected 2
+[terraform-backend] self-test ok   — bootstrap defaulting to another fixed name: 1 problem(s), expected 1
+[terraform-backend] self-test ok   — bootstrap defaulting to null: 0 problem(s), expected 0
+[terraform-backend] self-test ok   — bootstrap still creating a lock table: 1 problem(s), expected 1
