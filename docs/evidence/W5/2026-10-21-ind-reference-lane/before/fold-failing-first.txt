@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > folds EVERY preceding sequence, not just the most recent 13ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a later filing of the same leaf supersedes the earlier one 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a withdrawn leaf drops out of the effective state 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > each surviving leaf remembers the sequence that actually holds it 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > reports the most recent prior sequence number 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > does NOT read only a single prior compilation 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > supersedes a leaf last filed two sequences back as REPLACE pointing at that sequence 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > still emits new for a genuinely first-time leaf 0ms
+ × server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > a replace under a new name takes the leaf it names off file 5ms
+   → expected [ 'ap-v1.pdf', 'ib.pdf', …(4) ] to not include 'ap-v1.pdf'
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > an append leaves the leaf it adds to on file 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > a pointer naming no leaf takes nothing off file, and no surviving leaf carries its own act 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > a replace under a new name takes the leaf it names off file
+AssertionError: expected [ 'ap-v1.pdf', 'ib.pdf', …(4) ] to not include 'ap-v1.pdf'
+ ❯ server/services/ectd/__tests__/prior-sequence-fold.test.ts:213:23
+    211|     const names = (await load()).leaves.map((l) => l.fileName);
+    212|     expect(names).toContain('ap-v2.pdf');
+    213|     expect(names).not.toContain('ap-v1.pdf');
+       |                       ^
+    214|   });
+    215|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  00:25:22
+   Duration  452ms (transform 118ms, setup 88ms, import 59ms, tests 29ms, environment 0ms)
+

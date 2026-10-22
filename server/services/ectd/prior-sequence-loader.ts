@@ -212,11 +212,20 @@ export async function loadLatestPriorManifestBySubmission(
   return foldManifestRows(res?.rows ?? []);
 }
 
+/** The filed leaf a `modified-file` pointer names: its sequence, backbone and ID. */
+const MODIFIED_FILE = /^(?:\.\.\/)+([0-9A-Za-z._-]+)\/((?:[A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9_-][A-Za-z0-9._-]*\.xml)#([A-Za-z_][A-Za-z0-9._-]*)$/;
+
 /**
  * Fold stored manifests, oldest sequence first, into the state they leave on
  * file: a later filing of a leaf supersedes an earlier one, a leaf whose last
  * operation is a delete drops out, and each surviving leaf remembers the
  * sequence that holds it (its modified-file pointer traverses there).
+ *
+ * A `replace` or `delete` also takes off file the leaf its modified-file names,
+ * matched by the sequence, backbone and ID recorded for it — the act's own
+ * statement of what it superseded. Matching by name alone kept a version on
+ * file after a later version replaced it under its own name (P-42, 2026-10-22).
+ * An `append` adds to the leaf it names; both stay on file.
  */
 function foldManifestRows(
   rows: Array<Record<string, unknown>>,
@@ -229,14 +238,28 @@ function foldManifestRows(
     for (const leaf of manifestToPriorLeaves(row.leaf_manifest, seq || undefined)) {
       // Same identity the lifecycle diff uses (leafKey, else section + filename).
       const key = leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
-      if ((leaf.operation ?? '').trim().toLowerCase() === 'delete') {
+      const operation = (leaf.operation ?? '').trim().toLowerCase();
+      if (operation === 'replace' || operation === 'delete') dropNamedLeaf(effective, leaf.modifiedFile);
+      if (operation === 'delete') {
         effective.delete(key); // withdrawn — no longer on file
         continue;
       }
-      effective.set(key, { ...leaf, sequenceNumber: seq });
+      const onFile: PriorLeaf = { ...leaf, sequenceNumber: seq };
+      delete onFile.modifiedFile; // what this leaf's act named, not part of what is on file
+      effective.set(key, onFile);
     }
   }
   return { priorSequenceNumber, leaves: [...effective.values()] };
+}
+
+/** Take off file the one leaf a modified-file pointer names, if it is on file. */
+function dropNamedLeaf(effective: Map<string, PriorLeaf>, modifiedFile: string | undefined): void {
+  const named = MODIFIED_FILE.exec(modifiedFile ?? '');
+  if (!named) return;
+  const [, sequence, backbone, leafId] = named;
+  for (const [key, leaf] of effective) {
+    if (leaf.sequenceNumber === sequence && leaf.backbone === backbone && leaf.leafId === leafId) effective.delete(key);
+  }
 }
 
 /**

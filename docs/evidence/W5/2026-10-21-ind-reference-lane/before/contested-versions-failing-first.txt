@@ -1,0 +1,365 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files a declared replace against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T01:15:27.673Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files a declared replace against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T01:15:27.683Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files a declared replace against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T01:15:27.683Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files a declared replace against the leaf its predecessor was filed as 283ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > never files it beside the filed version: placed as new, it is the replace of its predecessor
+{
+  "timestamp": "2026-10-22T01:15:27.873Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > never files it beside the filed version: placed as new, it is the replace of its predecessor
+{
+  "timestamp": "2026-10-22T01:15:27.874Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > never files it beside the filed version: placed as new, it is the replace of its predecessor
+{
+  "timestamp": "2026-10-22T01:15:27.874Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses to choose when two filed leaves carry earlier versions of it
+{
+  "timestamp": "2026-10-22T01:15:27.937Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses to choose when two filed leaves carry earlier versions of it
+{
+  "timestamp": "2026-10-22T01:15:27.939Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 7
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses to choose when two filed leaves carry earlier versions of it
+{
+  "timestamp": "2026-10-22T01:15:27.939Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 7,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > never files it beside the filed version: placed as new, it is the replace of its predecessor 182ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-22T01:15:27.995Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-22T01:15:27.996Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-22T01:15:27.996Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses to choose when two filed leaves carry earlier versions of it 65ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > binds a withdrawal naming the current version to the filed earlier version 55ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+{
+  "timestamp": "2026-10-22T01:15:28.162Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+{
+  "timestamp": "2026-10-22T01:15:28.164Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+{
+  "timestamp": "2026-10-22T01:15:28.164Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one 190ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'ap-pdf-vault-documents-a2222222-2222-…'
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files the delete-and-new the author declared: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T01:15:28.371Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files the delete-and-new the author declared: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T01:15:28.372Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files the delete-and-new the author declared: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T01:15:28.372Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > does not follow a link the database rules refuse
+{
+  "timestamp": "2026-10-22T01:15:28.438Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > does not follow a link the database rules refuse
+{
+  "timestamp": "2026-10-22T01:15:28.439Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > does not follow a link the database rules refuse
+{
+  "timestamp": "2026-10-22T01:15:28.439Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > files the delete-and-new the author declared: a version whose predecessor this sequence withdraws binds nothing 188ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > does not follow a link the database rules refuse 66ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > leaves only the new version on file once the replace is filed
+{
+  "timestamp": "2026-10-22T01:15:28.611Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > leaves only the new version on file once the replace is filed
+{
+  "timestamp": "2026-10-22T01:15:28.612Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > leaves only the new version on file once the replace is filed
+{
+  "timestamp": "2026-10-22T01:15:28.612Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > leaves only the new version on file once the replace is filed 175ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'ap-pdf-vault-documents-a2222222-2222-…'
+
+- Expected
++ Received
+
+- ap-pdf-vault-documents-a2222222-2222-4222-8222-222222222222.pdf
++ <?xml version="1.0" encoding="UTF-8"?>
++ <?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>
++ <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
++ <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
++            xmlns:xlink="http://www.w3c.org/1999/xlink"
++            dtd-version="3.2">
++   <m1-administrative-information-and-prescribing-information>
++     <leaf operation="new" checksum="ce0bee2d066c9a0f9cdcb756d04e17cd" checksum-type="md5" xlink:href="m1/us/us-regional.xml" xlink:type="simple" ID="leaf-m1-regional-backbone">
++       <title>Module 1 regional backbone (us-regional.xml)</title>
++     </leaf>
++   </m1-administrative-information-and-prescribing-information>
++   <m3-quality>
++     <m3-2-body-of-data>
++       <m3-2-s-drug-substance>
++         <leaf operation="replace" modified-file="../0000/index.xml#leaf-3-2-S-4-2-ap-pdf-vault-documents-a1111111-1111-4111-8111-111111111111" checksum="bea4fcdd5ebcea75be7ca4d49a725158" checksum-type="md5" xlink:href="m3/3-2-s-4-2/ap-pdf-vault-documents-a2222222-2222-4222-8222-222222222222.pdf" xlink:type="simple" ID="leaf-m3-2-s-4-2-ap-pdf-vault-documents-a2222222-2222-4222-8222-222222222222">
++           <title>Analytical procedures</title>
++         </leaf>
++       </m3-2-s-drug-substance>
++     </m3-2-body-of-data>
++   </m3-quality>
++ </ectd:ectd>
+
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:206:23
+    204|     try {
+    205|       const xml = await indexXmlOf(r.bundle.path);
+    206|       expect(xml).not.toContain(nameOf(V2));
+       |                       ^
+    207|       expect(xml).not.toContain(nameOf(V3));
+    208|       expect(r.skipped).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  01:15:19
+   Duration  9.02s (transform 2.66s, setup 100ms, import 4.50s, tests 4.09s, environment 0ms)
+
+EXIT 1
