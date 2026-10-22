@@ -1,0 +1,3 @@
+17:08:13 G thread ana-ri_1792688889938_x96j4pvku run run_9ad20bf6-3c28-4c69-ad22-7c150fb21848
+17:08:13 G: Live Drive page closed
+17:08:42 done {"G_liveDriveRequested":true,"G_detachedNotStopped":true,"G_finishedAndSealed":true,"G_screenActionNotRun":true,"G_readStillRan":true,"G_summaryShowsTheLine":true,"G_noLostConnection":true}

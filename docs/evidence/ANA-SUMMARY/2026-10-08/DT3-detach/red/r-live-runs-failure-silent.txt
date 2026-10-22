@@ -1,0 +1,12 @@
+# r-live-runs-failure-silent: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts  -t could not be made
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the live-runs read on a reload could not be made (DT3 review) > a 500: the thread says it could not check, never that nothing runs; checking again rejoins 27ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the live-runs read on a reload could not be made (DT3 review) > a malformed 200: the thread says it could not check, never that nothing runs; checking again rejoins 4ms
+   → expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 16 skipped (18)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the live-runs read on a reload could not be made (DT3 review) > a 500: the thread says it could not check, never that nothing runs; checking again rejoins
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the live-runs read on a reload could not be made (DT3 review) > a malformed 200: the thread says it could not check, never that nothing runs; checking again rejoins
+AssertionError: expected false to be true // Object.is equality

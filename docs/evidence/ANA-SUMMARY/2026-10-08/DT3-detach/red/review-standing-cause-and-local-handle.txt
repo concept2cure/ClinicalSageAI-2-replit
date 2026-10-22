@@ -1,0 +1,27 @@
+# pre-fix red, 2026-10-22: every standing ending recorded as 'the session ended' (DT3 review DP-83, finding 3.4) and no standing check for a turn whose run row could not be opened (IAM-35, finding 3.3)
+# tests: run-standing.test.ts; stream-detach.test.ts -t 'DT3 test 11' (the harness answers the new shape, so the first case's red is the old route passing the answer object on as the reason)
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the session ended: stopped as session_ended, and the record says so 89ms
+   → expected [ { reason: 'session_ended', …(1) } ] to deeply equal [ 'session_ended' ]
+ ✓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the standing could not be read (fails closed): stopped as session_ended, and the record says so 23ms
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the record names the cause the check found: an organisation that can no longer run work 28ms
+   → expected [ { reason: 'session_ended', …(1) } ] to deeply equal [ 'session_ended' ]
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > a turn with no run row is re-checked too, and stopped when its standing ended 29ms
+   → expected +0 to be 2 // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > a standing session goes on 18ms
+ ✓ server/services/ana/__tests__/run-standing.test.ts > runStanding > a live session in an active organisation stands — checked as not the person acting 10ms
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a revoked, expired, signed-out or idle credential: session_ended, the credential ended 5ms
+   → expected 'session_ended' to deeply equal { reason: 'session_ended', …(1) }
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a suspended, read-only, inactive or deleting organisation: session_ended, the organisation unavailable 1ms
+   → expected 'session_ended' to deeply equal { reason: 'session_ended', …(1) }
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a membership that is gone, or cannot be read: session_ended, the membership ended 1ms
+   → expected 'session_ended' to deeply equal { reason: 'session_ended', …(1) }
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > an organisation check that throws: session_ended, the standing unreadable (fail closed) 3ms
+   → expected 'session_ended' to deeply equal { reason: 'session_ended', …(1) }
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > no credential at all: session_ended, the standing unreadable, without asking anything 1ms
+   → expected 'session_ended' to deeply equal { reason: 'session_ended', …(1) }
+ × server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > carries the round-boundary standing check 2ms
+   → expected undefined to be type of 'function'
+ ✓ server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > with no person identified it has none (nothing to check), as before 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  9 failed | 4 passed | 39 skipped (52)

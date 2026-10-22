@@ -1,0 +1,357 @@
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792651953383_8si7sctws"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792651953383_8si7sctws/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/stream",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792651990180_4dgrprhi1"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792651990180_4dgrprhi1/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652027215_30wvgz94p"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792652027215_30wvgz94p/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652050845_r5i7bbdq2"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792652050845_r5i7bbdq2/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792652078794_knh6xwehc/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652118090_feajt95pb"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792652118090_feajt95pb/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792652129341_ey5xy79ct/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/authoring/docs?conversationId=ana-ri_1792652129341_ey5xy79ct",
+    "error": "net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/runs/run_b6eda0a7-a9d9-4199-95cb-3f47d1bc1f1e/events?after=8&visible=1",
+    "error": "net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/runs/run_b6eda0a7-a9d9-4199-95cb-3f47d1bc1f1e/events?after=8&visible=1",
+    "error": "net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/runs/run_b6eda0a7-a9d9-4199-95cb-3f47d1bc1f1e/events?after=8&visible=1",
+    "error": "net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/runs/run_b6eda0a7-a9d9-4199-95cb-3f47d1bc1f1e/events?after=8&visible=1",
+    "error": "net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/agent-activity",
+    "error": "net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/agent-activity",
+    "error": "net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "WebSocket connection to 'ws://127.0.0.1:5099/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792652129341_ey5xy79ct/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792652129341_ey5xy79ct/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  }
+]

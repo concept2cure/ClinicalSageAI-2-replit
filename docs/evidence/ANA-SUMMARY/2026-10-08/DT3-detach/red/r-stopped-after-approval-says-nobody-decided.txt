@@ -1,0 +1,10 @@
+# r-stopped-after-approval-says-nobody-decided: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t approved action was being carried out
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a run stopped while its approved action was being carried out (DT3 review) > the step says a person approved it as the run stopped, and is not "not authorised" 62ms
+   → expected 'error' to be 'cancelled' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a run stopped while its approved action was being carried out (DT3 review) > a stop with no claim still says nobody decided 13ms
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 1 passed | 44 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a run stopped while its approved action was being carried out (DT3 review) > the step says a person approved it as the run stopped, and is not "not authorised"
+AssertionError: expected 'error' to be 'cancelled' // Object.is equality

@@ -1,0 +1,9 @@
+# m-stream-does-not-retain: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t tenant connection
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn keeps its request's tenant connection (blocking review finding, 14362ef00) > the round after the page closed reads on the request's client, and the client is released once, after the turn 58ms
+   → the tool after the close did not read on the request client: expected [] to deeply equal [ 'released=0' ]
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 45 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn keeps its request's tenant connection (blocking review finding, 14362ef00) > the round after the page closed reads on the request's client, and the client is released once, after the turn
+AssertionError: the tool after the close did not read on the request client: expected [] to deeply equal [ 'released=0' ]

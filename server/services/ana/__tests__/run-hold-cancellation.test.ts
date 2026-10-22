@@ -44,7 +44,6 @@ function controlledHold() {
   const endHeld = vi.fn(async () => true);
   const hold = createRunHold({
     readStatus, wake, emit: frame => state.frames.push(frame),
-    clientGone: () => false, stopForDisconnect: async () => {},
     now: () => state.clock, maxPauseMs: 100,
     expiry: 'end', endHeld,
   });

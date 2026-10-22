@@ -39,6 +39,10 @@ vi.mock('../../../db/requestDb', async importOriginal => ({
 
 vi.mock('../../../services/ana/run-control.js', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
+  // The held approval is claimed before the sign-off and the execution (DT3
+  // review, finding 4.3; governedActionRunEnded.test.ts holds its refusals).
+  claimApproval: vi.fn(async () => 'claimed'),
+  releaseApprovalClaim: vi.fn(async () => undefined),
   readPendingApproval: vi.fn(async (_c: unknown, runId: string, orgId: number, userId?: number) => {
     if (row.id !== runId || row.orgId !== orgId || !row.held) return null;
     if (userId !== undefined && row.userId !== userId) return null;

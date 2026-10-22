@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > a durable run with a person and a resolved conversation, not driving: detaches 2ms
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > local-only (no run row): stops on disconnect 1ms
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > no person: stops on disconnect 0ms
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > the request asked to drive (D-7): stops on disconnect 0ms
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > no resolved conversation: stops on disconnect 8ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/run-detachable.test.ts > detachable > no resolved conversation: stops on disconnect
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/run-detachable.test.ts:25:49
+     23|     ['no resolved conversation', { threadResolved: false }],
+     24|   ])('%s: stops on disconnect', (_name, over) => {
+     25|     expect(detachable({ ...durable, ...over })).toBe(false);
+       |                                                 ^
+     26|   });
+     27| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  05:37:29
+   Duration  609ms (transform 118ms, setup 104ms, import 51ms, tests 16ms, environment 0ms)
+

@@ -100,9 +100,10 @@ describe('the dossier reads AnA’s own holds beside the human controls', () => 
         runPolicy: 'manual',
       },
     ]);
-    // The resume is the person's; it is counted once, as a human control.
+    // The resume is the person's; it is counted once, as a human control, and
+    // says who took it (DT3 review; no name resolves here, so by id).
     expect(d.humanControls).toEqual([
-      { turn: 1, action: 'resume', message: null, round: 2, at: '2026-09-28T10:01:00.000Z' },
+      { turn: 1, action: 'resume', message: null, round: 2, at: '2026-09-28T10:01:00.000Z', by: 'user 3', byRole: null, reason: null },
     ]);
   });
 

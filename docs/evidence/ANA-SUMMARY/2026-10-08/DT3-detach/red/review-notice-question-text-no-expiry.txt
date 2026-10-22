@@ -1,0 +1,13 @@
+# pre-fix red, 2026-10-22: the notice copied question text into the inbox with no expiry (DT3 review DP-84, finding 3.5, second half)
+ ✓ server/services/ana/__tests__/run-notice.test.ts > runNoticeContent > finished: the title, the conversation by its title, and the link 2ms
+ × server/services/ana/__tests__/run-notice.test.ts > runNoticeContent > a conversation with no title is named by its start (UTC), never by the question 7ms
+   → expected '14:02 UTC · Find every stability repo…' to be 'Your conversation started at 14:02 UTC' // Object.is equality
+ ✓ server/services/ana/__tests__/run-notice.test.ts > runNoticeContent > a stop says its line: "AnA stopped: …" 0ms
+ ✓ server/services/ana/__tests__/run-notice.test.ts > runNoticeContent > "1 step was not authorised and did not run." when a step was held back 1ms
+ ✓ server/services/ana/__tests__/run-notice.test.ts > runNoticeContent > the person's own Stop sends nothing 0ms
+ ✓ server/services/ana/__tests__/run-notice.test.ts > runNoticeContent > an approval: a warning, with the conversation and no parameters or ids 0ms
+ × server/services/ana/__tests__/run-notice.test.ts > sendRunNotice (DT3 review, DP-84) > the notice expires, like the turn it points at, and carries no question text 2ms
+   → expected undefined to be an instance of Date
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)

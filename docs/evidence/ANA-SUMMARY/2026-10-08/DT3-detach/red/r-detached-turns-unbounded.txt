@@ -1,0 +1,10 @@
+# r-detached-turns-unbounded: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t ceiling
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the ceiling on turns that go on after their page closed (DT3 review) > at the organisation's ceiling, the turn stops as client_disconnected and its record says why 57ms
+   → expected [ '2026-10-22T17:20:18.676Z' ] to deeply equal []
+ ✓ server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the ceiling on turns that go on after their page closed (DT3 review) > a detached turn gives its slot back when it ends 18ms
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 1 passed | 44 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the ceiling on turns that go on after their page closed (DT3 review) > at the organisation's ceiling, the turn stops as client_disconnected and its record says why
+AssertionError: expected [ '2026-10-22T17:20:18.676Z' ] to deeply equal []

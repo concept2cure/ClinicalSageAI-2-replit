@@ -33,6 +33,7 @@ import type { AnaPlanChange, AnaPlanStep } from '../components/ana/useAnaChat.ty
 import { PLAN_TOOL } from '../components/ana/anaProgress';
 import { STEP_SOURCES, formatStepDuration, unknownStepLabel, type StepFact, type StepSource } from '@shared/ana/step-verbs';
 import {
+  notAuthorisedStep,
   orderTimeline,
   stepDidNotComplete,
   stepStates,
@@ -42,6 +43,7 @@ import {
   type TimelineEvent,
 } from '@shared/ana/turn-timeline';
 import { isContinuable, stopLineText } from './anaWorkModel';
+import { notAuthorisedLine } from '@shared/ana/stop-lines';
 
 /* ── The inline record's items (moved from AnaActivity) ─────────────────────── */
 
@@ -250,14 +252,38 @@ function taskRow(e: TaskEvent, ctx: RowContext): TaskRow {
   };
 }
 
-const CONTROL_WORDS: Record<string, string> = {
-  pause: 'You paused AnA',
-  resume: 'You resumed AnA',
-  interject: 'You steered AnA',
-  cancel: 'You stopped the run',
-  approve: 'You approved an action',
-  deny: 'You declined an action',
+/** What each control did, after its actor ("You", "The person who asked", …). */
+const CONTROL_DONE: Record<string, string> = {
+  pause: 'paused AnA',
+  resume: 'resumed AnA',
+  interject: 'steered AnA',
+  cancel: 'stopped the run',
+  approve: 'approved an action',
+  deny: 'declined an action',
 };
+
+/**
+ * A control row's words, credited to whoever took it (AnA detach DT3 review:
+ * an administrator's cancel read "You stopped the run"). The server says who,
+ * in terms this reader may be told (turn-summary.ts attributeControls); no
+ * `by` is the asker reading their own turn. An attribution this client cannot
+ * read is nobody's "You".
+ */
+export function controlText(c: TimelineControl): string {
+  const done = CONTROL_DONE[c.action] ?? 'took a control';
+  const by = c.by;
+  if (!by) return `You ${done}`;
+  switch (by.kind) {
+    case 'administrator':
+      return c.action === 'cancel' ? `Stopped by ${by.name}, an administrator` : `${by.name}, an administrator, ${done}`;
+    case 'you_as_administrator':
+      return `You ${done}, as an administrator`;
+    case 'asker':
+      return `The person who asked ${done}`;
+    default:
+      return `Someone else ${done}`;
+  }
+}
 
 /** The closing row's words for how the turn ended. */
 export function endText(outcome: string, reason: string | null): string {
@@ -289,12 +315,10 @@ export const NOT_RECORDED_LINE = 'The steps up to here were saved as they ran. T
 /**
  * Said in the closing row when steps were held back — a person's no, no
  * answer in time, or an act only a person may take (§2.7, §5.3). Counted from
- * the timeline's own `heldBack` steps; nothing when there were none.
+ * the timeline's own `heldBack` steps; nothing when there were none. The one
+ * copy is shared with the server's "finished" notification (DT3).
  */
-export function notAuthorisedLine(n: number): string | null {
-  if (n < 1) return null;
-  return n === 1 ? '1 step was not authorised and did not run.' : `${n} steps were not authorised and did not run.`;
-}
+export { notAuthorisedLine };
 
 function endRow(outcome: string, reason: string | null, key: string, notes: string[] = []): SummaryRow {
   return {
@@ -309,14 +333,16 @@ function endRow(outcome: string, reason: string | null, key: string, notes: stri
 
 /** The closing row's notes: the held-back steps, and that the turn was not recorded. */
 function endNotes(states: Map<string, StepState>, opts: SummaryRowOptions): string[] {
-  const heldBack = [...states.values()].filter((s) => s.finished?.heldBack === true).length;
+  const heldBack = [...states.values()].filter((s) => notAuthorisedStep(s.finished)).length;
   return [notAuthorisedLine(heldBack), opts.notRecorded ? NOT_RECORDED_LINE : null].filter((l): l is string => l !== null);
 }
 
 function itemRow(item: ReturnType<typeof orderTimeline>[number], ctx: RowContext): SummaryRow | null {
   if (item.kind === 'control') {
     const c: TimelineControl = item.control;
-    return { kind: 'control', key: `c-${c.at}-${c.action}`, text: CONTROL_WORDS[c.action] ?? 'You took a control', ...(c.message ? { message: c.message } : {}) };
+    // An administrator's reason is what the row says under it; a steer's text otherwise.
+    const message = c.reason ? `Reason: ${c.reason}` : c.message;
+    return { kind: 'control', key: `c-${c.at}-${c.action}`, text: controlText(c), ...(message ? { message } : {}) };
   }
   const e = item.event;
   if (e.kind === 'note') return { kind: 'note', key: `n-${e.seq}`, text: e.text.trim() };

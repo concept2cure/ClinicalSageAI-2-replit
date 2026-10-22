@@ -13,7 +13,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { NOTIFICATION_CATEGORIES } from '../../shared/constants/notifications';
+import { CREATABLE_NOTIFICATION_CATEGORIES, NOTIFICATION_CATEGORIES } from '../../shared/constants/notifications';
 
 import { createScopedLogger } from '../utils/logger';
 import {
@@ -55,7 +55,12 @@ const listQuery = z.object({
 const createBody = z.object({
   recipientUserId:  z.number().int().positive().optional().nullable(),
   recipientRole:    z.string().max(60).optional().nullable(),
-  category:         z.enum(CATEGORIES),
+  // Not a platform-only category ('ana_turn'): a notice in one is the
+  // platform's to write, never a member's (DT3 review, DP-84).
+  category:         z.enum(CATEGORIES).refine(
+    (c): boolean => (CREATABLE_NOTIFICATION_CATEGORIES as readonly string[]).includes(c),
+    { message: 'This category is written by the platform only.' },
+  ),
   severity:         z.enum(SEVERITY),
   title:            z.string().min(1).max(300),
   body:             z.string().max(4000).optional().nullable(),

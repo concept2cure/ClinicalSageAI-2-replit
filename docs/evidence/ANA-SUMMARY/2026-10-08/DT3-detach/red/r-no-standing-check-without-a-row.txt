@@ -1,0 +1,10 @@
+# r-no-standing-check-without-a-row: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-standing.test.ts  -t local-only
+ × server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > carries the round-boundary standing check 6ms
+   → expected undefined to be type of 'function'
+ ✓ server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > with no person identified it has none (nothing to check), as before 0ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 6 skipped (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > carries the round-boundary standing check
+AssertionError: expected undefined to be type of 'function'

@@ -1,0 +1,31 @@
+# pre-fix red, 2026-10-22: the client findings of the DT3 review (2.2 frozen running rows, 2.3 one-shot Working marker / waiting is not Working / failed read, 2.4 hand-over with an unreadable conversation, 2.5 a 401 on the poll, 2.7 a code-less server error frame, 2.8 a failed live-runs read, 2.9 + 4.7 'stops by' as a bound, in UTC)
+# tests: useAnaChat-detach.test.ts -t honestly; useAnaChat-follow.test.ts -t 'could not be made'; projectHomeWorkingMarker.test.tsx
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > "Working" while someone watches; when it has stopped by, once nobody does 10ms
+   → expected 'Working · stops by 14:31 if nobody op…' to be 'Working · stops by 14:33 UTC if nobod…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > the same instant, in UTC, whatever zone this device is in (DT3 review 4.7) 3ms
+   → expected 'Working · stops by 07:31 if nobody op…' to be 'Working · stops by 14:33 UTC if nobod…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > a run waiting on its person is "Waiting for you", never "Working" (DT3 review 2.3) 1ms
+   → expected 'Working' to be 'Waiting for you' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > the marker is read again when the page comes back on screen: a turn that ended is no longer "Working" 5080ms
+   → Unable to find an element with the text: Working · stops by 14:33 UTC if nobody opens it. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > a list that could not be read says so, quietly, and marks nothing (DT3 review 2.3) 5026ms
+   → Unable to find an element with the text: Couldn't check which conversations AnA is working in.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the RUN_LIMIT refusal links to the Working conversations > each one opens its conversation 191ms
+   → Unable to find an accessible element with the role "button" and name `/Labelling · Waiting for you/`
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the RUN_LIMIT refusal links to the Working conversations > under any other turn there is nothing, and nothing is read 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the RUN_LIMIT refusal links to the Working conversations > a list that could not be read shows no links, and says nothing false 13ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the live-runs read on a reload could not be made (DT3 review) > a 500: the thread says it could not check, never that nothing runs; checking again rejoins 53ms
+   → expected undefined to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the live-runs read on a reload could not be made (DT3 review) > a malformed 200: the thread says it could not check, never that nothing runs; checking again rejoins 7ms
+   → expected undefined to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > an in-place follow leaves no step "running": not while it follows, not after an unsealed end 44ms
+   → expected [ { name: 'search_vault', …(6) } ] to deeply equal []
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a hand-over that cannot read the answer says so, never an empty answer 8ms
+   → expected null to be 'The answer couldn\'t be loaded. Reope…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a 401 on the poll says the sign-in ended, in the server's words, and stops polling 8ms
+   → expected 'Can\'t reach the server. Retrying.' to be 'Signed out after a period of inactivi…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a code-less error frame from the server is a refusal, not a lost socket 5ms
+   → expected undefined to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  12 failed | 2 passed | 26 skipped (40)

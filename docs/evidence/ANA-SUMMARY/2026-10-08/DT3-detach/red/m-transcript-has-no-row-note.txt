@@ -1,0 +1,29 @@
+# m-transcript-has-no-row-note: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts  -t transcript's note
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > server_shutdown: "Stopped: the server restarted for an update. Continue picks it up." 8ms
+   → expected null to be 'Stopped: the server restarted for an …' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > orphaned: "Stopped: the server handling this turn stopped responding. Continue picks it up." 1ms
+   → expected null to be 'Stopped: the server handling this tur…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > session_ended: "Stopped: the sign-in or access that started this turn ended. Continue picks it up." 1ms
+   → expected null to be 'Stopped: the sign-in or access that s…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > unattended_limit: "Stopped: nobody was watching for 15 minutes. Continue picks it up." 1ms
+   → expected null to be 'Stopped: nobody was watching for 15 m…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > admin_cancelled: "Stopped by an administrator." 1ms
+   → expected null to be 'Stopped by an administrator.' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > error: "Stopped: the turn ended with an error." 1ms
+   → expected null to be 'Stopped: the turn ended with an error.' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  6 failed | 7 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > server_shutdown: "Stopped: the server restarted for an update. Continue picks it up."
+AssertionError: expected null to be 'Stopped: the server restarted for an …' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > orphaned: "Stopped: the server handling this turn stopped responding. Continue picks it up."
+AssertionError: expected null to be 'Stopped: the server handling this tur…' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > session_ended: "Stopped: the sign-in or access that started this turn ended. Continue picks it up."
+AssertionError: expected null to be 'Stopped: the sign-in or access that s…' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > unattended_limit: "Stopped: nobody was watching for 15 minutes. Continue picks it up."
+AssertionError: expected null to be 'Stopped: nobody was watching for 15 m…' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > admin_cancelled: "Stopped by an administrator."
+AssertionError: expected null to be 'Stopped by an administrator.' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > error: "Stopped: the turn ended with an error."
+AssertionError: expected null to be 'Stopped: the turn ended with an error.' // Object.is equality

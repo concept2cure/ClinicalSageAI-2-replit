@@ -1,0 +1,9 @@
+# r-iam23-contract-per-file-only: exit 1 (non-zero = red)
+# tests: server/middleware/__tests__/token-class-every-verifier.test.ts  -t every call site
+ × server/middleware/__tests__/token-class-every-verifier.test.ts > every JWT verifier applies the token-class rule (IAM-23) > every call site applies the rule, or says at the site why it need not 318ms
+   → expected [ 'routes/auth.ts:1424' ] to deeply equal []
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/middleware/__tests__/token-class-every-verifier.test.ts > every JWT verifier applies the token-class rule (IAM-23) > every call site applies the rule, or says at the site why it need not
+AssertionError: expected [ 'routes/auth.ts:1424' ] to deeply equal []

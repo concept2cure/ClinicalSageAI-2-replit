@@ -1,0 +1,4 @@
+✅ Schema migration complete — safe to roll services.
+DEPLOY-MIGRATE fresh2 OK 2026-10-22T07:11:19Z (detached_at)
+DEPLOY-MIGRATE fresh2 OK 2026-10-22T15:49:36Z (the review pass: started_session_id, stopped_detail; db/migrations/20260917_ana_runs.sql amended in place)
+exit=0

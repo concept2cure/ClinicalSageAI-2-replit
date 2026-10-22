@@ -1,0 +1,9 @@
+# m-member-removal-stops-nothing: exit 1 (non-zero = red)
+# tests: server/routes/__tests__/tenant-users-audit.test.ts  -t stops the removed member
+ × server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > stops the removed member's live AnA runs, once the removal has committed 559ms
+   → expected [ 'COMMIT' ] to deeply equal [ 'COMMIT', 'UPDATE ana_runs' ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > stops the removed member's live AnA runs, once the removal has committed
+AssertionError: expected [ 'COMMIT' ] to deeply equal [ 'COMMIT', 'UPDATE ana_runs' ]

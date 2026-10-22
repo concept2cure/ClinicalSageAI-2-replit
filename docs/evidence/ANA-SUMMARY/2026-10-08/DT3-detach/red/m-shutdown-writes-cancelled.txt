@@ -1,0 +1,15 @@
+# m-shutdown-writes-cancelled: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-control-detach.pglite.test.ts  -t shutdown
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > stopRunInternally('server_shutdown') writes failed, as the reaper does, and aborts with the reason 30ms
+   → expected { status: 'cancelled', …(2) } to match object { status: 'failed', …(1) }
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > stopRunInternally('session_ended') writes cancelled; client_disconnected stays cancelled 10ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > settleOwnedRunsForShutdown ends every owned live run failed/server_shutdown, in each org, and aborts each 17ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after a shutdown, and readRunEnding returns the row's reason 7ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run a shutdown ended while the person signed: not_waiting, and nothing is claimed 10ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > abortOwnedRunsForShutdown (DT3 review) > stops every owned turn with server_shutdown, writes nothing, and counts each once 13ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed | 31 skipped (37)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > stopRunInternally('server_shutdown') writes failed, as the reaper does, and aborts with the reason
+AssertionError: expected { status: 'cancelled', …(2) } to match object { status: 'failed', …(1) }

@@ -1,0 +1,13 @@
+# m-read-only-counted-not-authorised: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/turn-timeline-not-authorised.test.ts client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts  -t read-only|heldBackCount
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > a step the person kept read-only is not counted as not authorised 10ms
+   → expected { kind: 'end', key: 'e-5', …(4) } to match object { kind: 'end', …(1) }
+ × server/services/ana/__tests__/turn-timeline-not-authorised.test.ts > TurnTimeline.heldBackCount > counts the steps a person did not authorise, and not a read-only refusal 7ms
+   → expected 2 to be 1 // Object.is equality
+ Test Files  2 failed (2)
+      Tests  2 failed | 23 skipped (25)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/turn-timeline-not-authorised.test.ts > TurnTimeline.heldBackCount > counts the steps a person did not authorise, and not a read-only refusal
+AssertionError: expected 2 to be 1 // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > a step the person kept read-only is not counted as not authorised
+AssertionError: expected { kind: 'end', key: 'e-5', …(4) } to match object { kind: 'end', …(1) }

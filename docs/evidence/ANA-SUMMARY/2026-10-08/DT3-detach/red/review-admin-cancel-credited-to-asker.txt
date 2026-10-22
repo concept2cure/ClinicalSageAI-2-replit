@@ -1,0 +1,35 @@
+# pre-fix red, 2026-10-22: an administrator's cancel credited to the asker in the Summary, the live read and the lineage dossier (DT3 review blocker, finding 4.0)
+# tests: turn-summary-controls.test.ts, turnSummaryControlActor.test.ts, lineage-dossier-control-actor.test.ts
+ × server/services/ana/__tests__/lineage-dossier-control-actor.test.ts > the dossier says who took each control > the asker's steer by name, the administrator's cancel by name and role with the reason, an unnamed actor by id 17ms
+   → expected [ …(3) ] to deeply equal [ [ 'interject', …(3) ], …(2) ]
+ × server/services/ana/__tests__/lineage-dossier-control-actor.test.ts > the dossier says who took each control > the XML carries by, byRole and the reason 4ms
+   → expected '<?xml version="1.0" encoding="UTF-8" …' to match /<Control action="cancel"[^>]* by="Dan…/
+ × server/services/ana/__tests__/lineage-dossier-control-actor.test.ts > the dossier says who took each control > the trace report's table has a By column: the cancel is the administrator's, never the author's 3ms
+   → expected [ 'Action', 'Message', 'Turn', 'When' ] to deeply equal [ 'Action', 'By', 'Message', …(2) ]
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > an administrator's cancel in the Summary > is credited to the administrator by name, with their reason, and never as "You stopped" 11ms
+   → expected { kind: 'control', …(2) } to match object { …(2) }
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > an administrator's cancel in the Summary > read by the administrator who took it: theirs, as an administrator 1ms
+   → controlText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > read by the asker: "You …", as before 1ms
+   → controlText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > read by anyone else: the person who asked, never "You" 1ms
+   → controlText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > an attribution this client cannot read is nobody's "You" 1ms
+   → controlText is not a function
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > controlsOf keeps the reason an administrator gave, and no person ids > the reason rides the cancel; byUserId and byRole never reach the projection 12ms
+   → expected { action: 'cancel', round: 2, …(1) } to deeply equal { action: 'cancel', round: 2, …(2) }
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the asker reads their own steer as theirs and the admin's cancel by the admin's name 1ms
+   → attributeControls is not a function
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the administrator reads their own cancel as theirs, as an administrator, and the steer as the asker's 1ms
+   → attributeControls is not a function
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a colleague reads neither as theirs, and the asker's id is never in the payload 2ms
+   → attributeControls is not a function
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > an administrator whose name cannot be read is "user <id>", and a failed read is the same, never "You" 1ms
+   → attributeControls is not a function
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a reader nobody identified is told neither is theirs 1ms
+   → attributeControls is not a function
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a record that could not read its controls stays null, never an empty list 0ms
+   → attributeControls is not a function
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  15 failed (15)

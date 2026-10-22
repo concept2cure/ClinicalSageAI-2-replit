@@ -1,0 +1,15 @@
+# m-attached-row-stop-read-as-error: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t still attached
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > admin_cancelled: done with the reason and post_done with the record, never an error frame 60ms
+   → a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > server_shutdown: done with the reason and post_done with the record, never an error frame 9ms
+   → a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > session_ended: done with the reason and post_done with the record, never an error frame 8ms
+   → a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []
+ Test Files  1 failed | 1 skipped (2)
+      Tests  3 failed | 43 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > admin_cancelled: done with the reason and post_done with the record, never an error frame
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > server_shutdown: done with the reason and post_done with the record, never an error frame
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > session_ended: done with the reason and post_done with the record, never an error frame
+AssertionError: a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []

@@ -1,0 +1,21 @@
+# pre-fix red, 2026-10-22: the admin cancel's reason and its chained audit row in the cancel's transaction (DT3 review DP-82, finding 4.4)
+# tests: server/services/ana/__tests__/run-control-detach.pglite.test.ts -t "admin's cancel"
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > is accepted on a colleague's run, attributed to the admin with byRole and their reason, and stops it admin_cancelled 44ms
+   → expected [ { …(5) } ] to deeply equal [ ObjectContaining{…} ]
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's pause is refused: only the asker steers 8ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's resume is refused: only the asker steers 11ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's interject is refused: only the asker steers 7ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > a member who is not an admin cannot cancel a colleague's run 7ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > another organisation's admin gets NOT_FOUND 9ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > the asker's own cancel is still `cancelled`, with no byRole, no reason asked and no admin audit row 16ms
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > needs a reason: refused REASON_REQUIRED, the run goes on, and nothing is written 12ms
+   → expected { ok: true, status: 'cancelled', …(2) } to match object { ok: false, …(2) }
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > writes the chained row inside the cancel: who, whose run, which conversation, and why 17ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > a refused audit row rolls the cancel back: AUDIT_REFUSED, the run still running, no abort, no control event 8ms
+   → expected { ok: true, status: 'cancelled', …(2) } to match object { ok: false, …(2) }
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after an admin's cancel, and readRunEnding returns the row's reason 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 7 passed | 19 skipped (30)
