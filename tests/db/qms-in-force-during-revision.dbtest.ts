@@ -41,6 +41,7 @@ let viewer: Actor;
 let secondViewer: Actor;
 let documentId: number;
 let v1: { documentVersion: string; contentDigest: string };
+let v1SignatureId: number;
 
 async function account(key: string, role: string): Promise<Actor> {
   const user = (await owner.query(`INSERT INTO users(email,name,password_hash,status) VALUES($1,$2,$3,'active') RETURNING id`,
@@ -90,6 +91,7 @@ beforeAll(async () => {
   documentId = Number(row.id);
   const approved = await sign(documentId);
   expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+  v1SignatureId = Number(approved.body.meta.signature.id);
   const read = await http(viewer, 'get', `/api/mdx/qms/documents/${documentId}`);
   v1 = read.body.meta.training;
   expect(read.body.meta.training).toMatchObject({ eligible: true, documentVersion: '1.0' });
@@ -138,6 +140,26 @@ describe('an effective SOP while its next version is drafted', () => {
     const readiness = await http(viewer, 'get', '/api/mdx/qms/readiness');
     expect(readiness.status, JSON.stringify(readiness.body)).toBe(200);
     expect(readiness.body.data.documents).toMatchObject({ available: true, effective: 1, underRevision: 1, draft: 0 });
+  });
+});
+
+describe('the controlled document register report while the revision is open', () => {
+  it('names the version in force and the signature that approved it, beside the draft', async () => {
+    const { findReport } = await import('../../server/services/audit/compliance-reports/catalog');
+    const { runComplianceReport } = await import('../../server/services/audit/compliance-reports/generate');
+    const { platformIntegrityChecks } = await import('../../server/services/audit/compliance-reports/integrity-checks');
+    const { parseReportPeriod } = await import('../../server/services/audit/compliance-reports/period');
+    const { runWithTenantScope } = await import('../../server/db/tenantStore');
+    const { getPool } = await import('../../server/db/runtime');
+    const window = parseReportPeriod({}, 'as-of');
+    if (!window.ok) throw new Error(window.message);
+    const { data } = await runWithTenantScope({ tenantId: String(orgId), orgUuid, role: 'admin', source: 'request', caller: 'qms-in-force-report' },
+      () => runComplianceReport(getPool(), findReport('controlled-documents')!, orgId, window, {
+        walkChain: async () => ({ ok: null, reason: 'not walked by this probe' }), checks: platformIntegrityChecks }));
+    const row = data.sections.find((x) => x.key === 'documents')!.rows.find((x) => Number(x.id) === documentId);
+    expect(row).toMatchObject({ version: '2.0', status: 'draft', approval_signature_id: null,
+      in_force_version: '1.0', in_force_approval_signature_id: v1SignatureId });
+    expect(String(row!.in_force_approval_signer_name)).toContain('invented signer');
   });
 });
 
