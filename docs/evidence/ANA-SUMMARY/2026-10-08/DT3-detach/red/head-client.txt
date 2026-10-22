@@ -1,0 +1,110 @@
+# head-client: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer 468ms
+   → Unable to find an accessible element with the role "button" and name "Stop"
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel 229ms
+   → Unable to find an accessible element with the role "button" and name "Stop"
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > a refused stop is said in the dialog, which stays open: nothing changed 209ms
+   → Unable to find an accessible element with the role "button" and name "Stop"
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker following their own turn keeps every control, and the composer steers 79ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker's Stop is their own: no dialog, straight to stop 73ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a conversation whose live runs could not be read > says so, and Check again reads them again 46ms
+   → Unable to find an element by: [data-testid="ct-live-runs-unchecked"]
+ × client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > names the conversation, and opens it once the server confirms it 263ms
+   → Unable to find an accessible element with the role "button" and name "Open conversation"
+ × client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a conversation the server will not confirm (not yours, or gone) is not opened 5028ms
+   → Unable to find role="button" and name "Open conversation"
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a notice with no record stays a row that only marks read 32ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the idle timer: straight to following from the last row, and "stopped responding" never shows 31ms
+   → expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a dropped connection: following, never interrupted 8ms
+   → expected true to be falsy
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a stream that ended before the turn did: following 5ms
+   → expected true to be falsy
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the followed run ends sealed: it hands over to the record, under the same id 7ms
+   → expected 'AnA stopped responding before finishi…' to be 'There are three reports.' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the idle timer: it follows its run like any other, and this page lets go of the drive 5ms
+   → expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the person's Stop of a driving turn is confirmed by the server before it shows Stopped 9ms
+   → expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what still ends as before > a refusal the server sent is not a lost socket 5ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > an administrator's Stop (adminStop) > sends the reason once; a refusal comes back in the server's words and is not retried 5ms
+   → result.current.adminStop is not a function
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > an administrator's Stop (adminStop) > an accepted stop shows the run stopping 5ms
+   → result.current.adminStop is not a function
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > an in-place follow leaves no step "running": not while it follows, not after an unsealed end 12ms
+   → expected undefined to be 'run_d' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a hand-over that cannot read the answer says so, never an empty answer 4ms
+   → expected null to be 'The answer couldn\'t be loaded. Reope…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a 401 on the poll says the sign-in ended, in the server's words, and stops polling 4ms
+   → expected null to be 'Signed out after a period of inactivi…' // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a code-less error frame from the server is a refusal, not a lost socket 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit reads "Stopped: nobody was watching for 15 minutes." 1ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended reads "Stopped: the sign-in or access that started this turn ended." 6ms
+   → expected 'Stopped: the session that started thi…' to be 'Stopped: the sign-in or access that s…' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown reads "Stopped: the server restarted for an update." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned reads "Stopped: the server handling this turn stopped responding." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > error reads "Stopped: the turn ended with an error." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > admin_cancelled reads "Stopped by an administrator." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > cancelled is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > admin_cancelled is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > error is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the phase line counts announced steps, not plan updates, and reads the server’s clock 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > an admin sees who is being waited on, not the work 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > nothing once the run has ended 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > a stale owner after four missed beats (60 s), in whole minutes 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the alert line, most urgent first 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > one held-back step 1ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > a step the person kept read-only is not counted as not authorised 4ms
+   → expected { kind: 'end', key: 'e-5', …(4) } to match object { kind: 'end', …(1) }
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > the count, and nothing at zero 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a missing seq is a gap 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a released run whose owner emitted more than was mirrored is a gap 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > the cap says so 0ms
+ Test Files  5 failed (5)
+      Tests  19 failed | 27 passed (46)
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx [ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx ]
+Error: Failed to resolve import "@shared/ana/run-detach" from "client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx". Does the file exist?
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended reads "Stopped: the sign-in or access that started this turn ended."
+AssertionError: expected 'Stopped: the session that started thi…' to be 'Stopped: the sign-in or access that s…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > a step the person kept read-only is not counted as not authorised
+AssertionError: expected { kind: 'end', key: 'e-5', …(4) } to match object { kind: 'end', …(1) }
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Stop"
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Stop"
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > a refused stop is said in the dialog, which stays open: nothing changed
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Stop"
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a conversation whose live runs could not be read > says so, and Check again reads them again
+TestingLibraryElementError: Unable to find an element by: [data-testid="ct-live-runs-unchecked"]
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > names the conversation, and opens it once the server confirms it
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Open conversation"
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a conversation the server will not confirm (not yours, or gone) is not opened
+TestingLibraryElementError: Unable to find role="button" and name "Open conversation"
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the idle timer: straight to following from the last row, and "stopped responding" never shows
+AssertionError: expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a dropped connection: following, never interrupted
+AssertionError: expected true to be falsy
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a stream that ended before the turn did: following
+AssertionError: expected true to be falsy
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the followed run ends sealed: it hands over to the record, under the same id
+AssertionError: expected 'AnA stopped responding before finishi…' to be 'There are three reports.' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the idle timer: it follows its run like any other, and this page lets go of the drive
+AssertionError: expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the person's Stop of a driving turn is confirmed by the server before it shows Stopped
+AssertionError: expected false to be true // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > an administrator's Stop (adminStop) > sends the reason once; a refusal comes back in the server's words and is not retried
+TypeError: result.current.adminStop is not a function
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > an administrator's Stop (adminStop) > an accepted stop shows the run stopping
+TypeError: result.current.adminStop is not a function
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > an in-place follow leaves no step "running": not while it follows, not after an unsealed end
+AssertionError: expected undefined to be 'run_d' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a hand-over that cannot read the answer says so, never an empty answer
+AssertionError: expected null to be 'The answer couldn\'t be loaded. Reope…' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a 401 on the poll says the sign-in ended, in the server's words, and stops polling
+AssertionError: expected null to be 'Signed out after a period of inactivi…' // Object.is equality

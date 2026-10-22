@@ -1,0 +1,134 @@
+# Wide unit tier, RLS_ENFORCE=off, the final tree of the DT3 review fixes, 2026-10-22 (scratch dt4/wide-run.sh).
+# Suites: server/services/ana, server/routes/ana-ri, client components/ana, v2 ana*/conversation*/taskTray*/projectHome*/notification*/turnSummary*/governed*, the auth/sso/session/notification/tenant-users/password route suites, server/__tests__/security, server/middleware, server/services/ana-ri, server/services/report-os, server/mcp, shared, tests/lineage, tests/golden-journeys, tests/regulatory-honesty.contract.test.ts, and every suite of a module DT3 touched (notifications, SCIM, master-admin, offboarding, account standing, session inactivity, chat-thread helpers, collab session recheck, startup).
+# The 71 failures in 22 files fail identically at HEAD with every DT3 change reverted: wide-failures-at-head.txt (same 71 test names, diffed).
+# Failing files (count of failing tests):
+#        15 server/services/report-os/pdf/__tests__/run-pdf.test.ts
+#         6 tests/lineage/founder-path-lineage.pglite.test.ts
+#         6 server/services/report-os/pdf/__tests__/export-identity.test.ts
+#         6 server/services/ana/__tests__/document-catalog-program-binding.test.ts
+#         5 server/services/report-os/pdf/__tests__/company-branding.test.ts
+#         5 server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts
+#         4 server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts
+#         4 server/services/report-os/pdf/__tests__/bundle-pdf.test.ts
+#         3 server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+#         2 server/services/ana/__tests__/capa-governed-service-handoff.test.ts
+#         2 server/services/ana/__tests__/ana-launch-scope.test.ts
+#         2 server/services/ana/__tests__/ana-launch-scope-execution.test.ts
+#         2 server/middleware/__tests__/launch-scope-api-gate.test.ts
+#         1 tests/golden-journeys/submission-release-signature.journey.test.ts
+#         1 tests/golden-journeys/submission-export-package.journey.test.ts
+#         1 tests/golden-journeys/drug-nda-ectd.journey.test.ts
+#         1 tests/golden-journeys/device-510k-estar.journey.test.ts
+#         1 tests/golden-journeys/cer-eu-mdr.journey.test.ts
+#         1 server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts
+#         1 server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts
+#         1 server/services/ana/__tests__/billing-credits-not-metered.test.ts
+#         1 client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 127ms
+   → {"error":"INTERNAL_ERROR"}: expected 500 to be 200 // Object.is equality
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 9ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 95ms
+   → walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 188ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 2ms
+   → This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 2ms
+   → transmit/bytes-retained: no such check ran
+ × tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 66ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 56ms
+ × tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 44ms
+ × tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate 197ms
+   → expected 'failed' to be 'complete' // Object.is equality
+ × tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package 17ms
+   → A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA’s us-regional backbone names a regulatory contact for the application: record the contact’s name, telephone and e-mail.. Nothing was built.
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 278ms
+   → handler refused: Transmission failed at the gateway: AS2 signing/encryption preparation failed. Nothing was transmitted. Check the transmittal record before retrying — the package may already be at FDA.: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 4ms
+   → Cannot read properties of undefined (reading 'body')
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle 5ms
+   → expected 'Transmission failed at the gateway: A…' to match /may hold it/
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 3ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > an independent signer who declared Responsibility is recorded as Responsibility on the ledger, signature row and transmittal 3ms
+ × server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > passes the trusted context actor to both writes and carries the committed critical audit receipt 39ms
+   → expected { status: 'needs_parameters', …(1) } to match object { status: 'created', …(2) }
+ × server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > create_complaint returns readback uncertainty instead of a definite failed or successful creation 4ms
+   → expected { status: 'needs_parameters', …(1) } to deeply equal { status: 'unconfirmed', …(4) }
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 6ms
+   → communication-center: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 2ms
+   → expected 618 to be 617 // Object.is equality
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs 8ms
+   → create_ha_interaction: expected 'create_ha_interaction was not run: it…' to be 'LAUNCH_SCOPE' // Object.is equality
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it 2ms
+   → expected 'create_ha_interaction was not run: it…' to be 'LAUNCH_SCOPE' // Object.is equality
+ × server/services/ana/__tests__/billing-credits-not-metered.test.ts > get_billing_credits > reports the balance as not metered, with nothing spending it 6ms
+   → expected undefined to be true // Object.is equality
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 9ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 3ms
+ × client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane 5047ms
+   → Unable to find an element with the placeholder text of: /switch the drug-substance supplier/
+ × server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > packages a delete declared by modified_file, shipping no bytes for it 15ms
+   → expected 'A package names its application and i…' to be undefined
+ × server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete that still carries a source_path, naming the leaf 3ms
+   → expected 'A package names its application and i…' to match /old-manufacture\.pdf/
+ × server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf 3ms
+   → expected 'A package names its application and i…' to match /ghost\.pdf/
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: true) 11ms
+   → expected { ok: false, …(3) } to match object { ok: false, refused: true }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: false) 2ms
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a missing preflight cannot become an unadmitted document on a later load 2ms
+   → expected { ok: false, …(3) } to match object { ok: false, idSpace: 'unknown' }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a body-supplied programme cannot replace the server-loaded programme 2ms
+   → expected { ok: false, …(3) } to match object { ok: true, catalogState: 'suggested' }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > the completion service independently refuses a different expected programme 1ms
+   → expected { ok: false, …(2) } to match object { ok: false, …(1) }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > matching expected programme is retained in the final writer handoff 1ms
+   → expected { ok: false, …(2) } to match object { ok: true }
+ × server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > actual matrix document and finalization truthfulness > exports actual matrix versions, source dates, obligations and explicit unknown currency in its PDF 14ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > actual lifecycle report output > exports actual recorded obligations/occurrences, dates and legal limits in the existing PDF exporter 25ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 14ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 4ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 7ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 4ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 6ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > states missing signature name, meaning and execution time without substituting the chain finalization time 2ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 2ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 2ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 10ms
+   → expected [Function] to throw error matching /U\+10FFFF.*Nothing was exported/ but got 'Reporting PDF fonts are unavailable o…'
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 3ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 2ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 6ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 3ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 3ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 3ms
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 12ms
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 4ms
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 6ms
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 4ms
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > includes complete distinct bodies in recorded order with tables, recorded charts, source/calculation evidence and multilingual text 12ms
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > keeps each run identity/status on every body and calculation appendix overflow page without marking another run 7ms
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > marks a legacy final reconstructed copy as unverified on each page and retains missing signature facts 5ms
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > inherits the canonical glyph refusal instead of substituting packet evidence 8ms
+   → expected Error: Reporting PDF fonts are unavailabl… { …(2) } to match object { Object (code) }
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > does not change any bytes when the company report preference is disabled 13ms
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity 8ms
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > preserves final sealed content, signer, reason and verification when adding company presentation 4ms
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > applies the same profile to bundle manifests and all retained packet pages 4ms
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > refuses unreadable logos, unrenderable glyphs and geometry that would hide content instead of silently ignoring company defaults 10ms
+   → expected Error: Reporting PDF fonts are unavailabl… { …(2) } to match object { status: 422, …(2) }
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 14ms
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 4ms
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 7ms
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 2ms
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > renders the same bytes from the same recorded export, whenever it is rendered 3ms
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 2ms
+ Test Files  22 failed | 1073 passed | 1 skipped (1096)
+      Tests  71 failed | 14164 passed | 4 skipped (14239)
+exit=1
+# (passing test lines omitted: 14164 passed)

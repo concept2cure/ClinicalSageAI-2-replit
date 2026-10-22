@@ -1,0 +1,360 @@
+# head-stream-and-run-control: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts server/routes/ana-ri/__tests__/stream-disconnect.test.ts server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts server/services/ana/__tests__/run-control-detach.pglite.test.ts server/services/ana/__tests__/run-stopped-gateway.test.ts server/services/ana/__tests__/unattended-clock.test.ts server/services/ana/__tests__/run-standing.test.ts server/services/ana/__tests__/run-notice.test.ts server/services/ana/__tests__/turn-run-policy.test.ts server/services/ana/__tests__/run-hold.test.ts server/services/ana/__tests__/run-detachable.test.ts server/services/ana/__tests__/turn-timeline-not-authorised.test.ts server/startup/__tests__/shutdown-ana-runs.test.ts
+ × server/startup/__tests__/shutdown-ana-runs.test.ts > graceful shutdown and the AnA runs this process owns > ends them before the HTTP drain, and closes the pool only after the turns recorded themselves 59ms
+   → the pool closed under turns still recording: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/startup/__tests__/shutdown-ana-runs.test.ts > the runs' writes have a deadline > a database that does not answer: the turns are stopped locally and the drain begins within the deadline 1ms
+   → actual value must be number or bigint, received "undefined"
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 1: a run that reached endRun stays finished > the reaper never touches a finished run, however stale its heartbeat 23ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 1: a run that reached endRun stays finished > the red variant: a detached run that never reached endRun stays running and is reaped orphaned 10ms
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 8: a reaped owner stops, and knows why > a row failed/orphaned by another writer aborts its owner with RunStopped(orphaned) 14ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer 8ms
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > a person's runs, in every organisation: cancelled/session_ended, each owner aborted, no control event 9ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > one session's sign-out stops that session's runs and not the person's others (DT3 review) 8ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > writes what ended the session on the row, and aborts the owner with it (DT3 review, the session-end cause) 5ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > links the act to the work in the ledger: one audit row per organisation, naming the cause, the actor and the runs 9ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > stops nothing, and writes no audit row, when no live run matched 2ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > an organisation's runs, everyone's, and no other organisation's 12ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > a run already ended is not rewritten, and an empty scope stops nothing 6ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > is accepted on a colleague's run, attributed to the admin with byRole and their reason, and stops it admin_cancelled 12ms
+   → expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: true, status: 'cancelled', …(1) }
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's pause is refused: only the asker steers 7ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's resume is refused: only the asker steers 10ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's interject is refused: only the asker steers 6ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > a member who is not an admin cannot cancel a colleague's run 5ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > another organisation's admin gets NOT_FOUND 8ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > the asker's own cancel is still `cancelled`, with no byRole, no reason asked and no admin audit row 7ms
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > needs a reason: refused REASON_REQUIRED, the run goes on, and nothing is written 6ms
+   → expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: false, …(2) }
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > writes the chained row inside the cancel: who, whose run, which conversation, and why 10ms
+   → expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: true, status: 'cancelled', …(1) }
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > a refused audit row rolls the cancel back: AUDIT_REFUSED, the run still running, no abort, no control event 5ms
+   → expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: false, …(2) }
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > stopRunInternally('server_shutdown') writes failed, as the reaper does, and aborts with the reason 6ms
+   → expected { status: 'cancelled', …(2) } to match object { status: 'failed', …(1) }
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > stopRunInternally('session_ended') writes cancelled; client_disconnected stays cancelled 10ms
+   → runStopReasonOf is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > settleOwnedRunsForShutdown ends every owned live run failed/server_shutdown, in each org, and aborts each 9ms
+   → settleOwnedRunsForShutdown is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'ended' when its write ended the run; readRunEnding has nothing to report 4ms
+   → expected undefined to be 'ended' // Object.is equality
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after a shutdown, and readRunEnding returns the row's reason 7ms
+   → expected undefined to be 'already_ended' // Object.is equality
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after an admin's cancel, and readRunEnding returns the row's reason 5ms
+   → expected undefined to be 'already_ended' // Object.is equality
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after the session's end, and readRunEnding returns the row's reason 3ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > the hold, for a follower > holdForPerson writes { reason: 'manual', next }; the person's resume clears it 5ms
+   → expected null to deeply equal { reason: 'manual', …(1) }
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > the hold, for a follower > a steer that answers the hold clears it too 6ms
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > claims once; a second claim is refused as already claimed 5ms
+   → approvalClaimed is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run an admin's cancel ended while the person signed: not_waiting, and nothing is claimed 6ms
+   → claimApproval is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run the session's end ended while the person signed: not_waiting, and nothing is claimed 5ms
+   → stopRunsFor is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run a shutdown ended while the person signed: not_waiting, and nothing is claimed 6ms
+   → claimApproval is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > only the asker's, in the run's organisation, for the step held 5ms
+   → claimApproval is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a claim released (the sign-off row was refused) can be claimed again 6ms
+   → claimApproval is not a function
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > abortOwnedRunsForShutdown (DT3 review) > stops every owned turn with server_shutdown, writes nothing, and counts each once 6ms
+   → abortOwnedRunsForShutdown is not a function
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run that is not paused passes straight through: no frame, no wait 3ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run already cancelled reports cancelled, with no frame 1ms
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then resumed: one paused frame, one resumed frame, both carrying the round and nothing else 8ms
+   → expected last "vi.fn()" call to have been called with [ 5000 ]
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then cancelled: cancelled, and no resumed frame 3ms
+   → expected undefined to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as finished: the hold reports ended, with no resumed frame 3ms
+   → expected undefined to be 'ended' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as failed: the hold reports ended, with no resumed frame 4ms
+   → expected undefined to be 'ended' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > nobody comes back: resumed as abandoned once, at the ceiling, and the resumed frame is sent 146ms
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > the pause clock starts when the hold is entered, before the first read (as pauseStart did) 4ms
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > two separate pauses each get their own clock 117ms
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > three concurrent callers: one paused frame and one resumed frame 6ms
+   → expected [ undefined, undefined, undefined ] to deeply equal [ 'running', 'running', 'running' ]
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > heldMs is the one interval the run was held, not the sum of every waiter’s 8ms
+   → expected [ undefined, undefined, undefined ] to deeply equal [ 'running', 'running', 'running' ]
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > the abandoned-pause resume runs once however many are waiting 146ms
+   → expected [ undefined, undefined ] to deeply equal [ 'running', 'running' ]
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an aborted signal releases its own waiter as cancelled while the others keep waiting 3ms
+   → expected undefined to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > a waiter whose read was issued before another saw the resume does not announce a second pause 4ms
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an announcement rides the paused frame 4ms
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > ends the held run once, reports expired, aborts expiredSignal, sends one hold_expired frame, and never resumes 146ms
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > two callers entering 60s apart both return expired by the FIRST caller’s deadline 148ms
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a caller entering after expiry returns expired at once, without reading the row 142ms
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > when a Continue wins the race (endHeld writes nothing), it re-reads and carries on 139ms
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a waiter held on its wake is released the moment the hold expires 148ms
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the last waiter leaving by its own signal closes the pause, and a later hold starts its own clock 117ms
+   → expected undefined to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the run stopped while held closes the pause: held time stops there 5ms
+   → expected undefined to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > one waiter leaving by its signal does NOT close the pause the others are still waiting on 72ms
+   → expected undefined to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a wake that rejects is thrown out of the hold, as `await runHandle.wake()` threw out of the checkpoint 4ms
+   → a failed wake was read as a wake: expected { done: true, …(1) } to deeply equal { done: true, error: 'latch broke' }
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > expiry 'end': a failed end write is thrown, not read as a Continue; the turn is not expired and the pause closes 147ms
+   → expected { done: true, …(1) } to deeply equal { done: true, error: 'db down' }
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 5089ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn the person stopped before any text is saved as a stopped, empty answer 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stopped turn whose loop reported no reason is still saved as stopped 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn with no text that was not stopped still saves nothing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stop that ended the turn in the error path saves what was streamed, as stopped 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 1ms
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 4ms
+   → expected '' to match /stoppedReason: loopStoppedReason,/
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > a Stop that aborts the model call saves the stopped answer before the record is filed 1ms
+   → the error path no longer tells a stop from a failure: expected -1 to be greater than -1
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a live session in an active organisation stands — checked as not the person acting 3ms
+   → runStanding is not a function
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a revoked, expired, signed-out or idle credential: session_ended, the credential ended 1ms
+   → runStanding is not a function
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a suspended, read-only, inactive or deleting organisation: session_ended, the organisation unavailable 1ms
+   → runStanding is not a function
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a membership that is gone, or cannot be read: session_ended, the membership ended 0ms
+   → runStanding is not a function
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > an organisation check that throws: session_ended, the standing unreadable (fail closed) 0ms
+   → runStanding is not a function
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > no credential at all: session_ended, the standing unreadable, without asking anything 1ms
+   → runStanding is not a function
+ × server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > carries the round-boundary standing check 4ms
+   → expected undefined to be type of 'function'
+ ✓ server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > with no person identified it has none (nothing to check), as before 0ms
+ × server/services/ana/__tests__/turn-timeline-not-authorised.test.ts > TurnTimeline.heldBackCount > counts the steps a person did not authorise, and not a read-only refusal 4ms
+   → t.heldBackCount is not a function
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > a durable run with a person and a resolved conversation: detaches 3ms
+   → detachable is not a function
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > a turn that asked to drive the screen detaches too (D-7, decided 2026-10-22) 1ms
+   → detachable is not a function
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > local-only (no run row): stops on disconnect 0ms
+   → detachable is not a function
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > no person: stops on disconnect 0ms
+   → detachable is not a function
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > no resolved conversation: stops on disconnect 0ms
+   → detachable is not a function
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a client that disconnects while AnA holds > a turn that cannot detach: the held step does not run, is filed not-run with why, and the hold is kept as disconnected 10ms
+   → expected [ { tool: 'search_literature', …(2) } ] to deeply equal [ { tool: 'search_literature', …(2) } ]
+ ✓ server/services/ana/__tests__/turn-run-policy.test.ts > a detached turn whose run is stopped while AnA holds (AnA detach DT3) > is filed as stopped, never as a page that closed: the page closing did not end it 1ms
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a detached turn whose run is stopped while AnA holds (AnA detach DT3) > the row reason wins over what the loop saw (§2.4) 2ms
+   → expected 'cancelled' to be 'server_shutdown' // Object.is equality
+ ✓ server/services/ana/__tests__/turn-run-policy.test.ts > a run whose row failed while AnA held, with no abort reaching the turn (AnA detach DT3, §2.4) > fails closed — the step never runs — and is not filed as a person's Stop 1ms
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > a step the read-only answer will refuse is not offered as "Run this step" 1ms
+   → expected [ undefined ] to deeply equal [ [ 'Label search_literature' ] ]
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > when every step would be refused, there is nothing to hold for 1ms
+   → expected [ undefined ] to deeply equal []
+ Test Files  15 failed (15)
+      Tests  71 failed | 28 passed (99)
+stderr | server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ FAIL  server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts [ server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts ]
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts [ server/routes/ana-ri/__tests__/stream-detach-review.test.ts ]
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts [ server/routes/ana-ri/__tests__/stream-detach.test.ts ]
+ FAIL  server/routes/ana-ri/__tests__/stream-disconnect.test.ts [ server/routes/ana-ri/__tests__/stream-disconnect.test.ts ]
+Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
+Caused by: Error: Cannot find module '../../../../db/requestDbLease.js' imported from /home/user/ClinicalSageAI-2-replit/server/routes/ana-ri/__tests__/support/stream-route-harness.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  server/services/ana/__tests__/run-notice.test.ts [ server/services/ana/__tests__/run-notice.test.ts ]
+Error: Cannot find module '/server/services/ana/run-notice.js' imported from /home/user/ClinicalSageAI-2-replit/server/services/ana/__tests__/run-notice.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  server/services/ana/__tests__/run-stopped-gateway.test.ts [ server/services/ana/__tests__/run-stopped-gateway.test.ts ]
+Error: Cannot find module '../run-stopped.js' imported from /home/user/ClinicalSageAI-2-replit/server/services/ana/__tests__/run-stopped-gateway.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  server/services/ana/__tests__/unattended-clock.test.ts [ server/services/ana/__tests__/unattended-clock.test.ts ]
+Error: Cannot find package '@shared/ana/run-detach' imported from /home/user/ClinicalSageAI-2-replit/server/services/ana/__tests__/unattended-clock.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯ Failed Tests 71 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/startup/__tests__/shutdown-ana-runs.test.ts > graceful shutdown and the AnA runs this process owns > ends them before the HTTP drain, and closes the pool only after the turns recorded themselves
+AssertionError: the pool closed under turns still recording: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ FAIL  server/startup/__tests__/shutdown-ana-runs.test.ts > the runs' writes have a deadline > a database that does not answer: the turns are stopped locally and the drain begins within the deadline
+TypeError: actual value must be number or bigint, received "undefined"
+ FAIL  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing
+AssertionError: expected '' to match /stoppedReason: loopStoppedReason,/
+ FAIL  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > a Stop that aborts the model call saves the stopped answer before the record is filed
+AssertionError: the error path no longer tells a stop from a failure: expected -1 to be greater than -1
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 8: a reaped owner stops, and knows why > a row failed/orphaned by another writer aborts its owner with RunStopped(orphaned)
+AssertionError: expected false to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > a person's runs, in every organisation: cancelled/session_ended, each owner aborted, no control event
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > one session's sign-out stops that session's runs and not the person's others (DT3 review)
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > writes what ended the session on the row, and aborts the owner with it (DT3 review, the session-end cause)
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > links the act to the work in the ledger: one audit row per organisation, naming the cause, the actor and the runs
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > stops nothing, and writes no audit row, when no live run matched
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > an organisation's runs, everyone's, and no other organisation's
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 11: stopRunsFor > a run already ended is not rewritten, and an empty scope stops nothing
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > is accepted on a colleague's run, attributed to the admin with byRole and their reason, and stops it admin_cancelled
+AssertionError: expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: true, status: 'cancelled', …(1) }
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > needs a reason: refused REASON_REQUIRED, the run goes on, and nothing is written
+AssertionError: expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: false, …(2) }
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > writes the chained row inside the cancel: who, whose run, which conversation, and why
+AssertionError: expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: true, status: 'cancelled', …(1) }
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > a refused audit row rolls the cancel back: AUDIT_REFUSED, the run still running, no abort, no control event
+AssertionError: expected { ok: false, code: 'NOT_YOURS', …(1) } to match object { ok: false, …(2) }
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > stopRunInternally('server_shutdown') writes failed, as the reaper does, and aborts with the reason
+AssertionError: expected { status: 'cancelled', …(2) } to match object { status: 'failed', …(1) }
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > stopRunInternally('session_ended') writes cancelled; client_disconnected stays cancelled
+TypeError: runStopReasonOf is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 14: shutdown > settleOwnedRunsForShutdown ends every owned live run failed/server_shutdown, in each org, and aborts each
+TypeError: settleOwnedRunsForShutdown is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'ended' when its write ended the run; readRunEnding has nothing to report
+AssertionError: expected undefined to be 'ended' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after a shutdown, and readRunEnding returns the row's reason
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after an admin's cancel, and readRunEnding returns the row's reason
+AssertionError: expected undefined to be 'already_ended' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after the session's end, and readRunEnding returns the row's reason
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > the hold, for a follower > holdForPerson writes { reason: 'manual', next }; the person's resume clears it
+AssertionError: expected null to deeply equal { reason: 'manual', …(1) }
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > claims once; a second claim is refused as already claimed
+TypeError: approvalClaimed is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run an admin's cancel ended while the person signed: not_waiting, and nothing is claimed
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run a shutdown ended while the person signed: not_waiting, and nothing is claimed
+TypeError: claimApproval is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run the session's end ended while the person signed: not_waiting, and nothing is claimed
+TypeError: stopRunsFor is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > only the asker's, in the run's organisation, for the step held
+TypeError: claimApproval is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a claim released (the sign-off row was refused) can be claimed again
+TypeError: claimApproval is not a function
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > abortOwnedRunsForShutdown (DT3 review) > stops every owned turn with server_shutdown, writes nothing, and counts each once
+TypeError: abortOwnedRunsForShutdown is not a function
+ FAIL  server/services/ana/__tests__/run-detachable.test.ts > detachable > a durable run with a person and a resolved conversation: detaches
+TypeError: detachable is not a function
+ FAIL  server/services/ana/__tests__/run-detachable.test.ts > detachable > a turn that asked to drive the screen detaches too (D-7, decided 2026-10-22)
+TypeError: detachable is not a function
+ FAIL  server/services/ana/__tests__/run-detachable.test.ts > detachable > local-only (no run row): stops on disconnect
+ FAIL  server/services/ana/__tests__/run-detachable.test.ts > detachable > no person: stops on disconnect
+ FAIL  server/services/ana/__tests__/run-detachable.test.ts > detachable > no resolved conversation: stops on disconnect
+TypeError: detachable is not a function
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then resumed: one paused frame, one resumed frame, both carrying the round and nothing else
+AssertionError: expected last "vi.fn()" call to have been called with [ 5000 ]
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then cancelled: cancelled, and no resumed frame
+AssertionError: expected undefined to be 'cancelled' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as finished: the hold reports ended, with no resumed frame
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as failed: the hold reports ended, with no resumed frame
+AssertionError: expected undefined to be 'ended' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > nobody comes back: resumed as abandoned once, at the ceiling, and the resumed frame is sent
+AssertionError: expected undefined to be 'running' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > the pause clock starts when the hold is entered, before the first read (as pauseStart did)
+AssertionError: expected undefined to be 'running' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > two separate pauses each get their own clock
+AssertionError: expected undefined to be 'running' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > three concurrent callers: one paused frame and one resumed frame
+AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ 'running', 'running', 'running' ]
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > heldMs is the one interval the run was held, not the sum of every waiter’s
+AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ 'running', 'running', 'running' ]
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > the abandoned-pause resume runs once however many are waiting
+AssertionError: expected [ undefined, undefined ] to deeply equal [ 'running', 'running' ]
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an aborted signal releases its own waiter as cancelled while the others keep waiting
+AssertionError: expected undefined to be 'cancelled' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > a waiter whose read was issued before another saw the resume does not announce a second pause
+AssertionError: expected undefined to be 'running' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an announcement rides the paused frame
+AssertionError: expected undefined to be 'running' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > ends the held run once, reports expired, aborts expiredSignal, sends one hold_expired frame, and never resumes
+AssertionError: expected undefined to be 'expired' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > two callers entering 60s apart both return expired by the FIRST caller’s deadline
+AssertionError: expected undefined to be 'expired' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a caller entering after expiry returns expired at once, without reading the row
+AssertionError: expected undefined to be 'expired' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > when a Continue wins the race (endHeld writes nothing), it re-reads and carries on
+AssertionError: expected undefined to be 'running' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a waiter held on its wake is released the moment the hold expires
+AssertionError: expected undefined to be 'expired' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the last waiter leaving by its own signal closes the pause, and a later hold starts its own clock
+AssertionError: expected undefined to be 'cancelled' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the run stopped while held closes the pause: held time stops there
+AssertionError: expected undefined to be 'cancelled' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > one waiter leaving by its signal does NOT close the pause the others are still waiting on
+AssertionError: expected undefined to be 'cancelled' // Object.is equality
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a wake that rejects is thrown out of the hold, as `await runHandle.wake()` threw out of the checkpoint
+AssertionError: a failed wake was read as a wake: expected { done: true, …(1) } to deeply equal { done: true, error: 'latch broke' }
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > expiry 'end': a failed end write is thrown, not read as a Continue; the turn is not expired and the pause closes
+AssertionError: expected { done: true, …(1) } to deeply equal { done: true, error: 'db down' }
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > a live session in an active organisation stands — checked as not the person acting
+TypeError: runStanding is not a function
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > a revoked, expired, signed-out or idle credential: session_ended, the credential ended
+TypeError: runStanding is not a function
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > a suspended, read-only, inactive or deleting organisation: session_ended, the organisation unavailable
+TypeError: runStanding is not a function
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > a membership that is gone, or cannot be read: session_ended, the membership ended
+TypeError: runStanding is not a function
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > an organisation check that throws: session_ended, the standing unreadable (fail closed)
+TypeError: runStanding is not a function
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > no credential at all: session_ended, the standing unreadable, without asking anything
+TypeError: runStanding is not a function
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > a local-only run handle (no run row) for a person > carries the round-boundary standing check
+AssertionError: expected undefined to be type of 'function'
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a client that disconnects while AnA holds > a turn that cannot detach: the held step does not run, is filed not-run with why, and the hold is kept as disconnected
+AssertionError: expected [ { tool: 'search_literature', …(2) } ] to deeply equal [ { tool: 'search_literature', …(2) } ]
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a detached turn whose run is stopped while AnA holds (AnA detach DT3) > the row reason wins over what the loop saw (§2.4)
+AssertionError: expected 'cancelled' to be 'server_shutdown' // Object.is equality
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > a step the read-only answer will refuse is not offered as "Run this step"
+AssertionError: expected [ undefined ] to deeply equal [ [ 'Label search_literature' ] ]
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > when every step would be refused, there is nothing to hold for
+AssertionError: expected [ undefined ] to deeply equal []
+ FAIL  server/services/ana/__tests__/turn-timeline-not-authorised.test.ts > TurnTimeline.heldBackCount > counts the steps a person did not authorise, and not a read-only refusal
+TypeError: t.heldBackCount is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function
+TypeError: this.deps.clientGone is not a function

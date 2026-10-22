@@ -69,6 +69,13 @@ export type StepEvent = EventBase & {
   status?: StepStatus;
   /** Finished only: a person's no, no answer, or an act only a person may take. */
   heldBack?: boolean;
+  /**
+   * Finished only: held back because the person asked for a read-only answer
+   * (2aa766a76). Nobody declined it, so it is not one of the steps "not
+   * authorised" the closing row and a detached turn's notice count (AnA
+   * detach DT3).
+   */
+  readOnly?: boolean;
   /** Finished only: the server's sentence (stepMessage), rendered word for word. */
   message?: string;
   /** Finished only: the step's generation capture saw a model call; null when unknown. */
@@ -110,11 +117,31 @@ export type SealedNoteEvent = Omit<NoteEvent, 'text'> & { text: TimelineTextRef 
 export type SealedTimelineEvent = SealedNoteEvent | StepEvent | TaskEvent | EndEvent;
 
 /** A person's control as the Summary shows it: never who took it. */
+/**
+ * Who took a control, in terms its reader may be told (AnA detach DT3 review:
+ * a control is never credited to a person who did not take it). Absent: the
+ * person who asked, reading their own turn — "You …".
+ *
+ *   asker                 the person who asked, read by someone else (never
+ *                         named: the Summary does not name the asker)
+ *   administrator         an organisation administrator, by name, or
+ *                         "user <id>" when the name cannot be read
+ *   you_as_administrator  the reader, who took it as an administrator
+ */
+export type TimelineControlBy =
+  | { kind: 'asker' }
+  | { kind: 'administrator'; name: string }
+  | { kind: 'you_as_administrator' };
+
 export interface TimelineControl {
   action: string;
   round: number;
   at: string;
   message?: string;
+  /** Who took it, when that is not the reader asking about their own turn. */
+  by?: TimelineControlBy;
+  /** The reason an administrator gave for stopping the turn (required for that cancel). */
+  reason?: string;
 }
 
 /** The sealed events with each note's text resolved from the record's texts; a note whose text is missing is left out. */
@@ -156,6 +183,7 @@ function finishedFields(r: Record<string, any>): Partial<StepEvent> {
   const out: Partial<StepEvent> = {};
   if (STATUSES.has(r.status)) out.status = r.status;
   if (typeof r.heldBack === 'boolean') out.heldBack = r.heldBack;
+  if (r.readOnly === true) out.readOnly = true;
   if (str(r.message)) out.message = r.message;
   if (typeof r.usedModel === 'boolean' || r.usedModel === null) out.usedModel = r.usedModel;
   if (typeof r.ms === 'number' && r.ms >= 0) out.ms = r.ms;
@@ -260,6 +288,16 @@ export function stepStates(events: readonly TimelineEvent[]): StepState[] {
     }
   }
   return [...states.values()];
+}
+
+/**
+ * The steps a person did not authorise and that did not run — "{n} step(s)
+ * were not authorised and did not run." (AnA detach §2.7): held back, but not
+ * for a read-only answer the person asked for. The one rule for the closing
+ * row (client) and a detached turn's notice (server).
+ */
+export function notAuthorisedStep(f: { heldBack?: boolean; readOnly?: boolean } | null | undefined): boolean {
+  return f?.heldBack === true && f.readOnly !== true;
 }
 
 /** A step that did not do its work: it failed, was held back, or never finished. */

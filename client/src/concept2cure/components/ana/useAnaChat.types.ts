@@ -288,6 +288,13 @@ export interface AnaFollow {
   unreachable?: boolean;
   /** The server refused this reader the live progress (403), in its words. */
   forbidden?: string;
+  /**
+   * The poll was answered 401: the sign-in ended (an idle session), so no
+   * retry can succeed. The server's words, or FOLLOW_LINES.signedOut (DT3 review).
+   */
+  signedOut?: string;
+  /** The record exists, but the answer could not be read at hand-over (DT3 review). */
+  answerUnreadable?: boolean;
 }
 
 export interface AnaContextUsed {
@@ -905,6 +912,29 @@ export interface UseAnaChatReturn {
    * admin's cancel). Null while no turn is followed.
    */
   followScope?: 'all' | 'cancel' | null;
+  /**
+   * The person whose turn an administrator is following, by name (or
+   * "user <id>"), so the administrator's Stop can name them (DT3 review).
+   * Null for the asker, and while nothing is followed.
+   */
+  followAskerName?: string | null;
+  /**
+   * An organisation administrator's Stop of a colleague's turn, with the
+   * reason they gave (DT3 review, DP-82). One request, never retried behind
+   * the administrator's back: the server records the stop and its chained
+   * audit row together or changes nothing, and its sentence is returned so
+   * the dialog can say it.
+   */
+  adminStop?: (reason: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  /**
+   * The conversation's runs could not be read after it loaded (a failed or
+   * malformed GET /runs?thread_id=), so whether AnA is still working here is
+   * not known — never shown as "nothing running" (DT3 review). The thread
+   * says so, with `recheckLiveRuns`.
+   */
+  liveRunsUnchecked?: boolean;
+  /** Read the conversation's runs again, and rejoin one still working. */
+  recheckLiveRuns?: () => void;
   /** Control status of the in-flight run (drives the pause/resume UI). */
   runStatus: RunControlStatus;
   /**

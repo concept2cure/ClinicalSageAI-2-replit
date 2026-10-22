@@ -201,9 +201,11 @@ export type LoopCheckpoint = (
  * A caller-owned budget, asked after each round's tools ran (see
  * AgenticLoopOptions.stopWhen).
  *
- *   'budget_exhausted' | 'approval_timeout'  end the turn: the next model call
- *                      is the closing answer (no tools), and the loop reports
- *                      this reason.
+ *   'budget_exhausted' | 'approval_timeout' | 'unattended_limit'
+ *                      end the turn: the next model call is the closing
+ *                      answer (no tools), and the loop reports this reason.
+ *                      'unattended_limit' is a detached turn nobody watched
+ *                      (AnA detach DT3, §2.6).
  *   'halt'             end the turn now with no further model call; reported
  *                      as `cancelled`. For a turn whose run has already ended.
  *                      It is asked AFTER the round's tools ran (a hold that
@@ -216,7 +218,7 @@ export type LoopCheckpoint = (
  *                      executeTools.
  *   null               carry on.
  */
-export type LoopStopDirective = 'budget_exhausted' | 'approval_timeout' | 'halt' | null;
+export type LoopStopDirective = 'budget_exhausted' | 'approval_timeout' | 'unattended_limit' | 'halt' | null;
 
 export interface AgenticLoopDeps {
   /**
@@ -370,7 +372,9 @@ export type StoppedReason =
   /** A caller's stopWhen ended the turn on its time or token budget. */
   | 'budget_exhausted'
   /** A caller's stopWhen ended the turn because an approval went unanswered. */
-  | 'approval_timeout';
+  | 'approval_timeout'
+  /** A caller's stopWhen ended a detached turn nobody was watching (AnA detach §2.6). */
+  | 'unattended_limit';
 
 export interface AgenticLoopResult {
   /** Number of tool rounds executed. */

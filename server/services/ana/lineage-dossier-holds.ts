@@ -7,7 +7,7 @@
  * @module server/services/ana/lineage-dossier-holds
  */
 import { isPolicyHoldOutcome, stepLabels, type PolicyHoldOutcome } from '@shared/ana/run-policy';
-import type { DossierHumanControl } from './lineage-dossier.js';
+import { actorLabel, resolveActorNames, type ActorName } from '../tenant/actor-names.js';
 
 /**
  * One of AnA's OWN holds under Manual (row 74): she stopped before a step and
@@ -65,6 +65,27 @@ export function policyHoldsOf(
   return { holds, unreadable: stored.length - holds.length };
 }
 
+/** One person's control of a turn, as the dossier lists it (lineage-dossier.ts re-exports it). */
+export interface DossierHumanControl {
+  /** The assistant turn (1-based) the control was recorded against. */
+  turn: number;
+  action: 'pause' | 'resume' | 'interject' | 'cancel';
+  message: string | null;
+  round: number | null;
+  at: string | null;
+  /**
+   * Who took it (AnA detach DT3 review: an administrator's cancel read as the
+   * document author's own stop): their name as this tenant may name them, or
+   * "user <id>" (services/tenant/actor-names.ts); null when the control
+   * recorded no actor. Absent from dossiers assembled before this field.
+   */
+  by?: string | null;
+  /** 'administrator' when an organisation administrator took it on a colleague's turn. */
+  byRole?: 'administrator' | null;
+  /** The reason an administrator gave for stopping the turn. */
+  reason?: string | null;
+}
+
 /**
  * The human control actions one assistant message recorded (its
  * `metadata.humanControls`), numbered with the turn. An entry without an
@@ -75,9 +96,9 @@ export function humanControlsOf(
   meta: Record<string, unknown>,
   turn: number,
   createdAt: string | null,
-): DossierHumanControl[] {
+): Array<DossierHumanControl & { byUserId: number | null }> {
   if (!Array.isArray(meta.humanControls)) return [];
-  const out: DossierHumanControl[] = [];
+  const out: Array<DossierHumanControl & { byUserId: number | null }> = [];
   for (const c of meta.humanControls as Array<Record<string, unknown> | null>) {
     if (!c || typeof c.action !== 'string') continue;
     out.push({
@@ -86,7 +107,24 @@ export function humanControlsOf(
       message: typeof c.message === 'string' ? c.message : null,
       round: typeof c.round === 'number' ? c.round : null,
       at: typeof c.at === 'string' ? c.at : createdAt,
+      // Who took it, resolved to a name by the dossier (DT3 review): an
+      // administrator's cancel is theirs, never the document author's.
+      byUserId: typeof c.byUserId === 'number' && Number.isInteger(c.byUserId) ? c.byUserId : null,
+      byRole: c.byRole === 'admin' ? 'administrator' : null,
+      reason: typeof c.reason === 'string' && c.reason ? c.reason : null,
     });
   }
   return out;
+}
+
+/**
+ * Each control's actor by name (DT3 review): resolved through the one
+ * resolver, inside the dossier's tenant scope; "user <id>" for an id it does
+ * not answer for, and the same when the names cannot be read — a control is
+ * never left unattributed or credited to anyone else.
+ */
+export async function namedControls(controls: Array<DossierHumanControl & { byUserId?: number | null }>): Promise<DossierHumanControl[]> {
+  const ids = controls.map(c => c.byUserId ?? null);
+  const names = await resolveActorNames(ids).catch(() => new Map<number, ActorName>());
+  return controls.map(({ byUserId, ...c }) => ({ ...c, by: actorLabel(names, byUserId ?? null) }));
 }

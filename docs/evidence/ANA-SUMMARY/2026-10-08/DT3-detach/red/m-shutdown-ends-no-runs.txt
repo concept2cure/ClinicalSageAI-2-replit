@@ -1,0 +1,13 @@
+# m-shutdown-ends-no-runs: exit 1 (non-zero = red)
+# tests: server/startup/__tests__/shutdown-ana-runs.test.ts
+ × server/startup/__tests__/shutdown-ana-runs.test.ts > graceful shutdown and the AnA runs this process owns > ends them before the HTTP drain, and closes the pool only after the turns recorded themselves 61ms
+   → the shutdown never ended the runs it owns: expected [ 'http:close', 'http:drained', …(3) ] to include 'ana:runs ended server_shutdown'
+ × server/startup/__tests__/shutdown-ana-runs.test.ts > the runs' writes have a deadline > a database that does not answer: the turns are stopped locally and the drain begins within the deadline 52ms
+   → expected -1 to be greater than -1
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/startup/__tests__/shutdown-ana-runs.test.ts > graceful shutdown and the AnA runs this process owns > ends them before the HTTP drain, and closes the pool only after the turns recorded themselves
+AssertionError: the shutdown never ended the runs it owns: expected [ 'http:close', 'http:drained', …(3) ] to include 'ana:runs ended server_shutdown'
+ FAIL  server/startup/__tests__/shutdown-ana-runs.test.ts > the runs' writes have a deadline > a database that does not answer: the turns are stopped locally and the drain begins within the deadline
+AssertionError: expected -1 to be greater than -1

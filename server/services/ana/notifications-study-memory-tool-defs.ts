@@ -12,7 +12,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
-import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications';
+import { CREATABLE_NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications';
 import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,7 +32,8 @@ export const FIRE_NOTIFICATION: AnaTool = {
       recipient_role:    { type: 'string' },
       category: {
         type: 'string',
-        enum: [...NOTIFICATION_CATEGORIES],
+        // Never a platform-only category (DT3 review, DP-84).
+        enum: [...CREATABLE_NOTIFICATION_CATEGORIES],
       },
       severity:      { type: 'string', enum: ['info', 'warning', 'critical'] },
       title:         { type: 'string', description: 'Short one-line headline.' },

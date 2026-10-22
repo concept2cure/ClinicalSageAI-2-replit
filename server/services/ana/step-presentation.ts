@@ -48,6 +48,7 @@ import {
   type StepSource,
   type StepTense,
 } from '@shared/ana/step-verbs';
+import { SCREEN_GONE_LINE } from '@shared/ana/stop-lines';
 import { stepPresentationOf } from './tool-authorization.js';
 import { agentEndedByHoldExpiry, agentResultSummary } from './sub-agent-result.js';
 import { refusalOf } from './tool-trace.js';
@@ -64,6 +65,12 @@ import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.j
  * produces it.
  */
 export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run' | 'incomplete';
+
+/**
+ * The `why` of a screen action refused because the page that started a Live
+ * Drive turn closed (D-7, decided 2026-10-22): stepMessage says SCREEN_GONE_LINE.
+ */
+export const SCREEN_GONE = 'screen_gone';
 
 export interface StepOutcome {
   status: StepStatus;
@@ -390,7 +397,8 @@ export function stepMessage(
   // A cancelled step is the person's Stop unless the caller says what else
   // ended it: a pause nobody answered is not something they did.
   if (status === 'cancelled') return why ? `${Step} was ended because ${why}.` : `You stopped ${step} before it finished.`;
-  if (status === 'not_run') return `${Step} did not run because the turn stopped first.`;
+  // A screen action asked for after the page closed (D-7, 2026-10-22): its own line.
+  if (status === 'not_run') return why === SCREEN_GONE ? SCREEN_GONE_LINE : `${Step} did not run because the turn stopped first.`;
   if (status === 'incomplete') return `The agent's result is incomplete: ${why ?? step}.`;
   return null;
 }

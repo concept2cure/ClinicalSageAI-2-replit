@@ -70,6 +70,26 @@ function embedLedger(dossier: DocumentLineageDossier): string {
     .join('\n');
 }
 
+/** The dossier's human controls: each with who took it (DT3 review: an administrator's cancel is theirs) and their reason. */
+function humanControlsXml(dossier: DocumentLineageDossier): string[] {
+  const out: string[] = [`  <HumanControls count="${dossier.humanControls.length}">\n`];
+  for (const c of dossier.humanControls) {
+    out.push(`    <Control`);
+    out.push(attr('action', c.action));
+    out.push(attr('turn', c.turn));
+    out.push(attr('round', c.round));
+    out.push(attr('at', c.at));
+    out.push(attr('by', c.by ?? null));
+    out.push(attr('byRole', c.byRole ?? null));
+    out.push(`>\n`);
+    out.push(leafEl('Message', c.message, '      '));
+    if (c.reason) out.push(leafEl('Reason', c.reason, '      '));
+    out.push(`    </Control>\n`);
+  }
+  out.push(`  </HumanControls>\n`);
+  return out;
+}
+
 /**
  * AnA's own holds under Manual (row 74) — the run policy's pauses, apart from
  * the human controls: the resume that answered each is a control; the stop
@@ -216,18 +236,7 @@ export function serializeDocumentLineageDossierXml(
   out.push(`  </Reasoning>\n`);
 
   // Human controls — pause / interject / redirect / cancel during the run.
-  out.push(`  <HumanControls count="${dossier.humanControls.length}">\n`);
-  for (const c of dossier.humanControls) {
-    out.push(`    <Control`);
-    out.push(attr('action', c.action));
-    out.push(attr('turn', c.turn));
-    out.push(attr('round', c.round));
-    out.push(attr('at', c.at));
-    out.push(`>\n`);
-    out.push(leafEl('Message', c.message, '      '));
-    out.push(`    </Control>\n`);
-  }
-  out.push(`  </HumanControls>\n`);
+  out.push(...humanControlsXml(dossier));
 
   // AnA's own holds under Manual (row 74), after the human controls: the
   // resume that answered each is a control; the stop before it was hers.

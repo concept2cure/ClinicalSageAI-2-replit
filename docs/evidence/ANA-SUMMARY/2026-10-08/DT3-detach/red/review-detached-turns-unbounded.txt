@@ -1,0 +1,7 @@
+# pre-fix red, 2026-10-22: nothing bounded how many turns a task or an organisation could leave running with no page, each pinning a pooled connection (DT3 review INF-40, finding 3.6)
+Error: Cannot find module '/server/services/ana/detach-slots.js' imported from /home/user/ClinicalSageAI-2-replit/server/routes/ana-ri/__tests__/stream-detach.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+Error: Cannot find module '../detach-slots.js' imported from /home/user/ClinicalSageAI-2-replit/server/services/ana/__tests__/detach-slots.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ Test Files  2 failed (2)
+      Tests  no tests

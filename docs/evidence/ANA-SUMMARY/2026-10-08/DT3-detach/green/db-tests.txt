@@ -1,0 +1,86 @@
+# DB tier on concept2cure-ri_qa_fresh2 (deploy-migrate 15:49:36Z), RLS_ENFORCE=on, vitest.db.config.ts, 2026-10-22 (DT3 review fixes).
+# 78 passed; the one failure (tenant-purge-artifact-records, SOURCE_READ_RECEIPT_PURGE_REFUSED) is trunk's (9c266724f) and failed identically at HEAD with DT3 reverted in the first pass.
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 540ms
+   → SOURCE_READ_RECEIPT_PURGE_REFUSED: an identified platform purge scope and positive target are required.
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner 505ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing 17ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 609ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 827ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 11ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 11ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 19ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 9ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2443ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2425ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2398ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a sign-out of every session ends the connector grants authorised before it (R2) > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2392ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 23ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 42ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 27ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 4ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 350ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 27ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 20ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 65ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 150ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 69ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 80ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a stop accepted on instance B aborts the run on instance A, by NOTIFY 224ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a listener on a connection another tenant opened still delivers this tenant's stop 78ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a pause wait on A is woken by a resume accepted on B, not by its timeout 262ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a steer accepted on B is drained exactly once on A 56ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: refusal and fallback > control from another organization is refused on B and never reaches A 327ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: refusal and fallback > with no LISTEN client, the declared poll fallback still delivers the stop 2030ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control lifecycle: shutdown and the reaper > shutdown returns the LISTEN connection, so closing the pool completes 28ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control lifecycle: shutdown and the reaper > the reaper fails a run whose instance stopped heartbeating, across tenants 39ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > an admin's cancel accepted on B aborts A's run, as admin_cancelled 146ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > B's reaper fails A's stale run, notifies, and A aborts as orphaned 147ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > a stopRunsFor on B (the person signed out) aborts A's run, as session_ended 144ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > a person's stop with no organisation named (system scope) reaches A too 152ms
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over 753ms
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over 224ms
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over 209ms
+ ✓ server/services/ana/__tests__/run-admin-cancel-audit.dbtest.ts > an administrator's cancel and its chained audit row, one transaction, under RLS (DT3 review) > lands with its chained row: the administrator, whose run, the reason, sealed on the tenant chain 826ms
+ ✓ server/services/ana/__tests__/run-admin-cancel-audit.dbtest.ts > an administrator's cancel and its chained audit row, one transaction, under RLS (DT3 review) > a row the database refuses rolls the cancel back: the run goes on, with no control event 38ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT (INSERT only where the store's ceiling allows it), and no UPDATE, DELETE or TRUNCATE, on every append-only table present 16ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 27ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 598ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 251ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 10ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 2892ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 15ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 81ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 58ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 26ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 19ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 20ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 11ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 10ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 12ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 49ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07) 48ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 57ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 29ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8a. a flush armed in tenant A's turn, fired from a timer tenant B's request created, writes A's rows 457ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8b. the process heartbeat beats both tenants' runs, though it was armed inside one tenant's request 35ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8c. the release door deletes in the run's own scope, and refuses from another tenant's 46ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > §2.8 racing posts, on separate connections > two posts racing on one conversation open one run; the other is refused RUN_IN_PROGRESS 28ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > §2.8 racing posts, on separate connections > racing posts by one person open at most three runs; the rest are refused RUN_LIMIT 42ms
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted 84ms
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it 94ms
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects 18ms
+ ✓ server/routes/ana-ri/__tests__/runs-watched-stamp-rls.dbtest.ts > the asker's watched stamp under RLS, on the request's own connection (DT3) > the asker's visible read stamps last_watched_at, in the run's own organisation 58ms
+ ✓ server/routes/ana-ri/__tests__/runs-watched-stamp-rls.dbtest.ts > the asker's watched stamp under RLS, on the request's own connection (DT3) > another organisation's request finds no run and stamps nothing, though it names the id 19ms
+ ✓ server/routes/ana-ri/__tests__/runs-watched-stamp-rls.dbtest.ts > the asker's watched stamp under RLS, on the request's own connection (DT3) > a second read within 5 s does not stamp again 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 10 passed (11)
+      Tests  1 failed | 78 passed (79)
+exit=1

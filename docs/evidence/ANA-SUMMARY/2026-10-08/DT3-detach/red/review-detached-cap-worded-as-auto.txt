@@ -1,0 +1,15 @@
+# pre-fix red, 2026-10-22: the 40-minute cap of a detached turn worded as Auto's budget (DT3 review finding 4.6)
+ × server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under null: the cap that applied, never Auto's budget 13ms
+   → expected 'The turn stopped at its time limit af…' to contain 'stopped at the 40-minute limit for a …'
+ × server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under manual: the cap that applied, never Auto's budget 4ms
+   → expected 'The turn stopped at its time limit af…' to contain 'stopped at the 40-minute limit for a …'
+ ✓ server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under Auto: Auto's own words, whose limits both applied 1ms
+ ✓ server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > a turn that never detached is as before 1ms
+ × client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under undefined: the 40-minute cap, never Auto's budget 11ms
+   → expected 'AnA reached this turn\'s time limit (…' to contain '40-minute limit for a turn that goes …'
+ × client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under manual: the 40-minute cap, never Auto's budget 3ms
+   → expected 'AnA reached this turn\'s time limit (…' to contain '40-minute limit for a turn that goes …'
+ ✓ client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under Auto: Auto's budget, as before 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  4 failed | 3 passed (7)

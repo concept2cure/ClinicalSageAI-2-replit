@@ -34,10 +34,31 @@ import { Pool } from 'pg';
 import { databaseUrl } from '../../../../tests/setup.db';
 import { createScratchSchema, tenantIsolationPolicySql, type ScratchSchema } from '../../../../tests/db/harness';
 
+/* An admin's cancel writes its chained audit row in the cancel's own
+   transaction (DT3 review, DP-82), and stopRunsFor writes its ledger row. The
+   scratch schema holds ana_runs and no audit chain, and each instance here is
+   its own module graph, so both are captured rather than written; the real
+   chained write under RLS is run-admin-cancel-audit.dbtest.ts. This suite is
+   about delivery across instances. */
+const chained = vi.hoisted(() => ({ rows: [] as Array<Record<string, unknown>> }));
+vi.mock('../../auditService.js', () => ({
+  default: {
+    logAction: async (entry: Record<string, unknown>) => {
+      chained.rows.push(entry);
+      return { persisted: true, chained: true, tamperProof: true };
+    },
+  },
+  writeChainedAuditRow: async (_client: unknown, entry: Record<string, unknown>) => {
+    chained.rows.push(entry);
+  },
+}));
+
 const MIGRATION = path.join(__dirname, '../../../../db/migrations/20260917_ana_runs.sql');
 const ORG = 4101;
 const OTHER_ORG = 4102;
 const USER = 7101;
+/** An admin of ORG (AnA detach DT3: cancel only). */
+const ADMIN = 7102;
 
 type RunControl = typeof import('../run-control.js');
 type TenantStore = typeof import('../../../db/tenantStore.js');
@@ -100,7 +121,7 @@ beforeAll(async () => {
   await ownerPool.query(`CREATE TABLE ${schema}.organizations (id integer PRIMARY KEY)`);
   await ownerPool.query(`CREATE TABLE ${schema}.users (id integer PRIMARY KEY)`);
   await ownerPool.query(`INSERT INTO ${schema}.organizations VALUES (${ORG}), (${OTHER_ORG})`);
-  await ownerPool.query(`INSERT INTO ${schema}.users VALUES (${USER})`);
+  await ownerPool.query(`INSERT INTO ${schema}.users VALUES (${USER}), (${ADMIN})`);
 
   const client = await ownerPool.connect();
   try {
@@ -329,5 +350,68 @@ describe('run control lifecycle: shutdown and the reaper', () => {
       { status: 'failed', stopped_reason: 'orphaned' },
       { status: 'failed', stopped_reason: 'orphaned' },
     ]);
+  });
+});
+
+/*
+ * AnA detach DT3 (docs/design/ANA_DETACH_2026-10-08.md §2.4, §2.5, §2.9; DT3
+ * test 15). A detached turn has no socket: what stops it arrives on whichever
+ * instance a request lands on, and only its owner can abort it. Each case
+ * checks the abort AND that it carries the row's reason (RunStopped), so the
+ * turn's record says what the row says.
+ */
+describe('run control across two instances: a detached run (DT3)', () => {
+  async function ownedOnA() {
+    const a = await bootInstance();
+    const b = await bootInstance();
+    const run = await a.asRequest(ORG, () =>
+      a.rc.beginRun({ pool: a.pool, organizationId: ORG, userId: USER, surface: 'dbtest' }),
+    );
+    await a.rc.startRunControlListener(a.pool);
+    await new Promise(r => setTimeout(r, 100));
+    return { a, b, ...run };
+  }
+
+  it("an admin's cancel accepted on B aborts A's run, as admin_cancelled", async () => {
+    const { a, b, runId, handle } = await ownedOnA();
+    const result = await b.asRequest(ORG, () =>
+      b.rc.applyControl({
+        pool: b.pool, runId, organizationId: ORG, userId: ADMIN, action: 'cancel', callerIsAdmin: true, reason: 'Stopping a stuck turn.',
+      }),
+    );
+    expect(result).toMatchObject({ ok: true, status: 'cancelled', byRole: 'admin' });
+    expect(chained.rows.at(-1)).toMatchObject({ action: 'ana.run.admin_cancelled', resourceId: runId, reason: 'Stopping a stuck turn.' });
+    await eventually(() => handle.cancelSignal.aborted, 1_000);
+    expect(a.rc.runStopReasonOf(handle.cancelSignal)).toBe('admin_cancelled');
+  });
+
+  it("B's reaper fails A's stale run, notifies, and A aborts as orphaned", async () => {
+    const { a, b, runId, handle } = await ownedOnA();
+    // A is partitioned: its beats stopped landing six minutes ago.
+    await scratch.ownerPool.query(
+      `UPDATE ${scratch.schema}.ana_runs SET heartbeat_at = now() - interval '6 minutes' WHERE id = $1`,
+      [runId],
+    );
+    expect(await b.rc.reapOrphanedRuns(b.pool)).toBe(1);
+    await eventually(() => handle.cancelSignal.aborted, 1_000);
+    expect(a.rc.runStopReasonOf(handle.cancelSignal)).toBe('orphaned');
+  });
+
+  it("a stopRunsFor on B (the person signed out) aborts A's run, as session_ended", async () => {
+    const { a, b, runId, handle } = await ownedOnA();
+    const stopped = await b.rc.stopRunsFor(b.pool, { organizationId: ORG, userId: USER }, { cause: 'member_removed', byUserId: null });
+    expect(stopped).toEqual([runId]);
+    await eventually(() => handle.cancelSignal.aborted, 1_000);
+    expect(a.rc.runStopReasonOf(handle.cancelSignal)).toBe('session_ended');
+    // What ended it travels with the abort across instances (the row's stopped_detail).
+    expect(a.rc.runStopDetailOf(handle.cancelSignal)).toEqual({ cause: 'member_removed', byUserId: null });
+  });
+
+  it("a person's stop with no organisation named (system scope) reaches A too", async () => {
+    const { a, b, runId, handle } = await ownedOnA();
+    const stopped = await b.rc.stopRunsFor(b.pool, { userId: USER }, { cause: 'password_change', byUserId: USER });
+    expect(stopped).toEqual([runId]);
+    await eventually(() => handle.cancelSignal.aborted, 1_000);
+    expect(a.rc.runStopReasonOf(handle.cancelSignal)).toBe('session_ended');
   });
 });

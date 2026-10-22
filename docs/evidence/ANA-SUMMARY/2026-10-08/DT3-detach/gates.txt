@@ -1,0 +1,79 @@
+# DT3 gates on the working tree at 28637579e + DT3 + the review fixes (uncommitted), 2026-10-22, the final tree.
+# Every gate in .husky/pre-push, plus the ci.yml gates the reviews named (ci:tenant-isolation:no-regression and its
+# justifications, tenant entry points and resolvers, error envelope, internals in copy, design system, client API calls,
+# launch-scope API, action overclaim, dead audit catch, microcopy, audit route mounts, AI tenant binding, regulated delete
+# audit, the discarded-audit-write self-test), run by scratch dt4/run-gates.sh; one line each: name, exit, tail of its output.
+# The push-scoped gates read commits, so they were also run against a temporary index that holds the new files (the real
+# index untouched): ci:pushed-lint-warnings (--since HEAD) and ci:untracked-imports --all. ci:pushed-typecheck runs
+# scripts/ci/typecheck-no-regression.mjs when a push changes a type; it was run directly (ci:pushed-typecheck-gate).
+#
+# 55 of 58 exit 0. The three that do not are not this change's:
+#   ci:tenant-entry-points  server/jobs/scheduleOfEventsSweep.ts changed since its justification (trunk 404371c51); not touched here.
+#   ci:launch-scope-api     /api/ind-master-data/sponsors from IndApplicantIdentity.tsx is unmapped (trunk f165afe1f); not touched here.
+#   ci:untracked-imports --all  server/__tests__/security/auth-invalid-expired-jwt.test.ts imports '../../middleware/' + 'auth.ts'
+#                           (a directory, read as untracked; file from 2026-06-08, not touched). The hook's own mode
+#                           (changed files against origin) reports nothing. Its "resolve to nothing" list is pre-existing.
+# The first run of the final tree failed two gates on this change, fixed in the code, never in a baseline:
+#   audit:repo-health:ceiling  run-control.ts had grown past 100000 bytes (58 files over, ceiling 57): the approval claim
+#                              moved to server/services/ana/run-approval-claim.ts (re-exported); now 57.
+#   ci:pushed-lint-warnings    +13 warnings in the changed files: refactored (detachOnClose, settledApprovalOutcome,
+#                              controlEventOf, waitOnRun, held-run-release.ts, controlsFor, humanControlsXml, namedControls
+#                              in lineage-dossier-holds.ts, stream-detach-review.test.ts split out); now net -1.
+ci:ectd-stubs exit=0 :: [ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids  [ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref). 
+ci:risk-codes exit=0 :: OK: Generated risk code types are up to date. 
+ci:migration-set-order exit=0 :: [ci:migration-set-order] OK — 418 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates. 
+ci:migration-guard-order:selftest exit=0 :: [ci:migration-guard-order] selftest OK — reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it. 
+ci:migration-guard-order exit=0 :: [ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined). 
+ci:install-fresh-overlay-deps:selftest exit=0 ::   ✓ the file creating it itself is never its own missing dependency — expected 0, got 0  [ci:install-fresh-overlay-deps] selftest passed: it fails on the unguarded case and only on that case. 
+ci:install-fresh-overlay-deps exit=0 :: [ci:install-fresh-overlay-deps] 349 overlay file(s) · 691 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s). [ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer. 
+ci:migration-drop-safety exit=0 :: [ci:migration-drop-safety] OK — 418 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed). 
+ci:migration-drop-safety:selftest exit=0 ::   ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case  [ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes. 
+ci:class-vocabulary exit=0 :: [ci:class-vocabulary] OK — 5318 file(s) scanned, no restated class vocabulary. 
+ci:migration-deploy-path exit=0 :: [ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new. 
+ci:column-reachability exit=0 :: [ci:column-reachability] OK — 3154 column add(s) on no applier, 0 queried by the server. 
+ci:runtime-ddl exit=0 ::     • server/routes/c2c/context-intelligence.ts — 1 → 0     • server/services/integrations/credentialVault.ts — 2 → 0 [ci:runtime-ddl] ✅ no new runtime DDL. 
+ci:json-operator-types exit=0 :: [ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3318 server file(s) read; 0 finding(s), 0 baselined [ci:json-operator-types] ✅ no jsonb operator on a json column. 
+db:sync-manifest:check exit=0 :: Manifest is in sync. 
+ci:drizzle-tenant-scope exit=0 :: [ci:drizzle-tenant-scope] OK — 98 site(s), all baselined; 29 fixed since the baseline was written. [ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 29 fix(es). 
+ci:undefined-css-classes exit=0 :: [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s). 
+ci:unauthenticated-fetch exit=0 :: ✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined). 
+ci:session-scoped-rls-bypass exit=0 :: [ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 4 baselined occurrence(s) remain in 1 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink. 
+ci:sql-interpolation exit=0 ::   server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility   server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility [ci:sql-interpolation] OK — no new value interpo
+check:catalog-copy exit=0 :: [ci:catalog-copy] OK — 120 catalog description(s) across 3 migration(s) read as product copy. 
+ci:fixture-fallback exit=0 ::   baselined (known, unfixed) : 0  ✅ no new ungated fixture fallback. 0 baselined. 
+ci:no-mock-in-prod-routes exit=0 :: ✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0) 
+ci:fabricated-identity exit=0 :: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new. 
+ci:program-ownership-single-source:selftest exit=0 :: [self-test] OK — 10 copies found, 6 reads passed. 
+ci:program-ownership-single-source exit=0 :: [ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts). 
+ci:discarded-audit-write exit=0 :: check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s). 
+ci:client-ip-single-source exit=0 :: ✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/ 
+ci:filing-exit-agreement:selftest exit=0 :: [ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door [ci:filing-exit-agreement:selftest] ✓ an empty tree passes [ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest. 
+ci:filing-exit-agreement exit=0 :: [ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 5 baselined site(s) in 2 file(s), exactly as baselined. 
+ci:sign-ceremony exit=0 :: [ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined. [ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined. 
+ci:upload-guards exit=0 :: [ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads. 
+ci:trivyignore-hygiene exit=0 :: [ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days. 
+audit:repo-health:ceiling exit=0 :: - files over line threshold: 113  ✅ repo health strict gate passed. 
+ci:server-error-leaks exit=0 :: [ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one. 
+ci:tenant-isolation:no-regression exit=0 :: [ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (42 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit) [ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline) 
+ci:tenant-isolation-justifications exit=0 :: [ci:baseline-justifications] OK — baseline is empty (retired 2026-08-07); 90 inline tenant-isolation-safe suppression(s), every one with a reason. 
+ci:tenant-entry-points exit=1 ::   Re-read the justification against the new code. If it still holds, refresh   the digest: npm run ci:tenant-entry-points:write-baseline  
+ci:tenant-resolvers exit=0 ::   - server/routes/regulatory-precedent-intelligence.ts  OK: no new local tenant resolvers. 
+ci:error-envelope exit=0 :: [ci:error-envelope] OK — 0 hand-rolled read(s) (baseline 0), none new. 
+ci:internals-in-copy exit=0 :: check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s). 
+ci:design-system exit=0 :: [design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces. 
+ci:check-client-api-calls exit=0 :: check-client-api-calls-resolve: 145 client /api prefixes, 310 server /api prefixes. ✅ every client /api call has a server route behind it. 
+ci:launch-scope-api exit=1 ::   [unmapped] /api/ind-master-data/sponsors     called by ind-checklist     in client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx 
+ci:action-overclaim exit=0 :: check-action-overclaim: no new occurrences. 0 baselined. 
+ci:dead-audit-catch exit=0 :: check-dead-audit-catch: no new occurrences. 0 baselined across 0 file(s). 
+check:microcopy exit=0 :: [ci:microcopy] OK — scanned 606 customer-facing files, no exclamations or pictographs. 
+ci:audit-route-mounts:no-regression exit=0 :: - Platform Kernel (server/routes/concept2cure.ts): 0 errors, 1 warnings  Baseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json) 
+ci:ai-tenant-binding exit=0 :: ✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules 
+ci:regulated-delete-audit exit=0 :: [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed). 
+ci:discarded-audit-write:self-test exit=0 ::   ✓ a baselined file at its baselined count is not flagged  self-test PASSED — the gate flags the defect and the baseline cannot grow. 
+ledger-check exit=0 ::    Ledger is internally consistent.  
+ci:pushed-lint-warnings exit=0 ::     -1  server/routes/ana-ri/utility.ts  (4 -> 3)  [ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since HEAD. 
+ci:pushed-lint-errors-on-dt3-files exit=0 :: files 117 errors 0 warnings 204 
+ci:untracked-imports exit=1 ::   scripts/setup-protection.js:100  →  ./development-best-practices-audit.js   server/scripts/verify-api-routes.js:29  →  ../routes/advisor.js   tests/unit/validate-ich-structure.js:4  →  ../server/utils/validateZip.js 
+ci:pushed-lint-errors exit=0 :: [ci:pushed-lint-errors] no lintable files changed against origin/concept2cure-v2. 
+ci:pushed-lint-warnings-hook exit=0 ::     -1  server/routes/ana-ri/utility.ts  (4 -> 3)  [ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since 28637579eb4042afb44b268d016a0dd8996cb94a. 
+ci:pushed-typecheck-gate exit=0 :: [ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0) [ci:typecheck-no-regression] errors found: 0 (tsc exit 0) [ci:typecheck-no-regression] OK — error count 0 matches baseline. 

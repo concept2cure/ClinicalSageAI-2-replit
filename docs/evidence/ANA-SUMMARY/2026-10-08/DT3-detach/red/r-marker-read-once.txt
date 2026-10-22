@@ -1,0 +1,9 @@
+# r-marker-read-once: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx  -t read again
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > the marker is read again when the page comes back on screen: a turn that ended is no longer "Working" 140ms
+   → expected 'Stability reportsOct 8 · Working · st…' to contain 'Resume'
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > the marker is read again when the page comes back on screen: a turn that ended is no longer "Working"
+AssertionError: expected 'Stability reportsOct 8 · Working · st…' to contain 'Resume'

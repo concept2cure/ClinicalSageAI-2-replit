@@ -13,12 +13,14 @@
  *   - events: the sealed timeline, each note's text resolved from the record's
  *     texts — the only text this resolves. Null for a record from before /4,
  *     which has no timeline (the client then shows its trace rows);
- *   - controls: the person's pause, steer and stop, without who took them;
+ *   - controls: the pause, steer and stop, with no person's id; who took
+ *     each is added for its reader by attributeControls (an administrator by
+ *     name, the asker as "you" or "the person who asked"; DT3 review);
  *   - models: the distinct provider and model of each call, without the
  *     request id, so a reviewer sees which model narrated the turn;
  *   - verdict: whether the stored bytes verify now, and if not, why, in words.
  *
- * Pure.
+ * Pure: attributeControls is handed its name reader.
  *
  * @module server/services/ana/turn-summary
  */
@@ -54,24 +56,87 @@ function verdictReason(v: TurnRecordVerdict): string | undefined {
   return 'The record could not be verified.';
 }
 
-/**
- * A run's control events as the Summary shows them: the action, round, time
- * and message, never who took them. Shared with the live run read
- * (routes/ana-ri/runs.ts), which reads them off the run row.
- */
-export function controlsOf(raw: unknown[] | null | undefined): TimelineControl[] | null {
+/** One control event as read, with who took it kept apart from what the reader is shown. */
+interface ReadControl {
+  control: TimelineControl;
+  byUserId: number | null;
+  administrator: boolean;
+}
+
+function readControls(raw: unknown[] | null | undefined): ReadControl[] | null {
   if (!Array.isArray(raw)) return null;
-  const out: TimelineControl[] = [];
+  const out: ReadControl[] = [];
   for (const c of raw as Array<Record<string, unknown>>) {
     if (!c || typeof c.action !== 'string' || typeof c.at !== 'string') continue;
     out.push({
-      action: c.action,
-      round: typeof c.round === 'number' ? c.round : 0,
-      at: c.at,
-      ...(typeof c.message === 'string' && c.message ? { message: c.message } : {}),
+      control: {
+        action: c.action,
+        round: typeof c.round === 'number' ? c.round : 0,
+        at: c.at,
+        ...(typeof c.message === 'string' && c.message ? { message: c.message } : {}),
+        ...(typeof c.reason === 'string' && c.reason ? { reason: c.reason } : {}),
+      },
+      byUserId: typeof c.byUserId === 'number' && Number.isInteger(c.byUserId) ? c.byUserId : null,
+      administrator: c.byRole === 'admin',
     });
   }
   return out;
+}
+
+/**
+ * A run's control events as the Summary shows them: the action, round, time,
+ * message and an administrator's reason, never a person's id. Who took each
+ * one is added for a reader by attributeControls. Shared with the live run
+ * read (routes/ana-ri/runs.ts), which reads them off the run row.
+ */
+export function controlsOf(raw: unknown[] | null | undefined): TimelineControl[] | null {
+  return readControls(raw)?.map(r => r.control) ?? null;
+}
+
+/** Who is reading, and whose turn it is. */
+export interface ControlReader {
+  viewerUserId: number | null;
+  askerUserId: number | null;
+}
+
+/** Names for account ids, as the reader's tenant may name them (services/tenant/actor-names.ts). */
+export type ReadActorNames = (ids: number[]) => Promise<Map<number, string | null>>;
+
+/**
+ * The controls with who took each, for this reader (AnA detach DT3 review: an
+ * administrator's cancel was shown as "You stopped the run"). The asker
+ * reading their own turn sees their controls as theirs, unmarked, as before.
+ * An administrator's cancel names the administrator — "user <id>" when the
+ * name cannot be read, never the asker — or tells the administrator it was
+ * theirs. Anyone else reading the asker's control is told it was the
+ * person who asked, with no id: the Summary never names the asker (S4).
+ */
+export async function attributeControls(
+  raw: unknown[] | null | undefined,
+  reader: ControlReader,
+  readNames: ReadActorNames,
+): Promise<TimelineControl[] | null> {
+  const read = readControls(raw);
+  if (!read) return null;
+  const viewer = reader.viewerUserId;
+  const named = [...new Set(read.flatMap(r => (r.administrator && r.byUserId !== null && r.byUserId !== viewer ? [r.byUserId] : [])))];
+  const names = named.length > 0 ? await readNames(named).catch(() => new Map<number, string | null>()) : new Map<number, string | null>();
+  return read.map(({ control, byUserId, administrator }) => {
+    if (administrator) {
+      if (byUserId !== null && byUserId === viewer) return { ...control, by: { kind: 'you_as_administrator' as const } };
+      const name = byUserId === null ? 'an administrator' : (names.get(byUserId) ?? `user ${byUserId}`);
+      return { ...control, by: { kind: 'administrator' as const, name } };
+    }
+    // Anyone but an administrator's cancel is the asker's (run-control.ts controlAuthority).
+    const actor = byUserId ?? reader.askerUserId;
+    return viewer !== null && actor === viewer ? control : { ...control, by: { kind: 'asker' as const } };
+  });
+}
+
+/** The raw control events a stored record holds, for attributeControls; null when unreadable. */
+export function recordControlEvents(record: StoredTurnRecord): unknown[] | null {
+  const body = bodyOf(record.recordText);
+  return body && Array.isArray(body.controls) ? (body.controls as unknown[]) : null;
 }
 
 function modelsOf(body: TurnRecordBody): TurnSummaryPayload['models'] {

@@ -1,0 +1,29 @@
+# r-logout-stops-on-a-signature: exit 1 (non-zero = red)
+# tests: server/routes/__tests__/passwordResetAuditTrail.test.ts  -t IAM-34|already revoked
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an mfa_challenge token (a correct password, no second factor) stops nothing (IAM-34) 284ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a refresh token stops nothing (IAM-34) 10ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an mfa-partial token stops nothing (IAM-34) 7ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a connector (delegated) token stops nothing (IAM-34) 4ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an unclassed token stops nothing (IAM-34) 5ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an expired access token stops nothing (IAM-34) 4ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a token this server did not sign stops nothing (IAM-34) 3ms
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a token already revoked (a second sign-out with it) stops nothing 8ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed | 26 skipped (34)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an mfa_challenge token (a correct password, no second factor) stops nothing (IAM-34)
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a refresh token stops nothing (IAM-34)
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an mfa-partial token stops nothing (IAM-34)
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a connector (delegated) token stops nothing (IAM-34)
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an unclassed token stops nothing (IAM-34)
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an expired access token stops nothing (IAM-34)
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a token already revoked (a second sign-out with it) stops nothing
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1

@@ -1,0 +1,9 @@
+# r-handover-shows-an-empty-answer: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts  -t cannot read the answer
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a hand-over that cannot read the answer says so, never an empty answer 35ms
+   → expected null to be 'The answer couldn\'t be loaded. Reope…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a hand-over that cannot read the answer says so, never an empty answer
+AssertionError: expected null to be 'The answer couldn\'t be loaded. Reope…' // Object.is equality

@@ -1,0 +1,12 @@
+# m-scim-delete-stops-nothing: exit 1 (non-zero = red)
+# tests: server/__tests__/security/scim-deprovision-stops-runs.test.ts  -t DELETE
+ × server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), a sole-organisation account 201ms
+   → expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ × server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), an account in other organisations too 4ms
+   → expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 skipped (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), a sole-organisation account
+ FAIL  server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), an account in other organisations too
+AssertionError: expected "vi.fn()" to be called with arguments: [ 100, …(2) ]

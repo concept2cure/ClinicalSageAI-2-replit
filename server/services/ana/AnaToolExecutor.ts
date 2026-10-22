@@ -245,7 +245,7 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
-import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
+import { CREATABLE_NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
 import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10658,7 +10658,9 @@ registerToolHandler('fire_notification', async (input, ctx) => {
   const category = typeof input.category === 'string' ? input.category : '';
   const severity = typeof input.severity === 'string' ? input.severity : '';
   const title    = typeof input.title === 'string' ? input.title.trim() : '';
-  const allowedCat = new Set<string>(NOTIFICATION_CATEGORIES);
+  // A platform-only category ('ana_turn') is the platform's to write, never a
+  // model's (DT3 review, DP-84).
+  const allowedCat = new Set<string>(CREATABLE_NOTIFICATION_CATEGORIES);
   if (!allowedCat.has(category)) {
     return JSON.stringify({ error: `category must be one of: ${Array.from(allowedCat).join(', ')}.` });
   }

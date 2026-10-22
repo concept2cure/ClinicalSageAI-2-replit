@@ -52,6 +52,7 @@ import {
   organizationIdOfClaims,
   readAccountStanding,
   sessionEndedByStanding,
+  stopPersonsRuns,
   untilStampHasBegun,
 } from '../services/account-standing';
 import {
@@ -1366,6 +1367,29 @@ async function signOutEverywhere(req: Request, res: Response): Promise<void> {
 }
 
 /**
+ * The account and session of a LIVE access token, or null: the same test
+ * signOutEverywhere applies before it acts on an account — verifyLiveToken
+ * (signature, expiry, revocation, the account's standing, the idle, lifetime
+ * and superseded windows; not the person acting) and the access-token class
+ * (requireAccessTokenReason, which refuses a refresh, mfa_challenge,
+ * mfa-partial, connector or delegated token). A token it refuses, or a check
+ * that cannot be read, is null: the sign-out then revokes the token and
+ * changes nothing else (IAM-34).
+ */
+async function liveAccessSessionOf(token: string): Promise<{ accountId: number; sessionId: string | null } | null> {
+  try {
+    const claims = await verifyLiveToken<Record<string, unknown>>(token, undefined, { activity: false });
+    if (requireAccessTokenReason(claims)) return null;
+    const accountId = accountIdOfClaims(claims);
+    if (accountId === null) return null;
+    return { accountId, sessionId: typeof claims.sid === 'string' && claims.sid ? claims.sid : null };
+  } catch (error) {
+    if (!isTokenRefusal(error)) logger.warn('Logout: the session could not be checked; it stops no AnA turn', { err: String(error) });
+    return null;
+  }
+}
+
+/**
  * POST /api/auth/logout
  * Logout and invalidate tokens. With `terminateAllSessions: true`, every
  * session of the account (signOutEverywhere).
@@ -1389,7 +1413,14 @@ router.post('/logout', async (req: Request, res: Response) => {
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
+      // Decided BEFORE the token is revoked below: is this a live access
+      // session? Only one may change anything about the account beyond its own
+      // token (IAM-34, a regression of IAM-23's intent): an mfa_challenge
+      // token, a refresh, connector or delegated token, an expired one or one
+      // already revoked stops nothing.
+      const liveSession = await liveAccessSessionOf(token);
       try {
+        // token-class: attribution only. Read for the audit row and the session's slot, never for a state change on the account: expired and unclassed tokens are attributed here, and liveAccessSessionOf above decides what the sign-out may stop.
         const verified = verifyJwtWithRotation<Record<string, unknown>>(token, { ignoreExpiration: true });
         auditUserId = (verified?.userId as string) ?? (verified?.sub as string);
         auditOrgId = verified?.organizationId as string | undefined;
@@ -1400,6 +1431,18 @@ router.post('/logout', async (req: Request, res: Response) => {
         /* not a token this server signed: record an anonymous logout */
       }
       await revokeToken(token);
+      // The session ended, so the AnA turns THIS session started stop — not
+      // the person's turns on their other devices, whose sessions stand (AnA
+      // detach §2.9; DT3 review: "the session that started this turn ended"
+      // must be true of every turn it is said of). A token with no sid has
+      // no runs to name; such a run stops at its next round boundary.
+      if (liveSession?.sessionId) {
+        await stopPersonsRuns(
+          liveSession.accountId,
+          { cause: 'sign_out', byUserId: liveSession.accountId },
+          { sessionId: liveSession.sessionId },
+        );
+      }
     }
 
     // Also revoke any refresh token sent in body
@@ -2576,6 +2619,9 @@ async function handleResetPassword(req: Request, res: Response) {
         )
       )
       .returning({ id: users.id });
+    // The reset ended every session begun before it; the AnA turns those
+    // sessions started stop too (AnA detach §2.9).
+    if (reset.length === 1) await stopPersonsRuns(userData.id, { cause: 'password_reset', byUserId: userData.id });
 
     if (reset.length !== 1) {
       await recordAuthEvent({
@@ -2776,6 +2822,9 @@ router.post('/password/change', async (req: Request, res: Response) => {
         mustChangePassword: false,
       })
       .where(eq(users.id, userData.id));
+    // The change ended every session begun before it; the AnA turns those
+    // sessions started stop too (AnA detach §2.9).
+    await stopPersonsRuns(userData.id, { cause: 'password_change', byUserId: userData.id });
 
     // The credential-changing event, in the account's tenant (21 CFR Part 11
     // §11.10(e); security audit 2026-09-24, IAM-17): until 2026-09-26 this

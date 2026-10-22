@@ -1,0 +1,9 @@
+# r-marker-failed-read-silent: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx  -t could not be read says so
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > a list that could not be read says so, quietly, and marks nothing (DT3 review 2.3) 5093ms
+   → Unable to find an element with the text: Couldn't check which conversations AnA is working in.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > a list that could not be read says so, quietly, and marks nothing (DT3 review 2.3)
+TestingLibraryElementError: Unable to find an element with the text: Couldn't check which conversations AnA is working in.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
