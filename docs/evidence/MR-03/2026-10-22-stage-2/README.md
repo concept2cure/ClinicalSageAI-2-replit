@@ -364,6 +364,38 @@ its anonymous rate limit. CI's production-image-boot job builds both targets,
 checks the image runs as `appuser`, and boots it to `/readyz`. Its result on
 this push is recorded below once it reports.
 
+**Correction, found after the push: slice D broke a guard it never ran.** At
+`540e00b12` and every push after it, `ci.yml`'s Lint job stopped at its first
+guard, "Node 22 runtime contracts" (`scripts/ci/check-node-runtime.mjs`). It
+reads each `FROM node:<tag>` line, and once the stages were pinned by digest it
+read `22-slim@sha256:…` as the tag. Neither this guard nor its self-test is in
+the pre-push hook, and this slice did not run them.
+
+The failure skipped every later Lint step, including this slice's own image
+guard. It was found when the Lint runs were read at about 14:40Z:
+
+| Commit | CI run | Lint job |
+|---|---|---|
+| `540e00b12` | 39740582076 | 119696555299 |
+| `5e71c9e8c` | 39745769007 | 119713707072 |
+| `e218851a1` | 39752718963 | 119736987008 |
+
+The baseline run 39728613967, at `c6556aa1`, passed that step.
+
+The fix, in the commit that adds this paragraph:
+- The guard reads the tag apart from a well-formed digest.
+- The self-test's production-downgrade mutation matches the pinned line. A new
+  case downgrades the builder stage with its digest kept.
+- A mutation that matches nothing now throws, rather than proving nothing.
+
+The guard now passes, and its self-test rejects 10 drifts. Every Lint step was
+then run locally on the corrected tree (`raw/d6`).
+
+`terraform-tests.yml` passed on run 39751973062 (`b4ff336be`, which contains
+this push): all 11 jobs. The production image boot and the production boot
+smoke were still queued at the time of writing: run 39740582076, jobs
+119755586909 and 119755586996.
+
 ## Not shown here
 
 - **The load half of OPS-13:** 20 concurrent DOCX→PDF conversions plus two

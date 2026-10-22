@@ -103,11 +103,10 @@ variable "api_requests_per_target_per_minute" {
 
 # ── Secrets ──────────────────────────────────────────────────────────────────
 
-variable "secret_arns" {
-  type        = list(string)
-  description = "Secrets Manager ARNs the execution role can read"
-  default     = ["*"]
-}
+# Each task's execution role may read exactly the secrets its container
+# references (api_secrets, migrate_secrets), and nothing else. This was one
+# list, every secret in the stack, so the API's role could read the owner
+# credential whether or not its container named it (MR-03 OPS-16).
 
 variable "secrets_kms_key_arn" {
   type        = string
@@ -120,7 +119,16 @@ variable "api_secrets" {
     name       = string
     value_from = string
   }))
-  description = "Secrets injected into the API container"
+  description = "Secrets injected into the API container. Never the database owner's: those are migrate_secrets."
+  default     = []
+}
+
+variable "migrate_secrets" {
+  type = list(object({
+    name       = string
+    value_from = string
+  }))
+  description = "Secrets injected into the one-off database task (migrate, provision): what the API boots with, plus the owner credential the API never holds."
   default     = []
 }
 

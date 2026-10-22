@@ -26,6 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { VaultPlaceIntoSubmission } from '../surfaces/VaultPlaceIntoSubmission';
+import { consumeNavParams } from '../navParams';
 
 const DOC_UUID = '22222222-2222-4222-8222-222222222222';
 
@@ -484,8 +485,21 @@ describe('vault filing confirmation', () => {
     expect(callbacks.onPlaced).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /Check filing status/i }));
     expect(callbacks.onNav).toHaveBeenCalledWith('submission-center');
+    // The sequence it was being placed into, where its status can be checked (break 13).
+    expect(consumeNavParams('submission-center')).toEqual({ submissionId: '4', sequenceId: '9', ws: 'builder' });
     expect(callbacks.onClose).toHaveBeenCalled();
     expect(writes).toHaveLength(1);
+  });
+
+  it('after a confirmed placement, Open in Submission Center opens that sequence in the Builder (break 13)', async () => {
+    mockApi();
+    const callbacks = { ...props(), onNav: vi.fn() };
+    render(<VaultPlaceIntoSubmission {...callbacks} />);
+    await fillTarget(); fireEvent.click(placeBtn());
+    expect(await screen.findByText(/Filed as leaf 3\.2\.P\.8\.3 in sequence 0000/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Open in Submission Center/i }));
+    expect(callbacks.onNav).toHaveBeenCalledWith('submission-center');
+    expect(consumeNavParams('submission-center')).toEqual({ submissionId: '4', sequenceId: '9', ws: 'builder' });
   });
 
   it.each([

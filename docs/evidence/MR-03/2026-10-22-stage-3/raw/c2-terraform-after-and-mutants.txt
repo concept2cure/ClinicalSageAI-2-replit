@@ -1,0 +1,48 @@
+# Slice C, after: validate on every root, terraform test on the stack and every module with tests.
+terraform/bootstrap                  Success! The configuration is valid. 
+terraform/environments/production    Success! The configuration is valid. 
+terraform/environments/staging       Success! The configuration is valid. 
+terraform/stack                      Success! 74 passed, 0 failed. 
+terraform/modules/alb                Success! 4 passed, 0 failed. 
+terraform/modules/cloudfront         Success! 9 passed, 0 failed. 
+terraform/modules/compliance-evidence Success! 5 passed, 0 failed. 
+terraform/modules/github-deploy-roles Success! 6 passed, 0 failed. 
+terraform/modules/vpc-secure         Success! 2 passed, 0 failed. 
+
+## Mutants, each in its own copy, terraform test on the stack
+### T1: DATABASE_URL back in boot_secrets (the API carries the owner URL again). The new API run, alone:
+  run "the_api_task_holds_no_owner_credential"... fail
+  on tests/a_api.tftest.hcl line 163, in run "the_api_task_holds_no_owner_credential":
+The API container carries an owner credential: DATABASE_URL
+  on tests/a_api.tftest.hcl line 170, in run "the_api_task_holds_no_owner_credential":
+An API secret reads the owner's URL or the app_service password, under
+  on tests/a_api.tftest.hcl line 177, in run "the_api_task_holds_no_owner_credential":
+The API's execution role can read the owner's secrets:
+Failure! 0 passed, 1 failed.
+### T1, the whole suite: the boot-contract run fails first (DATABASE_URL then appears twice in the database task), the rest skip
+  run "renders_the_boot_contract"... fail
+tests/boot_contract.tftest.hcl... fail
+Failure! 0 passed, 1 failed, 73 skipped.
+exit 1
+### T2: the API's execution role granted the database task's secrets
+  run "renders_the_boot_contract"... fail
+Error: Test assertion failed
+  run "the_api_task_holds_no_owner_credential"... fail
+Error: Test assertion failed
+tests/boot_contract.tftest.hcl... fail
+Failure! 72 passed, 2 failed.
+exit 1
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 314, in run "renders_the_boot_contract":
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 767, in run "the_api_task_holds_no_owner_credential":
+### T3: the database task registered with the API's execution role
+#   First version of the run: NOT caught (74 passed). It compared the role resources (both exist), not the role each task
+#   definition is registered with. The run now reads module.ecs.task_execution_role_arns; against that:
+  run "the_one_off_database_task_alone_holds_it"... fail
+Error: Test assertion failed
+tests/boot_contract.tftest.hcl... fail
+Failure! 73 passed, 1 failed.
+exit 1
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 790, in run "the_one_off_database_task_alone_holds_it":

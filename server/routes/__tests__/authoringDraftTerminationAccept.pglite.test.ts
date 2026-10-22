@@ -43,6 +43,8 @@ beforeAll(async () => {
       ALTER TABLE c2c_documents ADD COLUMN owner_id integer;
       ALTER TABLE c2c_documents ADD COLUMN readiness integer NOT NULL DEFAULT 0;
       ALTER TABLE c2c_documents ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
+      -- The section-parent repair joins a document to its own rule pack.
+      ALTER TABLE c2c_documents ADD COLUMN rule_pack_version text;
     `,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',

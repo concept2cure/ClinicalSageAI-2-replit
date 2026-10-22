@@ -129,12 +129,14 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
     // connectivity probe above declares a system scope.
     // Production verifies and creates nothing, on the runtime pool: the schema
     // is the deploy's (install-fresh, deploy-migrate), and the API holds no
-    // owner credential to create it with (MR-03 Stage 3, OPS-16). Elsewhere the
-    // owner URL, when set, still lets a developer's database be filled in.
+    // owner credential to create it with (MR-03 Stage 3, OPS-16). Elsewhere a
+    // developer's database is still filled in, on the owner URL when one is set
+    // (ensureCoreTables reads it; the boot names none).
     const result = await runWithSystemTenantScope('startup:ensure-core-tables', async () =>
-      process.env.NODE_ENV === 'production'
-        ? ensureCoreTables(undefined, { verifyOnly: true })
-        : ensureCoreTables(process.env.DATABASE_URL)
+      ensureCoreTables(
+        undefined,
+        process.env.NODE_ENV === 'production' ? { verifyOnly: true } : { ownerUrlWhenSet: true },
+      )
     );
     // The auth columns and the membership and module tables, which the boot
     // used to ALTER into shape on the owner connection; now

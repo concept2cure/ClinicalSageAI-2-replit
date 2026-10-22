@@ -59,6 +59,8 @@ output "deploy_targets" {
     ECS_API_TASK_FAMILY     = "${local.long}-api"
     ECS_API_CONTAINER_NAME  = module.ecs.api_container.name
     ECS_MIGRATE_TASK_FAMILY = local.migrate_family
+    # The container the one-off database tasks derive from (OPS-16).
+    ECS_MIGRATE_CONTAINER_NAME = module.ecs.migrate_container.name
     # The configured name, which is what S3 creates; the module's output is
     # the bucket's computed id, unknown until apply.
     FRONTEND_BUCKET = local.frontend_bucket

@@ -22,9 +22,14 @@
  *      provider mocked (tests/boot_contract.tftest.hcl). No account needed.
  *   2. Reads the rendered API task definition out of the test's final state,
  *      and fails unless its family is the one the pipeline inspects.
- *   3. Runs the preflight step's own shell against it (`aws` stubbed).
- *   4. Checks the revision the preflight checked is the one that rolls: the
- *      step publishes its ARN; migrate and deploy-api derive from it.
+ *   3. Runs the preflight step's own shell against it (`aws` stubbed), then the
+ *      database-task step's against the rendered migrate definition (MR-03
+ *      Stage 3, OPS-16), and both against definitions each must REFUSE: an API
+ *      carrying the owner's credential; a database task without it, with
+ *      another environment, another secret source, or the API's role.
+ *   4. Checks the revisions the preflight checked are the ones that run: each
+ *      step publishes its ARN; the migration derives from the database task's,
+ *      deploy-api from the API's.
  *   5. Executes the rendered container health-check command against a stub
  *      server that answers by path: live-but-not-ready (/healthz 200, /readyz
  *      503) must pass; /healthz 503 and a closed port must fail. A regex on
@@ -60,6 +65,7 @@ const TEST_FILE = 'tests/boot_contract.tftest.hcl';
 const WORKFLOW = path.join(repoRoot, '.github', 'workflows', 'deploy-aws.yml');
 const PROVISION_WORKFLOW = path.join(repoRoot, '.github', 'workflows', 'provision-database.yml');
 const PREFLIGHT_STEP = 'Preflight — task definition must carry the production boot contract';
+const MIGRATE_PREFLIGHT_ID = 'migrate-preflight';
 const TAG = '[terraform-preflight-proof]';
 
 const args = process.argv.slice(2);
@@ -79,7 +85,9 @@ function loadPreflight() {
     for (const step of job.steps ?? []) {
       if ((step.name ?? '').startsWith(PREFLIGHT_STEP)) {
         const env = { ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) };
-        return { jobName, run: step.run, env, needs: [].concat(job.needs ?? []), wf };
+        const mStep = (job.steps ?? []).find((st) => st.id === MIGRATE_PREFLIGHT_ID);
+        const migrate = mStep ? { run: mStep.run, env: { ...(wf.env ?? {}), ...(job.env ?? {}), ...(mStep.env ?? {}) } } : null;
+        return { jobName, run: step.run, env, migrate, needs: [].concat(job.needs ?? []), wf };
       }
     }
   }
@@ -87,18 +95,31 @@ function loadPreflight() {
   process.exit(1);
 }
 
-/** Run the preflight shell with `aws` answering from a file. */
-function runPreflight(pre, tdFile) {
+/**
+ * Run a step's shell with `aws` answering describe-task-definition from the
+ * given definitions, by family: `--task-definition` may name a family or a
+ * revision ARN, as the steps use both. Anything else it is asked for fails,
+ * as ECS would.
+ */
+const AWS_SHIM = `#!/usr/bin/env bash
+td=""
+while [[ $# -gt 0 ]]; do if [[ "$1" == --task-definition ]]; then td="$2"; break; fi; shift; done
+td="\${td##*/}"; td="\${td%%:*}"
+[[ -f "$TD_DIR/$td.json" ]] || { echo "ClientException: Unable to describe task definition '$td'." >&2; exit 254; }
+cat "$TD_DIR/$td.json"
+`;
+function runPreflight(pre, tds, extraEnv = {}) {
   const shimDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tf-preflight-'));
-  // The step's only AWS call is `aws ecs describe-task-definition … --query
-  // taskDefinition`; answer it from the rendered file and nothing else.
-  fs.writeFileSync(path.join(shimDir, 'aws'), '#!/usr/bin/env bash\ncat "$TD_JSON"\n', { mode: 0o755 });
+  const tdDir = path.join(shimDir, 'td');
+  fs.mkdirSync(tdDir);
+  for (const td of [].concat(tds)) fs.writeFileSync(path.join(tdDir, `${td.family}.json`), JSON.stringify(td));
+  fs.writeFileSync(path.join(shimDir, 'aws'), AWS_SHIM, { mode: 0o755 });
   const outputFile = path.join(shimDir, 'github_output');
   fs.writeFileSync(outputFile, '');
   const res = spawnSync('bash', ['-c', pre.run], {
     encoding: 'utf8',
     env: {
-      ...process.env, ...stringEnv(pre.env), TD_JSON: tdFile, GITHUB_OUTPUT: outputFile,
+      ...process.env, ...stringEnv(pre.env), ...extraEnv, TD_DIR: tdDir, GITHUB_OUTPUT: outputFile,
       PATH: `${shimDir}:${process.env.PATH}`,
     },
   });
@@ -108,17 +129,18 @@ function runPreflight(pre, tdFile) {
 }
 
 /**
- * The first-provision workflow's own check, run against the rendered task
- * definition: it must accept what Terraform renders, pin that revision, and
- * hand db:provision the owner URL as DATABASE_OWNER_URL from the SAME secret
- * the API reads as DATABASE_URL. Its shell, verbatim, with `aws` stubbed.
+ * The first-provision workflow's own check, run against the rendered database
+ * task definition: it must accept what Terraform renders, pin that revision,
+ * and hand db:provision the owner URL as DATABASE_OWNER_URL from the SAME
+ * secret the migration reads as DATABASE_URL. Its shell, verbatim, with `aws`
+ * stubbed.
  */
-function checkProvisionSource(tdFile, td) {
+function checkProvisionSource(td) {
   const wf = loadYaml(fs.readFileSync(PROVISION_WORKFLOW, 'utf8'));
   const job = Object.values(wf.jobs ?? {}).find((j) => (j.steps ?? []).some((st) => st.id === 'source'));
   const step = job?.steps.find((st) => st.id === 'source');
   if (!step) return fail('provision-database.yml has no step with id "source"');
-  const res = runPreflight({ run: step.run, env: { ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) } }, tdFile);
+  const res = runPreflight({ run: step.run, env: { ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) } }, td);
   if (res.status !== 0) {
     process.stderr.write(res.stdout + res.stderr);
     return fail(`provision-database.yml's source check refused the rendered task definition (exit ${res.status})`);
@@ -135,7 +157,7 @@ function checkProvisionSource(tdFile, td) {
   if (!(extra.length === 1 && extra[0].name === 'DATABASE_OWNER_URL' && extra[0].valueFrom === dbUrl)) {
     return fail(`provision source must add DATABASE_OWNER_URL from DATABASE_URL's secret; got ${out.extra_secrets}`);
   }
-  ok('provision-database.yml accepts the rendered task definition and passes the owner URL from the same secret');
+  ok('provision-database.yml accepts the rendered database task definition and passes the owner URL from the same secret');
 }
 
 /**
@@ -229,10 +251,12 @@ function checkWorkflowIam() {
 }
 
 /**
- * The revision the preflight checks is the revision that rolls. The step
- * publishes the ARN it checked; migrate derives from that ARN, exports it, and
- * deploy-api derives from it and refuses if the family moved. Structural, read
- * off the workflow itself, because a runtime check of deploy-api would need AWS.
+ * The revisions the preflight checks are the revisions that run. The API step
+ * publishes the ARN it checked; the database-task step compares against that
+ * revision and publishes its own; the migration derives from the database
+ * task's; migrate exports the API's, and deploy-api derives from it and refuses
+ * if the family moved. Structural, read off the workflow itself, because a
+ * runtime check of deploy-api would need AWS.
  */
 function checkRevisionPinning(pre) {
   const { wf } = pre;
@@ -244,13 +268,24 @@ function checkRevisionPinning(pre) {
   if (migrate.outputs?.api_td_arn !== '${{ steps.preflight.outputs.api_td_arn }}') {
     problems.push(`job "${pre.jobName}" does not export the checked ARN as outputs.api_td_arn`);
   }
+  const mPre = migrate.steps.find((st) => st.id === MIGRATE_PREFLIGHT_ID);
+  if (!mPre) problems.push(`no step with id ${MIGRATE_PREFLIGHT_ID} checks the database task`);
+  else {
+    if (mPre.if !== undefined || mPre['continue-on-error']) problems.push(`the ${MIGRATE_PREFLIGHT_ID} step is conditional or continue-on-error`);
+    if (mPre.env?.CHECKED_API_TD_ARN !== '${{ steps.preflight.outputs.api_td_arn }}') problems.push(`the ${MIGRATE_PREFLIGHT_ID} step does not compare against the checked API revision`);
+  }
   const mig = migrate.steps.find((st) => st.id === 'migrate-task');
   if (
-    mig?.env?.CHECKED_API_TD_ARN !== '${{ steps.preflight.outputs.api_td_arn }}' ||
-    !/SOURCE_TD_ARN="\$CHECKED_API_TD_ARN"/.test(mig?.run ?? '') ||
+    mig?.env?.CHECKED_MIGRATE_TD_ARN !== `\${{ steps.${MIGRATE_PREFLIGHT_ID}.outputs.migrate_td_arn }}` ||
+    !/SOURCE_TD_ARN="\$CHECKED_MIGRATE_TD_ARN"/.test(mig?.run ?? '') ||
+    !/CONTAINER_NAME="\$ECS_MIGRATE_CONTAINER_NAME"/.test(mig?.run ?? '') ||
     !/scripts\/ops\/ecs-one-off-task\.sh/.test(mig?.run ?? '')
   ) {
-    problems.push('the migration is not derived from the checked ARN (step id migrate-task, via scripts/ops/ecs-one-off-task.sh)');
+    problems.push('the migration is not derived from the checked database-task ARN (step id migrate-task, via scripts/ops/ecs-one-off-task.sh)');
+  }
+  const order = (id) => migrate.steps.findIndex((st) => st.id === id);
+  if (!(order('preflight') < order(MIGRATE_PREFLIGHT_ID) && order(MIGRATE_PREFLIGHT_ID) < order('migrate-task'))) {
+    problems.push(`the steps do not run preflight → ${MIGRATE_PREFLIGHT_ID} → migrate-task`);
   }
   const deploy = Object.entries(wf.jobs).find(([, j]) => (j.steps ?? []).some((st) => st.id === 'register-api-td'));
   if (!deploy) {
@@ -264,7 +299,59 @@ function checkRevisionPinning(pre) {
     if (!/"\$LATEST_API_TD_ARN" != "\$CHECKED_API_TD_ARN"/.test(dStep.run ?? '')) problems.push(`job "${dName}" does not refuse when the family moved after the check`);
   }
   if (problems.length) problems.forEach((pr) => fail(`revision pinning: ${pr}`));
-  else ok('the revision the preflight checked is the one migrate and deploy-api derive from (ARN pinned end to end)');
+  else ok('the revisions the preflight checked are the ones that run: the migration from the database task\'s, deploy-api from the API\'s (ARNs pinned end to end)');
+}
+
+/**
+ * The owner's credential is the database task's alone. The rendered pair must
+ * pass both steps, and each mutation below must be refused by the step that
+ * exists to refuse it, naming what it refused. A gate only seen to pass has not
+ * been tested, so the refusals run on every proof, not once for evidence.
+ */
+function checkDatabaseTask(pre, apiTd, migrateTd) {
+  if (!pre.migrate) return fail(`deploy-aws.yml has no step with id ${MIGRATE_PREFLIGHT_ID} in job "${pre.jobName}"`);
+  if (migrateTd.family !== pre.env.ECS_MIGRATE_TASK_FAMILY) {
+    fail(`rendered database task family "${migrateTd.family}" is not the pipeline's ECS_MIGRATE_TASK_FAMILY ("${pre.env.ECS_MIGRATE_TASK_FAMILY}")`);
+  }
+  const runMigrate = (api, mig) => runPreflight(pre.migrate, [api, mig], { CHECKED_API_TD_ARN: api.taskDefinitionArn });
+  const res = runMigrate(apiTd, migrateTd);
+  if (res.status !== 0) {
+    process.stderr.write(res.stdout + res.stderr);
+    fail(`the ${MIGRATE_PREFLIGHT_ID} step refused the rendered database task (exit ${res.status})`);
+  } else if (!res.githubOutput.includes(`migrate_td_arn=${migrateTd.taskDefinitionArn}\n`)) {
+    fail(`the ${MIGRATE_PREFLIGHT_ID} step accepted but did not publish migrate_td_arn=${migrateTd.taskDefinitionArn}`);
+  } else {
+    ok(`the ${MIGRATE_PREFLIGHT_ID} step accepted the rendered database task and published the revision it checked`);
+  }
+
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const withApi = (edit) => { const a = clone(apiTd); edit(a.containerDefinitions.find((c) => c.name === pre.env.ECS_API_CONTAINER_NAME), a); return a; };
+  const withMigrate = (edit) => { const m = clone(migrateTd); edit(m.containerDefinitions[0], m); return m; };
+  const ownerArn = (name) => migrateTd.containerDefinitions[0].secrets.find((s) => s.name === name)?.valueFrom;
+  const cases = [
+    ['API', 'an API task definition carrying DATABASE_URL', 'DATABASE_URL',
+      withApi((c) => c.secrets.push({ name: 'DATABASE_URL', valueFrom: ownerArn('DATABASE_URL') })), null],
+    ['API', 'an API task definition carrying APP_SERVICE_DB_PASSWORD', 'APP_SERVICE_DB_PASSWORD',
+      withApi((c) => c.secrets.push({ name: 'APP_SERVICE_DB_PASSWORD', valueFrom: ownerArn('APP_SERVICE_DB_PASSWORD') })), null],
+    ['API', 'an API task definition carrying DATABASE_URL_PROD as a plain value', 'DATABASE_URL_PROD',
+      withApi((c) => c.environment.push({ name: 'DATABASE_URL_PROD', value: 'postgresql://c2c_admin@db/x' })), null],
+    ['database', 'a database task without DATABASE_URL', 'DATABASE_URL',
+      apiTd, withMigrate((c) => { c.secrets = c.secrets.filter((s) => s.name !== 'DATABASE_URL'); })],
+    ['database', 'a database task whose environment differs (DB_AUDIT_REQUIRED=none)', 'DB_AUDIT_REQUIRED',
+      apiTd, withMigrate((c) => { c.environment.find((e) => e.name === 'DB_AUDIT_REQUIRED').value = 'none'; })],
+    ['database', 'a database task reading APP_DATABASE_URL from another secret', 'APP_DATABASE_URL',
+      apiTd, withMigrate((c) => { c.secrets.find((s) => s.name === 'APP_DATABASE_URL').valueFrom = ownerArn('DATABASE_URL'); })],
+    ['database', "a database task on the API's execution role", 'execution role',
+      apiTd, withMigrate((_, m) => { m.executionRoleArn = apiTd.executionRoleArn; })],
+    ['database', 'a database task with a second container', 'one container',
+      apiTd, withMigrate((c, m) => { m.containerDefinitions.push({ ...clone(c), name: 'sidecar' }); })],
+  ];
+  for (const [step, what, named, api, mig] of cases) {
+    const r = step === 'API' ? runPreflight(pre, api) : runMigrate(api, mig);
+    const said = `${r.stdout}${r.stderr}`;
+    if (r.status !== 0 && said.includes(named)) ok(`refused: ${what} (exit ${r.status}, names ${named})`);
+    else fail(`NOT refused as it must be: ${what} (exit ${r.status}${r.status !== 0 ? `, without naming ${named}` : ''})`);
+  }
 }
 
 function stringEnv(env) {
@@ -338,6 +425,7 @@ async function renderTaskDefinitions() {
   const tds = all.filter((r) => r.type === 'aws_ecs_task_definition');
   return Object.fromEntries(tds.map((r) => [r.name, {
     family: r.values.family,
+    executionRoleArn: r.values.execution_role_arn,
     containerDefinitions: JSON.parse(r.values.container_definitions),
   }]));
 }
@@ -408,7 +496,7 @@ async function main() {
   }
 
   // 3. The preflight itself.
-  const res = runPreflight(pre, tdFile);
+  const res = runPreflight(pre, td);
   process.stdout.write(res.stdout);
   process.stderr.write(res.stderr);
   if (res.status !== 0) fail(`deploy-aws.yml's preflight refused the task definition (exit ${res.status})`);
@@ -420,8 +508,13 @@ async function main() {
 
   if (tdJsonArg) return;
 
+  // 3b. The database task (MR-03 Stage 3, OPS-16): accepted as rendered, and
+  // each step refuses the definitions it exists to refuse.
+  const mtd = { ...rendered.migrate, taskDefinitionArn: `arn:aws:ecs:us-east-1:123456789012:task-definition/${rendered.migrate.family}:1` };
+  checkDatabaseTask(pre, td, mtd);
+
   checkRevisionPinning(pre);
-  checkProvisionSource(tdFile, td);
+  checkProvisionSource(mtd);
   checkWorkflowIam();
 
   // Where the preflight sits: it has to run before the production migration.

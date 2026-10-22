@@ -19,6 +19,10 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// The posture is checked against the environment each case sets, not a
+// developer's `.env`, which server/config/load-env-files would otherwise read.
+vi.mock('../../config/load-env-files', () => ({ ENV_FILES: [] }));
+
 const ORIGINAL = { ...process.env };
 const ECS = { ECS_CONTAINER_METADATA_URI_V4: 'http://169.254.170.2/v4/0123456789abcdef-1234' };
 
@@ -32,6 +36,11 @@ function bootWith(env: Record<string, string | undefined>) {
   });
   delete process.env.ECS_CONTAINER_METADATA_URI;
   if (!('ECS_CONTAINER_METADATA_URI_V4' in env)) delete process.env.ECS_CONTAINER_METADATA_URI_V4;
+  // Not inherited from the runner (CI's test job sets DATABASE_URL): on an ECS
+  // task the boot refuses an owner URL (env-hosted-owner-credential.test.ts).
+  for (const k of ['DATABASE_URL', 'DATABASE_URL_PROD', 'DATABASE_NEON_NEW_SECRET', 'NEON_DATABASE_URL', 'DATABASE_OWNER_URL', 'APP_SERVICE_DB_PASSWORD']) {
+    if (!(k in env)) delete process.env[k];
+  }
   for (const [k, v] of Object.entries(env)) if (v === undefined) delete process.env[k];
 }
 

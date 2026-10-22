@@ -93,6 +93,17 @@ override_resource {
   target = aws_kms_key.secrets
   values = { arn = "arn:aws:kms:us-east-1:123456789012:key/secrets", key_id = "secrets" }
 }
+# The two execution roles, by identity: under the shared mock ARN the API's role
+# and the one-off database task's are indistinguishable, and "the API cannot
+# read the owner's secrets" could never fail.
+override_resource {
+  target = module.ecs.aws_iam_role.ecs_execution
+  values = { arn = "arn:aws:iam::123456789012:role/c2c-production-ecs-execution" }
+}
+override_resource {
+  target = module.ecs.aws_iam_role.migrate_execution
+  values = { arn = "arn:aws:iam::123456789012:role/c2c-production-migrate-execution" }
+}
 
 variables {
   environment                     = "production"
@@ -297,22 +308,27 @@ run "renders_the_boot_contract" {
     error_message = "The ECS task role can reach the frontend bucket; only the deploy role may write the site."
   }
 
-  # The execution role must be able to read every secret a task references —
-  # the RDS-managed secret used to be outside its grant, so no task could start.
+  # Each execution role must be able to read every secret its task references —
+  # the RDS-managed secret used to be outside the grant, so no task could start.
   assert {
-    condition = length(setsubtract(
-      toset([for s in module.ecs.api_container.secrets : s.valueFrom]),
-      toset(flatten([jsondecode(module.ecs.execution_secrets_policy).Statement[0].Resource]))
-    )) == 0
-    error_message = "A task references a secret the ECS execution role cannot read; the task would fail before its container starts."
+    condition = alltrue([
+      for pair in [[module.ecs.api_container, module.ecs.execution_secrets_policy], [module.ecs.migrate_container, module.ecs.migrate_execution_secrets_policy]] :
+      length(setsubtract(
+        toset([for s in pair[0].secrets : s.valueFrom]),
+        toset(flatten([jsondecode(pair[1]).Statement[0].Resource]))
+      )) == 0
+    ])
+    error_message = "A task references a secret its execution role cannot read; the task would fail before its container starts."
   }
 
   # DATABASE_URL and APP_DATABASE_URL come from secrets Terraform composes, not
-  # from the RDS-managed credential (whose value is JSON, not a URL).
+  # from the RDS-managed credential (whose value is JSON, not a URL). The API
+  # reads the runtime role's; the one-off database task reads both.
   assert {
     condition = alltrue([
-      for pair in [["DATABASE_URL", "database_url"], ["APP_DATABASE_URL", "app_database_url"]] :
-      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == pair[0]]) == module.secrets.secret_arns[pair[1]]
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "APP_DATABASE_URL"]) == module.secrets.secret_arns["app_database_url"],
+      one([for s in module.ecs.migrate_container.secrets : s.valueFrom if s.name == "APP_DATABASE_URL"]) == module.secrets.secret_arns["app_database_url"],
+      one([for s in module.ecs.migrate_container.secrets : s.valueFrom if s.name == "DATABASE_URL"]) == module.secrets.secret_arns["database_url"],
     ])
     error_message = "DATABASE_URL / APP_DATABASE_URL must be the composed connection-string secrets."
   }
@@ -337,25 +353,25 @@ run "renders_the_boot_contract" {
     error_message = "The runtime role must not share the owner's password."
   }
 
-  # The migrate task is cloned from the API definition and re-aligns app_service
-  # from APP_SERVICE_DB_PASSWORD, so the API carries it — as a secret, from the
-  # generated password's own secret, and never as a plain variable.
+  # deploy-migrate re-aligns app_service from APP_SERVICE_DB_PASSWORD, so the
+  # one-off database task carries it — as a secret, from the generated
+  # password's own secret, and never as a plain variable anywhere.
   assert {
     condition = alltrue([
-      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "APP_SERVICE_DB_PASSWORD"]) == module.secrets.secret_arns["app_service_db_password"],
+      one([for s in module.ecs.migrate_container.secrets : s.valueFrom if s.name == "APP_SERVICE_DB_PASSWORD"]) == module.secrets.secret_arns["app_service_db_password"],
       alltrue([
-        for defs in [module.ecs.api_container] :
+        for defs in [module.ecs.api_container, module.ecs.migrate_container] :
         !contains([for e in defs.environment : e.name], "APP_SERVICE_DB_PASSWORD")
       ]),
     ])
-    error_message = "APP_SERVICE_DB_PASSWORD must be an API secret (for the migrate clone), never a plain variable."
+    error_message = "APP_SERVICE_DB_PASSWORD must be the database task's secret, never a plain variable."
   }
 
   # No secret value in a plain environment variable, where any caller of
   # ecs:DescribeTaskDefinition reads it. Substrings too: a URL embeds a password.
   assert {
     condition = nonsensitive(alltrue(flatten([
-      for defs in [module.ecs.api_container] : [
+      for defs in [module.ecs.api_container, module.ecs.migrate_container] : [
         for e in defs.environment : [
           # An unset optional key (openai_api_key, no tenant elected OpenAI) is "",
           # which every string contains; it is not a secret to look for.
@@ -676,8 +692,8 @@ run "staging_carries_every_name_the_deploy_preflight_requires" {
     error_message = "Staging runs the production posture: NODE_ENV=production and RLS_ENFORCE=on."
   }
   assert {
-    condition     = module.rds.master_user_secret_arn == null && output.api_task_boot_contract.secret_source["DATABASE_URL"] == module.secrets.secret_arns["database_url"]
-    error_message = "Staging's DATABASE_URL must be the composed URL secret, as production's is."
+    condition     = module.rds.master_user_secret_arn == null && one([for s in module.ecs.migrate_container.secrets : s.valueFrom if s.name == "DATABASE_URL"]) == module.secrets.secret_arns["database_url"]
+    error_message = "Staging's DATABASE_URL must be the composed URL secret, in the database task, as production's is."
   }
 }
 
@@ -709,7 +725,8 @@ run "provision_workflow_names_are_the_ones_terraform_creates" {
     condition = alltrue([
       for k, v in merge(output.deploy_targets, { ECS_PROVISION_TASK_FAMILY = "c2c-production-provision" }) :
       v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/provision-database.yml")))
-      if k != "FRONTEND_BUCKET" && k != "ECS_MIGRATE_TASK_FAMILY"
+      # Provisioning derives from the database task (MR-03 OPS-16), not the API's.
+      if !contains(["FRONTEND_BUCKET", "ECS_API_TASK_FAMILY", "ECS_API_CONTAINER_NAME"], k)
     ])
     error_message = "A name in provision-database.yml differs from what Terraform creates."
   }
@@ -719,6 +736,109 @@ run "provision_workflow_names_are_the_ones_terraform_creates" {
       contains(st.Action, "ecs:RunTask") && try(contains(st.Resource, "arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-provision:*"), false)
     ])
     error_message = "The deploy role cannot run the provision family."
+  }
+}
+
+# MR-03 Stage 3 (OPS-16; MR-05 DATA-03). The API task carried the database
+# owner's credential: DATABASE_URL in its boot secrets, APP_SERVICE_DB_PASSWORD
+# in its own, and an execution role that could read every secret in the stack.
+# That role owns every table and bypasses RLS. The API now boots as app_service
+# and creates no schema; the owner's secrets belong to the one-off database task
+# alone. Both runs read the rendered definitions and policies, and match the
+# owner's secrets by ARN as well as by name, so a rename does not get past them.
+run "the_api_task_holds_no_owner_credential" {
+  command = apply
+
+  assert {
+    condition = length(setintersection(
+      toset(concat([for s in module.ecs.api_container.secrets : s.name], [for e in module.ecs.api_container.environment : e.name])),
+      toset(["DATABASE_URL", "APP_SERVICE_DB_PASSWORD", "DATABASE_OWNER_URL"]),
+    )) == 0
+    error_message = "The API container carries an owner credential: ${join(", ", [for s in module.ecs.api_container.secrets : s.name if contains(["DATABASE_URL", "APP_SERVICE_DB_PASSWORD", "DATABASE_OWNER_URL"], s.name)])}"
+  }
+  assert {
+    condition = length(setintersection(
+      toset([for s in module.ecs.api_container.secrets : s.valueFrom]),
+      toset([module.secrets.secret_arns["database_url"], module.secrets.secret_arns["app_service_db_password"]]),
+    )) == 0
+    error_message = "An API secret reads the owner's URL or the app_service password, under whatever name."
+  }
+  assert {
+    condition = length(setintersection(
+      toset(flatten([for st in jsondecode(module.ecs.execution_secrets_policy).Statement : st.Resource if contains(flatten([st.Action]), "secretsmanager:GetSecretValue")])),
+      toset([module.secrets.secret_arns["database_url"], module.secrets.secret_arns["app_service_db_password"], "*"]),
+    )) == 0
+    error_message = "The API's execution role can read the owner's secrets: ${module.ecs.execution_secrets_policy}"
+  }
+}
+
+run "the_one_off_database_task_alone_holds_it" {
+  command = apply
+
+  # Both owner secrets, from their own secrets, in the one container.
+  assert {
+    condition = alltrue([
+      for pair in [["DATABASE_URL", "database_url"], ["APP_SERVICE_DB_PASSWORD", "app_service_db_password"]] :
+      one([for s in module.ecs.migrate_container.secrets : s.valueFrom if s.name == pair[0]]) == module.secrets.secret_arns[pair[1]]
+    ])
+    error_message = "The database task must carry DATABASE_URL and APP_SERVICE_DB_PASSWORD from the database_url and app_service_db_password secrets."
+  }
+  # Its own execution role, which reads exactly what the container references.
+  # By the role each task definition is REGISTERED with, not the role resources:
+  # a database task put on the API's role must fail here.
+  assert {
+    condition = (
+      module.ecs.task_execution_role_arns.migrate == module.ecs.migrate_execution_role_arn &&
+      module.ecs.task_execution_role_arns.api == module.ecs.execution_role_arn &&
+      module.ecs.task_execution_role_arns.migrate != module.ecs.task_execution_role_arns.api &&
+      toset(flatten([jsondecode(module.ecs.migrate_execution_secrets_policy).Statement[0].Resource])) == toset([for s in module.ecs.migrate_container.secrets : s.valueFrom])
+    )
+    error_message = "The database task must be registered with its own execution role, granted exactly the secrets its container references: ${jsonencode(module.ecs.task_execution_role_arns)}"
+  }
+  # The API's environment, value for value: deploy-migrate checks the readiness
+  # contract under the posture the API boots with. The deploy preflight refuses
+  # a revision that differs.
+  assert {
+    condition     = jsonencode(module.ecs.migrate_container.environment) == jsonencode(module.ecs.api_container.environment)
+    error_message = "The database task's environment must be the API container's."
+  }
+  # Everything the API boots with, so the readiness contract can be verified as
+  # the runtime role; the setup token is the API's alone.
+  assert {
+    condition = (
+      length(setsubtract(toset([for s in module.ecs.api_container.secrets : s.name if s.name != "SETUP_TOKEN"]), toset([for s in module.ecs.migrate_container.secrets : s.name]))) == 0 &&
+      !contains([for s in module.ecs.migrate_container.secrets : s.name], "SETUP_TOKEN")
+    )
+    error_message = "The database task must carry every API secret but SETUP_TOKEN."
+  }
+  # One container that serves nothing: no scanner, port or health check, and a
+  # command that migrates. Started as it is, it never boots the server.
+  assert {
+    condition = (
+      length(module.ecs.migrate_task_containers) == 1 &&
+      try(module.ecs.migrate_container.portMappings, []) == [] &&
+      try(module.ecs.migrate_container.healthCheck, null) == null &&
+      try(module.ecs.migrate_container.dependsOn, null) == null &&
+      module.ecs.migrate_container.command == ["npm", "run", "db:migrate:deploy"] &&
+      module.ecs.migrate_container.image == module.ecs.api_container.image
+    )
+    error_message = "The database task is one container of the API image that runs db:migrate:deploy and serves nothing."
+  }
+  # The pipeline can register and run it, and pass its execution role, and the
+  # family is the one deploy-aws.yml names (production_names_… above).
+  assert {
+    condition = (
+      module.ecs.migrate_task_family == output.deploy_targets.ECS_MIGRATE_TASK_FAMILY &&
+      anytrue([
+        for st in jsondecode(output.github_deploy_policies.deploy).Statement :
+        contains(flatten([st.Action]), "iam:PassRole") && contains(flatten([st.Resource]), module.ecs.migrate_execution_role_arn)
+      ]) &&
+      anytrue([
+        for st in jsondecode(output.github_deploy_policies.deploy).Statement :
+        contains(flatten([st.Action]), "ecs:RunTask") && contains(flatten([st.Resource]), "arn:aws:ecs:us-east-1:123456789012:task-definition/${module.ecs.migrate_task_family}:*")
+      ])
+    )
+    error_message = "The deploy role must be able to run the database task's family and pass its execution role."
   }
 }
 
@@ -1571,7 +1691,7 @@ run "database_level_audit_is_loaded_and_required" {
   }
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container] :
+      for defs in [module.ecs.api_container, module.ecs.migrate_container] :
       one([for e in defs.environment : e.value if e.name == "DB_AUDIT_REQUIRED"]) == "pgaudit"
     ])
     error_message = "Every task must carry DB_AUDIT_REQUIRED=pgaudit, so the deploy refuses a database that is not recording."
@@ -1601,13 +1721,15 @@ run "the_database_tier_is_under_customer_managed_keys" {
     error_message = "Every secret must be on a customer-managed key, not aws/secretsmanager."
   }
   assert {
-    condition = anytrue([
-      for st in jsondecode(module.ecs.execution_secrets_policy).Statement :
-      contains(flatten([st.Action]), "kms:Decrypt")
-      && contains(flatten([st.Resource]), one(distinct(values(module.secrets.kms_key_ids))))
-      && try(st.Condition.StringEquals["kms:ViaService"], "") == "secretsmanager.us-east-1.amazonaws.com"
+    condition = alltrue([
+      for policy in [module.ecs.execution_secrets_policy, module.ecs.migrate_execution_secrets_policy] : anytrue([
+        for st in jsondecode(policy).Statement :
+        contains(flatten([st.Action]), "kms:Decrypt")
+        && contains(flatten([st.Resource]), one(distinct(values(module.secrets.kms_key_ids))))
+        && try(st.Condition.StringEquals["kms:ViaService"], "") == "secretsmanager.us-east-1.amazonaws.com"
+      ])
     ])
-    error_message = "The execution role must be able to decrypt the secrets' key, through Secrets Manager only; otherwise no task can start."
+    error_message = "Each execution role must be able to decrypt the secrets' key, through Secrets Manager only; otherwise no task can start."
   }
 }
 
@@ -1626,11 +1748,13 @@ run "each_key_is_used_where_it_belongs_and_the_passwords_rotate_on_the_marker" {
     error_message = "Every secret must be on the secrets key."
   }
   assert {
-    condition = anytrue([
-      for st in jsondecode(module.ecs.execution_secrets_policy).Statement :
-      contains(flatten([st.Action]), "kms:Decrypt") && flatten([st.Resource]) == [aws_kms_key.secrets.arn]
+    condition = alltrue([
+      for policy in [module.ecs.execution_secrets_policy, module.ecs.migrate_execution_secrets_policy] : anytrue([
+        for st in jsondecode(policy).Statement :
+        contains(flatten([st.Action]), "kms:Decrypt") && flatten([st.Resource]) == [aws_kms_key.secrets.arn]
+      ])
     ])
-    error_message = "The execution role decrypts with the secrets key, and only that key."
+    error_message = "Each execution role decrypts with the secrets key, and only that key."
   }
   assert {
     condition     = aws_kms_key.database.enable_key_rotation && aws_kms_key.secrets.enable_key_rotation
