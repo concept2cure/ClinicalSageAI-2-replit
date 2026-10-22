@@ -50,6 +50,7 @@ import { captureShellProjectGuard, useShellProject, type ShellProject } from '..
 import { useSubmissionReadSession } from './submissionScopedRead';
 import { PackageDtdValidation, RegionalPackageFact, type PackageDtdStatus } from './EctdCompileDtdEvidence';
 import { EctdModuleReadiness, isStatusView, statusReadinessWords, type StatusView } from './EctdModuleReadiness';
+import { EctdFiledState } from './EctdFiledState';
 
 interface ValidationResult {
   rule: string;
@@ -1573,6 +1574,9 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
           )}
         </div>
       </div>
+
+      {/* ── What the agency holds now, across every filed sequence (gap 6.1) ── */}
+      <EctdFiledState identPath={identPath} seqQuery={seqQuery} isScopeCurrent={current} />
 
       {/* ── Orchestrator pipeline ─────────────────────────────────────────
           The 11-step run (M2/M3 composition, CSR tabulation, assembly,

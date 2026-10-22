@@ -1,0 +1,8 @@
+# RED at b7c70e012: EctdCompile shows no view of what is on file; the card does not exist (2026-10-22T16:26:17Z)
+ × client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows what the agency holds now, across the filed sequences (gap 6.1) 5034ms
+   → Unable to find role="table" and name "Module 3: 1 document on file"
+Error: Failed to resolve import "../surfaces/EctdFiledState" from "client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx". Does the file exist?
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find role="table" and name "Module 3: 1 document on file"
+ Test Files  2 failed (2)
+      Tests  1 failed | 28 passed (29)
