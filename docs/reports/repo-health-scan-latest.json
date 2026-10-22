@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T00:34:41.588Z",
+  "generatedAt": "2026-10-22T00:47:35.766Z",
   "git": {
-    "sha": "58dcd57fef7f365c36f59644148417f5787ec34b",
+    "sha": "1c69f3a34a4a1f21a5b68232230bac4c82adf955",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2906,12 +2906,12 @@
         "lines": 1602
       },
       {
-        "file": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
-        "lines": 1581
+        "file": "server/routes/mdx-qms.ts",
+        "lines": 1583
       },
       {
-        "file": "server/routes/mdx-qms.ts",
-        "lines": 1562
+        "file": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+        "lines": 1581
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",

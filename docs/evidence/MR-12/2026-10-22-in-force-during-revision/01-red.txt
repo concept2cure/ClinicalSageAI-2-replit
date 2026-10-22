@@ -1,0 +1,24 @@
+# RED at 9e77eca23: the QMS readers as on trunk, the new real-Postgres test kept (2026-10-22T00:12:06Z)
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible 48ms
+   → {"error":"You do not have permission to read this authored document.","details":{"code":"QMS_DOCUMENT_VIEW_DENIED"}}: expected 403 to be 200 // Object.is equality
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt 25ms
+   → expected undefined to match object { document_version: '1.0', …(2) }
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it 29ms
+   → {"error":"You do not have permission to read this authored document.","details":{"code":"QMS_DOCUMENT_VIEW_DENIED"}}: expected 403 to be 201 // Object.is equality
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness 39ms
+   → expected { id: 29, organization_id: 423, …(18) } to match object { version: '2.0', …(2) }
+ × tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count 53ms
+   → {"error":"You need approval permission on this authored document before applying its Quality signature. Nothing was signed.","details":{"code":"QMS_DOCUMENT_PERMISSION_DENIED"}}: expected 403 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"error":"You do not have permission to read this authored document.","details":{"code":"QMS_DOCUMENT_VIEW_DENIED"}}: expected 403 to be 200 // Object.is equality
+AssertionError: expected undefined to match object { document_version: '1.0', …(2) }
+AssertionError: {"error":"You do not have permission to read this authored document.","details":{"code":"QMS_DOCUMENT_VIEW_DENIED"}}: expected 403 to be 201 // Object.is equality
+AssertionError: expected { id: 29, organization_id: 423, …(18) } to match object { version: '2.0', …(2) }
+AssertionError: {"error":"You need approval permission on this authored document before applying its Quality signature. Nothing was signed.","details":{"code":"QMS_DOCUMENT_PERMISSION_DENIED"}}: expected 403 to be 200 // Object.is equality
+      Tests  5 failed (5)
+
+# RED (client) at 9e77eca23: the register as on trunk, SopRegisterInForce.test.tsx kept
+ × client/src/concept2cure/quality/__tests__/SopRegisterInForce.test.tsx > a controlled document under revision > shows the version in force beside its draft, dated by that version 86ms
+   → Unable to find an element by: [data-testid="qms-in-force"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed (1)

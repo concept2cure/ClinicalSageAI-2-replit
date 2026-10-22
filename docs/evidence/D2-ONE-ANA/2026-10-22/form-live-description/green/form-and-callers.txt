@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is what is sent, never a name typed before the account was chosen 5106ms
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > becomes a free field again when "no account" is chosen 5112ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 32 passed (33)
+      Tests  2 failed | 523 passed (525)

@@ -57,6 +57,10 @@ const CALLED = [
   '/api/ind-forms/1571/pdf',
   '/api/ind-forms/1571/artifact',
   '/api/ind-forms/1571/official-upload',
+  // client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx (the applicant's identity on the forms,
+  // added 2026-10-21 in ccd509c06; it shipped unclaimed, so production refused it 403 until 2026-10-22)
+  '/api/ind-master-data/sponsors', //               the sponsor list (GET) and a new sponsor (POST)
+  '/api/ind-master-data/sponsors/7', //             a sponsor's edit (PATCH)
 ];
 
 /** What HaqManager.tsx called before its store was retired (2026-10-18). Nothing claims them now. */
@@ -89,6 +93,18 @@ describe('P-32: the IND screen is served', () => {
   it.each(CALLED)('%s, called by a launch screen, is in launch scope', (path) => {
     expect(verdict(path)).toBe('launch');
   });
+});
+
+describe('the IND master data: only the sponsor records the identity screen edits', () => {
+  /* /api/ind-master-data also mounts US agents and investigators. No launch
+     screen calls them, so claiming the bare prefix would put them in the
+     release unread. */
+  it.each(['/api/ind-master-data/agents', '/api/ind-master-data/agents/7', '/api/ind-master-data/investigators', '/api/ind-master-data/investigators/7'])(
+    '%s, which no launch screen calls, is not in launch scope',
+    (path) => {
+      expect(verdict(path)).not.toBe('launch');
+    },
+  );
 });
 
 describe('P-32: agency questions are answered on the inbox, with approval a signed act (2026-10-18)', () => {
