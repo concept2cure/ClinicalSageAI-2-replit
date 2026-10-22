@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T02:08:03.438Z",
+  "generatedAt": "2026-10-22T05:17:24.889Z",
   "git": {
-    "sha": "044dc55d62b0356d438060a2cdfeb87c6a7503ff",
+    "sha": "86a92f6061c99830bc9be999df255365dc91eb2d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2245,7 +2245,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1160670
+        "bytes": 1160755
       },
       {
         "file": "shared/schema.ts",
@@ -2475,7 +2475,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22111
+        "lines": 22112
       },
       {
         "file": "shared/schema.ts",
@@ -2694,6 +2694,10 @@
         "lines": 2137
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2134
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "lines": 2124
       },
@@ -2704,10 +2708,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 2115
-      },
-      {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 2101
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2778,12 +2778,12 @@
         "lines": 1908
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1898
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1904
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1892
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1898
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
@@ -2806,12 +2806,12 @@
         "lines": 1861
       },
       {
-        "file": "server/routes/c2c/ai-editing.ts",
+        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1858
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
-        "lines": 1855
+        "file": "server/routes/c2c/ai-editing.ts",
+        "lines": 1858
       },
       {
         "file": "server/routes/ivdr-routes.ts",
