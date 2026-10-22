@@ -473,6 +473,42 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
   }
 });
 
+type GovernedClientTrack = 'biotech' | 'device' | 'diagnostics';
+const GOVERNED_CLIENT_TRACKS: readonly GovernedClientTrack[] = ['biotech', 'device', 'diagnostics'];
+
+/**
+ * The track an organization's industry profile records, or null when it records
+ * none or names more than one (a device-and-diagnostics or combination maker).
+ */
+function trackFromIndustryProfile(primary: unknown, specialization: unknown): GovernedClientTrack | null {
+  if (primary === 'biotech_pharma') return 'biotech';
+  if (primary !== 'medical_device_diagnostics') return null;
+  if (specialization === 'medical_device' || specialization === 'samd') return 'device';
+  if (specialization === 'ivd_diagnostics' || specialization === 'companion_diagnostic') return 'diagnostics';
+  return null;
+}
+
+/**
+ * The governed client track of an upload: the one it states, else the one the
+ * organization's industry profile (organization_industry_profiles) records,
+ * else not stated. 2026-10-22: it was 'biotech' unless the body said otherwise,
+ * so a device or diagnostics organization's uploads were governed as biotech.
+ */
+async function recordedClientTrack(
+  stated: unknown,
+  organizationId: number,
+): Promise<{ track: GovernedClientTrack; source: 'upload' | 'organization' } | { track: null; source: 'not_stated' }> {
+  if (GOVERNED_CLIENT_TRACKS.includes(stated as GovernedClientTrack)) {
+    return { track: stated as GovernedClientTrack, source: 'upload' };
+  }
+  const { rows } = await pool.query(
+    `SELECT primary_industry, mdx_specialization FROM organization_industry_profiles WHERE organization_id = $1 LIMIT 1`,
+    [organizationId],
+  );
+  const track = rows[0] ? trackFromIndustryProfile(rows[0].primary_industry, rows[0].mdx_specialization) : null;
+  return track ? { track, source: 'organization' } : { track: null, source: 'not_stated' };
+}
+
 /**
  * POST /api/concept2cure/documents/upload
  * Upload a document and attach to project knowledge.
@@ -573,7 +609,8 @@ router.post(
       const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
       const contentForArtifact = extractedText;
       const contentHash = calculateContentHash(contentForArtifact);
-      const uploadGovernedResolution = resolveGovernedContext({
+      const clientTrackRecord = await recordedClientTrack(req.body?.clientTrack, organizationId);
+      const evaluateUploadContract = (clientTrack: GovernedClientTrack) => resolveGovernedContext({
         req,
         projectId: numericId,
         artifactId: null,
@@ -584,12 +621,7 @@ router.post(
         // provenance remains explicit in generationMode, sourceRefs and the
         // artifact's uploadSource; a disallowed origin blocked every upload.
         originSurface: 'api_route',
-        clientTrack:
-          req.body?.clientTrack === 'device'
-            ? 'device'
-            : req.body?.clientTrack === 'diagnostics'
-            ? 'diagnostics'
-            : 'biotech',
+        clientTrack,
         submissionProgram: 'general_ri',
         persona: 'regulatory',
         regulatorScope: 'fda',
@@ -609,6 +641,27 @@ router.post(
         exportAllowed: false,
         eventType: 'artifact.created',
       });
+      /* The contract needs a track to pick its rule pack. With none recorded it
+         is evaluated under every track, and the upload goes ahead only when the
+         outcome is the same under each; the harness then records no track. */
+      let uploadGovernedResolution: ReturnType<typeof evaluateUploadContract>;
+      if (clientTrackRecord.track) {
+        uploadGovernedResolution = evaluateUploadContract(clientTrackRecord.track);
+      } else {
+        const outcomes = GOVERNED_CLIENT_TRACKS.map(evaluateUploadContract);
+        const outcomeOf = (r: (typeof outcomes)[number]) =>
+          JSON.stringify([r.validation.valid, r.contract.exportEligibility.gateChecks, r.contract.exportEligibility.blockingReasons, r.contract.exportEligibility.readinessOutcome]);
+        if (new Set(outcomes.map(outcomeOf)).size > 1) {
+          return sendError(
+            res,
+            422,
+            "The governed checks for this upload depend on the client track, which neither the upload (clientTrack: 'biotech', 'device' or 'diagnostics') nor the organization's industry profile records.",
+            undefined,
+            'CLIENT_TRACK_NOT_STATED'
+          );
+        }
+        uploadGovernedResolution = outcomes[0];
+      }
       if (!uploadGovernedResolution.validation.valid) {
         return sendError(
           res,
@@ -646,7 +699,8 @@ router.post(
             knowledgeDocumentId: documentId,
             dossierClassification,
             harness: {
-              clientTrack: uploadGovernedResolution.contract.clientTrack,
+              clientTrack: clientTrackRecord.track,
+              clientTrackSource: clientTrackRecord.source,
               submissionProgram: uploadGovernedResolution.contract.submissionProgram,
               persona: uploadGovernedResolution.contract.persona,
               regulatorScope: uploadGovernedResolution.contract.regulatorScope,

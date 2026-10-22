@@ -362,6 +362,28 @@ async function spineForRequest(
   return { spine, named: true };
 }
 
+/** The type a compile of this sequence is recorded as: the sequence's own, in
+ *  the history's words ('initial' for an original); null when it records none.
+ *  The history took the screen's selector, so amendment 0001 was recorded as
+ *  initial (WO-9 §20, 2026-10-22, W5/D7). */
+async function recordedCompilationType(sequenceId: number, orgId: number): Promise<string | null> {
+  const r = await pool.query(
+    `SELECT type FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [sequenceId, orgId],
+  );
+  const type = String(r.rows[0]?.type ?? '').trim().toLowerCase();
+  if (!type) return null;
+  return type === 'original' ? 'initial' : type;
+}
+
+/** The sequence a compile would build, as the status reports it: its recorded
+ *  region and type; null when the program has none. */
+async function statusSequence(spine: SubmissionSpine | null | undefined, orgId: number) {
+  if (!spine?.sequence) return null;
+  const { id, sequenceNumber, region, leafCount } = spine.sequence;
+  return { id, sequenceNumber, region, leafCount, type: await recordedCompilationType(id, orgId) };
+}
+
 /** A named sequence with nothing placed in it is refused: the program's section
  *  store is not that sequence, and compiling or validating it would answer for
  *  something else. True when a response was sent. */
@@ -689,12 +711,25 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
           },
         });
       }
+      // The recorded type decides the record; a contradiction is refused, as a region is.
+      const recordedType = await recordedCompilationType(spine.sequence.id, orgId);
+      const statedType = req.body?.submissionType == null ? '' : String(req.body.submissionType).trim().toLowerCase();
+      if (recordedType && statedType && statedType !== recordedType) {
+        return res.status(409).json({
+          error: {
+            code: 'SUBMISSION_TYPE_MISMATCH',
+            message:
+              `Sequence ${spine.sequence.sequenceNumber} is recorded as ${recordedType}; it cannot be compiled as ` +
+              `"${req.body.submissionType}". The sequence's recorded type decides what the compile is recorded as.`,
+          },
+        });
+      }
       return await compileFromSpine(req, res, {
         orgId,
         anchor,
         ident,
         spine,
-        submissionType: String(submissionType),
+        submissionType: recordedType ?? String(submissionType),
         moduleFilter,
         required,
         priorState: req.body?.rehearsal === true ? 'rehearsal' : 'filed',
@@ -1489,10 +1524,8 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       /** 'placed' — counted from documents placed in the sequence; 'approved' —
        *  from the section store's approved/locked/final statuses. */
       readinessBasis: placedLeaves ? 'placed' : 'approved',
-      /** The sequence a compile would build, with its recorded region. */
-      sequence: spine?.sequence
-        ? { id: spine.sequence.id, sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
-        : null,
+      /** The sequence a compile would build: its recorded region and type. */
+      sequence: await statusSequence(spine, orgId),
       requiredSectionSource: required.provenance,
       totalSections: sections.length,
       totalRequired,

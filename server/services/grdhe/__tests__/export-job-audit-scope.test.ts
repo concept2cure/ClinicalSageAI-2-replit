@@ -35,6 +35,8 @@ vi.mock('../../../db', () => {
 import { grdheService, ExportJobNotFoundError } from '../grdheService';
 
 const JOB = '11111111-2222-4333-8444-555555555555';
+// 2026-10-22: the by-id writers take the signed-in tenant as well.
+const TENANT = '3f2a8c1e-7b4d-4e9a-9c2f-1a2b3c4d5e6f';
 // 2026-10-15: the writers take the authenticated actor (they recorded 'system'
 // when called without one) and a completion takes the returned output, not a
 // path (they recorded '/exports/...', a file nothing wrote).
@@ -50,7 +52,7 @@ beforeEach(() => {
 
 describe('an export job audit row is written only for a job this session updated (L203)', () => {
   it('a status change to a job the session cannot see writes no audit row, and says not found', async () => {
-    await expect(grdheService.updateExportJobStatus(JOB, 'cancelled', { errorMessage: 'x' }, ACTOR)).rejects.toBeInstanceOf(
+    await expect(grdheService.updateExportJobStatus(TENANT, JOB, 'cancelled', { errorMessage: 'x' }, ACTOR)).rejects.toBeInstanceOf(
       ExportJobNotFoundError
     );
     expect(auditInserts(), "no audit row may be filed against a job the session did not update").toEqual([]);
@@ -58,20 +60,20 @@ describe('an export job audit row is written only for a job this session updated
 
   it('completing a job the session cannot see writes no audit row, and says not found', async () => {
     await expect(
-      grdheService.completeExportJob(JOB, OUTPUT, ACTOR)
+      grdheService.completeExportJob(TENANT, JOB, OUTPUT, ACTOR)
     ).rejects.toBeInstanceOf(ExportJobNotFoundError);
     expect(auditInserts()).toEqual([]);
   });
 
   it("the session's own job still gets its status change and its audit row", async () => {
     state.updated = [{ id: JOB }];
-    await grdheService.updateExportJobStatus(JOB, 'cancelled', { errorMessage: 'x' }, ACTOR);
+    await grdheService.updateExportJobStatus(TENANT, JOB, 'cancelled', { errorMessage: 'x' }, ACTOR);
     expect(auditInserts()).toHaveLength(1);
   });
 
   it("the session's own job is still completed with its audit row", async () => {
     state.updated = [{ id: JOB }];
-    await grdheService.completeExportJob(JOB, OUTPUT, ACTOR);
+    await grdheService.completeExportJob(TENANT, JOB, OUTPUT, ACTOR);
     expect(auditInserts()).toHaveLength(1);
   });
 });

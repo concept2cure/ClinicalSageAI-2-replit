@@ -49,10 +49,19 @@ export interface TmfCompletenessSummary {
   zonesComplete: number;
   totalRequired: number;
   totalMissing: number;
+  /** Filed, but without a verified document. Included in totalMissing. */
+  totalUnverified: number;
 }
 
 export interface TmfCompletenessResult {
-  ready: boolean;
+  /**
+   * Mirrors server tmf-completeness.ts. null: every remaining gap is filed
+   * against an off-platform reference the server cannot check, so readiness is
+   * not determined. (2026-10-15: typed boolean, and null rendered as NOT ready.)
+   */
+  ready: boolean | null;
+  /** What "filed" rests on: documents checked, or codes taken as listed. */
+  basis: 'verified_documents' | 'asserted_codes';
   scope: string;
   zones: TmfCompletenessZone[];
   summary: TmfCompletenessSummary;
@@ -164,6 +173,8 @@ export function assessTmfCompleteness(input?: TmfCompletenessInput): TmfComplete
   const totalMissing = zones.reduce((n, z) => n + z.missing.length, 0);
   return {
     ready: zones.every((z) => z.complete),
+    // The codes are taken as given, as the server's stateless check does.
+    basis: 'asserted_codes',
     scope,
     zones,
     summary: {
@@ -171,6 +182,7 @@ export function assessTmfCompleteness(input?: TmfCompletenessInput): TmfComplete
       zonesComplete: zones.filter((z) => z.complete).length,
       totalRequired,
       totalMissing,
+      totalUnverified: 0,
     },
   };
 }

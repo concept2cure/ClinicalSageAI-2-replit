@@ -139,7 +139,13 @@ export class FHIRR4Connector implements DataConnector {
   }
 
   async search(query: ConnectorQuery): Promise<ConnectorResult[]> {
-    if (!this.baseUrl) return [];
+    // 2026-10-22: an unconfigured connector answered [], and each resource type
+    // whose read failed (HTTP error, network failure, a body that is not a
+    // Bundle) became [], so a failed read looked like "no matches". The EU
+    // connectors throw on a failed search; so does this one, naming each type.
+    if (!this.baseUrl) {
+      throw new Error('FHIR R4 connector is not configured (no server base URL); no search was run.');
+    }
 
     const limit = query.limit || 20;
     const results: ConnectorResult[] = [];
@@ -147,7 +153,7 @@ export class FHIRR4Connector implements DataConnector {
     // Determine which resource types to search based on query parameters
     const resourceTypes = this.resolveResourceTypes(query);
 
-    const searchPromises = resourceTypes.map(async (resourceType) => {
+    const reads = await Promise.all(resourceTypes.map(async (resourceType) => {
       try {
         const params = this.buildSearchParams(resourceType, query, limit);
         const headers = await this.buildHeaders();
@@ -157,22 +163,26 @@ export class FHIRR4Connector implements DataConnector {
           headers: { ...headers, Accept: 'application/fhir+json' },
         });
 
-        if (!res.ok) return [];
+        if (!res.ok) return { resourceType, failure: `HTTP ${res.status}` };
 
-        const bundle: FHIRBundle = await res.json();
-        return (bundle.entry || []).map((entry, i) =>
-          this.mapToConnectorResult(entry.resource, resourceType, i)
-        );
-      } catch {
-        // Graceful degradation: if one resource type fails, continue with others
-        return [];
+        const bundle = (await res.json()) as FHIRBundle | null;
+        if (bundle?.resourceType !== 'Bundle' || (bundle.entry !== undefined && !Array.isArray(bundle.entry))) {
+          return { resourceType, failure: 'unexpected shape (not a FHIR Bundle)' };
+        }
+        return {
+          resourceType,
+          results: (bundle.entry || []).map((entry, i) => this.mapToConnectorResult(entry.resource, resourceType, i)),
+        };
+      } catch (err) {
+        return { resourceType, failure: err instanceof Error ? err.message : String(err) };
       }
-    });
+    }));
 
-    const allResults = await Promise.all(searchPromises);
-    for (const batch of allResults) {
-      results.push(...batch);
+    const failed = reads.filter((r) => r.failure);
+    if (failed.length > 0) {
+      throw new Error(`FHIR R4 search failed for ${failed.map((r) => `${r.resourceType} (${r.failure})`).join(', ')}`);
     }
+    for (const read of reads) results.push(...(read.results ?? []));
 
     // Interleave the resource types by each one's own result order (sourceRank is
     // a position, not a relevance), and cap at limit

@@ -432,7 +432,10 @@ describe('Health Canada (CA) package validator', () => {
         },
       ]
     );
-    expect(findings.filter(f => f.region === 'CA')).toHaveLength(0);
+    // 2026-10-15: HC-REP-002 (bilingual labelling) is catalogued and not
+    // evaluated; it is now named as not assessed rather than implied clean.
+    expect(findings.filter(f => f.region === 'CA' && f.ruleId !== 'REGION_RULES_NOT_ASSESSED')).toHaveLength(0);
+    expect(findings.find(f => f.ruleId === 'REGION_RULES_NOT_ASSESSED')?.message).toContain('HC-REP-002');
   });
 
   it('rejects a valid HC prefix followed by trailing garbage (end-anchored)', () => {

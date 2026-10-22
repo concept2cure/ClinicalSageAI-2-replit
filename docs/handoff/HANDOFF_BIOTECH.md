@@ -225,8 +225,14 @@ on revert:
   routes only checked the tenant, so a 7-day fatal draft could be marked
   filed with a sequence whose content came from another event. An annual-
   report draft with open 312.33 sections is refused (409 DRAFT_INCOMPLETE)
-  unless the caller sends `acknowledgeGaps: true`, and the filing response then
-  records `filedWithOpenGaps`.
+  unless the caller sends `acknowledgeGaps: true` or names each open section in
+  `acknowledgedGaps`, and the filing response then records `filedWithOpenGaps`.
+  *(2026-10-15)* Without a draft, every open section must be named by its
+  section key in `acknowledgedGaps`, else 409 `GAPS_NOT_ACKNOWLEDGED` with
+  `openGaps` and nothing is filed. A 201 carries `openSectionsFiled` (the keys
+  filed open) and `gapAcknowledgement` (those keys and the outcome of the
+  `ANNUAL_REPORT_OPEN_SECTIONS_ACKNOWLEDGED` audit row naming the actor and the
+  sequence). Report fields sent beside a `draftId` are refused 400.
 - The dashboard, cockpit and per-sequence dispatch gate count overdue safety
   reports from the register (`listOverdueSafetyReports`), never from the
   request body. Omitting the field, or sending 0, used to read as "no critical

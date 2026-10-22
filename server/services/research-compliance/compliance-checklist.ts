@@ -38,7 +38,11 @@ export interface ActivityProfile {
   involvesRecombinantDNA: boolean | null;
   involvesHumanGeneTransfer: boolean | null;
   fundingSource: FundingSource | null;
-  /** No rule in this RULE_VERSION reads region: the rules cite U.S. federal requirements. */
+  /**
+   * The rules in this RULE_VERSION cite U.S. federal requirements only. A stated
+   * non-U.S. region is therefore resolved as not determined (U.S. rules only);
+   * an unstated one is read under the U.S. rules, as before.
+   */
   region: Region | null;
 }
 
@@ -203,7 +207,33 @@ export function resolveComplianceChecklist(p: ActivityProfile): ComplianceCheckl
     steps.push({ order: order++, step: 'File FCOI / research-security disclosures for all investigators prior to expenditure.', basis: '42 CFR 50 Subpart F; NSPM-33' });
   }
 
-  return { ruleVersion: RULE_VERSION, requiredApprovals, requiredTraining, undeterminedApprovals, undeterminedTraining, unstatedFacts, determined, steps };
+  const checklist = { ruleVersion: RULE_VERSION, requiredApprovals, requiredTraining, undeterminedApprovals, undeterminedTraining, unstatedFacts, determined, steps };
+  return p.region === 'eu' || p.region === 'other' ? outsideUsRules(checklist, p.region) : checklist;
+}
+
+/**
+ * A stated non-U.S. region. 2026-10-15: no rule read region, so an EU study was
+ * told it required IRB review under 45 CFR 46, NIH training and PHS FCOI
+ * disclosure, and the checklist read determined. What the U.S. rules would
+ * require (or leave open) is listed as not determined, without the U.S.
+ * citations; rules for other regions are not written in this version.
+ */
+function outsideUsRules(c: ComplianceChecklist, region: Region): ComplianceChecklist {
+  const reason = `Not determined (U.S. rules only): region '${region}' is stated, and rule version ${RULE_VERSION} holds U.S. federal requirements only.`;
+  const citation = `No rule for region '${region}' in rule version ${RULE_VERSION}`;
+  const committees = Array.from(new Set([...c.requiredApprovals, ...c.undeterminedApprovals].map((a) => a.committee)));
+  const trainings = [...c.requiredTraining, ...c.undeterminedTraining].filter(
+    (t, i, all) => all.findIndex((o) => o.trainingType === t.trainingType) === i,
+  );
+  return {
+    ...c,
+    requiredApprovals: [],
+    requiredTraining: [],
+    undeterminedApprovals: committees.map((committee) => ({ committee, dependsOn: ['region'], reason, citation })),
+    undeterminedTraining: trainings.map((t) => ({ trainingType: t.trainingType, appliesTo: t.appliesTo, citation, dependsOn: ['region'], reason })),
+    determined: false,
+    steps: [{ order: 1, step: `Determine the committee approvals and training this activity requires under the law of region '${region}': this checklist applies U.S. rules only.`, basis: reason }],
+  };
 }
 
 export type ActivityProfileRead = { ok: true; profile: ActivityProfile } | { ok: false; error: string };

@@ -44,7 +44,8 @@ import {
   SUPPORTED_FORMATS,
   SupportedFormat,
   RECORDED_AS,
-  EXPORT_JOBS_UNAVAILABLE
+  EXPORT_JOBS_UNAVAILABLE,
+  exportFormatCatalog
 } from '../services/grdhe/exportGenerators';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -136,6 +137,24 @@ const assertTenantMatchesAuth = (req: Request, res: Response, tenantId: string):
   }
 
   return true;
+};
+
+/**
+ * The signed-in tenant a by-id read or write is held to, or null after
+ * answering 403. 2026-10-22: the by-id routes passed only the id, and the
+ * service matched the UUID alone, so only row security kept another tenant's
+ * job or case out.
+ */
+const requireAuthTenant = (req: Request, res: Response): string | null => {
+  const authed = (req as any).user?.organizationUuid ?? (req as any).tenantContext?.organizationUuid;
+  if (!authed) {
+    res.status(403).json({
+      success: false,
+      error: { code: 'TENANT_REQUIRED', message: 'This request identifies no tenant, so no GRDHE record is read for it' },
+    });
+    return null;
+  }
+  return String(authed);
 };
 
 const validateTenantId = (req: Request, res: Response, next: NextFunction) => {
@@ -565,9 +584,10 @@ router.get('/rules/format/:targetFormat/:sourceEntityType', asyncHandler(async (
  * List supported export formats
  */
 router.get('/exports/formats', asyncHandler(async (req: Request, res: Response) => {
+  // Each format says whether a job can be recorded for it (exportFormatCatalog).
   res.json({
     success: true,
-    data: SUPPORTED_FORMATS
+    data: exportFormatCatalog()
   });
 }));
 
@@ -576,7 +596,8 @@ router.get('/exports/formats', asyncHandler(async (req: Request, res: Response) 
  * Create a new export job
  */
 router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
-  const request: CreateExportJobRequest = req.body;
+  // targetFormat in the body is a generator key, not a regulatory_format value.
+  const request: Omit<CreateExportJobRequest, 'targetFormat'> & { targetFormat: SupportedFormat } = req.body;
   const actor = requireWriteActor(req, res);
   if (!actor) return;
   // 2026-10-15: the body's tenantId reached the service unchecked.
@@ -657,9 +678,11 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
  */
 router.get('/exports/:jobId', asyncHandler(async (req: Request, res: Response) => {
   const jobId = String(req.params.jobId);
-  
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
+
   try {
-    const job = await grdheService.getExportJob(jobId);
+    const job = await grdheService.getExportJob(tenantId, jobId);
 
     res.json({
       success: true,
@@ -703,10 +726,12 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
   const jobId = String(req.params.jobId);
   const actor = requireWriteActor(req, res);
   if (!actor) return;
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
 
   try {
     // Get job details
-    const job = await grdheService.getExportJob(jobId);
+    const job = await grdheService.getExportJob(tenantId, jobId);
 
     const refusal = executionRefusal(job);
     if (refusal) {
@@ -714,7 +739,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
     }
 
     // Update status to processing
-    await grdheService.updateExportJobStatus(jobId, 'transforming', {
+    await grdheService.updateExportJobStatus(tenantId, jobId, 'transforming', {
       progressPercent: 10,
       currentStep: 'Loading source data'
     }, actor);
@@ -726,20 +751,21 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
       
       for (const entityId of job.sourceEntityIds) {
         // Update progress
-        await grdheService.updateExportJobStatus(jobId, 'transforming', {
+        await grdheService.updateExportJobStatus(tenantId, jobId, 'transforming', {
           progressPercent: 30,
           currentStep: `Processing entity ${entityId}`
         }, actor);
         
         // Get adverse event
-        const event = await grdheService.getCanonicalAdverseEventById(entityId);
+        const event = await grdheService.getCanonicalAdverseEventById(tenantId, entityId);
         
         // Generate XML based on format: the generator whose format the job
-        // records (RECORDED_AS, read backwards), else the stored key itself.
+        // records (RECORDED_AS, read backwards); none is refused below.
+        // 2026-10-22: else the stored value was taken as a key, but a job
+        // records a regulatory_format value, which is never one.
         let exportResult;
         const generatorFormat =
-          (Object.keys(RECORDED_AS) as SupportedFormat[]).find(key => RECORDED_AS[key] === job.targetFormat) ??
-          (job.targetFormat as SupportedFormat);
+          (Object.keys(RECORDED_AS) as SupportedFormat[]).find(key => RECORDED_AS[key] === job.targetFormat);
 
         switch (generatorFormat) {
           case 'FDA_AE_3500A':
@@ -759,7 +785,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         }
         
         if (!exportResult.success) {
-          await grdheService.updateExportJobStatus(jobId, 'failed', {
+          await grdheService.updateExportJobStatus(tenantId, jobId, 'failed', {
             errorMessage: 'Validation failed',
             errorDetails: { errors: exportResult.errors }
           }, actor);
@@ -781,14 +807,14 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
       // nowhere, so the job records no output path (2026-10-15: it recorded
       // `/exports/<tenant>/<file>`, a file nothing wrote).
       if (results.length > 0 && results[0].content) {
-        await grdheService.completeExportJob(jobId, {
+        await grdheService.completeExportJob(tenantId, jobId, {
           fileName: results[0].fileName || `export_${jobId}.xml`,
           content: results[0].content,
           mimeType: results[0].contentType
         }, actor);
 
         // Get updated job
-        const completedJob = await grdheService.getExportJob(jobId);
+        const completedJob = await grdheService.getExportJob(tenantId, jobId);
         
         res.json({
           success: true,
@@ -808,9 +834,13 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
       });
     }
   } catch (error: any) {
+    // Not this tenant's job (or no such job): nothing was read or changed.
+    if (error instanceof ExportJobNotFoundError) {
+      return notFound(res, 'JOB_NOT_FOUND', 'Export job not found');
+    }
     // Update job status to failed
     try {
-      await grdheService.updateExportJobStatus(jobId, 'failed', {
+      await grdheService.updateExportJobStatus(tenantId, jobId, 'failed', {
         errorMessage: error.message,
         errorDetails: { stack: error.stack }
       }, actor);
@@ -831,13 +861,15 @@ router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Res
   const { reason } = req.body;
   const actor = requireWriteActor(req, res);
   if (!actor) return;
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
 
   try {
-    await grdheService.updateExportJobStatus(jobId, 'cancelled', {
+    await grdheService.updateExportJobStatus(tenantId, jobId, 'cancelled', {
       errorMessage: reason || 'Cancelled by user'
     }, actor);
     
-    const job = await grdheService.getExportJob(jobId);
+    const job = await grdheService.getExportJob(tenantId, jobId);
     
     res.json({
       success: true,
@@ -929,9 +961,11 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
  */
 router.get('/adverse-events/:eventId', asyncHandler(async (req: Request, res: Response) => {
   const eventId = String(req.params.eventId);
-  
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
+
   try {
-    const event = await grdheService.getCanonicalAdverseEventById(eventId);
+    const event = await grdheService.getCanonicalAdverseEventById(tenantId, eventId);
 
     res.json({
       success: true,
@@ -1002,6 +1036,8 @@ router.get('/adverse-events/tenant/:tenantId', validateTenantId, asyncHandler(as
 router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Request, res: Response) => {
   const eventId = String(req.params.eventId);
   const { targetFormat } = req.body;
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
   
   if (!targetFormat) {
     return res.status(400).json({
@@ -1014,7 +1050,7 @@ router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Reques
   }
   
   try {
-    const event = await grdheService.getCanonicalAdverseEventById(eventId);
+    const event = await grdheService.getCanonicalAdverseEventById(tenantId, eventId);
     
     let validation;
     switch (targetFormat) {

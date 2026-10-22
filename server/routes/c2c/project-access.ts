@@ -293,7 +293,9 @@ export async function loadProjectSharingState(
  * failure rather than a false sentence about this caller's access. Deny-by-
  * default is the right DIRECTION for a tenant boundary; silence was never part
  * of it. `innovation-routes.ts` fixed the same defect in `guardQuery` on
- * 2026-09-10 (GuardUnavailableError) and `moduleEntitlementGate.ts:189` states
+ * 2026-09-10 (GuardUnavailableError; the file was deleted 2026-10-15, and
+ * server/lib/verification-outcome.ts carries that shape now) and
+ * `moduleEntitlementGate.ts:189` states
  * the rule this broke: **never silent.**
  *
  * Deliberately NOT treated as a denial-with-fallback the way

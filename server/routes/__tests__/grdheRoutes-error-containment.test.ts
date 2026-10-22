@@ -78,7 +78,7 @@ describe('/api/grdhe: the 500 body is contained', () => {
     expectContained(r);
     // The job is still marked failed, best-effort, as before, by the token's
     // subject (5); since 2026-10-15 the actor is passed, not read as 'system'.
-    expect(svc.updateExportJobStatus).toHaveBeenCalledWith('job-1', 'failed', expect.any(Object), '5');
+    expect(svc.updateExportJobStatus).toHaveBeenCalledWith(TENANT, 'job-1', 'failed', expect.any(Object), '5');
   });
 
   it('the router error handler answers an uncaught failure with INTERNAL_ERROR, never the thrown text', async () => {

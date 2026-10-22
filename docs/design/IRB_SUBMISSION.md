@@ -19,7 +19,7 @@ What exists, and is good:
 | Six tables — submissions, sites, consent documents, reviews, amendments, reportable events | `migrations/20260610_irb_submissions.sql` | written, CHECK-constrained, grounded in 45 CFR 46 / 21 CFR 56 / ICH E6(R2) |
 | Drizzle mirror | `shared/schema/irb.ts` | 208 lines |
 | Service layer | `server/services/irb/irb-service.ts` | every mutation inside `BEGIN → setTenantContextTx → recordGovernedAction(domain:'irb') → COMMIT` |
-| Deterministic engines | `server/services/irb/irb-logic.ts` | `recommendReviewType`, `evaluateIrbCompleteness`, `continuingReviewStatus` |
+| Deterministic engines | `server/services/irb/irb-logic.ts`, `server/services/irb/lifecycle.ts` | `recommendReviewType`, `evaluateIrbCompleteness` (irb-logic); `lifecycleStatus` (lifecycle) |
 | Nine routes | `server/routes/irb.ts`, mounted at `register-inline-routes.ts:418` | reachable by HTTP |
 | Consent element set and completeness | `server/services/protocol-consent/*`, `/api/protocol-consent` | 21 CFR 50.25 / 45 CFR 46.116 elements, 6 routes, AnA tools |
 | Committee governance | `migrations/20260619_research_committees.sql` | members, meetings, quorum, agenda items, per-member votes |
@@ -104,8 +104,8 @@ later session finds a decision rather than an unexplained exception.
    not two.
 5. **Lifecycle:** approval and expiration recorded, continuing review
    scheduled from the approval date, modifications tied to protocol
-   amendments, reportable events, closure. `continuingReviewStatus` already
-   computes the timing.
+   amendments, reportable events, closure. `lifecycleStatus`
+   (`server/services/irb/lifecycle.ts`) already computes the timing.
 6. **Evidence** under `docs/evidence/IRB/`, with a fail-first proof for every
    new gate and a live run against the seeded biotech program.
 

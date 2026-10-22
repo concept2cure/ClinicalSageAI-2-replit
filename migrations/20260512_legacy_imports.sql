@@ -1,3 +1,14 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Tables for the legacy archive importer (jobs, per-file placement, findings).
+--
+-- 2026-10-22: comments only. The mapping_source comment now lists every value
+-- the importer writes (structure_path and fallback were missing). This file is
+-- on no deploy applier (scripts/ci/migration-deploy-path-baseline.json); no
+-- statement changed.
+-- =============================================================================
 -- 20260512_legacy_imports.sql
 --
 -- Legacy archive importer — when a new paying client arrives with prior
@@ -63,7 +74,8 @@ CREATE TABLE IF NOT EXISTS import_job_files (
   mapped_section_key text,                     -- for medtech: 'cover-letter', 'substantial-equivalence'
   mapped_artifact_kind text,                   -- 'cover_letter' | 'ifu' | 'protocol' | 'csr' | etc.
   mapping_confidence numeric(3,2),             -- 0.00..1.00
-  mapping_source    text,                      -- 'backbone_xml' | 'filename_heuristic' | 'manual' | 'ana'
+  mapping_source    text,                      -- 'backbone_xml' | 'structure_path' | 'filename_heuristic'
+                                               -- | 'fallback' | 'manual' | 'ana'
   artifact_id       integer,                   -- fk into concept2cure_artifacts after approval
   status            text NOT NULL DEFAULT 'pending',
                                                -- 'pending' | 'mapped' | 'skipped' | 'error' | 'imported'

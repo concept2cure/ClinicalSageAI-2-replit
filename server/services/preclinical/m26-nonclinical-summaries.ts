@@ -23,6 +23,7 @@
 
 import { mapStudyTypeToM24, type NonclinicalStudyInput } from './nonclinical-m24-adapter.js';
 import { classifyToxFindings, type ToxFindingInput, type ToxFindingsSummary } from './tox-findings-classifier.js';
+import { DRUG_SUBSTANCE_NAME_GAP, DRUG_SUBSTANCE_NAME_NOT_RECORDED } from '../m2-summary-builders.js';
 
 export interface GeneratedTable {
   title: string;
@@ -77,7 +78,9 @@ function normalize(s: NonclinicalStudyInput, i: number): NormalizedStudy {
 
 /** Compose the Module 2.6 nonclinical written and tabulated summaries. */
 export function buildM26NonclinicalSummaries(input: M26Input): M26Result {
-  const ds = input.drugSubstanceName || 'the drug substance';
+  // 2026-10-15: an unrecorded name read 'the drug substance', so the narrative
+  // read as finished prose for a product nobody named; it is now a gap.
+  const ds = input.drugSubstanceName?.trim() || DRUG_SUBSTANCE_NAME_NOT_RECORDED;
   const studies = input.studies.map(normalize);
 
   const pharm = studies.filter(s => s.category === 'pharmacology' || s.category === 'safety_pharmacology');
@@ -92,6 +95,9 @@ export function buildM26NonclinicalSummaries(input: M26Input): M26Result {
   if (pk.length === 0) gaps.push('pharmacokinetics / ADME');
   if (!studies.some(s => s.category === 'toxicology')) gaps.push('repeat-dose toxicology');
   if (!studies.some(s => s.category === 'genotoxicity')) gaps.push('genotoxicity battery (ICH S2(R1))');
+  // Completeness is over the categories above; the name is a gap, not a category.
+  const categoryGapCount = gaps.length;
+  if (ds === DRUG_SUBSTANCE_NAME_NOT_RECORDED) gaps.push(DRUG_SUBSTANCE_NAME_GAP);
 
   let toxProfile: ToxFindingsSummary | null = null;
   if (input.findings && input.findings.length > 0) {
@@ -158,7 +164,7 @@ export function buildM26NonclinicalSummaries(input: M26Input): M26Result {
   }
 
   const expected = 5;
-  const completeness = Math.max(0, Math.round(((expected - gaps.length) / expected) * 100));
+  const completeness = Math.max(0, Math.round(((expected - categoryGapCount) / expected) * 100));
 
   return {
     sectionKey: '2.6',

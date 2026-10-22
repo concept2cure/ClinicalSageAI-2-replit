@@ -46,8 +46,22 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
     return n;
   }
 
-  function getUserId(req: Request): string {
-    return (req as any).userId || (req as any).user?.id || 'system';
+  /* The signed-in user's id (a positive integer, as text for the *_by_user_id
+     columns), or null. 2026-10-15: this fell back to 'system', which was
+     stored as the author and audited as user 0 (`Number(userId) || 0`); a
+     write with no identifiable user is now refused (refuseNoActor). */
+  function getUserId(req: Request): string | null {
+    const raw = (req as any).userId ?? (req as any).user?.id;
+    const text = typeof raw === 'number' || typeof raw === 'string' ? String(raw).trim() : '';
+    const n = /^\d+$/.test(text) ? Number(text) : NaN;
+    return Number.isSafeInteger(n) && n > 0 ? String(n) : null;
+  }
+
+  function refuseNoActor(res: Response): Response {
+    return res.status(401).json({
+      error: 'No signed-in user could be identified, so nothing was recorded.',
+      code: 'IVDR_NO_ACTOR',
+    });
   }
 
   // ── Safe error response ────────────────────────────────────────────────────
@@ -110,7 +124,10 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         (req as any).user?.username ||
         (req as any).user?.email ||
         userId;
-      const numericUserId = Number(userId) || 0;
+      // userId is the signed-in user's positive integer id (getUserId).
+      // entity_id stays 0: audit_events.entity_id is INTEGER and binder,
+      // claim, job and pack ids are UUIDs, carried in metadata.
+      const numericUserId = Number(userId);
       const now = new Date();
       await pool.query(
         `INSERT INTO audit_events
@@ -229,6 +246,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
+      if (userId === null) return refuseNoActor(res);
       const {
         projectId,
         claimKey,
@@ -330,6 +348,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
+      if (userId === null) return refuseNoActor(res);
       const { claimId } = req.params;
       const {
         projectId,
@@ -416,6 +435,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
+      if (userId === null) return refuseNoActor(res);
       const { evidenceId } = req.params;
       const { projectId, reason } = req.body;
 
@@ -477,6 +497,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
+      if (userId === null) return refuseNoActor(res);
       const { claimId } = req.params;
       const { projectId, reason } = req.body;
 
@@ -545,6 +566,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
+      if (userId === null) return refuseNoActor(res);
       const { claimId } = req.params;
       const { projectId, reason } = req.body;
 
@@ -678,6 +700,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
+      if (userId === null) return refuseNoActor(res);
       const {
         projectId,
         packType = 'IVDR_TECHDOC',
@@ -932,6 +955,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
+      if (userId === null) return refuseNoActor(res);
       const { packId } = req.params;
       const requestedFormat = req.query.format ?? 'manifest';
       if (typeof requestedFormat !== 'string' || !['pdf', 'docx', 'zip', 'manifest'].includes(requestedFormat)) {

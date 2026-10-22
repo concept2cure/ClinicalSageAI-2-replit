@@ -1,0 +1,43 @@
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > carries the facts the record has columns for 4ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > is a patch the write accepts, which is the only thing that makes it a record 4ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > reads the class through the governed reader rather than the answer’s spelling 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > names the agencies as the record names them, not as the question stores them 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > maps the interview’s priority onto the column’s, which has no "standard" 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > takes the US premarket path from the position the person took 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > refuses to guess a US path for a route that is not one 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > reports every answered field no column took, with a reason 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > says nothing about a field nobody answered 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > says the PRIMARY agency was recorded as a target and not applied as primary 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > distinguishes a refused column from a column that does not exist 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > files the predicate of record from the two facts the eSTAR prints 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > refuses a submission number that is not one, rather than printing it on a form 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > files neither half alone, and says which half is missing 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > keeps the development phase away from the workflow phase 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > records the class the sponsor DECLARED, not the one the rules yield 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > clears the column where no EU filing is planned, rather than standing a class in it 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > records the IVDR class on its own column, for its own regulation 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > keeps a class in the person’s own words off the record as a class 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > never puts a European class in the US column, which is printed on a US form 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the two lists, in both directions > every field the interview can answer is projected or has a written reason 1684ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the two lists, in both directions > writes no reason, and reads no field, the interview does not ask 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the two lists, in both directions > projects nothing the write cannot set 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the commit plan the interview produces > is one entry, naming the programme record and the fields it sets 2ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the commit plan the interview produces > is NO entry where the answers set nothing, so an empty update is never called a configuration 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the commit plan the interview produces > is what the launch-scope gate now admits 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > is either read as a fact or declared a non-fact, with a reason 274ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > declares a non-fact only where a flow actually offers it 8ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > a question whose positions come from a catalogue > is scanned, with the values a person is actually offered 8ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads the sterile, measuring and reusable Class I devices as Class I 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads the transitional device as Class III, so its PMA carries no caution 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads an answer that states a statute and no modality 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > prefers the modality where the answer names one 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads a stage of material as no product at all 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads the class asked under the second field id, which two flows use 1ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > the fixture is the full verified set 1ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > no quoted wrong statement remains in its file 11ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > the recurring miscitations appear nowhere in the question flows or auditors 6ms
+      Tests  38 passed (38)
+
+Wider run (flows, auditors, tests/regulatory, c2c, ana, cmc, constants-domain, sop-expertise, shared):
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+The 18 failures are in 8 files that fail identically on unchanged trunk (origin 6b63513e4+): submissionTypeBridge, submittabilityCoverage, package-ectd-for-region-withdrawal, document-catalog-program-binding, ana-launch-scope, ana-launch-scope-execution, capa-governed-service-handoff, billing-credits-not-metered (18 failed | 67 passed on trunk).

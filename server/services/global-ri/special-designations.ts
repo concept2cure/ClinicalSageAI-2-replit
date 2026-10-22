@@ -99,7 +99,7 @@ export interface DesignationInput {
   euPrevalencePer10k?: number;
   /** Estimated Japan prevalence (number of patients). */
   jpPrevalence?: number;
-  /** Whether the condition is life-threatening / seriously debilitating. */
+  /** Whether the condition is life-threatening / chronically debilitating (EU orphan, Art 3(1)(a)). */
   seriousOrLifeThreatening?: boolean;
   /** Whether no satisfactory authorised treatment exists. */
   noSatisfactoryTreatment?: boolean;
@@ -262,7 +262,8 @@ function emaPrevalenceLimb(input: DesignationInput): { unmet: string[]; missing:
   const missing: (keyof DesignationInput)[] = [];
   if (input.euPrevalencePer10k == null) missing.push('euPrevalencePer10k');
   else if (input.euPrevalencePer10k > 5) unmet.push(`prevalence ${input.euPrevalencePer10k} per 10,000 exceeds 5`);
-  if (input.seriousOrLifeThreatening === false) unmet.push('not life-threatening/seriously debilitating');
+  // 2026-10-15: said "seriously debilitating" (CMA/PRIME wording), not this criterion.
+  if (input.seriousOrLifeThreatening === false) unmet.push('not life-threatening/chronically debilitating');
   else if (input.seriousOrLifeThreatening !== true) missing.push('seriousOrLifeThreatening');
   return { unmet, missing };
 }
@@ -290,7 +291,7 @@ function assessEmaOrphan(input: DesignationInput, program: string): OrphanAssess
     return {
       eligible: true,
       program,
-      rationale: `EU prevalence ${input.euPrevalencePer10k} per 10,000 (≤ 5), condition is life-threatening/seriously debilitating, and (no satisfactory method or significant benefit) — meets EMA orphan criteria.`,
+      rationale: `EU prevalence ${input.euPrevalencePer10k} per 10,000 (≤ 5), condition is life-threatening/chronically debilitating, and (no satisfactory method or significant benefit) — meets EMA orphan criteria.`,
       missing: [],
       notAssessedCriteria: [],
     };

@@ -121,8 +121,10 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         model: result.model,
       });
     } catch (error: any) {
+      // 2026-10-15: the 500 body carried error.message (driver text included);
+      // the detail is logged, the caller gets a fixed message.
       logger.error('Generate error', { err: error instanceof Error ? error.message : String(error) });
-      return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
+      return sendError(res, 500, 'Artifact generation failed unexpectedly', null, 'INTERNAL_ERROR');
     }
   });
 
@@ -181,13 +183,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
       );
     } catch (error: any) {
       logger.error('Command execution error', { err: error instanceof Error ? error.message : String(error) });
-      return sendError(
-        res,
-        500,
-        error?.message || 'Command execution failed',
-        null,
-        'EXECUTION_ERROR'
-      );
+      return sendError(res, 500, 'Command execution failed', null, 'EXECUTION_ERROR');
     }
   });
 }

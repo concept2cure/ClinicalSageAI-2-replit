@@ -88,9 +88,9 @@ describe('what reaches the programme record', () => {
   });
 
   it('reads the class through the governed reader rather than the answer’s spelling', () => {
-    /* 'class_ii_pma' states Class II and asks for the basis it asserts;
-       'no_us_filing' and 'not_classified' state no class at all. */
-    expect(projected({ d: { device_class: 'class_ii_pma' } }).patch.deviceClass).toBe('II');
+    /* 'class_ii_pma' is a transitional device, Class III by FD&C Act 520(l)
+       (2026-10-22); 'no_us_filing' and 'not_classified' state no class at all. */
+    expect(projected({ d: { device_class: 'class_ii_pma' } }).patch.deviceClass).toBe('III');
     for (const value of ['no_us_filing', 'not_classified']) {
       const out = projected({ d: { device_class: value } });
       expect(out.patch.deviceClass, value).toBeUndefined();

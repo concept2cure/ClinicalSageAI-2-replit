@@ -1,0 +1,49 @@
+# Regression on the pushed tree: trunk 892739bb7 + this lane's commits (summary of the full log)
+# Command: vitest run server/services/ectd/__tests__ server/services/ind-lifecycle/__tests__ server/services/submission-service/__tests__ tests/routes/ectd-compile*.test.ts tests/routes/*submission*.test.ts tests/golden-journeys <client suites of the surfaces on the path>
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+ Test Files  7 failed | 264 passed | 1 skipped (272)
+      Tests  26 failed | 3014 passed | 2 skipped | 1 todo (3043)
+     Errors  4 errors
+   Duration  621.55s (transform 18.35s, setup 7.81s, import 196.40s, tests 344.27s, environment 28.69s)
+
+## Failing tests
+ × tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 52ms
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists 5044ms
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope 5006ms
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project 5007ms
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate 5007ms
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 61ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > F19: a repeated notification handoff opens its exact submission and sequence while this surface is already mo
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder 219ms
+ × tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 48ms
+ × tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package 19ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > control: a trusted certificate and an accepting MDN is transmitted 40ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — an authenticated gateway read the whole message and reset: DELIVERED_UNCONFIRMED > TLSv1.3: receipt-unproven, never transport 34ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — an authenticated gateway read the whole message and reset: DELIVERED_UNCONFIRMED > TLSv1.2: receipt-unproven, never transport 30ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 500 after the whole message: receipt-unproven, confirm before any resend 29ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 502 after the whole message: receipt-unproven, confirm before any resend 27ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 503 after the whole message: receipt-unproven, confirm before any resend 26ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 504 after the whole message: receipt-unproven, confirm before any resend 34ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 400: gateway-rejected 30ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 401: gateway-rejected 27ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 403: gateway-rejected 25ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 404: gateway-rejected 27ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 413: gateway-rejected 28ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 422: gateway-rejected 28ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > records transmission_unconfirmed with the agency response and our AS2 Message-ID; a second transmit sends nothing; the A
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.3: whole ICSR read, the answer fails decryption — receipt-unproven 31ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.2: whole ICSR read, the answer fails decryption — receipt-unproven 31ms
+
+## Their messages
+      1    → A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor regis
+      1    → ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: self-signed certificate in certificate chain. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.
+      2    → Unable to find role="heading" and name `/AAA-100 — Initial IND/`
+      2    → Unable to find role="heading" and name `/BX-701 — Initial IND/`
+      2    → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+      6    → expected 'transport' to be 'gateway-rejected' // Object.is equality
+      9    → expected [] to have a length of 1 but got +0
+      3    → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+## Unhandled errors
+      4 Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?

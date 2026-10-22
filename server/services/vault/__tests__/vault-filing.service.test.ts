@@ -20,6 +20,7 @@ import {
   isFolderInView,
   folderLabel,
 } from '../vault-filing.service';
+import { classifyArtifact as classifyTmfArtifact } from '../../etmf/etmf-logic';
 import {
   foldersForView,
   VAULT_VIEWS,
@@ -97,9 +98,10 @@ describe('fail-closed on unclassifiable input', () => {
     }
   });
 
-  it('the TMF default zone is NOT treated as a finding — service-view no-match stays unfiled', () => {
-    // etmf-logic defaults unmatched names to Zone 2; filing must not adopt a
-    // placeholder as a placement.
+  it('a name the TMF classifier leaves unclassified stays unfiled in the service view', () => {
+    // etmf-logic returns an unmatched name as 'unclassified', with no zone (it
+    // defaulted to Zone 2 until 2026-10-15); filing must not invent a placement.
+    expect(classifyTmfArtifact('holiday-photos-notes.txt')).toMatchObject({ zone: null, confidence: 'unclassified' });
     const c = classifyForFiling({ fileName: 'holiday-photos-notes.txt', view: 'service' });
     expect(c.folderId).toBeNull();
     expect(c.needsReview).toBe(true);

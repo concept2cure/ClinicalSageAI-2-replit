@@ -452,8 +452,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Dosage and administration information is provided but pharmacokinetic data supporting the dosing regimen is absent.',
-          'Pharmacokinetic data including absorption, bioavailability, half-life, volume of distribution, and clearance are expected per 21 CFR 201.57(c)(13)(ii) to support dosing recommendations.',
-          '21 CFR 201.57(c)(13)(ii); FDA Guidance: Population Pharmacokinetics (2022); ICH M12',
+          'Pharmacokinetic data including absorption, bioavailability, half-life, volume of distribution, and clearance are expected per 21 CFR 201.57(c)(13)(i) (Clinical Pharmacology, 12.3 Pharmacokinetics) to support dosing recommendations.',
+          '21 CFR 201.57(c)(13)(i); FDA Guidance: Population Pharmacokinetics (2022); ICH M12',
           'Provide complete PK parameters: Cmax, Tmax, AUC, bioavailability, half-life (t1/2), volume of distribution (Vd), clearance (CL), protein binding, and the effect of food on absorption.',
           ['pk_data', 'dosage_administration', 'clinical_pharmacology_section'],
         );
@@ -475,8 +475,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Neither hepatic nor renal impairment dosing data is included in the labeling.',
-          'Per 21 CFR 201.57(c)(6), the Use in Specific Populations section must address dosing in hepatic and renal impairment per FDA Guidance on Pharmacokinetics in Patients with Impaired Hepatic/Renal Function.',
-          '21 CFR 201.57(c)(6); FDA Guidance: Pharmacokinetics in Patients with Impaired Renal Function (2020); FDA Guidance: Pharmacokinetics in Patients with Impaired Hepatic Function (2003)',
+          'Per 21 CFR 201.57(c)(9), the Use in Specific Populations section must address dosing in hepatic and renal impairment per FDA Guidance on Pharmacokinetics in Patients with Impaired Hepatic/Renal Function.',
+          '21 CFR 201.57(c)(9); FDA Guidance: Pharmacokinetics in Patients with Impaired Renal Function (2020); FDA Guidance: Pharmacokinetics in Patients with Impaired Hepatic Function (2003)',
           'Conduct hepatic impairment (Child-Pugh A/B/C) and renal impairment (mild/moderate/severe/ESRD) studies or provide population PK analyses. Include dose adjustment recommendations or state that no adjustment is needed with supporting data.',
           ['hepatic_impairment_data', 'renal_impairment_data', 'dosage_administration', 'pk_data'],
         );
@@ -547,7 +547,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Product is self-administered but lacks clear patient instructions for self-administration.',
-          'Products for self-administration require detailed Instructions for Use (IFU) per 21 CFR 201.57(c)(18) and FDA Guidance on patient labeling. The instructions must be tested for comprehension.',
+          'Products for self-administration require detailed Instructions for Use (IFU) per 21 CFR 201.57(c)(18) and FDA Guidance on patient labeling. These provisions do not require comprehension testing of the instructions, but it is often advisable and may be expected in some cases (for example, human factors validation for combination products under FDA\'s human factors guidance).',
           '21 CFR 201.57(c)(18); FDA Guidance: Instructions for Use -- Patient Labeling for Human Prescription Drug and Biological Products (2022)',
           'Develop step-by-step Instructions for Use (IFU) with illustrations, plain language at appropriate reading level, injection/administration site information, storage and disposal instructions, and troubleshooting for common errors.',
           ['self_administration_instructions', 'self_administered', 'dosage_administration'],
@@ -570,8 +570,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No storage and handling conditions are specified in the labeling.',
-          'Storage conditions must be included per 21 CFR 201.57(c)(16) based on stability study data. Proper storage instructions are essential for maintaining product quality through expiration.',
-          '21 CFR 201.57(c)(16); ICH Q1A(R2); USP <659>',
+          'Storage conditions must be included per 21 CFR 201.57(c)(17) based on stability study data. Proper storage instructions are essential for maintaining product quality through expiration.',
+          '21 CFR 201.57(c)(17); ICH Q1A(R2); USP <659>',
           'Include specific storage conditions (temperature range, light protection, humidity), in-use stability after opening, reconstitution stability if applicable, and disposal instructions.',
           ['storage_conditions', 'dosage_forms'],
         );
@@ -593,8 +593,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'The How Supplied/Storage and Handling section is missing or incomplete.',
-          'Per 21 CFR 201.57(c)(16), the labeling must describe all available dosage forms, strengths, NDC numbers, and packaging configurations to enable accurate dispensing.',
-          '21 CFR 201.57(c)(16); FDA PLR Guidance (2013)',
+          'Per 21 CFR 201.57(c)(17), the labeling must describe all available dosage forms, strengths, NDC numbers, and packaging configurations to enable accurate dispensing.',
+          '21 CFR 201.57(c)(17); FDA PLR Guidance (2013)',
           'List all available dosage forms and strengths with descriptions (color, shape, markings), package sizes, NDC numbers for each presentation, and storage conditions.',
           ['how_supplied', 'dosage_forms', 'ndc_number', 'storage_conditions'],
         );
@@ -763,8 +763,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'The product is CNS-active but no Drug Abuse and Dependence section (Controlled Substance, Abuse, Dependence subsections) is included.',
-          'Per 21 CFR 201.57(c)(14), the Drug Abuse and Dependence section must include the controlled substance schedule (if applicable), abuse potential data from clinical and nonclinical studies, and dependence/withdrawal information.',
-          '21 CFR 201.57(c)(14); FDA Guidance: Assessment of Abuse Potential of Drugs (2017); Controlled Substances Act',
+          'Per 21 CFR 201.57(c)(10), the Drug Abuse and Dependence section must include the controlled substance schedule (if applicable), abuse potential data from clinical and nonclinical studies, and dependence/withdrawal information.',
+          '21 CFR 201.57(c)(10); FDA Guidance: Assessment of Abuse Potential of Drugs (2017); Controlled Substances Act',
           'Include a complete Drug Abuse and Dependence section with: (1) Controlled Substance subsection citing DEA schedule, (2) Abuse subsection with human abuse potential study data, and (3) Dependence subsection with physical and psychological dependence characterization.',
           ['abuse_dependence_section', 'cns_active', 'controlled_substance_schedule'],
         );
@@ -830,7 +830,7 @@ export function createLabelingAuditor(): WarGameAuditor {
     name: 'FDA OPDP/DMEPA Labeling Reviewer',
     description:
       'Simulates an FDA OPDP (Office of Prescription Drug Promotion) and DMEPA (Division of ' +
-      'Medical and Education Policy) reviewer performing labeling review per 21 CFR 201.56-57 ' +
+      'Medication Error Prevention and Analysis) reviewer performing labeling review per 21 CFR 201.56-57 ' +
       'for prescription drugs, 21 CFR 201.66 for OTC products, 21 CFR 208 for Medication Guides, ' +
       'and 21 CFR 801 for device labeling. Evaluates completeness, internal consistency, regulatory ' +
       'alignment, scientific rigor, practical feasibility, documentation quality, and risk identification.',

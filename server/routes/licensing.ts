@@ -28,6 +28,7 @@ import {
   buildFeatureCatalog,
 } from '../services/licensing/entitlements-service.js';
 import {
+  AgreementPublishTextMissingError,
   AgreementTextMissingError,
   getActiveAgreements,
   getOutstandingAgreements,
@@ -174,6 +175,10 @@ router.post('/agreements', async (req: Request, res: Response) => {
     });
     return res.status(201).json({ agreement });
   } catch (error) {
+    // An agreement with no body or url is the request's fault: nothing was published.
+    if (error instanceof AgreementPublishTextMissingError) {
+      return res.status(400).json({ error: error.message, code: error.code });
+    }
     logger.error('publish error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to publish agreement' });
   }

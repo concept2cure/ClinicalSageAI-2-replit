@@ -3378,13 +3378,16 @@ export const C2C_MIGRATION_FILES = [
   // installed earlier. Conditional on the function existing; creates nothing.
   'migrations/20261015g_innovation_readiness_score_refuses.sql',
 
-  // ibc_registrations.nih_guidelines_section and involves_human_gene_transfer
-  // become nullable (2026-10-15): an unanswered NIH Guidelines category or
-  // gene-transfer question was stored as "not applicable" / "no", so the
-  // convened-IBC review read as not required. The creator,
+  // ibc_registrations.nih_guidelines_section, involves_human_gene_transfer,
+  // biosafety_level and involves_recombinant_dna, and ibc_reviews.convened_quorum,
+  // lose their defaults and become nullable (2026-10-15): an unanswered NIH
+  // Guidelines category, gene-transfer, containment-level or recombinant-DNA
+  // question, or an undescribed quorum, was stored as an answer ("not
+  // applicable" / "no" / 'BSL-1' / no convened quorum), so the convened-IBC
+  // review read as not required. The creator,
   // migrations/20260610_ibc_biosafety.sql, is amended in place but runs on
   // install-fresh only; this relaxes the columns where an earlier install
-  // created them. Conditional on the table and the live shape; creates nothing.
+  // created them. Conditional on the tables and the live shape; creates nothing.
   'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
 
   // Seven cortex engine functions stored fixed priors and random jitter as

@@ -330,6 +330,11 @@ function deriveVerdict(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function assessSufficiency(req: AssessRequest): Promise<SufficiencyResult> {
+  // 2026-10-15: an unstated trigger was recorded as 'manual'. The column is
+  // NOT NULL, so a run to be persisted must name its trigger.
+  if (!req.dryRun && !req.trigger?.trim()) {
+    throw Object.assign(new Error('trigger is required to record a run (e.g. manual, scheduled, api)'), { statusCode: 422, field: 'trigger' });
+  }
   // 1. Pull evidence (or use override)
   const evidence: EvidenceObject[] =
     req.evidenceOverride ??
@@ -508,7 +513,7 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
         pathway: req.pathway,
         // Not recorded when the caller supplied no actor (was 'system' until 2026-10-15).
         triggeredBy: req.triggeredBy ?? null,
-        trigger: req.trigger ?? 'manual',
+        trigger: req.trigger as string, // checked on entry
         inputsHash,
         verdict,
         overallScore,

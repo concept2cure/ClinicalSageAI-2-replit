@@ -3161,7 +3161,7 @@ router.get(
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
     }
     try {
-      const { listConsistencyAlerts } = await import(
+      const { listConsistencyAlerts, CONSISTENCY_SCAN_HISTORY_NOTE } = await import(
         '../services/intelligence/cross-artifact-consistency-scanner'
       );
       const { rows, total } = await listConsistencyAlerts({
@@ -3173,7 +3173,8 @@ router.get(
         limit: parsed.data.limit,
         offset: parsed.data.offset,
       });
-      return res.json({ organizationId, total, alerts: rows });
+      // 2026-10-22: an empty list said nothing of the scan history the summary names.
+      return res.json({ organizationId, total, alerts: rows, scanHistory: { recorded: false, note: CONSISTENCY_SCAN_HISTORY_NOTE } });
     } catch (err: any) {
       logger.error('[AnA consistency alerts list] failed', { error: err?.message || err });
       return res.status(500).json({
@@ -3491,7 +3492,7 @@ router.get(
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
     }
     try {
-      const { listGuidanceAlerts } = await import(
+      const { listGuidanceAlerts, GUIDANCE_SCAN_HISTORY_NOTE } = await import(
         '../services/intelligence/guidance-impact-scanner'
       );
       const { rows, total } = await listGuidanceAlerts({
@@ -3507,6 +3508,8 @@ router.get(
         organizationId,
         total,
         alerts: rows,
+        // 2026-10-22: an empty list said nothing of the scan history the summary names.
+        scanHistory: { recorded: false, note: GUIDANCE_SCAN_HISTORY_NOTE },
       });
     } catch (err: any) {
       logger.error('[AnA guidance alerts list] failed', { error: err?.message || err });

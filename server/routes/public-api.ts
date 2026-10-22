@@ -641,6 +641,10 @@ router.get('/precedent/search', requireApiScope('precedent:read'), requireScope(
       return res.status(400).json({ error: 'submissionType is required (e.g. NDA, BLA, 510(k), PMA)' });
     }
     const limit = parsePositiveInt(req.query.limit, 10, 50);
+    // The key's organization, so its own private precedents are searched with the
+    // public ones. 2026-10-22: none was passed, and they were silently omitted.
+    const organizationId = resolveApiOrg(req, res);
+    if (organizationId === undefined) return res;
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_precedent_search', 1, {
@@ -652,25 +656,35 @@ router.get('/precedent/search', requireApiScope('precedent:read'), requireScope(
       });
     }
 
-    let precedents = await precedentEngine.search({
+    const found = await precedentEngine.search({
       indication: indication as string,
       submissionType,
       query: indication as string,
       limit: limit * 2, // Over-fetch to allow agency filtering
-    });
+    }, organizationId);
 
-    // Filter by agency if provided
-    if (agency) {
-      precedents = precedents.filter((p: any) =>
-        !p.agency || p.agency.toLowerCase().includes((agency as string).toLowerCase())
-      );
-    }
-    precedents = precedents.slice(0, limit);
+    /* Filter by agency if provided. A precedent recording another agency is
+       dropped; one recording none is kept and labelled 'not_recorded'.
+       2026-10-22: one with no agency was kept as if it matched, unlabelled. */
+    const recordedAgency = (p: object): string | null => {
+      const a = (p as { agency?: unknown }).agency;
+      return typeof a === 'string' && a.trim() ? a : null;
+    };
+    const precedents = (agency
+      ? found
+          .filter((p) => recordedAgency(p) === null || recordedAgency(p)!.toLowerCase().includes(agency.toLowerCase()))
+          .map((p) => ({ ...p, agencyMatch: recordedAgency(p) === null ? 'not_recorded' as const : 'matched' as const }))
+      : found
+    ).slice(0, limit);
+    const agencyNotRecorded = agency
+      ? precedents.filter((p) => (p as { agencyMatch?: string }).agencyMatch === 'not_recorded').length
+      : null;
 
     return res.json({
       query: { indication, agency, submissionType },
       precedents,
       total: precedents.length,
+      agencyNotRecorded,
       limit,
       _apiVersion: 'v1',
     });

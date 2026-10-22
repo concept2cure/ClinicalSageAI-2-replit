@@ -99,12 +99,19 @@ export function importFileParams(jobId: number, orgId: number, f: DetectedFile):
    both import paths (2026-10-15: AnA's start_legacy_import had none). Only a job
    still 'detecting' is marked, so a cancelled or completed one keeps its state.
    Resolves whether it marked the job. */
+/* What import_jobs / import_job_files.error_message hold, and what GET
+   /imports/:id returns. 2026-10-22: both stored the raw err.message (the
+   archive's absolute path from ENOENT, the database's text from a failed
+   insert) and the GET returned it; the detail goes to the log. */
+export const IMPORT_JOB_FAILED_MESSAGE = 'The import failed after its job was created. The detail is in the server log.';
+export const IMPORT_FILE_FAILED_MESSAGE = 'This file could not be imported. The detail is in the server log.';
 export async function markImportJobFailed(jobId: number, err: unknown): Promise<boolean> {
+  log.error('import job failed', { jobId, error: err instanceof Error ? err.message : String(err) });
   try {
     const { rows } = await pool.query(
       `UPDATE import_jobs SET status = 'failed', error_message = $2, updated_at = NOW()
         WHERE id = $1 AND status = 'detecting' RETURNING id`,
-      [jobId, err instanceof Error ? err.message : String(err)],
+      [jobId, IMPORT_JOB_FAILED_MESSAGE],
     );
     return rows.length > 0;
   } catch (markErr) {
@@ -255,7 +262,9 @@ router.get('/imports/:id', async (req: Request, res: Response) => {
         [id],
       ),
     ]);
-    return ok(res, { ...rows[0], files: files.rows, findings: findings.rows });
+    // A stored error is returned as its fixed sentence, whatever an older row holds.
+    const fixed = <T extends { error_message?: unknown }>(row: T, msg: string): T => (row.error_message == null ? row : { ...row, error_message: msg });
+    return ok(res, { ...fixed(rows[0], IMPORT_JOB_FAILED_MESSAGE), files: files.rows.map((f) => fixed(f, IMPORT_FILE_FAILED_MESSAGE)), findings: findings.rows });
   } catch (err) { return serverError(res, log, 'get', err); }
 });
 
@@ -294,15 +303,20 @@ router.patch('/imports/:id/files/:fileId', requireEditorAccess, async (req: Requ
   setFrags.push(`mapping_source = 'manual'`, `mapping_confidence = NULL`);
   args.push(fileId, jobId, orgId);
   try {
+    /* The placement before the change is read, locked, in the same statement,
+       for the audit row below. 2026-10-22: an override wrote no audit row,
+       though the placement decides what approve imports. */
     const { rows } = await pool.query(
-      `UPDATE import_job_files SET ${setFrags.join(', ')}
-        WHERE id = $${args.length - 2} AND import_job_id = $${args.length - 1}
-          AND organization_id = $${args.length}
-        RETURNING *`,
+      `UPDATE import_job_files f SET ${setFrags.join(', ')} FROM (SELECT id, status, mapped_ctd_section, mapped_section_key, mapped_artifact_kind, mapping_source
+         FROM import_job_files WHERE id = $${args.length - 2} AND import_job_id = $${args.length - 1} AND organization_id = $${args.length} FOR UPDATE) AS before WHERE f.id = before.id RETURNING f.*, to_jsonb(before) AS before`,
       args,
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Import file');
-    return ok(res, rows[0]);
+    const { before, ...row } = rows[0];
+    const after = Object.fromEntries(Object.keys(before).filter((k) => k !== 'id').map((k) => [k, row[k]]));
+    const auditTrail = await recordAuditRow({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'mdx.onboarding.import.file.override',
+      resourceType: 'import_job_file', resourceId: fileId, details: { importJobId: jobId, before, after } });
+    return ok(res, row, { auditTrail });
   } catch (err) { return serverError(res, log, 'patch-file', err); }
 });
 
@@ -381,10 +395,8 @@ async function materializeImportFile(
     return true;
   } catch (innerErr: unknown) {
     await client.query('ROLLBACK TO SAVEPOINT import_file');
-    await client.query(
-      `UPDATE import_job_files SET status = 'error', error_message = $1 WHERE id = $2`,
-      [innerErr instanceof Error ? innerErr.message : String(innerErr), f.id],
-    );
+    log.error('import file could not be materialized', { jobId: id, fileId: f.id, error: innerErr instanceof Error ? innerErr.message : String(innerErr) });
+    await client.query(`UPDATE import_job_files SET status = 'error', error_message = $1 WHERE id = $2`, [IMPORT_FILE_FAILED_MESSAGE, f.id]);
     return false;
   }
 }
@@ -592,8 +604,12 @@ function onboardingAggregate(c: OnboardingCounts, files: OnboardingFileRow[], fi
       { id: 'connect', label: 'Connect', desc: 'Org account · SSO · admin', state: 'not_recorded',
         note: 'Not recorded: nothing records whether the org account, SSO and admin set-up are complete.' },
       { id: 'upload', label: 'Upload archive', desc: 'Legacy submission files', state: c.files > 0 ? 'complete' : 'pending' },
-      { id: 'map', label: 'Section mapping', desc: 'AnA maps files → sections', state: c.mapped > 0 ? 'active' : 'pending' },
-      { id: 'validate', label: 'Validate', desc: 'Completeness + integrity checks', state: c.findings > 0 ? 'active' : 'pending' },
+      /* 2026-10-22: said "AnA maps files → sections" and "Completeness + integrity
+         checks". The archive's backbone places files and a person confirms the
+         rest; the checks are backbone references against the archive's contents,
+         and no checksum is verified against util/index-md5.txt. */
+      { id: 'map', label: 'Section mapping', desc: "Placed by the archive's backbone; filename suggestions confirmed by a person", state: c.mapped > 0 ? 'active' : 'pending' },
+      { id: 'validate', label: 'Validate', desc: 'Backbone references checked against the archive · checksums not verified against util/index-md5.txt', state: c.findings > 0 ? 'active' : 'pending' },
     ],
     artifacts: files.map((r) => ({
       id: `i-${r.id}`,

@@ -141,12 +141,17 @@ describe('the two values that had drifted', () => {
     expect(cautionFor('EU_MDR_CLASS_I', programmeFactsFrom({ eu_mdr_class: 'class_ir' }))).toBeNull();
   });
 
-  it('reads the transitional Class II PMA device as Class II, and asks for the basis it asserts', async () => {
-    expect(programmeFactsFrom({ device_class: 'class_ii_pma' })).toEqual({ deviceClass: 'II' });
+  /* 2026-10-22 (D2 knowledge audit): this read the transitional device as
+     Class II and cautioned its PMA. A transitional device is Class III by
+     FD&C Act section 520(l), so its PMA is the expected route. */
+  it('reads the transitional device as Class III, so its PMA carries no caution', async () => {
+    expect(programmeFactsFrom({ device_class: 'class_ii_pma' })).toEqual({ deviceClass: 'III' });
     const { cautionFor } = await import('@shared/regulatory/pathway-cautions');
-    const caution = cautionFor('US_PMA', programmeFactsFrom({ device_class: 'class_ii_pma' }))!;
-    expect(caution.availability).toBe('needs_basis');
-    expect(caution.reason, 'the caution must name the basis this very answer claims').toMatch(/transitional|called for/i);
+    expect(cautionFor('US_PMA', programmeFactsFrom({ device_class: 'class_ii_pma' }))).toBeNull();
+    const ii = cautionFor('US_PMA', programmeFactsFrom({ device_class: 'class_ii' }))!;
+    expect(ii.availability).toBe('needs_basis');
+    expect(ii.reason).toMatch(/520\(l\)/);
+    expect(ii.reason).not.toMatch(/reclassified into Class II, for which FDA has called/);
   });
 
   it('reads an answer that states a statute and no modality', async () => {
