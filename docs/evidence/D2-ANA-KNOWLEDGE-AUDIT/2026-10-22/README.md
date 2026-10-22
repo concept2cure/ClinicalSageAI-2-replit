@@ -11,7 +11,7 @@ This change corrects text. It adds no capability.
 
 ## Method
 
-1. `audit-workflow.js` was the workflow that ran. It used:
+1. `audit-workflow.js.txt` (the workflow script, stored as text so it is not linted as code) was the workflow that ran. It used:
    - one finder per file, which read the file and listed statements of regulatory fact it believed wrong, with the exact quoted text;
    - independent verifiers per finding, prompted to refute it.
 2. Of 325 candidate findings, **322 survived verification**, and 3 were rejected. `confirmed-findings.json` holds each one: file, line, severity, quote, error and correct fact.
