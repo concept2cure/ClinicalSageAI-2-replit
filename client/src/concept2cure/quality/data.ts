@@ -53,6 +53,8 @@ export interface QmsDoc {
   /** Canonical editing copy; null for a legacy entry awaiting explicit binding. */
   authoringDocumentId?: string | null;
   programId?: string | null;
+  /** While a revision is open: the signed version that still governs the work (server in-force-release.ts). */
+  inForce?: { version: string; effectiveDate: string | null } | null;
 }
 
 export interface ReviewDueRow {
