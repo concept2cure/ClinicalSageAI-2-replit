@@ -144,7 +144,7 @@ export const DOMAIN_HISTORY_TABLES: readonly DomainHistoryTable[] = [
     table: 'ectd_submission_status_history',
     rowSemantics: 'One eCTD submission status transition.',
     linked: false,
-    owner: 'server/services/ectd-submission-agent.ts:100,314,447',
+    owner: 'server/services/ectd-submission-agent.ts:126,363,506',
   },
   {
     table: 'org_lifecycle_state_history',
@@ -156,7 +156,7 @@ export const DOMAIN_HISTORY_TABLES: readonly DomainHistoryTable[] = [
     table: 'document_audit_trail',
     rowSemantics: 'One legacy document action with before-after values.',
     linked: false,
-    owner: 'server/services/DocumentOrchestrationService.ts:437',
+    owner: 'server/services/DocumentOrchestrationService.ts:396',
   },
   {
     // charters.ts:745 calls this row the §11.10(e) coverage of record for the

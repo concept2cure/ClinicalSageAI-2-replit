@@ -192,11 +192,19 @@ await record('IQ-09', 'Application boots and reports readiness honestly', 'GET /
   return observed;
 });
 
+// The run identity (2026-10-15): with VALIDATION_USER_EMAIL unset, IQ-10 signed
+// in as a real person's personal address. No identity is built in: where
+// dev-login answers it needs one, and the refusal elsewhere is probed with none.
+const RUN_IDENTITY = (process.env.VALIDATION_USER_EMAIL || '').trim();
+
 let token = null;
 await record('IQ-10', 'Development authentication policy is as configured', 'POST /api/auth/dev-login answers only when NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts); anywhere else — production included — it must be 404', async () => {
-  const r = await fetch(`${BASE_URL}/api/auth/dev-login`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: BASE_URL }, body: JSON.stringify({ email: process.env.VALIDATION_USER_EMAIL || 'jonmichaelpsmith@gmail.com' }) });
-  const j = await r.json().catch(() => ({}));
   const devAuthConfigured = env.NODE_ENV === 'development' && env.ALLOW_DEV_AUTH === '1';
+  if (devAuthConfigured && !RUN_IDENTITY) {
+    throw deviation('not executed — no run identity: set VALIDATION_USER_EMAIL to the account dev-login signs in as; no identity is built in');
+  }
+  const r = await fetch(`${BASE_URL}/api/auth/dev-login`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: BASE_URL }, body: JSON.stringify(RUN_IDENTITY ? { email: RUN_IDENTITY } : {}) });
+  const j = await r.json().catch(() => ({}));
   const expected = devAuthConfigured ? 200 : 404;
   const observed = `dev-login → ${r.status} (NODE_ENV=${env.NODE_ENV ?? 'unset'}, ALLOW_DEV_AUTH=${env.ALLOW_DEV_AUTH ?? 'unset'})`;
   if (r.status !== expected) throw fail(`${observed}; this configuration must answer ${expected}`);

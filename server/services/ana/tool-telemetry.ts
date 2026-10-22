@@ -82,11 +82,11 @@ function orgMap(orgId: string): Map<string, ToolReliability> {
   return m;
 }
 
-export type ToolOutcome = 'success' | 'degraded' | 'failure';
+export type ToolReliabilityOutcome = 'success' | 'degraded' | 'failure';
 
 function applyOutcome(
   e: ToolReliability,
-  outcome: ToolOutcome,
+  outcome: ToolReliabilityOutcome,
   latencyMs: number,
   errorNote?: string,
   resultYield?: ResultYield
@@ -114,7 +114,7 @@ function applyOutcome(
  */
 export function recordToolOutcome(
   tool: string,
-  outcome: ToolOutcome,
+  outcome: ToolReliabilityOutcome,
   latencyMs: number,
   errorNote?: string,
   orgId?: string | number | null,
@@ -293,7 +293,7 @@ function detectYield(parsed: any): ResultYield | undefined {
  * On success, also derive a result-yield signal (did the tool actually deliver?).
  */
 export function classifyResult(result: string): {
-  outcome: ToolOutcome;
+  outcome: ToolReliabilityOutcome;
   note?: string;
   resultYield?: ResultYield;
 } {

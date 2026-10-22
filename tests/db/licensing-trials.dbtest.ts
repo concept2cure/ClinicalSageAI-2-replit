@@ -139,8 +139,9 @@ function asTenant<T>(org: number, fn: () => Promise<T>): Promise<T> {
 
 async function catalogEntry(org: number, moduleId: string) {
   const catalog = await asTenant(org, () => license.getModuleCatalog(org));
-  // getModuleCatalog answers [] on ANY failure — an empty catalog here means
-  // the read failed, not that the module is absent, so say which.
+  // getModuleCatalog throws on a failed read (2026-10-15; it answered [] from a
+  // catch), so [] here means the organization has no row or every catalog
+  // module is deprecated — not, as the message below still says, a failed read.
   expect(catalog.length, 'getModuleCatalog returned [] — the read failed').toBeGreaterThan(0);
   const entry = catalog.find((e) => e.moduleId === moduleId);
   expect(entry, `${moduleId} missing from ${org}'s catalog`).toBeDefined();

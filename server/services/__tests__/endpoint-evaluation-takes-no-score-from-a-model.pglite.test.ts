@@ -33,6 +33,8 @@ vi.mock('../../huggingface-service', () => ({ huggingFaceService: { queryHugging
 import { EndpointRecommenderService } from '../endpoint-recommender-service';
 
 const NSCLC = 'Non-small cell lung cancer';
+/** The organization the corpus is seeded under; the recommender reads only its own. */
+const ORG = 7;
 const SCORED = '{"score": 250, "feedback": "Clear, measurable and clinically meaningful."}';
 
 function ddlOf(table: PgTable): string {
@@ -85,7 +87,7 @@ describe('endpoint evaluation: no figure from a model', () => {
   it("does not report the number the model typed as the endpoint's score", async () => {
     const { svc } = serviceWithModel(async () => SCORED);
 
-    const evaluation = await svc.evaluateEndpoint('Overall survival at 24 months', NSCLC, 'Phase 3');
+    const evaluation = await svc.evaluateEndpoint(ORG, 'Overall survival at 24 months', NSCLC, 'Phase 3');
 
     expect(evaluation.score).toBeNull();
   });
@@ -93,7 +95,7 @@ describe('endpoint evaluation: no figure from a model', () => {
   it('does not ask the model for a score', async () => {
     const { svc, prompts } = serviceWithModel(async () => 'Specific and measurable; name the analysis population.');
 
-    await svc.evaluateEndpoint('Overall survival at 24 months', NSCLC, 'Phase 3');
+    await svc.evaluateEndpoint(ORG, 'Overall survival at 24 months', NSCLC, 'Phase 3');
 
     expect(prompts).toHaveLength(1);
     expect(prompts[0]).not.toMatch(/score:|0-100/i);
@@ -104,7 +106,7 @@ describe('endpoint evaluation: CSR precedent is read, or the evaluation fails', 
   it('reads similar primary endpoints from the corpus', async () => {
     const { svc } = serviceWithModel(async () => 'Commentary.');
 
-    const evaluation = await svc.evaluateEndpoint('Overall survival at 24 months', NSCLC, 'Phase 3');
+    const evaluation = await svc.evaluateEndpoint(ORG, 'Overall survival at 24 months', NSCLC, 'Phase 3');
 
     // Both share a word with it ("overall", "survival"); the second report's repeat is not listed twice.
     expect(evaluation.similarEndpoints).toEqual(['Overall survival', 'Progression-free survival per RECIST 1.1']);
@@ -116,7 +118,7 @@ describe('endpoint evaluation: CSR precedent is read, or the evaluation fails', 
     const { svc } = serviceWithModel(async () => 'Commentary.');
 
     try {
-      await expect(svc.evaluateEndpoint('Overall survival at 24 months', NSCLC, 'Phase 3')).rejects.toThrow();
+      await expect(svc.evaluateEndpoint(ORG, 'Overall survival at 24 months', NSCLC, 'Phase 3')).rejects.toThrow();
     } finally {
       holder.db = corpusDb;
       await empty.close();
@@ -128,7 +130,7 @@ describe('endpoint evaluation: CSR precedent is read, or the evaluation fails', 
       throw new Error('AI gateway unavailable');
     });
 
-    await expect(svc.evaluateEndpoint('Overall survival at 24 months', NSCLC, 'Phase 3')).rejects.toThrow(
+    await expect(svc.evaluateEndpoint(ORG, 'Overall survival at 24 months', NSCLC, 'Phase 3')).rejects.toThrow(
       'AI gateway unavailable',
     );
   });
@@ -136,7 +138,7 @@ describe('endpoint evaluation: CSR precedent is read, or the evaluation fails', 
   it('says nothing was compared when the endpoint has no word to match on, rather than "none found"', async () => {
     const { svc } = serviceWithModel(async () => 'Commentary.');
 
-    const evaluation = await svc.evaluateEndpoint('ORR', NSCLC, 'Phase 3');
+    const evaluation = await svc.evaluateEndpoint(ORG, 'ORR', NSCLC, 'Phase 3');
 
     expect(evaluation.similarEndpoints).toBeNull();
   });

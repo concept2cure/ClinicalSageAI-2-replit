@@ -224,7 +224,9 @@ export async function buildWisdomRouterContext(
       .select()
       .from(anaPlatformWisdom)
       .where(and(...wisdomConditions))
-      .orderBy(desc(anaPlatformWisdom.confidenceScore))
+      // By the evidence recorded. 2026-10-15: by confidence_score, which held a
+      // stamped 0.5 + 0.05·organizations and is now null (nothing measures it).
+      .orderBy(desc(anaPlatformWisdom.evidenceCount))
       .limit(20);
 
     // Filter by context

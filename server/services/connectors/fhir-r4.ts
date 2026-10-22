@@ -174,8 +174,9 @@ export class FHIRR4Connector implements DataConnector {
       results.push(...batch);
     }
 
-    // Sort by relevance and cap at limit
-    results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    // Interleave the resource types by each one's own result order (sourceRank is
+    // a position, not a relevance), and cap at limit
+    results.sort((a, b) => a.sourceRank - b.sourceRank);
     return results.slice(0, limit);
   }
 
@@ -464,7 +465,7 @@ export class FHIRR4Connector implements DataConnector {
       sourceConnector: this.id,
       title,
       summary,
-      relevanceScore: Math.max(0.1, 1 - index * 0.04),
+      sourceRank: index + 1,
       metadata: {
         resourceType,
         fhirId,

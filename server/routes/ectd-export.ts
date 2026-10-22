@@ -163,13 +163,16 @@ function classifyError(error: unknown): {
 /**
  * The acting user's numeric id from the JWT principal — required for the
  * canonical assembler's audit attribution. Callers run after requireTenant, so
- * a principal exists; a principal without a usable id falls back to 0 (the
- * audit row still carries the org).
+ * a principal exists. 2026-10-15: one without a usable id fell back to 0 and
+ * the assembly was recorded against user 0; it is now refused (401) here,
+ * before anything is assembled. Returns null after answering.
  */
-function actingUserId(req: Request): number {
+function actingUserId(req: Request, res: Response): number | null {
   const user = (req as any).user;
   const n = Number(user?.id ?? user?.userId);
-  return Number.isFinite(n) ? n : 0;
+  if (Number.isInteger(n) && n > 0) return n;
+  res.status(401).json({ error: 'An identified user is required', code: 'USER_ID_REQUIRED' });
+  return null;
 }
 
 /**
@@ -535,6 +538,9 @@ async function recordGovernedEctdExport(
     docType: 'ectd_package',
     backendRoute,
     ipAddress: req.ip,
+    // 2026-10-15: the placed record carried no attestation (only the
+    // non-fatal ectd_export_generated row did); the unplaced row above did.
+    metadata: { reviewAttestation: p.reviewAttestation },
   });
   return governanceResult ? 'placed' : null;
 }
@@ -581,6 +587,8 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
   // principal lacks an organizationId (authenticated-but-forbidden).
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
+  const userId = actingUserId(req, res);
+  if (userId == null) return;
 
   // Validate region up-front so an unsupported region returns 400 with a
   // helpful list instead of 500 from resolveEctdRegion().
@@ -606,7 +614,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     const result = await assembleSubmissionEctd({
       submissionId,
       organizationId,
-      userId: actingUserId(req),
+      userId,
       region,
       sequenceNumber,
       applicationNumber,
@@ -652,13 +660,10 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
        refusal below is a JSON error — not a body labelled application/zip
        with an attachment disposition. Fail-closed for the regulated path. */
     // SECURITY: the org/user attribution on the export audit record
-    // must be the JWT principal. requireTenant() already guaranteed an
-    // organizationId at the top; we re-fetch the user object here for
-    // the user.id required by the governance service.
+    // must be the JWT principal. requireTenant() and actingUserId() at the
+    // top guaranteed both (a principal with no usable id was refused 401
+    // before assembly); the user object is re-read here for the name.
     const user = (req as any).user;
-    if (user?.id == null) {
-      return res.status(403).json({ error: 'Tenant context required for governed export' });
-    }
     /* The integrity hash must cover the PACKAGE, not the words describing it.
        Without `exportHash`, registerExportGovernanceQuick falls back to
        sha256(`${title}:${filename}:${size}`) — a digest over metadata, which
@@ -674,10 +679,10 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     /* 2026-10-15: the review assertion that passed the gate was recorded
        nowhere, and stamped Human-Review-Approved: true. Both rows below now
        carry it, as the caller's assertion, with the principal who made it. */
-    const reviewAttestation = exportReviewAttestation(governance, Number(user.id));
+    const reviewAttestation = exportReviewAttestation(governance, userId);
     const registry = await recordGovernedEctdExport(req, {
       organizationId,
-      userId: Number(user.id),
+      userId,
       userName: user?.name || user?.email || 'unknown',
       submissionId,
       packageSha256,
@@ -838,6 +843,8 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
   // silently dropped for lack of attribution.
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
+  const userId = actingUserId(req, res);
+  if (userId == null) return;
 
   // Detect JSON mode. express.json (mounted globally on /api in startup
   // middleware) populates req.body for application/json requests; for any
@@ -868,7 +875,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
         const result = await assembleSubmissionEctd({
           submissionId,
           organizationId,
-          userId: actingUserId(req),
+          userId,
         });
         zipValidation = await validateEctdPackage(result.buffer);
         generatedStats = result.stats;
@@ -922,7 +929,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
           const result = await assembleSubmissionEctd({
             submissionId,
             organizationId,
-            userId: actingUserId(req),
+            userId,
           });
           zipValidation = await validateEctdPackage(result.buffer);
           generatedStats = result.stats;
@@ -984,7 +991,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
         const result = await assembleSubmissionEctd({
           submissionId,
           organizationId,
-          userId: actingUserId(req),
+          userId,
         });
         zipValidation = await validateEctdPackage(result.buffer);
         generatedStats = result.stats;
@@ -1211,6 +1218,8 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
   // emits 401 for unauthenticated / 403 for authenticated-but-no-org.
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
+  const userId = actingUserId(req, res);
+  if (userId == null) return;
 
   // Validate the optional ?region= query against the supported enum so an
   // unsupported region returns 400 from this route. The sequence's recorded
@@ -1230,7 +1239,7 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
     const result = await assembleSubmissionEctd({
       submissionId,
       organizationId,
-      userId: actingUserId(req),
+      userId,
       region: regionParsed.data,
     });
 

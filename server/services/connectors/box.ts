@@ -131,7 +131,7 @@ export class BoxConnector implements DataConnector {
         sourceConnector: this.id,
         title: String(entry.name || ''),
         summary: `${String(entry.type || 'file')} — ${formatBytes(size)} — by ${ownerName} — ${String(entry.modified_at || '')}`,
-        relevanceScore: 1 - idx * 0.01,
+        sourceRank: idx + 1,
         metadata: {
           type: entry.type,
           size,

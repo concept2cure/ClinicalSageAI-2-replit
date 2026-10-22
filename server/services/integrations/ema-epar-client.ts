@@ -11,9 +11,10 @@
  * on a network/HTTP error: it returns a typed `status: 'unavailable'` result so
  * the governed AnA handler degrades cleanly to manual-search guidance.
  *
- * NOTE: a separate `connectors/ema-epar.ts` DataConnector exists for the
- * cross-connector federated search surface; this client is the governed,
- * graceful wrapper that backs the dedicated `search_ema_epar` AnA tool.
+ * NOTE: `connectors/ema-epar.ts`, the DataConnector for the cross-connector
+ * federated search, is an adapter over this client: it throws on
+ * `status: 'unavailable'`, so a failed read is a failed source there, never an
+ * empty result. (2026-10-15: this note called it a separate implementation.)
  *
  * @module server/services/integrations/ema-epar-client
  */

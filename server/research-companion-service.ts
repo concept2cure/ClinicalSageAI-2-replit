@@ -18,7 +18,8 @@ interface ResearchCompanionMemory {
     timestamp: string;
   }[];
   userPreferences: {
-    expertiseLevel: 'beginner' | 'intermediate' | 'expert';
+    /** null: not recorded — the researcher has not stated it. */
+    expertiseLevel: 'beginner' | 'intermediate' | 'expert' | null;
     preferredStyle: 'conversational' | 'academic' | 'concise';
     showCitations: boolean;
   };
@@ -49,10 +50,12 @@ interface ResearchConversation {
 // In-memory store for conversations (would be DB-backed in production)
 const conversations: Record<string, ResearchConversation> = {};
 
-// Default user preferences
-const defaultUserPreferences = {
-  expertiseLevel: 'intermediate' as const,
-  preferredStyle: 'conversational' as const,
+// Default user preferences. Expertise is a fact about the researcher, so it is
+// null (not recorded) until stated. 2026-10-15: it defaulted to 'intermediate',
+// and every prompt pitched its answer to that invented level.
+const defaultUserPreferences: ResearchCompanionMemory['userPreferences'] = {
+  expertiseLevel: null,
+  preferredStyle: 'conversational',
   showCitations: true,
 };
 
@@ -289,6 +292,8 @@ class ResearchCompanionService {
         ? `Recently viewed trials: ${memory.recentCSRs.map(csr => csr.title).join(', ')}.`
         : '';
 
+    const expertise = memory.userPreferences.expertiseLevel;
+
     // Build conversation history context (last 3 messages)
     const recentMessages = conversation.messages.slice(-6);
     const conversationContext = recentMessages
@@ -304,7 +309,7 @@ class ResearchCompanionService {
       ${favoriteIndicationsContext}
       ${favoriteEndpointsContext}
       ${recentCSRsContext}
-      Expertise level: ${memory.userPreferences.expertiseLevel}
+      Expertise level: ${expertise ?? 'not recorded'}
       
       KNOWLEDGE CONTEXT:
       ${relevantCSRsContext}
@@ -317,7 +322,7 @@ class ResearchCompanionService {
       USER QUESTION: ${userMessage.content}
       
       Respond thoughtfully as ${persona.name}, providing specific insights based on the relevant trials and academic sources. 
-      Answer in a ${memory.userPreferences.preferredStyle} style appropriate for a ${memory.userPreferences.expertiseLevel} expertise level.
+      Answer in a ${memory.userPreferences.preferredStyle} style${expertise ? ` appropriate for a ${expertise} expertise level` : '; the expertise level is not recorded, so do not assume one'}.
       ${memory.userPreferences.showCitations ? 'Include specific citations to support your points.' : 'Focus on the information without formal citations.'}
     `;
 

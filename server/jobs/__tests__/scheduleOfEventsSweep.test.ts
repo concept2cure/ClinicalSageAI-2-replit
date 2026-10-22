@@ -11,6 +11,8 @@ const m = vi.hoisted(() => ({
   list: vi.fn(), review: vi.fn(), humanReview: vi.fn(), claim: vi.fn(),
   connect: vi.fn(), globalQuery: vi.fn(), warn: vi.fn(), info: vi.fn(),
   clients: [] as Client[], leaseHeld: false,
+  /** Organizations whose lifecycle posture permits background work. */
+  entitled: null as Set<number> | null,
 }));
 vi.mock('../../db/runtime', () => ({ getPool: () => ({ connect: m.connect }) }));
 // The old sweep used this estate-wide pool for protected claims. Its use must
@@ -22,6 +24,10 @@ vi.mock('../../services/projects/schedule-of-events', () => ({
   reviewScheduleHealth: m.humanReview,
 }));
 vi.mock('../../utils/logger', () => ({ createScopedLogger: () => ({ warn: m.warn, info: m.info }) }));
+vi.mock('../../services/tenant/tenant-lifecycle', () => ({
+  filterTenantsForBackgroundWork: vi.fn(async (ids: Iterable<number>) =>
+    new Set([...ids].filter(id => m.entitled === null || m.entitled.has(id)))),
+}));
 
 import { runScheduleOfEventsSweep } from '../scheduleOfEventsSweep';
 
@@ -39,6 +45,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   m.clients = [];
   m.leaseHeld = false;
+  m.entitled = null;
   m.list.mockImplementation(async () => PLANS);
   m.review.mockResolvedValue({ ok: true, tasksCreated: 1, alertsCreated: 2 });
   m.humanReview.mockResolvedValue({ ok: true, tasksCreated: 1, alertsCreated: 2 });
@@ -87,7 +94,7 @@ describe('schedule sweep tenant admission', () => {
       expect(client.scope).toEqual(expectedScope(params.orgId));
       return { ok: true, tasksCreated: 1, alertsCreated: 2 };
     });
-    expect(await runScheduleOfEventsSweep()).toEqual({ schedules: 2, reviewed: 2, recentlyReviewed: 0, tasksCreated: 2, alertsCreated: 4, errors: 0 });
+    expect(await runScheduleOfEventsSweep()).toEqual({ schedules: 2, reviewed: 2, recentlyReviewed: 0, skippedNotEntitled: 0, tasksCreated: 2, alertsCreated: 4, errors: 0 });
     expect(m.review).toHaveBeenCalledTimes(2);
     expect(m.humanReview).not.toHaveBeenCalled();
     expect(m.globalQuery).not.toHaveBeenCalled();
@@ -117,7 +124,7 @@ describe('schedule sweep tenant admission', () => {
 
   it('does no listing or tenant work when another process holds the lease', async () => {
     m.leaseHeld = true;
-    expect(await runScheduleOfEventsSweep()).toEqual({ schedules: 0, reviewed: 0, recentlyReviewed: 0, tasksCreated: 0, alertsCreated: 0, errors: 0, skipped: 'held_elsewhere' });
+    expect(await runScheduleOfEventsSweep()).toEqual({ schedules: 0, reviewed: 0, recentlyReviewed: 0, skippedNotEntitled: 0, tasksCreated: 0, alertsCreated: 0, errors: 0, skipped: 'held_elsewhere' });
     expect(m.list).not.toHaveBeenCalled();
     expect(m.claim).not.toHaveBeenCalled();
     expect(m.review).not.toHaveBeenCalled();
@@ -149,6 +156,36 @@ describe('schedule sweep tenant admission', () => {
     expect(m.humanReview).not.toHaveBeenCalled();
   });
 
+});
+
+describe('schedule sweep tenant lifecycle', () => {
+  // A tenant whose organization row reads active but whose payment is past_due
+  // or canceled is read_only: every HTTP write is refused. The sweep checked
+  // only organizations.status, so it still claimed the schedule and created
+  // AnA's tasks and alerts for that tenant (taskDueSweep has the same filter).
+  it('does not claim or review a schedule whose tenant may not run background work', async () => {
+    m.entitled = new Set([72]);
+    expect(await runScheduleOfEventsSweep()).toMatchObject({ schedules: 2, reviewed: 1, skippedNotEntitled: 1, errors: 0 });
+    expect(m.review).toHaveBeenCalledTimes(1);
+    expect(m.review.mock.calls[0][0]).toMatchObject({ orgId: 72, projectId: 720 });
+    expect(m.claim.mock.calls.map(([, values]) => (values as unknown[])[1])).toEqual([72]);
+    expect(tenantClients().map(c => c.scope?.tenantId)).toEqual(['72']);
+  });
+
+  it('reviews nothing when entitlement cannot be read, and says so', async () => {
+    const { filterTenantsForBackgroundWork } = await import('../../services/tenant/tenant-lifecycle');
+    vi.mocked(filterTenantsForBackgroundWork).mockRejectedValueOnce(new Error('posture read failed'));
+    expect(await runScheduleOfEventsSweep()).toMatchObject({ schedules: 2, reviewed: 0, errors: 1 });
+    expect(m.claim).not.toHaveBeenCalled();
+    expect(m.warn).toHaveBeenCalledWith('tenant lifecycle read failed; no schedule was reviewed');
+  });
+
+  it('does no tenant work when no tenant is entitled', async () => {
+    m.entitled = new Set();
+    expect(await runScheduleOfEventsSweep()).toMatchObject({ schedules: 2, reviewed: 0, skippedNotEntitled: 2 });
+    expect(m.claim).not.toHaveBeenCalled();
+    expect(tenantClients()).toEqual([]);
+  });
 });
 
 describe('schedule sweep failed and inactive work', () => {

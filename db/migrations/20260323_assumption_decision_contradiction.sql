@@ -28,6 +28,11 @@
 -- SAP-capture vocabulary change (server/__tests__/migrations/assumption-
 -- confidence-as-stated.pglite.test.ts). The CHECK on a stated value stays.
 --
+-- AMENDED IN PLACE 2026-10-15 (D2, third change) — decision_records.
+-- recommendation_summary is nullable. It was `TEXT NOT NULL`, and
+-- decision-record-service stored '' for a summary nobody stated; it now
+-- stores null (server/__tests__/migrations/decision-summary-unstated.pglite.test.ts).
+--
 -- RULE 1: this file is in C2C_MIGRATION_FILES and re-executes on every
 -- deploy. Each CREATE TABLE below is amended for databases where the table
 -- does not exist yet; the conditional block after each relaxes the column on
@@ -181,7 +186,7 @@ CREATE TABLE IF NOT EXISTS decision_records (
     'manufacturing_change', 'labeling_change', 'submission_timing',
     'risk_mitigation', 'protocol_amendment', 'data_package'
   )),
-  recommendation_summary TEXT NOT NULL,
+  recommendation_summary TEXT,             -- null when nobody stated one (2026-10-15)
   recommendation_rationale TEXT,
 
   -- Confidence, as the decider stated it; null when nobody did (2026-10-15)
@@ -240,6 +245,20 @@ BEGIN
   END IF;
 END
 $decision_confidence$;
+
+-- 2026-10-15 (third change, see the header): the summary loses its NOT NULL on
+-- a database provisioned before. Conditional, every deploy.
+DO $decision_summary$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = current_schema() AND table_name = 'decision_records'
+       AND column_name = 'recommendation_summary' AND is_nullable = 'NO'
+  ) THEN
+    ALTER TABLE decision_records ALTER COLUMN recommendation_summary DROP NOT NULL;
+  END IF;
+END
+$decision_summary$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PART 4: CONTRADICTION FINDINGS

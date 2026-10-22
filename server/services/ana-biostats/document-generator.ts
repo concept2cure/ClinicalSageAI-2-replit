@@ -23,7 +23,7 @@ import type {
   DomainAdaptation,
   RegulatoryCustomization,
   GovernedStatisticalDocument,
-  DocumentProvenance,
+  BiostatDocumentProvenance,
   DocumentMetadata,
   StatisticalDocumentType,
 } from './types';
@@ -634,7 +634,7 @@ export class DocumentGenerator {
     judgment: JudgmentResult,
     domain: DomainAdaptation,
     regulatory?: RegulatoryCustomization
-  ): DocumentProvenance {
+  ): BiostatDocumentProvenance {
     return {
       computationInputs: input,
       computationResults: comp,

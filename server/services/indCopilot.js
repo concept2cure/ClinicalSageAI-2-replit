@@ -258,11 +258,28 @@ async function fetchRegulatoryGuidelines(sectionCode) {
 }
 
 /**
+ * Insert a record, and fail when the store refuses it. The Supabase client
+ * reports a refused write in `{ error }` rather than throwing; these inserts
+ * discarded it (to 2026-10-15), so a write that never landed read as success.
+ *
+ * @param {string} table - Table name
+ * @param {Object} row - Row to insert
+ */
+async function insertRecord(table, row) {
+  const { error } = await supabase.from(table).insert(row);
+  if (error) {
+    logger.error(`Error recording ${table}: ${error.message}`);
+    throw new Error(`The ${table} record could not be recorded.`);
+  }
+}
+
+/**
  * Fetch available references for citation
  *
  * @param {string} submissionId - The IND submission ID
  * @param {string} sectionCode - The section code (e.g., '2.7.1')
  * @returns {Promise<Array>} - Array of available references
+ * @throws when the references cannot be read
  */
 async function fetchAvailableReferences(submissionId, sectionCode) {
   try {
@@ -276,8 +293,7 @@ async function fetchAvailableReferences(submissionId, sectionCode) {
       .eq('submission_id', submissionId);
 
     if (error) {
-      logger.warn(`Error fetching references: ${error.message}`);
-      return [];
+      throw new Error(`Error fetching references: ${error.message}`);
     }
 
     // Filter documents by relevance to section
@@ -323,8 +339,11 @@ async function fetchAvailableReferences(submissionId, sectionCode) {
       url: doc.url || doc.filename,
     }));
   } catch (error) {
+    // 2026-10-15: a failed read returned [] — "no references" — and the section
+    // was drafted, revised and streamed against it. It is an error now; the
+    // store's own message stays in the log.
     logger.error(`Error in fetchAvailableReferences: ${error.message}`);
-    return [];
+    throw new Error(`References for submission ${submissionId} could not be read.`, { cause: error });
   }
 }
 
@@ -790,7 +809,7 @@ async function validateContent(content, sectionCode, context) {
   const validation = { coverage, ...narration };
 
   // Log validation result
-  await supabase.from('ind_content_validations').insert({
+  await insertRecord('ind_content_validations', {
     submission_id: context.submission.id,
     section_code: sectionCode,
     // SHA-256 of the whole content. It was the base64 of the first 15 bytes,
@@ -855,7 +874,7 @@ export async function generateSectionContent(submissionId, sectionCode, options 
     const validation = await validateContent(generatedContent, sectionCode, context);
 
     // 7. Log generation event
-    await supabase.from('ind_generation_events').insert({
+    await insertRecord('ind_generation_events', {
       submission_id: submissionId,
       section_code: sectionCode,
       // What served, not what was asked for (it recorded 'gpt-4o' by default).
@@ -948,7 +967,7 @@ Reference relevant FDA guidelines or scientific literature as needed.
     const responseWithCitations = parseCitations(response, references);
 
     // Log the follow-up event
-    await supabase.from('ind_generation_events').insert({
+    await insertRecord('ind_generation_events', {
       submission_id: submissionId,
       section_code: sectionCode,
       model: aiResult.model,
@@ -1142,7 +1161,7 @@ export async function analyzeContent(submissionId, sectionCode) {
     const analysis = { coverage, ...narrationFrom(aiResult) };
 
     // Log the analysis
-    await supabase.from('ind_content_analyses').insert({
+    await insertRecord('ind_content_analyses', {
       submission_id: submissionId,
       section_code: sectionCode,
       analysis_result: analysis,

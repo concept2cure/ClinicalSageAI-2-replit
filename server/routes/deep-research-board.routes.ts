@@ -94,12 +94,14 @@ interface DrConnector {
   configured: boolean;
 }
 
-/** Matches DrJob in the fixture: { name, state, hits } — one connector's fan-out. */
+/** One connector's fan-out: { name, state, hits, error }. */
 interface DrRunJob {
   name: string;
-  state: 'run' | 'done';
-  /** Persisted resultCount; null when a job's connector_logs did not record a count. */
+  state: 'run' | 'done' | 'error';
+  /** Persisted resultCount; null when the search failed or its log recorded no count. */
   hits: number | null;
+  /** The persisted error of a failed search; null otherwise. */
+  error: string | null;
 }
 
 /** Persisted research run (deep_research_jobs). results/synthesis omitted — see HONESTY NOTES. */
@@ -167,18 +169,38 @@ function toIso(value: Date | null | undefined): string | null {
 
 /**
  * Map a persisted job to the surface run shape. The per-connector fan-out is
- * derived from connector_logs: an entry means that connector's search returned,
- * so state='done' and hits=resultCount. A run whose logs are not yet written
- * (still queued/running) yields jobs=[] rather than fabricated in-flight rows.
+ * derived from connector_logs: a `status: 'error'` entry is a failed search
+ * (state='error', hits=null, its error); any other entry means that connector's
+ * search returned, so state='done' and hits=resultCount. A run whose logs are not
+ * yet written (still queued/running) yields jobs=[] rather than fabricated
+ * in-flight rows.
+ *
+ * 2026-10-15: every entry used to map to state='done', hits=resultCount, so a
+ * source whose search threw (persisted as resultCount 0) read as "done, 0 hits" —
+ * an empty result for a source nobody read.
  */
 function toDrRun(job: DeepResearchJob): DrRun {
   const logs = job.connectorLogs ?? {};
   const jobs: DrRunJob[] = Object.entries(logs).map(([connectorId, log]) => {
-    const resultCount = (log as { resultCount?: unknown } | null)?.resultCount;
+    const entry = (log ?? {}) as { status?: unknown; resultCount?: unknown; error?: unknown };
+    const name = CONNECTOR_NAME_BY_ID.get(connectorId) ?? connectorId;
+    if (entry.status === 'error') {
+      return {
+        name,
+        state: 'error' as const,
+        hits: null,
+        error:
+          typeof entry.error === 'string' && entry.error.trim()
+            ? entry.error
+            : 'The search failed; no error message was recorded.',
+      };
+    }
+    const resultCount = entry.resultCount;
     return {
-      name: CONNECTOR_NAME_BY_ID.get(connectorId) ?? connectorId,
+      name,
       state: 'done' as const,
       hits: typeof resultCount === 'number' && Number.isFinite(resultCount) ? resultCount : null,
+      error: null,
     };
   });
 
@@ -310,7 +332,8 @@ export default function createDeepResearchBoardRoutes(): Router {
  *                               (id, uuid, status, query.indication, progress,
  *                               creditsUsed, timestamps).
  *   • runs[].jobs[]           — derived from each job's persisted connector_logs
- *                               (resultCount → hits, state='done').
+ *                               (resultCount → hits, state='done'; a log with
+ *                               status 'error' → state='error', hits=null, error).
  *
  * OMITTED / NULLED (documented gaps — NOT fabricated):
  *   • DEPTHS (quick/standard/exhaustive @ 1/3/8 credits) is NOT served. The engine's

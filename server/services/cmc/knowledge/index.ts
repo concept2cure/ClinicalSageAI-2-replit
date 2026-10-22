@@ -149,7 +149,7 @@ function modalityMatches(wanted: string, stated: string): boolean {
 
 // ── Lookups ─────────────────────────────────────────────────────────────────
 
-export interface RequirementQuery {
+export interface CmcRequirementQuery {
   authority?: string;
   applicationType?: string;
   phase?: string;
@@ -159,7 +159,7 @@ export interface RequirementQuery {
 }
 
 /** Requirements matching every filter given, best topical match first. */
-export function findCmcRequirements(q: RequirementQuery, limit = 12): { matches: CmcRequirement[]; total: number } {
+export function findCmcRequirements(q: CmcRequirementQuery, limit = 12): { matches: CmcRequirement[]; total: number } {
   const authorities = resolveAuthorities(q.authority);
   const topic = tokens(q.topic ?? '');
   const filtered = CMC_RECORD.requirements.filter((r) => {

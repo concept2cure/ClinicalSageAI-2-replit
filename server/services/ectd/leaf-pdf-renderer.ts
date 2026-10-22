@@ -22,7 +22,7 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { parseSectionHtml } from '../../export/section-html-parse';
 import { looksLikeHtml, plainTextToHtml } from '@shared/authoring/plain-text-html';
-import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
+import { addBookmarks, type BookmarkNode } from './pdf-bookmark-generator';
 import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
 import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
 import { unfiledFigureLabel } from '../../export/authoring-images.js';
@@ -46,7 +46,7 @@ export interface LeafPdfOptions {
    * FDA eCTD guidance requires PDF bookmarks for navigation. Page indices are
    * caller-supplied (zero-based); they should match this renderer's layout.
    */
-  bookmarks?: OutlineNode[];
+  bookmarks?: BookmarkNode[];
 }
 
 /**
@@ -609,7 +609,7 @@ export async function renderLeafPdf(content: string, options: LeafPdfOptions = {
   // single document-level bookmark so every leaf is navigable per FDA eCTD
   // guidance. addBookmarks is deterministic (no dates/random), so the byte
   // stability / md5 contract above is preserved.
-  const outline: OutlineNode[] =
+  const outline: BookmarkNode[] =
     options.bookmarks && options.bookmarks.length > 0
       ? options.bookmarks
       : header
@@ -685,7 +685,7 @@ export async function renderStructuredLeafPdf(
 
   // Walk the section tree depth-first, recording the page index at which each
   // heading is drawn so the bookmark jumps to the right page.
-  const walk = (nodes: LeafSection[], depth: number): OutlineNode[] =>
+  const walk = (nodes: LeafSection[], depth: number): BookmarkNode[] =>
     nodes.map((s) => {
       const indent = depth * 14;
       // A heading near the bottom of a page should start the next page so it is
