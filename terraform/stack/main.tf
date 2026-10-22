@@ -38,7 +38,9 @@ module "ecr" {
   source           = "../modules/ecr"
   prefix           = local.short
   repository_names = ["api"]
-  tags             = var.tags
+  # Staging: production may read the images it verifies, to promote them.
+  reader_account_ids = var.production_account_id == "" ? [] : [var.production_account_id]
+  tags               = var.tags
 }
 
 # ── Database credentials (D1 brief B1) ──────────────────────────────────────

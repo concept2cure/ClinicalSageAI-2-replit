@@ -11,7 +11,7 @@ module "github_deploy" {
   name_prefix          = local.long
   github_repository    = var.github_repository
   deploy_environment   = var.environment
-  build_subjects       = var.github_build_subjects
+  build_subjects       = local.github_build_subjects
   create_oidc_provider = var.create_github_oidc_provider
 
   ecr_repository_arn  = module.ecr.repository_arns["api"]
@@ -22,7 +22,12 @@ module "github_deploy" {
   one_off_task_families = [local.migrate_family, local.provision_family]
   # The one-off families run with the migrate execution role, the only one that
   # can read the owner's secrets (modules/ecs-fargate; MR-03 OPS-16).
-  pass_role_arns              = [module.ecs.execution_role_arn, module.ecs.migrate_execution_role_arn, module.ecs.task_role_arn]
+  pass_role_arns = [module.ecs.execution_role_arn, module.ecs.migrate_execution_role_arn, module.ecs.task_role_arn]
+  # Production reads the image staging verified, from staging's repository
+  # (its name is .github/deploy-targets.json's staging ECR_API_REPO).
+  promote_source_repository_arns = var.staging_account_id == "" ? [] : [
+    "arn:aws:ecr:${var.region}:${var.staging_account_id}:repository/${local.staging_ecr_api_repo}",
+  ]
   api_log_group_arn           = module.ecs.api_log_group_arn
   frontend_bucket_arn         = module.cdn.frontend_bucket_arn
   cloudfront_distribution_arn = module.cdn.distribution_arn
@@ -31,6 +36,11 @@ module "github_deploy" {
 }
 
 locals {
+  github_build_subjects = var.github_build_subjects != null ? var.github_build_subjects : (
+    var.environment == "production" ? [] : ["ref:refs/tags/rc-*", "ref:refs/heads/concept2cure-v2"]
+  )
+  # Staging's image repository, as the staging stack names it (local.short).
+  staging_ecr_api_repo = "c2c-stg-api"
   # Terraform registers it (aws_ecs_task_definition.migrate, ${cluster}-migrate).
   migrate_family   = module.ecs.migrate_task_family
   provision_family = "${local.long}-provision"

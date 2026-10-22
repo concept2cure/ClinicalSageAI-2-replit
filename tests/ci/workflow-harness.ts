@@ -44,6 +44,8 @@ export type Job = {
   name?: string;
   if?: string;
   needs?: string | string[];
+  environment?: string;
+  outputs?: Record<string, string>;
   env?: Record<string, string>;
   permissions?: Record<string, string>;
   container?: string | { image?: string };
@@ -130,6 +132,7 @@ export type Scenario = { label: string; event: string; ref: string; inputs?: Rec
 export const TRUNK_PUSH: Scenario = { label: `push to ${TRUNK}`, event: 'push', ref: `refs/heads/${TRUNK}` };
 export const PULL_REQUEST: Scenario = { label: `pull request to ${TRUNK}`, event: 'pull_request', ref: 'refs/pull/1/merge' };
 export const TAG_PUSH: Scenario = { label: 'v* tag push', event: 'push', ref: 'refs/tags/v1.0.0' };
+export const RC_PUSH: Scenario = { label: 'rc-* tag push', event: 'push', ref: 'refs/tags/rc-1.0.0' };
 /** workflow_dispatch: boolean inputs reach `github.event.inputs` as the strings 'true' / 'false'. */
 export const dispatch = (inputs: Record<string, string>): Scenario => ({
   label: `workflow_dispatch ${Object.entries(inputs).map(([k, v]) => `${k}=${v}`).join(' ')}`,
@@ -138,7 +141,7 @@ export const dispatch = (inputs: Record<string, string>): Scenario => ({
   inputs,
 });
 
-function contexts(wf: Workflow, job: string, s: Scenario, extra: Record<string, unknown>): Record<string, unknown> {
+export function contexts(wf: Workflow, job: string, s: Scenario, extra: Record<string, unknown>): Record<string, unknown> {
   const event =
     s.event === 'workflow_dispatch' ? { inputs: s.inputs ?? {} } : s.event === 'pull_request' ? { action: 'synchronize', pull_request: { number: 1 } } : {};
   const github = {
@@ -168,11 +171,11 @@ export function stepRuns(
   job: string,
   step: Step,
   s: Scenario,
-  so: { failed?: boolean; steps?: Record<string, StepResult> } = {},
+  so: { failed?: boolean; steps?: Record<string, StepResult>; needs?: Record<string, unknown> } = {},
 ): boolean {
   const known = so.steps ?? {};
   const steps = new Proxy(known, { get: (t, k) => (typeof k === 'string' && k in t ? t[k] : PASSED) });
-  const ctx = contexts(wf, job, s, { steps });
+  const ctx = contexts(wf, job, s, { steps, needs: so.needs ?? {} });
   ctx.env = { ...(ctx.env as Record<string, string>), ...(step.env ?? {}) };
   return evaluateIf(step.if, { status: stepStatus(so.failed ?? false), contexts: ctx });
 }
@@ -186,13 +189,19 @@ export type JobResult = 'success' | 'failure' | 'skipped';
  * not fail the job; a job with continue-on-error does not fail the run, and the
  * jobs after it proceed — both modelled as a passing job.
  */
-export function simulateSteps(wf: Workflow, job: string, s: Scenario, failing?: Step): { ran: Step[]; result: JobResult } {
+export function simulateSteps(
+  wf: Workflow,
+  job: string,
+  s: Scenario,
+  failing?: Step,
+  needs?: Record<string, unknown>,
+): { ran: Step[]; result: JobResult } {
   const def = wf.jobs[job];
   const results: Record<string, StepResult> = {};
   const ran: Step[] = [];
   let failed = false;
   for (const step of def?.steps ?? []) {
-    const runs = stepRuns(wf, job, step, s, { failed, steps: results });
+    const runs = stepRuns(wf, job, step, s, { failed, steps: results, needs });
     if (runs) ran.push(step);
     const fails = runs && step === failing;
     const conclusion = fails && !continuesOnError(step['continue-on-error']) ? 'failure' : 'success';
@@ -209,12 +218,23 @@ export function simulateSteps(wf: Workflow, job: string, s: Scenario, failing?: 
  * function a job needs every job in its `needs` to have succeeded; failure() is
  * true when any ancestor failed; always() runs it whatever happened above.
  */
-export function simulateJobs(wf: Workflow, s: Scenario, given: Record<string, JobResult> = {}): Record<string, JobResult> {
+export function simulateJobs(
+  wf: Workflow,
+  s: Scenario,
+  given: Record<string, JobResult> = {},
+  outputs: Record<string, Record<string, string>> = {},
+): Record<string, JobResult> {
   const out: Record<string, JobResult> = {};
   const visit = (job: string): JobResult => {
     if (out[job]) return out[job];
     const direct = asList(wf.jobs[job]?.needs);
-    const needs = Object.fromEntries(direct.map((n) => [n, { result: visit(n), outputs: {} }]));
+    // A job's outputs reach the jobs after it only when it ran and passed.
+    const needs = Object.fromEntries(
+      direct.map((n) => {
+        const result = visit(n);
+        return [n, { result, outputs: result === 'success' ? (outputs[n] ?? {}) : {} }];
+      }),
+    );
     const status: StatusFns = {
       success: direct.every((n) => needs[n].result === 'success'),
       failure: [...transitiveNeeds(wf, job)].some((n) => out[n] === 'failure'),
@@ -337,3 +357,39 @@ export function actionsApi(runs: Array<Record<string, unknown>> | Error) {
     },
   };
 }
+
+/**
+ * deploy-aws.yml's `resolve` job, run as written for a scenario (its shell step,
+ * reading this checkout's .github/deploy-targets.json): the outputs every later
+ * job's condition and environment read. Empty when it refuses the scenario.
+ */
+export function resolveOutputs(wf: Workflow, s: Scenario): Record<string, string> {
+  const step = (wf.jobs.resolve?.steps ?? []).find((st) => st.id === 'target');
+  if (!step?.run) throw new Error('the workflow has no resolve job with a step id target');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wf-resolve-'));
+  const out = path.join(dir, 'out');
+  fs.writeFileSync(out, '');
+  const r = runShellStep(
+    step.run,
+    {
+      GITHUB_EVENT_NAME: s.event,
+      GITHUB_REF: s.ref,
+      GITHUB_SHA: 'c'.repeat(40),
+      GITHUB_WORKSPACE: ROOT,
+      GITHUB_OUTPUT: out,
+      INPUT_TARGET: s.inputs?.target ?? '',
+    },
+    {},
+    shellFor(wf, 'resolve', step),
+  );
+  const text = fs.readFileSync(out, 'utf8');
+  fs.rmSync(dir, { recursive: true, force: true });
+  if (r.status !== 0) return {};
+  return Object.fromEntries(text.trim().split('\n').filter(Boolean).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
+}
+
+/** simulateJobs for deploy-aws.yml, with the resolve job's real outputs for the scenario. */
+export function deployJobs(wf: Workflow, s: Scenario, given: Record<string, JobResult> = {}): Record<string, JobResult> {
+  return simulateJobs(wf, s, given, { resolve: resolveOutputs(wf, s) });
+}
+

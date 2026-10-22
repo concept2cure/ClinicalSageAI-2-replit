@@ -61,6 +61,8 @@ output "deploy_targets" {
     ECS_MIGRATE_TASK_FAMILY = local.migrate_family
     # The container the one-off database tasks derive from (OPS-16).
     ECS_MIGRATE_CONTAINER_NAME = module.ecs.migrate_container.name
+    AWS_REGION                 = var.region
+    ECS_PROVISION_TASK_FAMILY  = local.provision_family
     # The configured name, which is what S3 creates; the module's output is
     # the bucket's computed id, unknown until apply.
     FRONTEND_BUCKET = local.frontend_bucket
