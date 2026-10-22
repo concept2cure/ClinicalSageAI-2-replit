@@ -1,6 +1,6 @@
 # F23 (8/9): each mutation applied alone, the file restored and the restore checked after (mutate.py)
-# Tests: document-readiness-counts-leaves.pglite, c2c-section-completion.contract, dossier-read.pglite, projects-dossier; the PATCH one on node-status-follows-work.pglite
-# 13 mutations, 13 red. 'No index for the heading probe' is caught by the contract text only: the index changes cost, not results.
+# Tests: document-readiness-counts-leaves.pglite, c2c-section-completion.contract, dossier-read.pglite, projects-dossier; the PATCH ones on filing-section-respects-authoring-seal (the route's mock harness)
+# 15 mutations, 15 red. 'No index for the heading probe' is caught by the contract text only: the index changes cost, not results.
 # The first two are the two rules this commit rejects: HEAD's (every row counted) and its own first draft's (a heading that has been written in drops out, which the review confirmed).
 RED  the trigger counts empty headings again (the head rule): the tests went red
 RED  a worked heading drops out (the first draft's rule): the tests went red
@@ -13,5 +13,12 @@ RED  the dossier counts headings: the tests went red
 RED  the twin drops a worked heading: the tests went red
 RED  the SQL rule drifts from the migration's text: the tests went red
 RED  no index for the heading probe: the tests went red
-RED  the PATCH insert drops the parent again: the tests went red
+RED  the PATCH insert drops the parent again (the parameter): 1 test failed
+RED  the PATCH pack read stops asking for the parent: 1 test failed
+RED  the PATCH INSERT stops writing the parent column: 1 test failed
 RED  the twin ignores which document names the parent (faithful): the tests went red
+# The PATCH case first sat in node-status-follows-work.pglite, on real Postgres. That file was at the
+# 500-line limit and the case took it over (ESLint max-lines, 0 -> 1), which the pre-push ratchet refused.
+# It moved to the route's mock harness. A stub answers whatever a statement asks, so that case also reads
+# the statements: the pack read must ask for parent_key and the INSERT must write it as $7. The last two
+# mutations above are the ones a stub alone would have let through.

@@ -15,7 +15,6 @@
  ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were 149ms
  ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 88ms
  ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 76ms
- ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a status PATCH on a section not created yet files it under its pack parent (F23 8/9: else the heading above reads as holding nothing, and is counted) 28ms
  ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5) 122ms
  ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing 73ms
  ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states 39ms
@@ -94,4 +93,36 @@ The 7 failures are two files that fail identically at the pushed head 1a9a7d2291
 
 ## Gates
 OK: ci:migration-drop-safety, ci:migration-set-order, ci:migration-guard-order, ci:migration-deploy-path, ci:migration-reachability, ci:migration-prefix-collisions, ci:sql-interpolation.
-Typecheck 0 errors. ESLint per-file counts unchanged. The eCTD audit header is within the migration's first 40 lines (require-migration-headers.sh).
+Typecheck 0 errors. ESLint per-file counts unchanged once the PATCH case moved (below); where it first sat it took node-status-follows-work.pglite.test.ts over the 500-line limit, and the pre-push ratchet refused it. The eCTD audit header is within the migration's first 40 lines (require-migration-headers.sh).
+
+## The PATCH case, moved to the route's mock harness
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > refuses a section change when the bound authoring document is FROZEN, and writes nothing
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > refuses it when the bound document is APPROVED — an approval e-signature freezes it too
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > allows it when the bound authoring document is still editable
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > allows it when no authoring document is bound to this filing
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > allows it where the deployment has no authoring bundle — nothing can be bound, so nothing is sealed
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > refuses when the seal cannot be read at all — an unreadable status is not permission
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > ONE sealed editing copy is enough: the binding is not unique
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > honours locked_at as well as the status, which is the schema’s other lock
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal > refuses section text outright, on an editable document, before anything is read
+ ✓ server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts > PATCH on a section not created yet files it under its pack parent (FILING_SPINE F23 8/9) > the INSERT carries the parent the rule pack gives the section
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
