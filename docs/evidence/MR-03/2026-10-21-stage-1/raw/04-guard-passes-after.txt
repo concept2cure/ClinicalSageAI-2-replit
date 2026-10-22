@@ -1,0 +1,1 @@
+[terraform-backend] ok — 2 S3 backend(s) take the bucket from backend.hcl and lock with S3 lock files; bootstrap names the bucket per account.

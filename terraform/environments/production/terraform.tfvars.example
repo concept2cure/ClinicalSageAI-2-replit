@@ -39,7 +39,9 @@ public_subnets  = ["10.10.101.0/24", "10.10.102.0/24"]
 private_subnets = ["10.10.1.0/24", "10.10.2.0/24"]
 azs             = ["us-east-1a", "us-east-1b"]
 
-rds_instance_class = "db.t3.medium"
+# Not burstable: a db.t* class runs out of CPU credits under filing-day load, and
+# terraform/stack refuses one in production (MR-03 DATA-13).
+rds_instance_class = "db.m6g.large"
 api_cpu            = 1024
 # 4096 MiB of it is the virus scanner beside the API; the stack refuses less than 6144.
 api_memory         = 6144
@@ -62,6 +64,9 @@ domain_aliases             = ["app.example.com"] # REPLACE_ME
 #   AWS_DEPLOY_ROLE_ARN          = terraform output -raw github_deploy_role_arn
 #   AWS_BUILD_ROLE_ARN           = terraform output -raw github_build_role_arn
 #   CLOUDFRONT_DISTRIBUTION_ID   = terraform output -raw cloudfront_distribution_id
+# and the repository variable (not a secret) the frontend is published to; its
+# name carries the account id, so deploy-aws.yml refuses to run without it:
+#   FRONTEND_BUCKET              = terraform output -raw frontend_bucket
 # and create the GitHub environment "production": its jobs are the only ones the
 # deploy role trusts.
 
