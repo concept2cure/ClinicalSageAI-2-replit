@@ -1,0 +1,33 @@
+# Slice B, before: tests/ci/deploy-rollback.contract.test.ts against HEAD's deploy-aws.yml (aff62826d)
+ FAIL  tests/ci/deploy-rollback.contract.test.ts [ tests/ci/deploy-rollback.contract.test.ts ]
+Error: job rollback has no step named "Return the API service to the revision…"
+     70|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+ Test Files  1 failed (1)
+      Tests  no tests
+
+# After
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > has one, after deploy-api and the smoke test, in the production environment
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > v* tag push: the smoke test failed after a successful roll → it rolls back
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > v* tag push: the smoke test passed → nothing rolls back
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > v* tag push: deploy-api failed (nothing new is serving) → nothing rolls back
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > workflow_dispatch deploy_api=true deploy_frontend=true rollback_taskdef=: the smoke test failed after a successful roll → it rolls back
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > workflow_dispatch deploy_api=true deploy_frontend=true rollback_taskdef=: the smoke test passed → nothing rolls back
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > workflow_dispatch deploy_api=true deploy_frontend=true rollback_taskdef=: deploy-api failed (nothing new is serving) → nothing rolls back
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > a rollback_taskdef dispatch runs the rollback job alone
+ ✓ tests/ci/deploy-rollback.contract.test.ts > when the rollback job runs > declares the rollback_taskdef input, empty by default
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > after a failed smoke test: returns the service to the revision serving before, and checks it is
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > on request: returns it to the named revision
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > refuses a revision of another family, and changes nothing
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > refuses something that is not a revision ARN, and changes nothing
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > refuses no revision at all (deploy-api recorded none), and changes nothing
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > refuses the revision that just failed, and changes nothing
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > refuses a revision with no API container, and changes nothing
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > fails when the service does not end on the revision it was sent to
+ ✓ tests/ci/deploy-rollback.contract.test.ts > what the rollback does > warns, and still rolls back, when the revision names its image by tag
+ ✓ tests/ci/deploy-rollback.contract.test.ts > deploy-api records what to roll back to before it moves anything > reads the serving revision before update-service, and exports it
+ ✓ tests/ci/deploy-rollback.contract.test.ts > deploy-api records what to roll back to before it moves anything > exports the revision the service runs
+ ✓ tests/ci/deploy-rollback.contract.test.ts > deploy-api records what to roll back to before it moves anything > refuses to roll when the serving revision reads as "None"
+ ✓ tests/ci/deploy-rollback.contract.test.ts > deploy-api records what to roll back to before it moves anything > refuses to roll when the serving revision reads as ""
+ ✓ tests/ci/deploy-rollback.contract.test.ts > deploy-api records what to roll back to before it moves anything > refuses to roll when the serving revision reads as "arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-migrate:4"
+ ✓ tests/ci/deploy-rollback.contract.test.ts > the migration records how long it took, on every way out of the step > writes start, end and duration to the job summary even when it refuses to run
+      Tests  24 passed (24)

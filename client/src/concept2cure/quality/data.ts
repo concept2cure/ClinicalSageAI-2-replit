@@ -55,15 +55,39 @@ export interface QmsDoc {
   programId?: string | null;
   /** While a revision is open: the signed version that still governs the work (server in-force-release.ts). */
   inForce?: { version: string; effectiveDate: string | null } | null;
+  /** The last signed periodic review of the version in force (server periodic-review.ts). */
+  lastReview?: PeriodicReviewSummary | null;
+  /** The next review date the approval signed. `nextReviewDate` is when it is due, after any review. */
+  signedReviewDate?: string | null;
+}
+
+/** A signed periodic review, as the register shows it. */
+export interface PeriodicReviewSummary {
+  signatureId: number;
+  outcome: 'current' | 'revision-required';
+  reviewedAt: string;
+  reviewerName: string | null;
+  /** The reason the reviewer signed with: for "revision required", what needs revising. */
+  reason: string | null;
+  /** The date the reviewer set; null when a revision is required. */
+  nextReviewDate: string | null;
+  version: string;
 }
 
 export interface ReviewDueRow {
   id: number;
   docNumber: string;
   title: string;
+  /** When the version in force is next due: after its last signed review, or the date its approval signed. */
   nextReviewDate: string | null;
   overdue: boolean;
   status: DocStatus;
+  version?: string;
+  /** A revision is open: the version in force stays due, and the revision's approval sets the next review. */
+  underRevision?: boolean;
+  lastReview?: PeriodicReviewSummary | null;
+  /** The next review date the approval signed; "revision required" leaves the document due on it. */
+  signedReviewDate?: string | null;
 }
 
 export interface TrainingRow {
@@ -150,13 +174,22 @@ export const STANDARD_SECTIONS: SopSection[] = [
 export function deriveReviewDue(docs: QmsDoc[], today: string = TODAY): ReviewDueRow[] {
   return docs
     .filter((d) => (d.status === 'effective' || d.status === 'in_review') && d.nextReviewDate)
-    .map((d) => ({
-      id: d.id,
-      docNumber: d.docNumber,
-      title: d.title,
-      nextReviewDate: d.nextReviewDate,
-      overdue: isReviewOverdue(d.nextReviewDate, today),
-      status: d.status,
-    }))
+    .map((d) => reviewRowOf(d, today))
     .sort((a, b) => String(a.nextReviewDate).localeCompare(String(b.nextReviewDate)));
+}
+
+/** A register document as a periodic review row: what Record review needs, from the panel or the register. */
+export function reviewRowOf(d: QmsDoc, today: string = TODAY): ReviewDueRow {
+  return {
+    id: d.id,
+    docNumber: d.docNumber,
+    title: d.title,
+    nextReviewDate: d.nextReviewDate,
+    overdue: isReviewOverdue(d.nextReviewDate, today),
+    status: d.status,
+    version: d.inForce?.version ?? d.version,
+    underRevision: !!d.inForce,
+    lastReview: d.lastReview ?? null,
+    signedReviewDate: d.signedReviewDate ?? null,
+  };
 }

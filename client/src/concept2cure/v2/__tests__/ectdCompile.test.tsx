@@ -55,6 +55,23 @@ describe('EctdCompile — real eCTD assembly', () => {
     expect(screen.getByRole('button', { name: /Download eCTD backbone/ })).toBeTruthy();
   });
 
+  it('shows what the agency holds now, across the filed sequences (gap 6.1)', async () => {
+    (window as any).C2C_PROJECT = { id: 42, title: 'ABC-123' };
+    const fallback = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === '/api/ectd-compile/42/filed-state') {
+        return ok({ projectIdent: '42', submissionId: 7, throughSequence: '0000',
+          sequences: [{ sequenceNumber: '0000', dispatchStatus: 'acknowledged', filed: true }],
+          leaves: [{ ctdSection: '3.2.S.1', fileName: 'general.pdf', title: 'General information', href: 'm3/general.pdf', sequenceNumber: '0000', operation: 'new', md5: 'a'.repeat(32) }] });
+      }
+      return fallback(method, url, body);
+    });
+    render(<EctdCompile {...props()} />);
+    const m3 = await screen.findByRole('table', { name: 'Module 3: 1 document on file' });
+    expect(within(m3).getByText('General information')).toBeTruthy();
+    expect(screen.getByTestId('ectd-filed-state').textContent).toContain('Folds 0000 (acknowledged).');
+  });
+
   it('shows an honest empty state when no program is open (no fixture)', () => {
     render(<EctdCompile {...props()} />);
     expect(screen.getByText(/Open a program to compile its eCTD/)).toBeTruthy();
@@ -419,8 +436,8 @@ describe('EctdCompile — an imported agency-validator report', () => {
     const picker = await screen.findByLabelText('eValidator report file for sequence 0001');
     fireEvent.change(picker, { target: { files: [new File(['{"results":[]}'], 'r.json', { type: 'application/json' })] } });
 
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain('This is not an eValidator report this product reads');
+    // The report's own alert: other cards on the surface (On file at the agency) may raise theirs.
+    await waitFor(() => expect(screen.getAllByRole('alert').some((a) => a.textContent?.includes('This is not an eValidator report this product reads'))).toBe(true));
     expect(screen.queryByRole('region', { name: 'eValidator report — sequence 0001' })).toBeNull();
   });
 });

@@ -50,6 +50,16 @@ const { resolveSignerOrgRole } = vi.hoisted(() => ({
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
+/* 2026-10-22: start, answer and resume ask the composition boundary of the
+   program the session is bound to (services/cmc/interview-composition-scope.ts),
+   and CTX's project is a legacy numeric one, which the boundary refuses. That
+   decision is pinned in cmc-tools-composition-boundary.test.ts; here it admits,
+   so these pin the session bookkeeping. */
+vi.mock('../../cmc/module3-compile', async (orig) => ({
+  ...(await orig<typeof import('../../cmc/module3-compile')>()),
+  assessProgramCompositionScope: vi.fn(async () => null),
+}));
+
 
 /* The runtime instruments the pool on import (server/db/poolInstrumentation
    wraps `pool.query`, keeping a bound reference to the original vi.fn). The

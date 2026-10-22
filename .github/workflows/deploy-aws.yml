@@ -13,6 +13,12 @@ on:
         description: 'Deploy frontend to S3/CloudFront'
         type: boolean
         default: true
+      # Roll the API back to a named revision, and do nothing else (MR-03 OPS-23;
+      # the `rollback` job). Empty: deploy as usual.
+      rollback_taskdef:
+        description: 'Roll back only: the API task-definition revision ARN to return to (leave empty to deploy)'
+        type: string
+        default: ''
 
   push:
     tags:
@@ -99,6 +105,9 @@ jobs:
   ci-verdict:
     name: CI passed for this commit
     runs-on: ubuntu-latest
+    # A rollback dispatch (rollback_taskdef) runs the rollback job alone, and
+    # so nothing that hangs off this one.
+    if: ${{ !github.event.inputs.rollback_taskdef }}
     timeout-minutes: 100
     permissions:
       actions: read
@@ -153,6 +162,9 @@ jobs:
   test:
     name: Pre-deploy Tests
     runs-on: ubuntu-latest
+    # A rollback dispatch (rollback_taskdef) runs the rollback job alone, and
+    # so nothing that hangs off this one.
+    if: ${{ !github.event.inputs.rollback_taskdef }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -180,6 +192,9 @@ jobs:
   security-gate:
     name: Pre-deploy Security Gate (SAST + Trivy + governance)
     runs-on: ubuntu-latest
+    # A rollback dispatch (rollback_taskdef) runs the rollback job alone, and
+    # so nothing that hangs off this one.
+    if: ${{ !github.event.inputs.rollback_taskdef }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -885,6 +900,21 @@ jobs:
         run: |
           set -uo pipefail
 
+          # How long the migration took, per release, in the job summary (OPS-23),
+          # on every way out of this step, a refusal included.
+          MIGRATION_START=$(date -u +%s)
+          record_migration() {
+            local status=$? end
+            end=$(date -u +%s)
+            {
+              echo "### Schema migration"
+              echo "| Started (UTC) | Ended (UTC) | Duration | Exit |"
+              echo "|---|---|---|---|"
+              echo "| $(date -u -d "@$MIGRATION_START" +%FT%TZ) | $(date -u -d "@$end" +%FT%TZ) | $((end - MIGRATION_START)) s | $status |"
+            } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          }
+          trap record_migration EXIT
+
           if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
             echo "::error::No API image digest available, so there is no image to migrate from."
             echo "::error::A deploy that skips the API image cannot migrate the schema. Re-run with deploy_api enabled."
@@ -934,6 +964,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.deploy_api != 'false' }}
     environment: production
+    outputs:
+      # For the rollback job: the revision serving before this deploy, and the
+      # one this deploy rolled.
+      previous_td_arn: ${{ steps.previous.outputs.previous_td_arn }}
+      task_def_arn: ${{ steps.register-api-td.outputs.task_def_arn }}
 
     steps:
       - name: Configure AWS credentials
@@ -1023,6 +1058,21 @@ jobs:
 
           echo "Registered API task def: $NEW_TD_ARN"
           echo "task_def_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
+
+      # The revision to return to if this release fails its smoke test (OPS-10,
+      # OPS-23): whatever the service runs now, read before it moves.
+      - name: Record the revision now serving (the rollback target)
+        id: previous
+        run: |
+          set -euo pipefail
+          PREVIOUS=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_API_SERVICE" \
+            --no-cli-pager --query 'services[0].taskDefinition' --output text)
+          if [[ ! "$PREVIOUS" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_API_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::Could not read the revision $ECS_API_SERVICE runs now ('$PREVIOUS'); refusing to roll a release that could not be rolled back."
+            exit 1
+          fi
+          echo "previous_td_arn=$PREVIOUS" >> "$GITHUB_OUTPUT"
+          echo "Serving before this deploy: $PREVIOUS"
 
       - name: Deploy pinned task def revision (API)
         env:
@@ -1186,3 +1236,82 @@ jobs:
           done
           echo "::error::https://$HOST/readyz did not report ready."
           exit 1
+
+  # ── Roll back the API (MR-03 Stage 4, OPS-10 / OPS-23) ────────────────────
+  # Automatically when the smoke test fails after a successful roll: the service
+  # returns to the revision deploy-api recorded as serving before it moved. On
+  # request with the workflow_dispatch input rollback_taskdef, naming a revision
+  # of the API family; then this job runs alone (ci-verdict, test and
+  # security-gate skip, and everything after them with them).
+  #
+  # Automatic is safe because the schema only grows: every file in
+  # C2C_MIGRATION_FILES is additive and re-runnable (CLAUDE.md RULE 1), so the
+  # previous revision's code runs against the migrated schema as it did before.
+  # A non-additive migration needs a person's decision, and
+  # ci:migration-drop-safety refuses one before it ships. The frontend is not
+  # rolled back here: its bucket versions (terraform/modules/cloudfront), and it
+  # was published only after the API it pairs with rolled.
+  rollback:
+    name: Roll back the API → previous revision
+    needs: [deploy-api, smoke-test]
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ !cancelled()
+      && ((needs.deploy-api.result == 'success' && needs.smoke-test.result == 'failure')
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_taskdef != '')) }}
+    environment: production
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Return the API service to the revision
+        id: rollback
+        env:
+          REQUESTED_TD_ARN: ${{ github.event.inputs.rollback_taskdef }}
+          PREVIOUS_TD_ARN: ${{ needs.deploy-api.outputs.previous_td_arn }}
+          FAILED_TD_ARN: ${{ needs.deploy-api.outputs.task_def_arn }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$REQUESTED_TD_ARN" ]]; then
+            TARGET="$REQUESTED_TD_ARN"; WHY="requested (rollback_taskdef)"
+          else
+            TARGET="$PREVIOUS_TD_ARN"; WHY="the smoke test failed on $FAILED_TD_ARN"
+          fi
+          if [[ ! "$TARGET" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_API_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::'$TARGET' is not a revision of $ECS_API_TASK_FAMILY; nothing was changed."
+            exit 1
+          fi
+          if [[ -n "$FAILED_TD_ARN" && "$TARGET" == "$FAILED_TD_ARN" ]]; then
+            echo "::error::The revision to return to is the one that failed ($TARGET); nothing was changed."
+            exit 1
+          fi
+          # It must exist, and say what it runs. A revision by tag rather than
+          # digest (Terraform's own, before the first deploy) is returned to with
+          # a warning: its image is whatever the tag names now.
+          IMAGE=$(aws ecs describe-task-definition --task-definition "$TARGET" --no-cli-pager \
+            --query "taskDefinition.containerDefinitions[?name=='$ECS_API_CONTAINER_NAME'].image | [0]" --output text)
+          if [[ -z "$IMAGE" || "$IMAGE" == "None" ]]; then
+            echo "::error::$TARGET has no $ECS_API_CONTAINER_NAME container; nothing was changed."
+            exit 1
+          fi
+          [[ "$IMAGE" == *@sha256:* ]] || echo "::warning::$TARGET runs $IMAGE, by tag rather than digest."
+
+          echo "Rolling $ECS_API_SERVICE back to $TARGET ($WHY)."
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_API_SERVICE" \
+            --task-definition "$TARGET" --no-cli-pager > /dev/null
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_API_SERVICE"
+          NOW=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_API_SERVICE" \
+            --no-cli-pager --query 'services[0].taskDefinition' --output text)
+          if [[ "$NOW" != "$TARGET" ]]; then
+            echo "::error::After the rollback $ECS_API_SERVICE runs $NOW, not $TARGET."
+            exit 1
+          fi
+          {
+            echo "### Rolled back"
+            echo "$ECS_API_SERVICE runs \`$TARGET\` ($IMAGE): $WHY."
+          } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          echo "rolled_back_to=$TARGET" >> "${GITHUB_OUTPUT:-/dev/null}"
