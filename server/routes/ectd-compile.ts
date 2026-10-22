@@ -51,7 +51,7 @@ import {
   namesLeafDocument,
   isWithdrawal,
   leafSatisfies,
-  placementModuleReadiness,
+  measureStatus,
   type SpineLeafRow,
 } from '../services/ectd/compile-placement';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
@@ -1396,30 +1396,19 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       { orderBy: 'section_code' },
     );
 
-    // Module-level readiness, against the program's own required set.
-    const required = await resolveRequiredSections(pool, {
-      programType: anchor.programType,
-      primaryAgency: anchor.primaryAgency,
-    });
-
-    // The leaf-rendering half of readiness comes from the submission spine's
-    // REAL state (documents placed into the sequence), not a capability flag.
-    // A named sequence (F14) is read when this project owns it.
+    // The sequence a compile would build (F14: a named one when this project
+    // owns it), and what /status measures for it: its placement, against the
+    // required set of its own market (F23 6/9, services/ectd/compile-placement).
     const chosen = await spineForRequest(req, res, anchor, orgId);
     if (!chosen) return;
     const spine = chosen.spine;
-    // A program has no linked section store, so for it the section-store count
-    // was always 0 of N — shown beside documents already placed in its
-    // sequence. Where the sequence carries leaves, readiness counts what is
-    // PLACED with a document behind it, and says so (`readinessBasis`), so a
-    // placed section is never read as an approved one.
-    const placedLeaves =
-      spine?.sequence && spine.sequence.leafCount > 0
-        ? (await loadSpineLeaves(spine.sequence.id, orgId)).filter(namesLeafDocument)
-        : null;
-
-    const { modules: moduleReadiness, totalRequired, totalCompleted, overallPct } =
-      placementModuleReadiness(required, sections, placedLeaves);
+    const measure = await measureStatus({
+      program: { programType: anchor.programType, primaryAgency: anchor.primaryAgency, hasSectionStore: anchor.numericProjectId !== null },
+      spine,
+      orgId,
+      sections,
+    });
+    const { modules: moduleReadiness, totalRequired, totalCompleted, overallPct } = measure;
 
     res.json({
       projectId: anchor.numericProjectId,
@@ -1437,14 +1426,16 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       submissionReady: overallPct === 100 && submissionBlockers([], anchor, spine).length === 0,
       submissionBlockers: overallPct === 100
         ? submissionBlockers([], anchor, spine)
-        : ['Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
+        : [measure.note ?? 'Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
       modules: moduleReadiness,
       /** 'placed' — counted from documents placed in the sequence; 'approved' —
-       *  from the section store's approved/locked/final statuses. */
-      readinessBasis: placedLeaves ? 'placed' : 'approved',
+       *  from the section store's approved/locked/final statuses; 'no-sequence'
+       *  and 'unavailable' — nothing counted, `readinessNote` says why. */
+      readinessBasis: measure.basis,
+      readinessNote: measure.note,
       /** The sequence a compile would build: its recorded region and type. */
       sequence: await statusSequence(spine, orgId),
-      requiredSectionSource: required.provenance,
+      requiredSectionSource: measure.required?.provenance ?? null,
       totalSections: sections.length,
       totalRequired,
       totalCompleted,
