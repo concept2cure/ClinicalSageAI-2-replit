@@ -110,13 +110,17 @@ export function isCompositionOutOfScope(err: unknown): err is CompositionOutOfSc
  * text reaches an IND. Distinct from `CMC_APPLICATION_OUT_OF_SCOPE` because the
  * remedy is different — nothing is wrong with the program, the read failed.
  */
-export function applicationNotReadable(detail: string): CompositionRefusal {
+export function applicationNotReadable(): CompositionRefusal {
+  /* The read's own error stays in the server log, where the caller writes it
+     (module3-compile.ts judgeProgramComposition). It used to be quoted here,
+     so a driver message (`invalid input syntax for type uuid`, a relation
+     name) reached the 409 body and AnA's answer (2026-10-22). */
   return {
     code: 'CMC_APPLICATION_NOT_READABLE',
     message:
       `This program's submission could not be read, so whether it files a US IND is not established, and ` +
       `Module 3 is not composed on an unestablished application type — a marketing application's content ` +
-      `differs from an IND's. Try again; if it persists, the failure is in the server log (${detail}).`,
+      `differs from an IND's. Try again; if it persists, the failure is in the server log.`,
   };
 }
 
@@ -239,7 +243,7 @@ export function applicationRefusal(
   if (!filed) {
     /* `regulatory_programs.program_type` is NOT NULL, so an empty answer means
        the program row could not be read — not that it files nothing. */
-    return applicationNotReadable(`the ${filer} row could not be read`);
+    return applicationNotReadable();
   }
 
   if (!isUsClinicalTrialApplication(filed)) {
@@ -258,6 +262,15 @@ export function applicationRefusal(
   }
 
   return null;
+}
+
+/**
+ * The status a refusal is answered with. A read that failed is not a verdict
+ * about the program: it is 503, so a screen offers the retry the message asks
+ * for instead of a settled answer. Every other refusal is 409.
+ */
+export function compositionRefusalStatus(refusal: CompositionRefusal): 409 | 503 {
+  return refusal.code === 'CMC_APPLICATION_NOT_READABLE' ? 503 : 409;
 }
 
 /**
@@ -312,6 +325,7 @@ export default {
   anaCompositionRefusal,
   refusedByCompositionScope,
   compositionRefusalBody,
+  compositionRefusalStatus,
   applicationNotReadable,
   CompositionOutOfScopeError,
   isCompositionOutOfScope,

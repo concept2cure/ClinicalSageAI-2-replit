@@ -1,14 +1,16 @@
 
  RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
 
- ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > finds the callers it exists to watch 3ms
- ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts' asks before it calls [ 'analyzeQbdFromSources', …(4) ] 1ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > finds the callers it exists to watch 2ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts' asks before it calls [ 'analyzeQbdFromSources', …(4) ] 0ms
  ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…' asks before it calls [ 'runIchComplianceCheck', …(1) ] 0ms
- ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/ana/AnaToolExecutor.ts is listed with a reason, and still needs to be 6ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/module3-convergence-s…' asks before it calls [ …(3) ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/submission-package-orchestrator.ts asks through the file named 1ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/ana/AnaToolExecutor.ts is listed with a reason, and still needs to be 0ms
  ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/routes/orchestration.ts is listed with a reason, and still needs to be 0ms
 
  Test Files  1 passed (1)
-      Tests  5 passed (5)
-   Start at  04:51:49
-   Duration  3.07s (transform 76ms, setup 82ms, import 2.71s, tests 17ms, environment 0ms)
+      Tests  7 passed (7)
+   Start at  05:20:57
+   Duration  5.47s (transform 81ms, setup 88ms, import 5.10s, tests 9ms, environment 0ms)
 

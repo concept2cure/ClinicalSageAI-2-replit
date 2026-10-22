@@ -28,23 +28,50 @@ import { describe, expect, it } from 'vitest';
 
 const ROOT = join(__dirname, '../../../..');
 
-/** The engines, and the files that define them (which call each other). */
+/** The engines and the Module 3 composers, and the files that define them (which call each other). */
 const ENGINES = [
   'analyzeQbdFromSources',
   'runIchComplianceCheck',
   'generateControlStrategy',
   'estimateRecordedShelfLife',
   'assessRecordedPoolability',
+  // The composers. composeProjectModule3 asks the boundary itself, so its
+  // callers are not listed; these do not.
+  'composeFullModule3',
+  'composeModule3FromCanonicalSources',
+  'buildModule3WithNarrative',
+  'composeRegional',
+  'composeAppendices',
 ];
 const ENGINE_FILES = new Set([
   'server/services/cmc/qbd-analyzer.ts',
   'server/services/cmc/ich-compliance-checker.ts',
   'server/services/cmc/control-strategy-generator.ts',
   'server/services/cmc/recorded-stability.ts',
+  'server/services/module3Composer.ts',
+  'server/services/module3-extensions.ts',
+  'server/services/cmc/module3-narrative-builder.ts',
+  // Defines the boundary decision and asks it before it composes.
+  'server/services/cmc/module3-compile.ts',
 ]);
 
 /** The boundary decision, by the names a caller reaches it through (services/cmc/module3-compile.ts). */
 const BOUNDARY = ['assessProgramCompositionScope', 'programCompositionRefusal', 'admitProgramComposition'];
+
+/**
+ * Callers that ask through another file, each with where. The orchestrator's
+ * Module 3 comes only from the governed loader, which judges the program; the
+ * orchestrator judges the target it composes for.
+ */
+const ASKED_THROUGH: Record<string, { reason: string; here: string; there: [file: string, marker: string] }> = {
+  'server/services/submission-package-orchestrator.ts': {
+    reason:
+      'Its cmcSources come only from loadApprovedCmcSourcesForProject, which asks the program boundary once the ' +
+      'export gate opens; m3.compose asks applicationRefusal of the package target before composing.',
+    here: 'applicationRefusal(',
+    there: ['server/services/cmc/load-approved-cmc-sources-for-project.ts', 'assessProgramCompositionScope('],
+  },
+};
 
 /** Callers that do not ask yet, each with why. */
 const NOT_YET: Record<string, string> = {
@@ -93,8 +120,18 @@ describe('callers of the CMC engines ask the composition boundary', () => {
     );
   });
 
-  it.each(callers.filter((c) => !(c.file in NOT_YET)))('$file asks before it calls $engines', ({ asks }) => {
-    expect(asks).toBe(true);
+  it.each(callers.filter((c) => !(c.file in NOT_YET) && !(c.file in ASKED_THROUGH)))(
+    '$file asks before it calls $engines',
+    ({ asks }) => {
+      expect(asks).toBe(true);
+    },
+  );
+
+  it.each(Object.entries(ASKED_THROUGH))('%s asks through the file named', (file, { reason, here, there }) => {
+    expect(reason.length).toBeGreaterThan(40);
+    expect(callers.some((c) => c.file === file), `${file} calls no engine any more: remove its entry`).toBe(true);
+    expect(readFileSync(join(ROOT, file), 'utf8')).toContain(here);
+    expect(readFileSync(join(ROOT, there[0]), 'utf8')).toContain(there[1]);
   });
 
   it.each(Object.entries(NOT_YET))('%s is listed with a reason, and still needs to be', (file, reason) => {

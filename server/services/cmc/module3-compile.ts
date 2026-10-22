@@ -191,7 +191,7 @@ async function judgeProgramComposition(
     await client.query('ROLLBACK TO SAVEPOINT m3_scope').catch(() => undefined);
     const detail = spineErr instanceof Error ? spineErr.message : String(spineErr);
     console.warn('[module3-compile] submission spine unreadable; refused at the composition boundary:', detail);
-    return { refusal: applicationNotReadable(detail), regional: null };
+    return { refusal: applicationNotReadable(), regional: null };
   }
   /* The program's own declared type, not the spine's: the spine can only
      carry the same one (see resolveProjectRegional), and reaching for it would
@@ -245,7 +245,7 @@ export async function assessProgramCompositionScope(
 /** The regional facts of a program the boundary admits; its refusal, thrown, otherwise. */
 function admitted(judged: Awaited<ReturnType<typeof judgeProgramComposition>>) {
   if (judged.refusal || !judged.regional) {
-    throw new CompositionOutOfScopeError(judged.refusal ?? applicationNotReadable('no regional facts'));
+    throw new CompositionOutOfScopeError(judged.refusal ?? applicationNotReadable());
   }
   return judged.regional;
 }
@@ -253,17 +253,28 @@ function admitted(judged: Awaited<ReturnType<typeof judgeProgramComposition>>) {
 /**
  * The boundary for a reader holding no transaction that must also enumerate
  * the 3.2.R sections compose writes — the build board. Judged on the sources
- * the caller already read, as compose judges its own; returns the regional
- * facts compose would write 3.2.R for, or throws the refusal compose would.
+ * the caller already read, which must be in compose's order (newest first:
+ * the newest drug substance is the one judged); returns the regional facts
+ * compose would write 3.2.R for, or throws the refusal compose would.
+ *
+ * One difference, on purpose. A program with NO CMC records yet is admitted
+ * past "modality not established": nothing is recorded, so nothing is
+ * established, and the board is where the first record is made. Its declared
+ * product class and its application are still judged, so a biologic program
+ * or one filing an NDA is refused before anything is recorded. (Compose has
+ * nothing to compose for it either way.)
  */
 export async function admitProgramComposition(
   orgId: number,
   projectId: string,
   knownSources: CanonicalSource[],
 ): Promise<Awaited<ReturnType<typeof resolveProjectRegional>>> {
-  return inReadOnlyTransaction(async (client) =>
-    admitted(await judgeProgramComposition(client, orgId, projectId, knownSources)),
-  );
+  return inReadOnlyTransaction(async (client) => {
+    const judged = await judgeProgramComposition(client, orgId, projectId, knownSources);
+    const nothingRecordedYet =
+      knownSources.length === 0 && judged.refusal?.code === 'CMC_MODALITY_NOT_ESTABLISHED' && judged.regional;
+    return nothingRecordedYet ? judged.regional! : admitted(judged);
+  });
 }
 
 /**

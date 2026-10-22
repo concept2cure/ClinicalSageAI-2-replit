@@ -4,7 +4,7 @@ import { getPool } from '../../db';
 import { summarizeSectionDiff } from '../../services/cmc-module3-compiler';
 import { renderComposedSectionMarkdown } from '../../services/module3Composer';
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
-import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
+import { compositionRefusalBody, compositionRefusalStatus, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
@@ -201,7 +201,7 @@ router.post('/compile/:projectId', async (req, res) => {
        (services/cmc/composition-scope.ts). A business refusal, not a server
        fault: 409 with the reason and the path that does author it. */
     if (isCompositionOutOfScope(error)) {
-      return res.status(409).json(compositionRefusalBody(error.refusal));
+      return res.status(compositionRefusalStatus(error.refusal)).json(compositionRefusalBody(error.refusal));
     }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -1016,7 +1016,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     // Same boundary as the compile: a refresh re-composes, so it is refused on
     // the same terms (services/cmc/composition-scope.ts).
     if (isCompositionOutOfScope(error)) {
-      return res.status(409).json(compositionRefusalBody(error.refusal));
+      return res.status(compositionRefusalStatus(error.refusal)).json(compositionRefusalBody(error.refusal));
     }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -1124,7 +1124,7 @@ router.post('/place-into-submission/:projectId', requireRole('regulatory-author'
         return res.status(409).json({ success: false, code: 'CROSS_PROJECT', error: result.error });
       }
       if (result.refusedBy === 'composition-scope') {
-        return res.status(409).json(compositionRefusalBody(result.refusal));
+        return res.status(compositionRefusalStatus(result.refusal)).json(compositionRefusalBody(result.refusal));
       }
       return res.status(409).json({ success: false, error: result.error, skipped: result.skipped });
     }

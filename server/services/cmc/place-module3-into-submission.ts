@@ -484,8 +484,8 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
       refusedBy: 'wrong-submission-type',
       error:
         `Module 3 files on CTD headings, and this submission files on ${targetVocabulary} ` +
-        'sections. Nothing was written. Place Module 3 into an eCTD submission ' +
-        '(IND, NDA, BLA or their equivalents).',
+        'sections. Nothing was written. Place Module 3 into the program’s US IND, the one application ' +
+        'Module 3 is composed for here.',
       vocabulary: targetVocabulary,
     };
   }

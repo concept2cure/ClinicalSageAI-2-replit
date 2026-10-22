@@ -1,0 +1,11 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcQualityBoundary.test.tsx > CmQuality — the QbD read > shows the boundary’s refusal in the server’s words, not as an outage 93ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcQualityBoundary.test.tsx > CmQuality — the QbD read > still reports a failed read as a failure 35ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  05:24:06
+   Duration  1.91s (transform 633ms, setup 156ms, import 790ms, tests 131ms, environment 613ms)
+

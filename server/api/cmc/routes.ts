@@ -73,7 +73,7 @@ import {
   withoutSignatureFields,
 } from '../../services/cmc/signed-record';
 import { createScopedLogger } from '../../utils/logger';
-import { compositionRefusalBody, studyFiledUnderNoProgram } from '../../services/cmc/composition-scope';
+import { compositionRefusalBody, compositionRefusalStatus, studyFiledUnderNoProgram } from '../../services/cmc/composition-scope';
 import * as metricsModule from '../../metrics.js';
 import { serverError } from '../../lib/api-response';
 import { launchScopeEnforced } from '../../services/entitlements/launch-scope';
@@ -2311,7 +2311,7 @@ async function refusedAtCompositionBoundary(res: express.Response, orgId: number
   const { assessProgramCompositionScope } = await import('../../services/cmc/module3-compile');
   const refusal = await assessProgramCompositionScope(orgId, projectId);
   if (!refusal) return false;
-  res.status(409).json(compositionRefusalBody(refusal));
+  res.status(compositionRefusalStatus(refusal)).json(compositionRefusalBody(refusal));
   return true;
 }
 

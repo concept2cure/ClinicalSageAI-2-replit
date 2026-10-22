@@ -108,6 +108,17 @@ describe.each(programRoutes)('$name asks the composition boundary first', ({ cal
     expect(assessProgramCompositionScope).toHaveBeenCalledWith(ORG, P);
     expect(engine).toHaveBeenCalled();
   });
+
+  it('answers a read the boundary could not make 503, so a screen offers the retry, and runs nothing', async () => {
+    assessProgramCompositionScope.mockResolvedValue({
+      code: 'CMC_APPLICATION_NOT_READABLE',
+      message: "This program's submission could not be read … Try again; if it persists, the failure is in the server log.",
+    });
+    const res = await call();
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('CMC_APPLICATION_NOT_READABLE');
+    expect(engine).not.toHaveBeenCalled();
+  });
 });
 
 describe('POST /stability-studies/:id/shelf-life judges the study’s own program', () => {

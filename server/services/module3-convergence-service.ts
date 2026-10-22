@@ -168,7 +168,8 @@ export async function getModule3BuildStatus(
               source_payload AS "sourcePayload", source_hash AS "sourceHash",
               updated_at AS "updatedAt"
        FROM cmc_source_objects
-       WHERE organization_id = $1 AND project_id = $2`,
+       WHERE organization_id = $1 AND project_id = $2
+       ORDER BY updated_at DESC`,
       [orgId, projectId],
     ),
     pool.query(

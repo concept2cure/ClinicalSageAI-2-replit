@@ -152,6 +152,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  await q(`UPDATE regulatory_programs SET product_type = 'drug' WHERE id = $1`, [PROGRAM]);
   await recordSubstance(SMALL_MOLECULE);
   await filesApplication('ind');
 });
@@ -188,6 +189,35 @@ describe('the build board (getModule3BuildStatus)', () => {
     await filesApplication('nda');
     const refusal = await refusalOf(getModule3BuildStatus(ORG, PROGRAM));
     expect(refusal?.code).toBe('CMC_APPLICATION_OUT_OF_SCOPE');
+  });
+
+  it('judges the NEWEST drug substance, as compose does, whatever order the rows are stored in', async () => {
+    /* The older record names the substance only, so on its own its modality
+       is not established; the newer one records the synthesis. Compose reads
+       newest first and admits the program. The board read in storage order and
+       judged the older one (found by the review of 2026-10-22). */
+    await q(`DELETE FROM cmc_source_objects WHERE project_id = $1`, [PROGRAM]);
+    await q(
+      `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, updated_at)
+       VALUES ($1, $2, 'drug_substance', 'drug_substance:1', $3::jsonb, '2026-01-01T00:00:00Z'),
+              ($1, $2, 'drug_substance', 'drug_substance:2', $4::jsonb, '2026-06-01T00:00:00Z')`,
+      [ORG, PROGRAM, JSON.stringify({ name: 'BX-702' }), JSON.stringify(SMALL_MOLECULE)],
+    );
+    expect(await refusalOf(getModule3BuildStatus(ORG, PROGRAM))).toBeNull();
+  });
+
+  it('gives a program with no CMC records yet its empty board, not a refusal', async () => {
+    await q(`DELETE FROM cmc_source_objects WHERE project_id = $1`, [PROGRAM]);
+    const { sections } = await getModule3BuildStatus(ORG, PROGRAM);
+    expect(sections.length).toBeGreaterThan(0);
+    expect(sections.every((s) => s.sourceObjectCount === 0)).toBe(true);
+  });
+
+  it('still refuses a program with no records whose declared class is outside the boundary', async () => {
+    await q(`DELETE FROM cmc_source_objects WHERE project_id = $1`, [PROGRAM]);
+    await q(`UPDATE regulatory_programs SET product_type = 'biologic' WHERE id = $1`, [PROGRAM]);
+    const refusal = await refusalOf(getModule3BuildStatus(ORG, PROGRAM));
+    expect(refusal?.code).toBe('CMC_PRODUCT_CLASS_OUT_OF_SCOPE');
   });
 });
 

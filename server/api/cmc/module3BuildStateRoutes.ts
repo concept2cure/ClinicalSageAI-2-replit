@@ -26,7 +26,7 @@ import { MODULE3_SECTION_RULES } from '../../services/module3Composer';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
 import { guardModule3Project, module3OrgId } from './module3-project-guard';
-import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
+import { compositionRefusalBody, compositionRefusalStatus, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 
 const router = express.Router();
 const log = createScopedLogger('module3-build-state');
@@ -163,7 +163,7 @@ router.get('/build-state/:projectId', async (req, res) => {
        small-molecule board to show: the boundary's own 409, as compile and
        build-section answer, instead of completeness scored by rules that are
        not its product's. */
-    if (isCompositionOutOfScope(error)) return res.status(409).json(compositionRefusalBody(error.refusal));
+    if (isCompositionOutOfScope(error)) return res.status(compositionRefusalStatus(error.refusal)).json(compositionRefusalBody(error.refusal));
     return serverError(res, log, 'computing the build state', error);
   }
 });

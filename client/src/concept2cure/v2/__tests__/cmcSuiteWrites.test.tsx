@@ -531,6 +531,33 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     expect(screen.queryByText('Couldn’t load the Module 3 build state')).toBeNull();
   });
 
+  it('titles a substance whose modality is not recorded yet as a record still to make, by the refusal’s code', async () => {
+    const notYet =
+      'Whether this program’s drug substance is a small molecule is not established — no manufacturing route is recorded. Record the manufacturing route on the drug substance, then compile again.';
+    apiRequest.mockImplementation(async (m: string, u: string) => {
+      if (u.startsWith('/api/cmc/module3-os/build-state/')) {
+        throw Object.assign(new Error(notYet), { status: 409, code: 'CMC_MODALITY_NOT_ESTABLISHED' });
+      }
+      return res({ success: true, data: null });
+    });
+    render(<CmModule3Build ask={() => {}} />);
+    expect(await screen.findByText('This program’s drug substance is not established yet')).toBeTruthy();
+    expect(screen.getByText(notYet)).toBeTruthy();
+    expect(screen.queryByText('Module 3 is not composed here for this program')).toBeNull();
+  });
+
+  it('reports a read the boundary could not make (503) as a failure, with its retry, never as a verdict', async () => {
+    apiRequest.mockImplementation(async (m: string, u: string) => {
+      if (u.startsWith('/api/cmc/module3-os/build-state/')) {
+        throw Object.assign(new Error('This program’s submission could not be read … Try again.'), { status: 503, code: 'CMC_APPLICATION_NOT_READABLE' });
+      }
+      return res({ success: true, data: null });
+    });
+    render(<CmModule3Build ask={() => {}} />);
+    expect(await screen.findByText('Couldn’t load the Module 3 build state')).toBeTruthy();
+    expect(screen.queryByText('Module 3 is not composed here for this program')).toBeNull();
+  });
+
   it('says the artifact registry is unlinked instead of rendering its absence as "no artifacts"', async () => {
     wire((m, u) =>
       m === 'GET' && u.startsWith('/api/cmc/module3-os/build-state/')

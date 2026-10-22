@@ -76,12 +76,12 @@ on a real engine.
 
 | Check | Red | Green |
 |---|---|---|
-| Routes: `server/api/cmc/__tests__/composition-boundary-routes.test.ts` | `routes-red.txt`: 10 failed / 12 | `routes-green.txt`: 12 / 12 |
-| Readers on a real engine: `server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts` (trunk's board and QOS tool) | `readers-red.txt`: 5 failed / 7 | `readers-green.txt`: 7 / 7 |
-| Board UI: `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx` | `board-red.txt`: the refusal case fails on trunk's surface | `board-green.txt`: 22 / 22 |
+| Routes: `server/api/cmc/__tests__/composition-boundary-routes.test.ts` | `routes-red.txt`: 10 failed / 12 | `routes-green.txt`: 15 / 15 (with the 503 cases) |
+| Readers on a real engine: `server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts` (trunk's board and QOS tool) | `readers-red.txt`: 5 failed / 7 | `readers-green.txt`: 10 / 10 (with the review's cases) |
+| Board UI: `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx` | `board-red.txt`: the refusal case fails on trunk's surface | `board-green.txt`: 26 / 26 (with `cmcQualityBoundary.test.tsx`) |
 | Placement: `server/services/cmc/__tests__/place-module3-into-submission.test.ts` | `placement-red.txt`: 6 failed / 27 | `placement-green.txt`: 27 / 27 |
 | Commands: `server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts` | `commands-red.txt`: 2 failed / 4 | `commands-green.txt`: 4 / 4 |
-| Static contract: `server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts` (trunk's routes and commands) | `callers-contract-red.txt`: 2 failed / 5 | `callers-contract-green.txt`: 5 / 5 |
+| Static contract: `server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts` (trunk's routes, commands, board, orchestrator and loader) | `callers-contract-red.txt`: 4 failed / 7 | `callers-contract-green.txt`: 7 / 7 |
 
 Existing tests whose mocks predated the boundary were brought to it, without
 weakening what they assert: `module3-convergence-build-status`,
@@ -90,6 +90,28 @@ to admit; these pin the figures for an admitted program),
 `stabilityPoolabilityRoute` (studies carry their program), the two QOS tool
 tests (their pools lend a connection), and the placement test's "places
 normally" case, which used an NDA and now uses an IND.
+
+## The adversarial review of this change, and what it changed
+
+Workflow `wf_16d9924c-19a` reviewed the uncommitted diff through four lenses:
+wiring, transactions, honest state and test validity. I checked each claim
+below against the code before acting on it, and each fix was seen failing
+first.
+
+| Finding | Fix | Red → green |
+|---|---|---|
+| **The submission-package orchestrator** (`POST /api/submission-orchestrator/runs`, `/runs/for-program`, both served at launch) composed and signed Module 3 without asking the boundary. A program approved before P-28 passed the export gate, and a run targeting an NDA or MAA carried IND-composed text. | `load-approved-cmc-sources-for-project.ts` asks `assessProgramCompositionScope` once the gate opens. A refusal closes the gate in the boundary's words; an unevaluable boundary is `unknown`. `m3.compose` asks `applicationRefusal(submissionType, 'submission')` before composing. The callers contract now watches the composers too, and records this caller in `ASKED_THROUGH`. | `orchestrator-red.txt` 4 failed → `orchestrator-green.txt` 56/56 |
+| The board read sources **unordered**, while compose reads newest first, and the boundary judges the first `drug_substance`. So the board could judge a different substance than compile. | `ORDER BY updated_at DESC`, as `loadCanonicalSources`. | `readers-review-red.txt` |
+| A program with **no CMC records yet** was refused at the board ("not established"), which hid the first-run state. | `admitProgramComposition` admits past "not established" when nothing is recorded. The declared class and the application are still judged. | `readers-review-red.txt` (2 red); 10/10 |
+| A read that failed (`CMC_APPLICATION_NOT_READABLE`) was answered 409 and shown as a settled verdict with no retry. Its message also quoted the driver's error. | `compositionRefusalStatus`: 503 for a failed read, 409 for a verdict, at every route that answers the boundary's body. The driver text stays in the server log. | `routes-503-red.txt` 3 failed → 15/15 |
+| The board titled "modality not recorded yet" as "not composed here". | `useLiveData` now carries the server's error `code` (`dataConnect.tsx`; copy changes, codes do not), and the board titles that case as a record still to make. | `board-review-red.txt` |
+| CMC Quality showed the QbD 409 as "The QbD register didn't respond". | A refusal state in the server's words (`cmc-qbd-out-of-scope`). | `quality-red.txt` → `quality-green.txt` |
+| The shelf-life and poolability refusals toasted "Couldn't save…", for an assessment that saves nothing. | `cmcAssessmentThrew`. | covered by copy only |
+| Placement's wrong-submission-type refusal still advised an NDA or BLA. | Now advises the program's US IND. | copy only |
+
+The review also raised legacy numeric project ids. They reach the boundary as
+a program-row read that cannot succeed, and are now answered 503 rather than
+quoting a uuid cast error. Compose has refused them since `ebde394d7`.
 
 ## Behaviour a reader should know
 
