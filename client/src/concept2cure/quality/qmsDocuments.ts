@@ -31,6 +31,8 @@ async function mutate(path: string, body: unknown): Promise<MutationRow> {
 }
 export function createQmsDocument(input: {
   title: string; docType: DocType; programId: string; reason: string; templateKey?: string; docNumber?: string;
+  /** YYYY-MM-DD; the periodic review the server schedules and review-due reads. */
+  nextReviewDate?: string;
 }) { return mutate('/api/mdx/qms/documents', input); }
 export function bindQmsDocument(id: number, input: { programId: string; reason: string; templateKey?: string }) {
   return mutate(`/api/mdx/qms/documents/${id}/bind`, input);

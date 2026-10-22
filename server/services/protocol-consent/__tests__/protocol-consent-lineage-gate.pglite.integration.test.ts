@@ -42,10 +42,10 @@ async function spans(elementId: number) {
   return r.rows as Array<{ provenance_kind: string; reference_id: string | null }>;
 }
 async function seed(): Promise<number> {
-  await exec.query(`INSERT INTO consent_forms (id, organization_id, status) VALUES (1, $1, 'draft') ON CONFLICT DO NOTHING`, [ORG]);
+  await exec.query(`INSERT INTO consent_forms (id, organization_id, title, status, created_by) VALUES (1, $1, 'ICF', 'draft', $2) ON CONFLICT DO NOTHING`, [ORG, USER]);
   const r = await exec.query(
-    `INSERT INTO consent_form_elements (organization_id, consent_form_id, content) VALUES ($1, 1, '') RETURNING id`,
-    [ORG],
+    `INSERT INTO consent_form_elements (organization_id, consent_form_id, element_key, title, content, created_by) VALUES ($1, 1, 'risks', 'Risks', '', $2) RETURNING id`,
+    [ORG, USER],
   );
   return (r.rows[0] as { id: number }).id;
 }
@@ -58,10 +58,8 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
   await pglite.exec(migration('migrations/20260907_span_lineage_accepted_machine_draft.sql'));
   await pglite.exec(migration('migrations/20260908_span_lineage_machine_draft.sql'));
-  await pglite.exec(`
-    CREATE TABLE consent_forms (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'draft', updated_at TIMESTAMPTZ DEFAULT now());
-    CREATE TABLE consent_form_elements (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, consent_form_id INTEGER NOT NULL, content TEXT, present BOOLEAN DEFAULT false, updated_at TIMESTAMPTZ DEFAULT now());
-  `);
+  await pglite.exec(`CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY); INSERT INTO users (id) VALUES (${USER}) ON CONFLICT DO NOTHING;`);
+  await pglite.exec(migration('migrations/20260629_protocol_consent.sql'));
 }, 60_000);
 afterAll(async () => {
   await pglite?.close();

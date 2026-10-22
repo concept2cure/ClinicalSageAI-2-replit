@@ -1,0 +1,5 @@
+# MUTATION: the field is shown but its value is not sent (the payload spread removed) (2026-10-22T04:46:44Z)
+ × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > sends the periodic review date chosen at create, which review-due reads
+   → expected "vi.fn()" to be called with arguments: [ 'POST', …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)

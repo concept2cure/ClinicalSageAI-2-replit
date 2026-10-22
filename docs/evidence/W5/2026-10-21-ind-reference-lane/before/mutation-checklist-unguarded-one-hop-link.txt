@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a replace by a later version supersedes the current earlier version without a blocker 22ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a later version placed as new replaces the current earlier version, so a withdrawal of it leaves nothing current 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a withdrawal naming the later version withdraws the earlier version on record 8ms
+ × server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > does not follow a predecessor link the database rules refuse 14ms
+   → expected [] to deeply equal [ StringContaining{…} ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > does not follow a predecessor link the database rules refuse
+AssertionError: expected [] to deeply equal [ StringContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   StringContaining "replace names no current document",
+- ]
++ []
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts:100:39
+     98|   it('does not follow a predecessor link the database rules refuse', a…
+     99|     await fileActs([[V1, 'new'], [VX, 'replace']]);
+    100|     expect(await lifecycleBlockers()).toEqual([expect.stringContaining…
+       |                                       ^
+    101|   });
+    102| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  01:43:51
+   Duration  5.75s (transform 1.27s, setup 88ms, import 2.87s, tests 2.48s, environment 0ms)
+
+EXIT 1

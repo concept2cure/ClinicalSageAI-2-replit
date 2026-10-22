@@ -64,9 +64,9 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No cover letter was included in the NDA submission.',
-          'A cover letter is required under 21 CFR 314.50(a) as part of the application form and must identify the drug, proposed indication, and application type.',
+          '21 CFR 314.50(a) requires a completed and signed application form (Form FDA 356h); it does not require a cover letter. FDA guidance recommends a cover letter (eCTD Module 1.2) that identifies the drug, proposed indication, and application type.',
           '21 CFR 314.50(a); FDA Guidance: Formatting, Assembling, and Submitting NDA/BLA Applications (2022)',
-          'Include a cover letter in Module 1.0 that clearly identifies the applicant, drug product, proposed indication(s), application type (505(b)(1) or 505(b)(2)), and references any pre-submission meetings with the Agency.',
+          'Include a cover letter in Module 1.2 (Cover letters) that clearly identifies the applicant, drug product, proposed indication(s), application type (505(b)(1) or 505(b)(2)), and references any pre-submission meetings with the Agency.',
           ['cover_letter', 'application_type'],
         );
       }
@@ -134,8 +134,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No Integrated Summary of Effectiveness (ISE) was found in the submission.',
-          'The ISE is required under 21 CFR 314.50(d)(5)(vi)(b) to integrate efficacy results across studies and demonstrate substantial evidence of effectiveness.',
-          '21 CFR 314.50(d)(5)(vi)(b); 21 CFR 314.126; ICH M4E(R2) Section 2.7.3',
+          'The ISE is required under 21 CFR 314.50(d)(5)(v) to integrate efficacy results across studies and demonstrate substantial evidence of effectiveness.',
+          '21 CFR 314.50(d)(5)(v); 21 CFR 314.126; ICH M4E(R2) Section 2.7.3',
           'Prepare an ISE that integrates efficacy data across all adequate and well-controlled studies, including individual study results, pooled analyses, consistency of effect across subgroups, and dose-response relationships.',
           ['integrated_summary_effectiveness', 'pivotal_study_count'],
         );
@@ -290,7 +290,7 @@ const rules: AuditRule[] = [
     id: rid('wrong_application_type'),
     dimension: 'regulatory_alignment',
     title: 'Application Type Not Justified',
-    question: 'The applicant has filed under 505(b)(2) but has not identified a listed drug or provided the required right-of-reference or suitability petition. Can the applicant confirm the regulatory basis for this application type and provide the necessary supporting documentation?',
+    question: 'The applicant has filed under 505(b)(2) but has not identified the listed drug(s) or published literature relied upon. Can the applicant confirm the regulatory basis for this application type and provide the necessary supporting documentation?',
     check(answers) {
       const appType = String(answers.application_type ?? '').toLowerCase();
       if (appType.includes('505(b)(2)') || appType.includes('505b2')) {
@@ -302,7 +302,7 @@ const rules: AuditRule[] = [
             this.title,
             this.question,
             `Application type is "${answers.application_type}" but no listed drug or right-of-reference is identified.`,
-            'A 505(b)(2) application must identify the listed drug(s) relied upon and include a right-of-reference letter or suitability petition per 21 CFR 314.54.',
+            'A 505(b)(2) application must identify the listed drug(s) and/or published literature relied upon for safety and/or effectiveness, and include the patent certifications or statements and exclusivity information required by 21 CFR 314.54 and 314.50(i)-(j); no right-of-reference letter or suitability petition is required, since a 505(b)(2) by definition relies on data the applicant has no right of reference to.',
             '21 CFR 314.54; FDA Guidance: Applications Covered by Section 505(b)(2) (2023); 21 CFR 314.50(i)',
             'Identify the listed drug(s) relied upon for safety and/or efficacy data, submit a right-of-reference letter if relying on proprietary data, or reclassify as a 505(b)(1) full NDA with complete nonclinical and clinical data packages.',
             ['application_type', 'listed_drug_reference', 'suitability_petition'],
@@ -349,7 +349,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Required patent certifications are absent from the submission.',
-          'Patent certifications (Paragraph I-IV) are required under 21 CFR 314.50(i) for any drug product with listed patents in the Orange Book.',
+          'Patent certifications (Paragraph I-IV) are required under 21 CFR 314.50(i) for a 505(b)(2) application, for each patent listed in the Orange Book that claims the listed drug relied upon or an approved use of it. A 505(b)(1) applicant instead submits patent information on its own drug under 21 CFR 314.50(h) and 314.53.',
           '21 CFR 314.50(i); 21 CFR 314.53; FD&C Act Section 505(b)(2)(A) and 505(j)(2)(A)',
           'Submit the required patent certifications (Paragraph I, II, III, or IV) for each patent listed in the Orange Book for the reference listed drug. If Paragraph IV certifications are made, prepare for potential patent litigation and 30-month stay provisions.',
           ['patent_certifications', 'listed_drug_reference', 'application_type'],
@@ -397,7 +397,7 @@ const rules: AuditRule[] = [
           'PDUFA user fee payment status is not confirmed in the submission.',
           'Under PDUFA VII (FD&C Act Section 736), a prescription drug user fee must accompany the NDA submission. The application will not be received for filing without confirmed fee payment.',
           'FD&C Act Section 736; PDUFA VII Commitment Letter; 21 CFR 314.50(a)',
-          'Confirm PDUFA user fee payment and include the payment confirmation or fee waiver/reduction request in Module 1.2 of the eCTD submission.',
+          'Confirm PDUFA user fee payment and include the user fee cover sheet (Form FDA 3397), with the payment confirmation or the fee waiver/reduction determination, in Module 1.1 (Forms) of the eCTD submission.',
           ['pdufa_user_fee_paid', 'fee_waiver_request'],
         );
       }
@@ -448,7 +448,7 @@ const rules: AuditRule[] = [
           this.question,
           'No pre-specified Statistical Analysis Plan (SAP) was referenced or provided.',
           'The primary analysis must be pre-specified per ICH E9 Section 5.1 and ICH E9(R1) to avoid bias from post-hoc analytical selection.',
-          'ICH E9 Section 5.1; ICH E9(R1) Addendum; 21 CFR 314.126(b)(2)(v); FDA Guidance: Statistical Principles for Clinical Trials (1998)',
+          'ICH E9 Section 5.1; ICH E9(R1) Addendum; 21 CFR 314.126(b)(1) and (b)(7); FDA Guidance: Statistical Principles for Clinical Trials (1998)',
           'Provide the finalized SAP dated before database lock, clearly specifying the primary analysis method, handling of missing data (estimand framework per ICH E9(R1)), sensitivity analyses, and multiplicity adjustments.',
           ['prespecified_sap', 'statistical_method', 'primary_endpoint'],
         );
@@ -474,8 +474,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Multiple primary/key secondary endpoints are declared but no multiplicity adjustment strategy is described.',
-          'When multiple primary endpoints or a gatekeeping strategy for key secondary endpoints is used, a pre-specified multiplicity adjustment is required per ICH E9 Section 5.7 and FDA Guidance on Multiple Endpoints.',
-          'ICH E9 Section 5.7; ICH E9(R1); FDA Guidance: Multiple Endpoints in Clinical Trials (2022)',
+          'When multiple primary endpoints or a gatekeeping strategy for key secondary endpoints is used, a pre-specified multiplicity adjustment is required per ICH E9 Section 5.6 and FDA Guidance on Multiple Endpoints.',
+          'ICH E9 Section 5.6; ICH E9(R1); FDA Guidance: Multiple Endpoints in Clinical Trials (2022)',
           'Implement a pre-specified multiplicity adjustment strategy such as hierarchical (fixed-sequence) testing, Hochberg, Holm, or graphical testing procedures. Document the strategy in the SAP.',
           ['multiple_primary_endpoints', 'multiplicity_adjustment', 'prespecified_sap'],
         );
@@ -547,7 +547,7 @@ const rules: AuditRule[] = [
           this.title,
           `The projected approval timeline of ${timeline} months is shorter than even a Priority Review cycle (6 months). Has the applicant accounted for the standard PDUFA review timeline?`,
           `Projected approval timeline of ${timeline} months is unrealistically short.`,
-          'Under PDUFA VII, the standard NDA review clock is 10 months (Standard Review) or 6 months (Priority Review) from the filing date. Accelerated programs may modify the timeline but rarely compress below 6 months.',
+          'Under PDUFA VII, the standard NDA review clock is 10 months (Standard Review) or 6 months (Priority Review); for new molecular entity NDAs reviewed under the PDUFA Program, the clock runs from the 60-day filing date (12 or 8 months from receipt), while for non-NME NDAs it runs from the receipt date. Accelerated programs may modify the timeline but rarely compress below 6 months.',
           'PDUFA VII Commitment Letter; FD&C Act Section 505(c); FDA MAPP 6020.3 (NDA Review Timelines)',
           'Adjust the projected timeline to at least 10 months for Standard Review or 6 months for Priority Review. Factor in potential FDA information requests (Day 74 letter), pre-approval facility inspections, and potential advisory committee meetings.',
           ['projected_approval_months', 'review_designation', 'pdufa_goal_date'],
@@ -593,8 +593,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No commercial supply chain or distribution plan is described in the submission.',
-          'All manufacturing, testing, and packaging sites must be identified in the NDA per 21 CFR 314.50(d)(1) to allow pre-approval inspections under 21 CFR 314.110.',
-          '21 CFR 314.50(d)(1); 21 CFR 314.110; FDA Guidance: Pre-Approval Inspections (2020)',
+          'All manufacturing, testing, and packaging sites must be identified in the NDA per 21 CFR 314.50(d)(1) to allow pre-approval inspections under FD&C Act section 704 (see 21 CFR 314.125(b) for refusal to approve when facilities or controls are inadequate or inspection is not permitted).',
+          '21 CFR 314.50(d)(1); FD&C Act section 704; 21 CFR 314.125(b); FDA Guidance: Pre-Approval Inspections (2020)',
           'Identify all manufacturing, testing, and packaging facilities in Module 3, including API suppliers, and confirm readiness for pre-approval inspections. Include site registration numbers and current cGMP compliance status.',
           ['supply_chain_plan', 'manufacturing_sites'],
         );
@@ -616,8 +616,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No launch quantity projections or manufacturing capacity assessment is provided.',
-          'While not a strict filing requirement, FDA has expressed concern about drug shortages and expects applicants to have sufficient manufacturing capacity per FD&C Act Title X.',
-          'FD&C Act Title X (Drug Shortage Prevention); FDA Guidance: Drug Shortage Management (2020); 21 CFR 314.81(b)(3)(iii)',
+          'While not a strict filing requirement, FDA has expressed concern about drug shortages and expects applicants to have sufficient manufacturing capacity, consistent with the drug shortage provisions added by FDASIA Title X (FD&C Act section 506C; 21 CFR 314.81(b)(3)(iii)).',
+          'FDASIA Title X; FD&C Act section 506C (Drug Shortage Prevention); FDA Guidance: Drug Shortage Management (2020); 21 CFR 314.81(b)(3)(iii)',
           'Include launch supply projections and demonstrate manufacturing capacity to meet projected demand for the first 12-24 months post-approval. Address contingency plans for supply disruptions.',
           ['launch_quantity_projection', 'manufacturing_scaleup', 'supply_chain_plan'],
         );
@@ -756,7 +756,7 @@ const rules: AuditRule[] = [
     id: rid('no_pediatric_study_plan'),
     dimension: 'risk_identification',
     title: 'Pediatric Study Plan (PSP) Not Addressed',
-    question: 'The NDA does not address pediatric development obligations. Under the Pediatric Research Equity Act (PREA), all NDAs must include pediatric study plans unless a waiver or deferral has been granted. Can the applicant provide the agreed PSP or the granted waiver/deferral?',
+    question: 'The NDA does not address pediatric development obligations. Under the Pediatric Research Equity Act (PREA), an NDA for a new active ingredient, indication, dosage form, dosing regimen or route of administration must address pediatric assessment unless a waiver or deferral has been granted. Can the applicant provide the agreed PSP or the granted waiver/deferral?',
     check(answers) {
       if (isBlank(answers.pediatric_study_plan) && isBlank(answers.pediatric_waiver)) {
         return finding(
@@ -766,7 +766,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No Pediatric Study Plan (PSP) or pediatric waiver/deferral documentation is included.',
-          'Under PREA (FD&C Act Section 505B), all NDAs must contain a pediatric assessment or an approved pediatric study deferral or waiver. A PSP must be submitted and agreed upon before the NDA is filed.',
+          'Under PREA (FD&C Act Section 505B), an NDA for a new active ingredient, new indication, new dosage form, new dosing regimen or new route of administration must contain a pediatric assessment or an FDA-granted pediatric study deferral or waiver. Indications with orphan designation are exempt, except molecularly targeted oncology drugs under Section 505B(a)(3). For these applications, an initial PSP must be submitted (generally within 60 days of the End-of-Phase 2 meeting) and agreed with FDA before the NDA is filed.',
           'FD&C Act Section 505B (PREA); FDA Guidance: Pediatric Study Plans (2020); 21 CFR 314.55',
           'Submit the agreed Pediatric Study Plan (PSP) or documentation of an FDA-granted full or partial pediatric waiver or deferral. Include the FDA correspondence confirming the PSP agreement.',
           ['pediatric_study_plan', 'pediatric_waiver', 'target_population_age'],
@@ -812,8 +812,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No drug-drug interaction assessment is provided in the NDA.',
-          'A comprehensive DDI assessment including in vitro metabolism studies (CYP enzymes, transporters) and clinical DDI studies is required per 21 CFR 314.50(d)(5) and FDA DDI Guidance.',
-          '21 CFR 314.50(d)(5); FDA Guidance: In Vitro Drug Interaction Studies (2020); FDA Guidance: Clinical Drug Interaction Studies (2020); ICH M4E(R2) Section 2.7.2',
+          'A comprehensive DDI assessment including in vitro metabolism studies (CYP enzymes, transporters) and clinical DDI studies is required per 21 CFR 314.50(d)(5) and ICH M12.',
+          '21 CFR 314.50(d)(5); ICH M12 Drug Interaction Studies (FDA final guidance, 2024); ICH M4E(R2) Section 2.7.2',
           'Provide a complete DDI evaluation including in vitro CYP inhibition/induction studies (CYP3A4, 2D6, 2C9, etc.), transporter studies (P-gp, OATP, BCRP), and clinical DDI studies with sensitive substrates and strong inhibitors/inducers. Include DDI recommendations in the proposed labeling.',
           ['ddi_assessment', 'cyp_metabolism', 'proposed_labeling'],
         );

@@ -1,0 +1,77 @@
+// npx tsx serve.ts <port> : the production security headers of server/middleware/enterprise-security.ts
+// (NODE_ENV=production selects them), in front of one page that does what PdfViewerPane does
+// (client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx): bytes that begin %PDF, typed
+// application/pdf, framed through URL.createObjectURL. The page records every CSP violation.
+import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const repo = process.env.REPO as string;
+// express resolves from the repository, as the server's own import does.
+const express = createRequire(path.join(repo, 'package.json'))('express');
+const { cspNonce, securityHeaders } = await import(path.join(repo, 'server/middleware/enterprise-security.ts'));
+const port = Number(process.argv[2] ?? 47811);
+// mkpdf.mjs from docs/evidence/reviews/2026-09-28/editor-family/fixes/SEC-A-3/browser: a valid one-page PDF.
+const objs = [
+  '<< /Type /Catalog /Pages 2 0 R >>',
+  '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+  '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 200] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+  '',
+  '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+];
+const text = 'BT /F1 28 Tf 30 100 Td (PDF RENDERED OK) Tj ET';
+objs[3] = `<< /Length ${text.length} >>\nstream\n${text}\nendstream`;
+let pdf = '%PDF-1.4\n';
+const offs: number[] = [];
+objs.forEach((o, i) => { offs.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+const xref = pdf.length;
+pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map((o) => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+pdf += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+const b64 = Buffer.from(pdf).toString('base64');
+
+const app = express();
+// Control: the same HTML-blob page with no policy at all, so a "did not run" above is the policy's doing.
+app.get('/html-no-policy', (_req, res) => res.type('html').send(htmlPage('')));
+// The policy CloudFront attaches to the S3-served SPA document (terraform/modules/cloudfront/main.tf),
+// read from the module so the proof follows it, served with no Express headers.
+const tf = (await import('node:fs')).readFileSync(path.join(repo, 'terraform/modules/cloudfront/main.tf'), 'utf8');
+const cloudfrontCsp = /content_security_policy\s*=\s*"([^"]+)"/.exec(tf)?.[1] ?? '';
+app.get('/cloudfront', (_req, res) => { res.set('Content-Security-Policy', cloudfrontCsp); res.type('html').send(pdfPage('')); });
+app.get('/cloudfront/html', (_req, res) => { res.set('Content-Security-Policy', cloudfrontCsp); res.type('html').send(htmlPage('')); });
+app.use(cspNonce);
+app.use(securityHeaders);
+// /html: the same frame, but the blob is HTML carrying an inline script with no nonce, as script
+// already on the page could mint. It must not run: the blob document inherits this policy.
+const htmlPage = (nonce: string) => `<!doctype html><html><head><meta charset="utf-8"><title>html blob under the served CSP</title></head><body>
+<div id="host"></div>
+<script nonce="${nonce}">
+  window.__violations = []; window.__ran = false;
+  document.addEventListener('securitypolicyviolation', (e) => {
+    window.__violations.push({ directive: e.effectiveDirective, blocked: String(e.blockedURI).slice(0, 12), disposition: e.disposition });
+  });
+  window.addEventListener('message', (e) => { if (e.data === 'ran') window.__ran = true; });
+  const html = '<!doctype html><p>framed html</p><scr' + 'ipt>parent.postMessage("ran", "*")</scr' + 'ipt>';
+  const frame = document.createElement('iframe');
+  frame.src = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  document.getElementById('host').appendChild(frame);
+</script></body></html>`;
+app.get('/html', (_req, res) => res.type('html').send(htmlPage(res.locals.cspNonce as string)));
+app.get('/', (_req, res) => res.type('html').send(pdfPage(res.locals.cspNonce as string)));
+function pdfPage(nonce: string): string {
+  return `<!doctype html><html><head><meta charset="utf-8"><title>pdf frame under the served CSP</title></head><body>
+<p>parent page</p><div id="host"></div>
+<script nonce="${nonce}">
+  window.__violations = [];
+  document.addEventListener('securitypolicyviolation', (e) => {
+    window.__violations.push({ directive: e.effectiveDirective, blocked: String(e.blockedURI).slice(0, 12), disposition: e.disposition });
+  });
+  const bytes = Uint8Array.from(atob('${b64}'), (c) => c.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  const frame = document.createElement('iframe');
+  frame.className = 'pf-viewer-frame';
+  frame.title = 'Invented SOP — PDF viewer';
+  frame.style.cssText = 'width:800px;height:500px';
+  frame.src = url;
+  document.getElementById('host').appendChild(frame);
+</script></body></html>`;
+}
+app.listen(port, '127.0.0.1', () => console.log(`listening ${port}`));

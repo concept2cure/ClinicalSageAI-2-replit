@@ -2,7 +2,7 @@
  * Informed Consent Form API — Capability C2C-18d
  *
  * Governed consent authoring: create a form (auto-seeded with the required elements
- * of consent per 45 CFR 46.116), edit an element's content + presence, read forms /
+ * of consent: shared/regulatory/informed-consent-elements.ts, 21 CFR 50.25), edit an element's content + presence, read forms /
  * a single form with elements, read completeness, and approve behind the
  * deterministic completeness gate. Every mutation runs BEGIN → Tx →
  * recordGovernedAction → COMMIT, org-scoped. Mounted at /api/protocol-consent.
@@ -19,6 +19,7 @@ import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createConsentFormTx,
   updateElementTx,
+  setApplicableClinicalTrialTx,
   approveConsentFormTx,
   getCompleteness,
   listConsentForms,
@@ -94,6 +95,7 @@ const formSchema = z.object({
   version: z.string().max(40).optional(),
   language: z.string().max(40).optional(),
   readingLevel: z.string().max(40).optional(),
+  applicableClinicalTrial: z.boolean().nullable().optional(),
   reason,
 });
 router.post('/forms', async (req, res) => {
@@ -103,6 +105,20 @@ router.post('/forms', async (req, res) => {
     const { id, elementsSeeded } = await createConsentFormTx(client, orgId, userId, parsed.data);
     recordConsentFormCreated();
     return { target: `consent-form:${id}`, payload: { elementsSeeded }, body: { id, elementsSeeded } };
+  });
+});
+
+// Whether the study is an applicable clinical trial decides whether the
+// 21 CFR 50.25(c) ClinicalTrials.gov statement is required on the form.
+const actSchema = z.object({ applicableClinicalTrial: z.boolean(), reason });
+router.patch('/forms/:id/applicable-clinical-trial', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = actSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    const body = await setApplicableClinicalTrialTx(client, orgId, userId, { formId: id, applicableClinicalTrial: parsed.data.applicableClinicalTrial });
+    return { target: `consent-form:${id}`, payload: { applicableClinicalTrial: body.applicableClinicalTrial }, body };
   });
 });
 

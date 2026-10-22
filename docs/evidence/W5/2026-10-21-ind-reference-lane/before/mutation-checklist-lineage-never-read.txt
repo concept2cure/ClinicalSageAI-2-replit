@@ -1,0 +1,83 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a replace by a later version supersedes the current earlier version without a blocker 28ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a later version placed as new replaces the current earlier version, so a withdrawal of it leaves nothing current 13ms
+   → expected [] to deeply equal [ StringContaining{…} ]
+ × server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a withdrawal naming the later version withdraws the earlier version on record 13ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > does not follow a predecessor link the database rules refuse 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a replace by a later version supersedes the current earlier version without a blocker
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "m3.2.S.4.2: replace names no current document",
++ ]
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts:84:39
+     82|   it('a replace by a later version supersedes the current earlier vers…
+     83|     await fileActs([[V1, 'new'], [V2, 'replace', '3.2.s.4.2']]);
+     84|     expect(await lifecycleBlockers()).toEqual([]);
+       |                                       ^
+     85|   });
+     86|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a later version placed as new replaces the current earlier version, so a withdrawal of it leaves nothing current
+AssertionError: expected [] to deeply equal [ StringContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   StringContaining "withdrawal names no current document",
+- ]
++ []
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts:90:39
+     88|     await fileActs([[V1, 'new'], [V2, 'new'], [V2, 'delete'], [V1, 'de…
+     89|     // V1 left the inventory when V2 was placed: withdrawing it again …
+     90|     expect(await lifecycleBlockers()).toEqual([expect.stringContaining…
+       |                                       ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a withdrawal naming the later version withdraws the earlier version on record
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "m3.2.S.4.2: withdrawal names no current document",
++ ]
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts:95:39
+     93|   it('a withdrawal naming the later version withdraws the earlier vers…
+     94|     await fileActs([[V1, 'new'], [V2, 'delete']]);
+     95|     expect(await lifecycleBlockers()).toEqual([]);
+       |                                       ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  01:43:45
+   Duration  5.72s (transform 1.33s, setup 87ms, import 2.93s, tests 2.42s, environment 0ms)
+
+EXIT 1

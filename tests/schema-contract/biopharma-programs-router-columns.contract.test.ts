@@ -82,6 +82,10 @@ const REGULATORY_PROGRAMS_DDL = `
     -- this pair on 2026-10-08 and the merge kept both, so the fixture's CREATE
     -- TABLE named each column twice and every case in this file failed to load
     -- with 42701 (2026-10-11).
+    -- The program's bound applicant in the ind_sponsors registry
+    -- (migrations/20261021_regulatory_programs_applicant_sponsor.sql), in the
+    -- position shared/schema/programs.ts gives it; NULL until bound.
+    applicant_sponsor_id uuid,
     sponsor_address text,
     ind_type text,
     intended_use text,

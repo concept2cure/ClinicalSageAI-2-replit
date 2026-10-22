@@ -1,0 +1,5 @@
+# RED at 5efa1de6f: AnA's create_qms_document, as on trunk, with the new case (2026-10-22T04:47:57Z)
+ × server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > stores the periodic review date the user named, which review-due reads (gap 5.1)
+   → expected 'null' to be '2027-10-01' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 12 passed (13)

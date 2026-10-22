@@ -83,6 +83,13 @@ export interface PriorLeaf {
    * this leaf. When absent, the caller's single-sequence prefix is used.
    */
   sequenceNumber?: string;
+  /**
+   * The `modified-file` pointer this leaf's own act carried, as its manifest
+   * recorded it. Used only when folding sequences into one prior state: a
+   * filed `replace` takes the leaf it names off file even when the two file
+   * names differ (a later Vault version, P-42). Not used by the diff itself.
+   */
+  modifiedFile?: string;
 }
 
 /**

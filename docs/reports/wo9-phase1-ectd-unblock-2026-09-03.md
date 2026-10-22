@@ -1825,3 +1825,132 @@ Checks run on the pushed tree:
 - The eCTD, gateway, submission-service, AnA, route and compile-surface suites
   pass: 325 files and 4,552 tests on `09c4c15d9`; 125 files on `b801a6630`.
   Every other golden journey is green; haq-correction fails as it does on origin.
+
+---
+
+## 21. The lane finished at head: the replace decided and built, re-walked, proof report written (2026-10-21/22)
+
+**Row and evidence.** This moves **D7, one real sequence** (workstream W5).
+
+- Evidence: `docs/evidence/W5/2026-10-21-ind-reference-lane/`. Its README holds
+  the full record: what already exists, the walk, before and after, red and
+  green.
+- Proof report: `docs/reports/wo9-demo-proof-2026-10-21.md`.
+
+D7 is still **not green** (§ "Blocked", below).
+
+**§20's open decision is closed as P-42**, under the founder's delegation of
+2026-10-18 (`docs/LAUNCH_DEFINITION_OF_DONE.md`). A later Vault version files as
+the `replace` of the version on file. It binds through the predecessor link the
+Vault records at check-in, which the database admits only within one document
+(VR-08):
+
+- a declared replace or append, or a version placed as new, names version 1's
+  filed leaf in `modified-file`;
+- a withdrawal naming version 2 withdraws version 1;
+- the folded prior state and the IND checklist take the superseded leaf off
+  file.
+
+Ambiguity is refused into `skipped`, which blocks transmit, and never guessed:
+two filed leaves carrying earlier versions, two versions in one sequence, a
+version beside its predecessor's own act, or a link the database rules refuse.
+
+**Still open:** an approved *authored* document has no new-version route (P-40
+covers a QMS draft only), so it is withdrawn and placed again rather than
+replaced. That is JM's decision, with the authoring lane.
+
+### How it was clicked
+
+The database was built from empty:
+
+1. Postgres 16 with pgvector 0.6.0.
+2. `install-fresh`.
+3. `deploy-migrate` (418/418 files).
+4. **One** `db:seed`.
+
+It was snapshotted, and each walk starts from the snapshot. When the lane merged
+the day's trunk (`892739bb7`), the snapshot was brought forward the way a later
+deploy is: `deploy-migrate` again, 421/421 files. The server ran with
+`RLS_ENFORCE=on` and `LAUNCH_SCOPE_ENFORCE=on`. The driver is headless Chromium
+on the product's own controls (`driver/walk.mjs`). The two walks:
+
+- **"Before"** ran at `ebad98fb`.
+- **"After"** ran on the pushed tree (that trunk plus this change), recorded on
+  video (215.20 s), with each click's time in the transcript.
+
+The 1571 is a stand-in again: the platform's render plus one appended comment
+line, which keeps FDA's encryption intact.
+
+| Click | What the product did (final walk) |
+|---|---|
+| 1 | BX-512 opened from Projects. The identity comes from the program record: IND 000512. |
+| 2 | Applicant identity recorded (D-U-N-S 000000512, contact, authorized representative). 1571 built, checked and rendered, then filed at m1.1 in 0000. |
+| 3 | The approved authored 3.2.S.4 placed in 0000. Analytical procedures v1.0 uploaded to the Vault, opened, filing confirmed, placed at 3.2.S.4.2. |
+| 4 | 0000 compiled ("Type initial · recorded on sequence 0000"), recorded, and exported as `000512-0000-fda.zip`. |
+| 5 | "Dispatch blocked — 4 blockers": validation findings, the unapproved Vault version (P-22), no Shadow Review, no release signature. |
+| 6 | 0001 started as an amendment. 3.2.S.4 withdrawn. v2.0 checked in under the same document and placed as Replace. The rehearsal compile shows `replace` 3.2.S.4.2 and `delete` 3.2.S.4, each naming 0000's leaf by ID; exported as `000512-0001-fda-rehearsal.zip`. |
+
+**Read from the downloaded ZIPs** by a stdlib reader that shares no code with the
+product:
+
+- every `util/index-md5.txt` line re-verifies: 5 in 0000, 3 in 0001;
+- both of 0001's pointers resolve to IDs in 0000's own backbone;
+- the sub-type is `fdasst1` in 0000 and `fdasst4` in 0001.
+
+**Before**, at `ebad98fb`, the same clicks left the replace out: "declared
+replace: no filed leaf named … to supersede". The 0001 package had 7 entries
+against the final 10.
+
+### Defects found by clicking, each fixed with its test failing first
+
+1. **The IND screen said "eCTD v4.0 (FDA)".** The platform builds v3.2.2, and the
+   subtitle and cover now say so.
+2. **The compile screen's type was a free selector defaulting to `initial`**
+   (§20's observation).
+   - It never reached the package, whose sub-type comes from the sequence record.
+   - A compile against filed sequences did record it as the compilation's type,
+     so a filed 0001 would have been recorded as `initial`.
+   - Now the screen states the recorded type, and the route records the
+     sequence's own. It refuses a contradicting type with 409
+     `SUBMISSION_TYPE_MISMATCH`.
+3. **P-42, in five places:** the packager's replace, its new, and its
+   withdrawal; the folded prior state; and the IND checklist inventory.
+
+Every new test has been seen failing, either on the code before or with the guard
+it pins removed. Each mutation was reverted and the file checked identical
+(evidence README, "Red, then green").
+
+### Recorded, not changed
+
+- **D-3 = CAT2-03.** The 3.2.S leaves attach directly to `m3-2-s-drug-substance`,
+  without `substance` and `manufacturer`. MR-10 Stage 5 closes it from the
+  vendored DTD.
+- **The Vault placement dialog's submit button moves by one pixel and never
+  settles.** The driver clicks it with `force`. Handed to the design-system owner.
+- **The 409 on `/api/vault/ingest` in Click 6c is the check-in offer (VR-08), not
+  a fault.** It is the walk's only failed request.
+- **An upload does not open the uploaded document.** On the merged trunk the
+  Vault opens the first required-section row by default, so the driver opens the
+  file explicitly before confirming or placing it. Recorded for the Vault lane.
+
+### Blocked — outside code
+
+- The ICH/FDA DTDs: egress is refused here, and the vendoring runbook's counsel
+  prerequisite is open (MR-10).
+- FDA ESG test credentials and certificates.
+- The eValidator run: JM runs it and imports the report.
+
+### Not done
+
+- JM's own recording, with his completed and signed 1571.
+- eValidator over the exported packages.
+- The rest of D7: B3, B4, B16, and an FDA test submission with its ack chain.
+
+Checks run on the pushed tree (trunk `892739bb7` plus this lane's commits):
+
+- `ci:typecheck:no-regression`: 0 errors.
+- ESLint ratchet: flat.
+- Repo-health ceiling: passes.
+- Every pre-push gate passed.
+- The lane's nine suites: 116 tests pass.
+- Regression: 3,014 tests pass; the 26 that fail (7 files) fail identically on the base without this change, none in a file this lane touches (evidence README, "Failures met on the way").
