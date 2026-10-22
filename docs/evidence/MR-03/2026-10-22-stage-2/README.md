@@ -12,7 +12,7 @@ on staging, no task replaced) is Stage 5's, after the founder's AWS account
 |---|---|---|
 | A | OPS-13, Terraform half: task size, stop timeout, init process, heap, autoscaling | done |
 | C | OPS-13, application half: one converter limiter, 503 with Retry-After | done |
-| B | OPS-28, SEC-18: boot refusals | open |
+| B | OPS-28, SEC-18: boot refusals | done |
 | D | OPS-19: the image (base pin, `chown`, `BUILD_COMMIT`, PID 1) | open |
 
 ## Re-confirmed at head before starting
@@ -48,6 +48,10 @@ Every Stage 2 finding was still open at `178f0b477`:
 | Graceful shutdown | `server/startup/shutdown.ts` | Drains, then force-exits after `FORCE_EXIT_MS` (12 s) | Run at all after ECS's default 30 s SIGKILL when deregistration takes 30 s |
 | FIFO semaphore | `server/services/ai-gateway/concurrency.ts` (`Semaphore`) | Bounds in-flight AI calls; an abort removes a waiter without dispatching it | Know about converters. **Reused by slice C**, not copied |
 | Typed HTTP refusals | `server/lib/api-response.ts` (`serverError`), `server/src/mw/observability.ts` (`errorHandler`) | Map errors to envelopes; 500 by default | Answer a busy converter 503 with Retry-After |
+| Production boot refusals | `server/startup/env.ts` (`PROD_FORBIDDEN_FLAGS`, `AUTH_BOUNDARY_MODE`, `SECURITY_SELF_TEST_NONBLOCKING`) | Refuses the mock, experimental and demo route flags in production | Refuse `ENABLE_TEST_ROUTES` (honoured as a "smoke test" hatch), or any override on the hosted deployment |
+| Override refusal in the pipeline | `deploy-aws.yml` preflight (`*_ACCEPT_*` by name, `AUDIT_*` exactly `true`) | Refuses a revision the pipeline registers if it carries an override | Stop a revision registered or edited outside the pipeline; name `ENABLE_TEST_ROUTES` |
+| Manifest guard | `scripts/ci/check-compose-boot-contract.mjs` | Holds both production compose stacks to the boot contract; refuses `SECURITY_SELF_TEST_NONBLOCKING`; pins `AUDIT_REQUIRE_ENFORCE=true` | Refuse the route flags; read the Helm values. **Extended by slice B**, not duplicated |
+| Audit enforcement | `server/startup/audit-enforcement.ts` | Fails closed on a missing trail, a failed immutability probe or a disabled sweep, when `AUDIT_REQUIRE_ENFORCE=true` | Fail closed by default in production |
 
 ## Slice A: the API task, sized and stopped cleanly, and autoscaled
 
@@ -204,6 +208,90 @@ are the agent's.
   missing relation), not converters.
 - **Lint:** eslint on the 17 changed and new files reports 0 errors. The
   pre-push hook's warning ratchet and typecheck run on push.
+
+## Slice B: production refuses test routes, and the hosted deployment refuses every override
+
+**The decision (P-43, `docs/LAUNCH_DEFINITION_OF_DONE.md`).** The work order's
+step 7 makes every `*_ACCEPT_*` override a boot refusal whenever
+`NODE_ENV=production`, with a CI escape variable. Done literally, that stops the
+canonical self-host install. `docker-compose.yml`, "the install SKU", runs
+production mode on an HMAC signer and a local volume, and states both through
+these variables. So, decided under the CPO mandate, the line is drawn by where
+the process runs:
+
+- **On an ECS task (the hosted deployment)** the boot refuses any `*_ACCEPT_*`
+  set to anything but `false`, and `AUDIT_REQUIRE_ENFORCE=false`.
+  - The task is recognised by `ECS_CONTAINER_METADATA_URI_V4`, which the ECS
+    agent sets and a task definition cannot remove.
+  - The deploy preflight already refused these by name, but only for revisions
+    the pipeline registers.
+- **A self-hosted install keeps its written acceptances.**
+- **`ENABLE_TEST_ROUTES` is refused in every production boot**, and production
+  never mounts the test routes.
+- **Audit enforcement is the production default.** Only an explicit
+  `AUDIT_REQUIRE_ENFORCE=false` turns a missing trail, a failed immutability
+  probe or a disabled sweep into a warning.
+
+**Departures from the work order, and why:**
+
+- **No CI escape variable.** The CI single-container boots are not ECS tasks,
+  so they boot without one, and an escape would be one more override to guard.
+- **`STORAGE_ACCEPT_LOCAL_DISK` stays in `docker-compose.beta.yml`.** The beta
+  stack has no object store, and its storage is MR-08's.
+- **The manifest check refuses the flags every production boot refuses.** Those
+  are the mock, experimental, demo and test route flags and
+  `SECURITY_SELF_TEST_NONBLOCKING`. The `*_ACCEPT_*` overrides are not
+  refused there, because these manifests are self-hosted.
+
+**What changed.**
+
+- `server/startup/env.ts`:
+  - `ENABLE_TEST_ROUTES` joins `PROD_FORBIDDEN_FLAGS`;
+  - `testRoutesEnabled` is false in production;
+  - new `refuseHostedOverrides`, applied after the existing production
+    refusals. The rule is the name's shape, so a later override is covered.
+- `server/startup/audit-enforcement.ts`: `requiresEnforce` is on in production
+  unless the value is `false`; outside production it is on only when `true`.
+  The docstrings and one refusal message now say so.
+- `scripts/ci/check-compose-boot-contract.mjs` (extended, not a new script):
+  - a production app service may not carry any `PROD_FORBIDDEN_FLAGS` entry in
+    any form; the list is read from `env.ts`, so the two cannot drift;
+  - the Helm values files (`charts/<chart>/values*.yaml`, `helm/*.yaml`) are
+    checked wherever an `env:` map sets `NODE_ENV=production`, including its
+    `extra` map.
+- `deploy-aws.yml`: the preflight refuses `ENABLE_TEST_ROUTES` by name. Its
+  audit wording no longer calls enforcement opt-in.
+
+**Verified by making it fail.**
+
+- **Before** (`raw/b1`): 16 of the new tests fail on the pre-change code.
+  - These include `ENABLE_TEST_ROUTES` booting and mounting, each override
+    and a hypothetical `SOME_FUTURE_ACCEPT_RISK` booting on ECS, and the three
+    unset-enforcement cases;
+  - the controls pass: an ECS boot with no override, an override set to
+    `false`, a self-hosted boot with acceptances, and test routes outside
+    production.
+- **After** (`raw/b2`): 41/41.
+  - The modules' related tests pass 118/118, and `server/startup` passes
+    211/211.
+  - eslint reports 0 errors, with warnings per file unchanged.
+- **The guard** (`raw/b3`, `raw/b4`):
+  - the new self-test cases fail on the old guard (3); the self-test passes
+    60/60 after, and the repository passes;
+  - with `ENABLE_TEST_ROUTES` planted in `docker-compose.yml` and in the
+    chart's `env.extra`, the guard refuses both and exits 1. Both files were
+    restored.
+- **The preflight** (`raw/b5`): it accepts the task definition slice A renders,
+  and refuses the same definition with `ENABLE_TEST_ROUTES=true`, naming it.
+- **Mutants** (`raw/b6`), eight, each failing its test:
+  - the flag dropped from the list;
+  - the mount arm restored;
+  - ECS never detected;
+  - only an exact `true` counted;
+  - `AUDIT_REQUIRE_ENFORCE=false` accepted on ECS;
+  - enforcement opt-in again;
+  - the guard skipping the route flags;
+  - the guard ignoring Helm's `extra`.
 
 ## Not shown here
 

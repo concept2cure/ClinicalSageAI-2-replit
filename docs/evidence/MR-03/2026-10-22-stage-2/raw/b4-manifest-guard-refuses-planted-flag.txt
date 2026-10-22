@@ -1,0 +1,6 @@
+# The guard against the repository with ENABLE_TEST_ROUTES planted in docker-compose.yml (the app service) and in
+# charts/concept2cure-app/values.yaml (env.extra); both restored afterwards.
+docker-compose.yml: service "app": ENABLE_TEST_ROUTES must not be passed to a production app (server/startup/env.ts refuses it); got "true"
+charts/concept2cure-app/values.yaml: env: ENABLE_TEST_ROUTES must not be set where NODE_ENV=production (server/startup/env.ts refuses it)
+[ci:compose-boot-contract] 2 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (28 names, 4 excused for Compose) plus ALLOWED_ORIGINS.
+exit 1
