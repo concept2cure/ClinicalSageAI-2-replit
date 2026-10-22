@@ -42,10 +42,12 @@ azs             = ["us-east-1a", "us-east-1b"]
 # Not burstable: a db.t* class runs out of CPU credits under filing-day load, and
 # terraform/stack refuses one in production (MR-03 DATA-13).
 rds_instance_class = "db.m6g.large"
-api_cpu            = 1024
+api_cpu            = 2048
 # 4096 MiB of it is the virus scanner beside the API; the stack refuses less than 6144.
-api_memory         = 6144
+api_memory         = 8192
 api_desired_count  = 2
+# The autoscaling ceiling: 2 until MR-14 closes OPS-07.
+api_max_count      = 2
 
 # Replace with your actual ACM certificate ARN
 acm_certificate_arn       = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"

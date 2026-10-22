@@ -1,11 +1,18 @@
 import { spawn } from 'node:child_process';
+import { withConversionSlot } from '../../services/conversion-slots';
 import type { PdfValidationReport } from '../../services/documentIntelligence/contracts';
 
 export class VeraPdfClient {
   constructor(private readonly command = process.env.VERAPDF_COMMAND || 'verapdf') {}
 
+  /**
+   * veraPDF is a JVM per run, as heavy as a conversion, so it runs inside one
+   * of the process's conversion slots (OPS-13, MR-03 Stage 2). A wait past
+   * CONVERTER_QUEUE_TIMEOUT_MS rejects with ConversionCapacityError; it is
+   * never reported as a compliant or non-compliant validation.
+   */
   async validate(pdfPath: string): Promise<PdfValidationReport> {
-    return new Promise((resolve) => {
+    return withConversionSlot('verapdf', () => new Promise<PdfValidationReport>((resolve) => {
       const child = spawn(this.command, ['--format', 'text', pdfPath], {
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -41,6 +48,6 @@ export class VeraPdfClient {
           rawSummary: output || stderr,
         });
       });
-    });
+    }));
   }
 }

@@ -75,6 +75,7 @@ module "stack" {
   api_cpu            = var.api_cpu
   api_memory         = var.api_memory
   api_desired_count  = var.api_desired_count
+  api_max_count      = var.api_max_count
 
   image_tag                  = var.image_tag
   acm_certificate_arn        = var.acm_certificate_arn
