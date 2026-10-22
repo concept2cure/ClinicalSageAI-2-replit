@@ -60,6 +60,7 @@ export type LaunchScopeApiVerdict = 'never-gated' | 'infrastructure' | 'launch' 
  */
 export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/ana-ri': 'AnA: the stream, governed actions, agent activity and live-drive state, from every host',
+  '/api/ana-skills': "AnA's skills: the methods she follows on every host, read and (by administrators, with a reason) changed from Admin and access → Skills; bound to no module so the methods AnA uses are never refused by one",
   '/api/v1/auth': 'the session the shell reads on load',
   '/api/tenants': 'tenant context (TenantContext.tsx) on load',
   '/api/clients': 'the client workspace list tenant context reads on load',

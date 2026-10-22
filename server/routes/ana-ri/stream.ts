@@ -159,6 +159,12 @@ import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/h
 import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
+import {
+  NO_TURN_SKILLS,
+  documentTypeIdOf,
+  renderSkillsBlock,
+  resolveTurnSkills,
+} from '../../services/ana/skills/turn-skills.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
 import { isPdfIntakeEnabled } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -1689,6 +1695,27 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
         projectContext: req.body.context ?? null,
       });
 
+      // AnA skills (server/services/ana/skills/): the methods this turn loads,
+      // chosen by what the person asked and what is on screen, from the
+      // platform library as this organization has it set and the
+      // organization's own skills. Read on the request's tenant-scoped
+      // connection in parallel with the context below; it never throws, and a
+      // failed read loads no skill and says so (turn-skills.ts).
+      const turnSkillsPromise =
+        orgId != null && Number.isFinite(Number(orgId))
+          ? resolveTurnSkills(requestPgClient(req), {
+              organizationId: Number(orgId),
+              message,
+              surfaceId: typeof req.body.context?.screenName === 'string' ? req.body.context.screenName : null,
+              documentType: documentTypeIdOf(req.body.module_context, document_context),
+              submissionType:
+                (typeof submission_type === 'string' && submission_type) ||
+                orchestration.detectedSubmissionType ||
+                null,
+              projectId: streamProjectIdNumber,
+            })
+          : Promise.resolve(NO_TURN_SKILLS);
+
       // Status: loading_context (about to fetch intelligence prefix, memory atoms, enrichment)
       res.write(
         `data: ${JSON.stringify({
@@ -1757,8 +1784,28 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       const screenGone = (): boolean => detachedAt !== null && driveState.enabled;
       const screenActionRefused = (call: { name: string }): boolean => screenGone() && SCREEN_ACTION_TOOLS.has(call.name);
       const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
+      // Skills ride the VOLATILE suffix: they are chosen per turn from the
+      // question, so the cached prefix stays the same across turns. The block
+      // names any tool a skill relies on that this turn cannot call.
+      const turnSkills = await turnSkillsPromise;
+      if (turnSkills.status === 'unavailable') {
+        const warning = 'AnA skills could not be read for this turn, so none was loaded.';
+        console.warn('[AnA RI] Skills unavailable:', turnSkills.error);
+        turnRecorder?.warn(warning);
+        res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
+      }
+      const skillsBlock = turnSkills.selection
+        ? renderSkillsBlock(turnSkills.selection, {
+            availableTools: new Set(
+              (await toolPolicyPromise)
+                .filter(t => !readOnlyToolRefusal(t.name, {}, readOnly))
+                .map(t => t.name)
+            ),
+          })
+        : '';
       const streamVolatileSuffix =
         memoryBlock +
+        skillsBlock +
         enrichment.block +
         (driveState.enabled
           ? buildLiveDrivePromptBlock(driveState.mode)
@@ -2052,6 +2099,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
           contentReadIds.has(u.fileId) ? { ...u, read: 'content' as const } : u
         ),
         memory: memoryResult,
+        skills: turnSkills,
       });
       turnRecorder?.setContext(contextUsedEvent, uploadChecksums);
       res.write(`data: ${JSON.stringify(contextUsedEvent)}\n\n`);
@@ -2437,6 +2485,11 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             ...SELF_DRIVE_TOOLS,
             // Delegation survives relevance trimming on a turn that may use it.
             ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
+            // The engines a loaded skill's method names: a method that tells
+            // her to run a tool the relevance cap dropped cannot be followed.
+            // Pins choose only among governedTools, so a tenant's deny-list
+            // and a read-only turn still win (turn-skills.ts toolPinsOf).
+            ...turnSkills.toolPins,
           ],
           context: {
             projectType: asStr(submission_type),

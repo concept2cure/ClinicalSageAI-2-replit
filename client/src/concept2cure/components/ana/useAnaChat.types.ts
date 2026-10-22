@@ -302,6 +302,13 @@ export interface AnaContextUsed {
   unresolvedUploads: number;
   memory: Array<{ layer: string; title: string; documentName?: string }>;
   memoryStatus: 'read' | 'none' | 'unavailable';
+  /**
+   * The skills whose methods the turn carried (server/services/ana/skills/).
+   * Undefined when the server did not say — an older server — which is shown
+   * as nothing, never as "no skills".
+   */
+  skills?: Array<{ key: string; name: string; source: 'library' | 'organization'; version: number }>;
+  skillsStatus?: 'loaded' | 'none' | 'unavailable';
 }
 /**
  * Result of `verify_docx_against_source` — the audited "verify it against your

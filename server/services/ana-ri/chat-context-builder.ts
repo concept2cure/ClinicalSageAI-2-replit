@@ -548,16 +548,10 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     // Governed context unavailable — continue without
   }
 
-  // === Account skill bundles, terms, templates, and regulatory context ===
-  // Single canonical context loader. Resolves org-level execution bundles
-  // scoped by submission type + project. Includes:
-  //   - Prompt fragments (priority-sorted execution instructions)
-  //   - Evidence preferences and citation style
-  //   - Term dictionary (approved terms, do-not-use terms)
-  //   - Template registry (section overrides, formatting rules)
-  //   - Policy bindings (enforcement rules)
-  //   - Authority response style
-  // All loaded automatically by project type — no UI needed.
+  // === Account canon, terms and templates ===
+  // Resolved by submission type + project. Skill bundles are no longer part of
+  // it: an organization's bundles are its AnA skills, selected per turn on the
+  // stream (server/services/ana/skills/), 2026-10-22.
   let skillBundleBlock = '';
   if (numericOrgId) {
     try {
@@ -571,7 +565,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
       });
       if (
         resolved &&
-        (resolved.bundles?.length > 0 ||
+        (resolved.canonItems?.length > 0 ||
           resolved.terms?.length > 0 ||
           resolved.templates?.length > 0)
       ) {

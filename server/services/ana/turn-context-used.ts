@@ -15,12 +15,16 @@
  *   - an upload that did not resolve is counted, never silently dropped;
  *   - a memory item is listed only when it survived the character budget
  *     (`MemoryContextAssemblerResult.read`), and a memory read that failed is
- *     reported as unavailable rather than as "nothing matched".
+ *     reported as unavailable rather than as "nothing matched";
+ *   - a skill is listed when its method was put in front of the model, with
+ *     its version, content hash and why it was chosen; skills that could not
+ *     be read are reported as unavailable (server/services/ana/skills/).
  *
  * @module server/services/ana/turn-context-used
  */
 
 import type { MemoryContextAssemblerResult, MemoryReadEntry } from '../memory-context-assembler.js';
+import type { TurnSkillEntry, TurnSkills, TurnSkillsStatus } from './skills/turn-skills.js';
 
 export interface ContextUpload {
   fileId: string;
@@ -39,6 +43,9 @@ export interface ContextUsedEvent {
   unresolvedUploads: number;
   memory: MemoryReadEntry[];
   memoryStatus: MemoryStatus;
+  /** The skills whose methods this turn's model call carried. */
+  skills: TurnSkillEntry[];
+  skillsStatus: TurnSkillsStatus;
 }
 
 /** The fallback the route uses when memory assembly throws. */
@@ -57,6 +64,8 @@ export function buildContextUsedEvent(input: {
   requestedUploads: number;
   uploads: ContextUpload[];
   memory: MemoryContextAssemblerResult | MemoryFallback;
+  /** Absent on doors that select no skills: reported as none. */
+  skills?: Pick<TurnSkills, 'status' | 'entries'>;
 }): ContextUsedEvent {
   const read = 'read' in input.memory && Array.isArray(input.memory.read) ? input.memory.read : [];
   return {
@@ -65,5 +74,7 @@ export function buildContextUsedEvent(input: {
     unresolvedUploads: Math.max(0, input.requestedUploads - input.uploads.length),
     memory: read,
     memoryStatus: memoryStatusOf(input.memory),
+    skills: input.skills?.entries ?? [],
+    skillsStatus: input.skills?.status ?? 'none',
   };
 }

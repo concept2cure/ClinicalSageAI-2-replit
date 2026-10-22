@@ -1,0 +1,93 @@
+[
+  {
+    "question": "How do we justify the first-in-human dose from our rat and dog NOAELs?",
+    "expect": "clinical-pharmacology"
+  },
+  {
+    "question": "Can we claim dose proportionality across the single ascending dose cohorts?",
+    "expect": "clinical-pharmacology"
+  },
+  {
+    "question": "What should the clinical pharmacology package include before we file the NDA?",
+    "expect": "clinical-pharmacology",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Our in vitro data show CYP3A4 time-dependent inhibition. Do we need a clinical DDI study?",
+    "expect": "clinical-pharmacology.drug-interactions"
+  },
+  {
+    "question": "Which index substrate should the interaction study use under ICH M12?",
+    "expect": "clinical-pharmacology.drug-interactions"
+  },
+  {
+    "question": "How do we estimate the fraction metabolized by CYP2C19 for the victim drug assessment?",
+    "expect": "clinical-pharmacology.drug-interactions",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Can concentration-QTc data from the MAD study replace a thorough QT study?",
+    "expect": "clinical-pharmacology.qt-assessment"
+  },
+  {
+    "question": "Our hERG IC50 is 3 uM and the clinical Cmax is 0.1 uM. How worried should we be about QTc?",
+    "expect": "clinical-pharmacology.qt-assessment"
+  },
+  {
+    "question": "What does the E14/S7B Q&A allow for a TQT waiver when we can only dose patients?",
+    "expect": "clinical-pharmacology.qt-assessment",
+    "context": { "therapeuticArea": "oncology" }
+  },
+  {
+    "question": "Do we need a dedicated hepatic impairment study if the drug is cleared mainly by CYP3A?",
+    "expect": "clinical-pharmacology.special-populations"
+  },
+  {
+    "question": "Should the food effect study use a high-fat meal with the commercial tablet?",
+    "expect": "clinical-pharmacology.special-populations"
+  },
+  {
+    "question": "Do we have enough older adults in the phase 3 trials to satisfy ICH E7?",
+    "expect": "clinical-pharmacology.special-populations",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Can we get a BCS biowaiver for our class III immediate-release tablet?",
+    "expect": "clinical-pharmacology.bioequivalence"
+  },
+  {
+    "question": "What design should the bioequivalence study use for a highly variable drug?",
+    "expect": "clinical-pharmacology.bioequivalence"
+  },
+  {
+    "question": "Are the test and reference profiles similar? I have the f2 similarity numbers for both lots.",
+    "expect": "clinical-pharmacology.bioequivalence",
+    "context": { "segments": ["pharma"], "submissionType": "US_ANDA" }
+  },
+  {
+    "question": "Can a PBPK model support skipping the clinical study with a strong inhibitor?",
+    "expect": "clinical-pharmacology.model-informed-development"
+  },
+  {
+    "question": "Plan the population PK analysis for the phase 3 program, including the covariate analysis.",
+    "expect": "clinical-pharmacology.model-informed-development"
+  },
+  {
+    "question": "Use the exposure-response data to support the 10 mg dose in Module 2.7.2.",
+    "expect": "clinical-pharmacology.model-informed-development",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "What ADA sampling schedule do we need for a monthly subcutaneous antibody?",
+    "expect": "clinical-pharmacology.immunogenicity"
+  },
+  {
+    "question": "Should our neutralizing antibody assay be cell-based or competitive ligand binding?",
+    "expect": "clinical-pharmacology.immunogenicity"
+  },
+  {
+    "question": "Does this formulation change need an immunogenicity comparability assessment with clinical data?",
+    "expect": "clinical-pharmacology.immunogenicity",
+    "context": { "segments": ["biotech"] }
+  }
+]

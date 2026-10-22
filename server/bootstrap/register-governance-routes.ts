@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import clientIntelligenceRoutes from '../routes/client-intelligence';
 import accountIntelligenceRoutes from '../routes/account-intelligence';
+import anaSkillsRoutes from '../routes/ana-skills';
 import universalPackagerRoutes from '../routes/universal-packager';
 import precedentEngineRoutes from '../routes/precedent-engine';
 import harmonizeRoutes from '../routes/harmonize';
@@ -42,6 +43,9 @@ export async function registerGovernanceRoutes(app: Express) {
 
   app.use('/api/client-intelligence', authenticateToken, clientIntelligenceRoutes);
   app.use('/api/account-intelligence', authenticateToken, accountIntelligenceRoutes);
+  // AnA skills: the platform library as the organization has it set, the
+  // organization's own skills, and a selection test (Admin and access → Skills).
+  app.use('/api/ana-skills', authenticateToken, anaSkillsRoutes);
   app.use('/api/packager', authenticateToken, universalPackagerRoutes);
   app.use('/api/precedent-engine', authenticateToken, precedentEngineRoutes);
   app.use('/api/harmonize', authenticateToken, harmonizeRoutes);

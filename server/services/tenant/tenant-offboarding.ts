@@ -1064,6 +1064,10 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // the administrator's decision reason. The canonical audit event survives;
   // this tenant-owned working record does not.
   'module_access_requests',
+  // An administrator's on/off for each platform AnA skill, with the stated
+  // reason (2026-10-22). The reason and the change are in the chained audit
+  // row, which is retained; this is the tenant's working configuration.
+  'organization_skill_settings',
   // A tenant's AnA run-control records: the pauses, steers and stops their
   // people issued mid-turn. Tenant-owned working data, not the audit trail —
   // the Part 11 rows for those actions live elsewhere and outlive the account.
