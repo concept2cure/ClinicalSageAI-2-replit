@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+{
+  "timestamp": "2026-10-22T05:23:10.204Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > a bare SAVEPOINT is refused here, as in production: this engine is the one that matters 13ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > lists exactly the 3.2.R section the compile composes for a US IND 34ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a monoclonal antibody, typed, and scores nothing 15ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a small molecule whose program files an NDA 11ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > judges the NEWEST drug substance, as compose does, whatever order the rows are stored in 14ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > gives a program with no CMC records yet its empty board, not a refusal 13ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records whose declared class is outside the boundary 13ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > assessProgramCompositionScope — the boundary for a caller holding no transaction > admits a small-molecule IND program, refuses a biologic, and leaves no transaction open 20ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine 37ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words 13ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  05:23:07
+   Duration  5.70s (transform 1.85s, setup 102ms, import 2.74s, tests 2.57s, environment 0ms)
+

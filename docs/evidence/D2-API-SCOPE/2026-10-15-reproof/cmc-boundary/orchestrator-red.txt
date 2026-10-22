@@ -1,0 +1,186 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > returns 3.2.A.1, 3.2.A.2, 3.2.A.3 6ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > names the route itself when one IS recorded 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > does NOT declare 3.2.A.2 not applicable from a row that records no origin either way 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > lists novel excipients in 3.2.A.3 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns US-specific subsections for US region 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns EU-specific subsections for EU region 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > returns S, P, A, and R sections together 8ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > injects cross-references for sections that depend on others 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > injectAllCrossReferences > does not crash on empty input 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.3 QOS from a full Module 3 composition 2ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > flags missing inputs in M2.3 gaps 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.4 from nonclinical studies 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.7 from CSR inputs 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > builds disposition, demographics, efficacy, AE tables 2ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > reports correct subject counts in AE summary 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags missing us-regional.xml for US submissions 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > rejects non-4-digit sequence numbers 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags package size over FDA 4 GB gateway limit 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > accepts valid EU application number format 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing XML declaration 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing DOCTYPE 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing eCTD namespace 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags leaf missing required attributes 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > raises no xlink finding for the value the DTD fixes 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > passes the vendored conformant backbone fixture with zero findings 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > does not read <leaf> inside an XML comment as a leaf 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > fails the vendored non-conformant backbone fixture on every seeded violation 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > flags malformed MD5 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > detects MD5 mismatch when buffers provided 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > flags M5.3.5 leaf without study-id 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > does not flag M3 leaves (study-id not required) 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > runs end-to-end and produces all step records 335ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > skips downstream steps when source data is missing 25ms
+stderr | server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a MAA target, and says why on the step
+[Orchestrator] run failed: ValidationError: The application id and the sequence number name the package file, so each must be a single name with no path in it.
+    at packageEctdSubmission (/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts:1405:11)
+    at assembleRealPackage (/home/user/ClinicalSageAI-2-replit/server/services/ectd/orchestrator-real-package.ts:191:20)
+    at assembleForValidation (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:648:16)
+    at /home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1937:42
+    at runStep (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1443:22)
+    at Module.runOrchestrator (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1936:5)
+    at /home/user/ClinicalSageAI-2-replit/server/__tests__/services/submission-orchestrator.test.ts:633:30
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  findings: [
+    {
+      ruleId: 'PACKAGE-NAME-NOT-PLAIN',
+      severity: 'error',
+      filePath: 'EMEA/H/C/12345-0000'
+    }
+  ],
+  errorClass: 'validation'
+}
+
+ × server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a NDA target, and says why on the step 202ms
+   → expected 'complete' to be 'skipped' // Object.is equality
+ × server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a MAA target, and says why on the step 112ms
+   → expected 'complete' to be 'skipped' // Object.is equality
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes Module 3 for its US IND target 137ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > marks downstream steps stale when an upstream step changes 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > records input hashes for incremental rebuild detection 127ms
+stderr | server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses inline cmcSources on POST /runs, before anything is read or written
+{
+  "timestamp": "2026-10-22T05:20:06.068Z",
+  "level": "warn",
+  "message": "[submission-orchestrator] Inline cmcSources refused outside development",
+  "context": {
+    "organizationId": 42
+  }
+}
+
+stderr | server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses it on the regenerate route too — the same door one level down
+{
+  "timestamp": "2026-10-22T05:20:06.074Z",
+  "level": "warn",
+  "message": "[submission-orchestrator] Inline cmcSources refused outside development",
+  "context": {
+    "organizationId": 42
+  }
+}
+
+stderr | server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a gate that cannot be evaluated carries none and reads as unknown, never as an empty program
+{
+  "timestamp": "2026-10-22T05:20:06.106Z",
+  "level": "warn",
+  "message": "[load-approved-cmc-sources] export gate could not be evaluated; the package carries no Module 3",
+  "context": {
+    "orgId": 42,
+    "projectId": "11111111-2222-3333-4444-555555555555",
+    "err": "connection terminated"
+  }
+}
+
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses an inaccessible project before loading any private input arrays or starting a run 29ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses inline cmcSources on POST /runs, before anything is read or written 7ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses it on the regenerate route too — the same door one level down 4ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > does not refuse an EMPTY array — it carries no Module 3 either way 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > keeps the fixture door open in development 4ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > asks the gate for THIS program, under THIS organization, and carries the sources when it opens 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > carries NO Module 3 when the gate refuses, and never reads the sources 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > says WHY it carried none, in the gate’s own words 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > hands the refusal to the run, so m3.compose records WHY it skipped 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > hands no refusal when the gate opened — the step has nothing to explain 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a gate that cannot be evaluated carries none and reads as unknown, never as an empty program 3ms
+ × server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > carries NO Module 3 for a program outside the composition boundary, though the gate opened, and says why 7ms
+   → expected "vi.fn()" to be called with arguments: [ 42, …(1) ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a boundary that cannot be evaluated carries none and reads as unknown 6ms
+   → expected [ { id: 'ds-1', …(2) } ] to deeply equal []
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > does not ask the gate at all when no CMC program is named 2ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > the standalone QOS route is gone > POST /m2/qos is not routed — the QOS is composed from records, not from a request body 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > m3.refine’s model path is unreachable from a request > useAI cannot be set through the run route 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a NDA target, and says why on the step
+ FAIL  server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a MAA target, and says why on the step
+AssertionError: expected 'complete' to be 'skipped' // Object.is equality
+
+Expected: "skipped"
+Received: "complete"
+
+ ❯ server/__tests__/services/submission-orchestrator.test.ts:635:23
+    633|     const { run, outputs } = await runOrchestrator({ ...baseInputs, su…
+    634|     const m3 = run.steps.find(s => s.key === 'm3.compose')!;
+    635|     expect(m3.status).toBe('skipped');
+       |                       ^
+    636|     expect(m3.outputRef).toMatch(new RegExp(`This submission files ${s…
+    637|     expect(outputs.module3Sections ?? []).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > carries NO Module 3 for a program outside the composition boundary, though the gate opened, and says why
+AssertionError: expected "vi.fn()" to be called with arguments: [ 42, …(1) ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/orchestrator-module3-governed.test.ts:329:45
+    327|
+    328|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    329|     expect(h.assessProgramCompositionScope).toHaveBeenCalledWith(ORG, …
+       |                                             ^
+    330|     expect(inputsPassed().cmcSources).toEqual([]);
+    331|     expect(h.loadCmcSourcesForProject).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a boundary that cannot be evaluated carries none and reads as unknown
+AssertionError: expected [ { id: 'ds-1', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "id": "ds-1",
++     "sourcePayload": {
++       "name": "BX-115",
++     },
++     "sourceType": "drug_substance",
++   },
++ ]
+
+ ❯ server/routes/__tests__/orchestrator-module3-governed.test.ts:342:39
+    340|
+    341|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    342|     expect(inputsPassed().cmcSources).toEqual([]);
+       |                                       ^
+    343|     expect(assemblyAudit()).toMatchObject({ cmcExportGate: 'unknown' }…
+    344|     expect(String(res.body.outputs.m3Refusal)).toMatch(/could not be e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 52 passed (56)
+   Start at  05:19:59
+   Duration  7.00s (transform 2.82s, setup 97ms, import 5.37s, tests 1.07s, environment 0ms)
+

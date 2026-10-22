@@ -19,6 +19,10 @@ vi.mock('../../../middleware/rateLimiter', () => ({
   default: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 vi.mock('../../../db', () => ({ db: {} }));
+/* A rendered letter is recorded before it is delivered (D5,
+   documents-recorded.test.ts pins that rule); this suite is about the
+   submission type, so the record persists. */
+vi.mock('../../../services/auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 const m = vi.hoisted(() => ({ getSubmission: vi.fn() }));
 vi.mock('../../../services/submission-service/submission-service', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/submission-service/submission-service')>()),

@@ -41,6 +41,7 @@ import {
   applicationNotReadable,
   compositionRefusal,
   compositionRefusalBody,
+  compositionRefusalStatus,
   CompositionOutOfScopeError,
   isCompositionOutOfScope,
 } from '../composition-scope';
@@ -284,11 +285,18 @@ describe('a refusal cannot be mistaken for an empty result', () => {
   });
 
   it('an unreadable submission refuses rather than composing on an unestablished application', () => {
-    const refusal = applicationNotReadable('connection terminated');
+    const refusal = applicationNotReadable();
     expect(refusal.code).toBe('CMC_APPLICATION_NOT_READABLE');
     expect(refusal.message).toMatch(/not established/);
-    expect(refusal.message).toMatch(/connection terminated/);
+    // The read's own error is in the server log, never in the message: it was
+    // quoted here, so a driver message reached the 409 body (2026-10-22).
+    expect(refusal.message).toMatch(/the failure is in the server log\.$/);
     // Not "out of scope" — nothing is wrong with the program.
     expect(refusal.message).not.toMatch(/not composed here/);
+  });
+
+  it('a read that failed is answered 503, so a screen offers the retry; a verdict is 409', () => {
+    expect(compositionRefusalStatus(applicationNotReadable())).toBe(503);
+    expect(compositionRefusalStatus(compositionRefusal([SMALL_MOLECULE], 'nda')!)).toBe(409);
   });
 });
