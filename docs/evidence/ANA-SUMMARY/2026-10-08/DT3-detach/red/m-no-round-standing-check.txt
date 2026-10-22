@@ -1,0 +1,21 @@
+# m-no-round-standing-check: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t session that ended
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the session ended: stopped as session_ended, and the record says so 92ms
+   → expected +0 to be 2 // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the standing could not be read (fails closed): stopped as session_ended, and the record says so 19ms
+   → expected +0 to be 2 // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the record names the cause the check found: an organisation that can no longer run work 20ms
+   → expected [] to deeply equal [ 'session_ended' ]
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > a turn with no run row is re-checked too, and stopped when its standing ended 14ms
+   → expected +0 to be 2 // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > a standing session goes on 22ms
+ Test Files  1 failed | 1 skipped (2)
+      Tests  4 failed | 1 passed | 41 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the session ended: stopped as session_ended, and the record says so
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the standing could not be read (fails closed): stopped as session_ended, and the record says so
+AssertionError: expected +0 to be 2 // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the record names the cause the check found: an organisation that can no longer run work
+AssertionError: expected [] to deeply equal [ 'session_ended' ]
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > a turn with no run row is re-checked too, and stopped when its standing ended
+AssertionError: expected +0 to be 2 // Object.is equality

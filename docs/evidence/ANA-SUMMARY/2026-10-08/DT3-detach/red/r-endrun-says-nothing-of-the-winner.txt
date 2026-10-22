@@ -1,0 +1,17 @@
+# r-endrun-says-nothing-of-the-winner: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-control-detach.pglite.test.ts  -t which writer ended
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'ended' when its write ended the run; readRunEnding has nothing to report 17ms
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after a shutdown, and readRunEnding returns the row's reason 14ms
+   → expected 'ended' to be 'already_ended' // Object.is equality
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after an admin's cancel, and readRunEnding returns the row's reason 12ms
+   → expected 'ended' to be 'already_ended' // Object.is equality
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after the session's end, and readRunEnding returns the row's reason 9ms
+   → expected 'ended' to be 'already_ended' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed | 33 skipped (37)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after a shutdown, and readRunEnding returns the row's reason
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after an admin's cancel, and readRunEnding returns the row's reason
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after the session's end, and readRunEnding returns the row's reason
+AssertionError: expected 'ended' to be 'already_ended' // Object.is equality

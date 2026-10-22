@@ -1,0 +1,28 @@
+# m-purge-does-not-stop-runs-first: exit 1 (non-zero = red)
+# tests: server/services/tenant/__tests__/tenant-offboarding.test.ts  -t purge|AnA
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an already-purged organization 6ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses to restore a purged organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses without a final export digest 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > VERIFIES the digest — a fabricated string does not open the gate 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > scopes the receipt lookup to THIS organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > checks the digest BEFORE reading the organization — cheapest refusal first 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses while the retention window is still open 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses to purge a tenant that was never scheduled for deletion 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason 6ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > rejects an unsafe table name rather than interpolating it 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > lists every table a purge door erases, since a door opens only for a listed table 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > ships a frozen child-table list that excludes the audit trail and billing 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > names the vault tables where they actually live 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes chunks before the documents their scoping predicate reads 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > requestDeletion stops them with session_ended once the organisation is pending deletion 233ms
+ × server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > purgeTenant stops them FIRST, before any table is purged 8ms
+   → the live runs were not stopped: expected -1 to be greater than -1
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed | 6 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > purgeTenant stops them FIRST, before any table is purged
+AssertionError: the live runs were not stopped: expected -1 to be greater than -1

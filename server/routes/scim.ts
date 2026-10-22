@@ -31,11 +31,16 @@ import { ipInAnyCidr } from '../utils/cidr';
 import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
 import { clientIpOf } from '../utils/client-ip';
 import { invalidateOrgMembershipCache } from '../middleware/orgMembership';
+import { stopPersonsRuns } from '../services/account-standing';
+import type { SessionEndDetail } from '@shared/ana/stop-lines';
 import {
   changeMemberRole,
   type MembershipActor,
   type MembershipTxClient,
 } from '../services/tenant/membership-change';
+
+/** What a SCIM deprovisioning says ended a person's AnA turns: the identity provider, no person (AnA detach §2.9). */
+const SCIM_DEPROVISIONED: SessionEndDetail = { cause: 'deprovisioned', byUserId: null };
 
 const logger = createScopedLogger('scim');
 const router = Router();
@@ -480,8 +485,12 @@ async function writeHeldAccount(
       }
     });
   }
-  if (deactivate) invalidateOrgMembershipCache(held.userId, held.orgId);
-  else if (held.nextStatus === 'active') {
+  if (deactivate) {
+    invalidateOrgMembershipCache(held.userId, held.orgId);
+    // Deactivated here: their live AnA runs in this organisation stop now,
+    // with session_ended (AnA detach §2.9). Never throws.
+    await stopPersonsRuns(held.userId, SCIM_DEPROVISIONED, { organizationId: held.orgId });
+  } else if (held.nextStatus === 'active') {
     // Nothing is written, so nothing claims to have been: no audit row.
     logger.info('SCIM activate ignored — the account is held by the platform', {
       orgId: held.orgId,
@@ -523,7 +532,10 @@ async function replaceOwnedAccount(
       );
     }
   });
-  if (r.status === 'inactive') invalidateOrgMembershipCache(r.userId, r.orgId);
+  if (r.status === 'inactive') {
+    invalidateOrgMembershipCache(r.userId, r.orgId);
+    await stopPersonsRuns(r.userId, SCIM_DEPROVISIONED, { organizationId: r.orgId });
+  }
 }
 
 /**
@@ -613,7 +625,10 @@ async function patchOwnedAccount(
       );
     }
   });
-  if (p.nextStatus === 'inactive') invalidateOrgMembershipCache(p.userId, p.orgId);
+  if (p.nextStatus === 'inactive') {
+    invalidateOrgMembershipCache(p.userId, p.orgId);
+    await stopPersonsRuns(p.userId, SCIM_DEPROVISIONED, { organizationId: p.orgId });
+  }
 }
 
 // ─── ServiceProviderConfig ───────────────────────────────────────────────────
@@ -925,6 +940,8 @@ router.put('/Users/:id', scimAuth, async (req: Request, res: Response) => {
           })
         );
         invalidateOrgMembershipCache(id, orgId);
+        // Their live AnA runs in this organisation stop now (AnA detach §2.9).
+        await stopPersonsRuns(id, SCIM_DEPROVISIONED, { organizationId: orgId });
         deprovisionedHere = true;
       } else if (askedStatus === 'active' && stored.status !== 'active') {
         logger.info(
@@ -1017,6 +1034,8 @@ router.patch('/Users/:id', scimAuth, async (req: Request, res: Response) => {
             })
           );
           invalidateOrgMembershipCache(id, orgId);
+          // Their live AnA runs in this organisation stop now (AnA detach §2.9).
+          await stopPersonsRuns(id, SCIM_DEPROVISIONED, { organizationId: orgId });
           deprovisionedHere = true;
         } else if (nextStatus === 'active') {
           // Nothing is written, so nothing claims to have been: no audit row.
@@ -1079,6 +1098,9 @@ router.delete('/Users/:id', scimAuth, async (req: Request, res: Response) => {
       }
     });
     invalidateOrgMembershipCache(id, orgId);
+    // Offboarded here: their live AnA runs in this organisation stop now, with
+    // session_ended (AnA detach §2.9). Never throws.
+    await stopPersonsRuns(id, SCIM_DEPROVISIONED, { organizationId: orgId });
     res.status(204).send();
   } catch (err) {
     logger.error('SCIM delete user failed', err as Record<string, unknown>);

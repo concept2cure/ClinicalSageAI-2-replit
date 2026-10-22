@@ -506,6 +506,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, signInLimits.secondFactor, asy
     // Verify the partial token to get user identity
     let decoded: any;
     try {
+      // token-class: its own class — the MFA partial token; anything without mfaPending is refused just below.
       decoded = verifyJwtWithRotation(partialToken) as any;
     } catch {
       await recordAuthEvent({

@@ -575,6 +575,9 @@ describe('the drive controls a turn hands the shell', () => {
       first.push({ type: 'run_started', runId: 'run-1' });
       first.push({ type: 'drive_state', enabled: true, mode: 'assist' });
       first.push({ type: 'done' });
+      // The turn closes (post_done): a stream that ends before it would be a
+      // lost socket, which a driving turn now follows (D-7, 2026-10-22).
+      first.push({ type: 'post_done' });
       first.close();
       await firstSent;
     });
@@ -645,6 +648,9 @@ describe('the drive controls a turn hands the shell', () => {
     await act(async () => {
       s.push({ type: 'run_started', runId: 'run-1' });
       s.push({ type: 'done' });
+      // Closed by post_done, as every server path closes a turn (D-7: a stream
+      // that ends before it is a lost socket, and is followed).
+      s.push({ type: 'post_done' });
       s.close();
       await sent;
     });

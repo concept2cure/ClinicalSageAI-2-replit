@@ -1,15 +1,17 @@
-import { NOTICE_UUID, noticePositiveId, noticeTaskId } from '../../../shared/types/notification-navigation';
+import { NOTICE_UUID, noticePositiveId, noticeTaskId, noticeThreadId } from '../../../shared/types/notification-navigation';
 import { SUBMISSION_WORKSPACES } from '../../../shared/types/submission-ui';
 
 export interface NotificationResourceReference {
   resource_type: string | null; resource_id: string | null; action_url: string | null;
 }
 export interface RecordReference {
-  kind: 'report_run' | 'unified_task' | 'authoring_document' | 'project' | 'regulatory_program' | 'submission' | 'ectd_sequence' | 'gateway_transmittal' | 'protocol_document' | 'qms_document';
+  kind: 'report_run' | 'unified_task' | 'authoring_document' | 'project' | 'regulatory_program' | 'submission' | 'ectd_sequence' | 'gateway_transmittal' | 'protocol_document' | 'qms_document' | 'chat_thread';
   id: string; sectionId?: string; submissionId?: string; workspace?: string;
 }
 function nativeReference(kind: string, id: string): RecordReference | null {
   if (kind === 'unified_task') return noticeTaskId(id) ? { kind,id } : null;
+  // An AnA conversation (a detached turn's notice, AnA detach §5.5).
+  if (kind === 'chat_thread') return noticeThreadId(id) ? { kind,id } : null;
   if (kind === 'authoring_document') {
     const parts = id.split(':');
     return parts.length <= 2 && parts.every(part => NOTICE_UUID.test(part))

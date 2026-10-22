@@ -1,0 +1,10 @@
+# pre-fix red, 2026-10-22: 'ana_turn' mintable by POST /api/mdx/notifications and AnA's fire_notification (DT3 review DP-84, finding 3.5)
+ × server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications > refuses 'ana_turn': the platform alone writes it 48ms
+   → expected 201 to be 422 // Object.is equality
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications > still creates any other category 8ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > a person may still mute 'ana_turn' > PUT /notification-subscriptions/ana_turn passes the category check 5ms
+ × server/routes/__tests__/notification-server-only-category.test.ts > AnA's fire_notification > is not offered 'ana_turn', and refuses it by name 128ms
+   → expected [ 'submission_status', …(22) ] to not include 'ana_turn'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)

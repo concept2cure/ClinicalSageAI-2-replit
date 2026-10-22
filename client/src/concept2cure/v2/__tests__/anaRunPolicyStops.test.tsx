@@ -76,8 +76,11 @@ describe('the work panel never reads Finished for a policy stop', () => {
 describe('the transcript says why, under the turn, with Continue', () => {
   const minutes = (ms: number) => ms / 60_000;
 
+  // Under Auto, whose budget it is. A turn under no policy or Manual reaches a
+  // time limit only as the cap of a turn that went on after its page closed
+  // (DT3 review 4.6; anaDetachedCapNote.test.ts).
   it('the time limit names both ceilings, from the shared constants', () => {
-    expect(stoppedNoteText('budget_exhausted', 7)).toBe(
+    expect(stoppedNoteText('budget_exhausted', 7, undefined, undefined, 'auto')).toBe(
       `AnA reached this turn's time limit (${minutes(AUTO_ACTIVE_MS)} minutes of work, ${minutes(AUTO_WALL_MS)} minutes in all) before she said she was done.`,
     );
   });

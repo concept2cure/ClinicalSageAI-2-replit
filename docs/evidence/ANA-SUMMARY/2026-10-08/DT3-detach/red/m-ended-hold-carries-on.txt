@@ -1,0 +1,12 @@
+# m-ended-hold-carries-on: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-hold.test.ts  -t ended as
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as finished: the hold reports ended, with no resumed frame 14ms
+   → expected 'running' to be 'ended' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as failed: the hold reports ended, with no resumed frame 4ms
+   → expected 'running' to be 'ended' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 23 skipped (25)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as finished: the hold reports ended, with no resumed frame
+ FAIL  server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended as failed: the hold reports ended, with no resumed frame
+AssertionError: expected 'running' to be 'ended' // Object.is equality

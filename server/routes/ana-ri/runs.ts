@@ -38,9 +38,13 @@
  * record before it releases the rows (run-events.ts sealAfterMirror), so a
  * reader never sees "no rows and no record" for a run that sealed (§4.3).
  *
- * Nothing here writes, except the throttled reaper every route runs first
- * (§2.4). The asker's watched stamp (`visible=1`) and the run's `hold` are
- * written from slice DT3; until then `hold` is null and nothing is stamped.
+ * Two writes, nothing else: the throttled reaper every route runs first
+ * (§2.4), and — from slice DT3 — the asker's watched stamp. A read by the
+ * asker that says the page is on screen (`visible=1`) stamps
+ * `last_watched_at`, at most once per WATCH_STAMP_MIN_MS per run; an admin's
+ * read never does (watching is the asker's, §2.2). The owner's unattended
+ * clock reads it, and so does `unattendedStopsAt` below: one instant for both
+ * (shared/ana/run-detach.ts unattendedDeadline).
  *
  * @module server/routes/ana-ri/runs
  */
@@ -48,13 +52,15 @@
 import type { Request, Response, Router } from 'express';
 
 import { requestPgClient } from '../../db/requestDb.js';
-import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
+import { approvalRequiredEnvelope } from '../../services/ana-ri/part11-governance.js';
 import { readPendingApproval, reapOrphanedRunsThrottled } from '../../services/ana/run-control.js';
-import { controlsOf } from '../../services/ana/turn-summary.js';
+import { attributeControls } from '../../services/ana/turn-summary.js';
+import { readControlActorNames } from '../../services/ana/control-actor-names.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
 import { planFromTaskChanges, type PlanChangeKind, type PlanStep } from '@shared/ana/plan-diff';
 import type { MirroredTimelineEvent, TimelineControl } from '@shared/ana/turn-timeline';
 import { readsEveryRecord } from './record-access.js';
+import { isWatchedNow, unattendedDeadline, WATCH_STAMP_MIN_MS } from '@shared/ana/run-detach';
 
 /** At most this many events per read. */
 export const RUN_EVENTS_PAGE = 200;
@@ -86,6 +92,8 @@ interface RunRowRead {
   heartbeat_at: unknown;
   released_at: unknown;
   timeline_seq: number | null;
+  detached_at: unknown;
+  last_watched_at: unknown;
 }
 
 type RunAccess =
@@ -109,7 +117,8 @@ export async function runReadAccess(req: Request, runId: string, pool: RunsQuery
   const organizationId = resolveOrgId(req);
   if (organizationId === null) return { ok: false, status: 404 };
   const { rows } = await pool.query(`SELECT id, user_id, thread_id, user_message_id, status, stopped_reason, current_round,
-  run_policy, hold, control_events, created_at, heartbeat_at, released_at, timeline_seq FROM ana_runs WHERE id = $1 AND organization_id = $2`, [
+  run_policy, hold, control_events, created_at, heartbeat_at, released_at, timeline_seq, detached_at, last_watched_at
+  FROM ana_runs WHERE id = $1 AND organization_id = $2`, [
     runId,
     organizationId,
   ]);
@@ -130,9 +139,33 @@ function refuse(res: Response, status: 404 | 403): void {
   }
 }
 
+const msOf = (v: unknown): number | null => {
+  const at = iso(v);
+  return at === null ? null : Date.parse(at);
+};
+
+/**
+ * When a detached turn stops if nobody opens it, and whether its asker is
+ * watching it now (§2.6, §5.1). Null and false for a turn whose page is
+ * still open: it has not detached.
+ */
+function unattendedOf(r: { created_at: unknown; detached_at: unknown; last_watched_at: unknown }, nowMs: number) {
+  const startedAtMs = msOf(r.created_at);
+  const detachedAtMs = msOf(r.detached_at);
+  const lastWatchedAtMs = msOf(r.last_watched_at);
+  const deadline =
+    startedAtMs === null ? null : unattendedDeadline({ startedAtMs, detachedAtMs, lastWatchedAtMs });
+  return {
+    detachedAt: iso(r.detached_at),
+    unattendedStopsAt: deadline ? new Date(deadline.at).toISOString() : null,
+    watched: detachedAtMs === null || isWatchedNow(lastWatchedAtMs, nowMs),
+  };
+}
+
 /** One run as a listing shows it. Allow-listed. */
 function listedRun(r: Record<string, any>) {
   return {
+    ...unattendedOf(r as never, Date.now()),
     runId: String(r.id),
     threadId: r.thread_id ?? null,
     ...(r.thread_title !== undefined ? { threadTitle: r.thread_title ?? null } : {}),
@@ -151,15 +184,17 @@ async function approvalFor(pool: RunsQuery, access: Extract<RunAccess, { ok: tru
   if (!access.asker || access.userId === null || access.row.status !== 'awaiting_approval') return null;
   const pending = await readPendingApproval(pool, access.row.id, access.organizationId, access.userId);
   if (!pending) return null;
-  const proposal = buildHumanConfirmationRequiredResult(pending.command, pending.params, pending.tier as never);
-  return {
+  // The attached frame's own builder (DT3 review): the proposal check and the
+  // words the attached page showed, so a sign-off on this device signs the
+  // same thing the sign-off audit row records as shown.
+  return approvalRequiredEnvelope({
     runId: access.row.id,
     toolUseId: pending.toolUseId,
-    action: proposal.action,
-    openModal: proposal.openModal,
-    data: proposal.data,
-    message: proposal.message,
-  };
+    command: pending.command,
+    params: pending.params,
+    tier: pending.tier as never,
+    check: pending.check,
+  });
 }
 
 const TASK_CHANGES: ReadonlySet<string> = new Set<PlanChangeKind>(['added', 'started', 'completed', 'removed']);
@@ -225,6 +260,26 @@ function holdOf(raw: unknown): { reason: unknown; next: unknown } | null {
   return { reason: h.reason ?? null, next: h.next ?? null };
 }
 
+/**
+ * The asker's page is on screen: this run is watched (§2.2). Throttled in the
+ * SQL itself, so two devices polling every 2 s write at most once per
+ * WATCH_STAMP_MIN_MS. Live runs only; never for an admin (watching is the
+ * asker's). On the request's own connection, under its tenant's policy
+ * (runs-watched-stamp-rls.dbtest.ts).
+ */
+async function stampWatched(pool: RunsQuery, access: Extract<RunAccess, { ok: true }>): Promise<void> {
+  if (!access.asker || access.userId === null) return;
+  const stamped = await pool.query(
+    `UPDATE ana_runs SET last_watched_at = now()
+      WHERE id = $1 AND organization_id = $2 AND user_id = $3
+        AND status IN ('running','paused','awaiting_approval')
+        AND (last_watched_at IS NULL OR last_watched_at < now() - make_interval(secs => $4))
+      RETURNING last_watched_at`,
+    [access.row.id, access.organizationId, access.userId, WATCH_STAMP_MIN_MS / 1000],
+  );
+  if (stamped.rows[0]) access.row.last_watched_at = stamped.rows[0].last_watched_at;
+}
+
 /** GET /runs/:runId/events?after=<seq> */
 async function readRunEvents(req: Request, res: Response, pool: RunsQuery): Promise<void> {
   const runId = String(req.params.runId);
@@ -235,8 +290,9 @@ async function readRunEvents(req: Request, res: Response, pool: RunsQuery): Prom
   const access = await runReadAccess(req, runId, pool);
   if (!access.ok) return refuse(res, access.status);
   const { row, organizationId } = access;
+  if (req.query.visible === '1') await stampWatched(pool, access);
   const mirror = await readMirror(pool, runId, organizationId, after);
-  const controls: TimelineControl[] | null = controlsOf(Array.isArray(row.control_events) ? row.control_events : null);
+  const controls = await controlsFor(access);
 
   res.status(200).json({
     runId: row.id,
@@ -250,9 +306,10 @@ async function readRunEvents(req: Request, res: Response, pool: RunsQuery): Prom
     hold: holdOf(row.hold),
     plan: mirror.plan,
     startedAt: iso(row.created_at),
-    // Written from slice DT3 (detach); nothing detaches in DT1.
-    detachedAt: null,
-    unattendedStopsAt: null,
+    // When the page that started it closed, and when it stops if nobody
+    // watches (DT3, §2.6): null while that page is open.
+    detachedAt: unattendedOf(row, Date.now()).detachedAt,
+    unattendedStopsAt: unattendedOf(row, Date.now()).unattendedStopsAt,
     lastBeatAt: iso(row.heartbeat_at),
     releasedAt: iso(row.released_at),
     serverNow: new Date().toISOString(),
@@ -262,10 +319,33 @@ async function readRunEvents(req: Request, res: Response, pool: RunsQuery): Prom
     sealed: mirror.sealed,
     approval: await approvalFor(pool, access),
     // The asker controls the run; an admin may cancel it and nothing else
-    // (admin cancel is accepted from slice DT3). Admins never approve (P-A).
+    // (run-control.ts applyControl accepts it since DT3). Admins never
+    // approve (P-A).
     canControl: true,
     controlScope: access.asker ? 'all' : 'cancel',
+    // For an administrator: whose turn this is, so their Stop can name them
+    // (DT3 review, DP-82). The asker reads their own turn: null.
+    askerName: access.asker ? null : await askerNameOf(row.user_id),
   });
+}
+
+/** Who took each control, for this reader (DT3 review: never "You" for an administrator's cancel). */
+function controlsFor(access: Extract<RunAccess, { ok: true }>): Promise<TimelineControl[] | null> {
+  const { row } = access;
+  return attributeControls(
+    Array.isArray(row.control_events) ? row.control_events : null,
+    { viewerUserId: access.userId, askerUserId: row.user_id == null ? null : Number(row.user_id) },
+    readControlActorNames,
+  );
+}
+
+/** The asker by name as this tenant may name them, "user <id>" when it cannot; null for a run with no person. */
+async function askerNameOf(userId: unknown): Promise<string | null> {
+  if (userId === null || userId === undefined) return null;
+  const id = Number(userId);
+  if (!Number.isInteger(id)) return null;
+  const names = await readControlActorNames([id]).catch(() => new Map<number, string | null>());
+  return names.get(id) ?? `user ${id}`;
 }
 
 /** GET /runs?thread_id=… | ?mine=live */
@@ -289,7 +369,7 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
     }
     const { rows } = await pool.query(
       `SELECT r.id, r.thread_id, r.user_message_id, r.status, r.stopped_reason, r.run_policy,
-              r.created_at, r.heartbeat_at, r.released_at, t.title AS thread_title
+              r.created_at, r.heartbeat_at, r.released_at, r.detached_at, r.last_watched_at, t.title AS thread_title
          FROM ana_runs r
          LEFT JOIN chat_threads t ON t.id = r.thread_id AND t.organization_id = r.organization_id
         WHERE r.organization_id = $1 AND r.user_id = $2 AND r.status IN ('running','paused','awaiting_approval')
@@ -319,7 +399,7 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
   const params: unknown[] = [organizationId, threadId, admin ? null : userId, THREAD_RUNS_LIMIT];
   const { rows } = await pool.query(
     `SELECT r.id, r.thread_id, r.user_message_id, r.status, r.stopped_reason, r.run_policy,
-            r.created_at, r.heartbeat_at, r.released_at
+            r.created_at, r.heartbeat_at, r.released_at, r.detached_at, r.last_watched_at
        FROM ana_runs r
       WHERE r.organization_id = $1 AND r.thread_id = $2 AND ($3::integer IS NULL OR r.user_id = $3)
         AND (r.status IN ('running','paused','awaiting_approval')

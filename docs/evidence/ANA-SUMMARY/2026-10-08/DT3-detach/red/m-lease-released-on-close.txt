@@ -1,0 +1,18 @@
+# m-lease-released-on-close: exit 1 (non-zero = red)
+# tests: server/middleware/__tests__/establishRequestTenantScope.test.ts server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t retained|tenant connection
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > survives the response closing, still answers queries, and is released by its holder 8ms
+   → the response closing took the turn's connection: expected null to be LazyRequestDbClient{ …(6) } // Object.is equality
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > a release that comes before the response ends leaves the response to release it 1ms
+   → the holder let go, but the response is still open: expected null to be truthy
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > nothing to retain once the response already released it, or on a request with no bound client 1ms
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn keeps its request's tenant connection (blocking review finding, 14362ef00) > the round after the page closed reads on the request's client, and the client is released once, after the turn 55ms
+   → the tool after the close did not read on the request client: expected [] to deeply equal [ 'released=0' ]
+ Test Files  2 failed | 1 skipped (3)
+      Tests  3 failed | 1 passed | 58 skipped (62)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > survives the response closing, still answers queries, and is released by its holder
+AssertionError: the response closing took the turn's connection: expected null to be LazyRequestDbClient{ …(6) } // Object.is equality
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > a release that comes before the response ends leaves the response to release it
+AssertionError: the holder let go, but the response is still open: expected null to be truthy
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn keeps its request's tenant connection (blocking review finding, 14362ef00) > the round after the page closed reads on the request's client, and the client is released once, after the turn
+AssertionError: the tool after the close did not read on the request client: expected [] to deeply equal [ 'released=0' ]

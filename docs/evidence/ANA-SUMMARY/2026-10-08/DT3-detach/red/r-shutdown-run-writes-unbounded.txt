@@ -1,0 +1,9 @@
+# r-shutdown-run-writes-unbounded: exit 1 (non-zero = red)
+# tests: server/startup/__tests__/shutdown-ana-runs.test.ts  -t deadline
+ × server/startup/__tests__/shutdown-ana-runs.test.ts > the runs' writes have a deadline > a database that does not answer: the turns are stopped locally and the drain begins within the deadline 5009ms
+   → expected [] to include 'http:close'
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/startup/__tests__/shutdown-ana-runs.test.ts > the runs' writes have a deadline > a database that does not answer: the turns are stopped locally and the drain begins within the deadline
+AssertionError: expected [] to include 'http:close'

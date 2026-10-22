@@ -1,0 +1,19 @@
+06:52:39 A thread ana-ri_1792651953383_8si7sctws run run_230a76ee-7ddf-4e21-893b-355f19b77066
+06:52:39 A: desktop page closed
+06:53:15 B thread ana-ri_1792651990180_4dgrprhi1 run run_5abf24ad-da46-437c-8f35-c5a82d659198
+06:53:18 B: reloaded
+06:53:52 C thread ana-ri_1792652027215_30wvgz94p run run_bbaece56-99df-4e59-a563-97e7a2620744
+06:54:02 C: admin pressed Stop
+06:54:16 E thread ana-ri_1792652050845_r5i7bbdq2 run run_a74c255d-db48-490f-9273-35527b101958
+06:54:21 E: desktop page closed at the hold
+06:54:26 E: phone pressed Run this step
+06:54:44 F thread ana-ri_1792652078794_knh6xwehc run run_96e2ddc0-4134-4485-b1d0-16560783e69b
+06:54:44 F: page closed; nobody watches
+06:55:23 G thread ana-ri_1792652118090_feajt95pb run run_0858a6f8-ca9c-40ec-8bf4-d5e6cfa2a68e
+06:55:23 G: Live Drive page closed
+06:55:34 D thread ana-ri_1792652129341_ey5xy79ct run run_b6eda0a7-a9d9-4199-95cb-3f47d1bc1f1e
+06:55:40 D: SIGTERM to 31181
+06:55:45 D: restarting
+06:56:08 D: server back
+06:56:22 done {"A_detachedNotStopped":true,"A_finishedAndSealed":true,"A_noLostConnection":true,"B_rejoined":true,"B_finished":true,"B_noLostConnection":true,"C_adminHadStopOnly":true,"C_rowSaysAdmin":true,"C_askerReadsAdminLine":true,"E_holdWrittenForFollower":true,"E_phoneShowsHoldButtons":true,"E_detachedAtHold":true,"E_stoppedFromPhone":true,"F_noticeNamesConversation":true,"F_openedTheConversation":true,"G_liveDriveStopsOnClose":true,"G_phoneReadsLostConnection":true,"D_sigtermAt":"2026-10-22T06:55:40.317Z","D_rowSaysShutdown":true,"D_phoneReadsRestart":true,"D_continueOffered":true}
+exit=0

@@ -453,3 +453,99 @@ describe('an account added through user administration: its events reach its org
     expect(tenantOf('user_password_changed')).toBe(5);
   });
 });
+
+/* ── AnA detach DT3 (docs/design/ANA_DETACH_2026-10-08.md §2.9) ─────────────
+   A turn whose page closed goes on in the server. It must not outlive the
+   session that started it: a password reset and a password change end every
+   session, and stop every live run of the person; a sign-out ends ONE
+   session, and stops the runs that session started (DT3 review: a desktop
+   sign-out does not stop the phone's turn, and "the session that started
+   this turn ended" stays true). Read off the statements that do it
+   (run-control.ts stopRunsFor), through the db double.
+
+   IAM-34 (DT3 review, a regression of IAM-23's intent): /logout is public and
+   reads its token with ignoreExpiration for the audit row. The stop is a
+   state change on the account, so it is taken only for a token that passes
+   the live access test signOutEverywhere applies: an mfa_challenge token (what
+   a correct password alone yields), a refresh, connector or delegated token,
+   an expired, revoked or forged one stops nothing. */
+describe("the person's live AnA runs stop when their session ends", () => {
+  const secret = () => process.env.JWT_SECRET as string;
+  const signed = (claims: Record<string, unknown>, opts: jwt.SignOptions = { expiresIn: '5m' }) => jwt.sign(claims, secret(), opts);
+  const access = (extra: Record<string, unknown> = {}) =>
+    signed({ userId: '7', email: 'holder@example.test', organizationId: '3', type: 'access', sid: 'sid-desk', ...extra });
+  const runStops = async () => {
+    const { pool } = await import('../../db');
+    return (pool.query as unknown as { mock: { calls: unknown[][] } }).mock.calls.filter(
+      c => /UPDATE ana_runs/.test(String(c[0])) && Array.isArray(c[1]) && (c[1] as unknown[]).includes('session_ended'),
+    );
+  };
+  const logout = (token: string) => request(app).post('/api/auth/logout').set('Authorization', `Bearer ${token}`).send({});
+  beforeEach(async () => {
+    const { pool } = await import('../../db');
+    (pool.query as unknown as { mockClear: () => void }).mockClear();
+  });
+
+  it('a password reset stops them, for that account, in every organisation', async () => {
+    dbState.selectRows = [{ id: 7, resetToken: 'x', resetTokenExpiresAt: new Date(Date.now() + 60_000) }];
+    const res = await request(app).post('/api/auth/reset-password').send({ token: 'raw-token', newPassword: 'Str0ng-Passphrase!42' });
+    expect(res.status).toBe(200);
+    const stops = await runStops();
+    expect(stops).toHaveLength(1);
+    expect(stops[0][1]).toEqual([7, null, 'session_ended', JSON.stringify({ cause: 'password_reset', byUserId: 7 })]);
+  });
+
+  it('a reset refused (the token was used first) stops nothing', async () => {
+    dbState.selectRows = [{ id: 7, resetToken: 'x', resetTokenExpiresAt: new Date(Date.now() + 60_000) }];
+    dbState.returningRows = [];
+    await request(app).post('/api/auth/reset-password').send({ token: 'raw-token', newPassword: 'Str0ng-Passphrase!42' });
+    expect(await runStops()).toHaveLength(0);
+  });
+
+  it('a password change while signed in stops them', async () => {
+    const passwordHash = await bcrypt.hash('Current-Passphrase!1', 4);
+    dbState.selectRows = [{ id: 7, email: 'holder@example.test', passwordHash, passwordHistory: [], defaultOrganizationId: 3 }];
+    const res = await request(app)
+      .post('/api/auth/password/change')
+      .set('Authorization', `Bearer ${access({ sid: undefined })}`)
+      .send({ currentPassword: 'Current-Passphrase!1', newPassword: 'Str0ng-Passphrase!42-new' });
+    expect(res.status).toBe(200);
+    expect((await runStops()).map(c => c[1])).toEqual([[7, null, 'session_ended', JSON.stringify({ cause: 'password_change', byUserId: 7 })]]);
+  });
+
+  it("a sign-out with a live access token stops the runs its session started, and only those", async () => {
+    const res = await logout(access());
+    expect(res.status).toBe(200);
+    const stops = await runStops();
+    expect(stops.map(c => c[1])).toEqual([[7, 'sid-desk', 'session_ended', JSON.stringify({ cause: 'sign_out', byUserId: 7 })]]);
+    expect(String(stops[0][0])).toMatch(/started_session_id = \$2/);
+  });
+
+  it('a live access token with no session id stops nothing at once (its runs stop at their next round)', async () => {
+    await logout(access({ sid: undefined }));
+    expect(await runStops()).toHaveLength(0);
+  });
+
+  it.each([
+    ['an mfa_challenge token (a correct password, no second factor)', () => signed({ userId: '7', type: 'mfa_challenge', purpose: 'mfa' })],
+    ['a refresh token', () => signed({ userId: '7', type: 'refresh', sid: 'sid-desk' })],
+    ['an mfa-partial token', () => signed({ userId: '7', type: 'access', mfaPending: true, sid: 'sid-desk' })],
+    ['a connector (delegated) token', () => signed({ userId: '7', type: 'access', token_use: 'mcp', sid: 'sid-desk' })],
+    ['an unclassed token', () => signed({ userId: '7', sid: 'sid-desk' })],
+    ['an expired access token', () => signed({ userId: '7', type: 'access', sid: 'sid-desk', exp: Math.floor(Date.now() / 1000) - 60 }, {})],
+    ['a token this server did not sign', () => jwt.sign({ userId: '7', type: 'access', sid: 'sid-desk' }, 'not-the-server-secret-but-long-enough-0000', { expiresIn: '5m' })],
+  ])('%s stops nothing (IAM-34)', async (_name, token) => {
+    const res = await logout(token());
+    expect(res.status).toBe(200);
+    expect(await runStops()).toHaveLength(0);
+  });
+
+  it('a token already revoked (a second sign-out with it) stops nothing', async () => {
+    const token = access({ sid: 'sid-twice' });
+    await logout(token);
+    const { pool } = await import('../../db');
+    (pool.query as unknown as { mockClear: () => void }).mockClear();
+    await logout(token);
+    expect(await runStops()).toHaveLength(0);
+  });
+});

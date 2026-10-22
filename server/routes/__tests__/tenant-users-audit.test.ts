@@ -243,6 +243,18 @@ describe('DELETE /:organizationId/:userId — a removal is recorded with its rea
     expect(written(/^ROLLBACK/)).toHaveLength(1);
     expect(written(/^COMMIT/)).toHaveLength(0);
     expect(h.invalidated).toHaveLength(0);
+    expect(written(/^UPDATE ana_runs/i), 'a removal that did not happen stopped runs').toHaveLength(0);
+  });
+
+  // AnA detach DT3 (§2.9): a removed member's live AnA turns in this
+  // organisation stop now, not at their next round boundary — after the
+  // removal has committed.
+  it("stops the removed member's live AnA runs, once the removal has committed", async () => {
+    const res = await remove({ reason: 'Left the company' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const order = h.log.filter(s => /^(COMMIT|UPDATE ana_runs)/i.test(s)).map(s => s.split(' ').slice(0, 2).join(' '));
+    expect(order).toEqual(['COMMIT', 'UPDATE ana_runs']);
+    expect(written(/^UPDATE ana_runs .*stopped_reason = \$4/i)).toHaveLength(1);
   });
 });
 
