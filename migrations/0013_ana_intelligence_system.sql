@@ -11,6 +11,18 @@
 --   7. ana_client_objectives — Company + project objectives tracking
 --
 -- Also adds new fields to project_intelligence_profiles for project classification.
+--
+-- AMENDED IN PLACE 2026-10-15 (D2) — ana_platform_wisdom.confidence_score is
+-- nullable, with no default. It was `REAL NOT NULL DEFAULT 0.5`, and
+-- promoteToPlatformWisdom (server/services/ana-wisdom-engine.ts) stamped
+-- min(0.95, 0.5 + 0.05·organizations) into it — a count of organizations, not
+-- a measured confidence — which detectProjectRisks then turned into a risk's
+-- severity. Nothing measures one, so the engine now writes NULL.
+-- RULE 1: this file is in C2C_MIGRATION_FILES and re-runs on every deploy. The
+-- CREATE TABLE below declares the new shape for a database without the table;
+-- the conditional block after it relaxes the column where the table already
+-- exists. It removes no object and discards no data (stored values are kept);
+-- nothing on any applier re-imposes the NOT NULL or the default.
 
 -- ============================================================
 -- 1. ANA CAPABILITY REGISTRY
@@ -139,7 +151,7 @@ CREATE TABLE IF NOT EXISTS ana_platform_wisdom (
   document_type TEXT,
   pattern_description TEXT NOT NULL,
   recommendation TEXT NOT NULL,
-  confidence_score REAL NOT NULL DEFAULT 0.5,
+  confidence_score REAL,                     -- NULL = nothing measured it (2026-10-15)
   evidence_count INTEGER NOT NULL DEFAULT 0,
   min_evidence_threshold INTEGER NOT NULL DEFAULT 10,
   effectiveness_score REAL,
@@ -155,6 +167,22 @@ CREATE INDEX IF NOT EXISTS ana_wisdom_regulatory_idx ON ana_platform_wisdom(regu
 CREATE INDEX IF NOT EXISTS ana_wisdom_project_type_idx ON ana_platform_wisdom(project_type);
 CREATE INDEX IF NOT EXISTS ana_wisdom_active_idx ON ana_platform_wisdom(is_active);
 CREATE INDEX IF NOT EXISTS ana_wisdom_confidence_idx ON ana_platform_wisdom(confidence_score);
+
+-- 2026-10-15 (see the header): a table created before still has NOT NULL and
+-- DEFAULT 0.5 here. Conditional on the live shape, so a re-run is a no-op.
+DO $ana_wisdom_confidence$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = current_schema() AND table_name = 'ana_platform_wisdom'
+       AND column_name = 'confidence_score'
+       AND (is_nullable = 'NO' OR column_default IS NOT NULL)
+  ) THEN
+    ALTER TABLE ana_platform_wisdom ALTER COLUMN confidence_score DROP DEFAULT;
+    ALTER TABLE ana_platform_wisdom ALTER COLUMN confidence_score DROP NOT NULL;
+  END IF;
+END
+$ana_wisdom_confidence$;
 
 -- ============================================================
 -- 6. ANA SCOPED RULES

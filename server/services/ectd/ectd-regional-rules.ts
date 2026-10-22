@@ -367,10 +367,8 @@ const FDA_GATEWAY_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
 const PMDA_LIMIT_BYTES = 1024 * 1024 * 1024;
 // NMPA and MFDS publish no single eCTD gateway package-size limit in the
-// accessible specifications. These two figures are NOT published limits; they
-// survive only for the deprecated getGatewaySizeLimit.
-const NMPA_LIMIT_BYTES = 1024 * 1024 * 1024;
-const MFDS_LIMIT_BYTES = 1024 * 1024 * 1024;
+// accessible specifications, so none is held for CN or KR (2026-10-15: a 1 GB
+// figure for each, which no agency publishes, was removed with getGatewaySizeLimit).
 
 // Region → its M1 regional backbone path. Every eCTD region requires a
 // {code}-regional.xml backbone under /m1/{code}/; centralised here so the
@@ -901,30 +899,4 @@ export function getGatewaySizeLimitOnFile(region: RegulatoryRegion): GatewaySize
   const entry = SIZE_RULE_BY_REGION[region];
   const rule = entry && REGIONAL_RULES.find(r => r.id === entry.ruleId);
   return entry && rule ? { bytes: entry.bytes, source: rule.citation } : null;
-}
-
-/**
- * @deprecated Use getGatewaySizeLimitOnFile. For CA (FDA's figure), CN, KR, UK,
- * AU, CH, BR, IN and SG this returns a figure no agency publishes (2026-10-15);
- * it remains only until its two consumers, submission-gateways/pre-transmit-check
- * and regulatory/workspace-config-enrichment, move to the sourced accessor.
- */
-export function getGatewaySizeLimit(region: RegulatoryRegion): number {
-  switch (region) {
-    case 'US':
-      return FDA_GATEWAY_LIMIT_BYTES;
-    case 'EU':
-      return EMA_CESP_LIMIT_BYTES;
-    case 'JP':
-      return PMDA_LIMIT_BYTES;
-    case 'CA':
-      return FDA_GATEWAY_LIMIT_BYTES;
-    case 'CN':
-      return NMPA_LIMIT_BYTES;
-    case 'KR':
-      return MFDS_LIMIT_BYTES;
-    // Not a published limit (see the deprecation note above).
-    default:
-      return PMDA_LIMIT_BYTES;
-  }
 }

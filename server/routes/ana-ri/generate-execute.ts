@@ -73,6 +73,9 @@ export function mountGenerateExecuteRoutes(router: Router): void {
       }
 
       const { orgId, userId } = extractRequestContext(req);
+      // 2026-10-15: a request with no user reached the generator, whose refusal
+      // was answered as 502 GENERATION_FAILED.
+      if (!userId) return sendError(res, 401, 'A signed-in user is required', null, 'NO_AUTH');
 
       if (!orgId) {
         return sendError(res, 403, 'Organization context required', null, 'NO_ORG');
@@ -85,9 +88,9 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         actionType: action_type as DocumentActionType,
         conversationContext: conversation_context,
         projectId: Number(project_id),
-        // orgId guaranteed truthy by the guard above.
+        // orgId and userId guaranteed by the guards above.
         organizationId: Number(orgId),
-        userId: userId ? Number(userId) : undefined,
+        userId,
         userRole: user_role,
         intentLens: intent_lens,
         title,

@@ -82,10 +82,10 @@ export function childToolsFrom(governed: readonly AnyAnaTool[]): AnaTool[] {
   return governed.filter((t): t is AnaTool => RESEARCH.has(t.name) && 'input_schema' in t);
 }
 
-export type AgentRole = 'research' | 'verify';
+export type SubAgentRole = 'research' | 'verify';
 
 export interface AgentBrief {
-  role: AgentRole;
+  role: SubAgentRole;
   objective: string;
   instructions: string;
   /** verify only: the exact text the checks run on. */

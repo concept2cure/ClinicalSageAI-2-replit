@@ -10,7 +10,7 @@
  *
  * Authentication: DEMO_SEED_TOKEN (a bearer token for the target server) or, on
  * a local server started with ALLOW_DEV_AUTH=1, dev-login as --email /
- * DEMO_SEED_EMAIL (default: the founder). Records land in that user's
+ * DEMO_SEED_EMAIL (required; no identity is built in). Records land in that user's
  * organisation and are audited as that user.
  *
  * Each pack lives in ./packs/<pack>.mjs and exports { seed(ctx), purge(ctx) }.

@@ -5,7 +5,8 @@
  *   MCP_URL=http://localhost:5300/mcp MCP_TOKEN=<bearer> [SEQUENCE_ID=<id>] \
  *     npx tsx server/mcp/client-transcript.ts
  *
- * Without MCP_TOKEN it obtains one from POST /api/auth/dev-login (dev only).
+ * Without MCP_TOKEN it obtains one from POST /api/auth/dev-login (dev only) as
+ * the account MCP_DEV_EMAIL names; with neither it refuses.
  * Prints a Markdown transcript to stdout: tools/list, then c2c_list_projects,
  * c2c_assess_sequence_readiness and c2c_get_sequence_status.
  */
@@ -18,10 +19,16 @@ const origin = new URL(MCP_URL).origin;
 
 async function token(): Promise<string> {
   if (process.env.MCP_TOKEN) return process.env.MCP_TOKEN;
+  // No identity is built in (2026-10-15): with MCP_DEV_EMAIL unset this signed
+  // in, and every tool call was audited, as a real person's personal address.
+  const email = (process.env.MCP_DEV_EMAIL ?? '').trim();
+  if (!email) {
+    throw new Error('name the account to sign in as: MCP_TOKEN (a bearer token) or MCP_DEV_EMAIL (dev-login); no identity is built in');
+  }
   const res = await fetch(`${origin}/api/auth/dev-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: process.env.MCP_DEV_EMAIL || 'jonmichaelpsmith@gmail.com' }),
+    body: JSON.stringify({ email }),
   });
   if (!res.ok) throw new Error(`dev-login failed: ${res.status}`);
   return ((await res.json()) as { accessToken: string }).accessToken;

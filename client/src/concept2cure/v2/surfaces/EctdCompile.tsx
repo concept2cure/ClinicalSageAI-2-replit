@@ -44,6 +44,7 @@ import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { OrchestratorRunControls } from './OrchestratorRunControls';
 import { captureShellProjectGuard, useShellProject, type ShellProject } from '../shellProject';
 import { useSubmissionReadSession } from './submissionScopedRead';
@@ -924,6 +925,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
   const actionRevision = useRef(0);
   const actionCurrent = useCallback((request: number) => current() && actionRevision.current === request, [current]);
   const [toast, fireToast] = useToast();
+  // The package download's review: the signed-in user's confirmation of this
+  // compile (a new compile starts unconfirmed). 2026-10-15: none was sent, so
+  // production refused every download (403 HUMAN_REVIEW_REQUIRED).
+  const exportReview = useExportReview(compileResult?.id ?? '');
 
   // ── Orchestrator pipeline state (folded in from the deleted duplicate) ──
   // Each panel carries its OWN read-outcome flag for the same reason
@@ -1097,7 +1102,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     const request = ++actionRevision.current;
     setBusy('export');
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
+        ...exportRequestBody(compileResult, regionBody),
+        governance: exportReview.governance,
+      });
       if (!actionCurrent(request)) return;
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -1118,7 +1126,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     } finally {
       if (actionCurrent(request)) setBusy(null);
     }
-  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent]);
+  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent, exportReview.governance]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null || !current()) return;
@@ -1574,14 +1582,17 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
                 content file and is still a package (2026-09-29, W5/D7: this
                 was gated on rendered leaf files, so it could not be exported). */}
             {compileResult.submissionId != null && compileResult.package != null && (
-              <button
-                className="btn primary"
-                style={{ height: 32, marginRight: 8 }}
-                disabled={busy != null}
-                onClick={() => void doExport()}
-              >
-                {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
-              </button>
+              <>
+                <ExportReviewConfirmation review={exportReview} subject="this compiled package's content" disabled={busy != null} />
+                <button
+                  className="btn primary"
+                  style={{ height: 32, marginRight: 8 }}
+                  disabled={busy != null}
+                  onClick={() => void doExport()}
+                >
+                  {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
+                </button>
+              </>
             )}
             {compileResult.xmlBackbone && (
               <>

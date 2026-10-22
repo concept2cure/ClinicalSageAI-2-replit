@@ -59,7 +59,8 @@ export interface DecisionRecord {
    */
   domainTrack: string;
   recommendationType: RecommendationType;
-  recommendationSummary: string;
+  /** As stated; null when nobody stated one (2026-10-15: stored as ''). */
+  recommendationSummary: string | null;
   recommendationRationale: string | null;
   /** As the decider stated it; null when nobody did. */
   confidenceLevel: string | null;
@@ -83,6 +84,8 @@ export interface DecisionRecord {
 
 /** A value the caller stated, or null when it stated none. */
 const stated = (value: unknown): string | null => (typeof value === 'string' && value ? value : null);
+/** Text the caller stated, or null: a blank string states nothing. */
+const statedText = (value: unknown): string | null => (typeof value === 'string' && value.trim() !== '' ? value : null);
 
 /** Who acted, as the caller named them (text, or a user id), or a refusal: no record is written for nobody. */
 function statedActor(value: unknown, field: string, context: string): string {
@@ -116,7 +119,8 @@ export interface CreateDecisionInput {
   title: string;
   domainTrack: DomainTrack;
   recommendationType: RecommendationType;
-  recommendationSummary: string;
+  /** As stated, or null when nobody stated one. */
+  recommendationSummary: string | null;
   recommendationRationale?: string;
   /** Stated by the decider, or absent. It defaulted to 'moderate' (2026-10-15). */
   confidenceLevel?: string | null;
@@ -190,11 +194,20 @@ export class DecisionRecordService {
   }
 
   async createDecision(input: Record<string, unknown>): Promise<DecisionRecord> {
+    // The title as stated, or a refusal: a decision neither described nor
+    // summarised was titled 'Decision' (2026-10-15).
+    const title = statedText(input.contextDescription) ?? statedText(input.recommendationSummary);
+    if (title === null) {
+      throw new LedgerInputRefusal(
+        'title',
+        'decisionRecordService.createDecision: a title is required — state contextDescription or recommendationSummary. Nothing was recorded.',
+      );
+    }
     return this.create({
       organizationId: Number(input.organizationId),
       projectId: Number(input.projectId),
       decisionCode: String(input.recommendationType || `DEC-${Date.now()}`),
-      title: String(input.contextDescription || input.recommendationSummary || 'Decision'),
+      title,
       // Absent stays the documented default; present-but-wrong is refused by
       // create() rather than silently rewritten into a discipline the caller
       // did not choose.
@@ -204,7 +217,8 @@ export class DecisionRecordService {
       // As stated, and refused by create() when absent or outside the CHECK
       // list: a missing one was recorded as 'regulatory_strategy' (2026-10-15).
       recommendationType: input.recommendationType as RecommendationType,
-      recommendationSummary: String(input.recommendationSummary || ''),
+      // As stated, or null: a missing summary was stored as '' (2026-10-15).
+      recommendationSummary: statedText(input.recommendationSummary),
       recommendationRationale: (input.recommendationDetail as string) || undefined,
       // What the caller stated, or null: every record was 'moderate', and
       // 'expert_judgment' whatever produced it — an SAP generator included.
@@ -254,7 +268,7 @@ export class DecisionRecordService {
         input.title,
         domainTrack,
         recommendationType,
-        input.recommendationSummary,
+        input.recommendationSummary ?? null,
         input.recommendationRationale ?? null,
         confidenceLevel,
         input.evidenceBasis ?? null,
@@ -453,7 +467,7 @@ export class DecisionRecordService {
       };
       const triggerType = triggerMap[input.actionState];
       if (triggerType) {
-        this.propagateDecisionChange(record, triggerType as any, input.reason).catch(err => {
+        this.propagateDecisionChange(record, triggerType as any, performedBy, input.reason).catch(err => {
           log.warn('Decision propagation failed (non-blocking)', {
             error: err instanceof Error ? err.message : String(err),
           });
@@ -467,6 +481,7 @@ export class DecisionRecordService {
   private async propagateDecisionChange(
     decision: DecisionRecord,
     triggerType: string,
+    performedBy: string,
     reason?: string
   ): Promise<void> {
     try {
@@ -479,6 +494,9 @@ export class DecisionRecordService {
         sourceId: decision.id,
         sourceLabel: decision.title,
         reason: reason ?? `Decision transitioned to ${decision.actionState}`,
+        // The person who transitioned it (2026-10-15: unstated, so the cascade
+        // was logged as the reactive-dependency machine actor).
+        triggeredBy: performedBy,
       });
     } catch {
       // Silently skip if tables don't exist yet
@@ -630,7 +648,7 @@ export class DecisionRecordService {
       title: row.title as string,
       domainTrack: row.domain_track as string,
       recommendationType: row.recommendation_type as RecommendationType,
-      recommendationSummary: row.recommendation_summary as string,
+      recommendationSummary: (row.recommendation_summary as string | null) ?? null,
       recommendationRationale: row.recommendation_rationale as string | null,
       confidenceLevel: (row.confidence_level as string | null) ?? null,
       evidenceBasis: row.evidence_basis as EvidenceBasis | null,

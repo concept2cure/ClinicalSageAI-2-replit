@@ -1547,9 +1547,13 @@ export async function loadUserContext(ctx: CommandContext): Promise<CommandResul
     );
     const user = userResult.rows[0];
 
-    // User's projects
+    // User's projects. 2026-10-15: this selected projects.submission_type, which
+    // projects does not have, so the read always failed. A project records its
+    // submission type in metadata (as user-intelligence's loadUserProjects reads it).
     const projects = await pool.query(
-      `SELECT id, name, status, submission_type, therapeutic_area, progress, updated_at
+      `SELECT id, name, status,
+              COALESCE(metadata->>'submissionType', metadata->>'submission_type') AS submission_type,
+              therapeutic_area, progress, updated_at
        FROM projects WHERE organization_id = $1 ORDER BY updated_at DESC LIMIT 20`,
       [ctx.organizationId]
     );
@@ -1584,17 +1588,15 @@ export async function loadUserContext(ctx: CommandContext): Promise<CommandResul
       message: `Loaded context: ${projects.rows.length} projects, ${conversations.rows.length} recent conversations, ${recentArtifacts.rows.length} recent artifacts.`,
     };
   } catch (err: unknown) {
-    // Graceful degradation — return partial context
+    // A failed read is a failure. 2026-10-15: it answered success: true with
+    // empty lists ("Loaded partial context"), so AnA was told nothing was in flight.
+    console.error('[ana-ri] load_user_context could not read the context:', err instanceof Error ? err.message : err);
     return {
-      success: true,
+      success: false,
       action: 'load_user_context',
-      data: {
-        user: { id: ctx.userId },
-        projects: [],
-        recentConversations: [],
-        recentArtifacts: [],
-      },
-      message: 'Loaded partial context (some tables may not exist yet).',
+      message:
+        'Your context (projects, conversations, artifacts) could not be read. This is not an empty context; retry, and report it if it persists.',
+      error: 'CONTEXT_UNAVAILABLE',
     };
   }
 }
@@ -4237,6 +4239,7 @@ export async function recommendEndpoints(
       return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
     const result = await service.getComprehensiveEndpointRecommendations(
+      ctx.organizationId,
       String(params.indication),
       params.phase as string | undefined,
       (params.count as number) || 10,
@@ -4286,6 +4289,7 @@ export async function evaluateEndpoint(
     }
     const service = getEndpointRecommenderService();
     const evaluation = await service.evaluateEndpoint(
+      ctx.organizationId,
       String(params.endpoint),
       String(params.indication),
       params.phase as string | undefined

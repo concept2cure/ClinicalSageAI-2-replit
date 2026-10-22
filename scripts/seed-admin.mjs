@@ -4,6 +4,8 @@
 // Usage: node scripts/seed-admin.mjs
 //
 // Uses DATABASE_URL / DATABASE_NEON_NEW_SECRET env var (falls back to local).
+// Off this machine: ADMIN_EMAIL, ADMIN_PASSWORD and ADMIN_ORG_SLUG (the slug
+// of an existing organisation the account joins); ADMIN_NAME is optional.
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import { isLocalDatabase } from './seed/local-only.mjs';
@@ -38,7 +40,10 @@ const pool = new Pool({
    password to 'pass-word' must never be runnable against production. */
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'jm.smith@concept2cure.pro';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'pass-word';
-const ADMIN_NAME = process.env.ADMIN_NAME || 'JM Smith';
+// The built-in name goes with the built-in identity only (2026-10-15): an
+// account the operator named with no ADMIN_NAME was named "JM Smith", a real
+// person. It is shown by the address the operator gave instead.
+const ADMIN_NAME = process.env.ADMIN_NAME || (process.env.ADMIN_EMAIL ? ADMIN_EMAIL : 'JM Smith');
 
 /* The built-in password, reset on every run, is for a database on this
    machine only. NODE_ENV alone let a UAT or customer database through
@@ -66,6 +71,20 @@ if (!process.env.ADMIN_EMAIL && !ON_THIS_MACHINE) {
   process.exit(1);
 }
 
+/* The organisation the account joins (2026-10-15). Off this machine it
+   created a 'concept2cure' organisation on the target stack and attached the
+   administrator to that instead of the stack's own. Now the operator names an
+   existing one, or it refuses; on this machine the development organisation
+   stays the default. */
+const ADMIN_ORG_SLUG = (process.env.ADMIN_ORG_SLUG || '').trim();
+if (!ADMIN_ORG_SLUG && !ON_THIS_MACHINE) {
+  console.error(
+    'seed-admin: name the organisation the account joins with ADMIN_ORG_SLUG (an existing organisation\'s slug) ' +
+      'for a database that is not on this machine, or in production. No organisation is built in.',
+  );
+  process.exit(1);
+}
+
 async function run() {
   if (!ON_THIS_MACHINE) {
     const existing = await pool.query('SELECT 1 FROM users WHERE email = $1', [ADMIN_EMAIL]);
@@ -78,26 +97,39 @@ async function run() {
   }
   const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
 
-  // Ensure org exists
-  await pool.query(`
-    INSERT INTO organizations (name, slug, industry_mode, tier, status)
-    VALUES ('Concept2Cure Therapeutics', 'concept2cure', 'biotech', 'enterprise', 'active')
-    ON CONFLICT (slug) DO NOTHING
-  `);
-
-  const orgRes = await pool.query(`SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`);
-  // No fallback to organization 1 (2026-10-15): that is somebody's tenant.
-  const orgId = orgRes.rows[0]?.id;
-  if (orgId == null) throw new Error("seed-admin: organization 'concept2cure' is not readable after it was ensured");
+  let orgId;
+  if (ADMIN_ORG_SLUG) {
+    // The operator's organisation must already exist; none is created for it.
+    const named = await pool.query('SELECT id FROM organizations WHERE slug = $1 LIMIT 1', [ADMIN_ORG_SLUG]);
+    orgId = named.rows[0]?.id;
+    if (orgId == null) {
+      throw new Error(
+        `seed-admin: no organisation with slug "${ADMIN_ORG_SLUG}" in this database; nothing was changed. ` +
+          'Name an existing organisation: seed-admin creates none.',
+      );
+    }
+  } else {
+    // This machine only (refused above otherwise): the development organisation.
+    await pool.query(`
+      INSERT INTO organizations (name, slug, industry_mode, tier, status)
+      VALUES ('Concept2Cure Therapeutics', 'concept2cure', 'biotech', 'enterprise', 'active')
+      ON CONFLICT (slug) DO NOTHING
+    `);
+    const orgRes = await pool.query(`SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`);
+    // No fallback to organization 1 (2026-10-15): that is somebody's tenant.
+    orgId = orgRes.rows[0]?.id;
+    if (orgId == null) throw new Error("seed-admin: organization 'concept2cure' is not readable after it was ensured");
+  }
 
   // On this machine an existing account is reset; off it, one was refused
-  // above and DO NOTHING leaves an account created meanwhile untouched.
+  // above and DO NOTHING leaves an account created meanwhile untouched. No
+  // title or department (2026-10-15): every account it created was titled
+  // 'Chief Science Officer', 'Executive Leadership', which nobody stated.
   const res = await pool.query(
     ON_THIS_MACHINE
-      ? `INSERT INTO users (email, name, password_hash, title, department, status,
+      ? `INSERT INTO users (email, name, password_hash, status,
            default_organization_id, failed_login_attempts, password_changed_at)
-         VALUES ($1, $4, $2, 'Chief Science Officer', 'Executive Leadership',
-           'active', $3, 0, NOW())
+         VALUES ($1, $4, $2, 'active', $3, 0, NOW())
          ON CONFLICT (email) DO UPDATE SET
            password_hash = $2,
            failed_login_attempts = 0,
@@ -105,10 +137,9 @@ async function run() {
            must_change_password = FALSE,
            status = 'active'
          RETURNING id, email, name`
-      : `INSERT INTO users (email, name, password_hash, title, department, status,
+      : `INSERT INTO users (email, name, password_hash, status,
            default_organization_id, failed_login_attempts, password_changed_at)
-         VALUES ($1, $4, $2, 'Chief Science Officer', 'Executive Leadership',
-           'active', $3, 0, NOW())
+         VALUES ($1, $4, $2, 'active', $3, 0, NOW())
          ON CONFLICT (email) DO NOTHING
          RETURNING id, email, name`,
     [ADMIN_EMAIL, hash, orgId, ADMIN_NAME]

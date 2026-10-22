@@ -205,7 +205,10 @@ describe('CerSurface — the CER workbench', () => {
     fireEvent.click(cerTabs().getByRole('tab', { name: /Generator/ }));
     await waitFor(() => expect(screen.getByText('No CER sections created yet')).toBeTruthy());
     expect(screen.getByText('Run structure check')).toBeTruthy();
-    expect(screen.getByText(/A human has reviewed the assembled content/)).toBeTruthy();
+    /* 2026-10-15: was "A human has reviewed the assembled content" — anyone's
+       review, with a typed name. The review is now the signed-in user's own
+       confirmation; with no user mounted here, the tab says none can be given. */
+    expect(screen.getByText(/no review can be confirmed/)).toBeTruthy();
 
     /* The previously dead button — now a real AnA routing with live context. */
     fireEvent.click(screen.getByText('Draft with AnA'));

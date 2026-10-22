@@ -3,12 +3,13 @@
  *
  * Ensures every AI-generated output in the intelligence layer declares:
  *   - What evidence it's based on (source chain)
- *   - How confident the system is (0-100 scale)
+ *   - A confidence (0-100) only when one was measured and stated; otherwise a
+ *     heuristic evidence coverage (0-100), labelled as one
  *   - Whether it's rules-based, validation-based, or AI-inferred
  *
  * This module provides:
  *   - Evidence chain builder
- *   - Confidence score calculator
+ *   - Heuristic evidence-coverage calculator (computeConfidence)
  *   - Evidence validation
  *   - Audit-ready evidence formatting
  *
@@ -32,13 +33,26 @@ export type EvidenceSourceType =
 export type ConfidenceBasis =
   | 'rules_based'       // Deterministic: confidence = null (implicit 100%)
   | 'validation_based'  // From validation engine: confidence derived from rule match
-  | 'ai_inferred';      // AI-generated: confidence from model output or heuristics
+  | 'ai_inferred';      // AI-generated: a confidence only when the model or caller states one
 
 export interface EvidenceChain {
   readonly primarySource: EvidenceSource;
   readonly supportingSources: readonly EvidenceSource[];
   readonly confidenceBasis: ConfidenceBasis;
-  readonly confidenceScore: number | null; // null for rules_based
+  /**
+   * A confidence the caller measured and stated (overrideConfidence); null when
+   * none was, and always for rules_based. 2026-10-15: held computeConfidence's
+   * heuristic, which a RIM chain computes from fixed evidence weights, and was
+   * persisted and printed as a confidence.
+   */
+  readonly confidenceScore: number | null;
+  /**
+   * Heuristic evidence coverage, 0-100 (computeConfidence): from the number of
+   * sources, their relevance, kinds and recency. Not a confidence. Absent on a
+   * rules-based chain and on a chain with no evidence.
+   */
+  readonly evidenceCoverage?: number;
+  /** Graded from a stated confidence, else from evidenceCoverage; 'strong' for rules_based. */
   readonly chainStrength: 'strong' | 'moderate' | 'weak';
 }
 
@@ -47,6 +61,12 @@ export interface EvidenceSource {
   readonly sourceId: string;
   readonly sourceTitle: string;
   readonly relevance: number; // 0-1
+  /**
+   * 'fixed_weight': `relevance` is a weight set by hand per kind of evidence
+   * (recommendation-engine's EVIDENCE_WEIGHT), not a measurement. Absent: the
+   * caller's own figure.
+   */
+  readonly relevanceBasis?: 'fixed_weight';
   readonly extractedValue?: string;
   readonly timestamp?: string;
 }
@@ -81,7 +101,8 @@ export function buildEvidenceChain(
       },
       supportingSources: [],
       confidenceBasis: basis,
-      confidenceScore: basis === 'rules_based' ? null : 20,
+      // Was 20 unless rules_based: a confidence for a chain with no evidence.
+      confidenceScore: null,
       chainStrength: 'weak',
     };
   }
@@ -91,22 +112,28 @@ export function buildEvidenceChain(
   const primary = sorted[0];
   const supporting = sorted.slice(1);
 
-  const confidence = overrideConfidence
-    ?? (basis === 'rules_based' ? null : computeConfidence(sources));
+  // 2026-10-15: the heuristic was the confidence (`override ?? computeConfidence`);
+  // over a RIM chain's fixed weights a profile risk read "Confidence: 65%".
+  const confidence = overrideConfidence ?? null;
+  const evidenceCoverage = basis === 'rules_based' ? undefined : computeConfidence(sources);
 
-  const strength = getChainStrength(sources, basis, confidence);
+  const strength = getChainStrength(sources, basis, confidence ?? evidenceCoverage ?? null);
 
   return {
     primarySource: primary,
     supportingSources: supporting,
     confidenceBasis: basis,
     confidenceScore: confidence,
+    evidenceCoverage,
     chainStrength: strength,
   };
 }
 
 /**
- * Compute confidence score from evidence factors.
+ * Heuristic evidence coverage (0-100): base 40, plus terms for the number of
+ * sources, their mean relevance, their kinds and recency. Not a confidence —
+ * nothing here measures one; the name predates that. buildEvidenceChain keeps
+ * it as `evidenceCoverage`.
  */
 export function computeConfidence(sources: EvidenceSource[]): number {
   if (sources.length === 0) return 20;
@@ -182,8 +209,9 @@ export function validateEvidenceChain(chain: EvidenceChain): {
     warnings.push('Primary evidence source has low relevance');
   }
 
-  if (chain.confidenceBasis === 'ai_inferred' && (chain.confidenceScore ?? 0) < 40) {
-    warnings.push('AI-inferred output has low confidence — consider additional evidence');
+  // Read the heuristic as what it is: an unstated confidence is not a low one.
+  if (chain.confidenceBasis === 'ai_inferred' && chain.evidenceCoverage !== undefined && chain.evidenceCoverage < 40) {
+    warnings.push('AI-inferred output has low evidence coverage (heuristic) — consider additional evidence');
   }
 
   if (chain.supportingSources.length === 0 && chain.confidenceBasis !== 'rules_based') {
@@ -205,18 +233,30 @@ export function validateEvidenceChain(chain: EvidenceChain): {
  */
 export function formatEvidenceForAudit(chain: EvidenceChain): string {
   const lines: string[] = [];
+  const relevance = (src: EvidenceSource) =>
+    `relevance: ${src.relevance}${src.relevanceBasis === 'fixed_weight' ? ', fixed weight' : ''}`;
+  const fromHeuristic = chain.confidenceScore === null && chain.evidenceCoverage !== undefined;
 
   lines.push(`Evidence Basis: ${chain.confidenceBasis}`);
-  lines.push(`Confidence: ${chain.confidenceScore !== null ? `${chain.confidenceScore}%` : 'Deterministic (rules-based)'}`);
-  lines.push(`Chain Strength: ${chain.chainStrength}`);
+  // 2026-10-15: a null confidence read "Deterministic" whatever the basis, and
+  // the heuristic below was printed as "Confidence: NN%".
+  lines.push(`Confidence: ${
+    chain.confidenceScore !== null ? `${chain.confidenceScore}%`
+      : chain.confidenceBasis === 'rules_based' ? 'Deterministic (rules-based)'
+        : 'not assessed — no confidence was measured'
+  }`);
+  if (chain.evidenceCoverage !== undefined) {
+    lines.push(`Evidence coverage (heuristic, not a confidence): ${chain.evidenceCoverage}/100, from the number of sources, their relevance, kinds and recency`);
+  }
+  lines.push(`Chain Strength${fromHeuristic ? ' (from that heuristic)' : ''}: ${chain.chainStrength}`);
   lines.push('');
-  lines.push(`Primary Source: [${chain.primarySource.sourceType}] ${chain.primarySource.sourceTitle} (relevance: ${chain.primarySource.relevance})`);
+  lines.push(`Primary Source: [${chain.primarySource.sourceType}] ${chain.primarySource.sourceTitle} (${relevance(chain.primarySource)})`);
 
   if (chain.supportingSources.length > 0) {
     lines.push('');
     lines.push('Supporting Sources:');
     for (const src of chain.supportingSources) {
-      lines.push(`  - [${src.sourceType}] ${src.sourceTitle} (relevance: ${src.relevance})`);
+      lines.push(`  - [${src.sourceType}] ${src.sourceTitle} (${relevance(src)})`);
     }
   }
 
@@ -227,14 +267,15 @@ export function formatEvidenceForAudit(chain: EvidenceChain): string {
 // INTERNAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** `graded`: the stated confidence, else the heuristic evidence coverage. */
 function getChainStrength(
   sources: EvidenceSource[],
   basis: ConfidenceBasis,
-  confidence: number | null,
+  graded: number | null,
 ): 'strong' | 'moderate' | 'weak' {
   if (basis === 'rules_based') return 'strong';
 
-  if (confidence !== null && confidence >= 75 && sources.length >= 2) return 'strong';
-  if (confidence !== null && confidence >= 50) return 'moderate';
+  if (graded !== null && graded >= 75 && sources.length >= 2) return 'strong';
+  if (graded !== null && graded >= 50) return 'moderate';
   return 'weak';
 }

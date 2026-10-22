@@ -31,9 +31,13 @@
  *
  * @module server/services/intelligence/guidance-impact-scanner
  */
+import type { PoolClient } from 'pg';
 import { getPool } from '../../db/runtime.js';
 import { GAP_RULES, type GapSeverity } from '../ana/gap-classifier.js';
 import { IND_SECTIONS } from '../ind/ind-section-registry.js';
+
+/** A query runner: the pool, or the one client of an open transaction. */
+type Queryable = Pick<PoolClient, 'query'>;
 
 export type GuidanceAuthority =
   | 'ICH'
@@ -87,8 +91,13 @@ export interface ScanGuidanceInput {
   prevVersion: string | null;
   newVersion: string;
   authority: GuidanceAuthority;
-  /** Restrict scan to one org. When omitted, scans every org. */
-  organizationId?: number;
+  /**
+   * The organization whose artifacts are scanned. Required: a scan reads and
+   * writes only this organization's rows. (2026-10-15: it was optional, and a
+   * scan without it read every organization's artifacts and wrote an alert
+   * into each.)
+   */
+  organizationId: number;
 }
 
 export interface ScanGuidanceResult {
@@ -196,86 +205,29 @@ export function inferAlertSeverity(matches: SectionMatch[]): GapSeverity {
 
 // ─── Live entries ────────────────────────────────────────────────────
 
-/**
- * Upsert a guidance version. If the row exists with a different
- * current_version, returns { changed: true } and the previous version.
- * Otherwise updates timestamps and returns { changed: false }.
- */
-export async function upsertGuidanceVersion(
-  input: GuidanceVersionUpsertInput
-): Promise<GuidanceVersionUpsertResult> {
-  const code = input.guidanceCode.trim();
-  if (!code) {
-    const err = new Error('guidanceCode is required');
-    (err as any).code = 'INVALID_REQUEST';
-    throw err;
-  }
+const invalidRequest = (message: string) => Object.assign(new Error(message), { code: 'INVALID_REQUEST' });
 
+function requireGuidanceCode(guidanceCode: string): string {
+  const code = guidanceCode.trim();
+  if (!code) throw invalidRequest('guidanceCode is required');
+  return code;
+}
+
+function requireOrganizationId(organizationId: unknown): number {
+  if (typeof organizationId !== 'number' || !Number.isInteger(organizationId) || organizationId <= 0) {
+    throw invalidRequest('organizationId is required: a guidance scan covers one organization');
+  }
+  return organizationId;
+}
+
+/** Run `fn` as one transaction on one client; roll back when it throws. */
+async function inTransaction<T>(fn: (client: Queryable) => Promise<T>): Promise<T> {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
-    const existing = await client.query(
-      `SELECT id, current_version
-         FROM guidance_reference_index
-        WHERE guidance_code = $1
-        FOR UPDATE`,
-      [code]
-    );
-    let registryRowId: string;
-    let prevVersion: string | null = null;
-    let changed = false;
-    if (existing.rows.length === 0) {
-      const inserted = await client.query(
-        `INSERT INTO guidance_reference_index
-           (guidance_code, authority, current_version, current_version_at,
-            source_url, metadata)
-         VALUES ($1, $2, $3, NOW(), $4, $5)
-         RETURNING id`,
-        [
-          code,
-          input.authority,
-          input.newVersion,
-          input.sourceUrl ?? null,
-          input.metadata ? JSON.stringify(input.metadata) : null,
-        ]
-      );
-      registryRowId = inserted.rows[0].id;
-      prevVersion = null;
-      // First time we see a guidance — treat as a change so initial
-      // alerts can fire on the first scan.
-      changed = true;
-    } else {
-      const row = existing.rows[0];
-      registryRowId = row.id;
-      prevVersion = row.current_version;
-      changed = prevVersion !== input.newVersion;
-      await client.query(
-        `UPDATE guidance_reference_index
-            SET current_version    = $2,
-                current_version_at = CASE WHEN current_version <> $2 THEN NOW() ELSE current_version_at END,
-                authority          = $3,
-                source_url         = COALESCE($4, source_url),
-                metadata           = COALESCE($5::jsonb, metadata),
-                updated_at         = NOW()
-          WHERE id = $1`,
-        [
-          registryRowId,
-          input.newVersion,
-          input.authority,
-          input.sourceUrl ?? null,
-          input.metadata ? JSON.stringify(input.metadata) : null,
-        ]
-      );
-    }
+    const result = await fn(client);
     await client.query('COMMIT');
-    return {
-      guidanceCode: code,
-      authority: input.authority,
-      prevVersion,
-      newVersion: input.newVersion,
-      changed,
-      registryRowId,
-    };
+    return result;
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     throw err;
@@ -285,14 +237,98 @@ export async function upsertGuidanceVersion(
 }
 
 /**
- * For one (guidance, prevVersion → newVersion) change, find every
- * artifact whose CTD section maps to the guidance and persist a row in
- * guidance_alerts. Idempotent (unique partial index on
+ * Upsert a guidance version. If the row exists with a different
+ * current_version, returns { changed: true } and the previous version.
+ * Otherwise updates timestamps and returns { changed: false }.
+ */
+export async function upsertGuidanceVersion(
+  input: GuidanceVersionUpsertInput
+): Promise<GuidanceVersionUpsertResult> {
+  const code = requireGuidanceCode(input.guidanceCode);
+  return inTransaction(client => upsertGuidanceVersionOn(client, code, input));
+}
+
+/** The upsert, on a client whose transaction the caller owns. */
+async function upsertGuidanceVersionOn(
+  client: Queryable,
+  code: string,
+  input: GuidanceVersionUpsertInput
+): Promise<GuidanceVersionUpsertResult> {
+  const existing = await client.query(
+    `SELECT id, current_version
+       FROM guidance_reference_index
+      WHERE guidance_code = $1
+      FOR UPDATE`,
+    [code]
+  );
+  let registryRowId: string;
+  let prevVersion: string | null;
+  let changed: boolean;
+  if (existing.rows.length === 0) {
+    const inserted = await client.query(
+      `INSERT INTO guidance_reference_index
+         (guidance_code, authority, current_version, current_version_at,
+          source_url, metadata)
+       VALUES ($1, $2, $3, NOW(), $4, $5)
+       RETURNING id`,
+      [
+        code,
+        input.authority,
+        input.newVersion,
+        input.sourceUrl ?? null,
+        input.metadata ? JSON.stringify(input.metadata) : null,
+      ]
+    );
+    registryRowId = inserted.rows[0].id;
+    prevVersion = null;
+    // First time we see a guidance — treat as a change so initial
+    // alerts can fire on the first scan.
+    changed = true;
+  } else {
+    const row = existing.rows[0];
+    registryRowId = row.id;
+    prevVersion = row.current_version;
+    changed = prevVersion !== input.newVersion;
+    await client.query(
+      `UPDATE guidance_reference_index
+          SET current_version    = $2,
+              current_version_at = CASE WHEN current_version <> $2 THEN NOW() ELSE current_version_at END,
+              authority          = $3,
+              source_url         = COALESCE($4, source_url),
+              metadata           = COALESCE($5::jsonb, metadata),
+              updated_at         = NOW()
+        WHERE id = $1`,
+      [
+        registryRowId,
+        input.newVersion,
+        input.authority,
+        input.sourceUrl ?? null,
+        input.metadata ? JSON.stringify(input.metadata) : null,
+      ]
+    );
+  }
+  return {
+    guidanceCode: code,
+    authority: input.authority,
+    prevVersion,
+    newVersion: input.newVersion,
+    changed,
+    registryRowId,
+  };
+}
+
+/**
+ * For one (guidance, prevVersion → newVersion) change, find every artifact
+ * of the organization whose CTD section maps to the guidance and persist a
+ * row in guidance_alerts. Idempotent (unique partial index on
  * (org, artifact, code, new_version) WHERE status IN ('open','acknowledged')).
+ * `db` is the pool, or the client of the caller's transaction.
  */
 export async function scanArtifactsForGuidanceChange(
-  input: ScanGuidanceInput
+  input: ScanGuidanceInput,
+  db: Queryable = getPool()
 ): Promise<ScanGuidanceResult> {
+  const organizationId = requireOrganizationId(input.organizationId);
   const matches = findSectionMatchesForGuidance(input.guidanceCode);
   const result: ScanGuidanceResult = {
     guidanceCode: input.guidanceCode,
@@ -316,26 +352,18 @@ export async function scanArtifactsForGuidanceChange(
     bucket.push(m);
   }
 
-  // Pull every artifact in the affected sections, scoped by org if given.
+  // The organization's artifacts in the affected sections.
   const sectionList = Array.from(matchesBySection.keys());
-  const orgFilter =
-    typeof input.organizationId === 'number'
-      ? 'AND organization_id = $2'
-      : '';
-  const sql = `
-    SELECT id AS artifact_pk, artifact_id, organization_id, project_id,
-           ctd_section, title
-      FROM concept2cure_artifacts
-     WHERE ctd_section = ANY($1::text[])
-       ${orgFilter}
-  `;
-  const params: any[] =
-    typeof input.organizationId === 'number'
-      ? [sectionList, input.organizationId]
-      : [sectionList];
   // 2026-10-15: a missing artifacts table (42P01) was read as no rows, so the
   // scan reported 0 artifacts affected without reading any. It now throws.
-  const { rows } = await getPool().query(sql, params);
+  const { rows } = await db.query(
+    `SELECT id AS artifact_pk, artifact_id, organization_id, project_id,
+            ctd_section, title
+       FROM concept2cure_artifacts
+      WHERE ctd_section = ANY($1::text[])
+        AND organization_id = $2`,
+    [sectionList, organizationId]
+  );
 
   for (const row of rows) {
     const sectionMatches = matchesBySection.get(row.ctd_section) ?? [];
@@ -350,7 +378,7 @@ export async function scanArtifactsForGuidanceChange(
 
     // 2026-10-15: a failed insert was logged (or, for 42P01, ignored) and the
     // scan returned counts that left it out. A failed write now throws.
-    const insertResult = await getPool().query(
+    const insertResult = await db.query(
       `INSERT INTO guidance_alerts (
          organization_id, project_id, artifact_id, artifact_pk,
          guidance_code, guidance_authority,
@@ -391,27 +419,40 @@ export async function scanArtifactsForGuidanceChange(
 }
 
 /**
- * Combined: upsert a version + scan in one call. The common path for
- * a guidance feed webhook ingest.
+ * Combined: upsert a version + scan the organization, as one transaction.
+ * The common path for a guidance feed webhook ingest. A scan that fails
+ * rolls the version back and throws: nothing is recorded, so the next
+ * ingest of the same version sees the change and scans it.
+ *
+ * 2026-10-15: the version was committed before the scan ran. A failed scan
+ * left it recorded, every later ingest of it answered changed: false and
+ * scanned nothing, and no alert was raised for the change.
  */
 export async function ingestGuidanceUpdate(
-  input: GuidanceVersionUpsertInput & { organizationId?: number }
+  input: GuidanceVersionUpsertInput & { organizationId: number }
 ): Promise<{
   upsert: GuidanceVersionUpsertResult;
   scan: ScanGuidanceResult | null;
 }> {
-  const upsert = await upsertGuidanceVersion(input);
-  if (!upsert.changed) {
-    return { upsert, scan: null };
-  }
-  const scan = await scanArtifactsForGuidanceChange({
-    guidanceCode: upsert.guidanceCode,
-    prevVersion: upsert.prevVersion,
-    newVersion: upsert.newVersion,
-    authority: input.authority,
-    organizationId: input.organizationId,
+  const code = requireGuidanceCode(input.guidanceCode);
+  const organizationId = requireOrganizationId(input.organizationId);
+  return inTransaction(async client => {
+    const upsert = await upsertGuidanceVersionOn(client, code, input);
+    if (!upsert.changed) {
+      return { upsert, scan: null };
+    }
+    const scan = await scanArtifactsForGuidanceChange(
+      {
+        guidanceCode: upsert.guidanceCode,
+        prevVersion: upsert.prevVersion,
+        newVersion: upsert.newVersion,
+        authority: input.authority,
+        organizationId,
+      },
+      client
+    );
+    return { upsert, scan };
   });
-  return { upsert, scan };
 }
 
 // ─── Alert lifecycle ─────────────────────────────────────────────────
@@ -605,17 +646,22 @@ export interface GuidanceAlertsSummary {
   projectId: number | null;
   asOf: string;
   /**
-   * Whether a scan result is on record for this scope. A guidance scan writes
-   * a row only for an artifact it finds affected, so false means no scan
-   * result is on record — never "scanned, nothing affected".
+   * Whether an alert is on record for this scope. A guidance scan writes a row
+   * only for an artifact it finds affected, so false means no alert is on
+   * record — never "scanned, nothing affected".
    */
   assessed: boolean;
   /**
-   * The newest alert row's creation time: the latest scan on record. A scan
-   * that raises no new alert writes nothing, so a later scan may exist.
-   * Null when no scan result is on record.
+   * Scan runs are not recorded: no table on the deploy path holds them, so a
+   * scan that finds nothing leaves no trace and no alerts is not a clean result.
    */
-  lastScanAt: string | null;
+  scanHistory: { recorded: false; note: string };
+  /**
+   * The newest alert's creation time; null when no alert is on record. Not a
+   * scan time: a later scan that raised nothing would not show here.
+   * (2026-10-15: named lastScanAt, so a clean scan read as "never scanned".)
+   */
+  lastAlertAt: string | null;
   /** Every alert raised, by severity, in any status (resolved included). */
   bySeverity: Record<GapSeverity, number>;
   /** Open and acknowledged alerts by severity: what is still unresolved. */
@@ -644,6 +690,10 @@ export interface GuidanceAlertsSummary {
 }
 
 const MAX_TOP_LIST = 10;
+
+const SCAN_HISTORY_NOTE =
+  'Scan history is not recorded: a guidance scan that finds no affected artifact leaves no record, ' +
+  'so no alerts is not a clean result.';
 
 const SEVERITY_RANK_LIST: GapSeverity[] = ['critical', 'major', 'minor', 'info'];
 
@@ -769,7 +819,8 @@ export async function getGuidanceAlertsSummary(
     projectId,
     asOf: new Date().toISOString(),
     assessed: lastAlertAt !== null,
-    lastScanAt: lastAlertAt,
+    scanHistory: { recorded: false, note: SCAN_HISTORY_NOTE },
+    lastAlertAt,
     bySeverity,
     openBySeverity,
     byStatus,

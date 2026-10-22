@@ -240,6 +240,10 @@ function buildRtmCsvRows(
     }
     return str;
   };
+  // An unscored claim (confidence null) says so. 2026-10-15: it was a blank cell,
+  // which in a governed export reads as a dropped value, not "never scored".
+  const confidenceCell = (confidence: string | number | null | undefined): string =>
+    confidence === null || confidence === undefined ? 'not scored' : escapeCSV(confidence);
 
   const header = [
     'Claim ID', 'Claim Text', 'Claim Type', 'Confidence',
@@ -256,7 +260,7 @@ function buildRtmCsvRows(
         escapeCSV(claim.claimId),
         escapeCSV(claim.claimText),
         escapeCSV(claim.claimType),
-        escapeCSV(claim.confidence),
+        confidenceCell(claim.confidence),
         escapeCSV(claim.sourceTitle),
         escapeCSV(claim.sourceType),
         escapeCSV(claim.sourceFileName),
@@ -268,7 +272,7 @@ function buildRtmCsvRows(
           escapeCSV(claim.claimId),
           escapeCSV(claim.claimText),
           escapeCSV(claim.claimType),
-          escapeCSV(claim.confidence),
+          confidenceCell(claim.confidence),
           escapeCSV(claim.sourceTitle),
           escapeCSV(claim.sourceType),
           escapeCSV(claim.sourceFileName),

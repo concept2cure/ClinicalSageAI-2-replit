@@ -62,6 +62,7 @@ vi.mock('../../services/DocumentOrchestrationService', () => ({
 }));
 
 import router from '../fda-forms.routes';
+import FDAFormGenerator from '../../services/FDAFormGenerator';
 
 function app() {
   const a = express();
@@ -140,14 +141,24 @@ describe('POST /api/fda-forms/project/:projectId/generate-all', () => {
 });
 
 describe('POST /api/fda-forms/project/:projectId/generate-stage/:stage', () => {
-  it('reports each form it could not draft with a fixed reason, and is not a 200 success', async () => {
-    const r = await request(app()).post('/api/fda-forms/project/12/generate-stage/0');
+  // 2026-10-15: this ran stage 0 and expected every form to fail — the route's
+  // stage map named ids ('form_3514') no registry key matched. It drafts them
+  // now (fda-forms-generate-stage-drafts-the-registry-forms.test.ts); a form
+  // whose draft fails is made to fail here.
+  it('reports a form it could not draft with a fixed reason, and is not a 200 success', async () => {
+    const draft = vi.spyOn(FDAFormGenerator.prototype, 'generateSmartForm');
+    draft.mockRejectedValueOnce(new Error('SENTINEL-DB-DETAIL: relation "fda_510k_stage_progress" does not exist'));
+    try {
+      const r = await request(app()).post('/api/fda-forms/project/12/generate-stage/0');
 
-    expect(r.status).toBe(207);
-    expect(r.body.success).toBe(false);
-    expect(JSON.stringify(r.body)).not.toMatch(/not found in registry/);
-    for (const x of r.body.results as Array<{ status: string; reason?: string }>) {
-      expect(x).toMatchObject({ status: 'error', reason: expect.any(String) });
+      expect(r.status).toBe(207);
+      expect(r.body.success).toBe(false);
+      expect(JSON.stringify(r.body)).not.toContain('SENTINEL-DB-DETAIL');
+      const [first, second] = r.body.results as Array<{ formId: string; status: string; reason?: string }>;
+      expect(first).toMatchObject({ formId: 'FDA_3514', status: 'error', reason: expect.any(String) });
+      expect(second).toMatchObject({ formId: 'FDA_3601', status: 'success' });
+    } finally {
+      draft.mockRestore();
     }
   });
 });

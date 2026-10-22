@@ -7,6 +7,8 @@
  * @version 1.0.0
  */
 
+import type { RegulatoryFormat } from '../types';
+
 // HL7 v3 ICSR-style XML for FDA export jobs (the names say 3500A; it is not the form)
 export { validateForFDA, generateFDA3500AXML } from './fdaAE3500A';
 
@@ -91,3 +93,29 @@ export const SUPPORTED_FORMATS = {
 } as const;
 
 export type SupportedFormat = keyof typeof SUPPORTED_FORMATS;
+
+/**
+ * The regulatory_format value (db/migrations/081) an export job for each format
+ * is recorded under, or null when no value says what the file is.
+ *
+ * 2026-10-15: none does. export_jobs.target_format is that enum, so every
+ * POST /exports failed at the cast (a 500) while /health said exportJobs: true.
+ * The nearest values name formats these files are not: FDA_3500A is MedWatch
+ * Form 3500A (FDA_AE_3500A writes HL7 v3 ICSR-style XML) and EMA_E2B_R3 is
+ * E2B(R3) (EMA_AE_E2B_R3 writes E2B(R2)), so the keys are not mapped onto them.
+ * Adding values that name these files is the founder's decision.
+ */
+export const RECORDED_AS: Readonly<Record<SupportedFormat, RegulatoryFormat | null>> = {
+  FDA_AE_3500A: null,
+  EMA_AE_E2B_R3: null,
+  PMDA_AE_E2B: null,
+  HC_AE_CIOMS: null,
+  FDA_510K: null,
+  FDA_PMA: null,
+  EMA_ECTD_32: null,
+};
+
+/** Why no export job can be recorded for any format, or null once one can. */
+export const EXPORT_JOBS_UNAVAILABLE: string | null = Object.values(RECORDED_AS).some(value => value !== null)
+  ? null
+  : 'The export formats have no matching regulatory_format value, so export_jobs cannot record a job for any of them; POST /exports answers 422 EXPORT_FORMAT_NOT_RECORDABLE.';
