@@ -1,0 +1,26 @@
+-- 2026-10-22 — submissions.application_number (decision P-44, docs/LAUNCH_DEFINITION_OF_DONE.md).
+--
+-- A project records one application number (regulatory_programs.application_number),
+-- and until now every package read it, whatever its market: the EU packager
+-- writes it into <procedure-number>, JP into <application-number>, CA into
+-- <dossier-id>. So an MAA added to an NDA project (FILING_SPINE F22) packaged
+-- under the US NDA number. P-44: the project's number is its home market's (the
+-- market of its primary agency); a submission for another market carries the
+-- number its own agency assigned, recorded here, on that submission. A
+-- home-market submission leaves this NULL and keeps reading the project's
+-- number, so each number has one source. Until a non-home submission's number
+-- is recorded its packages refuse (server/services/ectd/package-identity.ts
+-- readSubmissionPackageIdentity). It is written only by the governed act
+-- POST /api/submissions/:id/application-number (lead or manager, a stated
+-- reason, a chained audit row naming the old and new value).
+--
+-- Not in the Drizzle schema (shared/schema/submissions.ts), on purpose: Drizzle
+-- names every schema column in a select, so getSubmission would fail on every
+-- database and test harness the column has not reached. It is read by name
+-- (to_jsonb(s)->>'application_number') and written by one statement.
+--
+-- Additive and replay-safe (CLAUDE.md Rule 1): ADD COLUMN IF NOT EXISTS, no
+-- default, nothing dropped. submissions already carries organization_id and the
+-- tenant policies; no table is created.
+
+ALTER TABLE submissions ADD COLUMN IF NOT EXISTS application_number text;

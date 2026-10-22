@@ -192,6 +192,20 @@ export async function loadLatestPriorManifestBySubmission(
      only; if its sequence is later sent, what was sent is a separate compile.
      Without this predicate a sent sequence's rehearsal manifest was folded in
      as if the agency held it. */
+  return foldManifestRows(await readFiledManifestRows(pool, organizationId, submissionId, currentSequence));
+}
+
+/**
+ * The filed compiles of a submission, oldest sequence first: only those the
+ * agency holds (above), strictly before `before` when it is given. The one
+ * read both the lifecycle diff and the current view fold.
+ */
+async function readFiledManifestRows(
+  pool: PoolLike,
+  organizationId: number,
+  submissionId: number,
+  before: string | null,
+): Promise<Array<Record<string, unknown>>> {
   const res = await pool.query(
     `SELECT c.sequence_number, c.leaf_manifest
        FROM ectd_compilations c
@@ -202,14 +216,59 @@ export async function loadLatestPriorManifestBySubmission(
         AND s.deleted_at IS NULL
       WHERE c.organization_id = $1
         AND c.submission_id = $2
-        AND c.sequence_number < $3
+        AND ($3::text IS NULL OR c.sequence_number < $3)
         AND c.leaf_manifest IS NOT NULL
         AND c.compilation_type IS DISTINCT FROM 'rehearsal'
         AND s.dispatch_status IN ('sent', 'acknowledged')
       ORDER BY c.sequence_number ASC, c.compiled_at ASC NULLS FIRST, c.id ASC`,
-    [organizationId, submissionId, currentSequence],
+    [organizationId, submissionId, before],
   );
-  return foldManifestRows(res?.rows ?? []);
+  return res?.rows ?? [];
+}
+
+/** A sequence of the submission, and whether the agency holds it. */
+export interface SubmissionSequenceState {
+  sequenceNumber: string;
+  /** 'sent' or 'acknowledged' when filed; otherwise what it is (pending, failed, none). */
+  dispatchStatus: string | null;
+  filed: boolean;
+}
+
+/**
+ * What the agency holds for a submission NOW: every filed sequence folded,
+ * exactly as compile and transmit fold the prior state (gap 6.1,
+ * docs/design/VEEVA_GAP_2026-10-22.md) — with no upper bound, and each leaf
+ * naming the sequence that holds it and the act that put it there. Beside it,
+ * every sequence of the submission and whether it is filed, so a reader is
+ * told which sequences the view does not include.
+ *
+ * Organization-scoped. A stored manifest that cannot be read throws, as it
+ * does for compile: a partial current view is not the current view.
+ */
+export async function loadFiledStateBySubmission(
+  pool: PoolLike,
+  args: { organizationId: number; submissionId: number },
+): Promise<{ throughSequence: string | null; leaves: PriorLeaf[]; sequences: SubmissionSequenceState[] }> {
+  const { organizationId, submissionId } = args;
+  if (!organizationId || !submissionId) {
+    throw new Error('Cannot read what is on file without the organization and the submission; nothing was read.');
+  }
+  // One after the other: the caller may pass a single request client.
+  const rows = await readFiledManifestRows(pool, organizationId, submissionId, null);
+  const seqs = await pool.query(
+    `SELECT sequence_number, dispatch_status FROM ectd_sequences
+      WHERE organization_id = $1 AND submission_id = $2 AND deleted_at IS NULL
+      ORDER BY sequence_number ASC`,
+    [organizationId, submissionId],
+  );
+  const { priorSequenceNumber, leaves } = foldManifestRows(rows);
+  const filedWithManifest = new Set(rows.map((r) => String(r.sequence_number ?? '')));
+  const sequences = (seqs?.rows ?? []).map((r) => {
+    const sequenceNumber = String(r.sequence_number ?? '');
+    const dispatchStatus = r.dispatch_status == null ? null : String(r.dispatch_status);
+    return { sequenceNumber, dispatchStatus, filed: filedWithManifest.has(sequenceNumber) };
+  });
+  return { throughSequence: priorSequenceNumber || null, leaves, sequences };
 }
 
 /** The filed leaf a `modified-file` pointer names: its sequence, backbone and ID. */

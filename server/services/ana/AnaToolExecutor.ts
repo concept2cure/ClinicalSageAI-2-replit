@@ -9243,7 +9243,7 @@ function confinePackagerPaths(
 async function recordedPackageIdentityOrRefusal(
   programIdInput: unknown,
   organizationId: number,
-  fda: boolean,
+  region: string,
 ): Promise<{ ok: true; identity: import('../ectd/package-identity').RecordedPackageIdentity } | { ok: false; refusal: string }> {
   const programId = typeof programIdInput === 'string' ? programIdInput.trim() : '';
   if (!programId) {
@@ -9258,12 +9258,29 @@ async function recordedPackageIdentityOrRefusal(
       }),
     };
   }
-  const [{ readRecordedPackageIdentity, packageIdentityRefusal }, { getPool }] = await Promise.all([
+  const [{ readRecordedPackageIdentity, packageIdentityRefusal, isHomeMarket }, { getPool }] = await Promise.all([
     import('../ectd/package-identity.js'),
     import('../../db.js'),
   ]);
   const identity = await readRecordedPackageIdentity(getPool(), organizationId, programId);
-  const missing = packageIdentityRefusal(identity, 'Nothing was built.', { fda });
+  // The project's number is its home market's (decision P-44). Another market's
+  // package carries the number its own agency assigned, recorded on that
+  // market's submission, which this tool does not read: it is refused here.
+  if (!isHomeMarket(region, identity.homeAgency)) {
+    return {
+      ok: false,
+      refusal: JSON.stringify({
+        error:
+          `package_ectd_for_region packages a project's home market only (${String(identity.homeAgency)}), from the ` +
+          `project's record. ${region.toUpperCase()} is another market: its package carries the application number its own ` +
+          "agency assigned, recorded on that market's submission, never the project's (P-44). Build it from Submission " +
+          'Center, on that submission. Nothing was built.',
+        code: 'NOT_HOME_MARKET',
+        retry: false,
+      }),
+    };
+  }
+  const missing = packageIdentityRefusal(identity, 'Nothing was built.', { fda: region === 'fda' });
   if (missing) {
     return {
       ok: false,
@@ -9302,7 +9319,7 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!paths.ok) return paths.refusal;
   const { sourcePaths, outputDir } = paths;
   try {
-    const recorded = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId, region === 'fda');
+    const recorded = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId, region);
     if (!recorded.ok) return recorded.refusal;
     const identity = recorded.identity;
     const applicationNumber = identity.applicationNumber as string;

@@ -13,7 +13,7 @@
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import type { QmsDoc, DocStatus, SopTemplate, ReviewDueRow, TrainingRow } from './data';
-import {adaptDoc,type ServerDoc} from './qmsDocumentRecord';
+import {adaptDoc,adaptPeriodicReview,nextReviewDueOf,type ServerDoc} from './qmsDocumentRecord';
 
 /** Unwrap the API envelope — `ok(res, rows, meta)` returns `{ data, ... }`,
  *  but tolerate a bare array or a `{ rows }` shape too.
@@ -75,9 +75,13 @@ export function useReviewDue(within = 120) {
         id: r.id,
         docNumber: r.doc_number,
         title: r.title,
-        nextReviewDate: r.next_review_date,
+        nextReviewDate: nextReviewDueOf(r),
         overdue: !!r.overdue,
         status: r.status as DocStatus,
+        version: r.in_force?.version ?? r.version,
+        underRevision: !!r.in_force,
+        lastReview: adaptPeriodicReview(r),
+        signedReviewDate: r.next_review_date,
       })) ?? null,
     [raw],
   );

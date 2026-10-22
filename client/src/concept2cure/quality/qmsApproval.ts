@@ -12,9 +12,19 @@
  * thrown as the sentence to show, and the dialog stays open. The time returned
  * is the server's, from the signature row, never the browser's clock.
  *
+ * A periodic review of the version in force (postQmsPeriodicReview, gap 5.2)
+ * is signed the same way, with meaning `review`, through the platform's one
+ * signing ceremony (POST /qms/documents/:id/periodic-review).
+ *
  * @module client/src/concept2cure/quality/qmsApproval
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+
+const NOTHING_SIGNED = 'Nothing was signed.';
+/** The server's sentence, ending once with "Nothing was signed." (the ceremony's refusals already do). */
+function refusedSigning(message: string): Error {
+  return new Error(message.trimEnd().endsWith(NOTHING_SIGNED) ? message : `${message} ${NOTHING_SIGNED}`);
+}
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
 
 export type QmsApprovalTarget = { kind: 'document' | 'change' | 'document-retire'; id: number };
@@ -42,7 +52,7 @@ export async function postQmsApproval(
   // apiRequest returns a 401 rather than throwing it; here it is the signing
   // ceremony refusing the password or code.
   if (res.status === 401) {
-    throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
+    throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
   }
   const sig = json?.meta?.signature;
   if (!sig?.signedAt) {
@@ -55,6 +65,47 @@ export async function postQmsApproval(
     ...(sig.boundPayloadDigest ? { hash: sig.boundPayloadDigest } : {}),
   };
 }
+
+/** What the reviewer decided: the next review date is required when the document remains current. */
+export type QmsPeriodicReviewDecision =
+  | { outcome: 'current'; nextReviewDate: string }
+  | { outcome: 'revision-required' };
+
+/**
+ * Record a periodic review of a controlled document's version in force. It
+ * changes nothing on the document: the review is the signature
+ * (server/services/qms/periodic-review.ts).
+ */
+export async function postQmsPeriodicReview(
+  id: number,
+  decision: QmsPeriodicReviewDecision,
+  input: { reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  let res: Response;
+  try {
+    res = await apiRequest('POST', `/api/mdx/qms/documents/${id}/periodic-review`, {
+      ...decision,
+      password: input.password,
+      ...(input.totp ? { mfaToken: input.totp } : {}),
+      meaning: 'review',
+      reason: input.reason,
+    });
+  } catch (err) {
+    // A coded refusal (4xx) is the server's sentence. A dropped connection or a
+    // server error may have come after the commit, so it is not "nothing was
+    // signed", and signing again could record a second review.
+    const status = (err as { status?: unknown } | null)?.status;
+    if (typeof status === 'number' && status < 500) throw err;
+    throw new Error(UNCONFIRMED_REVIEW);
+  }
+  const json = (await res.json().catch(() => null)) as { signedAt?: string; sha256Chain?: string } | null;
+  if (res.status === 401) {
+    throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
+  }
+  if (!json?.signedAt) throw new Error(UNCONFIRMED_REVIEW);
+  return { meaning: 'review', reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
+}
+const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';
 
 /**
  * Send a draft controlled document for review: the existing edit route,

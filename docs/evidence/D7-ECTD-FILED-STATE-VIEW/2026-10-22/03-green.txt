@@ -1,0 +1,11 @@
+# GREEN at b7c70e012 + this change (2026-10-22T16:27:21Z)
+## Real PostgreSQL 16 (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)), RLS_ENFORCE=on, runtime role app_service
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 3920ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 14ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 26ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+
+## Every reader of the fold (unit and PGlite), the compile routes, EctdCompile
+ Test Files  32 passed (32)
+      Tests  355 passed (355)

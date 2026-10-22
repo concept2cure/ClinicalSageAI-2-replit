@@ -217,8 +217,8 @@ describe('verifySignatureIntegrity — §11.70 content binding', () => {
 
 describe('verifySignatureIntegrity — binding basis decides what can be re-derived', () => {
   /*
-   * There are eleven binding bases (BINDING_BASIS in part11/signature-persistence)
-   * and `computeVersionBindingDigest` can re-derive exactly ONE of them:
+   * Of the binding bases (BINDING_BASIS in part11/signature-persistence, which
+   * names every one), `computeVersionBindingDigest` can re-derive exactly ONE:
    * DOCUMENT_VERSION_CONTENT, the sha256 of a document version's content. The
    * verifier used to re-derive whenever `versionId` was set and pass `null`
    * otherwise, which made it answer about a digest of something else entirely:
