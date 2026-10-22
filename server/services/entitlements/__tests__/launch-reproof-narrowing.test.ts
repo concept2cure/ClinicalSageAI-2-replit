@@ -151,6 +151,16 @@ describe('the 79 sub-namespaces the re-proof upheld are not served at launch', (
   });
 });
 
+describe('in any letter case: Express routes ignore it, so the verdict does too', () => {
+  /* The bypass keeps the launch-claimed prefix as written and changes the
+     case of what follows it, so the longest claim it still matches is the
+     launch root's (found by the narrowing's review, 2026-10-22). */
+  it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
+    expect(verdict(path.replace(/[^/]+$/, (seg) => seg.toUpperCase()))).not.toBe('launch');
+    expect(verdict(`${path.replace(/[^/]+$/, (seg) => seg[0].toUpperCase() + seg.slice(1))}/x`)).not.toBe('launch');
+  });
+});
+
 describe('what a launch screen calls under those prefixes still is', () => {
   it.each(STILL_SERVED)('%s', (path) => {
     expect(verdict(path)).toBe('launch');
@@ -161,6 +171,19 @@ describe('LAUNCH_EXCLUDED_API stays honest', () => {
   it.each(Object.entries(LAUNCH_EXCLUDED_API))('%s carries a reason, and is one of the upheld findings', (path, reason) => {
     expect(reason).toMatch(/^(DEAD|HIDDEN APP): .{20,}/);
     expect(NOT_SERVED_AT_LAUNCH).toContain(path);
+  });
+
+  it('every key the verdict matches is lower case, because it matches a lower-cased path', async () => {
+    const { UI_SURFACES } = await import('../../../../shared/constants/ui-surface-registry');
+    const { LAUNCH_PLATFORM_API, LAUNCH_INFRASTRUCTURE_API } = await import('../launch-scope-api');
+    const keys = [
+      ...UI_SURFACES.flatMap((s) => s.apiPrefixes ?? []),
+      ...NEVER_GATED,
+      ...Object.keys(LAUNCH_PLATFORM_API),
+      ...Object.keys(LAUNCH_INFRASTRUCTURE_API),
+      ...Object.keys(LAUNCH_EXCLUDED_API),
+    ];
+    expect(keys.filter((k) => k !== k.toLowerCase())).toEqual([]);
   });
 
   it('excludes no path a launch screen calls', () => {
