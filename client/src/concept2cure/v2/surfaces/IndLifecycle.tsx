@@ -1145,7 +1145,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           {kicker}
           <h1>{drug} — Initial IND</h1>
           <p className="surface-sub">
-            {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v4.0 (FDA)']
+            {/* The format every FDA package here is built in (market-support.ts:
+                "this platform builds eCTD v3.2.2 only"); it said v4.0 until the
+                WO-9 lane re-walk of 2026-10-22. */}
+            {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v3.2.2 (FDA)']
               .filter(Boolean)
               .join(' — ')}
           </p>
@@ -1324,7 +1327,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="indl-cover-meta">
                   {prog.productName && <span>{prog.productName}</span>}
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
-                  <span>Initial IND — eCTD v4.0 (FDA)</span>
+                  <span>Initial IND — eCTD v3.2.2 (FDA)</span>
                   <span>
                     {R.assessed
                       ? 'Assessed ' +
