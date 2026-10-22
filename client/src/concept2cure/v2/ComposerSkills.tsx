@@ -114,7 +114,7 @@ export function ComposerSkills({ projectId, chosen, onChange }: Props) {
   const byKey = useMemo(() => new Map(skills.map(s => [s.key, s])), [skills]);
 
   return (
-    <span className="ct-engine ct-skills">
+    <span className="ct-engine">
       <button
         type="button"
         className="ct-engine-pill"
