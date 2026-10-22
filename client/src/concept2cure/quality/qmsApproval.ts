@@ -12,6 +12,10 @@
  * thrown as the sentence to show, and the dialog stays open. The time returned
  * is the server's, from the signature row, never the browser's clock.
  *
+ * A periodic review of the version in force (postQmsPeriodicReview, gap 5.2)
+ * is signed the same way, with meaning `review`, through the platform's one
+ * signing ceremony (POST /qms/documents/:id/periodic-review).
+ *
  * @module client/src/concept2cure/quality/qmsApproval
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
@@ -54,6 +58,38 @@ export async function postQmsApproval(
     signedAt: sig.signedAt,
     ...(sig.boundPayloadDigest ? { hash: sig.boundPayloadDigest } : {}),
   };
+}
+
+/** What the reviewer decided: the next review date is required when the document remains current. */
+export type QmsPeriodicReviewDecision =
+  | { outcome: 'current'; nextReviewDate: string }
+  | { outcome: 'revision-required' };
+
+/**
+ * Record a periodic review of a controlled document's version in force. It
+ * changes nothing on the document: the review is the signature
+ * (server/services/qms/periodic-review.ts).
+ */
+export async function postQmsPeriodicReview(
+  id: number,
+  decision: QmsPeriodicReviewDecision,
+  input: { reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  const res = await apiRequest('POST', `/api/mdx/qms/documents/${id}/periodic-review`, {
+    ...decision,
+    password: input.password,
+    ...(input.totp ? { mfaToken: input.totp } : {}),
+    meaning: 'review',
+    reason: input.reason,
+  });
+  const json = (await res.json().catch(() => null)) as { signedAt?: string } | null;
+  if (res.status === 401) {
+    throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
+  }
+  if (!json?.signedAt) {
+    throw new Error('The server did not return the signature record. Reload the register to see whether the review was recorded.');
+  }
+  return { meaning: 'review', reason: input.reason, signedAt: json.signedAt };
 }
 
 /**

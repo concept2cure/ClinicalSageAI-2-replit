@@ -1,0 +1,76 @@
+# GREEN at 149ef8ccd + this change: real PostgreSQL 16 (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)), RLS_ENFORCE=on, runtime role app_service (2026-10-22T15:17:51Z)
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > moves the next review out, leaves the effective row and its approval untouched, and says who reviewed it 129ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is one review signature bound to the release content, with the decision on its manifest 5ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is in the controlled document register report beside the date its approval signed 168ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review that finds a revision is required > is recorded, and the document stays due 34ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a next review date that has passed 11ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > "remains current" with no next date 10ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a viewer, who has no signing authority 13ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a wrong password 19ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review counts only for the version it reviewed > is refused while a revision is open, and stops counting once the next version is approved 228ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > readiness counts what is overdue after the last standing review > stops counting a reviewed document, and counts it again once that review is voided 86ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client 211ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient 37ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads 9ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature 113ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > reads retained versions and counts actual current-version training 117ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback 62ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > rolls back the personal receipt with its mandatory audit on failure and recovers on a fresh request 84ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > refuses exact foreign records, training acknowledgments and program claims without exposing prose 63ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > uses fresh membership to refuse an unshared member despite an admin token claim 56ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect 3ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > recovers a genuinely committed legacy signature after lost COMMIT reply and discards its physical connection 60ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible 18ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt 17ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it 36ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness 30ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > the controlled document register report while the revision is open > names the version in force and the signature that approved it, beside the draft 29ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count 142ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > a periodic review date set when the document is created > is stored, signed with the version, and lists the document as due once it is effective 148ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > uses an actual non-owner NOSUPERUSER/NOBYPASSRLS runtime connection under tenant RLS 15ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > binds a genuine independently signed release to a personal receipt and its canonical chained audit 173ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > withdraws current training after actual post-release revocation while retaining the old personal receipt and signature history 168ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses approve after actual target wait and signer demotion without domain/audit/signature writes 58ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes 46ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses change after actual target wait and signer demotion without domain/audit/signature writes 48ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses an actor disabled during the actual target wait 50ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > allows a genuinely authorized signer through the same actual target wait 47ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > honors an actual strict resource denial added during the target wait 49ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 6ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 15ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 11ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 18ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 10ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 48ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 246ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 52ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 58ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 166ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 18ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 8ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 10ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 78ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 36ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 18ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 17ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 19ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 25ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 24ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 36ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 36ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 41ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 14ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 16ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 5ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 26ms
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 130ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 22ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 19ms
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > an account created by single sign-on is not reported as having the emailed code 18ms
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > the retention policies section says it is as at generation, not as at the period 20ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > reads this organization's version under a share lock, and not another's 1206ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > binds the version hash, and refuses when the document recorded another 10ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the creator and the uploader are its authors; a third person may sign 12ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the recorded creator cannot be reassigned 3ms
+ Test Files  7 passed (7)
+      Tests  73 passed (73)
