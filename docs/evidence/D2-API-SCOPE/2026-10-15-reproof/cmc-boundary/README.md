@@ -11,7 +11,9 @@ that boundary holds at every CMC entry point, not only at compose.
 
 It did not. Twelve findings survived three skeptics each (workflow
 `wf_bdb3bd90-a37`). Three more were refused as neutral statistics and are not
-changed: process capability, the stability trend, dissolution.
+changed: process capability, the stability trend, dissolution. All twelve are
+fixed: nine in the first change, and the three AnA entry points in the second
+("The three AnA entry points", below).
 
 ## What already exists
 
@@ -31,6 +33,8 @@ Searched: `compositionRefusal`, `CompositionOutOfScopeError`,
 | Placement | `server/services/cmc/place-module3-into-submission.ts` | Gate → vocabulary `ctd` → cross-project | `ctd` admits NDA/BLA/ANDA/MAA |
 | QOS draft | `server/services/ana/cmc-quality-summary-tool.ts` | Composed through compose | Handed compose the bare pool |
 | Board UI | `client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx` | Rendered every failed read as "Couldn't load… sign in and retry" | Had no state for a refusal |
+| AnA stability tools | `server/services/ana/AnaToolExecutor.ts` `estimate_recorded_shelf_life`, `assess_recorded_batch_poolability` | The same recorded engines as the routes, tenant-scoped, refusing a partial set | Never asked the program the study is filed under |
+| AnA CMC interview | `AnaToolExecutor.ts` `start_` / `answer_` / `resume_intelligence_flow`; `server/services/ana/intelligence-questions/flows/cmc-specification.ts` | Asks the molecule type, and has its own biologic branch, which only skips a question | Judged every answer by small-molecule rules whatever the type; the launch-scope check on the flow ran at start only |
 
 Nothing was rebuilt. The judgment was lifted out of compose into one exported
 decision, and every entry point now asks that decision.
@@ -55,6 +59,10 @@ own pooled connection in a read-only transaction (`inReadOnlyTransaction`);
 | AnA `module3_missing_inputs`, `module3_stale_sections`, `module3_refresh_stale` | Small-molecule missing inputs for any program | Relay the refusal |
 | AnA `ich_compliance`, `control_strategy` | Engines called directly | Relay the refusal |
 | `POST /api/cmc/module3-os/place-into-submission/:projectId` | IND-composed Module 3 placeable into an NDA/BLA of the same program | `refusedBy: 'composition-scope'` for a non-IND target (`applicationRefusal(…, 'submission')`) and for a program outside the boundary, before anything is read or written |
+| AnA `estimate_recorded_shelf_life`, `assess_recorded_batch_poolability` | Q1E shelf life and pooling for any study | The routes' own decision, `studiesCompositionRefusal` (`study-composition-scope.ts`; the routes now call it too): each study's program judged, an unfiled study refused. The result tells the assistant not to fall back to the pasted-numbers calculators |
+| AnA CMC specification interview (`answer_intelligence_question`) | A monoclonal antibody's answers got "critical" ICH Q3A(R2) and M7 findings and a "ready to proceed with document generation" summary | Before an answer is judged, `interviewCompositionRefusal` (`interview-composition-scope.ts`) asks the molecule type stated, this answer's or an earlier one, and the program the session is bound to. A biologic, a peptide or an oligonucleotide is refused by name (ICH Q3A(R2) and M7 exclude all three by scope); "Other", or any value that is not an option, is not established. The result tells the assistant not to answer the molecule type on the person's behalf |
+| `start_intelligence_flow`, `resume_intelligence_flow` | Started and re-presented the interview for any program | Start refuses on a program outside the boundary; resume does not re-present a refused session's small-molecule summary |
+| `answer_intelligence_question` with a caller-supplied `flow_state` | Advanced any flow, so a flow start refuses in production (one whose answers reach no record) could be driven by supplying its state | The same launch-scope check as start (`interviewNotInRelease`, one function for both) |
 
 **Two latent defects found on the way, same cause.** Postgres refuses `SAVEPOINT`
 outside a transaction block (`ERROR: SAVEPOINT can only be used in transaction
@@ -81,10 +89,17 @@ on a real engine.
 | Board UI: `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx` | `board-red.txt`: the refusal case fails on trunk's surface | `board-green.txt`: 26 / 26 (with `cmcQualityBoundary.test.tsx`) |
 | Placement: `server/services/cmc/__tests__/place-module3-into-submission.test.ts` | `placement-red.txt`: 6 failed / 27 | `placement-green.txt`: 27 / 27 |
 | Commands: `server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts` | `commands-red.txt`: 2 failed / 4 | `commands-green.txt`: 4 / 4 |
-| Static contract: `server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts` (trunk's routes, commands, board, orchestrator and loader) | `callers-contract-red.txt`: 4 failed / 7 | `callers-contract-green.txt`: 7 / 7 |
+| Static contract: `server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts` (trunk's routes, commands, board, orchestrator and loader) | `callers-contract-red.txt`: 4 failed / 7 | 7 / 7 at the time |
+| AnA tools: `server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts` (trunk's `AnaToolExecutor.ts`) | `ana-tools-red.txt`: 21 failed / 24; the 3 that pass are the cases the boundary admits | `ana-tools-green.txt`: 24 / 24, with `composition-scope.test.ts` 31 / 31 |
+| A boundary read that throws, in the interview | `ana-interview-unaskable-red.txt`: the error escaped the handler | Refused as a failed read (`CMC_APPLICATION_NOT_READABLE`), the driver text kept in the log |
+| Static contract with the interview engine watched (`advanceFlow`, `resumeFlow`) and the two expiring entries removed (trunk's `AnaToolExecutor.ts`) | `callers-contract-ana-red.txt`: 4 failed / 15, one per unwired handler | `callers-contract-green.txt`: 15 / 15 |
+| The molecule-type decision, against its own first draft | `molecule-type-first-version-red.txt`: `42`, `{}` and `['small_molecule']` were read as unanswered and admitted; `constructor` and `__proto__` matched an object's prototype and were called biologics | Each is not established; the tables are `Map`s, and the unit test reads the flow's own options and its own biologic branch, so a type added to the flow cannot pass unjudged |
+| Every suite that drives these tools or the boundary | — | `ana-affected-suites-green.txt`: 39 files, 651 / 651 |
 
 Existing tests whose mocks predated the boundary were brought to it, without
-weakening what they assert: `module3-convergence-build-status`,
+weakening what they assert: `intelligence-flow-sessions` (its context's project
+is a legacy numeric one, which the boundary refuses; the decision is stood in
+for, so it still pins the session bookkeeping), `module3-convergence-build-status`,
 `module3BuildStateRoutes`, `module3BuildStateReadiness` (the boundary is mocked
 to admit; these pin the figures for an admitted program),
 `stabilityPoolabilityRoute` (studies carry their program), the two QOS tool
@@ -166,15 +181,36 @@ The review's final tally: 16 of 20 findings survived three skeptics, and all
   Authoring use to place into NDAs legitimately. It still lists a program's NDA.
   Placing Module 3 there now answers "Placement refused" with the boundary's
   reason.
+- The CMC interview is **admitted on a program with no drug substance recorded
+  yet**, as the board is: the interview is how the substance gets recorded, and
+  its own molecule-type answer decides. A program whose recorded substance is a
+  biologic, or that files something other than a US IND, is refused at start.
+- The interview is **refused on a legacy numeric project** (`CMC_PROGRAM_NOT_RECORDED`),
+  as every other boundary caller refuses one. With no project at all, only the
+  molecule type is judged.
+- A refused answer is not recorded and the session stays where it was, so a
+  person who chose the wrong molecule type can answer that question again.
+- The interview's commit (`commit_intelligence_flow`) is not gated. It writes
+  only what the person stated into the registers, and no answer reaches it once
+  the molecule type is refused. Compose judges those records again.
+
+## The three AnA entry points (2026-10-22, second change)
+
+They were held for other lanes' 24-hour windows on
+`server/services/ana/AnaToolExecutor.ts`, and those windows kept moving. Three
+lanes edited the file in the 24 hours before this change: `…01TzCCfq`
+(`862dc0f07`, `64168f8e6`, `1354c0f5f`, the last at 2026-10-22T01:23Z),
+`…01KnUGoX` (`d4be3c13f`, 04:57Z) and `…011DpxUy` (`dfe94a300`, 15:11Z). A
+boundary gap held open for a moving window stays open, so the file was edited
+inside the window and the edit is disclosed on the board. The change touches
+only the five handlers named above and adds one helper, `interviewNotInRelease`,
+beside `intelligenceProjectId`. No hunk of those commits is in or next to
+them: theirs are at `project_knowledge_search`, `load_nonclinical_program`,
+`expiryText`, `log_inspection_finding`, `create_qms_document` and the governed
+document reads.
 
 ## Still open
 
-- **AnA tools in `server/services/ana/AnaToolExecutor.ts`**:
-  `estimate_recorded_shelf_life`, `assess_recorded_batch_poolability` and the
-  `answer_intelligence_question` CMC flows. Another lane (`…01TzCCfq`) edited the
-  file at 2026-10-22T00:12Z, so they are wired after its 24-hour window. The
-  callers contract lists the file in `NOT_YET` with that reason, and fails once
-  the file asks, until the entry is removed.
 - `POST /api/orchestration/pre-submission-gate` runs the ICH check. It is
   outside the launch catalog and refused in production, so it is listed in
   `NOT_YET` with that reason, not changed.
