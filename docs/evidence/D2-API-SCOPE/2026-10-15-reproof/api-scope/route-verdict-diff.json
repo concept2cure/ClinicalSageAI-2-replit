@@ -1,0 +1,606 @@
+{
+ "before": 3358,
+ "after": 3358,
+ "changed": [
+  {
+   "path": "/api/authoring-actions/authority-map",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/body-aware-gaps",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/compare-versions/:projectId/:artifactId",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/contradiction-consequence",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/contradiction-context/:projectId",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/contradiction-scan",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/correction-draft",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/cross-section-consistency",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/decision/:decisionId",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/decision/:decisionId/confirm",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/dossier-preflight",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/execute-contradiction-resolution",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/explain-contradiction-resolution",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/harmonize-sections",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/mark-submission-ready",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/plan-contradiction-resolution",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/project-resolution-status/:projectId",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/promote-to-review",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/promotion-blockers/:projectId",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/resolution-changelog",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/resume-last-section/:projectId",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/section-context/:projectId/:sectionCode",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/section-evidence/:projectId/:sectionCode",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/section-expectations/:regulatorBody/:submissionType/:sectionCode",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/section-preflight",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/authoring-actions/seed-overlay-rules",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/biostat-bridge/computation-runs/:runId/reproduce",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/biostat-bridge/filing-placements",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/chat/actions/run",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/chat/health",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/chat/send-message",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/chat/stream",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/chat/thread/:threadId",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/coauthor/sessions",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/coauthor/templates",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/concept2cure/artifacts/export-pptx",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/concept2cure/projects/all/artifacts-summary",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/concept2cure/reviews/pending",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/artifacts/:artifactId/document-versions",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/artifacts/:artifactId/versions",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/citations/normalize",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/plan-execute",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/plan-summary",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/proposals",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/proposals/:proposalId/accept",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/proposals/:proposalId/reject",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/quality/lint",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/retrieval/ingest",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/review-diff",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/scout",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/scout/:findingId/promote",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/tool-events",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/conversation-os/conversations/:conversationId/tools",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/corpus/benchmark",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/corpus/extract",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/corpus/ingest",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/ectd/controlled-vocab",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/ectd/controlled-vocab/:listId",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/ectd/qualification/spec-versions",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/ectd/templates",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/ectd/templates/:id",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/ectd/v4/forward-compat",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/ectd/v4/validate",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/internal-audits",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/internal-audits/:id",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/management-reviews",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/nonconforming",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/nonconforming/:id/disposition",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/readiness",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/suppliers",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/qms/suppliers/:id",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/vault",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/vault/:artifactId",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/vault/:artifactId/audit",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/mdx/vault/:artifactId/versions",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/:code",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/:code/assign",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/:code/comments",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/:code/deadline",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/:code/history",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/:code/status",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/dependencies",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/initialize",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/milestones",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/milestones/:id",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/notifications",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/notifications/:id/read",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/notifications/read-all",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/summary",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/project-sections/timeline",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/realtime-collab/health",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/regulatory/tasks/dashboard/unified",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/regulatory/tasks/sync/:module",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/approval-bottlenecks",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/automation/run",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/automation/runs",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/automation/runs/:runId/actions",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/blockers",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/blockers/:blockerId",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/command-center",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/digests",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/digests/:digestId/read",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/due-soon",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/hotspots",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/policies",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/policies/:policyId",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/policies/resolve",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/sections/:sectionDbId/artifacts",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/unified-work",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/submission-ops/workload",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/task-management/automation",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/tasks/automation",
+   "before": "launch",
+   "after": "unmapped"
+  },
+  {
+   "path": "/api/workflow/progression/create",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/workflow/proofs/audit",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/workflow/proofs/certificate/:workflowRunId",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/workflow/proofs/status",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/workflow/proofs/verify",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/workflow/status",
+   "before": "launch",
+   "after": "out-of-scope"
+  },
+  {
+   "path": "/api/workflow/tasks",
+   "before": "launch",
+   "after": "out-of-scope"
+  }
+ ]
+}

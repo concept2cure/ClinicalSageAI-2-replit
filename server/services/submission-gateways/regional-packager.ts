@@ -922,6 +922,7 @@ export function regionalBackbonePath(region: Region): string {
 interface CapturedPackageEntry { relPath: string; bytes: Buffer }
 
 async function capturedChecksumManifest(dir: string): Promise<string> {
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- a constant file name in the packager's own working directory
   const file = path.join(dir, 'checksums.txt');
   try {
     const stat = await fs.lstat(file);
@@ -946,6 +947,7 @@ async function capturePackageEntries(zip: JSZip): Promise<CapturedPackageEntry[]
 async function materializePackageEntries(dir: string, entries: CapturedPackageEntry[]): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
   for (const { relPath, bytes } of entries) {
+    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- checked on the next line: isPathWithin(dir, dest) refuses an escaping entry (PACKAGE-ENTRY-ESCAPES)
     const dest = path.join(dir, relPath);
     if (!isPathWithin(dir, dest) || relPath.includes('\\')) {
       throw new ValidationError(`Package entry '${relPath}' would extract outside its directory.`, [

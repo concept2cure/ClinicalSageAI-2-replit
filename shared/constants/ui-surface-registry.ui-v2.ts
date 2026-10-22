@@ -297,7 +297,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ConversationThread.tsx exports and routes artifacts through the legacy project API.
-    apiPrefixes: ['/api/conversation-os', '/api/chat', '/api/authoring-actions', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects'],
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -605,7 +606,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     uiKit: 'authoring',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ProtocolDevDesign.tsx / ProtocolDevProjections.tsx read the study design.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): Protocol Dev exports, files IRB packages and reads its hub.
-    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge', '/api/study-design', '/api/concept2cure/artifacts', '/api/irb', '/api/protocol-dev'],
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge/designs', '/api/study-design', '/api/concept2cure/artifacts', '/api/irb', '/api/protocol-dev'],
     anaToolFamilies: ['create_protocol_document', 'update_protocol_section', 'review_protocol_completeness', 'finalize_protocol_document', 'add_soa_assessment', 'review_soa_matrix'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -783,7 +785,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'submission',
     icon: 'mail',
     uiKit: null,
-    apiPrefixes: ['/api/ha-interactions', '/api/regulatory-correspondence', '/api/submission-ops'],
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/ha-interactions', '/api/regulatory-correspondence', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages'],
     anaToolFamilies: ['draft_agency_response', 'plan_crl_response'],
     sharedContract: '@shared/types/communication-center',
     discoveryCatalog: 'AgencyCommunicationEventRecord',

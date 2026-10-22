@@ -73,12 +73,15 @@ export function stripComments(src) {
   return out;
 }
 
-/** The body of every `<header> {…}` block matching `headerRe`, brace-matched. */
+/**
+ * The body of every `<header> {…}` block matching `headerRe`, brace-matched.
+ * `headerRe` is a global regex literal from this file; matchAll copies it, so
+ * no RegExp is built from a value at run time.
+ */
 export function blocks(src, headerRe) {
+  if (!headerRe.global) throw new Error('blocks(): headerRe must be a global regex literal');
   const found = [];
-  const re = new RegExp(headerRe.source, 'g');
-  let m;
-  while ((m = re.exec(src)) !== null) {
+  for (const m of src.matchAll(headerRe)) {
     const open = src.indexOf('{', m.index + m[0].length - 1);
     let depth = 0;
     for (let j = open; j < src.length; j += 1) {
@@ -96,7 +99,7 @@ export function blocks(src, headerRe) {
 export function problemsIn(rel, text) {
   const out = [];
   const src = stripComments(text);
-  for (const body of blocks(src, /backend\s+"s3"\s*\{/)) {
+  for (const body of blocks(src, /backend\s+"s3"\s*\{/g)) {
     if (/^\s*bucket\s*=/m.test(body)) {
       out.push(`${rel}: backend "s3" names its bucket in source. Leave it out and pass it with \`terraform init -backend-config=backend.hcl\` (the name is the account's: \`terraform -chdir=terraform/bootstrap output -raw state_bucket\`).`);
     }
@@ -108,7 +111,7 @@ export function problemsIn(rel, text) {
     }
   }
   if (rel === 'terraform/bootstrap/variables.tf') {
-    const [body] = blocks(src, /variable\s+"state_bucket_name"\s*\{/);
+    const [body] = blocks(src, /variable\s+"state_bucket_name"\s*\{/g);
     if (body === undefined) out.push(`${rel}: variable "state_bucket_name" is missing.`);
     else if (!/^\s*default\s*=\s*null\s*$/m.test(body)) {
       out.push(`${rel}: state_bucket_name must default to null, so bootstrap names the bucket for the account it runs in.`);
