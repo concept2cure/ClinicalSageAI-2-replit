@@ -11,7 +11,7 @@ on staging, no task replaced) is Stage 5's, after the founder's AWS account
 | Slice | Findings | State |
 |---|---|---|
 | A | OPS-13, Terraform half: task size, stop timeout, init process, heap, autoscaling | done |
-| C | OPS-13, application half: one converter limiter, 503 with Retry-After | next |
+| C | OPS-13, application half: one converter limiter, 503 with Retry-After | done |
 | B | OPS-28, SEC-18: boot refusals | open |
 | D | OPS-19: the image (base pin, `chown`, `BUILD_COMMIT`, PID 1) | open |
 
@@ -114,6 +114,96 @@ Every Stage 2 finding was still open at `178f0b477`:
 the run asserts `ignore_changes = [task_definition, desired_count]` by reading
 `modules/ecs-fargate/main.tf`. Its first version referenced no object, which
 Terraform refuses. It now also references `module.ecs.api_autoscaling`.
+
+## Slice C: one converter limiter, and a busy converter answered 503
+
+**What changed.**
+
+- **`server/services/conversion-slots.ts`** (new) exports
+  `withConversionSlot(kind, fn)`. It is one process-wide, first-come
+  first-served limiter:
+  - `CONVERTER_MAX_CONCURRENCY` slots (default 2);
+  - a bounded wait of `CONVERTER_QUEUE_TIMEOUT_MS` (default 120000);
+  - past that wait it throws `ConversionCapacityError` (503, `retryAfterSeconds`
+    30). A request is never dropped and never answered with an empty result;
+  - the timeout bounds the wait for a slot, never a running conversion.
+
+  It reuses the AI gateway's `Semaphore` (`server/services/ai-gateway/concurrency.ts`)
+  rather than copying it. A timer aborts the wait, using the semaphore's
+  existing abort, which removes a waiter without dispatching it.
+- **Nesting cannot deadlock.** A conversion started while its async context
+  already holds a slot runs under that slot (`AsyncLocalStorage`). No wrapped
+  converter calls another today; this keeps it that way.
+- **Wrapped:**
+  - LibreOffice (`pdf-converter.ts` `runLibreOffice`);
+  - the python3 DOCX→PDF pipeline, including its soffice and Ghostscript
+    children, as one process group (`docx-pdf-pipeline.ts`);
+  - OCRmyPDF, now also `--jobs 1`, so one slot is one worker
+    (`integrations/ocrmypdf/client.ts`);
+  - veraPDF (`integrations/verapdf/client.ts`, and the PDF/A pipeline's
+    validation);
+  - Ghostscript (the PDF/A conversion in `ectd/pdfa-pipeline.ts`, and
+    `pdf-compression-service.ts`).
+- **Not wrapped:** the 5-second `--version` probes. They convert nothing, and a
+  probe refused for capacity would read as "binary absent": a busy converter
+  disguised as a missing one.
+- **A busy converter is not a different outcome:**
+  - `finalizePdfA` and the veraPDF validation rethrow it rather than return
+    "unchanged" or a validation note. The packager would otherwise ship a leaf
+    as not-PDF/A on the strength of a queue.
+  - A compression batch stops rather than failing each later file after its
+    own wait.
+  - A compile records no failed compilation for it.
+  - The submission service does not wrap it as `DISPATCH_BLOCKED`.
+- **One HTTP mapping.** `respondIfConverterBusy` (`server/lib/api-response.ts`)
+  answers 503 with `Retry-After` and the error's own sentence ("The document
+  converter is busy… Try again in about 30 seconds.").
+  - It is called by `serverError` and by the global `errorHandler`
+    (`server/src/mw/observability.ts`), in production too, where a 5xx message
+    would otherwise read "Internal server error".
+  - The eCTD export, preview and validate routes and the submissions routes
+    call it too, because they classify errors themselves.
+- **The callers that now see a rejection:**
+  - `ocrService.ocrPdf` and the intake pipeline propagate it. Before, every
+    OCR failure resolved `applied: false`.
+  - The feature-flagged veraPDF advisory (`pdfValidationAttachment.ts`)
+    records "veraPDF skipped" with the busy sentence as its reason.
+
+**Built by a delegated agent, reviewed here.** The agent was cut off by a usage
+limit before it could report or run the wider suites. Every change was read
+here, and everything below was run here except `raw/c1`–`c4` and `c6`, which
+are the agent's.
+
+**Verified by making it fail.**
+
+- **The cap** (`raw/c1`, `raw/c2`). `conversion-slots.test.ts` was run against
+  HEAD's converters with the module absent: 11 of 12 failed, with five and
+  eight children alive at once. After: 12/12.
+- **The 503** (`raw/c3`, `raw/c4`). Before the mapping, `serverError`, the
+  global handler, the three export routes and the compile route answered 500.
+  After, they answer 503 with `Retry-After`, as do the submissions routes:
+  8/8.
+- **Mutants** (`raw/c6`), seven, each failing its test:
+  - re-entrancy removed;
+  - PDF/A or veraPDF turning a refusal into a result;
+  - the batch continuing;
+  - the probe taking a slot;
+  - `--jobs 1` lost;
+  - the veraPDF client spawning outside a slot.
+- **A flaky test, found and fixed here** (`raw/c5`). One test asserted which of
+  three conversions was refused. Each writes its input file before it queues,
+  so the order depends on the filesystem; it failed on its first run here. It
+  now asserts what holds in any order, and the fixed 20 ms waits became a wait
+  until both holders run. Six consecutive runs passed 12/12, and all four new
+  files pass 20/20.
+- **Every related suite** (`raw/c5`). `vitest related` over the changed modules
+  is 1,521 files, because `api-response.ts` is imported nearly everywhere:
+  19,564 passed and 86 failed in 37 files. **The same 86 tests fail with the
+  change stashed**, test name for test name. The causes are this container's
+  environment and schema (reporting PDF fonts, AS2 signing, a journey's
+  missing relation), not converters.
+- **Lint:** eslint on the 17 changed and new files reports 0 errors. The
+  pre-push hook's warning ratchet and typecheck run on push.
 
 ## Not shown here
 

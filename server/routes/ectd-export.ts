@@ -52,6 +52,7 @@ import {
   refusalHttpStatus,
 } from '../services/ectd/signed-package-export';
 import { createScopedLogger } from '../utils/logger.js';
+import { respondIfConverterBusy } from '../lib/api-response';
 
 const log = createScopedLogger('ectd-export');
 
@@ -749,6 +750,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 
     return res.send(result.buffer);
   } catch (error: any) {
+    // The assembly converts every PDF leaf through Ghostscript in a conversion
+    // slot; a slot that never freed is "busy, retry", not a failed package (OPS-13).
+    if (respondIfConverterBusy(res, error)) return;
     // Submission-grade gate tripped: the dossier still has placeholder leaves or
     // no content. This is an expected, actionable rejection — not a server
     // failure — so return 422 with the exact unfinished sections.
@@ -1078,6 +1082,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
     if (generatedStats !== undefined) response.stats = generatedStats;
     return res.json(response);
   } catch (error: any) {
+    if (respondIfConverterBusy(res, error)) return; // generate-then-validate assembles (OPS-13)
     const correlationId = randomUUID();
     log.error('Validate failed', {
       err: error instanceof Error ? error.message : String(error),
@@ -1272,6 +1277,7 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    if (respondIfConverterBusy(res, error)) return; // the preview assembles the package (OPS-13)
     const correlationId = randomUUID();
     log.error('Preview failed', {
       err: error instanceof Error ? error.message : String(error),

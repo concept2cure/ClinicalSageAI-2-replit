@@ -57,6 +57,7 @@ import {
   type RequiredSectionProvenance,
 } from '../services/ectd/required-sections';
 import { serverError } from '../lib/api-response';
+import { isConversionCapacityError } from '../services/conversion-slots';
 import { createScopedLogger } from '../utils/logger';
 import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
 import type { SubmissionBundle } from '../services/submission-gateways/types';
@@ -1209,6 +1210,10 @@ async function compileFromSpine(
       await assembled.cleanup();
     }
   } catch (err) {
+    // Every conversion slot stayed busy (OPS-13): nothing was refused, so this
+    // is no `failed` compilation to record. The handler's serverError answers
+    // it 503 with Retry-After, and the compile can simply be run again.
+    if (isConversionCapacityError(err)) throw err;
     assembleFailure = err instanceof Error ? err.message : String(err);
     // A refusal the assembler audited (EctdAssemblyBlockedError) carries what
     // happened to that row. Read structurally: the class arrives through a

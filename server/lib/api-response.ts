@@ -18,11 +18,14 @@
  *     the logger so the error appears under the right scope)
  *
  * This module has zero runtime side effects — pure functions over the
- * Express Response. Safe to import from any route handler.
+ * Express Response. Safe to import from any route handler. Its one runtime
+ * import is the converter limiter's error type (server/services/conversion-slots.ts),
+ * which does no I/O on import.
  */
 
 import type { Response } from 'express';
 import type { ApiEnvelope, ApiErrorEnvelope } from '../../shared/constants/mdx';
+import { isConversionCapacityError } from '../services/conversion-slots';
 
 interface ScopedLogger {
   error: (message: string, context?: unknown) => void;
@@ -133,6 +136,8 @@ export function serverError(
      sites are unchanged. */
   extra?: Record<string, unknown>,
 ): Response {
+  // A busy converter is not a server fault: 503 with Retry-After (OPS-13).
+  if (respondIfConverterBusy(res, err)) return res;
   const detail = err instanceof Error ? err.message : 'Operation failed';
   /* Set by the requestId middleware (server/middleware/enterprise-security.ts)
      before any route runs, so reading it back off the response needs no change
@@ -166,6 +171,43 @@ export function serverError(
     ...(correlationId ? { correlationId } : {}),
   };
   return res.status(500).json(envelope);
+}
+
+/**
+ * 503 Service Unavailable with `Retry-After`, for a request refused because
+ * every conversion slot stayed in use past CONVERTER_QUEUE_TIMEOUT_MS
+ * (ConversionCapacityError, server/services/conversion-slots.ts; MR-03
+ * Stage 2, OPS-13). Returns true when it answered, so a sink can call it
+ * first and fall through for every other error:
+ *
+ *   if (respondIfConverterBusy(res, err)) return;
+ *
+ * The one mapping for that error. `serverError` and the global error handler
+ * (server/src/mw/observability.ts) call it; so do the routes that answer
+ * converter errors through their own classifier (eCTD export, submissions).
+ * The message is the error's own sentence, written for the screen: the
+ * converter is busy and when to try again. Nothing in it names a binary, a
+ * path or a slot count beyond what the user can act on.
+ */
+export function respondIfConverterBusy(res: Response, err: unknown): boolean {
+  if (!isConversionCapacityError(err) || res.headersSent) return false;
+  const header =
+    typeof (res as { getHeader?: unknown }).getHeader === 'function'
+      ? res.getHeader('X-Request-Id')
+      : undefined;
+  const correlationId = typeof header === 'string' && header ? header : null;
+  // Probed like getHeader above: a route test's minimal `res` double may lack it.
+  if (typeof (res as { setHeader?: unknown }).setHeader === 'function') {
+    res.setHeader('Retry-After', String(err.retryAfterSeconds));
+  }
+  const envelope: ApiErrorEnvelope & { retryAfterSeconds: number } = {
+    error: 'CONVERTER_BUSY',
+    message: err.message,
+    retryAfterSeconds: err.retryAfterSeconds,
+    ...(correlationId ? { correlationId } : {}),
+  };
+  res.status(503).json(envelope);
+  return true;
 }
 
 /* ─── Convenience guards ───────────────────────────────────────────── */
