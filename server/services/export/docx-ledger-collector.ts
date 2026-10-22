@@ -20,9 +20,9 @@
  * is the document's embedded AI-use record, so a failed read rendered as
  * `<Proposals count="0">`, `<Runs total="0"><ModelsUsed/>` and
  * `<AuthoringPlan xsi:nil="true"/>` — no AI proposal, run, model or plan. They
- * now carry the same `…Unavailable` reason, a missing table included — except
- * that the plan lookups in authoring-plan-generator still answer a missing
- * authoring_plans table with "no plan" before this file sees an error.
+ * now carry the same `…Unavailable` reason, a missing table included (the plan
+ * lookups in authoring-plan-generator stopped answering a missing
+ * authoring_plans table with "no plan" the same day).
  *
  * The AnALedger contract:
  *   - artifact + active version + content_hash
@@ -75,12 +75,15 @@ export interface LedgerCitations {
   ranAgainstContentHash: string | null;
   /** Raw citations array as persisted on the artifact. */
   sentences: unknown[];
-  totalSentences: number;
-  supportedCount: number;
-  contradictedCount: number;
-  gapCount: number;
-  totalReadinessDelta: number;
-  filingBlocked: boolean;
+  /** Non-null when the artifact names a citation run that has no recorded row:
+   * every count below is then null — not recorded — never zero. */
+  statsNotRecorded: string | null;
+  totalSentences: number | null;
+  supportedCount: number | null;
+  contradictedCount: number | null;
+  gapCount: number | null;
+  totalReadinessDelta: number | null;
+  filingBlocked: boolean | null;
 }
 
 export interface LedgerAuditEntry {
@@ -219,6 +222,7 @@ async function loadArtifact(
             a.version, a.content_hash, a.created_at, a.updated_at,
             a.published_at, a.locked_at,
             a.citations, a.citation_run_id, a.citations_at,
+            r.id AS run_row_id,
             r.artifact_content_hash AS ran_against_content_hash,
             r.total_sentences, r.supported_count, r.contradicted_count,
             r.gap_count, r.total_readiness_delta, r.filing_blocked,
@@ -235,6 +239,9 @@ async function loadArtifact(
   );
   if (rows.length === 0) return null;
   const r = rows[0];
+  // 2026-10-15: when the join found no run row the counts were built as
+  // `Number(null) || 0` — a clean, unblocked run of 0 sentences nobody recorded.
+  const runRecorded = r.run_row_id != null;
   return {
     artifact: {
       artifactId: r.artifact_id,
@@ -268,12 +275,13 @@ async function loadArtifact(
           citationsAt: r.citations_at ? new Date(r.citations_at).toISOString() : null,
           ranAgainstContentHash: r.ran_against_content_hash ?? null,
           sentences: Array.isArray(r.citations) ? r.citations : [],
-          totalSentences: Number(r.total_sentences) || 0,
-          supportedCount: Number(r.supported_count) || 0,
-          contradictedCount: Number(r.contradicted_count) || 0,
-          gapCount: Number(r.gap_count) || 0,
-          totalReadinessDelta: Number(r.total_readiness_delta) || 0,
-          filingBlocked: !!r.filing_blocked,
+          statsNotRecorded: runRecorded ? null : 'no citation run recorded',
+          totalSentences: runRecorded ? Number(r.total_sentences) : null,
+          supportedCount: runRecorded ? Number(r.supported_count) : null,
+          contradictedCount: runRecorded ? Number(r.contradicted_count) : null,
+          gapCount: runRecorded ? Number(r.gap_count) : null,
+          totalReadinessDelta: runRecorded ? Number(r.total_readiness_delta) : null,
+          filingBlocked: runRecorded ? !!r.filing_blocked : null,
         }
       : null,
   };
@@ -508,8 +516,8 @@ export async function collectArtifactLedger(
  *      the case where the artifact was drafted before the plan id was
  *      attached back.
  *
- * `plan` is null when no plan matches (and, inside the generator's lookups,
- * when authoring_plans is missing). 2026-10-15: a lookup that threw also
+ * `plan` is null when no plan matches; a missing authoring_plans table is
+ * `unavailable` like any other failed read. 2026-10-15: a lookup that threw also
  * returned null (`catch { return null }`), which the ledger rendered as "no
  * authoring plan"; it now returns `unavailable` with the reason.
  */

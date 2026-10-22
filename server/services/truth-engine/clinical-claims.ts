@@ -43,7 +43,7 @@ export type {
   MeasureSummary,
   NotCompared,
   Outcome,
-  Population,
+  ClaimPopulation,
   Scope,
   SlotName,
   StudyRef,

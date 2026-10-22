@@ -50,9 +50,15 @@ export interface SbomCompletenessResult {
   componentGaps: SbomComponentGap[];
   /** Document-level NTIA elements that are missing. */
   documentGaps: string[];
-  /** Components carrying at least one known vulnerability. */
+  /** Components carrying at least one known vulnerability, of those whose list was supplied. */
   vulnerableComponents: string[];
-  totalKnownVulnerabilities: number;
+  /** Known vulnerabilities across the components whose list was supplied; null when none was. */
+  totalKnownVulnerabilities: number | null;
+  /** Components whose vulnerability list was supplied (an empty list: assessed, none known). */
+  vulnerabilityAssessedComponentCount: number;
+  /** Components with no vulnerability list: not assessed, so not counted as having none. */
+  vulnerabilityNotAssessedComponentCount: number;
+  vulnerabilityNotAssessedComponents: string[];
   framework: 'FDA §524B / NTIA minimum elements';
 }
 
@@ -76,6 +82,7 @@ export function scoreSbomCompleteness(input: SbomInput): SbomCompletenessResult 
   let requiredCount = 0;
   const componentGaps: SbomComponentGap[] = [];
   const vulnerableComponents: string[] = [];
+  const vulnerabilityNotAssessedComponents: string[] = [];
   let totalKnownVulnerabilities = 0;
 
   input.components.forEach((c, index) => {
@@ -88,11 +95,15 @@ export function scoreSbomCompleteness(input: SbomInput): SbomCompletenessResult 
     if (missing.length > 0) {
       componentGaps.push({ index, componentName: c.componentName ?? `component[${index}]`, missingFields: missing });
     }
-    if (c.knownVulnerabilities && c.knownVulnerabilities.length > 0) {
+    // 2026-10-15: a component with no list counted as 0 known vulnerabilities; it is not assessed.
+    if (!Array.isArray(c.knownVulnerabilities)) {
+      vulnerabilityNotAssessedComponents.push(c.componentName ?? `component[${index}]`);
+    } else if (c.knownVulnerabilities.length > 0) {
       vulnerableComponents.push(c.componentName ?? `component[${index}]`);
       totalKnownVulnerabilities += c.knownVulnerabilities.length;
     }
   });
+  const vulnerabilityAssessedComponentCount = input.components.length - vulnerabilityNotAssessedComponents.length;
 
   // Document-level elements: author, timestamp, dependency relationships.
   const documentGaps: string[] = [];
@@ -113,7 +124,10 @@ export function scoreSbomCompleteness(input: SbomInput): SbomCompletenessResult 
     componentGaps,
     documentGaps,
     vulnerableComponents,
-    totalKnownVulnerabilities,
+    totalKnownVulnerabilities: vulnerabilityAssessedComponentCount > 0 ? totalKnownVulnerabilities : null,
+    vulnerabilityAssessedComponentCount,
+    vulnerabilityNotAssessedComponentCount: vulnerabilityNotAssessedComponents.length,
+    vulnerabilityNotAssessedComponents,
     framework: 'FDA §524B / NTIA minimum elements',
   };
 }

@@ -46,7 +46,7 @@ export class EMAEPARConnector implements DataConnector {
       sourceConnector: this.id,
       title: med.medicineName || 'Unknown Medicine',
       summary: `${med.medicineName} | Active: ${med.activeSubstance} | Status: ${med.authorisationStatus} | Therapeutic Area: ${med.therapeuticArea}`,
-      relevanceScore: 1 - i * 0.04,
+      sourceRank: i + 1,
       metadata: { ...med, source: EMA_EPAR_SOURCE },
       url: med.url,
     }));

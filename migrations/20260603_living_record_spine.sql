@@ -22,6 +22,12 @@
 -- conditional block after it drops NOT NULL and the default wherever this file
 -- runs on a table created before the amendment. Nothing is dropped; stored
 -- scores are kept (a stored 0.5000 cannot be told from one someone gave).
+-- ─── AMENDED 2026-10-15 — fact_drift.severity has no default ───────────────
+-- It was NOT NULL DEFAULT 'medium', so a drift whose writer rated nothing read
+-- as a medium one. Every writer states a severity ('unrated' when it assessed
+-- none); the column stays NOT NULL and loses the default, here and through the
+-- conditional block after the CREATE. Databases installed before are relaxed by
+-- migrations/20261015m_claim_confidence_and_drift_severity_unstated.sql.
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Living Record Spine
 -- Migration: 20260603_living_record_spine.sql
@@ -219,7 +225,7 @@ CREATE TABLE IF NOT EXISTS fact_drift (
   expected_value     text,                             -- the canonical value at detection
   observed_value     text,                             -- the diverging value at the target
   drift_type         varchar(24) NOT NULL,             -- value_mismatch | unit_mismatch | stale_source | missing_target
-  severity           varchar(12) NOT NULL DEFAULT 'medium',  -- low | medium | high | critical
+  severity           varchar(12) NOT NULL,             -- low | medium | high | critical | unrated (no default, 2026-10-15)
 
   status             varchar(16) NOT NULL DEFAULT 'open',    -- open | acknowledged | resolved | dismissed
   detected_at        timestamp with time zone NOT NULL DEFAULT now(),
@@ -240,6 +246,20 @@ CREATE INDEX IF NOT EXISTS fact_drift_binding_idx
   ON fact_drift (binding_id);
 CREATE INDEX IF NOT EXISTS fact_drift_open_idx
   ON fact_drift (program_id, status) WHERE status = 'open';
+
+-- 2026-10-15: a table created before the amendment above still defaults
+-- severity to 'medium'. Conditional on the live shape, so a re-run is a no-op.
+DO $fact_drift_severity$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'fact_drift'
+       AND column_name = 'severity' AND column_default IS NOT NULL
+  ) THEN
+    ALTER TABLE public.fact_drift ALTER COLUMN severity DROP DEFAULT;
+  END IF;
+END
+$fact_drift_severity$;
 
 COMMENT ON TABLE fact_drift IS
   'Drift Sentinel output: a bound target value diverged from its canonical fact. Handed to the cascade router.';

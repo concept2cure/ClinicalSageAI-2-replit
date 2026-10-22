@@ -30,7 +30,7 @@ import type { Endpoint } from './study-design-types';
 const Z_975 = 1.959963985; // standard-normal 97.5th percentile
 
 /** Options controlling extraction. */
-export interface ExtractOptions {
+export interface CsrExtractOptions {
   /** Benefit direction of the target endpoint; orients ratio effects to "positive = benefit". */
   direction?: Endpoint['direction'];
   /** Target indication, for relevance weighting against the CSR's indication. */
@@ -62,7 +62,7 @@ function seFromCi(ci: unknown): number | undefined {
 function relevance(
   reportIndication: string | null | undefined,
   reportPhase: string | null | undefined,
-  opts: ExtractOptions,
+  opts: CsrExtractOptions,
 ): number {
   let r = 1;
   if (opts.targetIndication && reportIndication) {
@@ -92,7 +92,7 @@ export function extractEffectObservation(
     metadata?: unknown;
   },
   detail: { results?: unknown; metadata?: unknown; sampleSize?: number | null } | null | undefined,
-  opts: ExtractOptions = {},
+  opts: CsrExtractOptions = {},
 ): EvidenceObservation | null {
   const sources = [
     asObject(detail?.results),
@@ -146,7 +146,7 @@ function observation(
   effect: number,
   standardError: number,
   n: number | undefined,
-  opts: ExtractOptions,
+  opts: CsrExtractOptions,
 ): EvidenceObservation {
   return {
     source: {
@@ -191,7 +191,7 @@ export async function gatherCsrEffectEvidence(args: {
     .orderBy(desc(csrReports.uploadDate))
     .limit(Math.min(args.limit ?? 100, 300));
 
-  const opts: ExtractOptions = {
+  const opts: CsrExtractOptions = {
     direction: args.direction,
     targetIndication: args.indication,
     targetPhase: args.phase,

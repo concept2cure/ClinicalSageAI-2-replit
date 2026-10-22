@@ -191,7 +191,7 @@ describe('ICSR persistence — a receipt-unproven outcome locks the row', () => 
 
     const ack = await recordIcsrAcknowledgment(
       'tx-1',
-      '<ichicsrAck><messagenumb>MSG-2026-0001</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ichicsrAck>',
+      '<ichicsrAck><icsrmessagenumb>MSG-2026-0001</icsrmessagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ichicsrAck>',
       ctx,
     );
     expect(ack.status).toBe('acknowledged');

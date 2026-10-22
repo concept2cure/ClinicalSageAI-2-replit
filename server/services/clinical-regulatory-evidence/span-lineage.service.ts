@@ -1014,7 +1014,8 @@ function mapRow(r: any): SpanLineageRow {
   };
 }
 
-/** The cited Vault versions of a read's `vault_document` rows (S5c), looked up only when it holds one. */
+/** The cited Vault versions of a read's `vault_document` rows (S5c), looked up only when it holds one, and only among the
+ *  reader's organization's (2026-10-15: by id alone, another organization's version read as current, with its title). */
 async function withVaultVersions(rows: any[], exec: Queryable, organizationId: number): Promise<any[]> {
   const ids = [...new Set(rows.filter((r) => r.provenance_kind === 'vault_document').map((r) => String(r.reference_id)))];
   if (ids.length === 0) return rows;

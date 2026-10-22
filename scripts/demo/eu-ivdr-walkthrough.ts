@@ -57,17 +57,23 @@ const di = validateGs1DeviceIdentifier('00012345678905');
 console.log(`UDI DI ${di.deviceIdentifier}: ${di.valid ? 'valid' : 'INVALID'}`);
 
 h('Submission-readiness capstone — pathway: eu-ivdr');
+// 2026-10-15: analytical and clinical performance were typed in as 1 and a valid DI
+// check digit stood for UDI at 1; nothing here computes those domains, so they are
+// reported not assessed.
 const readiness = assessSubmissionReadiness({
   pathway: 'eu-ivdr',
   domainScores: {
     ivdrPerformanceEvaluation: per.completenessScore,
-    analyticalPerformance: 1,
-    clinicalPerformance: 1,
-    udiGudid: di.valid ? 1 : 0,
   },
 });
-console.log(`Overall: ${(readiness.overallScore * 100).toFixed(0)}%  →  VERDICT: ${readiness.verdict.toUpperCase()}`);
-readiness.perDomain.forEach(d => console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${(d.score * 100).toFixed(0)}%`));
+const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
+console.log(
+  readiness.assessedDomainCompleteness === null
+    ? 'Completeness of the assessed domains: none assessed'
+    : `Completeness of the assessed domains: ${pct(readiness.assessedDomainCompleteness)} (${readiness.perDomain.length} of ${readiness.requiredDomains.length} required domains)  →  verdict: ${readiness.verdict}`,
+);
+readiness.perDomain.forEach(d => console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${pct(d.score)}`));
+if (readiness.notAssessedDomains.length) console.log(`Not assessed: ${readiness.notAssessedDomains.join(', ')}`);
 if (readiness.prioritizedGaps.length) {
   console.log('Prioritized gaps:');
   readiness.prioritizedGaps.forEach((g, i) => console.log(`  ${i + 1}. ${g.domain} (${(g.score * 100).toFixed(0)}%)`));

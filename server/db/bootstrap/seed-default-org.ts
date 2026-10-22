@@ -26,10 +26,13 @@ const logger = createScopedLogger('database');
 // startup. Without one, a fresh account receives a non-recoverable random
 // credential: development token-based helpers still work, but the repository
 // no longer publishes a password that can authenticate as an administrator.
-const DEMO_EMAIL = (process.env.DEMO_USER_EMAIL ?? 'jonmichaelpsmith@gmail.com')
-  .trim()
-  .toLowerCase();
-const DEMO_NAME = 'JM Smith';
+//
+// The account is the one DEMO_USER_EMAIL names, read when the seed runs
+// (2026-10-15): it defaulted to a real person's personal address, named
+// "JM Smith" and titled "Chief Science Officer". No identity is built in.
+function demoUserEmail(): string | null {
+  return (process.env.DEMO_USER_EMAIL ?? '').trim().toLowerCase() || null;
+}
 const DEMO_PASSWORD_ROUNDS = 12;
 
 export async function seedOrganizations(client: PoolClient): Promise<void> {
@@ -112,17 +115,17 @@ function demoUserSeedDisabled(): boolean {
  * row, so operators must rotate credentials in any environment initialized by
  * an earlier release.
  */
-async function resolveDemoPasswordHash(): Promise<string> {
+async function resolveDemoPasswordHash(demoEmail: string): Promise<string> {
   const override = (process.env.DEMO_USER_PASSWORD ?? '').trim();
   if (override) {
     logger.info(
-      `ensureAuthTables: demo admin password sourced from DEMO_USER_PASSWORD (${DEMO_EMAIL})`
+      `ensureAuthTables: demo admin password sourced from DEMO_USER_PASSWORD (${demoEmail})`
     );
     return bcrypt.hash(override, DEMO_PASSWORD_ROUNDS);
   }
 
   logger.warn(
-    `ensureAuthTables: DEMO_USER_PASSWORD is unset; a fresh ${DEMO_EMAIL} account ` +
+    `ensureAuthTables: DEMO_USER_PASSWORD is unset; a fresh ${demoEmail} account ` +
       `will receive a random, non-recoverable password. Set DEMO_USER_PASSWORD ` +
       `to enable deliberate password login, or SEED_DEMO_USER=false to skip the account.`
   );
@@ -141,6 +144,15 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     return;
   }
 
+  const demoEmail = demoUserEmail();
+  if (!demoEmail) {
+    logger.warn(
+      'ensureAuthTables: demo admin not seeded: DEMO_USER_EMAIL is unset and no identity is built in. ' +
+        'Set DEMO_USER_EMAIL to the account to seed, or SEED_DEMO_USER=false to skip it.'
+    );
+    return;
+  }
+
   const c2cOrg = await client.query(
     `SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`
   );
@@ -150,22 +162,24 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     return;
   }
 
-  const demoPasswordHash = await resolveDemoPasswordHash();
+  const demoPasswordHash = await resolveDemoPasswordHash(demoEmail);
 
+  // Named by the address the operator gave, with no title or department
+  // (2026-10-15: "JM Smith", "Chief Science Officer", "Executive Leadership").
   await client.query(
     `
-    INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id, password_changed_at)
-    VALUES ($1, $2, $3, 'Chief Science Officer', 'Executive Leadership', 'active', $4, NOW())
+    INSERT INTO users (email, name, password_hash, status, default_organization_id, password_changed_at)
+    VALUES ($1, $2, $3, 'active', $4, NOW())
     ON CONFLICT (email) DO UPDATE SET
       password_hash = CASE WHEN users.password_hash IS NULL OR users.password_hash = '' THEN $3 ELSE users.password_hash END,
       default_organization_id = COALESCE(users.default_organization_id, $4),
       status = 'active'
     `,
-    [DEMO_EMAIL, DEMO_NAME, demoPasswordHash, c2cOrgId]
+    [demoEmail, demoEmail, demoPasswordHash, c2cOrgId]
   );
 
   const demoUser = await client.query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [
-    DEMO_EMAIL,
+    demoEmail,
   ]);
   if (demoUser.rows[0]) {
     await client.query(
@@ -178,5 +192,5 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     );
   }
 
-  logger.info(`ensureAuthTables: GA demo user verified (${DEMO_EMAIL})`);
+  logger.info(`ensureAuthTables: GA demo user verified (${demoEmail})`);
 }

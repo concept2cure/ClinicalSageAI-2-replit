@@ -113,7 +113,7 @@ export interface BurdenMatrix {
  * One measure, with whether it could be computed at all. A profile where a figure
  * is unknown is distinguishable from one where the figure is genuinely zero.
  */
-export interface Measure<T> {
+export interface BurdenMeasure<T> {
   status: 'computed' | 'not_computable';
   value: T | null;
   /** The exact input this measure is read from. */
@@ -142,7 +142,7 @@ export interface BurdenVisitLoad {
   /** Scheduled activities at this visit, all states counted. */
   procedureCount: number;
   byState: { performed: number; conditional: number; optional: number; unstated: number };
-  participantMinutes: Measure<number>;
+  participantMinutes: BurdenMeasure<number>;
 }
 
 export interface BurdenAssessmentLoad {
@@ -154,26 +154,26 @@ export interface BurdenAssessmentLoad {
 }
 
 export interface BurdenComplexity {
-  distinctAssessmentCategories: Measure<number>;
-  armCount: Measure<number>;
-  hasUnscheduledVisits: Measure<boolean>;
-  hasConditionalActivities: Measure<boolean>;
-  proceduresPerVisit: Measure<number>;
+  distinctAssessmentCategories: BurdenMeasure<number>;
+  armCount: BurdenMeasure<number>;
+  hasUnscheduledVisits: BurdenMeasure<boolean>;
+  hasConditionalActivities: BurdenMeasure<boolean>;
+  proceduresPerVisit: BurdenMeasure<number>;
 }
 
 export interface BurdenProfile {
   /** False when there is no schedule to measure. Every measure is then absent. */
   present: boolean;
   source: string;
-  visitCount: Measure<number>;
-  scheduledVisitCount: Measure<number>;
-  durationDays: Measure<number>;
-  procedureCount: Measure<number>;
-  activityCount: Measure<number>;
-  peakVisitLoad: Measure<BurdenPeakVisit>;
-  medianVisitLoad: Measure<number>;
-  participantTimeMinutes: Measure<number>;
-  invasiveProcedureCount: Measure<number>;
+  visitCount: BurdenMeasure<number>;
+  scheduledVisitCount: BurdenMeasure<number>;
+  durationDays: BurdenMeasure<number>;
+  procedureCount: BurdenMeasure<number>;
+  activityCount: BurdenMeasure<number>;
+  peakVisitLoad: BurdenMeasure<BurdenPeakVisit>;
+  medianVisitLoad: BurdenMeasure<number>;
+  participantTimeMinutes: BurdenMeasure<number>;
+  invasiveProcedureCount: BurdenMeasure<number>;
   complexity: BurdenComplexity;
   visits: BurdenVisitLoad[];
   assessments: BurdenAssessmentLoad[];
@@ -209,17 +209,17 @@ const EVERY_VISIT_EXPECTED_CATEGORIES = new Set([
   'safety',
 ]);
 
-// ─── Measure constructors ────────────────────────────────────────────────────
+// ─── BurdenMeasure constructors ──────────────────────────────────────────────
 //
 // Exported for the sibling burden modules (`burden-adapters.ts`, `burden-delta.ts`)
 // so the three share one construction of a measure and one finding shape. They are
 // internal to this slice, not part of the module's product surface.
 
-export function computedMeasure<T>(value: T, basis: string): Measure<T> {
+export function computedMeasure<T>(value: T, basis: string): BurdenMeasure<T> {
   return { status: 'computed', value, basis };
 }
 
-export function absentMeasure<T>(basis: string, absentReason: string): Measure<T> {
+export function absentMeasure<T>(basis: string, absentReason: string): BurdenMeasure<T> {
   return { status: 'not_computable', value: null, basis, absentReason };
 }
 
@@ -266,7 +266,7 @@ function hasMinutes(activity: BurdenActivityInput | undefined): boolean {
   return typeof activity?.participantMinutes === 'number' && Number.isFinite(activity.participantMinutes);
 }
 
-function visitMinutes(activities: BurdenActivityInput[]): Measure<number> {
+function visitMinutes(activities: BurdenActivityInput[]): BurdenMeasure<number> {
   const missing = activities.filter(a => !hasMinutes(a)).map(a => a.name);
   if (missing.length > 0) {
     return absentMeasure(
@@ -315,7 +315,7 @@ function buildVisitLoads(norm: NormalizedMatrix): BurdenVisitLoad[] {
 const DURATION_BASIS =
   'span in days between the earliest and latest planned study day across the scheduled visits (SoaVisit.studyDay)';
 
-function durationMeasure(scheduled: BurdenVisitInput[]): Measure<number> {
+function durationMeasure(scheduled: BurdenVisitInput[]): BurdenMeasure<number> {
   if (scheduled.length === 0) {
     return absentMeasure(DURATION_BASIS, 'The schedule has no scheduled visits.');
   }
@@ -331,7 +331,7 @@ function durationMeasure(scheduled: BurdenVisitInput[]): Measure<number> {
   return computedMeasure(Math.max(...days) - Math.min(...days), DURATION_BASIS);
 }
 
-function peakMeasure(loads: BurdenVisitLoad[]): Measure<BurdenPeakVisit> {
+function peakMeasure(loads: BurdenVisitLoad[]): BurdenMeasure<BurdenPeakVisit> {
   const basis = 'the scheduled visit with the most scheduled cells (ties resolve to the earlier column)';
   if (loads.length === 0) return absentMeasure(basis, 'The schedule has no scheduled visits.');
   let peak = loads[0];
@@ -342,7 +342,7 @@ function peakMeasure(loads: BurdenVisitLoad[]): Measure<BurdenPeakVisit> {
   );
 }
 
-function medianMeasure(loads: BurdenVisitLoad[]): Measure<number> {
+function medianMeasure(loads: BurdenVisitLoad[]): BurdenMeasure<number> {
   const basis = 'median of the per-visit scheduled-cell counts across the scheduled visits';
   if (loads.length === 0) return absentMeasure(basis, 'The schedule has no scheduled visits.');
   return computedMeasure(round2(median(loads.map(l => l.procedureCount))), basis);
@@ -358,7 +358,7 @@ function totalMinutesMeasure(
   scheduledActivities: BurdenActivityInput[],
   cells: BurdenCellInput[],
   activityById: Map<string, BurdenActivityInput>,
-): Measure<number> {
+): BurdenMeasure<number> {
   if (cells.length === 0) return computedMeasure(0, PARTICIPANT_TIME_BASIS);
   const missing = scheduledActivities.filter(a => !hasMinutes(a));
   if (missing.length > 0) {
@@ -380,7 +380,7 @@ function invasiveMeasure(
   scheduledActivities: BurdenActivityInput[],
   cells: BurdenCellInput[],
   activityById: Map<string, BurdenActivityInput>,
-): Measure<number> {
+): BurdenMeasure<number> {
   const basis = 'scheduled cells whose activity is marked invasive or minimally invasive';
   if (cells.length === 0) return computedMeasure(0, basis);
   const missing = scheduledActivities.filter(a => !a.invasiveness);
@@ -524,7 +524,7 @@ const COMPOSITE_NOTE: NotComputedNote = {
 };
 
 function collectNotComputed(profile: Omit<BurdenProfile, 'notComputed'>): NotComputedNote[] {
-  const candidates: Array<[string, Measure<unknown>]> = [
+  const candidates: Array<[string, BurdenMeasure<unknown>]> = [
     ['durationDays', profile.durationDays],
     ['peakVisitLoad', profile.peakVisitLoad],
     ['participantTimeMinutes', profile.participantTimeMinutes],
@@ -600,7 +600,7 @@ function countVisitsPerActivity(cells: BurdenCellInput[]): Map<string, number> {
 
 /** The honest empty profile: present false, every measure absent with the reason. */
 export function absentBurdenProfile(source: string, reason: string): BurdenProfile {
-  const gone = <T>(basis: string): Measure<T> => absentMeasure<T>(basis, reason);
+  const gone = <T>(basis: string): BurdenMeasure<T> => absentMeasure<T>(basis, reason);
   return {
     present: false,
     source,

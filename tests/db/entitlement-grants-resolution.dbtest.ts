@@ -813,9 +813,10 @@ describe('checkProgramQuota — the Projects create path, per-user scope, real r
 // ═══════════════════════════════════════════════════════════════════════════
 describe('checkProjectQuota / checkUserQuota — the usage-panel statements, per-user scope, real rows', () => {
   // GET /api/module-subscriptions/license and resolveEntitlements (/api/licensing) read
-  // these. Both helpers FAIL OPEN on an error ({ withinQuota: true, count 0 }),
-  // so every expectation below carries a non-zero count: a green result cannot
-  // be the catch branch answering for a statement that failed.
+  // these. Since 2026-10-15 both helpers THROW on a failed read (they answered
+  // { withinQuota: true, count 0 } from a catch), and an unrecorded (NULL) limit
+  // is maxAllowed null with withinQuota null. Every expectation below still
+  // carries a non-zero count, so a green result is a count that was read.
   beforeAll(async () => {
     for (const org of [ORG_LEGACY_QUOTA, ORG_FOREIGN]) {
       const { rows } = await owner.query(

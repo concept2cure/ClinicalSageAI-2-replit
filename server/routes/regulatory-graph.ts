@@ -53,6 +53,7 @@ import {
 import { FRESHNESS_SOURCE_UNAVAILABLE_MESSAGE, FreshnessSourceUnavailableError, programFreshnessReport } from '../services/living-file/freshness-report.service';
 import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import {
+  FactInputRefusal,
   getFact,
   listProgramFacts,
   listBindingsForFact,
@@ -493,9 +494,15 @@ router.post(
 
       res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
-      // A defensePacketId the program has no packet for is the request's fault.
+      // A defensePacketId the program has no packet for is the request's fault,
+      // at the status the error states (an unavailable store is not 422) — and
+      // so is a ctdProgramId not on record for this organization
+      // (CtdProgramNotFoundError; 2026-10-15: it read as a program with no studies).
       if (err instanceof ReviewerSimulationInputError) {
         return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      if (err instanceof Error && err.name === 'CtdProgramNotFoundError') {
+        return res.status(422).json({ error: err.message, code: (err as { code?: string }).code });
       }
       return serverError(res, logger, 'saving reviewer simulation', err);
     }
@@ -717,6 +724,15 @@ router.post(
       });
       res.json(result);
     } catch (err: any) {
+      // 2026-10-15: a claim whose fact the store refused (e.g. confidence 1.5)
+      // was a 500. The run reconciles claim by claim, so say where it stopped.
+      if (err instanceof FactInputRefusal) {
+        return res.status(422).json({
+          error: err.message,
+          field: err.field,
+          partial: 'The run stopped at this claim. Claims reconciled before it, and the program link, remain recorded.',
+        });
+      }
       return serverError(res, logger, 'reconciling programs', err);
     }
   }
@@ -748,6 +764,8 @@ router.post(
       });
       res.json(result);
     } catch (err: any) {
+      // 2026-10-15: the store's named refusal (nothing written) was a 500.
+      if (err instanceof FactInputRefusal) return res.status(422).json({ error: err.message, field: err.field });
       return serverError(res, logger, 'reconciling claims', err);
     }
   }
@@ -799,6 +817,7 @@ router.post('/claims/:claimId/reconcile', requireClaimAccess, async (req: Reques
     const result = await reconcileClaimById(claimId, { actor: actorId(req) });
     res.json(result);
   } catch (err: any) {
+    if (err instanceof FactInputRefusal) return res.status(422).json({ error: err.message, field: err.field });
     return serverError(res, logger, 'reconciling claims', err);
   }
 });

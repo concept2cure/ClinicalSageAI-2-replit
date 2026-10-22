@@ -21,7 +21,7 @@ import { normalizeRulePackProvenance, rulePackProvenanceSelectSql } from '../../
 interface Queryable { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> }
 type Spec = PackSectionLike & { key: string };
 
-export interface DocumentOutline {
+export interface GovernedDocumentOutline {
   document: {
     id: string; title: string; doc_type: string; agency: string; status: string; readiness: unknown;
     filing_scope: 'home' | 'market';
@@ -58,7 +58,7 @@ function withLive(spec: Spec, live: Map<string, any>) {
 }
 
 /** null when the document is not this organization's (or does not exist). */
-export async function readDocumentOutline(db: Queryable, orgId: number, documentId: string): Promise<DocumentOutline | null> {
+export async function readDocumentOutline(db: Queryable, orgId: number, documentId: string): Promise<GovernedDocumentOutline | null> {
   const docRes = await db.query(
     `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title, d.project_id,
             d.status, d.readiness, rp.required_sections,

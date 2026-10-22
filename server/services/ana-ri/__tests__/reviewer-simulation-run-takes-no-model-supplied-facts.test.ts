@@ -39,6 +39,17 @@ vi.mock('../../intelligence-engine/reviewer-simulator.service', () => ({
 }));
 vi.mock('../../../db', () => ({ pool }));
 vi.mock('../../auditService', () => ({ default: audit }));
+// The handler proves program ownership through the one program check
+// (server/services/c2c/program-access.ts) since 2026-10-15; these cases
+// exercise what happens after it answers yes.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: async () => true,
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: async () => true,
+}));
 
 import { MDX_COMMAND_METADATA_PHASE2, reviewerSimulationRun } from '../mdx-command-handlers-phase2';
 

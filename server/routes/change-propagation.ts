@@ -45,6 +45,7 @@ import {
   traceFactToSource,
 } from '../services/living-record/source-tracer';
 import type { ProposedFactValue } from '../services/living-record/fact-change';
+import { FactInputRefusal } from '../services/living-record/canonical-fact-store';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { programInOrganization } from '../services/c2c/program-access';
@@ -158,6 +159,8 @@ router.post(
       if (!result.ok) return sendFailure(res, result);
       res.status(201).json(result);
     } catch (err: any) {
+      // 2026-10-15: the store's named refusal (nothing written) was a 500.
+      if (err instanceof FactInputRefusal) return res.status(422).json({ error: err.message, field: err.field });
       return serverError(res, logger, 'saving facts', err);
     }
   }

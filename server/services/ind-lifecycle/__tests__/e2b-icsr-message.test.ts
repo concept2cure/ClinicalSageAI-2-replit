@@ -156,11 +156,13 @@ describe('buildIcsrTransmission', () => {
   });
 });
 
+// The acknowledged number is <icsrmessagenumb>; an R2 ACK's <messagenumb> is its
+// own header number, which these fixtures used for it until 2026-10-15.
 describe('parseIcsrAcknowledgment', () => {
   it('treats AA as accepted, requiring no further action', () => {
     const ack = `<?xml version="1.0"?>
       <ichicsrAck>
-        <messagenumb>MSG-2026-0001</messagenumb>
+        <icsrmessagenumb>MSG-2026-0001</icsrmessagenumb>
         <transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode>
       </ichicsrAck>`;
     const parsed = parseIcsrAcknowledgment(ack);
@@ -173,7 +175,7 @@ describe('parseIcsrAcknowledgment', () => {
 
   it('treats AE (accepted with error) as not accepted but requiring action', () => {
     const ack = `<ichicsrAck>
-        <messagenumb>MSG-2026-0002</messagenumb>
+        <icsrmessagenumb>MSG-2026-0002</icsrmessagenumb>
         <transmissionacknowledgmentcode>AE</transmissionacknowledgmentcode>
         <error>MedDRA version mismatch on E.i.2.1b</error>
       </ichicsrAck>`;
@@ -186,7 +188,7 @@ describe('parseIcsrAcknowledgment', () => {
 
   it('treats AR as rejected, requiring action, with the errors extracted', () => {
     const ack = `<ichicsrAck>
-        <messagenumb>MSG-2026-0003</messagenumb>
+        <icsrmessagenumb>MSG-2026-0003</icsrmessagenumb>
         <transmissionacknowledgmentcode>AR</transmissionacknowledgmentcode>
         <error>Missing mandatory element C.1.8.1</error>
         <error>Missing mandatory element G.k.2.2</error>
@@ -225,7 +227,7 @@ describe('parseIcsrAcknowledgment', () => {
     expect(tx.transmitReady).toBe(true);
 
     const ack = `<ichicsrAck>
-        <messagenumb>MSG-RT-1</messagenumb>
+        <icsrmessagenumb>MSG-RT-1</icsrmessagenumb>
         <transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode>
       </ichicsrAck>`;
     const parsed = parseIcsrAcknowledgment(ack);

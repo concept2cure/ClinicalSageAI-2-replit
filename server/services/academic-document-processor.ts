@@ -7,7 +7,8 @@ interface ProcessedDocument {
   title: string;
   type: string;
   source: string;
-  year: number;
+  /** null: the document's metadata states no year. */
+  year: number | null;
   summary: string;
   keyInsights: string[];
   tags: string[];
@@ -136,7 +137,9 @@ export class AcademicDocumentProcessor {
       const title = documentInfo.title || fileName;
       const type = documentInfo.type || 'Academic Paper';
       const source = documentInfo.source || 'Unknown';
-      const year = documentInfo.year || new Date().getFullYear();
+      // 2026-10-15: a document whose metadata stated no year was stamped with the
+      // current year, so an undated paper read as published this year.
+      const year: number | null = documentInfo.year || null;
 
       // Generate summary
       const summary = await this.huggingFaceService.generateSummary(text);
@@ -155,7 +158,7 @@ export class AcademicDocumentProcessor {
       const embedding = await this.huggingFaceService.generateEmbeddings(text);
 
       // Create document ID
-      const documentId = Buffer.from(`${title}-${source}-${year}`).toString('base64');
+      const documentId = Buffer.from(`${title}-${source}-${year ?? 'year not stated'}`).toString('base64');
 
       // Create document data
       const documentData = {

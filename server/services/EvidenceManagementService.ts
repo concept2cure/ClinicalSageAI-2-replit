@@ -424,11 +424,11 @@ export class EvidenceManagementService {
   /**
    * Get evidence for specific workflow stage.
    *
-   * `organizationId` is optional in the signature only because
-   * routes/authoring-actions.ts does not pass it yet; a read without it is
-   * refused. Until 2026-10-15 this read every organization's rows.
+   * `organizationId` is required (it was optional until 2026-10-15, when this
+   * read every organization's rows); an untyped caller without one is still
+   * refused at runtime.
    */
-  async getStageEvidence(projectId: string, stage: number, organizationId?: number) {
+  async getStageEvidence(projectId: string, stage: number, organizationId: number) {
     if (!Number.isInteger(organizationId)) {
       throw new Error('getStageEvidence requires the caller organization; an unscoped evidence read is refused');
     }

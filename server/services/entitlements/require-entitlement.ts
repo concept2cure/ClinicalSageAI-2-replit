@@ -20,18 +20,20 @@
  * Resolved per-request so the flip needs no reboot (same as the c2c modes).
  *
  * TIER RESOLUTION — honest about unknowns. The org's tier is read from
- * organizations.tier (the same source the capability resolver's layer 0 uses).
- * Deliberately NOT via resolveCapabilities alone: that resolver defaults a
- * failed/unknown tier lookup to 'standard', which silently converts "we don't
- * know" into "entitled". A gate must keep the unknown visible, so the lookup
- * here returns tier:null with the reason, and the mode decides: warn → allowed
- * (logged, headered), on → blocked with the reason. Never a fabricated tier.
+ * organizations.tier (the same source the capability resolver's layer 0 uses)
+ * by this file's own lookup, not resolveCapabilities: since 2026-10-15 the
+ * resolver reports an unread plan as tier null / tierResolved false and
+ * enables nothing by it (it used to default it to 'standard'), but it does not
+ * say WHY the tier is unknown — no row, an unrecognized value, a failed query —
+ * and a gate's log and refusal need that. The lookup returns tier:null with the
+ * reason, and the mode decides: warn → allowed (logged, headered), on → blocked
+ * with the reason. Never a fabricated tier.
  *
- * TOGGLE GRANTS still count. When the tier verdict alone would deny, the
+ * TOGGLE GRANTS still count. When the tier was read and alone would deny, the
  * composed resolver (resolver.ts) is consulted so a feature_toggles pilot grant
  * below tier keeps working — only a grant whose `source` is 'toggle' is
- * honored, so the resolver's own default-tier fallback can never smuggle an
- * allow through this path.
+ * honored, so the tier verdict is always this file's lookup, never the
+ * resolver's second read of the same column.
  *
  * Read paths stay open by design: this is applied only to the capability's
  * mutating/producing routes (build/official/assemble, device-profile write).
@@ -75,10 +77,10 @@ export interface OrgTierLookup {
 
 /**
  * Read the org's plan tier from organizations.tier — the same column the
- * capability resolver reads — but WITHOUT the resolver's default-to-standard:
- * a missing row, an unrecognized value, or a failed query returns tier:null
- * with the reason, so the caller can treat "unknown" as its own state instead
- * of a silently invented plan.
+ * capability resolver reads — keeping the reason it is unknown: a missing row,
+ * an unrecognized value, or a failed query returns tier:null with the reason,
+ * so the caller can treat "unknown" as its own state instead of a silently
+ * invented plan.
  */
 export async function lookupOrgTier(organizationId: number): Promise<OrgTierLookup> {
   try {
@@ -165,10 +167,11 @@ export async function evaluateOrgEntitlement(
     return { allowed: true, viaToggle: false, requiredTier, tier, reason: null, detail: null };
   }
 
-  // Tier alone denies (or is unknown with a KNOWN org): honor a pilot
-  // feature_toggles grant below tier via the composed resolver. Only a
-  // 'toggle'-sourced enable counts — the resolver defaults an unknown tier
-  // to 'standard', and that fabricated tier verdict must not open the gate.
+  // The tier was read and denies: honor a pilot feature_toggles grant below
+  // tier via the composed resolver. An unknown tier consults nothing here; it
+  // stays a denial with its reason. Only a 'toggle'-sourced enable counts —
+  // the tier verdict is lookupOrgTier's above, not the resolver's own read
+  // (which, until 2026-10-15, defaulted an unread plan to 'standard').
   if (requiredTier !== null && organizationId !== null && tier !== null) {
     try {
       const caps = await resolveCapabilities(organizationId);

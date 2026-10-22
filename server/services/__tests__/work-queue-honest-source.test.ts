@@ -22,9 +22,9 @@ import { addToWorkQueue, generateWorkRecommendations } from '../user-intelligenc
 
 const PAST = new Date(Date.now() - 5 * 86_400_000).toISOString();
 const SECTIONS = [
-  { section_code: '2.5', title: 'Clinical overview', status: 'drafting', deadline: PAST, assigned_to_id: 7, module: '2' },
-  { section_code: '3.2.P', title: 'Drug product', status: 'qc_review', deadline: null, assigned_to_id: 9, module: '3' },
-  { section_code: '5.3.5', title: 'Efficacy reports', status: 'not_started', deadline: null, assigned_to_id: null, module: '5' },
+  { section_code: '2.5', title: 'Clinical overview', status: 'drafting', deadline: PAST, assigned_to: 7, module: '2' },
+  { section_code: '3.2.P', title: 'Drug product', status: 'qc_review', deadline: null, assigned_to: 9, module: '3' },
+  { section_code: '5.3.5', title: 'Efficacy reports', status: 'not_started', deadline: null, assigned_to: null, module: '5' },
 ];
 
 /** The INSERT parameters of each queued item. */

@@ -52,7 +52,7 @@ export class EuCtisConnector implements DataConnector {
       sourceConnector: this.id,
       title: trial.title || trial.euTrialNumber || 'Unknown Trial',
       summary: `EU trial: ${trial.euTrialNumber} | Sponsor: ${trial.sponsor} | Phase: ${trial.phase} | Status: ${trial.status} | Conditions: ${trial.conditions.join(', ')}`,
-      relevanceScore: 1 - i * 0.04,
+      sourceRank: i + 1,
       metadata: { ...trial, source: EU_CTIS_SOURCE },
       url: trial.url,
     }));
