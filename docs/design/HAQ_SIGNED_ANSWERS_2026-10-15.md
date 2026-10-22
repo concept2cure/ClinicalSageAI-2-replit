@@ -1,5 +1,18 @@
 # Agency questions: signed answers (P-32 follow-up) — design record, 2026-10-15
 
+> **SUPERSEDED 2026-10-22 — do not build this design (CLAUDE.md Rule 3).** The outcome it designs, an agency answer approved by Part 11 signature bound to its text, landed on trunk on 2026-10-18 in `0308ee257d` (another session):
+> - `migrations/20261018b_agency_response_questions.sql`: questions on the project inbox letter; every response text append-only in `agency_question_response_revisions`;
+> - `server/routes/c2c/agency-responses.ts` and `client/src/concept2cure/v2/surfaces/AgencyResponses.tsx`: approval through `signGovernedAct`, read from `electronic_signatures` and never stored, so an edit ends it; the author of the current text cannot approve it; the package assembles only when every response is approved.
+>
+> `server/routes/haq-manager.ts` was deleted there. This design's partial build (red tests, a second store, its engines) was never pushed. It was discarded on 2026-10-22 so there is one implementation.
+>
+> Kept as the judged record only. These parts of it were not checked against the shipped implementation:
+> - a commitment acknowledged inside the approval signature;
+> - the US-IND / FDA-letter release boundary;
+> - the verbatim quote check of a question against the letter, and the split proposal from the letter's own numbering.
+>
+> If any is missing, it is a completion of `AgencyResponses` (`server/routes/c2c/agency-responses.ts`), never a build of this design.
+
 Decided by the CPO under the founder's delegation of 2026-10-07, from two independent designs judged against the code (workflow wf_d45d56cc-529: four subsystem maps, two designs, one judge). This file is the build spec; the decision itself is recorded under "### P-32" in docs/LAUNCH_DEFINITION_OF_DONE.md when the surface opens.
 
 ## Judgement
