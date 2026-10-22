@@ -36,3 +36,8 @@ a snapshot-level form of `packageSignIdentityRefusal` from
 `verifyAwaitingReleasePayload`, with a test that the signature row is never
 written. This is a product change on another lane's code, so it is handed on,
 not done here.
+
+## Whole proof tier after records 2 and 3
+
+`npm run test:proof-tier` at `841b93056`: **131 files, 1571 tests, all
+passed** (exit 0). Before these records: 6 files red. `typecheck:fast`: exit 0.
