@@ -52,6 +52,7 @@ function ddlOf(table: PgTable): string {
 /** The CREATE TABLE statement for `table` exactly as its migration writes it. */
 function migrationDdl(file: string, table: string): string {
   const sql = readFileSync(path.resolve(__dirname, '../../../db/migrations', file), 'utf8');
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- table is a literal table name at each call in this file
   const ddl = sql.match(new RegExp(`CREATE TABLE IF NOT EXISTS ${table} \\([\\s\\S]*?\\n\\);`));
   if (!ddl) throw new Error(`the CREATE TABLE for ${table} is not in ${file}`);
   return ddl[0];

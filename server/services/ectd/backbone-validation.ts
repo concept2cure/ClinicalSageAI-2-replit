@@ -109,6 +109,7 @@ async function referencedDtd(root: string, file: string, relPath: string): Promi
   if (!systemId) return invalid(`${relPath} has a DOCTYPE with no parseable SYSTEM identifier.`);
   const unsafe = externalIdError(systemId);
   if (unsafe) return invalid(`${relPath}: ${unsafe}`);
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- confined: externalIdError refused URI/absolute/entity ids above, and packagedFile refuses anything outside root or behind a symlink
   const resolved = await packagedFile(root, path.resolve(path.dirname(file), systemId));
   if (resolved.missing) return { valid: true, errors: [], file: null, missingName: path.basename(systemId) };
   if (!resolved.file) return invalid(`${relPath}: ${resolved.error}`);
@@ -127,7 +128,9 @@ function relativeLint(result: XmlLintResult, root: string): XmlLintResult {
 
 /** Validate one XML file against the actual declared, confined package DTD. */
 export async function validateBackboneFile(packageDir: string, relPath: string): Promise<BackboneValidation> {
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- packageDir is the server's own temp package directory, not request input
   const root = await fs.realpath(packageDir).catch(() => path.resolve(packageDir));
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- confined: absolute relPath refused here, and packagedFile refuses anything outside root or behind a symlink
   const resolved = path.isAbsolute(relPath) ? { file: null, error: 'Absolute XML path is not package-relative.' } : await packagedFile(root, path.resolve(root, relPath));
   const referenced = resolved.file ? await referencedDtd(root, resolved.file, relPath) :
     { valid: false, errors: [`${relPath} could not be read: ${resolved.error}`], file: null, missingName: null };

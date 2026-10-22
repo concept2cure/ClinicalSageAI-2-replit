@@ -32,6 +32,7 @@ async function click1() {
   await settle(page, 3000);
   await shot(page, 'c1-project-home');
   const t = await mainText(page, 20000);
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- label is one of four uppercase literals at the call site below
   const grab = (label) => { const m = t.match(new RegExp(`${label}\\n([^\\n]+)`)); return m ? m[1] : '(absent)'; };
   say(`   identity: Sponsor=${grab('SPONSOR')} | Product=${grab('PRODUCT')} | Indication=${grab('INDICATION')} | IND number=${grab('IND NUMBER')}`);
 }
