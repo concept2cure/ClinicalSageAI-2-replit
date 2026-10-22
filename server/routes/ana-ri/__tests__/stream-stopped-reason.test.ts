@@ -165,19 +165,27 @@ describe('stream.ts carries the loop outcome — carriage', () => {
   });
 
   it('hands both to post-processing', () => {
-    const call = src.slice(src.indexOf('void runStreamPostProcessing({'));
+    // Handed to the route's afterTurn since AnA detach DT3, which holds a
+    // graceful shutdown's drain (shutdown-hold.ts) and the request's DB client
+    // (db/requestDbLease.ts) until post-processing has ended.
+    const call = src.slice(src.indexOf('afterTurn(runStreamPostProcessing({'));
     const body = call.slice(0, call.indexOf('});'));
     expect(body).toMatch(/stoppedReason: loopStoppedReason,/);
     expect(body).toMatch(/rounds: loopRounds,/);
   });
 
   it('a Stop that aborts the model call saves the stopped answer before the record is filed', () => {
-    const at = src.indexOf('const stopped = Boolean(runHandle?.cancelSignal.aborted);');
+    // `let` since the DT3 review: a row another writer stopped before its
+    // abort arrived also makes the turn a stop (settleRunRow, below).
+    const at = src.indexOf('let stopped = Boolean(runHandle?.cancelSignal.aborted);');
     expect(at, 'the error path no longer tells a stop from a failure').toBeGreaterThan(-1);
     const path = src.slice(at, src.indexOf("await fileTurnRecord(stopped ? 'stopped' : 'failed')", at));
     expect(path).toMatch(/if \(stopped && stoppedTurnThreadId\) \{/);
-    // With the turn's own reason: a page that lost its connection is not a person's Stop (S4).
-    expect(path).toMatch(/await persistStoppedAnswer\(stoppedTurnThreadId, turnRecorder\?\.streamedText \?\? '', turnPolicyOf\?\.stoppedReason\('cancelled'\)\)/);
+    // With the turn's own reason: a page that lost its connection is not a
+    // person's Stop (S4), and the run row's reason wins when the row's stop
+    // aborted it (AnA detach DT3, §2.4).
+    expect(path).toMatch(/turnPolicyOf\.stoppedReason\('cancelled', rowReason\)/);
+    expect(path).toMatch(/await persistStoppedAnswer\(stoppedTurnThreadId, turnRecorder\?\.streamedText \?\? '', stoppedWhy\)/);
     // The thread it saves into is the one the turn resolved and saved its question in.
     expect(src).toMatch(/turnRecorder\?\.setMessageIds\(\{ user: userMessageId \}\);\s*\n\s*stoppedTurnThreadId = threadId;/);
   });

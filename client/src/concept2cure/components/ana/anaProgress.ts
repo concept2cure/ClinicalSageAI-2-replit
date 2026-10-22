@@ -340,6 +340,14 @@ const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'hold_unavailable',
   'answer_cut_off',
   'client_disconnected',
+  // The run row's own stops (AnA detach DT3, §2.10): they reach a page that
+  // is still attached, and a stored answer carries them.
+  'unattended_limit',
+  'session_ended',
+  'server_shutdown',
+  'orphaned',
+  'error',
+  'admin_cancelled',
 ]);
 
 /** Labels that are non-empty strings (shared/ana/run-policy.ts), or undefined when there are none. */

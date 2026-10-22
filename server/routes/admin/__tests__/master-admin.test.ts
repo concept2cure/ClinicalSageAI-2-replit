@@ -56,6 +56,10 @@ vi.mock('../../../auth', () => ({
   },
 }));
 
+// AnA run control (detach DT3, §2.9): the live runs a suspension stops.
+const stopRunsForMock = vi.hoisted(() => vi.fn(async () => [] as string[]));
+vi.mock('../../../services/ana/run-control.js', () => ({ stopRunsFor: stopRunsForMock }));
+
 // Imported after mocks (vi.mock is hoisted).
 import router from '../master-admin';
 
@@ -227,5 +231,62 @@ describe('governed mutations', () => {
       .send({ enabled: true, reason: 'GA rollout' });
     expect(res.status).toBe(200);
     expect(logActionMock).toHaveBeenCalledOnce();
+  });
+});
+
+describe("a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9)", () => {
+  it("an organisation suspended: its runs stop", async () => {
+    stopRunsForMock.mockClear();
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ status: 'active' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Acme', status: 'suspended' }] });
+    const res = await request(makeApp())
+      .patch('/api/admin/master/tenants/1/status')
+      .set('x-test-user', ADMIN)
+      .send({ status: 'suspended', reason: 'abuse investigation' });
+    expect(res.status).toBe(200);
+    expect(stopRunsForMock).toHaveBeenCalledWith(expect.anything(), { organizationId: 1 }, { cause: 'org_suspended', byUserId: 1 });
+  });
+
+  it("an organisation reactivated: nothing stops", async () => {
+    stopRunsForMock.mockClear();
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ status: 'suspended' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Acme', status: 'active' }] });
+    await request(makeApp())
+      .patch('/api/admin/master/tenants/1/status')
+      .set('x-test-user', ADMIN)
+      .send({ status: 'active', reason: 'investigation closed' });
+    expect(stopRunsForMock).not.toHaveBeenCalled();
+  });
+
+  it("a person suspended: their runs stop, on every device", async () => {
+    stopRunsForMock.mockClear();
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ status: 'active' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 2, email: 'user@x.io', status: 'suspended' }] });
+    const res = await request(makeApp())
+      .patch('/api/admin/master/users/2/status')
+      .set('x-test-user', ADMIN)
+      .send({ status: 'suspended', reason: 'support request' });
+    expect(res.status).toBe(200);
+    expect(stopRunsForMock).toHaveBeenCalledWith(expect.anything(), { userId: 2 }, { cause: 'account_deactivated', byUserId: 1 });
+  });
+
+  it("the decision's audit row says how many live runs it stopped (DT3 review, the session-end cause)", async () => {
+    stopRunsForMock.mockClear();
+    logActionMock.mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
+    stopRunsForMock.mockResolvedValueOnce(['run_a', 'run_b']);
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ status: 'active' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Acme', status: 'suspended' }] });
+    const res = await request(makeApp())
+      .patch('/api/admin/master/tenants/1/status')
+      .set('x-test-user', ADMIN)
+      .send({ status: 'suspended', reason: 'abuse investigation' });
+    expect(res.status).toBe(200);
+    expect(logActionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ details: expect.objectContaining({ masterAdminAction: 'tenant.status_change', anaRunsStopped: 2 }) }),
+    );
   });
 });

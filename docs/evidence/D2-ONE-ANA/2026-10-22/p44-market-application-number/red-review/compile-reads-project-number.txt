@@ -1,0 +1,13 @@
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence 2076ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named" 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles 8ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the status read names the sequence asked for, with its recorded region 2ms
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with no number recorded for the EU market, nothing is assembled, and the refusal names the market 11ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with the EU market's number recorded, the MAA compiles under it, never the project's 13ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > the project's own NDA sequence still compiles under the project's number 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)

@@ -1,0 +1,9 @@
+# m-no-wait-for-the-thread: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-disconnect.test.ts  -t could not be stamped
+ × server/routes/ana-ri/__tests__/stream-disconnect.test.ts > a page that closed before a new conversation had its thread > whose run could not be stamped with the minted thread: stops as client_disconnected, never runs on unseen 41ms
+   → expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-disconnect.test.ts > a page that closed before a new conversation had its thread > whose run could not be stamped with the minted thread: stops as client_disconnected, never runs on unseen
+AssertionError: expected false to be true // Object.is equality

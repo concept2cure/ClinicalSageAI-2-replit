@@ -102,6 +102,7 @@ import {
   type RunPoll,
 } from './anaTurnTimeline';
 import { MIRROR_TRUNCATED_SEQ } from '@shared/ana/turn-timeline';
+import { FOLLOW_LINES } from '../../v2/anaWorkModel';
 
 import type {
   AnaChatAction,
@@ -577,13 +578,23 @@ function framePresentation(event: Record<string, unknown>): Partial<AnaToolCall>
  * sent people to check a connection that was fine.
  */
 function streamFailure(event: { error?: unknown; code?: unknown; status?: unknown; runId?: unknown }) {
-  const failure = new Error(serverMessage(event) ?? 'Stream error') as Error & { code?: string; status?: number; runId?: string };
+  const failure = new Error(serverMessage(event) ?? 'Stream error') as Error & {
+    code?: string;
+    status?: number;
+    runId?: string;
+    serverSent?: boolean;
+  };
+  // Said by the server, so never a lost socket, with or without a code (DT3 review).
+  failure.serverSent = true;
   failure.code = errorCodeOf(event);
   if (typeof event.status === 'number') failure.status = event.status;
   // RUN_IN_PROGRESS names the live run that holds the conversation (§2.8).
   if (typeof (event as { runId?: unknown }).runId === 'string') failure.runId = (event as { runId: string }).runId;
   return failure;
 }
+
+/** A step this page's stream drew as running when the turn went on without it: its outcome is the timeline's (DT3 review). */
+const FOLLOWED_STEP_NOTE = 'This page lost its connection while the step ran; how it ended is in the turn’s timeline.';
 
 /**
  * What the person reads when the server refuses to start a run (AnA detach
@@ -794,8 +805,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
    * did not complete (a network failure or the control timeout). Stop needs
    * the status: a 409 says the run is already stopped (§2.5, §5.2).
    */
-  const postControl = useCallback(
-    async (runId: string, action: RunControlAction, message?: string, moveId?: string): Promise<number | null> => {
+  const postControlAnswer = useCallback(
+    async (
+      runId: string,
+      action: RunControlAction,
+      extra: { message?: string; moveId?: string; reason?: string } = {},
+    ): Promise<{ status: number; message: string | null } | null> => {
       const controlAbort = new AbortController();
       const timeout = setTimeout(() => controlAbort.abort(), CONTROL_REQUEST_TIMEOUT_MS);
       try {
@@ -808,13 +823,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             signal: controlAbort.signal,
             body: JSON.stringify({
               action,
-              ...(message !== undefined ? { message } : {}),
-              ...(moveId !== undefined ? { moveId } : {}),
+              ...(extra.message !== undefined ? { message: extra.message } : {}),
+              ...(extra.moveId !== undefined ? { moveId: extra.moveId } : {}),
+              ...(extra.reason !== undefined ? { reason: extra.reason } : {}),
             }),
           },
         );
         // `ok` is the answer; the status says which one (a 409 is "already stopped").
-        return typeof res.status === 'number' && res.status > 0 ? res.status : res.ok ? 200 : 500;
+        const status = typeof res.status === 'number' && res.status > 0 ? res.status : res.ok ? 200 : 500;
+        const body = res.ok ? null : await res.json().catch(() => null);
+        return { status, message: body ? serverMessage(body) : null };
       } catch {
         return null;
       } finally {
@@ -822,6 +840,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       }
     },
     [],
+  );
+  const postControl = useCallback(
+    async (runId: string, action: RunControlAction, message?: string, moveId?: string): Promise<number | null> =>
+      (await postControlAnswer(runId, action, { message, moveId }))?.status ?? null,
+    [postControlAnswer],
   );
 
   const controlRun = useCallback(
@@ -912,14 +935,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const followerRef = useRef<Follower | null>(null);
   const followTickRef = useRef<(f: Follower) => Promise<void>>(async () => undefined);
   const [followScope, setFollowScope] = useState<'all' | 'cancel' | null>(null);
+  const [followAskerName, setFollowAskerName] = useState<string | null>(null);
   /** The turn in flight in this view, by message id: the stream's, or the one followed. */
   const liveTurnIdRef = useRef<string | null>(null);
-  /** The in-flight stream asked to drive the screen: such a turn is not detachable (§2.1, D-7). */
-  const turnDriveRequestedRef = useRef(false);
   /** The stream's run and message while the stream is open: a page coming back on screen merges one poll into it (§5.4). */
   const sseTurnRef = useRef<{ runId: string; messageId: string } | null>(null);
   /** The stream a 'leave' aborted: its turn is not shown Stopped (§5.2). */
   const leftRef = useRef<AbortController | null>(null);
+  /** The stream a hand-over aborted: its turn is the record's now, and is left as it is (§4.3). */
+  const handedOverRef = useRef<AbortController | null>(null);
   /** Record asks in flight, ended with the view. */
   const recordAsksRef = useRef(new Set<AbortController>());
 
@@ -927,6 +951,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     const f = followerRef.current;
     followerRef.current = null;
     setFollowScope(null);
+    setFollowAskerName(null);
     if (!f) return;
     if (f.timer) clearTimeout(f.timer);
     f.ctl.abort();
@@ -935,6 +960,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   /** The followed run is over here: nothing left to control, and the composer is free. */
   const releaseFollowedRun = (f: Follower) => {
     setFollowScope(null);
+    setFollowAskerName(null);
     if (liveTurnIdRef.current === f.messageId) liveTurnIdRef.current = null;
     if (runIdRef.current !== f.runId) return;
     runIdRef.current = null;
@@ -997,6 +1023,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     setRunHold(poll.status === 'paused' && poll.hold ? readRunHold(poll.hold) : null);
     if (poll.runPolicy) setTurnRunPolicy(poll.runPolicy);
     setFollowScope(poll.scope);
+    setFollowAskerName(poll.askerName);
   };
 
   /**
@@ -1014,7 +1041,19 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     }
     f.terminalAt ??= clientNow;
     const done = poll.releasedAt !== null || clientNow - f.terminalAt >= RECORD_WAIT_MS;
-    setMessages((prev) => prev.map((m) => (m.id === f.messageId ? { ...m, streaming: false, recordConfirming: !done } : m)));
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === f.messageId
+          ? {
+              ...m,
+              streaming: false,
+              recordConfirming: !done,
+              // The run ended: no row it drew is still running (DT3 review).
+              toolCalls: settleRunningCalls(m.toolCalls, FOLLOWED_STEP_NOTE, clientNow, 'unconfirmed'),
+            }
+          : m,
+      ),
+    );
     if (done) stopFollowing();
     else scheduleFollow(f, FOLLOW_POLL_MS);
   };
@@ -1025,6 +1064,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
    * record's own — the same events, so they read the same (§4.3).
    */
   const handOver = async (f: Follower, sealed: NonNullable<RunPoll['sealed']>) => {
+    // A stream still open on this run is not the turn any more: the record is
+    // (§4.3). It is left, never shown Stopped, and its late frames reach nothing.
+    if (sseTurnRef.current?.runId === f.runId && abortRef.current) {
+      handedOverRef.current = abortRef.current;
+      leftRef.current = abortRef.current;
+      abortRef.current.abort();
+    }
     const threadId = threadIdRef.current;
     const [record, history] = await Promise.all([
       readSealedRecord(sealed.recordId),
@@ -1037,10 +1083,22 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         : history?.find((h) => h.role === 'assistant' && h.serverId === sealed.assistantMessageId);
     // A record that could not be read is not shown as filed, nor as absent.
     const turnRecord = record ?? { status: 'unconfirmed' as const };
+    // The record names an answer this page could not read: said, never shown
+    // as an empty answer beside "Recorded" (DT3 review).
+    const answerUnreadable = sealed.assistantMessageId !== null && !answer;
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== f.messageId) return m;
-        if (!answer) return { ...m, streaming: false, recordConfirming: false, turnRecord };
+        if (!answer) {
+          return {
+            ...m,
+            streaming: false,
+            recordConfirming: false,
+            turnRecord,
+            toolCalls: settleRunningCalls(m.toolCalls, FOLLOWED_STEP_NOTE, Date.now(), 'unconfirmed'),
+            ...(answerUnreadable ? { follow: { ...(m.follow ?? followedTurn(f.runId).follow!), answerUnreadable: true } } : {}),
+          };
+        }
         return { ...answer, id: m.id, timeline: m.timeline, turnRecord };
       }),
     );
@@ -1060,6 +1118,21 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     if (followerRef.current !== f) return;
     const clientNow = Date.now();
     if (!r.ok) {
+      if (r.kind === 'signed_out') {
+        // The sign-in ended: no retry can read anything, so the page says so
+        // and stops polling, rather than "Retrying" for ever (DT3 review).
+        const signedOut = r.message ?? FOLLOW_LINES.signedOut;
+        stopFollowing();
+        releaseFollowedRun(f);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === f.messageId
+              ? { ...m, streaming: false, recordConfirming: false, follow: { ...(m.follow ?? followedTurn(f.runId).follow!), signedOut, unreachable: false } }
+              : m,
+          ),
+        );
+        return;
+      }
       if (r.kind === 'unreachable') {
         // This reader's network: say so, keep the last known state, back off.
         setMessages((prev) => prev.map((m) => (m.id === f.messageId && m.follow ? { ...m, follow: { ...m.follow, unreachable: true } } : m)));
@@ -1095,14 +1168,34 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
    * ended is in its recording window: "Recording…" until it hands over.
    */
   const followRun = useCallback(
-    (runId: string, opts: { status?: string; runPolicy?: AnaRunPolicy | null; userMessageId?: number | null } = {}) => {
+    (
+      runId: string,
+      opts: {
+        status?: string;
+        runPolicy?: AnaRunPolicy | null;
+        userMessageId?: number | null;
+        /**
+         * The turn already on screen that this view started, whose socket was
+         * lost (AnA detach DT3, §4.2): it is followed in place, from the last
+         * row it holds, rather than drawn a second time.
+         */
+        messageId?: string;
+        after?: number;
+      } = {},
+    ) => {
       stopFollowing();
       const base = followedTurn(runId);
       const live = !opts.status || LIVE_RUN_STATUSES.has(opts.status);
-      const turn: AnaChatMessage = live
-        ? base
-        : { ...base, streaming: false, recordConfirming: true, follow: { ...base.follow!, status: opts.status! } };
-      setMessages((prev) => placeFollowedTurn(prev, turn, opts.userMessageId ?? null));
+      const turn: AnaChatMessage = opts.messageId
+        ? { ...base, id: opts.messageId }
+        : live
+          ? base
+          : { ...base, streaming: false, recordConfirming: true, follow: { ...base.follow!, status: opts.status! } };
+      if (opts.messageId) {
+        setMessages((prev) => prev.map((m) => (m.id === opts.messageId ? { ...m, streaming: true, follow: m.follow ?? base.follow } : m)));
+      } else {
+        setMessages((prev) => placeFollowedTurn(prev, turn, opts.userMessageId ?? null));
+      }
       if (live && runIdRef.current === null) {
         runIdRef.current = runId;
         liveTurnIdRef.current = turn.id;
@@ -1117,13 +1210,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const f: Follower = {
         runId,
         messageId: turn.id,
-        after: 0,
+        after: Math.max(0, opts.after ?? 0),
         ctl: new AbortController(),
         timer: null,
         backoffMs: 0,
         terminalAt: null,
         controlsSeen: 0,
-        placed: opts.userMessageId !== undefined && opts.userMessageId !== null,
+        placed: Boolean(opts.messageId) || (opts.userMessageId !== undefined && opts.userMessageId !== null),
         inFlight: false,
       };
       followerRef.current = f;
@@ -1131,6 +1224,26 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     },
     [stopFollowing],
   );
+
+  /* The conversation's runs, read once it has loaded: a turn still working on
+     it — on another device, or the one this page showed before it reloaded —
+     or in its recording window, is rejoined after its question (§4.2). A read
+     that fails, or answers something that is not a listing, is said
+     (`liveRunsUnchecked`), never shown as "nothing running" (DT3 review). */
+  const [liveRunsUnchecked, setLiveRunsUnchecked] = useState(false);
+  const checkLiveRunsRef = useRef<(threadId: string, signal?: AbortSignal) => Promise<void>>(async () => undefined);
+  checkLiveRunsRef.current = async (threadId: string, signal?: AbortSignal) => {
+    const runs = await listThreadRuns(threadId, signal);
+    if (threadIdRef.current !== threadId) return;
+    setLiveRunsUnchecked(runs === null);
+    if (!runs || followerRef.current || isStreamingRef.current) return;
+    const run = runToRejoin(messagesRef.current, runs);
+    if (run) followRun(run.runId, { status: run.status, runPolicy: run.runPolicy, userMessageId: run.userMessageId });
+  };
+  const recheckLiveRuns = useCallback(() => {
+    const threadId = threadIdRef.current;
+    if (threadId) void checkLiveRunsRef.current(threadId);
+  }, []);
 
   /**
    * A send refused because a run already holds the conversation
@@ -1282,9 +1395,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       }
       return;
     }
-    // A turn with a durable run that did not ask to drive is detachable (§2.1).
-    // A followed turn has no stream of its own and is always one.
-    const detachable = stoppedRunId !== null && (stoppedController === null || !turnDriveRequestedRef.current);
+    // A turn with a durable run is detachable (§2.1), one that asked to drive
+    // included (D-7, decided 2026-10-22). A followed turn has no stream of its
+    // own and is always one.
+    const detachable = stoppedRunId !== null;
     if (!detachable) {
       if (stoppedRunId) {
         try {
@@ -1328,6 +1442,33 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   }, [controlRun, haltTurnDrive, stopFollowing, cancelOnce, markStopUnconfirmed]);
   const stopRef = useRef(stop);
   stopRef.current = stop;
+
+  /**
+   * An organisation administrator's Stop of a colleague's turn (DT3 review,
+   * DP-82). One request, with the reason they gave, and never a retry behind
+   * their back: the server writes the stop and its chained audit row in one
+   * transaction or changes nothing, and says which. Stopped is shown only on
+   * its 2xx (or a 409: the turn had already ended).
+   */
+  const adminStop = useCallback(
+    async (reason: string): Promise<{ ok: true } | { ok: false; message: string }> => {
+      const runId = runIdRef.current;
+      if (!runId) return { ok: false, message: 'This turn has already ended.' };
+      const answer = await postControlAnswer(runId, 'cancel', { reason });
+      if (answer && ((answer.status >= 200 && answer.status < 300) || answer.status === 409)) {
+        if (runIdRef.current === runId) {
+          setRunStatus('cancelled');
+          setRunHold(null);
+        }
+        return { ok: true };
+      }
+      return {
+        ok: false,
+        message: answer?.message ?? 'Your stop could not be confirmed: the server did not answer. If the turn is still working, try again.',
+      };
+    },
+    [postControlAnswer],
+  );
 
   // Abort any in-flight stream when the hosting panel unmounts — otherwise the
   // fetch keeps the connection (and the server-side generation) alive until
@@ -1403,6 +1544,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     threadLoadRef.current = loading;
     threadLoadErrorRef.current = null;
     setThreadLoadError(null);
+    setLiveRunsUnchecked(false);
     // The selected conversation has not loaded yet. Keeping the last one's
     // transcript/id here let a failed switch silently send into that thread.
     threadIdRef.current = null;
@@ -1437,11 +1579,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // A turn still working on this conversation — on another device, or
       // the one this page was showing before it reloaded — or in its
       // recording window, is rejoined after its question (§4.2).
-      void listThreadRuns(threadId, loading.signal).then((runs) => {
-        if (threadIdRef.current !== threadId || !runs || followerRef.current || isStreamingRef.current) return;
-        const run = runToRejoin(messagesRef.current, runs);
-        if (run) followRun(run.runId, { status: run.status, runPolicy: run.runPolicy, userMessageId: run.userMessageId });
-      });
+      void checkLiveRunsRef.current(threadId, loading.signal);
     } catch (err: any) {
       // Aborting alone cannot cancel an already-resolved response/body. Only
       // the current selection may replace history, fail, or finish loading.
@@ -1546,9 +1684,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const sentPolicy = sendOpts?.runPolicy ?? options.runPolicy;
       setTurnRunPolicy(isAnaRunPolicy(sentPolicy) ? sentPolicy : null);
       liveTurnIdRef.current = assistantId;
-      // Read at request parse, as the server reads it (§2.1): a turn that asked
-      // to drive is not detachable, whether or not it ever moved.
-      turnDriveRequestedRef.current = (sendOpts?.liveDrive ?? options.liveDrive) === true;
 
       const abortCtl = new AbortController();
       abortRef.current = abortCtl;
@@ -1763,6 +1898,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
          conversation (RUN_IN_PROGRESS): that run is followed once this turn's
          own cleanup below has run, so the cleanup cannot clear it. */
       let rejoinAfter: { runId: string; keep: string[] } | null = null;
+      /* Set when this turn's socket was lost but its run goes on in the
+         server (AnA detach DT3, §4.2, §5.4): the turn is followed in place
+         once this turn's own cleanup below has run. */
+      let followAfter: { runId: string; after: number } | null = null;
 
       try {
         // Include the wait for response headers: starting this only after
@@ -2111,9 +2250,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 // only: a promotion arriving after Stop must not re-arm it.
                 if (event.enabled === true && !turnDriveEnabled) {
                   turnDriveEnabled = true;
-                  // The server enabled a drive: whatever the request said, this
-                  // turn's work is a screen, and it is not detachable (D-7).
-                  if (abortRef.current === abortCtl) turnDriveRequestedRef.current = true;
                   if (abortRef.current === abortCtl) haltDriveRef.current = haltThisTurn;
                 }
               } else {
@@ -2455,9 +2591,41 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // record of an interrupted turn is looked up by it.
         const interruptedRunId = turnRunId;
         const left = err?.name === 'AbortError' && leftRef.current === abortCtl;
-        // Asked whether or not this view left the turn: its record is its own run's.
-        if (interruptedRunId && !serverStatedRecord) confirmTurnRecordByRun(interruptedRunId, assistantId);
-        if (left) {
+        const handedOver = handedOverRef.current === abortCtl;
+        /* The socket was lost — the idle timer fired (a phone that slept), the
+           connection dropped, or the stream ended before the turn did — on a
+           turn whose run goes on without it: a durable run (§2.1), one that
+           asked to drive included (D-7, decided 2026-10-22: the server stops
+           driving the screen and refuses any further screen action, and this
+           page's drive is released below, drive_turn_end). It is not
+           interrupted and nothing says AnA stopped responding: this view
+           follows the run from its last row instead (§4.2, §5.4). A refusal
+           the server sent is not a lost socket. */
+        const serverRefused = err?.serverSent === true || typeof err?.code === 'string' || typeof err?.status === 'number';
+        const socketLost = err?.name === 'AbortError' ? didTimeout : !serverRefused;
+        const detachedTurn =
+          interruptedRunId !== null && !left && !handedOver && socketLost && abortRef.current === abortCtl;
+        if (detachedTurn) {
+          const turnNow = messagesRef.current.find(m => m.id === assistantId);
+          followAfter = { runId: interruptedRunId, after: Math.max(0, ...(turnNow?.timeline ?? []).map(e => e.seq)) };
+          // The steps this stream drew as running go on in the server: the
+          // run's timeline, which the follower reads, says how each ends. A
+          // row left "running" here would stay so for ever once the run ended
+          // without a record (DT3 review).
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantId
+                ? { ...m, toolCalls: settleRunningCalls(m.toolCalls, FOLLOWED_STEP_NOTE, Date.now(), 'unconfirmed') }
+                : m,
+            ),
+          );
+        } else if (interruptedRunId && !serverStatedRecord) {
+          // Asked whether or not this view left the turn: its record is its own run's.
+          confirmTurnRecordByRun(interruptedRunId, assistantId);
+        }
+        if (detachedTurn || handedOver) {
+          // Followed from here, or already the record's: nothing to settle.
+        } else if (left) {
           // This view left the turn (§5.2): it is not the person's Stop, and
           // is never shown as one.
           setMessages(prev =>
@@ -2591,9 +2759,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         }
         if (leftRef.current === abortCtl) leftRef.current = null;
       }
+      if (handedOverRef.current === abortCtl) handedOverRef.current = null;
       // §2.8: "AnA is still working on the last message in this conversation."
       // The asker's client rejoins that run rather than leaving an error.
       if (rejoinAfter) void rejoinRun(rejoinAfter.runId, rejoinAfter.keep);
+      // The socket is gone and the run is not: follow it, in place (§4.2).
+      if (followAfter) followRun(followAfter.runId, { messageId: assistantId, after: followAfter.after });
     },
     [
       isStreaming,
@@ -2615,6 +2786,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       steerRun,
       confirmTurnRecordByRun,
       rejoinRun,
+      followRun,
     ]
   );
 
@@ -2631,6 +2803,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     interject,
     pendingSteers,
     followScope,
+    followAskerName,
+    adminStop,
+    liveRunsUnchecked,
+    recheckLiveRuns,
     reset,
     loadThread,
     threadId: threadIdRef.current,

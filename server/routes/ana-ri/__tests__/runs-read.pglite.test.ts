@@ -22,6 +22,14 @@ import { fileURLToPath } from 'node:url';
 import { vi } from 'vitest';
 
 vi.mock('../../../db.js', () => ({ getPool: () => null, pool: null }));
+// Names as public.actor_name answers them (services/tenant/actor-names.ts).
+const names = vi.hoisted(() => ({ calls: [] as number[][] }));
+vi.mock('../../../services/ana/control-actor-names.js', () => ({
+  readControlActorNames: async (ids: number[]) => {
+    names.calls.push(ids);
+    return new Map(ids.map(id => [id, 'Sam Rivera'] as const));
+  },
+}));
 
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { TurnRecorder, writeTurnRecord } from '../../../services/ana/turn-record';
@@ -187,6 +195,21 @@ describe('9. who may read a live run (D-1(b))', () => {
     expect(res.body).toMatchObject({ canControl: true, controlScope: 'cancel' });
   });
 
+  /* DT3 review (DP-82): an administrator's Stop names whose turn it is, so the
+     run read tells the administrator — and nobody else needs it: the asker's
+     own read carries null, and no name is read for them. */
+  it("an admin's read names whose turn it is; the asker's does not", async () => {
+    const runId = await insertRun();
+    names.calls = [];
+    const admin = await get('admin', `/api/ana-ri/runs/${runId}/events`);
+    expect(admin.body.askerName).toBe('Sam Rivera');
+    expect(names.calls).toEqual([[ASKER]]);
+    names.calls = [];
+    const asker = await get('asker', `/api/ana-ri/runs/${runId}/events`);
+    expect(asker.body.askerName).toBeNull();
+    expect(names.calls).toEqual([]);
+  });
+
   it('the asker sees their own pending approval, as the approval_required frame carries it', async () => {
     const runId = await insertRun({ status: 'awaiting_approval' });
     await db.query(`UPDATE ana_runs SET pending_approval = $2::jsonb WHERE id = $1`, [
@@ -222,7 +245,33 @@ describe('9. who may read a live run (D-1(b))', () => {
     expect((await get('asker', `/api/ana-ri/runs/${runId}/events`)).status).toBe(403);
     expect((await get('admin', `/api/ana-ri/runs/${runId}/events`)).status).toBe(200);
   });
+});
 
+/* DT3 review (finding 4.1): after DT3 a detached turn has no page, so the
+   follower is where its person signs. Its dialog must show what the
+   attached page's approval_required frame shows — the proposal check
+   included, which the sign-off audit row records as shown — and say the
+   same words. */
+describe('the follower carries what the attached approval frame carries (DT3 review)', () => {
+  const CHECK = { verdict: 'unsupported', claims: [{ text: 'Shelf life is 36 months', supported: false }] };
+  const held = (check?: unknown) =>
+    JSON.stringify({
+      toolUseId: S.pendingTool, command: 'save_document_to_vault', params: { title: 'Plan', content: 'Shelf life is 36 months.' },
+      tier: 'reason', requestedAt: new Date().toISOString(), ...(check === undefined ? {} : { check }),
+    });
+  it.each([
+    ['present', CHECK, CHECK],
+    ['absent', undefined, undefined],
+    ['malformed (not an object)', 'unsupported', undefined],
+  ])('a proposal check %s', async (_name, stored, carried) => {
+    const runId = await insertRun({ status: 'awaiting_approval' });
+    await db.query(`UPDATE ana_runs SET pending_approval = $2::jsonb WHERE id = $1`, [runId, held(stored)]);
+    const res = await get('asker', `/api/ana-ri/runs/${runId}/events`);
+    expect(res.body.approval.check).toEqual(carried);
+    expect('check' in res.body.approval).toBe(carried !== undefined);
+    // The frame's own words, with what AnA is waiting for.
+    expect(res.body.approval.message).toMatch(/AnA is waiting on this before she goes on\.$/);
+  });
 });
 
 describe('9. the listings apply the same rule', () => {
@@ -338,5 +387,67 @@ describe('10. nothing excluded leaks', () => {
       expect(bodies.mine).not.toContain(s);
     }
     expect(bodies.asker).toContain(S.pendingTool);
+  });
+});
+
+/* ── AnA detach DT3 (§2.2, §2.6, §3.7): watching, and when an unwatched turn stops ── */
+describe('the watched stamp and the armed limit (DT3)', () => {
+  const lastWatched = async (id: string) =>
+    (await db.query<{ last_watched_at: unknown }>(`SELECT last_watched_at FROM ana_runs WHERE id = $1`, [id])).rows[0]?.last_watched_at;
+
+  it("the asker's visible poll stamps last_watched_at; a hidden one, and an admin's, never do", async () => {
+    const id = await insertRun();
+    await get('asker', `/api/ana-ri/runs/${id}/events`).expect(200);
+    expect(await lastWatched(id), 'a hidden page is not watching').toBeNull();
+    await get('admin', `/api/ana-ri/runs/${id}/events?visible=1`).expect(200);
+    expect(await lastWatched(id), "watching is the asker's").toBeNull();
+    await get('asker', `/api/ana-ri/runs/${id}/events?visible=1`).expect(200);
+    expect(await lastWatched(id)).not.toBeNull();
+  });
+
+  it('at most once per 5 s per run', async () => {
+    const id = await insertRun();
+    await db.query(`UPDATE ana_runs SET last_watched_at = now() - interval '2 seconds' WHERE id = $1`, [id]);
+    const before = String(await lastWatched(id));
+    await get('asker', `/api/ana-ri/runs/${id}/events?visible=1`).expect(200);
+    expect(String(await lastWatched(id))).toBe(before);
+    await db.query(`UPDATE ana_runs SET last_watched_at = now() - interval '6 seconds' WHERE id = $1`, [id]);
+    const older = String(await lastWatched(id));
+    await get('asker', `/api/ana-ri/runs/${id}/events?visible=1`).expect(200);
+    expect(String(await lastWatched(id))).not.toBe(older);
+  });
+
+  it('a run that ended is not stamped', async () => {
+    const id = await insertRun({ status: 'finished' });
+    await get('asker', `/api/ana-ri/runs/${id}/events?visible=1`).expect(200);
+    expect(await lastWatched(id)).toBeNull();
+  });
+
+  it('detachedAt and unattendedStopsAt: null while the page is open; 15 minutes after watching stopped once it closed', async () => {
+    const id = await insertRun();
+    const open = await get('asker', `/api/ana-ri/runs/${id}/events`).expect(200);
+    expect(open.body).toMatchObject({ detachedAt: null, unattendedStopsAt: null });
+    await db.query(
+      `UPDATE ana_runs SET created_at = '2026-10-08T14:00:00Z', detached_at = '2026-10-08T14:02:00Z',
+              last_watched_at = '2026-10-08T14:16:00Z' WHERE id = $1`,
+      [id],
+    );
+    const closed = await get('admin', `/api/ana-ri/runs/${id}/events`).expect(200);
+    expect(closed.body.detachedAt).toBe('2026-10-08T14:02:00.000Z');
+    expect(closed.body.unattendedStopsAt).toBe('2026-10-08T14:31:00.000Z');
+    const mine = await get('asker', `/api/ana-ri/runs?mine=live`).expect(200);
+    const listed = mine.body.runs.find((r: { runId: string }) => r.runId === id);
+    expect(listed).toMatchObject({ detachedAt: '2026-10-08T14:02:00.000Z', unattendedStopsAt: '2026-10-08T14:31:00.000Z', watched: false });
+  });
+
+  it('never later than 40 minutes from the start', async () => {
+    const id = await insertRun();
+    await db.query(
+      `UPDATE ana_runs SET created_at = '2026-10-08T14:00:00Z', detached_at = '2026-10-08T14:02:00Z',
+              last_watched_at = '2026-10-08T14:30:00Z' WHERE id = $1`,
+      [id],
+    );
+    const res = await get('asker', `/api/ana-ri/runs/${id}/events`).expect(200);
+    expect(res.body.unattendedStopsAt).toBe('2026-10-08T14:40:00.000Z');
   });
 });

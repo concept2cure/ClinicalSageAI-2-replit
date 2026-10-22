@@ -56,7 +56,7 @@ export async function resolveRunPackageIdentity(inputs: RunIdentityInputs): Prom
   }
   let identity: Awaited<ReturnType<typeof readSubmissionPackageIdentity>>;
   try {
-    identity = await readSubmissionPackageIdentity(pool, inputs.organizationId, submissionFk);
+    identity = await readSubmissionPackageIdentity(pool, inputs.organizationId, submissionFk, { region: inputs.region ?? null });
   } catch (err) {
     console.error('[Orchestrator] package identity read failed:', err instanceof Error ? err.message : err);
     return { recorded: false, reason: 'the recorded application number and applicant could not be read.' };

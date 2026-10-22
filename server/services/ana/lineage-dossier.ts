@@ -37,10 +37,16 @@
  */
 import { getPool } from '../../db/runtime.js';
 import { listTurnRecords } from './turn-record-verify.js';
-import { humanControlsOf, policyHoldsOf, type DossierPolicyHold } from './lineage-dossier-holds.js';
+import {
+  humanControlsOf,
+  namedControls,
+  policyHoldsOf,
+  type DossierHumanControl,
+  type DossierPolicyHold,
+} from './lineage-dossier-holds.js';
 import { loadProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
 
-export type { DossierPolicyHold } from './lineage-dossier-holds.js';
+export type { DossierHumanControl, DossierPolicyHold } from './lineage-dossier-holds.js';
 export { measureProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
 import {
   collectArtifactLedger,
@@ -150,15 +156,6 @@ export interface DossierReasoningTurn {
   reasoning: string;
   model: string | null;
   createdAt: string | null;
-}
-
-export interface DossierHumanControl {
-  /** The assistant turn (1-based) the control was recorded against. */
-  turn: number;
-  action: 'pause' | 'resume' | 'interject' | 'cancel';
-  message: string | null;
-  round: number | null;
-  at: string | null;
 }
 
 /**
@@ -562,7 +559,7 @@ async function loadTurnRecords(
       policyHolds.push(...held.holds);
       policyHoldsUnreadable += held.unreadable;
     }
-    return { reasoning, humanControls, policyHolds, policyHoldsUnreadable };
+    return { reasoning, humanControls: await namedControls(humanControls), policyHolds, policyHoldsUnreadable };
   } catch (err) {
     warnUnless42P01('turn-records', err);
     return { reasoning: [], humanControls: [], policyHolds: [], policyHoldsUnreadable: 0 };

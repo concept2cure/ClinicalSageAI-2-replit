@@ -77,6 +77,46 @@
 --   Additive; nothing is dropped, renamed or narrowed, and no CHECK is added
 --   (an ADD CONSTRAINT would re-validate every row on every deploy).
 --   Companion table: migrations/20261008f_ana_run_events.sql.
+--
+-- AMENDMENT 2026-10-08, second (in place, per CLAUDE.md RULE 1; AnA detach
+-- slice DT3, docs/design/ANA_DETACH_2026-10-08.md §2.1, §2.6, evidence
+-- docs/evidence/ANA-SUMMARY/2026-10-08/DT3-detach/):
+--   One column, its own ADD COLUMN IF NOT EXISTS at the end of this file:
+--     detached_at  when the page that started the turn closed and the turn
+--                  went on, written once by the owner. With last_watched_at
+--                  and created_at it says when an unwatched turn stops
+--                  (shared/ana/run-detach.ts unattendedDeadline), the same
+--                  instant for the owner's clock and a follower's "stops by".
+--   Additive and nullable; nothing is dropped, renamed or narrowed.
+--   The DT1 note's "written from slice DT3" for hold and last_watched_at is
+--   now true: holdForPerson and the hold's announcement write hold, and the
+--   asker's visible poll stamps last_watched_at (server/routes/ana-ri/runs.ts).
+--   stopped_reason gains values with no schema change (it has no CHECK):
+--   unattended_limit, session_ended, server_shutdown, admin_cancelled.
+--
+-- AMENDMENT 2026-10-22 (in place, per CLAUDE.md RULE 1; the three independent
+-- reviews of the uncommitted DT3 change, findings IAM-34, the cross-device
+-- sign-out line and the session-end cause; evidence
+-- docs/evidence/ANA-SUMMARY/2026-10-08/DT3-detach/, "Review findings"):
+--   Two columns, each its own ADD COLUMN IF NOT EXISTS at the end of this file:
+--     started_session_id  the `sid` of the session whose request started the
+--                         run (services/session-inactivity.ts; kept through
+--                         every refresh and rotation). A sign-out ends that one
+--                         session, so it stops only the runs that session
+--                         started: a turn running on the person's phone is not
+--                         stopped by a sign-out on their desktop, and "the
+--                         session that started this turn ended" stays true.
+--                         Null for a run begun before this column, or by a
+--                         token with no sid; such a run is stopped by its own
+--                         round-boundary standing check.
+--     stopped_detail      jsonb, for a `session_ended` stop only: what ended
+--                         the session or the organisation ({cause, byUserId}:
+--                         sign_out, password_change, deprovisioned,
+--                         member_removed, org_suspended, purge, …) and who did
+--                         it, so the record can say which act stopped the turn.
+--                         Written by run-control.ts stopRunsFor; never a control
+--                         event, because nobody decided to stop AnA.
+--   Additive and nullable; nothing is dropped, renamed or narrowed.
 -- =============================================================================
 
 -- One row per in-flight AnA turn.
@@ -157,3 +197,10 @@ ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS run_policy text;
 ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS hold jsonb;
 ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS last_watched_at timestamptz;
 ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS released_at timestamptz;
+
+-- AMENDMENT 2026-10-08, second (DT3): see the header.
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS detached_at timestamptz;
+
+-- AMENDMENT 2026-10-22 (DT3 review): see the header.
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS started_session_id text;
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS stopped_detail jsonb;

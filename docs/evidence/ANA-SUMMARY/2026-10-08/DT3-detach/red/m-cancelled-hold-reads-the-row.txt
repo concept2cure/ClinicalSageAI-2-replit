@@ -1,0 +1,24 @@
+# m-cancelled-hold-reads-the-row: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-hold-cancellation.test.ts
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > releases immediately, cleans its listener, and observes a later query rejection 8ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > also releases during a later read and closes the held-time interval 3ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > throws the original query error while the signal is live and removes its listener 2ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale paused result after Stop 2ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale running result after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > cancels one pending reader while another waiter can still resume normally 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > removes read listeners after an uninterrupted status read completes 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > Stop between the inner read and its outer consumer > does not consume a settled paused read after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > Stop between the inner read and its outer consumer > does not consume a settled running read after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending null policy hold when Stop lands 2ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending auto policy hold when Stop lands 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending manual policy hold when Stop lands 5ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by outcome does not start another drain 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by signal does not start another drain 1ms
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by outcome does not start another drain 6ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by signal does not start another drain 2ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by outcome does not start another drain
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times

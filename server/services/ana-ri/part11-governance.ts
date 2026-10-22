@@ -437,6 +437,40 @@ export function buildHumanConfirmationRequiredResult(
   };
 }
 
+/** Said after the proposal's own message while a run waits on its person. Fixed copy. */
+export const AWAITING_APPROVAL_LINE = 'AnA is waiting on this before she goes on.';
+
+/**
+ * The approval a held run puts to its person — the attached stream's
+ * `approval_required` frame (less its transport fields, `type` and `round`)
+ * and the follower's run read (routes/ana-ri/runs.ts) both — from the one
+ * builder (AnA detach DT3 review). After DT3 a detached turn has no page, so
+ * the follower is where its person signs; its dialog shows what the attached
+ * page showed: the same words, and the proposal check that the sign-off audit
+ * row names as shown (governed-execution-audit.ts). A check that is not an
+ * object is not carried: the client's reader would refuse it anyway.
+ */
+export function approvalRequiredEnvelope(held: {
+  runId: string;
+  toolUseId: string;
+  command: string;
+  params: Record<string, unknown>;
+  tier?: GovernedTier;
+  check?: unknown;
+}) {
+  const proposal = buildHumanConfirmationRequiredResult(held.command, held.params, held.tier);
+  const check = held.check && typeof held.check === 'object' && !Array.isArray(held.check) ? held.check : null;
+  return {
+    runId: held.runId,
+    toolUseId: held.toolUseId,
+    action: proposal.action,
+    openModal: proposal.openModal,
+    data: proposal.data,
+    message: `${proposal.message} ${AWAITING_APPROVAL_LINE}`,
+    ...(check ? { check } : {}),
+  };
+}
+
 /**
  * STRICT org-settings read: is Part 11 enforcement enabled for this tenant?
  * DB errors PROPAGATE, so the caller can distinguish a DETERMINATE "tenant has

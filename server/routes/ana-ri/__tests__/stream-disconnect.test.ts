@@ -1,4 +1,9 @@
-/** The real mounted stream stops local-only work without inventing a human control. */
+/**
+ * The real mounted stream, when its page closes (AnA detach DT3, design §2.1):
+ * a durable, owned turn that did not ask to drive DETACHES — it goes on,
+ * reaches endRun and ends as it ends; a local-only turn, an unowned run and a
+ * Live Drive turn still stop, without inventing a human control.
+ */
 import type { Request, Response } from 'express';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunHandle } from '../../../services/ana/run-control.js';
@@ -109,6 +114,12 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); });
 
+/** The answered turn's sealed record, once post-processing (its stand-in) has it. */
+async function answeredRecord() {
+  await vi.waitFor(() => expect(h.state.post).not.toBeNull());
+  return h.state.post.turnRecorder.seal('answered').body;
+}
+
 function deferred() {
   let resolve!: () => void;
   const promise = new Promise<void>(r => { resolve = r; });
@@ -116,7 +127,7 @@ function deferred() {
 }
 
 /** A provider that waits for work or the actual signal the route supplies. */
-function startPendingGateway() {
+function startPendingGateway(body: Record<string, unknown> = {}) {
   const started = deferred();
   const work = deferred();
   const record = deferred();
@@ -139,7 +150,7 @@ function startPendingGateway() {
   });
   // A destroyed response rejects its HTTP reader. That is expected here;
   // the signal and sealed record are asserted through the real route instead.
-  const reader = turn(app, { message: 'Compare the evidence.' }).then(() => undefined, () => undefined);
+  const reader = turn(app, { message: 'Compare the evidence.', ...body }).then(() => undefined, () => undefined);
   return { started: started.promise, record: record.promise, release: work.resolve, reader };
 }
 
@@ -205,9 +216,9 @@ describe('local-only stream disconnect', () => {
   });
 });
 
-describe('disconnect while opening the run', () => {
-  it.each([true, false])('settles an already-dropped response when beginRun resumes (local-only=%s)', async localOnly => {
-    h.state.beginRunThrows = localOnly;
+describe('disconnect while opening the run (before context assembly and the drive state)', () => {
+  it('local-only: settles an already-dropped response when beginRun resumes', async () => {
+    h.state.beginRunThrows = true;
     const entered = deferred();
     const proceed = deferred();
     io.beginEntered = entered.resolve;
@@ -225,23 +236,84 @@ describe('disconnect while opening the run', () => {
       expect(io.signal?.aborted).toBe(true);
       io.response!.emit('close');
       expect(io.humanControl).not.toHaveBeenCalled();
-      if (localOnly) {
-        expect(io.localAbort).toHaveBeenCalledTimes(1);
-        expect(io.internalStop).not.toHaveBeenCalled();
-      } else {
-        expect(io.localAbort).not.toHaveBeenCalled();
-        expect(io.internalStop).toHaveBeenCalledTimes(1);
-        expect(io.internalStop).toHaveBeenCalledWith(expect.anything(), 'run_test', 'client_disconnected', 7);
-      }
+      expect(io.localAbort).toHaveBeenCalledTimes(1);
+      expect(io.internalStop).not.toHaveBeenCalled();
       await pending.record;
       expect(io.records[0].outcome).toBe('stopped');
       expect(io.records[0].body?.controls).toEqual([]);
-      if (localOnly) {
-        expect(io.records[0].body?.turn.runId).toBeNull();
-        expect(io.records[0].body?.warnings.join(' ')).toContain('connection dropped');
-        expect(io.records[0].body?.warnings.join(' ')).not.toMatch(/person cancelled|user cancelled/i);
-      }
+      expect(io.records[0].body?.turn.runId).toBeNull();
+      expect(io.records[0].body?.warnings.join(' ')).toContain('connection dropped');
+      expect(io.records[0].body?.warnings.join(' ')).not.toMatch(/person cancelled|user cancelled/i);
       expect(h.state.endRuns).toEqual([]);
+    } finally {
+      proceed.resolve();
+      pending.release();
+      await pending.reader;
+    }
+  });
+
+  // DT3 test 3: a socket closed before the drive state resolves. Since the
+  // founder's decision of 2026-10-22 (D-7, replacing "a Live Drive turn stops
+  // on close"), a turn that asked to drive detaches like any other: its later
+  // screen actions are refused (stream-detach.test.ts), its other work goes on.
+  it.each([
+    ['no live_drive: detaches', false],
+    ['live_drive: true: detaches too (D-7, 2026-10-22)', true],
+  ] as const)('durable, %s', async (_name, liveDrive) => {
+    const entered = deferred();
+    const proceed = deferred();
+    io.beginEntered = entered.resolve;
+    io.beginGate = proceed.promise;
+    const pending = startPendingGateway(liveDrive ? { live_drive: true } : {});
+    try {
+      await entered.promise;
+      const closed = new Promise<void>(resolve => io.response!.once('close', resolve));
+      io.response!.destroy();
+      await closed;
+      proceed.resolve();
+      await pending.started;
+      io.response!.emit('close');
+      expect(io.humanControl).not.toHaveBeenCalled();
+      expect(io.localAbort).not.toHaveBeenCalled();
+      void liveDrive;
+      expect(io.signal?.aborted).toBe(false);
+      expect(io.internalStop).not.toHaveBeenCalled();
+      pending.release();
+      const body = await answeredRecord();
+      expect(body.warnings.join(' ')).toMatch(/The page closed at .*; the turn continued\./);
+      await vi.waitFor(() => expect(h.state.endRuns).toEqual([{ status: 'finished', stoppedReason: 'no_more_tools' }]));
+    } finally {
+      proceed.resolve();
+      pending.release();
+      await pending.reader;
+    }
+  });
+});
+
+// A run detaches only with its conversation resolved (§2.1): a new
+// conversation whose page closed before its thread existed is decided once the
+// thread step has run — the test above detaches, stamped; this one cannot be.
+describe('a page that closed before a new conversation had its thread', () => {
+  it('whose run could not be stamped with the minted thread: stops as client_disconnected, never runs on unseen', async () => {
+    h.state.stampThreadResult = false;
+    const entered = deferred();
+    const proceed = deferred();
+    io.beginEntered = entered.resolve;
+    io.beginGate = proceed.promise;
+    const pending = startPendingGateway();
+    try {
+      await entered.promise;
+      const closed = new Promise<void>(resolve => io.response!.once('close', resolve));
+      io.response!.destroy();
+      await closed;
+      proceed.resolve();
+      await pending.started;
+      expect(h.state.stamps, 'the thread step ran').toHaveLength(1);
+      expect(io.signal?.aborted).toBe(true);
+      expect(io.internalStop).toHaveBeenCalledWith(expect.anything(), 'run_test', 'client_disconnected', 7);
+      expect(h.state.detachStamps).toEqual([]);
+      await pending.record;
+      expect(io.records[0].outcome).toBe('stopped');
     } finally {
       proceed.resolve();
       pending.release();
@@ -263,7 +335,12 @@ describe('completed and durable stream lifecycle', () => {
     if (!localOnly) expect(h.state.endRuns).toEqual([{ status: 'finished', stoppedReason: 'no_more_tools' }]);
   });
 
-  it('keeps a durable disconnect distinct from a human control and settles it once', async () => {
+  // DT3 test 1 (route half): a durable, owned turn without drive whose page
+  // closes goes on, is not settled by the disconnect, reaches endRun and ends
+  // finished, with an answered record that says the page closed. Before DT3:
+  // stopped as client_disconnected; with runSettled still set on the detach
+  // branch, endRun was never called (the row stayed running and was reaped).
+  it('detaches a durable run: it runs on, reaches endRun, ends finished, and its record says the page closed', async () => {
     const pending = startPendingGateway();
     try {
       await pending.started;
@@ -271,15 +348,82 @@ describe('completed and durable stream lifecycle', () => {
       io.response!.destroy();
       await closed;
       io.response!.emit('close');
-      expect(io.signal?.aborted).toBe(true);
+      expect(io.signal?.aborted).toBe(false);
       expect(io.localAbort).not.toHaveBeenCalled();
+      expect(io.internalStop).not.toHaveBeenCalled();
+      expect(io.humanControl).not.toHaveBeenCalled();
+      expect(h.state.detachStamps).toHaveLength(1);
+      pending.release();
+      const body = await answeredRecord();
+      expect(io.records, 'a detached turn is not filed as stopped').toEqual([]);
+      expect(h.state.post.stopped).toBe(false);
+      expect(body.controls).toEqual([]);
+      const warnings = body.warnings.join(' ');
+      expect(warnings).toMatch(/The page closed at \d{4}-\d\d-\d\dT[\d:]+Z; the turn continued\./);
+      expect(warnings).toMatch(/stops after 15 minutes with nobody watching, and no later than \d{4}-\d\d-\d\dT[\d:]+Z\./);
+      await vi.waitFor(() => expect(h.state.endRuns).toEqual([{ status: 'finished', stoppedReason: 'no_more_tools' }]));
+    } finally {
+      pending.release();
+      await pending.reader;
+    }
+  });
+
+  // DT3 test 2: what still stops. A turn that asked to drive no longer does
+  // (D-7, decided 2026-10-22): it detaches, above.
+  it.each([
+    ['an unowned run (no person)', { user: { organizationId: 7 } }, {}],
+  ] as const)('stops %s on disconnect, as client_disconnected', async (_name, state, body) => {
+    Object.assign(h.state, state);
+    const pending = startPendingGateway(body);
+    try {
+      await pending.started;
+      const closed = new Promise<void>(resolve => io.response!.once('close', resolve));
+      io.response!.destroy();
+      await closed;
+      io.response!.emit('close');
+      expect(io.signal?.aborted).toBe(true);
       expect(io.internalStop).toHaveBeenCalledTimes(1);
       expect(io.internalStop).toHaveBeenCalledWith(expect.anything(), 'run_test', 'client_disconnected', 7);
       expect(io.humanControl).not.toHaveBeenCalled();
       await pending.record;
+      expect(io.records[0].outcome).toBe('stopped');
       expect(io.records[0].body?.controls).toEqual([]);
+      expect(h.state.detachStamps).toEqual([]);
       expect(h.state.endRuns).toEqual([]);
     } finally {
+      pending.release();
+      await pending.reader;
+    }
+  });
+});
+
+// DT3 test 6: a detached turn keeps writing frames to a socket that is gone.
+describe('a detached turn writing to a destroyed response', () => {
+  it('produces no error event and no unhandled error', async () => {
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    const responseErrors = vi.fn();
+    // Several rounds of tool frames, all after the destroy.
+    h.state.script = Array.from({ length: 6 }, (_, i) => [{ id: `tu_${i}`, name: 'list_app_screens', input: { i } }]);
+    const pending = startPendingGateway();
+    try {
+      await pending.started;
+      io.response!.on('error', responseErrors);
+      const closed = new Promise<void>(resolve => io.response!.once('close', resolve));
+      io.response!.destroy();
+      await closed;
+      io.response!.emit('close');
+      const writes = vi.spyOn(io.response!, 'write');
+      for (let i = 0; i < 50; i++) io.response!.write(`data: ${JSON.stringify({ type: 'status', i })}\n\n`);
+      pending.release();
+      await answeredRecord();
+      await new Promise(resolve => setTimeout(resolve, 20));
+      expect(writes.mock.calls.length).toBeGreaterThan(50);
+      expect(responseErrors).not.toHaveBeenCalled();
+      expect(unhandled).not.toHaveBeenCalled();
+      expect(h.state.post.stopped).toBe(false);
+    } finally {
+      process.off('unhandledRejection', unhandled);
       pending.release();
       await pending.reader;
     }

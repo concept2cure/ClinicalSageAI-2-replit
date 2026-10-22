@@ -1,0 +1,38 @@
+# r-controls-carry-no-actor: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/turn-summary-controls.test.ts server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts  -t attributeControls|who took each control
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the asker 83ms
+   → expected [ undefined, { kind: 'asker' } ] to deeply equal [ undefined, …(1) ]
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the admin 20ms
+   → expected [ { kind: 'asker' }, undefined ] to deeply equal [ { kind: 'asker' }, …(1) ]
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the colleague 26ms
+   → expected [ Array(2) ] to deeply equal [ { kind: 'asker' }, …(1) ]
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the asker reads their own steer as theirs and the admin's cancel by the admin's name 13ms
+   → expected { action: 'cancel', round: 2, …(3) } to match object { action: 'cancel', …(2) }
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the administrator reads their own cancel as theirs, as an administrator, and the steer as the asker's 1ms
+   → expected undefined to deeply equal { kind: 'you_as_administrator' }
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a colleague reads neither as theirs, and the asker's id is never in the payload 2ms
+   → expected [ Array(2) ] to deeply equal [ { kind: 'asker' }, …(1) ]
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > an administrator whose name cannot be read is "user <id>", and a failed read is the same, never "You" 1ms
+   → expected { kind: 'asker' } to deeply equal { kind: 'administrator', …(1) }
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a reader nobody identified is told neither is theirs 1ms
+   → expected [ 'asker', 'asker' ] to deeply equal [ 'asker', 'administrator' ]
+ ✓ server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a record that could not read its controls stays null, never an empty list 0ms
+ Test Files  2 failed (2)
+      Tests  8 failed | 1 passed | 8 skipped (17)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the asker
+AssertionError: expected [ undefined, { kind: 'asker' } ] to deeply equal [ undefined, …(1) ]
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the admin
+AssertionError: expected [ { kind: 'asker' }, undefined ] to deeply equal [ { kind: 'asker' }, …(1) ]
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the colleague
+AssertionError: expected [ Array(2) ] to deeply equal [ { kind: 'asker' }, …(1) ]
+ FAIL  server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the asker reads their own steer as theirs and the admin's cancel by the admin's name
+AssertionError: expected { action: 'cancel', round: 2, …(3) } to match object { action: 'cancel', …(2) }
+ FAIL  server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the administrator reads their own cancel as theirs, as an administrator, and the steer as the asker's
+AssertionError: expected undefined to deeply equal { kind: 'you_as_administrator' }
+ FAIL  server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a colleague reads neither as theirs, and the asker's id is never in the payload
+AssertionError: expected [ Array(2) ] to deeply equal [ { kind: 'asker' }, …(1) ]
+ FAIL  server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > an administrator whose name cannot be read is "user <id>", and a failed read is the same, never "You"
+AssertionError: expected { kind: 'asker' } to deeply equal { kind: 'administrator', …(1) }
+ FAIL  server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a reader nobody identified is told neither is theirs
+AssertionError: expected [ 'asker', 'asker' ] to deeply equal [ 'asker', 'administrator' ]

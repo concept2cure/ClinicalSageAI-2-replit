@@ -141,7 +141,7 @@ The inventory's critic read the landed block at `7730e04ab4` and found no defect
 
 ## Handed on
 
-- **Two trunk reds, not F23's.**
+- ~~**Two trunk reds, not F23's.**~~ Both pass at `4eacf0fd27`, in the 178-file run of `../filing-lock-write-through/green.txt`; other sessions' commits fixed them.
   - `tests/authoring-market-document-binding.pglite.test.ts` "creates the market's own Module 1 section" returns 500: `relation "authoring_audit_trail" does not exist`. The section-create path writes that table since `9a4da85005` (2026-10-21), and the fixture does not build it.
   - `tests/lineage/founder-path-lineage.pglite.test.ts` fails from hop 8 (`Invalid sequence id`).
   - Both fail identically at the pushed head without this work.

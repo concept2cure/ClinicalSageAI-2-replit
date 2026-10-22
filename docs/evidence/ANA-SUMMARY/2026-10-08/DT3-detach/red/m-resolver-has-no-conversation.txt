@@ -1,0 +1,17 @@
+# m-resolver-has-no-conversation: exit 1 (non-zero = red)
+# tests: server/services/notifications/__tests__/notification-conversation-target.test.ts  -t resolves
+ × server/services/notifications/__tests__/notification-conversation-target.test.ts > a conversation notice resolves through the canonical notification target > the recipient's own conversation opens as a verified conversation target 7ms
+   → This notification does not name a record and program relationship this version can open.
+ × server/services/notifications/__tests__/notification-conversation-target.test.ts > a conversation notice resolves through the canonical notification target > a colleague's conversation is unavailable (404), and so is one with no row in this organisation 8ms
+   → expected Error: This notification does not name a … { status: … } to match object { status: 404 }
+ ✓ server/services/notifications/__tests__/notification-conversation-target.test.ts > a conversation notice resolves through the canonical notification target > a malformed conversation id is not a record this version can open (422) 1ms
+ ✓ server/services/notifications/__tests__/notification-conversation-target.test.ts > a conversation notice resolves through the canonical notification target > the shared contract admits the conversation surface with its one parameter, and nothing else 2ms
+ ✓ server/services/notifications/__tests__/notification-conversation-target.test.ts > a conversation notice resolves through the canonical notification target > the notice's category is a canonical one, so it can be muted and validated 1ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/notifications/__tests__/notification-conversation-target.test.ts > a conversation notice resolves through the canonical notification target > the recipient's own conversation opens as a verified conversation target
+Error: This notification does not name a record and program relationship this version can open.
+Serialized Error: { status: 422 }
+ FAIL  server/services/notifications/__tests__/notification-conversation-target.test.ts > a conversation notice resolves through the canonical notification target > a colleague's conversation is unavailable (404), and so is one with no row in this organisation
+AssertionError: expected Error: This notification does not name a … { status: … } to match object { status: 404 }

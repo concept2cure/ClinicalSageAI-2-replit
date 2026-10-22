@@ -120,6 +120,21 @@ async function readOrganization(
 }
 
 /**
+ * Stop the organisation's live AnA runs with `session_ended` (AnA detach
+ * §2.9). Lazy, so offboarding does not load run control until it needs it;
+ * never throws (stopRunsFor logs its own failure).
+ */
+async function stopOrganisationRuns(
+  pool: Pool,
+  organizationId: number,
+  cause: 'deletion_requested' | 'purge',
+  byUserId: number,
+): Promise<void> {
+  const { stopRunsFor } = await import('../ana/run-control.js');
+  await stopRunsFor(pool, { organizationId }, { cause, byUserId });
+}
+
+/**
  * Move an active organization into `pending_deletion` and start the retention
  * clock. Idempotent for an organization already pending deletion: the original
  * request time and eligibility instant are preserved, so re-requesting cannot be
@@ -173,6 +188,9 @@ export async function requestDeletion(
   );
 
   invalidateTenantPosture(organizationId);
+  // A deleting organisation is read-only: its live AnA runs stop now, not at
+  // their next round (AnA detach §2.9, session_ended). Never throws.
+  await stopOrganisationRuns(pool, organizationId, 'deletion_requested', requestedByUserId);
 
   const r = rows[0];
   logger.warn('Tenant offboarding requested', {
@@ -947,6 +965,10 @@ export async function purgeTenant(
   assertNoRetainedRecords(childTables);
 
   const { existing, receipt } = await assertPurgePermitted(pool, organizationId, purgedByUserId, preconditions);
+
+  // AnA's live runs stop FIRST, before any table is purged (AnA detach §2.9):
+  // a turn still running would go on writing rows the purge is removing.
+  await stopOrganisationRuns(pool, organizationId, 'purge', purgedByUserId);
 
   const tally = await purgeInOneTransaction(pool, {
     existing,

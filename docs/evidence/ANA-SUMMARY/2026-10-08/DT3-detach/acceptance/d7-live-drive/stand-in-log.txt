@@ -1,0 +1,6 @@
+17:07:23.347 stand-in model on :8839 delay=6000 noText=false
+17:08:10.143 #1 stream=true tools=50 msgs=1 -> navigate_to {"target":"vault"}
+17:08:13.116 #2 stream=true tools=50 msgs=3 -> act_on_screen {"action":"vault.search","params":{"query":"stability"}}
+17:08:30.768 #3 stream=true tools=50 msgs=5 -> list_project_documents {}
+17:08:33.525 #4 stream=true tools=50 msgs=7 -> text "Done. The screen search came back: SCREEN_GONE. The documents were listed: yes."
+17:08:37.412 #5 stream=false tools=0 msgs=1 -> text "FAKE: the tool navigate_to was not offered on this turn."

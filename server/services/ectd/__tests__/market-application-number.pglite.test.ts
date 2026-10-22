@@ -52,7 +52,10 @@ beforeAll(async () => {
       (4, 'EU MAA of an EMA project, the home market', 'maa', 'pharma', 'eu', ${ORG}, ${USER}, '${EMA_HOME}', NULL),
       (5, 'a stale number on a home-market submission is not read', 'nda', 'pharma', 'fda', ${ORG}, ${USER}, '${NDA}', '999999');
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by) VALUES
-      (21, 2, 'eu', '0000', ${ORG}, ${USER});
+      (21, 2, 'eu', '0000', ${ORG}, ${USER}),
+      -- A sequence of another region under the US home submission (security
+      -- review, 2026-10-22): its package is built for the sequence's region.
+      (22, 1, 'eu', '0001', ${ORG}, ${USER});
   `);
 });
 
@@ -73,6 +76,15 @@ describe('a package carries its own market\'s application number (P-44)', () => 
     expect(refusal?.message).toMatch(/EU market/);
     expect(refusal?.message).toMatch(/record the number its agency assigned on the submission/);
     expect(refusal?.message).not.toContain('214321');
+  });
+
+  it("the market is the package's region: a sequence of another region never borrows its submission's number", async () => {
+    const eu = { region: 'eu' };
+    expect((await readSubmissionPackageIdentity(q(), ORG, 1, eu)).applicationNumber).toBeNull();
+    expect((await readSubmissionPackageIdentity(q(), ORG, 3, eu)).applicationNumber).toBe('EMEA-H-C-005124');
+    expect((await readSubmissionPackageIdentity(q(), ORG, 3, { region: 'fda' })).applicationNumber).toBe('214321');
+    await expect(assembleSubmissionEctd({ submissionId: 1, organizationId: ORG, userId: USER, sequenceNumber: '0001' }))
+      .rejects.toBeInstanceOf(PackageIdentityMissingError);
   });
 
   it('the export of an added market with no number recorded is refused, and nothing is built', async () => {

@@ -56,7 +56,7 @@ import { requireEditorAccess } from '../middleware/orgMembership.js';
 import { continueOrchestratorRun, requireOrchestratorProgramAccess, OrchestratorContinuationRefusal } from '../services/submission-orchestrator-continuation.js';
 import { readProgramAnchorRow } from '../services/c2c/program-project-anchor.js';
 import { resolveSubmissionSpine, resolveSequenceSpine } from '../services/cmc/submission-spine.js';
-import { readRecordedPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity.js';
+import { readSubmissionPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity.js';
 import { CsrSourceSelectionSchema } from '../../shared/csr-source-input.js';
 import { requestConnectable } from '../db/requestDb.js';
 import { withCsrVaultSource, CsrSourceInputError } from '../services/csr/vault-source-input.js';
@@ -309,7 +309,8 @@ router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
     const anchor = recordedProgramAnchor(programId, program);
     const spine = sequenceId ? await resolveSequenceSpine(anchor, organizationId, sequenceId) : await resolveSubmissionSpine(anchor, organizationId);
     if (!spine?.sequence || spine.match !== 'program') return res.status(409).json({ error: 'SUBMISSION_SEQUENCE_REQUIRED', message: 'The selected program needs a recorded submission and sequence before it can be orchestrated.' });
-    const identity = await readRecordedPackageIdentity(pool, organizationId, programId);
+    // The sequence's own market's number (P-44), as the run's identity reader judges it.
+    const identity = await readSubmissionPackageIdentity(pool, organizationId, spine.submissionId, { region: spine.sequence.region });
     const identityRefusal = packageIdentityRefusal(identity, 'Nothing was built.');
     if (identityRefusal) return res.status(409).json({ error: identityRefusal.code, message: identityRefusal.message });
     const project = await readProgramAnchorRow(pool as any, { programId, orgId: organizationId, context: 'submission-orchestrator', requireUnique: true });

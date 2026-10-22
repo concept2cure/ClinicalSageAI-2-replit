@@ -1,0 +1,309 @@
+# The 22 failing files, alone, against the source at HEAD (every DT3 source change reverted in place, every new DT3 module moved aside; restored from memory, md5-checked), 2026-10-22.
+# at HEAD (DT3 reverted): exit 1
+# tests: server/services/report-os/pdf/__tests__/run-pdf.test.ts tests/lineage/founder-path-lineage.pglite.test.ts server/services/report-os/pdf/__tests__/export-identity.test.ts server/services/ana/__tests__/document-catalog-program-binding.test.ts server/services/report-os/pdf/__tests__/company-branding.test.ts server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts server/services/report-os/pdf/__tests__/bundle-pdf.test.ts server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts server/services/ana/__tests__/capa-governed-service-handoff.test.ts server/services/ana/__tests__/ana-launch-scope.test.ts server/services/ana/__tests__/ana-launch-scope-execution.test.ts server/middleware/__tests__/launch-scope-api-gate.test.ts tests/golden-journeys/submission-release-signature.journey.test.ts tests/golden-journeys/submission-export-package.journey.test.ts tests/golden-journeys/drug-nda-ectd.journey.test.ts tests/golden-journeys/device-510k-estar.journey.test.ts tests/golden-journeys/cer-eu-mdr.journey.test.ts server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts server/services/ana/__tests__/billing-credits-not-metered.test.ts client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 116ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 404ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 135ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 53ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 84ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault)
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 97ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault) 86ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 224ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 129ms
+   → {"error":"INTERNAL_ERROR"}: expected 500 to be 200 // Object.is equality
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 11ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 141ms
+   → walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 238ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 207ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 3ms
+   → This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+   → transmit/bytes-retained: no such check ran
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > opens the validation tab WITHOUT starting the run the human button would, and says so 317ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > REFUSES to leave the document tab over unsaved edits (the editor unmounts) 157ms
+ × client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane 5064ms
+   → Unable to find an element with the placeholder text of: /switch the drug-substance supplier/
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > SubmissionCenter — select/workspace/sequence via the "submissions" alias > drives the real portfolio: select a submission, open its sequences, select one — with honest misses 49ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with a project open, the stage rail really moves 74ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with no project open, the refusal is honest 5ms
+ × tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 54ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 49ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 50ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate 168ms
+   → expected 'failed' to be 'complete' // Object.is equality
+ ✓ server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > admitted recorded lifecycle source > uses the explicit same executor, one source snapshot and canonical real sharing policy before and after the read 25ms
+ ✓ server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > admitted recorded lifecycle source > admits each private parent only for its actual owner and retains separately recorded nullable dates 39ms
+ ✓ server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > admitted recorded lifecycle source > refuses a missing context or inactive actor without substituting the global pool or an empty report 3ms
+ ✓ server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > admitted recorded lifecycle source > refuses a scope revoked while SQL was reading instead of retaining earlier private facts 11ms
+ ✓ server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > admitted recorded lifecycle source > refuses unreadable and oversized sources rather than saving empty or truncated success 53ms
+ ✓ server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > actual lifecycle report output > renders fixed nullable date columns, source rows and explicit gaps without readiness substitution or legal finalization 17ms
+ × server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > actual lifecycle report output > exports actual recorded obligations/occurrences, dates and legal limits in the existing PDF exporter 24ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ ✓ server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts > actual lifecycle report output > preserves null-first date fields in the fixed document contract and refuses unsupported saved schemas 0ms
+ × tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package 27ms
+   → A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA’s us-regional backbone names a regulatory contact for the application: record the contact’s name, telephone and e-mail.. Nothing was built.
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > loads exactly one snapshot and binds every read to the selected organization 11ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > preserves all versions and duplicate approvals without choosing a current winner 3ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > does not substitute a core data sheet for an unrecorded JP/CA label or invent J-Label support 3ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > keeps independent region obligations independent and calculates only recorded due-date standing 3ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > refuses client-workspace narrowing before reading organization-wide data 1ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > an empty source stays missing with explicit critical gaps and no reassuring score 2ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > an unreadable source rejects instead of persisting a successful empty matrix 1ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > recorded label matrix from canonical PostgreSQL source tables > the actual shared dispatcher uses the domain engine and propagates critical blockers 4ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > actual matrix document and finalization truthfulness > renders every fixed column, including later non-null values after a null first row 6ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > actual matrix document and finalization truthfulness > holds a nonempty matrix at partial when final is requested 3ms
+ × server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > actual matrix document and finalization truthfulness > exports actual matrix versions, source dates, obligations and explicit unknown currency in its PDF 17ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > actual matrix document and finalization truthfulness > does not accept an unsupported saved matrix schema as valid source content 0ms
+ ✓ server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts > actual matrix document and finalization truthfulness > pure calculation makes no latest-version or legal-currentness claim on a positive recorded slot 0ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 287ms
+   → handler refused: Transmission failed at the gateway: AS2 signing/encryption preparation failed. Nothing was transmitted. Check the transmittal record before retrying — the package may already be at FDA.: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 6ms
+   → Cannot read properties of undefined (reading 'body')
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 4ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle 5ms
+   → expected 'Transmission failed at the gateway: A…' to match /may hold it/
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 6ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 6ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a recorded package creator of null before any transmission or signature 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a recorded package creator of 7 before any transmission or signature 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 0ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 3ms
+   → handler refused: Transmission failed at the gateway: AS2 signing/encryption preparation failed. Nothing was transmitted. Check the transmittal record before retrying — the package may already be at FDA.: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > an independent signer who declared Responsibility is recorded as Responsibility on the ledger, signature row and transmittal 3ms
+   → handler refused: Transmission failed at the gateway: AS2 signing/encryption preparation failed. Nothing was transmitted. Check the transmittal record before retrying — the package may already be at FDA.: expected false to be true // Object.is equality
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > refuses the original authorship meaning authorship before the wire or any governed write 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > refuses the original authorship meaning AUTHOR before the wire or any governed write 1ms
+ × server/services/ana/__tests__/billing-credits-not-metered.test.ts > get_billing_credits > reports the balance as not metered, with nothing spending it 8ms
+   → expected undefined to be true // Object.is equality
+ ✓ server/services/ana/__tests__/billing-credits-not-metered.test.ts > get_billing_credits > its definition does not offer the balance as usage 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the workflow runner AnA Command used, now that AnA Command is locked 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > the gate production builds refuses them 403 LAUNCH_SCOPE, and serves what the CMC screens call 2ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 8ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims no /api/cmc prefix the CMC screens do not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 3ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims nothing, and no surface claims the retired store 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > answers launch for the agency-response paths Communication and Respond call 1ms
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 13ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 4ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 6ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 4ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 5ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > states missing signature name, meaning and execution time without substituting the chain finalization time 2ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 2ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 2ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 9ms
+   → expected [Function] to throw error matching /U\+10FFFF.*Nothing was exported/ but got 'Reporting PDF fonts are unavailable o…'
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 2ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 2ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 5ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 3ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 3ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 3ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > passes the trusted context actor to both writes and carries the committed critical audit receipt 30ms
+   → expected { status: 'needs_parameters', …(1) } to match object { status: 'created', …(2) }
+ × server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > create_complaint returns readback uncertainty instead of a definite failed or successful creation 2ms
+   → expected { status: 'needs_parameters', …(1) } to deeply equal { status: 'unconfirmed', …(4) }
+ ✓ server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > open_device_capa returns readback uncertainty instead of a definite failed or successful creation 2ms
+ ✓ server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > passes the verified context actor to both read entrypoints 2ms
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > does not change any bytes when the company report preference is disabled 14ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity 9ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > preserves final sealed content, signer, reason and verification when adding company presentation 4ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > applies the same profile to bundle manifests and all retained packet pages 4ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > refuses unreadable logos, unrenderable glyphs and geometry that would hide content instead of silently ignoring company defaults 12ms
+   → expected Error: Reporting PDF fonts are unavailabl… { …(2) } to match object { status: 422, …(2) }
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 13ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 7ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 4ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 3ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > renders the same bytes from the same recorded export, whenever it is rendered 4ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 3ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 2ms
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > includes complete distinct bodies in recorded order with tables, recorded charts, source/calculation evidence and multilingual text 13ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > keeps each run identity/status on every body and calculation appendix overflow page without marking another run 5ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > marks a legacy final reconstructed copy as unverified on each page and retains missing signature facts 6ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > refuses an empty packet, repeated run, mismatched document identity or contradictory seal/source before rendering 3ms
+ × server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > inherits the canonical glyph refusal instead of substituting packet evidence 8ms
+   → expected Error: Reporting PDF fonts are unavailabl… { …(2) } to match object { Object (code) }
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > does not require source_path, and offers modified_file 3ms
+ × server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > packages a delete declared by modified_file, shipping no bytes for it 17ms
+   → expected 'A package names its application and i…' to be undefined
+ × server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete that still carries a source_path, naming the leaf 6ms
+   → expected 'A package names its application and i…' to match /old-manufacture\.pdf/
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a non-delete leaf with no source_path instead of reading an empty path 1ms
+ × server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf 4ms
+   → expected 'A package names its application and i…' to match /ghost\.pdf/
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 13ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 5ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 6ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 4ms
+   → Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: true) 13ms
+   → expected { ok: false, …(3) } to match object { ok: false, refused: true }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: false) 2ms
+   → expected { ok: false, …(3) } to match object { ok: false, refused: true }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a missing preflight cannot become an unadmitted document on a later load 2ms
+   → expected { ok: false, …(3) } to match object { ok: false, idSpace: 'unknown' }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a body-supplied programme cannot replace the server-loaded programme 2ms
+   → expected { ok: false, …(3) } to match object { ok: true, catalogState: 'suggested' }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > the completion service independently refuses a different expected programme 1ms
+   → expected { ok: false, …(2) } to match object { ok: false, …(1) }
+ × server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > matching expected programme is retained in the final writer handoff 1ms
+   → expected { ok: false, …(2) } to match object { ok: true }
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > the probes stand for hidden tools and two in-scope tools 2ms
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs 13ms
+   → create_ha_interaction: expected 'create_ha_interaction was not run: it…' to be 'LAUNCH_SCOPE' // Object.is equality
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, the fast path’s own tool runs now that CMC is in the catalog 2ms
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it 2ms
+   → expected 'create_ha_interaction was not run: it…' to be 'LAUNCH_SCOPE' // Object.is equality
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, an in-scope tool still runs 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > with launch scope off (a development server), a hidden tool runs 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 3ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every platform command 1ms
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 5ms
+   → communication-center: expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory 0ms
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 2ms
+   → expected 618 to be 617 // Object.is equality
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 1ms
+ Test Files  22 failed (22)
+      Tests  71 failed | 101 passed (172)
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+⎯⎯⎯⎯⎯⎯ Failed Tests 71 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows

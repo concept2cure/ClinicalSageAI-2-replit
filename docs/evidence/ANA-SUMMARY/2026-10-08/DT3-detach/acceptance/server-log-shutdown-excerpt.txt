@@ -1,0 +1,13 @@
+# Server log excerpt, acceptance D (SIGTERM mid-turn), private instance :5099, 2026-10-22.
+# Lines from SIGTERM to the pool closing, DEBUG request dumps removed; the next process's first line closes it.
+🔄 Graceful shutdown initiated (SIGTERM)...
+{"level":30,"time":"2026-10-22T06:55:40.326Z","pid":31181,"hostname":"vm","context":{},"msg":"[ana-run-control] [ana-run-control] shutdown ended 1 live run(s) as server_shutdown"}
+🔄 Draining HTTP connections...
+[PERF] Slow request: POST /stream took 11073ms
+{"level":30,"time":"2026-10-22T06:55:40.383Z","pid":31181,"hostname":"vm","context":{"requestId":"1cfe4166-3fdb-4ccc-ba42-5c4427584b1c","method":"POST","path":"/api/ana-ri/stream","statusCode":200,"durationMs":11074,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+⚠️ Force closing after 10s timeout
+✅ Redis rate limiter closed
+AI Actions infrastructure shut down
+{"level":30,"time":"2026-10-22T06:55:50.329Z","pid":31181,"hostname":"vm","context":{},"msg":"[redis-manager] Redis connections closed"}
+✅ Database connections closed
+{"level":30,"time":"2026-10-22T06:55:52.692Z","pid":439,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}

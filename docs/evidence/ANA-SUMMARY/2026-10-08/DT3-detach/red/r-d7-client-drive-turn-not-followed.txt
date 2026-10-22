@@ -1,0 +1,10 @@
+# r-d7-client-drive-turn-not-followed: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts  -t asked to drive
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the idle timer: it follows its run like any other, and this page lets go of the drive 30ms
+   → expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the person's Stop of a driving turn is confirmed by the server before it shows Stopped 7ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 11 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the idle timer: it follows its run like any other, and this page lets go of the drive
+AssertionError: expected 'AnA stopped responding before finishi…' not to match /stopped responding/i

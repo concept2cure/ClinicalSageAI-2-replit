@@ -1,0 +1,16 @@
+# m-no-watched-stamp: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/runs-read.pglite.test.ts  -t watched stamp
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > the asker's visible poll stamps last_watched_at; a hidden one, and an admin's, never do 78ms
+   → expected null not to be null
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > at most once per 5 s per run 34ms
+   → expected 'Thu Oct 22 2026 17:14:13 GMT+0000 (Co…' not to be 'Thu Oct 22 2026 17:14:13 GMT+0000 (Co…' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > a run that ended is not stamped 15ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > detachedAt and unattendedStopsAt: null while the page is open; 15 minutes after watching stopped once it closed 41ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > never later than 40 minutes from the start 18ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed | 17 skipped (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > the asker's visible poll stamps last_watched_at; a hidden one, and an admin's, never do
+AssertionError: expected null not to be null
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > at most once per 5 s per run
+AssertionError: expected 'Thu Oct 22 2026 17:14:13 GMT+0000 (Co…' not to be 'Thu Oct 22 2026 17:14:13 GMT+0000 (Co…' // Object.is equality

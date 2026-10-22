@@ -1,0 +1,9 @@
+# r-run-ended-during-action-silent: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts  -t DURING
+ × server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts > a governed action on a run that ended while its person signed (DT3 review) > the run ended DURING the execution: said in the response, and in the ledger beside the execution row 39ms
+   → expected '{"success":true,"data":{"success":tru…' to contain '"runEnded":true'
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts > a governed action on a run that ended while its person signed (DT3 review) > the run ended DURING the execution: said in the response, and in the ledger beside the execution row
+AssertionError: expected '{"success":true,"data":{"success":tru…' to contain '"runEnded":true'

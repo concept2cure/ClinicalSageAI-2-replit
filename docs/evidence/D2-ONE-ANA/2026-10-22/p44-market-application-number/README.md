@@ -50,3 +50,29 @@ Typecheck clean. These pass: `ci:migration-set-order`, `ci:migration-drop-safety
 
 - **To the identity lane (MR-10 Stage 4).** `REGULATORY_IDENTIFIER_PATTERN` refuses the slash that EMA's `EMEA/H/C/…` form carries, while rule EMA-CESP-002 expects it. Until that is decided, a market's number is recorded without slashes, and the form says a slash is not accepted yet.
 - **Not in P-44.** Two submissions in the same region as the home market (an IND and an NDA, both US) still share the project's one number, as before.
+
+## Review round (same day), pushed at the founder's instruction to stop
+
+Two read-only lenses reviewed the first commit: security and Part 11.
+
+**Fixed, red first** (`red-review/`, `green-review/focused.txt`, 6 files and 36 tests):
+- **The package's region decides the market**, not the submission's. An EU sequence under the US submission read the NDA number. `readSubmissionPackageIdentity` now takes the sequence's region, and every caller passes it.
+- **Compile and the orchestrator read by submission.** Compile had read the project's number, so the decision text's "compile" was not yet true. It also stores the packaged number on the compilation.
+- **The GET checks project access** through `getSubmissionForRequest`, as every submission read does.
+- **A number a frozen or dispatched sequence was built under is not changed.** Recording one for the first time is still allowed.
+- **The audit row carries `programId`**, so the project's activity feed shows it, along with the IP and user agent. The read returns who recorded the number last, when and why.
+
+**Open, not done (stopped at the founder's instruction):**
+- **Part 11 lens, UI items:**
+  - say "No change" when the number is unchanged (the server already returns `changed:false`);
+  - state the consequence in the form, including that a changed number withdraws a release signature;
+  - re-read the market's verdict after a save;
+  - keep the form open on refusal, and state the reason's 8-character minimum;
+  - explain why the control is absent for someone who may not change the project;
+  - show the recorded-by line the read now returns;
+  - map `SUBMISSION_APPLICATION_NUMBER_RECORDED` to a label in the project feed.
+- **No test yet** for the freeze guard, the access-scoped GET or `lastRecorded`.
+- **Security lens, handed on:**
+  - non-US signature coverage of the number (the identity lane's non-FDA recipe);
+  - an unknown region reads as home;
+  - the legacy no-spine draft backbone in `ectd-compile.ts:835`.

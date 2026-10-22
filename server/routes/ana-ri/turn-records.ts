@@ -50,7 +50,8 @@ import {
   type ListedTurnRecord,
   type StoredTurnRecord,
 } from '../../services/ana/turn-record-verify.js';
-import { buildTurnSummary } from '../../services/ana/turn-summary.js';
+import { attributeControls, buildTurnSummary, recordControlEvents } from '../../services/ana/turn-summary.js';
+import { readControlActorNames } from '../../services/ana/control-actor-names.js';
 import { resolveThreadStore } from '../../services/chat-thread-helpers.js';
 import { readsEveryRecord } from './record-access.js';
 import { extractRequestContext, sendError, sendSuccess } from './shared.js';
@@ -237,7 +238,15 @@ async function readSummary(req: Request, res: Response) {
   try {
     const record = await recordFor(req, res, access, 'summary');
     if (!record) return;
-    return sendSuccess(res, buildTurnSummary(record, verifyStoredTurnRecord(record)));
+    const summary = buildTurnSummary(record, verifyStoredTurnRecord(record));
+    // Who took each control, for this reader (DT3 review: an administrator's
+    // cancel was shown as the asker's "You stopped the run").
+    const controls = await attributeControls(
+      recordControlEvents(record),
+      { viewerUserId: access.userId ?? null, askerUserId: record.actorUserId },
+      readControlActorNames,
+    );
+    return sendSuccess(res, { ...summary, controls: summary.controls === null ? null : controls });
   } catch (err: any) {
     console.error('[turn-records] summary read failed:', err?.message);
     return sendError(res, 500, "The turn's summary could not be read", null, 'TURN_SUMMARY_UNAVAILABLE');

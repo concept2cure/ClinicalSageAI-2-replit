@@ -135,7 +135,7 @@ export function AdminSkills({ onAsk }: { onAsk?: (text: string) => void } = {}) 
 interface LiveRead<T> {
   data: T | null | undefined;
   loading: boolean;
-  error: unknown;
+  error?: unknown;
 }
 
 /** The platform library: filters, the list, and the selected skill's drawer. */

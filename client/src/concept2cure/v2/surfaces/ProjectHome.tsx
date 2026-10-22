@@ -15,7 +15,8 @@ import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
-import { useProjectThreads } from './projectThreads';
+import { useProjectThreads, useWorkingThreads } from './projectThreads';
+import { WORKING_UNREADABLE_LINE, workingMarkerLine } from '../anaWorkModel';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
@@ -1175,6 +1176,10 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
    with more could open). */
 function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string) => void }) {
   const threads = useProjectThreads(pid);
+  /* The conversations AnA is working in, by thread (AnA detach DT3, §5.1). A
+     list that could not be read says so, quietly, and marks nothing. */
+  const workingRead = useWorkingThreads();
+  const working = workingRead.byThread;
   const resumeThread = (id: string) => {
     window.C2C_CONVO = { id };
     onNav('conversation-thread');
@@ -1199,10 +1204,17 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
               {threads.shown.map((t) => (
                 <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
                   <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                  <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+                  <div className="pj-file-m">
+                    {[fmtWhen(t.updated_at || t.created_at), working.has(t.id) ? workingMarkerLine(working.get(t.id)!) : 'Resume']
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </div>
                 </button>
               ))}
             </div>
+            {workingRead.failed && (
+              <div className="sec-sub" role="status" style={{ fontSize: 12, marginTop: 6 }}>{WORKING_UNREADABLE_LINE}</div>
+            )}
             {threads.olderError && (
               <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>{threads.olderError}</div>
             )}

@@ -2,6 +2,9 @@
  * Graceful shutdown + process error handlers.
  *
  * Extracted from server/index.ts. Preserves:
+ *  - AnA's live runs ended as `server_shutdown` BEFORE the drain, and the
+ *    turns' own unwinding (their stopped answers and records) drained with
+ *    the HTTP connections, in the same 10s window (AnA detach DT3)
  *  - HTTP drain (10s force-close timeout)
  *  - Python subprocess termination
  *  - Redis rate limiter teardown
@@ -19,6 +22,24 @@ import { closeRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { cleanup as cleanupPerformance } from '../middleware/enterprise-performance.js';
 
 type AnyServer = { close: (cb?: () => void) => void } | null;
+
+/**
+ * The drain window, shared by the HTTP drain and AnA's turns. ECS sends
+ * SIGKILL `stopTimeout` after SIGTERM — 30 s on Fargate when the task
+ * definition sets none, as terraform/modules/ecs-fargate/main.tf does not —
+ * and this drain plus the AI action queue's (10 s) must finish inside it.
+ */
+const SHUTDOWN_DRAIN_MS = 10_000;
+
+/**
+ * How long ending AnA's owned runs may take before the drain begins (DT3
+ * review, INF-41). The writes go one organisation after another under the
+ * pool's 30 s statement timeout, so a slow database could otherwise use the
+ * whole SIGKILL window before the drain started. Past it, every owned turn is
+ * stopped locally anyway — nothing runs past the process — and a row left live
+ * is ended by the reaper as `orphaned`.
+ */
+export const SHUTDOWN_RUN_SETTLE_MS = 3_000;
 
 interface ShutdownContext {
   getHttpServer: () => AnyServer;
@@ -38,20 +59,52 @@ export async function gracefulShutdown(
 ): Promise<never> {
   console.log(`🔄 Graceful shutdown initiated (${signal})...`);
 
-  const httpServer = ctx.getHttpServer();
-  if (httpServer) {
-    console.log('🔄 Draining HTTP connections...');
-    await new Promise<void>(resolve => {
-      httpServer.close(() => {
-        console.log('✅ HTTP server closed — all connections drained');
-        resolve();
-      });
-      setTimeout(() => {
-        console.log('⚠️ Force closing after 10s timeout');
-        resolve();
-      }, 10000);
-    });
+  // AnA (detach DT3, docs/design/ANA_DETACH_2026-10-08.md §7): a turn whose
+  // page closed goes on in this process, with no socket the HTTP drain could
+  // wait on. Every run this process owns is ended honestly FIRST —
+  // failed/server_shutdown on its row, in its own tenant, then aborted with
+  // that reason — so a turn that finishes in the drain records
+  // stopped/server_shutdown to match its row, never `answered`. The turns
+  // then unwind inside the same window as the HTTP drain.
+  let anaTurnsSettled: Promise<boolean> = Promise.resolve(true);
+  try {
+    const { settleOwnedRunsForShutdown, abortOwnedRunsForShutdown } = await import('../services/ana/run-control.js');
+    const { ownedWorkSettled } = await import('../services/ana/shutdown-hold.js');
+    let deadline: ReturnType<typeof setTimeout> | null = null;
+    const ended = await Promise.race([
+      settleOwnedRunsForShutdown(ctx.pool).then(() => true),
+      new Promise<false>(resolve => {
+        deadline = setTimeout(() => resolve(false), SHUTDOWN_RUN_SETTLE_MS);
+      }),
+    ]);
+    if (deadline) clearTimeout(deadline);
+    if (!ended) {
+      const stopped = abortOwnedRunsForShutdown();
+      console.warn(
+        `⚠️ AnA runs were not all written as ended within ${SHUTDOWN_RUN_SETTLE_MS} ms; ${stopped} turn(s) stopped locally (the reaper ends their rows)`,
+      );
+    }
+    anaTurnsSettled = ownedWorkSettled(SHUTDOWN_DRAIN_MS);
+  } catch (error: any) {
+    console.warn('⚠️ AnA runs could not be ended before the drain:', error.message);
   }
+
+  const httpServer = ctx.getHttpServer();
+  const httpDrained = !httpServer
+    ? Promise.resolve()
+    : new Promise<void>(resolve => {
+        console.log('🔄 Draining HTTP connections...');
+        httpServer.close(() => {
+          console.log('✅ HTTP server closed — all connections drained');
+          resolve();
+        });
+        setTimeout(() => {
+          console.log('⚠️ Force closing after 10s timeout');
+          resolve();
+        }, SHUTDOWN_DRAIN_MS);
+      });
+  const [, turnsSettled] = await Promise.all([httpDrained, anaTurnsSettled]);
+  if (!turnsSettled) console.warn('⚠️ Some AnA turns had not recorded themselves within the drain window');
 
   try {
     await closeRedisRateLimiter();

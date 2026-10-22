@@ -1,0 +1,4 @@
+Full typecheck on the working tree, 2026-10-22 (DT3 review fixes, session 2)
+$ NODE_OPTIONS=--max-old-space-size=10240 npx tsc --noEmit -p tsconfig.check.json
+(no diagnostics)
+exit=0

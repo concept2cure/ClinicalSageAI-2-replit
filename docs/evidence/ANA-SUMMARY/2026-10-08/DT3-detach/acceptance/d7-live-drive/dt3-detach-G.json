@@ -1,0 +1,155 @@
+{
+  "checks": {
+    "G_liveDriveRequested": true,
+    "G_detachedNotStopped": true,
+    "G_finishedAndSealed": true,
+    "G_screenActionNotRun": true,
+    "G_readStillRan": true,
+    "G_summaryShowsTheLine": true,
+    "G_noLostConnection": true
+  },
+  "views": {
+    "G_beforeClose": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792688889938_x96j4pvku",
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Working Pause Stop",
+      "stripButtons": [
+        "Pause",
+        "Stop"
+      ],
+      "buttons": [
+        "Stop"
+      ],
+      "lastTurn": "✻ Opened a screen 6 ms Opening the Vault on your screen. Create Evidence Memo Create Risk Memo Rewrite Section Create Strategy Note",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "G_phoneFollowing": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792688889938_x96j4pvku",
+      "phase": [
+        "Working · step 1 · 10s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Working Pause Stop",
+      "stripButtons": [
+        "Pause",
+        "Stop"
+      ],
+      "buttons": [
+        "Summary",
+        "Stop"
+      ],
+      "lastTurn": "✻ Working · step 1 · 10s Working · step 1 · 10s Summary",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "G_phoneEnd": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792688889938_x96j4pvku",
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Recorded 26f18944ad20"
+      ],
+      "lastTurn": "✻ 1 step did not complete 3 steps completed · 1 failed Summary Opening the Vault on your screen. Searching it on screen. Listing the project documents. Done. The screen search came back: SCREEN_GONE. The documents were listed: yes. No specific claims to check against this turn's sources",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "G_phoneSummary": {
+      "screenGoneShown": true
+    }
+  },
+  "shots": {
+    "G_beforeClose": "01-G-live-drive-turn-moving-the-screen.png",
+    "G_phoneFollowing": "02-G-phone-following-the-detached-drive-turn.png",
+    "G_phoneEnd": "03-G-phone-handed-over-to-record.png",
+    "G_phoneSummary": "04-G-phone-summary-screen-step-not-run.png"
+  },
+  "runs": {
+    "G": {
+      "threadId": "ana-ri_1792688889938_x96j4pvku",
+      "runId": "run_9ad20bf6-3c28-4c69-ad22-7c150fb21848",
+      "liveDriveRequested": true,
+      "runPolicySent": "auto",
+      "afterClose": {
+        "http": 200,
+        "status": "running",
+        "stoppedReason": null,
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": "2026-10-22T17:08:13.315Z",
+        "unattendedStopsAt": "2026-10-22T17:23:20.703Z",
+        "sealed": null,
+        "releasedAt": null
+      },
+      "end": {
+        "http": 200,
+        "status": "finished",
+        "stoppedReason": "no_more_tools",
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": "2026-10-22T17:08:13.315Z",
+        "unattendedStopsAt": "2026-10-22T17:23:32.898Z",
+        "sealed": {
+          "recordId": "ab86981f-8ba1-45b8-9a5b-17e392a16167",
+          "assistantMessageId": 70
+        },
+        "releasedAt": "2026-10-22T17:08:37.568Z"
+      },
+      "summary": {
+        "http": 200,
+        "outcome": "answered",
+        "verdict": {
+          "ok": true
+        },
+        "steps": [
+          {
+            "label": "Opened a screen",
+            "status": "success",
+            "message": null,
+            "source": "screen"
+          },
+          {
+            "label": "Running an on-screen action",
+            "status": "not_run",
+            "message": "Not run: the page was closed, so AnA stopped driving the screen.",
+            "source": "screen"
+          },
+          {
+            "label": "Listed the Vault documents",
+            "status": "success",
+            "message": null,
+            "source": "vault"
+          }
+        ]
+      }
+    }
+  }
+}
