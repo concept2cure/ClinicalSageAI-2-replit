@@ -145,7 +145,8 @@ export function AdminSkills() {
 interface LiveRead<T> {
   data: T | null | undefined;
   loading: boolean;
-  error: unknown;
+  /* Optional, as useLiveData's DataState has it: required here, the library read did not typecheck. */
+  error?: unknown;
 }
 
 /** The platform library: filters, the list, and the selected skill's drawer. */
