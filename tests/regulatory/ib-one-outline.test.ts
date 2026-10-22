@@ -119,3 +119,24 @@ describe('the M4E clinical overview outline', () => {
     expect(co.sections.map((s) => s.number).at(-1)).toBe('2.5.7');
   });
 });
+
+/*
+ * Fourth slice, 2026-10-22: the Projects blueprint numbered the IB 1–9 with
+ * its front matter as 1–3, so a new IB project's section "4" was the Summary
+ * while every other IB tree's "4" is Nonclinical Studies. New projects now take
+ * the canonical body codes; existing projects keep theirs, because section
+ * codes are stored by value in section dependencies, history, authoring
+ * documents, chat proposals and rendered leaves.
+ */
+describe('a new IB project is numbered like the canonical outline', () => {
+  it('body sections carry the canonical numbers and headings; front matter sorts before them', async () => {
+    const { SECTION_BLUEPRINTS } = await import('../../shared/regulatory/project-bootstrap');
+    const secs = SECTION_BLUEPRINTS.ich_ib_sections.sections;
+    const body = secs.filter((s) => /^[1-9]$/.test(s.code)).map((s) => [s.code, s.title]);
+    expect(body).toEqual(canonical.sections.map((s) => [s.number, s.heading]));
+    const front = secs.filter((s) => !/^[1-9]$/.test(s.code));
+    expect(front.map((s) => s.title)).toEqual((canonical.frontMatter ?? []).map((s) => s.heading));
+    const codes = secs.map((s) => s.code);
+    expect([...codes].sort()).toEqual(codes); // project sections are listed ORDER BY section_code
+  });
+});
