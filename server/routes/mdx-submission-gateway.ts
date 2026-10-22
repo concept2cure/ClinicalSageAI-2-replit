@@ -30,9 +30,13 @@ import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/expor
 import {
   getGateway, listGateways, gatewayConfigurationStatus,
   CredentialError, GatewayError, TransportError, ValidationError,
+  PreTransmitBlockedError, UnverifiedTransportError,
   acknowledgementFilename,
   type Region, type GatewayName,
 } from '../services/submission-gateways';
+import {
+  ACTIVE_TRANSMITTAL_STATUSES,
+} from '../services/submission-gateways/fda-esg';
 import {
   executeGovernedTransmit,
   GovernedTransmitRefusal,
@@ -209,28 +213,77 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
   if (pid)    { args.push(pid);    filters.push(`t.program_id = $${args.length}`); }
   if (region) { args.push(region); filters.push(`t.region = $${args.length}`); }
   if (status) { args.push(status); filters.push(`t.status = $${args.length}`); }
-  args.push(limit);
+  const where = filters.join(' AND ');
 
   try {
     // submitted_by resolved to a person: a governed row shows who, not a bare id.
-    const { rows } = await pool.query(
-      `SELECT t.id, t.organization_id, t.program_id, t.package_id, t.region, t.gateway, t.format,
-              t.submission_type, t.transport, t.transmission_id, t.status, t.http_status,
-              t.error_class, t.error_message, t.bundle_size_bytes, t.submitted_by, t.submitted_at,
-              t.ack_received_at, t.completed_at, t.metadata,
-              u.name AS submitted_by_name
-         FROM submission_transmittals t
-         LEFT JOIN LATERAL public.actor_name(t.submitted_by) u ON TRUE
-        WHERE ${filters.join(' AND ')}
-        ORDER BY t.submitted_at DESC
-        LIMIT $${args.length}`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length, signing: { canSign: await canSignHere(req, orgId) } });
+    const [{ rows }, totals] = await Promise.all([
+      pool.query(
+        `SELECT t.id, t.organization_id, t.program_id, t.package_id, t.region, t.gateway, t.format,
+                t.submission_type, t.transport, t.transmission_id, t.status, t.http_status,
+                t.error_class, t.error_message, t.bundle_size_bytes, t.submitted_by, t.submitted_at,
+                t.ack_received_at, t.completed_at, t.metadata,
+                u.name AS submitted_by_name
+           FROM submission_transmittals t
+           LEFT JOIN LATERAL public.actor_name(t.submitted_by) u ON TRUE
+          WHERE ${where}
+          ORDER BY t.submitted_at DESC
+          LIMIT $${args.length + 1}`,
+        [...args, limit],
+      ),
+      transmittalTotals(orgId, { programId: pid, region, status }),
+    ]);
+    return ok(res, rows, {
+      count: rows.length,
+      ...totals,
+      hasMore: totals.total > rows.length,
+      signing: { canSign: await canSignHere(req, orgId) },
+    });
   } catch (err) {
     return serverError(res, log, 'list-trans', err);
   }
 });
+
+/**
+ * The log's totals over EVERY row the filters match, not the page returned:
+ * how many there are, by status, and how many the agency may still acknowledge
+ * and has not — an active status (pending, in transit, received: the
+ * duplicate-send lock's set) with no acknowledgement. A rejected, rolled-back or
+ * completed row awaits nothing; submitted_at is NOT NULL DEFAULT now(), so it
+ * cannot tell them apart. 2026-10-08 (W5/D7, sweep HS-8): meta was the page's
+ * row count alone, so the surface showed the newest 100 as the whole log and
+ * AnA was told what awaited acknowledgement from that page.
+ */
+/** The duplicate-send lock's statuses (fda-esg's SQL list), as a bind-parameter array. */
+const ACTIVE_STATUS_VALUES: readonly string[] = [...ACTIVE_TRANSMITTAL_STATUSES.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+
+/* Every filter and the status list are bind parameters, with no SQL text built
+   from values (ci:sql-interpolation, 2026-10-22); an absent filter is NULL. */
+async function transmittalTotals(
+  organizationId: number,
+  filters: { programId?: string; region?: string; status?: string },
+): Promise<{ total: number; byStatus: Record<string, number>; awaitingAcknowledgement: number }> {
+  const { rows } = await pool.query<{ status: string; n: string | number; awaiting: string | number }>(
+    `SELECT t.status, count(*) AS n,
+            count(*) FILTER (WHERE t.ack_received_at IS NULL AND t.status = ANY($5::text[])) AS awaiting
+       FROM submission_transmittals t
+      WHERE t.organization_id = $1
+        AND ($2::uuid IS NULL OR t.program_id = $2::uuid)
+        AND ($3::text IS NULL OR t.region = $3)
+        AND ($4::text IS NULL OR t.status = $4)
+      GROUP BY t.status`,
+    [organizationId, filters.programId ?? null, filters.region ?? null, filters.status ?? null, [...ACTIVE_STATUS_VALUES]],
+  );
+  const byStatus: Record<string, number> = {};
+  let total = 0;
+  let awaitingAcknowledgement = 0;
+  for (const r of rows) {
+    byStatus[r.status] = Number(r.n);
+    total += Number(r.n);
+    awaitingAcknowledgement += Number(r.awaiting);
+  }
+  return { total, byStatus, awaitingAcknowledgement };
+}
 
 /* ─── GET /api/mdx/gateways/transmittals/:id ─────────────────────── */
 
@@ -368,36 +421,58 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
       // The bundle the history holds under this sequence when another one was
       // recorded during the send ('sequence-conflict'); null otherwise.
       filedSequenceConflict: outcome.filedSequenceConflict,
+      // The checks the transmit guard ran that FAILED without blocking ("name:
+      // detail", as the sign record and AnA's result carry them), and its
+      // warnings, for an API caller of this route (production refuses it and no
+      // screen calls it since 2026-10-17). null = the guard reported nothing,
+      // never "all passed". 2026-10-08 (W5/D7, sweep HS-2).
+      preTransmitFailedChecks: outcome.preTransmitFailedChecks,
+      preTransmitWarnings: outcome.preTransmitWarnings,
       // filedSequenceWarning / contentWarning / ledgerWriteFailed + ledgerWarning,
       // each only when it applies (shared with AnA's k510 transmit).
       ...transmitOutcomeNotices(outcome),
     });
   } catch (err: unknown) {
-    // Honest pre-transmit refusals: nothing left the platform, so there is no
-    // transmittal, no acknowledgement and no agency identifier to report.
-    if (err instanceof GovernedTransmitRefusal) {
-      // The code rides in `details` so a surface can tell two 409s apart
-      // (ACTIVE_TRANSMITTAL from SEQUENCE_ALREADY_FILED) without parsing words.
-      return clientError(res, err.httpStatus, err.message, { code: err.code, ...err.details });
-    }
-    if (err instanceof GovernedTransmitInternalError) {
-      return serverError(res, log, err.stage, err.cause);
-    }
-    if (err instanceof CredentialError) {
-      return clientError(res, 412, err.message);
-    }
-    if (err instanceof ValidationError) {
-      return clientError(res, 422, err.message, { findings: err.findings });
-    }
-    if (err instanceof TransportError) {
-      return clientError(res, 502, err.message);
-    }
-    if (err instanceof GatewayError) {
-      return clientError(res, 502, err.message, { httpStatus: err.httpStatus, code: err.gatewayCode });
-    }
-    return serverError(res, log, 'transmit', err);
+    return transmitFailure(res, err);
   }
 });
+
+/** A transmit that did not complete, as the response that says why. */
+function transmitFailure(res: Response, err: unknown): Response {
+  // Honest pre-transmit refusals: nothing left the platform, so there is no
+  // transmittal, no acknowledgement and no agency identifier to report.
+  if (err instanceof GovernedTransmitRefusal) {
+    // The code rides in `details` so a surface can tell two 409s apart
+    // (ACTIVE_TRANSMITTAL from SEQUENCE_ALREADY_FILED) without parsing words.
+    return clientError(res, err.httpStatus, err.message, { code: err.code, ...err.details });
+  }
+  if (err instanceof GovernedTransmitInternalError) {
+    return serverError(res, log, err.stage, err.cause);
+  }
+  // The selected transport refuses before anything is sent (FDA ESG in REST
+  // mode, whose contract is unverified). Its own sentence says nothing was
+  // transmitted; as a 500 that sentence was lost. AnA maps it the same way.
+  // 2026-10-08 (W5/D7, sweep HS-4).
+  if (err instanceof UnverifiedTransportError) {
+    return clientError(res, 412, err.message, { code: 'TRANSPORT_NOT_VERIFIED', transmitted: false });
+  }
+  if (err instanceof CredentialError) {
+    return clientError(res, 412, err.message);
+  }
+  if (err instanceof ValidationError) {
+    // The guard's own refusal names itself, so a surface does not read it as
+    // the structural gate's. 2026-10-08 (W5/D7, sweep HS-3).
+    const source = err instanceof PreTransmitBlockedError ? { code: err.code } : {};
+    return clientError(res, 422, err.message, { ...source, findings: err.findings });
+  }
+  if (err instanceof TransportError) {
+    return clientError(res, 502, err.message);
+  }
+  if (err instanceof GatewayError) {
+    return clientError(res, 502, err.message, { httpStatus: err.httpStatus, code: err.gatewayCode });
+  }
+  return serverError(res, log, 'transmit', err);
+}
 
 /* ─── GET /api/mdx/gateways/transmittals/:id/status ──────────────── */
 
@@ -526,7 +601,7 @@ router.post('/gateways/transmittals/:id/technical-rejection', requireEditorAcces
   // Signing authority before the password, as transmit asks it.
   const authority = await checkSigningAuthority(userId, orgId);
   if (authority) return signingAuthorityRefused(res, authority);
-  // Then the same high-risk re-auth gate as transmit and rollback.
+  // Then the same high-risk re-auth gate as transmit.
   const reauthResult = await verifyReauth(userId, p.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');

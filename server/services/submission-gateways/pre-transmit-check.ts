@@ -32,7 +32,7 @@
  */
 
 import type { Region, SubmissionBundle } from './types';
-import { getGatewaySizeLimitOnFile, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
+import { getGatewaySizeLimitOnFile, FDA_OVERSIZE_REMEDY, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
 import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
@@ -216,14 +216,17 @@ function checkGatewaySize(
       (unsourced ? ` (not enforced: ${unsourced})` : ''),
   };
   if (sizeOk) return { check };
-  const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
+  // Decimal GB (10^9 bytes): FDA states its 10 GB in it, and a figure printed in
+  // binary units read "9.31 GB" for that limit (2026-10-08, W5/D7, sweep VP-6).
+  const gb = (n: number) => (n / 1000 ** 3).toFixed(2);
   return unsourced
     ? { check, warning: `Package is ${gb(sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ${R} gateway. Not enforced: ${unsourced}.` }
     : {
         check,
         blocker:
           `Package is ${gb(sizeBytes)} GB, over the ${R} gateway limit of ${gb(limit)} GB. ` +
-          "Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.",
+          // FDA's own remedy, the one its regional finding (FDA-ESG-003) gives (sweep VP-6).
+          (region === 'fda' ? FDA_OVERSIZE_REMEDY : "Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway."),
       };
 }
 
@@ -254,10 +257,13 @@ function checkPdfA(
     name: 'pdfa-submission-grade',
     // Plain PDF fails this check only where PDF/A was chosen.
     passed: notConverted === 0 || !pdfa.required,
+    // 2026-10-08 (sweep VP-3): the not-required text said "the agency accepts
+    // plain PDF 1.4–1.7" of leaves this check never reads, and they shipped as
+    // PDF 1.3. The version is judged at assembly (LEAF-PDF-VERSION), not here.
     detail:
       `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} plain PDF` +
       asIssued +
-      (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required: the agency accepts plain PDF 1.4–1.7.'),
+      (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required.'),
   };
   if (!(isProd && pdfa.required && notConverted > 0)) return { check };
   return {
