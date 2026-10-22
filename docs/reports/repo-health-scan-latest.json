@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T08:11:47.934Z",
+  "generatedAt": "2026-10-22T09:59:36.294Z",
   "git": {
-    "sha": "5e71c9e8c5030a550ff89b6ede00a1b5ac689e4a",
+    "sha": "dcb6abe903ae2e25ff0e735c7560df11a3a85e5f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 240,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 57,
+    "largeFilesByBytes": 56,
     "largeFilesByLines": 113
   },
   "findings": {
@@ -2408,12 +2408,12 @@
         "bytes": 119001
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 117305
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "bytes": 117106
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 116737
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2450,10 +2450,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "bytes": 108529
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 104577
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2651,7 +2647,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2268
+        "lines": 2247
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
@@ -2738,10 +2734,6 @@
         "lines": 2047
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2035
-      },
-      {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
       },
@@ -2764,6 +2756,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1942
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1940
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
@@ -2950,7 +2946,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 58,
-      "largeByBytes": 13,
+      "largeByBytes": 12,
       "largeByLines": 17
     },
     {
