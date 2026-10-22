@@ -1,0 +1,11 @@
+Mutations against submissionCenterBuilderSection.test.tsx (each applied alone, file restored after):
+RED  applied on every visit (no once-guard): ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+RED  section kept for any tab: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+RED  no length bound: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+RED  line not focused: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+RED  frozen sequence offered placement: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+RED  failed read treated as no leaf: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+RED  form not prefilled: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+row code compared as written (after adding the m1.3.1 case): RED
+finding code compared as written: RED
+(Before the m1.3.1 case was added, 'row code compared as written' survived: the fixture's leaf code was already canonical. The case was added for that reason.)

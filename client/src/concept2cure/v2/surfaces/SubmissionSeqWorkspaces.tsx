@@ -49,6 +49,8 @@ import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import { CompanySubmissionDocuments } from './CompanySubmissionDocuments';
 import { useSubmissionReadSession, useSubmissionScopedRows, type SubmissionReadSession } from './submissionScopedRead';
+import { useBuilderSectionArrival } from './builderSectionArrival';
+import type { BuilderSection } from './submissionNavTarget';
 import {
   FailedRunNote,
   ShadowPresenceNote,
@@ -775,8 +777,10 @@ function CoauthorDocField({ list, doc, onChoose, disabled }: { list: CoauthorDoc
 /** Place a Co-Author document into the sequence as a leaf — a REAL persisted
  *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
  *  document, no leaf: the picker never invents a document to place. */
-function AddLeafForm({ seq, onDone, isCurrent }: {
+function AddLeafForm({ seq, onDone, isCurrent, placeAt }: {
   seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void; isCurrent: () => boolean;
+  /** Open at this section: the Builder was sent here by a readiness finding (F18). */
+  placeAt?: { code: string | null } | null;
 }) {
   const [open, setOpen] = React.useState(false);
   const list = useCoauthorDocList(open);
@@ -803,6 +807,12 @@ function AddLeafForm({ seq, onDone, isCurrent }: {
     if ((normalizeCtdCode(value) ?? value.trim()) !== (normalizeCtdCode(section) ?? section.trim())) clearStudy();
     setSection(value);
   };
+  React.useEffect(() => {
+    if (!placeAt) return;
+    setOpen(true);
+    setSection(placeAt.code ?? '');
+    setStudy({ studyId: '', stfFileTag: '' });
+  }, [placeAt]);
   const place = async () => {
     if (!isCurrent() || !live.current || pending.current || disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid) return;
     pending.current = true;
@@ -968,6 +978,10 @@ interface BuilderWorkspaceProps {
   session?: SubmissionReadSession;
   scopeContext?: string;
   isScopeCurrent?: () => boolean;
+  /** The section a readiness finding's act names (F18), applied once. */
+  section?: BuilderSection | null;
+  /** The Builder used `section`: its owner stops passing it. */
+  onSectionApplied?: () => void;
 }
 
 /** Actor/selection generations remount owned state even on A → B → A. */
@@ -982,6 +996,24 @@ export function BuilderWorkspace(props: BuilderWorkspaceProps) {
   return <BuilderWorkspaceForScope key={`${context}:${generation}`} {...props} session={session} scopeContext={context} isScopeCurrent={isScopeCurrent} />;
 }
 
+/** The Builder's leaf table columns; Actions only while leaves can change. */
+function LeafTableHead({ locked }: { locked: boolean }) {
+  return (
+    <thead>
+      <tr>
+        <th>Section</th>
+        <th>Title</th>
+        <th>Operation</th>
+        <th>Granularity</th>
+        <th>Study id</th>
+        <th>STF file-tag</th>
+        <th>Source document</th>
+        {!locked && <th>Actions</th>}
+      </tr>
+    </thead>
+  );
+}
+
 function builderLeafReadPath(sequenceId: number, submission?: SubLike) {
   const selection = new URLSearchParams();
   if (submission) selection.set('submissionId', String(submission.id));
@@ -989,7 +1021,7 @@ function builderLeafReadPath(sequenceId: number, submission?: SubLike) {
   return `/api/submissions/sequences/${sequenceId}/leaves${selection.size ? `?${selection}` : ''}`;
 }
 
-function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, session, scopeContext, isScopeCurrent }: BuilderWorkspaceProps & {
+function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, session, scopeContext, isScopeCurrent, section, onSectionApplied }: BuilderWorkspaceProps & {
   session: SubmissionReadSession; scopeContext: string; isScopeCurrent: () => boolean;
 }) {
   const [bump, setBump] = React.useState(0);
@@ -1000,6 +1032,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
   const leaves = useSubmissionScopedRows<LeafRow>(leavesPath, scopeContext, bump, session, isRowsWith<LeafRow>('id', 'sectionCode'));
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const locked = seq.status === 'frozen' || seq.status === 'dispatched';
+  const arrival = useBuilderSectionArrival({ section, leaves, seq, locked, onApplied: onSectionApplied });
   const afterWrite = (n: Notice, effect: LeafWriteEffect) => {
     if (!isScopeCurrent() || !leaves.isCurrent()) return;
     // A sequence refresh unmounts this pane; keep its confirmed state-change
@@ -1017,6 +1050,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
       </div>
       <div className="pj-card-b">
         <VerdictNote notice={notice} />
+        {arrival.line}
         {leaves.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading the sequence&#39;s leaves…
@@ -1036,22 +1070,14 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           />
         ) : (
           <table className="ub-inv">
-            <thead>
-              <tr>
-                <th>Section</th>
-                <th>Title</th>
-                <th>Operation</th>
-                <th>Granularity</th>
-                <th>Study id</th>
-                <th>STF file-tag</th>
-                <th>Source document</th>
-                {!locked && <th>Actions</th>}
-              </tr>
-            </thead>
+            <LeafTableHead locked={locked} />
             <tbody>
               {leaves.rows.map((l) => (
-                <tr key={l.id}>
-                  <td className="sc-mono">{l.sectionCode}</td>
+                <tr key={l.id} data-section-target={arrival.marks(l.sectionCode) ? 'true' : undefined}>
+                  <td className="sc-mono">
+                    {l.sectionCode}
+                    {arrival.marks(l.sectionCode) && <span className="sp-row-s"> · Named by readiness</span>}
+                  </td>
                   <td>
                     <b>{l.title}</b>
                   </td>
@@ -1083,7 +1109,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           </div>
         ) : !leaves.loading && !leaves.error ? (
           <>
-            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} />
+            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} />
             <BuilderSources onNav={onNav} />
           </>
         ) : null}

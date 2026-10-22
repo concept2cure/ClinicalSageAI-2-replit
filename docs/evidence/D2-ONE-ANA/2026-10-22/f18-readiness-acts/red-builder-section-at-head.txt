@@ -1,0 +1,21 @@
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a place act opens the placement form with Section filled in, and focus is on the line saying so 5414ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a place act with no section opens the form empty and says which sequence it is for 5023ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a leaf act marks the placed leaf at that section, matched by its CTD code 5120ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a leaf act whose leaf is no longer placed marks nothing and says so 5097ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > is applied once: back on the Builder after another tab, the form is closed and nothing is named 5018ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a frozen sequence says no leaf can be placed in it 5017ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a failed leaves read says the section was not opened 5018ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the section a sender names is read, not trusted > keeps a known act with a code-length section on a named sequence in the Builder 2ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the section a sender names is read, not trusted > drops an unknown act, an over-long code, a leaf act with no code, a section with no sequence, and a section for another tab 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a place act opens the placement form with Section filled in, and focus is on the line saying so
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a place act with no section opens the form empty and says which sequence it is for
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a leaf act marks the placed leaf at that section, matched by its CTD code
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a leaf act whose leaf is no longer placed marks nothing and says so
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > is applied once: back on the Builder after another tab, the form is closed and nothing is named
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a frozen sequence says no leaf can be placed in it
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a failed leaves read says the section was not opened
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the section a sender names is read, not trusted > keeps a known act with a code-length section on a named sequence in the Builder
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the section a sender names is read, not trusted > drops an unknown act, an over-long code, a leaf act with no code, a section with no sequence, and a section for another tab
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
