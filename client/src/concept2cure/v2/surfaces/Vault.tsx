@@ -721,6 +721,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const [staging, setStaging] = useState<Staging | null>(null);
   /* The header's drop zone, so Coverage's "upload here" opens the same picker. */
   const uploadControls = React.useRef<FileDropZoneControls | null>(null);
+  /* Closing the upload list returns focus to the button that opened it (a11y review, 2026-10-22). */
+  const addFilesButton = React.useRef<HTMLButtonElement | null>(null);
   const patchStaged = (key: string, patch: Partial<StagedFile>) =>
     setStaging((st) => st && { ...st, rows: st.rows.map((r) => (r.key === key ? { ...r, ...patch } : r)) });
   const uploadStaged = async () => {
@@ -893,6 +895,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
       .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
   }, [cabinet]);
+  /* An upload may name only a folder of this program's own view: the cabinet's
+     "filed under another view" group is listed for review, and ingest refuses it. */
+  const uploadFolders = useMemo(() => cabinetFolders.filter((f) => f.id !== 'other-view'), [cabinetFolders]);
   const [moveTarget, setMoveTarget] = useState('');
   /* The uploaded documents a person may file at a missing section (VR-15). */
   const coverageDocuments = useMemo<CoverageDocument[]>(() => {
@@ -1316,12 +1321,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             the picker onto a line of its own with the buttons below it. */}
         <select
           className="c2c-input"
-          aria-label="Document type for uploaded files"
+          aria-label="Document type for files added next"
           value={docType}
           onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
           disabled={uploading}
           data-testid="vault-upload-type"
-          title="Document type for uploaded files"
+          title="Document type for files added next; each file's own row can change it"
           style={{ width: 'auto', maxWidth: 260 }}
         >
           {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
@@ -1339,8 +1344,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           accept={VAULT_UPLOAD_ACCEPT}
           directory
           activation="controls"
-          disabled={uploading || !projectId}
-          label="Upload documents to the Vault"
+          disabled={!projectId}
+          label="Add documents to the Vault"
           testId="vault-upload-zone"
           controlsRef={uploadControls}
           onFiles={(picked) => setStaging((st) => stageFiles(picked, docType, st ?? undefined))}
@@ -1348,8 +1353,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           {({ chooseFiles, chooseFolder }) => (
             <>
               <button
+                ref={addFilesButton}
                 className="sp-primary"
-                disabled={uploading || !projectId}
+                disabled={!projectId}
                 onClick={chooseFiles}
                 title={
                   projectId
@@ -1358,10 +1364,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 }
                 data-testid="vault-upload-button"
               >
-                {I.upload} {uploading ? 'Uploading…' : 'Upload'}
+                {I.upload} Add files
               </button>
-              <button className="sp-ask" disabled={uploading || !projectId} onClick={chooseFolder} data-testid="vault-upload-folder-button">
-                {I.folder} Upload a folder
+              <button className="sp-ask" disabled={!projectId} onClick={chooseFolder} data-testid="vault-upload-folder-button">
+                {I.folder} Add a folder
               </button>
               <span className="vd-upload-zone-t">or drop files or a folder here</span>
             </>
@@ -1387,12 +1393,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       {staging && canWrite ? (
         <VaultUploadStaging
           staging={staging}
-          folders={cabinetFolders}
+          folders={uploadFolders}
           uploading={uploading}
           onChange={patchStaged}
           onRemove={(key) => setStaging((st) => st && { ...st, rows: st.rows.filter((r) => r.key !== key) })}
           onUpload={() => void uploadStaged()}
-          onDone={() => setStaging(null)}
+          onDone={() => { setStaging(null); setTimeout(() => addFilesButton.current?.focus(), 0); }}
         />
       ) : null}
       {(uploadNote || downloadNote) && (
@@ -1564,7 +1570,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 hint={
                   vault?.pendingStore
                     ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
-                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
+                    : "Nothing has been filed into this project's vault yet. Add files — each one is recorded in the folder you choose for it, or classified and filed to a suggested folder for you to confirm — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
                 }
               />
             </div>

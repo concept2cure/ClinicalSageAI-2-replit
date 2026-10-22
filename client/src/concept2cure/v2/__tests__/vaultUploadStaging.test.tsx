@@ -63,33 +63,35 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
     expect(within(panel).getAllByTestId('vault-stage-row')).toHaveLength(1);
     const skipped = within(panel).getByTestId('vault-stage-skipped');
     expect(skipped.textContent).toContain('tool.exe: the Vault does not take .exe');
-    expect(skipped.textContent).toContain('.DS_Store: a system file, not a document');
+    expect(skipped.textContent).toContain('.DS_Store: a hidden or system file');
     expect(sent).toHaveLength(0);
     expect(within(panel).getByRole('button', { name: /Upload 1 file/ })).toBeTruthy();
   });
 
-  it("sends each row's title, type, version, classification and the folder chosen, with its kind and section", async () => {
-    const sent = stubIngest([{ status: 201, body: { success: true, document: { version: '2.1' }, filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', needsReview: false } } }]);
+  it("sends each row's title, type, classification and the folder chosen, with its kind and section, and no version", async () => {
+    const sent = stubIngest([{ status: 201, body: { success: true, document: { version: '1.0' }, filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false } } }]);
     const panel = await choose([new File(['a'], 'stability-24m.pdf')]);
     const row = within(panel).getByTestId('vault-stage-row');
     fireEvent.change(within(row).getByLabelText('Title'), { target: { value: 'Stability summary, 24 months' } });
     fireEvent.change(within(row).getByLabelText('Document type'), { target: { value: 'MODULE_3' } });
-    fireEvent.change(within(row).getByLabelText('Version'), { target: { value: '2.1' } });
+    expect(within(row).queryByLabelText('Version')).toBeNull();
     fireEvent.change(within(row).getByLabelText('Classification'), { target: { value: 'CONFIDENTIAL' } });
-    expect(within(row).queryByLabelText('CTD section')).toBeNull();
+    expect(within(row).queryByLabelText('CTD section (optional)')).toBeNull();
     const folder = within(row).getByLabelText('Folder') as HTMLSelectElement;
-    expect([...folder.options].map((o) => o.textContent)).toEqual(['Let the Vault suggest a folder', 'Module 3 · Quality', 'Agency correspondence']);
+    expect([...folder.options].map((o) => o.textContent)).toEqual(['No folder chosen: the Vault suggests one, or leaves it Unfiled', 'Module 3 · Quality', 'Agency correspondence']);
     fireEvent.change(folder, { target: { value: 'module-3' } });
-    fireEvent.change(within(row).getByLabelText('Evidence kind'), { target: { value: 'cmc' } });
-    fireEvent.change(within(row).getByLabelText('CTD section'), { target: { value: '3.2.P.8' } });
+    expect(within(row).getByText('Recorded as filed by you.')).toBeTruthy();
+    fireEvent.change(within(row).getByLabelText('Evidence kind (optional)'), { target: { value: 'cmc' } });
+    fireEvent.change(within(row).getByLabelText('CTD section (optional)'), { target: { value: '3.2.P.8' } });
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(fields(sent[0])).toEqual({
       documentCode: 'stability-24m.pdf', documentTitle: 'Stability summary, 24 months', documentType: 'MODULE_3',
-      version: '2.1', classification: 'CONFIDENTIAL', folderId: 'module-3', evidenceKind: 'cmc', ctdSection: '3.2.P.8',
+      classification: 'CONFIDENTIAL', folderId: 'module-3', evidenceKind: 'cmc', ctdSection: '3.2.P.8',
     });
-    expect(await within(row).findByText('Recorded as v2.1 · Module 3 · Quality')).toBeTruthy();
-    expect(within(panel).getByRole('button', { name: 'Done' })).toBeTruthy();
+    // The person's folder is said as their filing, not as a suggestion.
+    expect(await within(row).findByText('Recorded as v1.0 · Module 3 · Quality, filed by you')).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: 'Close' })).toBeTruthy();
   });
 
   it('leaves every blank field to the Vault, and the folder to its classifier', async () => {
@@ -110,7 +112,11 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
     const rows = within(panel).getAllByTestId('vault-stage-row');
     expect(await within(rows[1]).findByText('Not recorded: The file failed the malware scan')).toBeTruthy();
-    expect(within(rows[0]).getByText('Recorded as v1.0')).toBeTruthy();
+    // A file the classifier could not place says so; it does not read as filed.
+    expect(within(rows[0]).getByText('Recorded as v1.0 · Unfiled, needs a folder')).toBeTruthy();
+    expect(within(panel).getByTestId('vault-stage-live').textContent).toBe('1 file recorded. 1 not recorded: b.pdf.');
+    // A refused row can still be removed.
+    expect(within(rows[1]).getByRole('button', { name: 'Remove b.pdf from this upload' })).toBeTruthy();
     fireEvent.click(within(panel).getByRole('button', { name: 'Try again for 1 file' }));
     await waitFor(() => expect(sent).toHaveLength(3));
     expect(sent[2].get('documentCode')).toBe('b.pdf');
@@ -124,7 +130,44 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
     const panel = await choose([a, b]);
     const rows = within(panel).getAllByTestId('vault-stage-row');
     expect(within(rows[0]).queryByText(/same name/)).toBeNull();
-    expect(within(rows[1]).getByText(/Another file in this upload has the same name/)).toBeTruthy();
+    expect(within(rows[1]).getByText(/Another file in this upload has this name\. The Vault identifies a document by its file name/)).toBeTruthy();
     expect(within(rows[1]).getByText('amendment-2/protocol.pdf')).toBeTruthy();
+    expect(within(rows[1]).getByText('Recorded in the Vault as protocol.pdf; the folder it came from is not kept.')).toBeTruthy();
+  });
+
+});
+
+describe('the staged list is usable without sight or a pointer (accessibility review, 2026-10-22)', () => {
+  it('opens with focus on the list and says what was added; a removed row hands focus on; Close returns it', async () => {
+    stubIngest([]);
+    const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf'), new File(['c'], 'tool.exe')]);
+    expect(document.activeElement).toBe(within(panel).getByRole('heading', { name: 'Files to upload' }));
+    expect(within(panel).getByTestId('vault-stage-live').textContent).toBe('2 files added to the upload list. 1 file not uploaded.');
+    fireEvent.click(within(panel).getByRole('button', { name: 'Remove a.pdf from this upload' }));
+    await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole('button', { name: 'Remove b.pdf from this upload' })));
+    fireEvent.click(within(panel).getByRole('button', { name: 'Remove b.pdf from this upload' }));
+    await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole('heading', { name: 'Files to upload' })));
+    fireEvent.click(within(panel).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByTestId('vault-upload-staging')).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('vault-upload-button')));
+  });
+
+  it('names each row by its file, offers only this view’s folders, and moves focus to Close once the upload settles', async () => {
+    stubIngest([]);
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') {
+        const tree = cabinetTree();
+        (tree[0].children as unknown[]).push({ id: 'cab-other-view', code: '', label: 'Filed under another view · needs review', children: [] });
+        return ok(vaultPayload({ tree }));
+      }
+      return ok({ success: true, data: {} });
+    });
+    const panel = await choose([new File(['a'], 'cover-letter.pdf')]);
+    const group = within(panel).getByRole('group', { name: 'cover-letter.pdf' });
+    const folder = within(group).getByLabelText('Folder') as HTMLSelectElement;
+    expect([...folder.options].map((o) => o.value)).not.toContain('other-view');
+    expect(within(group).queryByText('Internal')).toBeNull();
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole('button', { name: 'Close' })));
   });
 });

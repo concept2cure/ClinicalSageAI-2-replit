@@ -58,9 +58,9 @@ describe('reading what was dropped', () => {
 });
 
 describe('the zone', () => {
-  it('as a button: Enter chooses files, and a drop of a folder reaches the caller with paths', async () => {
+  it('as a button: Enter chooses files, and where folders are offered a dropped folder reaches the caller with paths', async () => {
     const onFiles = vi.fn((_p: PickedFiles) => {});
-    render(<FileDropZone accept=".pdf" label="Add sources" onFiles={onFiles}>{() => <span>Drop here</span>}</FileDropZone>);
+    render(<FileDropZone accept=".pdf" directory label="Add sources" onFiles={onFiles}>{() => <span>Drop here</span>}</FileDropZone>);
     const zone = screen.getByRole('button', { name: 'Add sources' });
     const input = screen.getByLabelText('Add sources: choose files') as HTMLInputElement;
     const click = vi.spyOn(input, 'click');
@@ -85,6 +85,15 @@ describe('the zone', () => {
     const click = vi.spyOn(folder, 'click');
     fireEvent.click(screen.getByRole('button', { name: 'Upload a folder' }));
     expect(click).toHaveBeenCalledTimes(1);
+  });
+
+  it('where folders are not offered (the Data Room), a drop gives the dropped files only, as before', async () => {
+    const onFiles = vi.fn((_p: PickedFiles) => {});
+    render(<FileDropZone accept=".pdf" label="Add sources" onFiles={onFiles}>{() => null}</FileDropZone>);
+    const f = new File(['x'], 'protocol.pdf');
+    fireEvent.drop(screen.getByRole('button', { name: 'Add sources' }), { dataTransfer: { items: [{ webkitGetAsEntry: () => STUDY }], files: [f] } });
+    await waitFor(() => expect(onFiles).toHaveBeenCalledTimes(1));
+    expect(onFiles.mock.calls[0][0]).toEqual({ files: [{ file: f, path: 'protocol.pdf' }], unread: 0 });
   });
 
   it('a plain file drop with no entry API still reaches the caller', async () => {

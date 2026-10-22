@@ -34,12 +34,47 @@ Gap 7, work item 1 of `docs/design/VEEVA_GAP_2026-10-22.md`: "Fix the uploader: 
   - two modes: the whole zone is the button (the Data Room, unchanged for its users and tests), or the zone is a labelled drop group whose own buttons choose files or a folder (Vault), so no control sits inside a button.
   - The Data Room now uses it, and its inline copy is gone.
 - **Staged rows.** `VaultUploadStaging.tsx` shows one row per gathered file before anything is sent:
-  - each row offers the title, document type (defaulting to the batch type), version, classification and folder; the evidence kind and CTD section appear once a folder is chosen;
+  - each row offers the title, document type (defaulting to the header's type for files added next), classification and folder; the evidence kind and CTD section appear once a folder is chosen;
+  - no version is offered: a new document is 1.0, and later versions are numbered by the Vault when they are added;
   - a blank field is not sent, so the Vault's default applies;
-  - a file the Vault does not take, a system file, or one over 50 MB is listed as not uploaded, with the reason;
-  - a second file with the same name is flagged before it is sent;
-  - each row then says "Recorded as vN · folder", "Not recorded: <the server's reason>" or "Already in the Vault", and a refused row can be tried again on its own.
-- **The hook.** `useVaultUpload.ts` takes `fields` per file, appended only when given (the filing details only with a folder), and an `onFileStatus` callback. Sequential upload, the per-file outcome note and the 409 → new-version offer are unchanged.
+  - a file the Vault does not take, a hidden or system file, an empty file, or one over 50 MB is listed as not uploaded, with the reason;
+  - a second file with the same name is flagged before it is sent, and a row whose path differs from its name says the folder it came from is not kept;
+  - each row then says "Recorded as v1.0 · Module 3 · Quality, filed by you", "…, suggested, awaiting confirmation" or "… · Unfiled, needs a folder", or "Not recorded: <the server's reason>", or that the bytes were already recorded and nothing was changed;
+  - a refused row can be removed, or tried again on its own.
+- **The hook.** `useVaultUpload.ts` takes `fields` per file, appended only when given (the filing details only with a folder), and an `onFileStatus` callback.
+  - It now reads the server's `placementStatus`, so a folder the person chose is said as their filing, both on the row and in the batch note ("Filed … as you chose"). It is no longer called "Auto-filed … suggested until confirmed".
+  - Sequential upload and the 409 → new-version offer are unchanged.
+
+## What the two reviews changed (2026-10-22)
+
+The first commit (`cb472b8c0`) was reviewed independently for accessibility and for Part 11 UX and copy before it was pushed. Every blocker and most advisories are fixed in the second commit; `05-red-review-fixes.txt` shows its cases failing on the first.
+
+- **Part 11 F1 (blocker): no client version.** A typed version under an existing file name would have recorded a second, unlinked version of that document. A non-numeric one would have stopped the Vault from numbering it later (`nextMajorVersion`, `vault-version-checkin.ts`). The field is gone, and the hook sends no version.
+- **Part 11 F2: placement in words.** "Filed by you", "suggested, awaiting confirmation" and "Unfiled, needs a folder", where the row and the note had made no distinction and the note called the person's own filing a suggestion.
+- **Part 11 F3 (UI half): a same-bytes re-upload says nothing was changed, including the details above.**
+- **Part 11 F5 and accessibility A10: the header type picker is labelled for what it does** ("Document type for files added next").
+- **Part 11 F6 and F8: copy.**
+  - The duplicate-name warning says what actually happens.
+  - Names are compared exactly, as the code is.
+  - A row with a folder path says only the name is kept.
+  - "No folder chosen: the Vault suggests one, or leaves it Unfiled".
+  - One "Internal (default)".
+  - "Close" once anything is recorded.
+  - "Add files" and "Add a folder", because the header buttons choose and the panel records.
+  - The not-read count is per drop or selection.
+  - A hidden or system file, an empty file, and sizes to one decimal.
+  - The cabinet's "filed under another view" group, which ingest refuses, is no longer offered as a folder.
+- **Accessibility B1-B6:**
+  - Each row is a group named by its file, with its status as the group's description.
+  - Status is plain text, and one panel-level polite live region says what was added, what is uploading and what became of it.
+  - Opening focuses the panel's heading, now a real `<h3>`.
+  - Removing a row moves focus to the next row's Remove, or the previous one's, or the heading.
+  - The Upload button stays mounted during an upload (`aria-disabled`), and focus moves to Close when it settles.
+  - Closing returns focus to Add files.
+  - Also from the review: wrapping paths instead of ellipsis, a visible disabled state, `role="list"`, and a drag border at `--accent-200`.
+- **Non-a11y defects the accessibility review found:**
+  - row keys are now serial, so a removed and re-added file cannot share a key;
+  - the Data Room's zone reads folders only where folders are offered, so its behaviour, and the absence of a 500-file cap there, is unchanged.
 
 ## Evidence
 
@@ -49,12 +84,24 @@ Gap 7, work item 1 of `docs/design/VEEVA_GAP_2026-10-22.md`: "Fix the uploader: 
 | `02-green-client.txt` | Every client suite naming Vault, the upload hook, ProjectHome, the drop zone or Coverage: 63 files, 482 tests. |
 | `03-mutation-client.txt` | The hook stops sending the folder, and so its kind and section: the two cases that assert it fail. |
 | `04-green-db.txt` | Real PostgreSQL 16 (`RLS_ENFORCE=on`, `app_service`), in two runs. |
+| `05-red-review-fixes.txt` | The review-driven cases against the first commit `cb472b8c0`: 9 fail. |
 
 In `04-green-db.txt`:
 - A file sent through the route with its row's fields is recorded with exactly those, with placement `confirmed` and `placed_by` the uploader (`vault-ingest.dbtest.ts`, 15/15).
 - The vocabulary refusals still hold (`vault-filing-vocabulary.dbtest.ts`, 6/6). It runs on a local recorded fixture database, `platform_ci_vault_fixture_local`, cloned from the migrated test database and re-migrated. The suite's guard admits that name pattern through `C2C_VAULT_LEGACY_FIXTURE_DATABASE`.
 
 ## What remains
+
+- **The route accepts a client version unchecked** (Part 11 review F1, server half). `POST /api/vault/ingest` still takes `version` from an API caller. Under a code that already has versions, and without `supersedesDocumentId`, that records an unlinked sibling. The service cannot restrict the format, because eSTAR and authoring retain non-numeric versions through it. The route-level control (refuse a version for an existing code unless it is added as a new version) is its own slice.
+- **A same-bytes re-upload does not report a different folder, kind or section** (F3, server half): `reuploadDiffers` compares title, type and classification only.
+- **Who filed a document, and when, is stored but not shown** (F4). The read model returns no `placed_by` or `placed_at`.
+- **No reason is captured at ingest** (F7). The review judged that correct for a first upload. If one is added, it goes in the ingest schema and audit row too.
+- **Accessibility advisories not taken:**
+  - the Data Room zone's name drops its explanatory sentence (A2, carried over unchanged);
+  - fields are not marked invalid on a refusal (A3);
+  - there is no "set for all rows" (A5);
+  - reasons for disabled header buttons live in `title` (A9);
+  - the CTD section is offered in every view.
 
 - **Per-file byte progress** (MR-08 Stage 6 step 2, XHR at concurrency 2). Rows show queued, uploading, recorded or refused, but not a percentage.
 - **Manifest import** (a spreadsheet of fields matched to files), connectors, metadata filters and saved views: gap 7's absent items.

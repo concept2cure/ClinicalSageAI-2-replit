@@ -7,9 +7,13 @@
  * so the zone never drops a file silently. Each file comes with its path
  * inside the folder it came from ("study-001/ae.xpt"), or its own name.
  *
- * A folder is read through the browser's entry API (`webkitGetAsEntry`, every
- * current engine) when dropped, and through `webkitdirectory` when chosen.
- * Reading stops at `maxFiles`, and the caller is told how many were not read.
+ * Where folders are offered (`directory`), a folder is read through the
+ * browser's entry API (`webkitGetAsEntry`, every current engine) when dropped,
+ * and through `webkitdirectory` when chosen. Reading stops at `maxFiles`, and
+ * the caller is told how many were not read. Without `directory` a drop gives
+ * the dropped files only, as the Data Room always had. While `disabled`, a drop
+ * is taken (so the browser does not open the file) and ignored: the controls
+ * say why nothing can be added.
  *
  * @module client/src/concept2cure/v2/FileDropZone
  */
@@ -107,7 +111,7 @@ export function FileDropZone({ accept, directory = false, maxFiles = DEFAULT_MAX
     e.preventDefault();
     setDragging(false);
     if (disabled) return;
-    const items = Array.from(e.dataTransfer?.items ?? []);
+    const items = directory ? Array.from(e.dataTransfer?.items ?? []) : [];
     const entries = items
       .map((item) => (item as { webkitGetAsEntry?: () => FsEntry | null }).webkitGetAsEntry?.() ?? null)
       .filter((entry): entry is FsEntry => entry !== null);

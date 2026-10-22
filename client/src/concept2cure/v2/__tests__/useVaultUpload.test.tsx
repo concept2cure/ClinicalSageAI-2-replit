@@ -47,7 +47,7 @@ describe('useVaultUpload — filing-aware outcome copy', () => {
 
     expect(outcome.succeeded).toEqual(['stability-summary.pdf']);
     expect(outcome.filings).toEqual([
-      { name: 'stability-summary.pdf', folderLabel: 'Module 3 · Quality', needsReview: false },
+      { name: 'stability-summary.pdf', folderLabel: 'Module 3 · Quality', needsReview: false, placement: 'suggested' },
     ]);
     await waitFor(() => expect(latest!.note).toBeTruthy());
     expect(latest!.note!.tone).toBe('ok');
@@ -181,28 +181,46 @@ describe('useVaultUpload — each file carries the fields its row gave (gap 7.1)
     return sent;
   }
 
-  it('sends each file its own title, type, version, classification and filing', async () => {
+  it('sends each file its own title, type, classification and filing, and never a version', async () => {
     const sent = capture();
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
     await latest!.upload([new File(['a'], 'risk-file.pdf'), new File(['b'], 'notes.txt')], {
       documentType: 'OTHER',
       fields: [
-        { title: 'Risk management file', documentType: 'REPORT', version: '2.1', classification: 'CONFIDENTIAL',
+        { title: 'Risk management file', documentType: 'REPORT', classification: 'CONFIDENTIAL',
           folderId: 'eng', evidenceKind: 'report', ctdSection: '3.2.P.8' },
-        { title: '  ', version: ' ', evidenceKind: 'report', ctdSection: '3.2.P.8' },
+        { title: '  ', evidenceKind: 'report', ctdSection: '3.2.P.8' },
       ],
     });
     expect(sent).toHaveLength(2);
     const first = Object.fromEntries([...sent[0].entries()].filter(([k]) => k !== 'file'));
     expect(first).toMatchObject({
-      documentCode: 'risk-file.pdf', documentTitle: 'Risk management file', documentType: 'REPORT', version: '2.1',
+      documentCode: 'risk-file.pdf', documentTitle: 'Risk management file', documentType: 'REPORT',
       classification: 'CONFIDENTIAL', folderId: 'eng', evidenceKind: 'report', ctdSection: '3.2.P.8',
     });
+    // No version is ever sent: a new document is 1.0, and later ones are numbered by the Vault.
+    expect(sent[0].get('version')).toBeNull();
     // A blank title takes the file name; a blank version is not sent; without a folder
     // the kind and section are not sent, because the Vault writes them only with one.
     const second = Object.fromEntries([...sent[1].entries()].filter(([k]) => k !== 'file'));
     expect(second).toEqual({ programId: '11111111-1111-4111-8111-111111111111', documentCode: 'notes.txt', documentTitle: 'notes', documentType: 'OTHER' });
+  });
+
+  it("says a folder the person chose is their filing, not a suggestion awaiting confirmation", async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ingestResponse({
+      folderId: 'eng', folderLabel: 'Engineering (DHF + RMF)', placementStatus: 'confirmed', needsReview: false,
+    })));
+    let latest: VaultUploadState | null = null;
+    render(<HookHost onState={(s) => { latest = s; }} />);
+    const seen: unknown[] = [];
+    await latest!.upload([new File(['a'], 'risk-file.pdf')], {
+      fields: [{ folderId: 'eng' }], onFileStatus: (_i, st) => seen.push(st),
+    });
+    expect(seen.at(-1)).toMatchObject({ state: 'stored', placement: 'confirmed', folderLabel: 'Engineering (DHF + RMF)' });
+    await waitFor(() => expect(latest!.note).toBeTruthy());
+    expect(latest!.note!.text).toContain('Filed risk-file.pdf → Engineering (DHF + RMF), as you chose.');
+    expect(latest!.note!.text).not.toMatch(/suggested until confirmed/);
   });
 
   it('tells the caller where each file stands as it starts and settles', async () => {
