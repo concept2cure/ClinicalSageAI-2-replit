@@ -41,13 +41,9 @@ vi.mock('../../submission-service/submission-service', () => ({
   listLeaves: (...args: unknown[]) => listLeaves(...args),
 }));
 
-/* The program half of the composition boundary (decision P-28), judged on a
-   real engine in composition-boundary-readers.pglite.test.ts. */
-const assessProgramCompositionScope = vi.fn<(...args: any[]) => Promise<any>>(async () => null);
-vi.mock('../module3-compile', async (orig) => ({
-  ...(await orig<object>()),
-  assessProgramCompositionScope: (...args: unknown[]) => assessProgramCompositionScope(...args),
-}));
+/* The composition boundary admits this suite's program; its refusals are in
+   place-module3-into-submission-boundary.test.ts. */
+vi.mock('../module3-compile', async (orig) => ({ ...(await orig<object>()), assessProgramCompositionScope: async () => null }));
 
 const poolQueries: Array<{ sql: string; params: unknown[] }> = [];
 let sectionRows: Array<{
@@ -114,8 +110,6 @@ describe('placeModule3IntoSubmission', () => {
     nextSnapshotId = 500;
     getSubmission.mockReset();
     getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind' });
-    assessProgramCompositionScope.mockReset();
-    assessProgramCompositionScope.mockResolvedValue(null);
   });
 
   it('refuses with the gate verdict and performs no write when the gate refuses', async () => {
@@ -231,27 +225,11 @@ describe('placeModule3IntoSubmission', () => {
     });
   });
 
-  it('refuses an eSTAR device submission for the same reason', async () => {
-    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
-    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
-    getSubmission.mockResolvedValue({ id: 10, applicationType: '510k' });
-    sectionRows = [
-      { sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } },
-    ];
-
-    const result = await placeModule3IntoSubmission({
-      orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20,
-    });
-
-    expect(result.placed).toBe(false);
-    expect(!result.placed && result.refusedBy).toBe('wrong-submission-type');
-    expect(inserted).toHaveLength(0);
-  });
-
   it('places normally when the submission files on CTD headings', async () => {
     // The guard must not refuse the case it exists to protect: an eCTD target
     // still places. A US IND, since 2026-10-22: an NDA or BLA files on CTD
-    // headings too, and is refused by the composition boundary below.
+    // headings too, and is refused by the composition boundary
+    // (place-module3-into-submission-boundary.test.ts).
     evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
     getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
     getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind' });
@@ -266,52 +244,6 @@ describe('placeModule3IntoSubmission', () => {
 
     expect(result.placed).toBe(true);
     expect(upsertLeaf).toHaveBeenCalledTimes(1);
-  });
-
-  describe('the composition boundary (decision P-28: small-molecule Module 3 for a US IND)', () => {
-    /* Compose refused a marketing application, but the IND-composed text could
-       be placed into one: 'ctd' admits NDA and BLA, and an NDA created under
-       the same program passes the cross-project check (2026-10-15
-       launch-boundary re-proof). */
-    const place = () =>
-      placeModule3IntoSubmission({ orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20 });
-    beforeEach(() => {
-      evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
-      getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
-      sectionRows = [{ sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } }];
-    });
-
-    it.each(['nda', 'bla', 'anda', 'maa'])('refuses a %s target, naming it, before anything is read or written', async (type) => {
-      getSubmission.mockResolvedValue({ id: 10, applicationType: type });
-      const result = await place();
-      expect(result.placed).toBe(false);
-      if (result.placed || result.refusedBy !== 'composition-scope') throw new Error(`expected the boundary, got ${JSON.stringify(result)}`);
-      expect(result.refusal.code).toBe('CMC_APPLICATION_OUT_OF_SCOPE');
-      expect(result.error).toMatch(new RegExp(`This submission files ${type.toUpperCase()}`));
-      expect(inserted).toHaveLength(0);
-      expect(upsertLeaf).not.toHaveBeenCalled();
-      expect(poolQueries.filter((q) => q.sql.includes('FROM cmc_module3_sections'))).toHaveLength(0);
-    });
-
-    it('refuses a program outside the boundary, even when its sections passed the gate', async () => {
-      assessProgramCompositionScope.mockResolvedValue({
-        code: 'CMC_MODALITY_OUT_OF_SCOPE',
-        modality: 'biologic',
-        message: "This program's drug substance is biologically derived — CHO cell culture.",
-      });
-      const result = await place();
-      expect(!result.placed && result.refusedBy).toBe('composition-scope');
-      expect(assessProgramCompositionScope).toHaveBeenCalledWith(7, 'proj-1');
-      expect(inserted).toHaveLength(0);
-      expect(upsertLeaf).not.toHaveBeenCalled();
-    });
-
-    it('places a small-molecule program into its US IND', async () => {
-      upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
-      const result = await place();
-      expect(result.placed).toBe(true);
-      expect(assessProgramCompositionScope).toHaveBeenCalledWith(7, 'proj-1');
-    });
   });
 
   it('carries the section label into coauthor_documents.module_name', async () => {

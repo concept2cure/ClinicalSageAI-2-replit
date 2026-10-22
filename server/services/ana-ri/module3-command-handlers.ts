@@ -270,6 +270,30 @@ export async function module3StaleSections(ctx: CommandContext, params: Record<s
 
 // ── module3_refresh_stale ─────────────────────────────────────────────────────
 
+/** Bridge each refreshed section to its governed artifact; the sections that could not be, with why. */
+async function bridgeRefreshedSections(
+  orgId: number,
+  projectId: string,
+  sections: ComposedSection[],
+  actorId: number,
+): Promise<string[]> {
+  const skips: string[] = [];
+  for (const section of sections) {
+    try {
+      await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
+        narrativeDraft: section.narrativeDraft,
+        tables: section.tables,
+        completeness: section.completeness,
+        missingInputs: section.missingInputs,
+        lineage: section.lineage,
+      }, { createdById: actorId });
+    } catch (err) {
+      skips.push(`${section.sectionKey}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return skips;
+}
+
 export async function module3RefreshStale(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   const pool = getPool();
   const orgId = ctx.organizationId;
@@ -314,20 +338,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
   } finally {
     client.release();
   }
-  const bridgeSkips: string[] = [];
-  for (const section of toBridge) {
-    try {
-      await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
-        narrativeDraft: section.narrativeDraft,
-        tables: section.tables,
-        completeness: section.completeness,
-        missingInputs: section.missingInputs,
-        lineage: section.lineage,
-      }, { createdById: actorId });
-    } catch (err) {
-      bridgeSkips.push(`${section.sectionKey}: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
+  const bridgeSkips = await bridgeRefreshedSections(orgId, projectId, toBridge, actorId);
 
   return {
     success: true,
