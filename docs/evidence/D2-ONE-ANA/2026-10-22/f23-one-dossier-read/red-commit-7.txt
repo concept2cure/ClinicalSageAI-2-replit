@@ -1,0 +1,13 @@
+# F23 (7/9) red at fe84064a6b
+## server/routes/c2c/__tests__/project-vault-completion.test.ts (4 cases added; 2 are the defects, 2 pin what must not change)
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > a drafted section is not 100% — it is 0% until the filing approves it 38ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an approved section is 100% 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an untouched mandatory section is 0% and still flags itself as a blocker 6ms
+ × server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > a market document holds Module 1 and 3.2.R only, never the home filing’s Module 2 (at head: 2.5 and 3.2.P too) 10ms
+   → expected [ '1.2', '2.5', '3.2.P', '3.2.R.1' ] to not include '2.5'
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > the home filing still shows its whole outline 6ms
+ × server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > a document with no section spec and no sections has no completion figure (at head: 0) 7ms
+   → expected +0 to be null
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > a document with no section spec but with sections keeps its measured figure 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 5 passed (7)
