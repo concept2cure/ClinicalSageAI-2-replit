@@ -1,0 +1,14 @@
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'GET /quality/qbd/:projectId' asks the composition boundary first > refuses a program outside it with the boundary’s 409, and runs nothing 27ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'GET /quality/qbd/:projectId' asks the composition boundary first > runs for a program inside it 6ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /ich-compliance' asks the composition boundary first > refuses a program outside it with the boundary’s 409, and runs nothing 13ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /ich-compliance' asks the composition boundary first > runs for a program inside it 4ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /control-strategy' asks the composition boundary first > refuses a program outside it with the boundary’s 409, and runs nothing 4ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /control-strategy' asks the composition boundary first > runs for a program inside it 3ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/:id/shelf-life judges the study’s own program > refuses a study of a program outside the boundary, and estimates nothing 4ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/:id/shelf-life judges the study’s own program > refuses a study filed under no program: its modality is not established 3ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/:id/shelf-life judges the study’s own program > estimates for a study of a program inside the boundary 12ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/poolability judges every study’s program > refuses when a study’s program is outside the boundary, and pools nothing 5ms
+ × server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/poolability judges every study’s program > refuses when any study is filed under no program 4ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/poolability judges every study’s program > pools studies of a program inside the boundary 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  10 failed | 2 passed (12)

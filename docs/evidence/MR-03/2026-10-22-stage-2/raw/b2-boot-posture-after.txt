@@ -1,0 +1,14 @@
+# Slice B, after: the same two files, then every test related to the changed modules, then all of server/startup.
+ Test Files  2 passed (2)
+      Tests  41 passed (41)
+
+## vitest related server/startup/env.ts server/startup/audit-enforcement.ts --run
+ Test Files  9 passed (9)
+      Tests  118 passed (118)
+
+## vitest run server/startup
+ Test Files  25 passed (25)
+      Tests  211 passed | 1 skipped (212)
+
+## eslint (changed files): 0 errors; warnings per file equal before and after
+

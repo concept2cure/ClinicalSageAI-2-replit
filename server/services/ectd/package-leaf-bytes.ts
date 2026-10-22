@@ -74,6 +74,16 @@ export interface LeafBytes {
    * composed from the section it sits in, and a section can be renamed.
    */
   leafKey?: string;
+  /**
+   * FDA only: the form this leaf IS, by form number ('1571', '356h'), when the
+   * caller declares it as one of the application's admin forms. The leaf is
+   * then written once, under the us-regional `<submission-information><form
+   * form-type>`, instead of under its Module 1 heading. It has to be declared
+   * here: the packager recognises a declared form only as the SAME leaf object
+   * it packages, and that object is built below (package-spine sweep F20,
+   * 2026-10-08). Ignored on a withdrawal.
+   */
+  formType?: string;
 }
 
 export interface PackageLeafBytesParams {
@@ -121,6 +131,9 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
 
     const usedNames = new Set<string>();
     const packagerLeaves: EctdLeaf[] = [];
+    // Leaves the caller declared as admin forms, paired with the packager leaf
+    // built for each — the identity the packager matches a declared form by.
+    const declaredForms: NonNullable<FdaRegionalAdmin['forms']> = [];
     for (const leaf of params.leaves) {
       // A withdrawal carries no bytes: it is a backbone entry pointing at the
       // prior sequence that holds the document. It writes no temp file, takes
@@ -162,7 +175,7 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
 
       const abs = path.join(leavesDir, fileName);
       await fs.writeFile(abs, leaf.bytes);
-      packagerLeaves.push({
+      const packagerLeaf: EctdLeaf = {
         ctdSection: leaf.ctdSection,
         operation: leaf.operation ?? 'new',
         sourcePath: abs,
@@ -170,15 +183,21 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
         title: leaf.title,
         ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
         ...(leaf.leafKey ? { leafKey: leaf.leafKey } : {}),
-      });
+      };
+      packagerLeaves.push(packagerLeaf);
+      if (leaf.formType) declaredForms.push({ formType: leaf.formType, leaf: packagerLeaf });
     }
+    // No leaf declared a form: the caller's fda block goes through untouched.
+    const fda = declaredForms.length
+      ? { ...params.fda, forms: [...(params.fda?.forms ?? []), ...declaredForms] }
+      : params.fda;
 
     return await packageEctdSubmission({
       region: params.region,
       applicationId: params.applicationId,
       sequence: params.sequence,
       submissionType: params.submissionType,
-      ...(params.fda ? { fda: params.fda } : {}),
+      ...(fda ? { fda } : {}),
       sponsorId: params.sponsorId,
       sponsorName: params.sponsorName,
       productName: params.productName,

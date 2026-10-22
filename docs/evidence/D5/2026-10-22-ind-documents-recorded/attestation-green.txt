@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 with no organization context 2028ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 for non-admin users 153ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > accepts admin role via roles array too 129ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 404 when org missing 115ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > emits tenant.export audit on success 102ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > passes the caller orgId through to the service (no override) 99ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > returns 503 when attestation key not configured 136ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > records EXPORT_GENERATED with the SHA-256 of the report it delivers 116ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > delivers nothing when the export record does not persist, and says so 101ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > emits tenant.attestation.generate audit on success 98ms
+stderr | server/routes/__tests__/tenant-export-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET / 20ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /full 4ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /attestation 4ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > leaves the 404 and the 503 answers unchanged 6ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > records a failed resource read instead of returning it as empty 3ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > reports a failed audit-log count as null, never as zero 1ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > a clean export carries an empty failure list and a real count 0ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > bumps schemaVersion, because a 1.0 consumer cannot read a null count 1ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > collects every failure, not the first 1ms
+
+ Test Files  3 passed (3)
+      Tests  19 passed (19)
+   Start at  05:14:01
+   Duration  5.05s (transform 1.51s, setup 126ms, import 1.23s, tests 3.13s, environment 0ms)
+

@@ -18,7 +18,13 @@ export type ExportSourceType =
   // An XML metadata file of existing records (AnA lineage dossier, routes/ana-ri/lineage.ts).
   | 'export_xml'
   // A plain-text rendition (Artifacts Center TXT export, routes/artifacts-center-routes.ts).
-  | 'export_txt';
+  | 'export_txt'
+  // A JSON report handed to someone outside the platform (the signed audit-trail
+  // attestation, routes/tenant-export.ts).
+  | 'export_json'
+  // A stored file delivered verbatim, not rendered here (an agency's AS2 MDN,
+  // routes/mdx-submission-gateway.ts).
+  | 'export_stored_file';
 
 export interface GovernedExportInput {
   organizationId: number;

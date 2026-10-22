@@ -93,6 +93,23 @@ export async function seed() {
   `);
 }
 
+/** Map a Module 1 form into the seeded package: its own section, keyed the way
+ *  section-to-ctd files a form at 1.1 ('form-1571'), holding one approved
+ *  artifact with no declared CTD section. `id` keys the section and the artifact. */
+export async function mapFormSection(id: number, sectionKey: string, title: string) {
+  await pg.query(
+    `INSERT INTO c2c_package_sections (id, section_id, org_id, package_db_id, section_key, section_label, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, -1)`,
+    [id, `sec_form${id}`, ORG, PKG, sectionKey, title],
+  );
+  await pg.query(
+    `INSERT INTO concept2cure_artifacts (id, artifact_id, project_id, organization_id, title, content, version, ctd_section, status, approved_version_id)
+     VALUES ($1, $2, 3, $3, $4, 'Signed copy attached.', 1, NULL, 'approved', 1)`,
+    [id, `artifact_form${String(id).padStart(4, '0')}`, ORG, title],
+  );
+  await pg.query(`INSERT INTO c2c_artifact_section_map (org_id, artifact_id, section_db_id) VALUES ($1, $2, $2)`, [ORG, id]);
+}
+
 export const assemble = (body: Record<string, unknown> = {}) =>
   request(app())
     .post('/api/submission-ops/packages/pkg_e2e/assemble')

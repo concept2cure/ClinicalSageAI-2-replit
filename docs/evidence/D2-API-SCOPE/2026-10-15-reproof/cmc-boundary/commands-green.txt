@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'ich_compliance' asks the composition boundary first > relays the refusal for a program outside it, and runs nothing 4ms
+ ✓ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'ich_compliance' asks the composition boundary first > runs its engine for a program inside it 1ms
+ ✓ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'control_strategy' asks the composition boundary first > relays the refusal for a program outside it, and runs nothing 1ms
+ ✓ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'control_strategy' asks the composition boundary first > runs its engine for a program inside it 0ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  04:50:45
+   Duration  444ms (transform 111ms, setup 98ms, import 40ms, tests 10ms, environment 0ms)
+

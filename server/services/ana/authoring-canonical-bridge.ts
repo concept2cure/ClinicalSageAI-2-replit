@@ -1,47 +1,25 @@
 /**
- * Authoring → canonical spine bridge.
+ * The authored document's text, read and assembled.
  *
- * The eCTD CoAuthor router (server/routes/authoring.router.ts) edits documents in
- * its own working store (authoring_documents / authoring_sections). The canonical
- * governed record lives in concept2cure_artifacts, reached through the one atomic
- * revision spine (document-spine.ts). This bridge connects the two at a governed
- * transition: when an authoring document is submitted for review, its assembled
- * content is committed into the canonical artifact through the spine, so the
- * canonical version, the Part 11 audit event, the review state, dossier placement
- * and program readiness all move together over concept2cure_artifacts.
+ * 2026-10-17 (D2, document store consolidation step 6): this module used to be
+ * the authoring → canonical spine bridge. On submit for review it committed the
+ * assembled document into concept2cure_artifacts through the AnA document spine
+ * (bridgeAuthoringToCanonical, resolveAuthoringCanonicalProject,
+ * authoringThreadKey). That projection is retired: an authoring draft's review
+ * state is its own workflow (authoring_documents.status,
+ * authoring_workflow_steps), read by the Review board, and a filed Vault
+ * version's lifecycle is canonical_documents. The projected row was set to
+ * 'review' once and never moved by an approval or rejection. Rows written
+ * before stay readable; nothing was moved. See
+ * docs/design/DOCUMENT_STORE_CONSOLIDATION.md, step 6.
  *
- * The working authoring review remains authoritative. This optional projection
- * uses the document's recorded program and its unique tenant-owned legacy
- * project relationship. An unlinked legacy document may use a verified project
- * hint; a hint cannot override a stored program. Missing or ambiguous linkage,
- * an unattributable actor, or an unstated reason produces a visible receipt.
- * Projection is separate from the review transaction. An unconfirmed receipt
- * can be retried on that review; it does not prove no canonical write occurred.
+ * What remains is the one reader of an authoring document's sections
+ * (loadDocumentSnapshot, used by the filing copy in
+ * services/coauthor/coauthor-snapshot.ts) and the one assembler of its text.
+ * The module keeps its path because those callers import it.
  *
  * @module server/services/ana/authoring-canonical-bridge
  */
-
-import type { CanonicalRevisionRequest, CanonicalRevisionResult } from './document-spine.js';
-import { programInOrganization } from '../c2c/program-access';
-import { readProgramAnchorRow } from '../c2c/program-project-anchor';
-import { createScopedLogger } from '../../utils/logger';
-
-const logger = createScopedLogger('authoring-canonical-bridge');
-
-export interface AuthoringBridgeRequest {
-  docId: string;
-  organizationId: number;
-  /** Optional legacy hint, subordinate to the recorded program relationship. */
-  projectId?: number | null;
-  /** Numeric users.id for Part 11 attribution. Non-numeric ⇒ skip. */
-  userId?: number | null;
-  /** The person's stated reason for the change. None ⇒ skip: the canonical
-   *  record takes a person's reason, never one written for them. */
-  reason: string | null;
-  triggerReview?: boolean;
-  ctdSection?: string | null;
-  aiModelUsed?: string | null;
-}
 
 /** One saved section, as the snapshot reads it. */
 export interface AuthoringSectionRow {
@@ -71,117 +49,12 @@ export interface AuthoringSnapshotQueryable {
 }
 
 export interface AuthoringBridgeDeps {
-  /** Resolve the document's recorded program to its tenant-owned legacy project.
-   * A supplied legacy hint may not override that stored relationship. */
-  resolveProject?(
-    docId: string, organizationId: number, hint?: number | null,
-  ): Promise<{ projectId: number | null; reason?: string }>;
   /** Reads on `q` when given (e.g. the caller's transaction), else on the pool. */
   loadDocumentSnapshot(
     docId: string,
     organizationId: number,
     q?: AuthoringSnapshotQueryable,
   ): Promise<AuthoringDocumentSnapshot | null>;
-  commit(req: CanonicalRevisionRequest): Promise<CanonicalRevisionResult>;
-}
-
-export interface AuthoringBridgeOutcome {
-  bridged: boolean;
-  /** Why the bridge skipped, when it did (for observability). */
-  reason?: string;
-  result?: CanonicalRevisionResult;
-  projectId?: number;
-}
-
-/** The bridge's destination is still integer-keyed. Use the existing recorded
- * relationship, never a program name or an invented legacy project. */
-export async function resolveAuthoringCanonicalProject(
-  q: AuthoringSnapshotQueryable, docId: string, organizationId: number, hint?: number | null,
-): Promise<{ projectId: number | null; reason?: string }> {
-  const doc = await q.query(
-    'SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-    [docId, organizationId],
-  );
-  if (doc.rows.length !== 1) return { projectId: null, reason: 'authoring document not found in this organization' };
-  const program = doc.rows[0].client_program_id;
-  if (program != null) {
-    if (!(await programInOrganization(q, program, organizationId))) {
-      return { projectId: null, reason: 'recorded program is not a live program of this organization' };
-    }
-    const linked = await readProgramAnchorRow(q, {
-      programId: program, orgId: organizationId, context: 'authoring-canonical-bridge', requireUnique: true,
-    });
-    if (!linked) return { projectId: null, reason: 'recorded program needs one unambiguous legacy project relationship' };
-    const projectId = linked.id;
-    if (hint != null && hint !== projectId) return { projectId: null, reason: 'client project conflicts with the document recorded program' };
-    return { projectId };
-  }
-  if (Number.isSafeInteger(hint) && Number(hint) > 0) {
-    const { projectBelongsToTenant } = await import('../cmc/project-membership');
-    if (await projectBelongsToTenant({ projectId: String(hint), organizationId }, q)) {
-      return { projectId: Number(hint) };
-    }
-  }
-  return { projectId: null, reason: 'unlinked legacy document needs a tenant-owned project context' };
-}
-
-/** Stable per-document thread key so successive submits append canonical versions. */
-export function authoringThreadKey(docId: string): string {
-  return `authoring:${docId}`;
-}
-
-function canonicalSection(requested?: string | null, recorded?: string | null): string | null {
-  return requested ?? recorded ?? null;
-}
-
-/**
- * Bridge an authoring document into the canonical spine. Returns an outcome that
- * says whether it bridged and, if not, precisely why. Never throws.
- */
-export async function bridgeAuthoringToCanonical(
-  req: AuthoringBridgeRequest,
-  deps: AuthoringBridgeDeps,
-): Promise<AuthoringBridgeOutcome> {
-  const userId = req.userId;
-  if (!Number.isSafeInteger(userId) || Number(userId) <= 0) {
-    return { bridged: false, reason: 'actor is not a numeric users.id — governed action cannot be attributed' };
-  }
-  if (!req.reason || !req.reason.trim()) {
-    return { bridged: false, reason: 'no reason for change was stated — the canonical revision records the person\'s reason, never one written for them' };
-  }
-  try {
-    const resolved: { projectId?: number | null; reason?: string } = deps.resolveProject
-      ? await deps.resolveProject(req.docId, req.organizationId, req.projectId)
-      : { projectId: req.projectId };
-    const projectId = resolved.projectId;
-    if (!Number.isSafeInteger(projectId) || Number(projectId) <= 0) {
-      return { bridged: false, reason: resolved.reason ?? 'no project context — canonical destination is unresolved' };
-    }
-    const snap = await deps.loadDocumentSnapshot(req.docId, req.organizationId);
-    if (!snap || !snap.content.trim()) {
-      return { bridged: false, reason: 'no assembled content to canonicalize' };
-    }
-    const result = await deps.commit({
-      organizationId: req.organizationId,
-      projectId: projectId as number,
-      userId: userId as number,
-      anaThreadId: authoringThreadKey(req.docId),
-      title: snap.title,
-      content: snap.content,
-      documentType: 'authoring_document',
-      reasonForChange: req.reason,
-      ctdSection: canonicalSection(req.ctdSection, snap.module),
-      aiModelUsed: req.aiModelUsed ?? null,
-      triggerReview: req.triggerReview !== false,
-    });
-    return { bridged: true, result, projectId: projectId as number };
-  } catch (err) {
-    logger.warn('canonical projection not confirmed', { docId: req.docId, err: err instanceof Error ? err.message : String(err) });
-    return {
-      bridged: false,
-      reason: 'canonical projection was not confirmed; retry after resolving its project or service availability',
-    };
-  }
 }
 
 /** A section as the assembler reads it. */
@@ -205,13 +78,9 @@ export function assembleAuthoredSections(sections: ReadonlyArray<AssemblableSect
     .trim();
 }
 
-/** Production deps: load the working doc from Postgres, commit via the real spine. */
+/** Production deps: load the working doc from Postgres. */
 export function defaultAuthoringBridgeDeps(): AuthoringBridgeDeps {
   return {
-    async resolveProject(docId, organizationId, hint) {
-      const q = (await import('../../db.js')).getPool();
-      return resolveAuthoringCanonicalProject(q, docId, organizationId, hint);
-    },
     async loadDocumentSnapshot(docId, organizationId, q) {
       /* 2026-09-23 (W5/D7, co-author final pass): `q` lets a caller read on its
          own transaction. The filing copy (services/coauthor/coauthor-snapshot.ts)
@@ -246,10 +115,6 @@ export function defaultAuthoringBridgeDeps(): AuthoringBridgeDeps {
         module: doc.rows[0].module ?? null,
         sections: sections.rows as AuthoringSectionRow[],
       };
-    },
-    async commit(req) {
-      const { commitCanonicalRevision, defaultSpineDeps } = await import('./document-spine.js');
-      return commitCanonicalRevision(req, defaultSpineDeps());
     },
   };
 }

@@ -1,0 +1,5 @@
+# Real PostgreSQL 16 (RLS_ENFORCE=on, app_service) at 32c2ec138 + working tree; vault-ingest on c2c_dbtest, the vocabulary suite on the local recorded fixture database platform_ci_vault_fixture_local (2026-10-22T06:32:45Z)
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

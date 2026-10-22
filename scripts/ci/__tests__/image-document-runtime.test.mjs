@@ -44,7 +44,7 @@ test('the repository passes', () => {
 
 test('fails when the runtimes are not copied into the production stage', () => {
   const inputs = realInputs();
-  inputs.dockerfile = without(inputs.dockerfile, /^COPY --from=builder \/app\/workers\/artifact-compute[^\n]*\n/m);
+  inputs.dockerfile = without(inputs.dockerfile, /^COPY (?:--chown=\S+ )?--from=builder \/app\/workers\/artifact-compute[^\n]*\n/m);
   const problems = checkImageDocumentRuntime(inputs);
   assert.ok(problems.some((p) => /docx-insert-runtime\.py is spawned by the server but not copied/.test(p)), problems.join('\n'));
 });

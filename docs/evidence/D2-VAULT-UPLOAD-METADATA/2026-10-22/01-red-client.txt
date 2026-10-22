@@ -1,0 +1,17 @@
+# RED at 32c2ec138: the uploader and Vault as on trunk, the new cases (2026-10-22T06:29:38Z)
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked
+   → Unable to find an element by: [data-testid="vault-upload-zone-files"]
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, version, classification and the folder chosen, with its kind and section
+   → Unable to find an element by: [data-testid="vault-upload-zone-files"]
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > leaves every blank field to the Vault, and the folder to its classifier
+   → Unable to find an element by: [data-testid="vault-upload-zone-files"]
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again
+   → Unable to find an element by: [data-testid="vault-upload-zone-files"]
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent
+   → Unable to find an element by: [data-testid="vault-upload-zone-files"]
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, version, classification and filing
+   → expected { …(4) } to match object { documentCode: 'risk-file.pdf', …(7) }
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts and settles
+   → expected [] to deeply equal [ Array(4) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 6 passed (13)

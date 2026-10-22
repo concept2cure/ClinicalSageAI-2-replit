@@ -1,0 +1,33 @@
+# Slice D mutants: each edits a real file, runs the check that must catch it, restores the file (mutd.py).
+## mutant: production FROM by tag again (Dockerfile.optimized) -> exit 1
+  Dockerfile.optimized: FROM node:22-slim AS production is not pinned by digest (@sha256:…)
+  [ci:image-hardening] 1 problem(s) (MR-03 OPS-19).
+
+## mutant: CMD back to npm (Dockerfile.optimized) -> exit 1
+  Dockerfile.optimized: the production CMD starts "npm", not node (CMD ["npm", "run", "start"]); npm, yarn or a shell would take SIGTERM in node's place
+  [ci:image-hardening] 1 problem(s) (MR-03 OPS-19).
+
+## mutant: recursive chown back (Dockerfile.optimized) -> exit 1
+  Dockerfile.optimized: the production stage runs a recursive chown (RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser &&      mkdir -…); set ownership with COPY --chown
+  [ci:image-hardening] 1 problem(s) (MR-03 OPS-19).
+
+## mutant: builder loses ARG BUILD_COMMIT (Dockerfile.optimized) -> exit 1
+  Dockerfile.optimized: the builder does not declare ARG BUILD_COMMIT before `npm run build`, so the bundle reports "unknown"
+  [ci:image-hardening] 1 problem(s) (MR-03 OPS-19).
+
+## mutant: deploy build stops passing the commit (.github/workflows/deploy-aws.yml) -> exit 1
+  .github/workflows/deploy-aws.yml: the production image build does not pass --build-arg BUILD_COMMIT (docker build -f Dockerfile.optimized --target production              -t "$ECR_REGISTRY/$E…)
+  [ci:image-hardening] 1 problem(s) (MR-03 OPS-19).
+
+## mutant: CI production build stops passing the commit (.github/workflows/ci.yml) -> exit 1
+  .github/workflows/ci.yml: the production image build does not pass --build-arg BUILD_COMMIT (docker build -f Dockerfile.optimized --target production -t c2c-app:ci .…)
+  [ci:image-hardening] 1 problem(s) (MR-03 OPS-19).
+
+## mutant: the migrations COPY deleted (contract test still sees it) (Dockerfile.optimized) -> exit 1
+  × tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > copies the root migrations tree into the production stage 10ms
+  Tests  1 failed | 435 passed (436)
+
+## mutant: the assets COPY deleted (RDS CA contract still sees it) (Dockerfile.optimized) -> exit 1
+  × tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in 6ms
+  Tests  1 failed | 5 passed (6)
+

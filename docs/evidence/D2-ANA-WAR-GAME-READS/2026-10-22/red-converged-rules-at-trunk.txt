@@ -1,0 +1,6 @@
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a converged rule fires on the case it names, and only then > NDA: patent certifications are asked of a 505(b)(2), not a 505(b)(1) 8ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a converged rule fires on the case it names, and only then > protocol: a single arm against a historical control is not a contradiction 2ms
+ ✓ tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a converged rule fires on the case it names, and only then > 510(k): a non-sterile device is not missing its sterilization validation 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a converged rule fires on the case it names, and only then > a "No" to a required yes/no draws its finding (it read as answered before) 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed | 47 skipped (51)

@@ -47,7 +47,7 @@ describe('useVaultUpload — filing-aware outcome copy', () => {
 
     expect(outcome.succeeded).toEqual(['stability-summary.pdf']);
     expect(outcome.filings).toEqual([
-      { name: 'stability-summary.pdf', folderLabel: 'Module 3 · Quality', needsReview: false },
+      { name: 'stability-summary.pdf', folderLabel: 'Module 3 · Quality', needsReview: false, placement: 'suggested' },
     ]);
     await waitFor(() => expect(latest!.note).toBeTruthy());
     expect(latest!.note!.tone).toBe('ok');
@@ -168,5 +168,75 @@ describe('useVaultUpload — the request actually authenticates', () => {
     // boundary, and setting it here produces a body the server cannot parse.
     const headers = (init.headers ?? {}) as Record<string, string>;
     expect(Object.keys(headers).map((k) => k.toLowerCase())).not.toContain('content-type');
+  });
+});
+
+describe('useVaultUpload — each file carries the fields its row gave (gap 7.1)', () => {
+  function capture() {
+    const sent: FormData[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: { body?: unknown }) => {
+      sent.push(init.body as FormData);
+      return ingestResponse({ folderId: 'eng', folderLabel: 'Engineering (DHF + RMF)', placementStatus: 'confirmed', needsReview: false });
+    }));
+    return sent;
+  }
+
+  it('sends each file its own title, type, classification and filing, and never a version', async () => {
+    const sent = capture();
+    let latest: VaultUploadState | null = null;
+    render(<HookHost onState={(s) => { latest = s; }} />);
+    await latest!.upload([new File(['a'], 'risk-file.pdf'), new File(['b'], 'notes.txt')], {
+      documentType: 'OTHER',
+      fields: [
+        { title: 'Risk management file', documentType: 'REPORT', classification: 'CONFIDENTIAL',
+          folderId: 'eng', evidenceKind: 'report', ctdSection: '3.2.P.8' },
+        { title: '  ', evidenceKind: 'report', ctdSection: '3.2.P.8' },
+      ],
+    });
+    expect(sent).toHaveLength(2);
+    const first = Object.fromEntries([...sent[0].entries()].filter(([k]) => k !== 'file'));
+    expect(first).toMatchObject({
+      documentCode: 'risk-file.pdf', documentTitle: 'Risk management file', documentType: 'REPORT',
+      classification: 'CONFIDENTIAL', folderId: 'eng', evidenceKind: 'report', ctdSection: '3.2.P.8',
+    });
+    // No version is ever sent: a new document is 1.0, and later ones are numbered by the Vault.
+    expect(sent[0].get('version')).toBeNull();
+    // A blank title takes the file name; a blank version is not sent; without a folder
+    // the kind and section are not sent, because the Vault writes them only with one.
+    const second = Object.fromEntries([...sent[1].entries()].filter(([k]) => k !== 'file'));
+    expect(second).toEqual({ programId: '11111111-1111-4111-8111-111111111111', documentCode: 'notes.txt', documentTitle: 'notes', documentType: 'OTHER' });
+  });
+
+  it("says a folder the person chose is their filing, not a suggestion awaiting confirmation", async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ingestResponse({
+      folderId: 'eng', folderLabel: 'Engineering (DHF + RMF)', placementStatus: 'confirmed', needsReview: false,
+    })));
+    let latest: VaultUploadState | null = null;
+    render(<HookHost onState={(s) => { latest = s; }} />);
+    const seen: unknown[] = [];
+    await latest!.upload([new File(['a'], 'risk-file.pdf')], {
+      fields: [{ folderId: 'eng' }], onFileStatus: (_i, st) => seen.push(st),
+    });
+    expect(seen.at(-1)).toMatchObject({ state: 'stored', placement: 'confirmed', folderLabel: 'Engineering (DHF + RMF)' });
+    await waitFor(() => expect(latest!.note).toBeTruthy());
+    expect(latest!.note!.text).toContain('Filed risk-file.pdf → Engineering (DHF + RMF), as you chose.');
+    expect(latest!.note!.text).not.toMatch(/suggested until confirmed/);
+  });
+
+  it('tells the caller where each file stands as it starts and settles', async () => {
+    let n = 0;
+    vi.stubGlobal('fetch', vi.fn(async () => (++n === 1
+      ? { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' }, filing: { folderId: 'eng', folderLabel: 'Engineering', needsReview: false } }) }
+      : { ok: false, status: 422, json: async () => ({ error: { message: 'The file failed the malware scan' } }) }) as Response));
+    let latest: VaultUploadState | null = null;
+    render(<HookHost onState={(s) => { latest = s; }} />);
+    const seen: Array<[number, string, string?]> = [];
+    await latest!.upload([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')], {
+      onFileStatus: (i, st) => seen.push([i, st.state, st.state === 'refused' ? st.reason : st.state === 'stored' ? `v${st.version} ${st.folderLabel}` : undefined]),
+    });
+    expect(seen).toEqual([
+      [0, 'uploading', undefined], [0, 'stored', 'v1.0 Engineering'],
+      [1, 'uploading', undefined], [1, 'refused', 'The file failed the malware scan'],
+    ]);
   });
 });

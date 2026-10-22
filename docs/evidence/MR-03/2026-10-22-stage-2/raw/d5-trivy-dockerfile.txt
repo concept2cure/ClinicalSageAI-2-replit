@@ -1,0 +1,14 @@
+# Slice D: trivy config Dockerfile.optimized --severity CRITICAL,HIGH --exit-code 1
+
+Report Summary
+
+┌──────────────────────┬────────────┬───────────────────┐
+│        Target        │    Type    │ Misconfigurations │
+├──────────────────────┼────────────┼───────────────────┤
+│ Dockerfile.optimized │ dockerfile │         0         │
+└──────────────────────┴────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+trivy exit 0

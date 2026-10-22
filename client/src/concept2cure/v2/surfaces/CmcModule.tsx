@@ -67,6 +67,7 @@ import {
   cmcWriteError,
   cmcWriteFailed,
   cmcWriteThrew,
+  cmcAssessmentThrew,
 } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
@@ -1520,7 +1521,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         report.supportedShelfLife != null ? 'ok' : 'error',
       );
     } catch (e) {
-      fireToast(cmcWriteThrew('shelf-life estimate', e), 'error');
+      fireToast(cmcAssessmentThrew('estimate the shelf life', e), 'error');
     } finally {
       setEstimating(null);
     }
@@ -1564,7 +1565,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         report.supportedShelfLife != null ? 'ok' : 'error',
       );
     } catch (e) {
-      fireToast(cmcWriteThrew('poolability assessment', e), 'error');
+      fireToast(cmcAssessmentThrew('assess batch poolability', e), 'error');
     } finally {
       setPooling(false);
     }

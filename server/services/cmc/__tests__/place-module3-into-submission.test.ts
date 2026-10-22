@@ -41,6 +41,10 @@ vi.mock('../../submission-service/submission-service', () => ({
   listLeaves: (...args: unknown[]) => listLeaves(...args),
 }));
 
+/* The composition boundary admits this suite's program; its refusals are in
+   place-module3-into-submission-boundary.test.ts. */
+vi.mock('../module3-compile', async (orig) => ({ ...(await orig<object>()), assessProgramCompositionScope: async () => null }));
+
 const poolQueries: Array<{ sql: string; params: unknown[] }> = [];
 let sectionRows: Array<{
   sectionKey: string;
@@ -221,29 +225,14 @@ describe('placeModule3IntoSubmission', () => {
     });
   });
 
-  it('refuses an eSTAR device submission for the same reason', async () => {
-    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
-    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
-    getSubmission.mockResolvedValue({ id: 10, applicationType: '510k' });
-    sectionRows = [
-      { sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } },
-    ];
-
-    const result = await placeModule3IntoSubmission({
-      orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20,
-    });
-
-    expect(result.placed).toBe(false);
-    expect(!result.placed && result.refusedBy).toBe('wrong-submission-type');
-    expect(inserted).toHaveLength(0);
-  });
-
   it('places normally when the submission files on CTD headings', async () => {
     // The guard must not refuse the case it exists to protect: an eCTD target
-    // still places, and an unreadable application type narrows to ctd upstream.
+    // still places. A US IND, since 2026-10-22: an NDA or BLA files on CTD
+    // headings too, and is refused by the composition boundary
+    // (place-module3-into-submission-boundary.test.ts).
     evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
     getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
-    getSubmission.mockResolvedValue({ id: 10, applicationType: 'nda' });
+    getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind' });
     upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
     sectionRows = [
       { sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } },

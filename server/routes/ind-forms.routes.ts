@@ -83,6 +83,11 @@ import {
 } from '@shared/schema';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import auditService from '../services/auditService';
+import {
+  createAuditedUnplacedExport,
+  isUnauditedExportRefusal,
+  sendAuditedDownload,
+} from '../services/export/governedExportConsequence';
 import { recordArtifactProvenanceDrizzle } from '../services/provenance/artifact-provenance';
 import { ProgramRecordWriteRefusal } from '../services/c2c/governed-program-write';
 import { ProgramFactsWriteRefusal, recordProgramFormFacts, resolveProgramIdent, type ResolvedProgram } from '../services/ind-forms/program-form-facts';
@@ -342,11 +347,24 @@ async function listFormPlacements(
   }
 }
 
-function sendPdf(res: Response, result: IndFormPdfResult): void {
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${result.formId}.pdf"`);
-  // This is a stateless PREVIEW render: the platform does not record that it was
-  // produced. Use POST /:formId/artifact for a governed, persisted record.
+/**
+ * Deliver a rendered form, recorded (D5).
+ *
+ * A render is a PREVIEW: no governed artifact holds it (POST /:formId/artifact
+ * makes one), which is what X-Form-Untracked-Preview still says. Its delivery
+ * is recorded all the same, as every generated download is: an
+ * EXPORT_GENERATED row with the SHA-256 of these exact bytes, and nothing sent
+ * when that row does not persist (`fail` answers 503). A filled FDA form that
+ * left the system with no record was the finding (2026-10-15 launch-boundary
+ * re-proof); "the platform does not record that it was produced" was this
+ * function's own description of it.
+ */
+async function sendPdf(req: Request, res: Response, result: IndFormPdfResult): Promise<void> {
+  const ctx = ctxOf(req);
+  if (!ctx) {
+    res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    return;
+  }
   res.setHeader('X-Form-Untracked-Preview', 'true');
   res.setHeader('X-Form-Used-Official-Template', String(result.usedOfficialTemplate));
   // Honestly signal a faithful reconstruction (pure dynamic XFA forms 1571/3674)
@@ -371,10 +389,85 @@ function sendPdf(res: Response, result: IndFormPdfResult): void {
   // The renderer reports it on every path, so there is no case where this is
   // unknown; an absent header means an older server, not a clean form.
   res.setHeader('X-Form-Required-Blank', result.requiredFieldsLeftBlank.join(','));
-  res.status(200).send(Buffer.from(result.pdfBytes));
+  await sendAuditedDownload(res, {
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    sourceType: 'export_pdf',
+    backendRoute: `${req.baseUrl}${req.route?.path ?? req.path}`,
+    resourceType: 'ind_form_render',
+    resourceId: result.formId,
+    programUuid: null,
+    filename: `${result.formId}.pdf`,
+    mimeType: 'application/pdf',
+    buffer: Buffer.from(result.pdfBytes),
+  });
+}
+
+/**
+ * Deliver one form per investigator as JSON, recorded (D5): the body sent is
+ * the bytes recorded, one EXPORT_GENERATED row with its SHA-256, each PDF's
+ * own SHA-256 in the row and beside it in the body. Nothing is sent when the
+ * row does not persist.
+ */
+async function sendRecordedFormSet(
+  req: Request,
+  res: Response,
+  formId: string,
+  results: IndFormPdfResult[],
+): Promise<void> {
+  const ctx = ctxOf(req);
+  if (!ctx) {
+    res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    return;
+  }
+  // No investigator yields a form (a 3455 with none disclosing): no document
+  // leaves the system, so there is nothing to record.
+  if (results.length === 0) {
+    res.json({ formId, documents: [] });
+    return;
+  }
+  const documents = results.map((r) => {
+    const pdf = Buffer.from(r.pdfBytes);
+    return {
+      usedOfficialTemplate: r.usedOfficialTemplate,
+      reconstructed: r.reconstructed === true,
+      fieldCoverage: r.fieldCoverage,
+      missingRequired: r.missingRequired,
+      // Per document: each investigator's form leaves its own boxes blank.
+      // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
+      requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
+      sha256: crypto.createHash('sha256').update(pdf).digest('hex'),
+      pdfBase64: pdf.toString('base64'),
+    };
+  });
+  const body = Buffer.from(JSON.stringify({ formId, documents }), 'utf8');
+  const recorded = await createAuditedUnplacedExport({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    sourceType: 'export_pdf',
+    backendRoute: `${req.baseUrl}${req.route?.path ?? req.path}`,
+    resourceType: 'ind_form_render',
+    resourceId: formId,
+    programUuid: null,
+    filename: `${formId}-all.json`,
+    mimeType: 'application/json',
+    buffer: body,
+    metadata: { documents: documents.map((d, i) => ({ index: i, sha256: d.sha256 })) },
+  });
+  res.setHeader('X-Export-Sha256', recorded.sha256);
+  res.type('application/json').status(200).send(body);
 }
 
 function fail(res: Response, err: unknown): void {
+  if (isUnauditedExportRefusal(err)) {
+    res.status(503).json({
+      error: {
+        code: 'UNAUDITED_EXPORT_REFUSED',
+        message: 'The form was not delivered because its record could not be written. Nothing was sent. Try again.',
+      },
+    });
+    return;
+  }
   if (err instanceof ProgramFactsWriteRefusal || err instanceof ProgramRecordWriteRefusal) {
     res.status(err.status).json({ error: { code: err.code, message: err.message } });
     return;
@@ -543,7 +636,7 @@ router.post('/:formId/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   const resolved = await metaForRequest(req, res, ctxOf(req));
   if (!resolved) return;
   try {
-    sendPdf(res, await generateIndForm(formId, resolved.meta));
+    await sendPdf(req, res, await generateIndForm(formId, resolved.meta));
   } catch (err) {
     fail(res, err);
   }
@@ -571,7 +664,7 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
         : Promise.resolve([]),
     ]);
     const meta = assembleFormMetadata({ sponsor, agent, investigators, overrides: b.overrides });
-    sendPdf(res, await generateIndForm(formId, meta));
+    await sendPdf(req, res, await generateIndForm(formId, meta));
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
     if (code === 'NOT_FOUND') {
@@ -976,20 +1069,7 @@ router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
   const resolved = await metaForRequest(req, res, ctxOf(req));
   if (!resolved) return;
   try {
-    const results = await generateAllForm1572(resolved.meta);
-    res.json({
-      formId: FORM_1572,
-      documents: results.map((r) => ({
-        usedOfficialTemplate: r.usedOfficialTemplate,
-        reconstructed: r.reconstructed === true,
-        fieldCoverage: r.fieldCoverage,
-        missingRequired: r.missingRequired,
-        // Per document: each investigator's form leaves its own boxes blank.
-        // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
-        requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
-        pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
-      })),
-    });
+    await sendRecordedFormSet(req, res, FORM_1572, await generateAllForm1572(resolved.meta));
   } catch (err) {
     fail(res, err);
   }
@@ -1005,20 +1085,7 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
   const resolved = await metaForRequest(req, res, ctxOf(req));
   if (!resolved) return;
   try {
-    const results = await generateAllForm3455(resolved.meta);
-    res.json({
-      formId: FORM_3455,
-      documents: results.map((r) => ({
-        usedOfficialTemplate: r.usedOfficialTemplate,
-        reconstructed: r.reconstructed === true,
-        fieldCoverage: r.fieldCoverage,
-        missingRequired: r.missingRequired,
-        // Per document: each investigator's form leaves its own boxes blank.
-        // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
-        requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
-        pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
-      })),
-    });
+    await sendRecordedFormSet(req, res, FORM_3455, await generateAllForm3455(resolved.meta));
   } catch (err) {
     fail(res, err);
   }

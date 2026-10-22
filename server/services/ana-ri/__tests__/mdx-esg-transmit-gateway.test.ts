@@ -92,7 +92,7 @@ function queryImpl(sql: string, args: unknown[] = []) {
     return Promise.resolve({ rows: [{ id: 4242 }], rowCount: 1 });
   }
   // findActiveTransmittal: no active row.
-  if (sql.includes('SELECT id, status FROM submission_transmittals')) {
+  if (/SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/.test(sql)) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
   return Promise.resolve({ rows: [], rowCount: 0 });

@@ -30,6 +30,7 @@ import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import { useProgramMarkets } from './programSequence';
 import { ComingLater } from './ProjectComingLater';
+import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
 import { sourceReadView } from '@shared/data-room-processing-status';
@@ -443,8 +444,6 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   // via window.C2C_SOURCE_PINS, matching the window.C2C_PROJECT / C2C_CONVO
   // convention this surface already uses for cross-surface handoff.
   const [pinned, setPinned] = useState<number[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const sourceRead = useLiveData<SourcesPage>(
     pid ? sourcesUrl(pid, term, offset) : null,
@@ -535,38 +534,25 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         </span>
       </div>
 
-      {/* Drop zone — the whole panel accepts a drag, and clicking opens the picker. */}
-      <div
+      {/* Drop zone — the whole panel accepts a drag, and clicking opens the
+          picker. The one drop zone (FileDropZone.tsx), shared with the Vault. */}
+      <FileDropZone
         className="pj-dropzone"
-        data-dragging={dragging || undefined}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
-        }}
-        onClick={() => fileRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click(); }}
-        aria-label="Add sources to this project"
+        accept={CHAT_UPLOAD_ACCEPT}
+        label="Add sources to this project"
+        inputLabel="Attach files to this project"
+        onFiles={({ files }) => { if (files.length) addFiles(files.map((f) => f.file)); }}
       >
-        <span aria-hidden="true">{I.paperclip}</span>
-        <span className="pj-dropzone-t">
-          <b>Add sources</b> — drop files here or click to browse. They&rsquo;re read on upload and
-          become available to AnA for this project.
-        </span>
-        <input
-          ref={fileRef}
-          type="file"
-          aria-label="Attach files to this project"
-          accept={CHAT_UPLOAD_ACCEPT}
-          multiple
-          hidden
-          onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}
-        />
-      </div>
+        {() => (
+          <>
+            <span aria-hidden="true">{I.paperclip}</span>
+            <span className="pj-dropzone-t">
+              <b>Add sources</b> — drop files here or click to browse. They&rsquo;re read on upload and
+              become available to AnA for this project.
+            </span>
+          </>
+        )}
+      </FileDropZone>
 
       {/* ── Sections drafted from content that has since changed ──────────────
           Reported, never repaired. A source moving does not tell us how the
