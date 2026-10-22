@@ -20,11 +20,12 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
-import { createJourneyDb, type JourneyDb } from './golden-journeys/harness';
+import { createJourneyDb, extractTableDdl, type JourneyDb } from './golden-journeys/harness';
 
 const JWT_SECRET = 'authoring-market-binding-secret';
 process.env.JWT_SECRET = JWT_SECRET;
 process.env.JWT_SECRET_DEV = JWT_SECRET;
+process.env.AUDIT_HMAC_KEY = 'authoring-market-binding-audit-hmac-key-not-a-secret';
 
 const AUTHOR = { id: '42', organizationId: 1, email: 'ra@market.example', name: 'Robin RA' };
 const NDA = '11111111-1111-4111-8111-111111111111';
@@ -57,14 +58,20 @@ const q = async (sql: string, params?: unknown[]) => (await jdb.pool.query(sql, 
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    // audit_logs: a section create writes its secondary index row there, in the
+    // same transaction as its authoring audit trail row (9a4da85005).
+    prereqSql: PREREQ + extractTableDdl('migrations/0000_sweet_joseph.sql', ['audit_logs']),
     migrations: [
       'migrations/20260524_program_workbench_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // A section create records its CREATE row in the authoring audit trail in
+      // the same transaction (9a4da85005), and fails closed without the table.
+      'db/migrations/20260725_authoring_audit_trail.sql',
       'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'migrations/20260527_mutation_primitives.sql',
+      'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260804_phase9_rule_pack_outlines.sql',
       'migrations/20260728_authoring_document_governed_binding.sql',
