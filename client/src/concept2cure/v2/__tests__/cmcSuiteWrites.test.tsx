@@ -515,6 +515,22 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     expect(await screen.findByText('Couldn’t load the Module 3 build state')).toBeTruthy();
   });
 
+  it('shows the composition boundary’s refusal as an answer about the program, not as a failed read', async () => {
+    /* apiRequest throws the server's own sentence with the status
+       (assertApiResponseOk); the build state answers 409 for a program outside
+       the boundary (decision P-28). */
+    const refusal =
+      'This program’s drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.';
+    apiRequest.mockImplementation(async (m: string, u: string) => {
+      if (u.startsWith('/api/cmc/module3-os/build-state/')) throw Object.assign(new Error(refusal), { status: 409 });
+      return res({ success: true, data: null });
+    });
+    render(<CmModule3Build ask={() => {}} />);
+    expect(await screen.findByText('Module 3 is not composed here for this program')).toBeTruthy();
+    expect(screen.getByText(refusal)).toBeTruthy();
+    expect(screen.queryByText('Couldn’t load the Module 3 build state')).toBeNull();
+  });
+
   it('says the artifact registry is unlinked instead of rendering its absence as "no artifacts"', async () => {
     wire((m, u) =>
       m === 'GET' && u.startsWith('/api/cmc/module3-os/build-state/')

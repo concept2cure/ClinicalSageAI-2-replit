@@ -73,6 +73,7 @@ import {
   withoutSignatureFields,
 } from '../../services/cmc/signed-record';
 import { createScopedLogger } from '../../utils/logger';
+import { compositionRefusalBody, studyFiledUnderNoProgram } from '../../services/cmc/composition-scope';
 import * as metricsModule from '../../metrics.js';
 import { serverError } from '../../lib/api-response';
 import { launchScopeEnforced } from '../../services/entitlements/launch-scope';
@@ -2297,6 +2298,40 @@ router.put('/comparability-studies/:id', async (req, res) => {
  * caller's to learn. Returns true when the caller may proceed; the refusal is
  * already written when it returns false.
  */
+/**
+ * The composition boundary (decision P-28: small-molecule Module 3 for a US
+ * IND), asked by every route here that states regulatory content for a
+ * program: the QbD designation, the ICH compliance verdict, the control
+ * strategy, the Q1E shelf life and batch poolability. Each of these used to
+ * answer a monoclonal antibody with small-molecule content (Q3A(R2) impurity
+ * bases, Q6A release defaults, a Q1E-extrapolated shelf life). True when it
+ * has answered: the boundary's own 409 body, and nothing was computed.
+ */
+async function refusedAtCompositionBoundary(res: express.Response, orgId: number, projectId: string): Promise<boolean> {
+  const { assessProgramCompositionScope } = await import('../../services/cmc/module3-compile');
+  const refusal = await assessProgramCompositionScope(orgId, projectId);
+  if (!refusal) return false;
+  res.status(409).json(compositionRefusalBody(refusal));
+  return true;
+}
+
+/** The boundary for stability studies: each is judged on the program it is filed under. */
+async function studiesRefusedAtCompositionBoundary(
+  res: express.Response,
+  orgId: number,
+  studies: ReadonlyArray<{ id: number; projectId: string | null }>,
+): Promise<boolean> {
+  const unfiled = studies.filter((s) => !s.projectId).map((s) => s.id);
+  if (unfiled.length) {
+    res.status(409).json(compositionRefusalBody(studyFiledUnderNoProgram(unfiled)));
+    return true;
+  }
+  for (const projectId of new Set(studies.map((s) => s.projectId as string))) {
+    if (await refusedAtCompositionBoundary(res, orgId, projectId)) return true;
+  }
+  return false;
+}
+
 async function answeredUnknownProgram(res: express.Response, orgId: number, projectId: string): Promise<boolean> {
   const { projectBelongsToTenant } = await import('../../services/cmc/project-membership');
   if (await projectBelongsToTenant({ organizationId: orgId, projectId })) return false;
@@ -2320,6 +2355,7 @@ router.get('/quality/qbd/:projectId', async (req, res) => {
       return res.status(400).json({ success: false, error: 'projectId is required' });
     }
     if (await answeredUnknownProgram(res, orgId, projectId)) return;
+    if (await refusedAtCompositionBoundary(res, orgId, projectId)) return;
     const { analyzeQbdFromSources } = await import('../../services/cmc/qbd-analyzer');
     const result = await analyzeQbdFromSources(orgId, projectId);
     res.json({ success: true, data: result });
@@ -2343,6 +2379,7 @@ router.post('/ich-compliance', async (req, res) => {
       return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
     }
     if (await answeredUnknownProgram(res, orgId, projectId)) return;
+    if (await refusedAtCompositionBoundary(res, orgId, projectId)) return;
     const { runIchComplianceCheck } = await import('../../services/cmc/ich-compliance-checker');
     const report = await runIchComplianceCheck(orgId, projectId);
     res.json({ success: true, data: report });
@@ -2406,6 +2443,7 @@ router.post('/control-strategy', async (req, res) => {
       });
     }
     if (await answeredUnknownProgram(res, orgId, projectId)) return;
+    if (await refusedAtCompositionBoundary(res, orgId, projectId)) return;
     const { generateControlStrategy } = await import('../../services/cmc/control-strategy-generator');
     const strategy = await generateControlStrategy(orgId, projectId, scope);
     res.json({ success: true, data: strategy });
@@ -2460,10 +2498,12 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         stabilityData: stabilityStudies.stabilityData,
+        projectId: stabilityStudies.projectId,
       })
       .from(stabilityStudies)
       .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
     if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
+    if (await studiesRefusedAtCompositionBoundary(res, orgId, [study])) return;
 
     /* One implementation, shared with AnA's recorded-estimate tool: the fit a
        registered shelf life is set from must not have two versions. */
@@ -2650,6 +2690,7 @@ router.post('/stability-studies/poolability', async (req, res) => {
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         stabilityData: stabilityStudies.stabilityData,
+        projectId: stabilityStudies.projectId,
       })
       .from(stabilityStudies)
       .where(and(inArray(stabilityStudies.id, wanted), eq(stabilityStudies.organizationId, orgId)));
@@ -2661,6 +2702,8 @@ router.post('/stability-studies/poolability', async (req, res) => {
         error: `Stability ${wanted.filter(id => !found.has(id)).length === 1 ? 'study' : 'studies'} not found: ${wanted.filter(id => !found.has(id)).join(', ')}`,
       });
     }
+
+    if (await studiesRefusedAtCompositionBoundary(res, orgId, studies)) return;
 
     const outcome = await assessRecordedPoolability(studies);
     if (!outcome.ok) {

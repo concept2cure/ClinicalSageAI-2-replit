@@ -1123,6 +1123,9 @@ router.post('/place-into-submission/:projectId', requireRole('regulatory-author'
       if (result.refusedBy === 'cross-project') {
         return res.status(409).json({ success: false, code: 'CROSS_PROJECT', error: result.error });
       }
+      if (result.refusedBy === 'composition-scope') {
+        return res.status(409).json(compositionRefusalBody(result.refusal));
+      }
       return res.status(409).json({ success: false, error: result.error, skipped: result.skipped });
     }
     return res.json({ success: true, data: result });

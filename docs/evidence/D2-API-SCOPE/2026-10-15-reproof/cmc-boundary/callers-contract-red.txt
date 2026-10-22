@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > finds the callers it exists to watch 2ms
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts' asks before it calls [ 'analyzeQbdFromSources', …(4) ] 6ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…' asks before it calls [ 'runIchComplianceCheck', …(1) ] 1ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/ana/AnaToolExecutor.ts is listed with a reason, and still needs to be 1ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/routes/orchestration.ts is listed with a reason, and still needs to be 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts' asks before it calls [ 'analyzeQbdFromSources', …(4) ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…' asks before it calls [ 'runIchComplianceCheck', …(1) ]
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts:97:18
+     95|
+     96|   it.each(callers.filter((c) => !(c.file in NOT_YET)))('$file asks bef…
+     97|     expect(asks).toBe(true);
+       |                  ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  04:51:53
+   Duration  3.01s (transform 85ms, setup 93ms, import 2.63s, tests 14ms, environment 0ms)
+

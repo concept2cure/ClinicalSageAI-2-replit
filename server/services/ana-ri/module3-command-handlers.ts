@@ -199,6 +199,25 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   };
 }
 
+/**
+ * The build status, or the composition boundary's refusal as this command's
+ * answer. getModule3BuildStatus refuses a program outside the boundary
+ * (decision P-28) rather than score it on small-molecule rules, and the
+ * assistant relays the reason instead of reporting a tool failure.
+ */
+async function buildStatusFor(
+  action: string,
+  orgId: number,
+  projectId: string,
+): Promise<{ statuses: Awaited<ReturnType<typeof getModule3BuildStatus>>['sections'] } | { refused: CommandResult }> {
+  try {
+    return { statuses: (await getModule3BuildStatus(orgId, projectId)).sections };
+  } catch (err) {
+    if (refusedByCompositionScope(err)) return { refused: anaCompositionRefusal(err, action, '') };
+    throw err;
+  }
+}
+
 // ── module3_missing_inputs ────────────────────────────────────────────────────
 
 export async function module3MissingInputs(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
@@ -206,7 +225,9 @@ export async function module3MissingInputs(ctx: CommandContext, params: Record<s
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_missing_inputs', message: 'Project ID required' };
 
-  const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
+  const status = await buildStatusFor('module3_missing_inputs', orgId, projectId);
+  if ('refused' in status) return status.refused;
+  const { statuses } = status;
   const withMissing = statuses.filter(s => s.missingInputs.length > 0);
 
   if (withMissing.length === 0) {
@@ -229,7 +250,9 @@ export async function module3StaleSections(ctx: CommandContext, params: Record<s
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_stale_sections', message: 'Project ID required' };
 
-  const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
+  const status = await buildStatusFor('module3_stale_sections', orgId, projectId);
+  if ('refused' in status) return status.refused;
+  const { statuses } = status;
   const stale = statuses.filter(s => s.isStale);
 
   if (stale.length === 0) {
@@ -255,7 +278,9 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
   const actorId = commandActor(ctx);
   if (actorId === null) return refusedWithoutActor('module3_refresh_stale');
 
-  const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
+  const status = await buildStatusFor('module3_refresh_stale', orgId, projectId);
+  if ('refused' in status) return status.refused;
+  const { statuses } = status;
   const stale = statuses.filter(s => s.isStale);
   if (stale.length === 0) {
     return { success: true, action: 'module3_refresh_stale', message: 'No stale sections to refresh.' };

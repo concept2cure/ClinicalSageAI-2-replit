@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > opens a drawer and POSTs the mapped body to the register endpoint 314ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > shows the SERVER’s row, not the values that were typed 116ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > a rejected write adds nothing and names the rejected field 97ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > closes Edit on a validated method and retires it with a reason instead 79ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > an edit PUTs against the row and keeps the validation record it was seeded with 72ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > records the signed-in user as the analyst on a new result 70ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > refuses to let the analyst review their own result, and says why 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > a review PUTs the disposition and the reviewer, never the analyst 66ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > renders the per-section build state the endpoint returns 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > refuses to build a section that no source data feeds, and says why 48ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > compiles the whole module against the operating-system endpoint 101ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > a compile that is refused reports the server’s reason and changes nothing 92ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > resolves a contradiction through the governed endpoint with its note 64ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the export gate’s refusal as the verdict it is, with the reason 89ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the pass verdict when the gate allows the export 88ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > asks for a project rather than guessing one 9ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > reports a failed board read as a failure, never as "nothing here yet" 14ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the composition boundary’s refusal as an answer about the program, not as a failed read 17ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > says the artifact registry is unlinked instead of rendering its absence as "no artifacts" 29ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > places approved sections into a chosen sequence through the placement endpoint 205ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > does not place without a stated reason, and offers only this program’s submissions 141ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows a placement refusal as the gate verdict it is, verbatim 133ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  01:55:31
+   Duration  3.44s (transform 567ms, setup 155ms, import 692ms, tests 1.93s, environment 499ms)
+

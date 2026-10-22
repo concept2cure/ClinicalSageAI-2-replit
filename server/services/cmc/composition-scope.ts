@@ -120,6 +120,24 @@ export function applicationNotReadable(detail: string): CompositionRefusal {
   };
 }
 
+/**
+ * A stability study filed under no program. The boundary judges a program, and
+ * a study with none has no product class, no substance and no application to
+ * judge: whether its product is a small molecule is not established, and an
+ * ICH Q1E figure is not produced on an unestablished modality (2026-10-22).
+ */
+export function studyFiledUnderNoProgram(studyIds: readonly number[]): CompositionRefusal {
+  const which = studyIds.length === 1 ? `Stability study ${studyIds[0]} is` : `Stability studies ${studyIds.join(', ')} are`;
+  return {
+    code: 'CMC_MODALITY_NOT_ESTABLISHED',
+    modality: 'unknown',
+    message:
+      `${which} filed under no program, so whether the product is a small molecule is not established, and an ` +
+      `ICH Q1E shelf life is produced here only for a small-molecule product of a US IND. File the study under ` +
+      `its program, then estimate again.`,
+  };
+}
+
 /** Where a program outside the composition scope does its Module 3 work. */
 const AUTHORED_INSTEAD =
   'Author its quality content in Document editor & authoring, keep the evidence in Vault (DMS), and file it ' +
@@ -202,19 +220,36 @@ export function compositionRefusal(
     };
   }
 
+  return applicationRefusal(applicationType);
+}
+
+/**
+ * The application half of the boundary: null for a US IND, the refusal
+ * otherwise. Asked of the program by `compositionRefusal`, and of the
+ * submission Module 3 is placed into by `placeModule3IntoSubmission` — the
+ * boundary refused composing for an NDA and then let the IND-composed text be
+ * placed into one, 3.2.R statements that are false for a marketing application
+ * and all (2026-10-15 launch-boundary re-proof).
+ */
+export function applicationRefusal(
+  applicationType: string | null | undefined,
+  filer: 'program' | 'submission' = 'program',
+): CompositionRefusal | null {
   const filed = String(applicationType ?? '').trim();
   if (!filed) {
     /* `regulatory_programs.program_type` is NOT NULL, so an empty answer means
        the program row could not be read — not that it files nothing. */
-    return applicationNotReadable('the program row could not be read');
+    return applicationNotReadable(`the ${filer} row could not be read`);
   }
 
   if (!isUsClinicalTrialApplication(filed)) {
+    const subject = filer === 'program' ? 'This program files' : 'This submission files';
+    const verb = filer === 'program' ? 'composed' : 'composed and placed';
     return {
       code: 'CMC_APPLICATION_OUT_OF_SCOPE',
       applicationType,
       message:
-        `This program files ${filed.toUpperCase()}, and Module 3 is composed here only for a US ` +
+        `${subject} ${filed.toUpperCase()}, and Module 3 is ${verb} here only for a US ` +
         `IND (21 CFR 312.23(a)(7)). A marketing application needs the 3.2.R location statements, the ` +
         `§3.2.S.4.5 / §3.2.P.5.6 justification of specification and 4-level section granularity, none of which ` +
         `this composer produces; an EU or Health Canada clinical-trial application needs an IMPD Quality part, ` +
@@ -273,6 +308,7 @@ export function refusedByCompositionScope(err: unknown): boolean {
 
 export default {
   compositionRefusal,
+  applicationRefusal,
   anaCompositionRefusal,
   refusedByCompositionScope,
   compositionRefusalBody,

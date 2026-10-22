@@ -54,6 +54,8 @@ import { evaluateFinalExportGate, type FinalExportGateVerdict } from './final-ex
 import { getSectionLabels } from '../module3-convergence-service';
 import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Composer';
 import { MODULE3_PLACED_FROM } from './module3-placement-marker';
+import { applicationRefusal, type CompositionRefusal } from './composition-scope';
+import { assessProgramCompositionScope } from './module3-compile';
 
 /**
  * Wording for the one refusal this seam adds: a section whose stored
@@ -198,6 +200,19 @@ export type PlaceModule3Result =
       error: string;
       /** The vocabulary the target actually files on — named, not implied. */
       vocabulary: PlacementVocabulary;
+    }
+  | {
+      placed: false;
+      /**
+       * The composition boundary (decision P-28: small-molecule Module 3 for a
+       * US IND) refused: the program is outside it, or the target submission
+       * files something other than a US IND. Refused before anything is read
+       * or written.
+       */
+      refusedBy: 'composition-scope';
+      error: string;
+      /** The boundary's own refusal; the route answers its 409 body. */
+      refusal: CompositionRefusal;
     }
   | {
       placed: false;
@@ -473,6 +488,23 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
         '(IND, NDA, BLA or their equivalents).',
       vocabulary: targetVocabulary,
     };
+  }
+
+  // 2a'. The target files a US IND, and the program is inside the composition
+  // boundary (decision P-28). Compose refuses a marketing application, but the
+  // IND-composed text could still be placed into one: 'ctd' above admits NDA,
+  // BLA, ANDA and MAA, and an NDA created under the same program passes the
+  // cross-project check below. What would have reached the agency is IND
+  // Module 3 in a marketing application — 3.2.R statements that say marketing
+  // items "do not apply to an IND", no §3.2.S.4.5 / §3.2.P.5.6 justification.
+  // The program is judged again too, because a section approved before the
+  // boundary existed can still pass the gate (2026-10-15 launch-boundary
+  // re-proof, docs/evidence/D2-API-SCOPE/2026-10-15-reproof/cmc-boundary/).
+  const scopeRefusal =
+    applicationRefusal((submission as { applicationType?: string | null }).applicationType ?? null, 'submission') ??
+    (await assessProgramCompositionScope(orgId, cmcProjectId));
+  if (scopeRefusal) {
+    return { placed: false, refusedBy: 'composition-scope', error: scopeRefusal.message, refusal: scopeRefusal };
   }
 
   // 2b. The submission is this project's (PF-11; founder decision 2026-09-26).
