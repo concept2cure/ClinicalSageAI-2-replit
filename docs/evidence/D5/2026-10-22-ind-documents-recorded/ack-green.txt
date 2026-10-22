@@ -1,0 +1,11 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts > GET /api/mdx/gateways/transmittals/:id/ack > records EXPORT_GENERATED with the SHA-256 of the bytes it delivers, and keeps the provenance headers 22ms
+ ✓ server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts > GET /api/mdx/gateways/transmittals/:id/ack > delivers nothing when the record does not persist, and says so 5ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  05:15:06
+   Duration  5.44s (transform 2.94s, setup 89ms, import 5.03s, tests 31ms, environment 0ms)
+

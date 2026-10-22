@@ -1,0 +1,681 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/cmcQualityBoundary.test.tsx > CmQuality — the QbD read > shows the boundary’s refusal in the server’s words, not as an outage 5074ms
+   → Unable to find an element with the text: Quality attributes are not derived here for this program. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Quality by design
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            CQAs and CPPs derived from your own records, the control strategy over them, and the ICH check
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            Run ICH compliance check
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-workflow"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+             
+            Generate control strategy
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+            role="status"
+          />
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Quality by design
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            CQAs and CPPs derived from your own records, the control strategy over them, and the ICH check
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            Run ICH compliance check
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-workflow"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+             
+            Generate control strategy
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+            role="status"
+          />
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963...
+ ✓ client/src/concept2cure/v2/__tests__/cmcQualityBoundary.test.tsx > CmQuality — the QbD read > still reports a failed read as a failure 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcQualityBoundary.test.tsx > CmQuality — the QbD read > shows the boundary’s refusal in the server’s words, not as an outage
+TestingLibraryElementError: Unable to find an element with the text: Quality attributes are not derived here for this program. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Quality by design
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            CQAs and CPPs derived from your own records, the control strategy over them, and the ICH check
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            Run ICH compliance check
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-workflow"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+             
+            Generate control strategy
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+            role="status"
+          />
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Quality by design
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            CQAs and CPPs derived from your own records, the control strategy over them, and the ICH check
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            Run ICH compliance check
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-workflow"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+             
+            Generate control strategy
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+            role="status"
+          />
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/cmcQualityBoundary.test.tsx:48:25
+     46|     });
+     47|     render(<CmQuality ask={() => {}} />);
+     48|     expect(await screen.findByText('Quality attributes are not derived…
+       |                         ^
+     49|     expect(screen.getByText(REFUSAL)).toBeTruthy();
+     50|     expect(screen.queryByText('Couldn’t derive the quality attributes'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  05:24:09
+   Duration  7.13s (transform 722ms, setup 156ms, import 935ms, tests 5.11s, environment 723ms)
+

@@ -1,0 +1,131 @@
+# c6 — mutation checks: each branch of the change, reverted one at a time, fails its own test
+# HEAD: 178f0b477c8e92257827a5f64c7f0441af7aa8a1
+# date: 2026-10-22T01:39:01Z
+# tree: `git archive HEAD ...` extracted to a scratch directory with this change's files copied over it (the repository working
+#       tree was not modified). Each mutant is applied, the named test run with -t, and the file restored before the next.
+# script: mutate.py (below), command per mutant: npx vitest run server/services/__tests__/conversion-slots.test.ts -t <name>
+# The HTTP mapping branches (serverError, global error handler, eCTD export, submissions fail(), ectd-compile rethrow) are
+# shown failing without the mapping in c3. The submission-service freeze/dispatch pass-through has no failing-first test (see README).
+
+## M1 nested acquire queues for a second slot (re-entrancy removed)
+# file: server/services/conversion-slots.ts
+# test filter: -t 'nesting cannot deadlock'
+# exit code: 1
+ × server/services/__tests__/conversion-slots.test.ts > withConversionSlot > a conversion started inside a slot runs under that slot, so nesting cannot deadlock 111ms
+   → The document converter is busy. Every conversion slot stayed in use for the 1 second this request waited, so it was not converted. Try again in about 30 seconds.
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M2 finalizePdfA turns a Ghostscript capacity refusal into converted:false
+# file: server/services/ectd/pdfa-pipeline.ts
+# test filter: -t 'not reported as "returned unchanged"'
+# exit code: 1
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a capacity refusal inside PDF/A finalization is not reported as "returned unchanged" 119ms
+   → promise resolved "{ …(4) }" instead of rejecting
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M3 veraPDF validation turns a capacity refusal into a validation note
+# file: server/services/ectd/pdfa-pipeline.ts
+# test filter: -t 'veraPDF run that never started'
+# exit code: 1
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > with no Ghostscript, a veraPDF run that never started is refused, not written up as a validation note 119ms
+   → promise resolved "{ …(4) }" instead of rejecting
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M4 compression batch records a capacity refusal as one failed file and continues
+# file: server/services/pdf-compression-service.ts
+# test filter: -t 'stops a compression batch'
+# exit code: 1
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > stops a compression batch at the first refusal instead of failing each file in turn 297ms
+   → promise resolved "{ results: [ …(3) ], summary: { …(3) } }" instead of rejecting
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M5 the Ghostscript version probe takes a conversion slot
+# file: server/services/pdf-compression-service.ts
+# test filter: -t 'version probe takes no slot'
+# exit code: 1
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a version probe takes no slot: Ghostscript is reported present while every slot is held 114ms
+   → expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M6 OCRmyPDF loses --jobs 1
+# file: server/integrations/ocrmypdf/client.ts
+# test filter: -t 'OCRmyPDF is told to run one job'
+# exit code: 1
+ × server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > OCRmyPDF is told to run one job, so its own worker pool cannot multiply the slot 129ms
+   → expected -1 to be greater than or equal to 0
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M7 the veraPDF client spawns outside a slot
+# file: server/integrations/verapdf/client.ts
+# test filter: -t 'one budget for the whole process'
+# exit code: 1
+ × server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > the cap is one budget for the whole process, across every converter 500ms
+   → expected 3 to be less than or equal to 2
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+# ---- mutate.py ----
+import subprocess, sys, pathlib, re
+root = pathlib.Path(sys.argv[1])
+MUTANTS = [
+  ("M1 nested acquire queues for a second slot (re-entrancy removed)",
+   "server/services/conversion-slots.ts",
+   "  if (heldSlot.getStore() !== undefined) return fn();\n", "",
+   "nesting cannot deadlock"),
+  ("M2 finalizePdfA turns a Ghostscript capacity refusal into converted:false",
+   "server/services/ectd/pdfa-pipeline.ts",
+   "    } catch (err: any) {\n      if (isConversionCapacityError(err)) throw err;\n      warnings.push(`Ghostscript",
+   "    } catch (err: any) {\n      warnings.push(`Ghostscript",
+   "not reported as \"returned unchanged\""),
+  ("M3 veraPDF validation turns a capacity refusal into a validation note",
+   "server/services/ectd/pdfa-pipeline.ts",
+   "  } catch (err: any) {\n    if (isConversionCapacityError(err)) throw err;\n    // Non-zero exit",
+   "  } catch (err: any) {\n    // Non-zero exit",
+   "veraPDF run that never started"),
+  ("M4 compression batch records a capacity refusal as one failed file and continues",
+   "server/services/pdf-compression-service.ts",
+   "      if (isConversionCapacityError(error)) throw error;\n", "",
+   "stops a compression batch"),
+  ("M5 the Ghostscript version probe takes a conversion slot",
+   "server/services/pdf-compression-service.ts",
+   "    await execFileAsync(resolveGsBinary(), ['--version'], { timeout: 5000 });",
+   "    await withConversionSlot('ghostscript-probe', () => execFileAsync(resolveGsBinary(), ['--version'], { timeout: 5000 }));",
+   "version probe takes no slot"),
+  ("M6 OCRmyPDF loses --jobs 1",
+   "server/integrations/ocrmypdf/client.ts",
+   "const args = ['--jobs', '1', '--skip-text',", "const args = ['--skip-text',",
+   "OCRmyPDF is told to run one job"),
+  ("M7 the veraPDF client spawns outside a slot",
+   "server/integrations/verapdf/client.ts",
+   "return withConversionSlot('verapdf', () => new Promise<PdfValidationReport>((resolve) => {",
+   "return ((_kind: string, run: () => Promise<PdfValidationReport>) => run())('verapdf', () => new Promise<PdfValidationReport>((resolve) => {",
+   "one budget for the whole process"),
+]
+test = "server/services/__tests__/conversion-slots.test.ts"
+for label, rel, old, new, name in MUTANTS:
+    p = root / rel
+    src = p.read_text()
+    assert src.count(old) == 1, (label, src.count(old))
+    p.write_text(src.replace(old, new))
+    try:
+        r = subprocess.run(["npx", "vitest", "run", test, "-t", name], cwd=root, capture_output=True, text=True, timeout=600)
+        out = r.stdout + r.stderr
+        lines = [l for l in out.splitlines() if re.search(r"^\s*(✓|×)|→|Tests\s|Test Files", l)]
+        print(f"## {label}\n# file: {rel}\n# test filter: -t {name!r}\n# exit code: {r.returncode}")
+        print("\n".join(lines))
+        print()
+    finally:
+        p.write_text(src)

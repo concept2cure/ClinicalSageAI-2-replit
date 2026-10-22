@@ -50,6 +50,14 @@ vi.mock('../cmc/resolve-cmc-artifact-project', () => ({
   }),
 }));
 
+/* The composition boundary admits this suite's program: these tests are about
+   the figures the board reports for one it admits. Its refusals, judged on a
+   real engine, are in services/cmc/__tests__/composition-boundary-readers.pglite.test.ts. */
+vi.mock('../cmc/module3-compile', async (orig) => ({
+  ...(await orig<object>()),
+  admitProgramComposition: async () => ({ region: null, applicationType: 'ind', programType: 'ind', productType: 'drug' }),
+}));
+
 import { deriveBuildState, getModule3BuildStatus } from '../module3-convergence-service';
 import {
   composeModule3FromCanonicalSources,

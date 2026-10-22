@@ -80,3 +80,24 @@ output "service_names" {
   description = "Every ECS service this module creates, so the stack's tests can say which exist."
   value       = [aws_ecs_service.api.name]
 }
+
+output "api_autoscaling" {
+  description = "The API service's autoscaling target and its two policies, for the stack's tests."
+  value = {
+    min_capacity       = aws_appautoscaling_target.api.min_capacity
+    max_capacity       = aws_appautoscaling_target.api.max_capacity
+    scalable_dimension = aws_appautoscaling_target.api.scalable_dimension
+    policies = {
+      cpu = {
+        metric         = aws_appautoscaling_policy.api_cpu.target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].predefined_metric_type
+        target         = aws_appautoscaling_policy.api_cpu.target_tracking_scaling_policy_configuration[0].target_value
+        resource_label = null
+      }
+      requests = {
+        metric         = aws_appautoscaling_policy.api_requests.target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].predefined_metric_type
+        target         = aws_appautoscaling_policy.api_requests.target_tracking_scaling_policy_configuration[0].target_value
+        resource_label = aws_appautoscaling_policy.api_requests.target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].resource_label
+      }
+    }
+  }
+}

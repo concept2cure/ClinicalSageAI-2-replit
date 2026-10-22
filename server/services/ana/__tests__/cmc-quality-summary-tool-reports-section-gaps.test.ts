@@ -25,15 +25,16 @@ const SOURCES = [
 ];
 
 /** Answers the program check and the program's source read; nothing else is recorded. */
-const poolOf = async () => ({
-  query: async (sql: string, params: unknown[] = []) => {
-    if (/regulatory_programs/i.test(sql)) {
-      return { rows: [{ id: PROGRAM, programType: 'ind', productType: 'drug', productName: 'BX-115', name: 'BX-115 IND', code: 'BX115' }] };
-    }
-    if (/FROM cmc_source_objects/i.test(sql)) return { rows: params[0] === ORG && params[1] === PROGRAM ? SOURCES : [] };
-    return { rows: [] };
-  },
-});
+const query = async (sql: string, params: unknown[] = []) => {
+  if (/regulatory_programs/i.test(sql)) {
+    return { rows: [{ id: PROGRAM, programType: 'ind', productType: 'drug', productName: 'BX-115', name: 'BX-115 IND', code: 'BX115' }] };
+  }
+  if (/FROM cmc_source_objects/i.test(sql)) return { rows: params[0] === ORG && params[1] === PROGRAM ? SOURCES : [] };
+  return { rows: [] };
+};
+/* Compose runs on a connection of its own, in a transaction (it reads the
+   spine under a savepoint). */
+const poolOf = async () => ({ query, connect: async () => ({ query, release: () => undefined }) });
 
 describe('draft_quality_overall_summary_m2_3 reports the sections Module 3 has not completed', () => {
   it('three CMC records are not a 100%-complete QOS with no gaps', async () => {
