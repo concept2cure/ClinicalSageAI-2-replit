@@ -30,7 +30,8 @@ beforeEach(()=>{
     if(sql.includes('FROM organization_users'))return{rows:[{account_status:'active',organization_status:'active',payment_status:'active',membership_role:'member'}]};
     if(sql.includes('FROM authoring_documents'))return{rows:[{client_program_id:'00000000-0000-4000-8000-000000000012'}]};
     // Periodic review lists in-force and in-review documents; a first draft is not due (in-force-release.ts).
-    if(sql.includes('next_review_date < CURRENT_DATE +'))return{rows:[{...registered,status:'in_review'}]};
+    // Its due date is decided after the read, from the version in force and its last review (periodic-review.ts).
+    if(sql.includes("status IN ('effective','in_review','draft')"))return{rows:[{...registered,status:'in_review',next_review_date:'2026-01-05'}]};
     return{rows:[registered]};
   });
   h.scope.mockReset().mockResolvedValue({docId,tenantId:9,documentStatus:'draft',createdBy:'3'});

@@ -14,6 +14,7 @@ import {
   type RegulatoryContactValues,
 } from './regulatory-identifiers';
 import type { FdaApplicantContact } from '../submission-gateways/ectd-packager/types';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
 
 export interface PackageIdentityQueryable {
   query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
@@ -28,6 +29,15 @@ export interface RecordedPackageIdentity {
   /** FDA DUNS only; never reinterpret it as an EMA/PMDA identifier. */
   applicantId: string | null;
   contact: RegulatoryContactValues;
+  /**
+   * Set when the submission is for a market other than its project's home
+   * market (decision P-44): `applicationNumber` is then the number recorded on
+   * that submission, never the project's. Absent for the home market and for
+   * a read by project.
+   */
+  market?: { region: string };
+  /** The project's primary agency, which names its home market (P-44). Not a package fact. */
+  homeAgency?: string | null;
 }
 
 /** Versioned captured facts carried by the existing governed package binding. */
@@ -92,6 +102,7 @@ export function fdaContactsForPackageIdentity(identity: RecordedPackageIdentity)
 interface IdentityRow {
   organization_name?: unknown;
   application_number?: unknown;
+  primary_agency?: unknown;
   applicant_sponsor_id?: unknown;
   sponsor_id?: unknown;
   sponsor_name?: unknown;
@@ -108,7 +119,7 @@ export async function readRecordedPackageIdentity(
   programId: string | null | undefined,
 ): Promise<RecordedPackageIdentity> {
   const row = (await q.query(
-    `SELECT o.name AS organization_name, p.application_number, p.applicant_sponsor_id,
+    `SELECT o.name AS organization_name, p.application_number, p.primary_agency, p.applicant_sponsor_id,
             s.id AS sponsor_id, s.name AS sponsor_name, s.duns,
             s.contact_name, s.contact_phone, s.contact_email
        FROM organizations o
@@ -137,6 +148,7 @@ function identityFromRow(row: IdentityRow, programId: string | null): RecordedPa
       phone: bound ? usableContactField('phone', row.contact_phone) : null,
       email: bound ? usableContactField('email', row.contact_email) : null,
     },
+    homeAgency: typeof row.primary_agency === 'string' ? row.primary_agency : null,
   };
 }
 
@@ -162,7 +174,7 @@ export async function lockRecordedPackageIdentity(
 }
 
 type LegacyReadableIdentity = Pick<RecordedPackageIdentity, 'programId' | 'applicationNumber' | 'applicantName'> &
-  Partial<Pick<RecordedPackageIdentity, 'applicantSponsorId' | 'applicantId' | 'contact'>>;
+  Partial<Pick<RecordedPackageIdentity, 'applicantSponsorId' | 'applicantId' | 'contact' | 'market'>>;
 
 /** Named actionable gaps, using the existing FDA identifier/contact rules. */
 export function packageIdentityRefusal(
@@ -174,7 +186,10 @@ export function packageIdentityRefusal(
   const gaps: string[] = [];
   if (!identity.applicationNumber) {
     missing.push('applicationNumber');
-    gaps.push(identity.programId
+    gaps.push(identity.market
+      ? `this submission is the project's ${identity.market.region} market, and records no application number of its own ` +
+        "(record the number its agency assigned on the submission; the project's number is its home market's, P-44)"
+      : identity.programId
       ? 'its project records no agency application number (record the number the agency assigned on the project; the program code is not one)'
       : 'the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)');
   }
@@ -205,18 +220,44 @@ export function packageIdentityRefusal(
     `A package names its application and its applicant from the record, never a placeholder, and ${gaps.join('; and ')}. ${outcome}`) : null;
 }
 
-/** Resolve the submission's same-tenant program before reading recorded facts. */
+/**
+ * Whether a submission's region is its project's home market, the region of the
+ * project's primary agency (decision P-44). When either side does not name a
+ * known region, the submission is read as the home market, as every submission
+ * was before P-44: the project's number is not withheld on a guess.
+ */
+export function isHomeMarket(submissionRegion: unknown, primaryAgency: unknown): boolean {
+  const market = canonicalRegionOf(typeof submissionRegion === 'string' ? submissionRegion : '');
+  const home = canonicalRegionOf(typeof primaryAgency === 'string' ? primaryAgency : '');
+  return !market || !home || market === home;
+}
+
+/**
+ * Resolve the submission's same-tenant program before reading recorded facts.
+ * A submission for a market other than its project's home market carries the
+ * number recorded on the submission, never the project's (P-44); the applicant
+ * and its contact are the project's either way. `application_number` is read
+ * through to_jsonb, so a database the 20261022b column has not reached reads
+ * every submission as before.
+ */
 export async function readSubmissionPackageIdentity(
   q: PackageIdentityQueryable,
   organizationId: number,
   submissionId: number,
 ): Promise<RecordedPackageIdentity> {
   const row = (await q.query(
-    `SELECT program_id FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    `SELECT program_id, primary_region, to_jsonb(s)->>'application_number' AS market_number
+       FROM submissions s WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
     [submissionId, organizationId],
-  )).rows[0] as { program_id?: unknown } | undefined;
+  )).rows[0] as { program_id?: unknown; primary_region?: unknown; market_number?: unknown } | undefined;
   const programId = typeof row?.program_id === 'string' && row.program_id ? row.program_id : null;
-  return readRecordedPackageIdentity(q, organizationId, programId);
+  const identity = await readRecordedPackageIdentity(q, organizationId, programId);
+  if (!programId || isHomeMarket(row?.primary_region, identity.homeAgency)) return identity;
+  return {
+    ...identity,
+    applicationNumber: usableIdentifier('applicationNumber', row?.market_number),
+    market: { region: canonicalRegionOf(String(row?.primary_region)) as string },
+  };
 }
 
 // ── Dry runs (P-27 follow-up, 2026-10-08) ────────────────────────────────────

@@ -35,6 +35,7 @@ import { SC_REGIONS, SC_SEQ_STATUS } from '../fixtures/submission';
 import { classNotSequencedReason, type FilingDocumentClass } from '@shared/regulatory/filing-document-classes';
 import type { ReviewItem } from '../fixtures/review-data';
 import type { BuilderSection } from './submissionNavTarget';
+import { MarketApplicationNumber } from './MarketApplicationNumber';
 import {
   awaitingOwnReleaseSignature,
   programTypeLabel,
@@ -232,10 +233,12 @@ export function marketAccessibleName(s: Pick<MarketSubmission, 'applicationType'
   return [marketName(s), s.title].filter(Boolean).join(', ');
 }
 
-function MarketRow({ m, onRetry, onOpen, detail }: {
+function MarketRow({ m, onRetry, onOpen, detail, number }: {
   m: ProgramMarket; onRetry: (id: number) => void; onOpen: ((m: ProgramMarket) => void) | null;
   /** What is shown under the verdict in place of VerdictDetail (Submission Readiness's gates). */
   detail?: (m: ProgramMarket) => React.ReactNode;
+  /** The market's own application number (P-44), where the list offers it. */
+  number?: (m: ProgramMarket) => React.ReactNode;
 }) {
   const s = m.submission;
   const name = marketName(s);
@@ -273,6 +276,7 @@ function MarketRow({ m, onRetry, onOpen, detail }: {
       {detail ? detail(m) : <VerdictDetail read={m.read} />}
       {/* What the platform can carry for this market, in the server's words (F19). */}
       <div className="pj-file-m"><MarketSupportLine applicationType={s.applicationType} market={s.primaryRegion} /></div>
+      {number?.(m)}
       {onOpen && (
         <div className="pj-mkt-acts">
           <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(m)} aria-label={`Open ${name} in the Submission Center`}>
@@ -305,11 +309,13 @@ const FORBIDDEN_WORDS = 'Your role does not include reading submissions, so this
 
 /** The project's markets as a list, with its loading, refused, failed and
  *  empty states. The Submit tab and Submission Readiness (F18) both draw it. */
-export function MarketsBody({ markets, onOpen, center, startHint, detail }: {
+export function MarketsBody({ markets, onOpen, center, startHint, detail, number }: {
   markets: ProgramMarkets; onOpen: ((m: ProgramMarket) => void) | null; center: boolean;
   /** Said after "No market for this project yet": how one is started from here. */
   startHint?: string;
   detail?: (m: ProgramMarket) => React.ReactNode;
+  /** Each market's own application number (P-44); drawn by the project's Submit tab. */
+  number?: (m: ProgramMarket) => React.ReactNode;
 }) {
   const { list } = markets;
   if (list.loading) {
@@ -335,7 +341,7 @@ export function MarketsBody({ markets, onOpen, center, startHint, detail }: {
   return (
     <>
       <ul className="pj-files pj-mkts" aria-label="Markets">
-        {markets.markets.map((m) => <MarketRow key={m.submission.id} m={m} onRetry={markets.retryMarket} onOpen={onOpen} detail={detail} />)}
+        {markets.markets.map((m) => <MarketRow key={m.submission.id} m={m} onRetry={markets.retryMarket} onOpen={onOpen} detail={detail} number={number} />)}
       </ul>
       {others && <p className="pj-mkt-note">{others}</p>}
     </>
@@ -421,7 +427,8 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChang
           )}
         </span>
       </div>
-      <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null} />
+      <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
+        number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange} />} />
     </section>
   );
 }

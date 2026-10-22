@@ -56,6 +56,7 @@ import {
 } from '../services/ectd/compile-placement';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
+import { loadFiledStateBySubmission } from '../services/ectd/prior-sequence-loader';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
 import { readRecordedPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
@@ -1504,6 +1505,45 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
     res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
   } catch (error) {
     return serverError(res, log, 'reading the compilation history', error, { projectIdent: ident });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:projectIdent/filed-state — What the agency holds now (gap 6.1)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/* The current view of the application: every filed sequence of the spine's
+   submission folded, by the fold compile and transmit already use
+   (loadFiledStateBySubmission, prior-sequence-loader.ts). Only sent or
+   acknowledged sequences count; a preview or rehearsal compile never does.
+   An unreadable fold is 503, never an empty dossier. */
+router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => {
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  try {
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen) return;
+    const spine = chosen.spine;
+    if (!spine) {
+      return res.json({ projectIdent: ident, submissionId: null, throughSequence: null, sequences: [], leaves: [] });
+    }
+    let state: Awaited<ReturnType<typeof loadFiledStateBySubmission>>;
+    try {
+      state = await loadFiledStateBySubmission(pool, { organizationId: orgId, submissionId: spine.submissionId });
+    } catch (err) {
+      log.warn('The filed state could not be read', { orgId, submissionId: spine.submissionId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(503).json({ error: { code: 'FILED_STATE_UNAVAILABLE', message: 'What is on file at the agency could not be read. It is not shown as empty.' } });
+    }
+    const leaves = state.leaves
+      .map((l) => ({ ctdSection: l.ctdSection, fileName: l.fileName, title: l.title ?? null, href: l.href ?? null,
+        sequenceNumber: l.sequenceNumber ?? null, operation: l.operation ?? null, md5: l.md5 }))
+      .sort((a, b) => a.ctdSection.localeCompare(b.ctdSection, undefined, { numeric: true }) || a.fileName.localeCompare(b.fileName));
+    return res.json({ projectIdent: ident, submissionId: spine.submissionId, applicationType: spine.applicationType,
+      throughSequence: state.throughSequence, sequences: state.sequences, leaves });
+  } catch (error) {
+    return serverError(res, log, 'reading what is on file', error, { projectIdent: ident });
   }
 });
 

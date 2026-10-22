@@ -8,8 +8,8 @@ Stage 4 (OPS-10, OPS-21, OPS-23). Branch `concept2cure-v2`. Session
 | Slice | What | State |
 |---|---|---|
 | A | OPS-21: the frontend bucket versions; one SPA delivery path on the hosted deployment, pinned | done |
-| B | OPS-23: roll back on a failed smoke test; a `rollback_taskdef` dispatch; the migration's duration recorded | next |
-| C | OPS-10: target resolution, per-environment settings, build once on staging, promote the staging-verified digest to production | open |
+| B | OPS-23: roll back on a failed smoke test; a `rollback_taskdef` dispatch; the migration's duration recorded | done |
+| C | OPS-10: target resolution, per-environment settings, build once on staging, promote the staging-verified digest to production | next |
 
 ## Re-confirmed at head before starting
 
@@ -77,7 +77,56 @@ the bundle out of the image it deploys.
   - previous versions kept 7 days;
   - versioning suspended.
 
+## Slice B: a failed release rolls back, and a rollback can be asked for
+
+**What changed** (`.github/workflows/deploy-aws.yml`).
+
+- **`deploy-api` records what to return to.** It reads the revision the
+  service runs before it moves anything, and refuses to roll if it cannot
+  read one. It exports that as `previous_td_arn`, beside the revision it
+  rolls.
+- **A `rollback` job.** It runs after `deploy-api` and the smoke test, in the
+  production environment.
+  - When the smoke test fails after a successful roll, it returns the service
+    to `previous_td_arn`.
+  - On a `workflow_dispatch` with `rollback_taskdef`, it returns the service
+    to that revision, and runs alone: `ci-verdict`, `test` and
+    `security-gate` skip, and everything after them with them.
+  - It refuses, changing nothing, a revision of another family, anything that
+    is not a revision ARN, the revision that just failed, or one with no API
+    container. It waits for the service to settle, checks it ended on the
+    revision it was sent to, and warns when that revision names its image by
+    tag.
+  - Its comment says why automatic is safe: the migration set is additive
+    (Rule 1), so the previous code runs on the migrated schema, and
+    `ci:migration-drop-safety` refuses a non-additive change before it ships.
+- **The migration step records its start, end and duration** in the job
+  summary, from an EXIT trap, so a refusal or a deadline records them too.
+
+**Verified by making it fail.**
+
+- **At head** (`raw/b1`): the new
+  `tests/ci/deploy-rollback.contract.test.ts` cannot load, because there is
+  no rollback job.
+- **After:** 24/24. The job conditions go through the runner simulator; the
+  rollback and capture steps run as shell against a stubbed `aws`.
+- **Six mutants** (`raw/b2`), each caught by the case that exists for it:
+  - the smoke-failure clause removed;
+  - a rollback when `deploy-api` failed;
+  - `ci-verdict` running on a rollback request;
+  - the capture moved after `update-service`;
+  - the EXIT trap removed;
+  - the post-rollback check removed.
+- **Everything else that reads the workflow** (`raw/b3`):
+  - the `tests/ci` and deploy schema-contract suites, 689/689;
+  - six gates;
+  - the preflight proof, every check. That includes every AWS call each job
+    makes being granted to the role it assumes: 41 job×action pairs, up from
+    38.
+
 ## Not shown here
 
-- Slices B and C are not done yet; their sections follow when they land.
+- Slice C is not done yet; its section follows when it lands.
+- **A rollback against AWS** (Stage 5's acceptance). The acceptance case is a
+  staging dispatch with a broken readiness URL.
 - Anything against AWS (Stage 5).

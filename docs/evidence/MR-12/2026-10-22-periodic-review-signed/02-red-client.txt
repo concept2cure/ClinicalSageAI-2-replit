@@ -1,0 +1,27 @@
+# RED at 149ef8ccd (trunk, implementation stashed): the register cannot record a review, and does not read the due date after one (2026-10-22T15:16:18Z)
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > offers Record review on an effective document only, and says when each was last reviewed 82ms
+   → Unable to find an element by: [data-testid="qms-review-row"]
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > asks for a next review date after today before it can be signed 407ms
+   → Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "remains current" with meaning review, posts the decision to the signed route, and shows the server’s time 205ms
+   → Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "revision required" with no date 218ms
+   → Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > says a refused password signed nothing, and does not refresh as if it had 178ms
+   → Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > retains the canonical binding and program rather than losing them between the service and Open control 18ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > keeps legacy absence explicit so an unbound draft opens binding setup 3ms
+ × client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the date due after the last signed review, not the date the approval signed 11ms
+   → expected { id: 6, docNumber: 'SOP-015', …(4) } to match object { nextReviewDate: '2027-10-22', …(3) }
+ × client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the row date when the server sends no review 3ms
+   → expected { id: 6, docNumber: 'SOP-015', …(11) } to match object { …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element by: [data-testid="qms-review-row"]
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record review: SOP-015 Supplier controls"
+AssertionError: expected { id: 6, docNumber: 'SOP-015', …(4) } to match object { nextReviewDate: '2027-10-22', …(3) }
+AssertionError: expected { id: 6, docNumber: 'SOP-015', …(11) } to match object { …(2) }
+ Test Files  2 failed (2)
+      Tests  7 failed | 2 passed (9)
