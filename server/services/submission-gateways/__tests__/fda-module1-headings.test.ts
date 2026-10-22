@@ -76,26 +76,34 @@ describe('regionConformant is decided by the structure built, not by the region'
     expect(bundle.regionalBackbone?.conformanceGap).toMatch(/no <applicant-contacts>/);
   });
 
-  it('a declared form that also ships as a 1.1 leaf is written twice with one ID — not conformant', async () => {
-    const { bundle, xml } = await packFda({
+  /* 2026-10-08 (package-spine sweep F20): these two cases pinned the double
+     write — a declared form under <form> AND under its heading, one ID twice —
+     and only asked that it be reported. A declared form is now written once, in
+     the admin block, so they pin that instead. */
+  it('a declared form that also ships as a 1.1 leaf is written once, under <submission-information><form>, with one ID', async () => {
+    const { bundle, xml, doc } = await packFda({
       leaves: [{ ctdSection: '1.1', fileName: 'form1571.pdf' }, { ctdSection: '1.2', fileName: 'cover.pdf' }],
       contacts: [FULL_CONTACT],
       forms: { 'form1571.pdf': '1571' },
     });
-    // The bytes the claim is about: the same leaf ID appears twice.
     const ids = [...xml.matchAll(/\bID="([^"]+)"/g)].map((m) => m[1]);
-    expect(ids.length - new Set(ids).size).toBe(1);
-    expect(bundle.regionalBackbone?.regionConformant).toBe(false);
-    expect(bundle.regionalBackbone?.conformanceGap).toMatch(/form1571\.pdf is written twice/);
+    expect(new Set(ids).size).toBe(ids.length);
+    const form = only(doc, 'form');
+    expect(form.getAttribute('form-type')).toBe('fdaft1');
+    expect(form.parentNode?.nodeName).toBe('submission-information');
+    expect(xml.match(/xlink:href="[^"]*form1571\.pdf"/g)).toHaveLength(1);
+    expect(childNames(only(doc, 'm1-regional'))).toEqual(['m1-2-cover-letters']);
+    expect(bundle.regionalBackbone?.conformanceGap).not.toMatch(/form1571|written twice/);
   });
 
-  it('a declared form filed under another heading is written twice as well, and the gap names that heading', async () => {
-    const { bundle } = await packFda({
-      leaves: [{ ctdSection: '1.2', fileName: 'cover.pdf' }],
+  it('a declared form filed under another heading is written once as well, and leaves that heading', async () => {
+    const { bundle, doc } = await packFda({
+      leaves: [{ ctdSection: '1.2', fileName: 'cover.pdf' }, { ctdSection: '1.20', fileName: 'plan.pdf' }],
       contacts: [FULL_CONTACT],
       forms: { 'cover.pdf': '1571' },
     });
-    expect(bundle.regionalBackbone?.conformanceGap).toMatch(/cover\.pdf is written twice, under <form> and under <m1-2-cover-letters>/);
+    expect(childNames(only(doc, 'm1-regional'))).toEqual([el('1.20')]);
+    expect(bundle.regionalBackbone?.conformanceGap).not.toMatch(/written twice/);
   });
 
   /* The closest this code can come today. Top-level headings only, a contact

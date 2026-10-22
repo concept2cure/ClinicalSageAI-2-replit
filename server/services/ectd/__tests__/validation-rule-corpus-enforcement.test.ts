@@ -65,6 +65,15 @@ describe('acceptance corpus agrees with the FDA technical-rules registry', () =>
     }
   });
 
+  // 2026-10-08 (W5/D7, sweep VP-3): the version became a verdict (LEAF-PDF-VERSION).
+  it('PDF_VERSION is answered as checked by the eCTD validator, and the validator holds the check it names', () => {
+    expect(getRule('PDF_VERSION')!.enforcement).toBe('ectd-validator');
+    expect(FDA_TECHNICAL_RULES.find((r) => r.id === 'pdf-version')!.platform.check).toBe('partial');
+    const src = fs.readFileSync(repoFile('server/services/submission-gateways/ectd-structural-validator.ts'), 'utf8');
+    expect(src).toMatch(/ruleId: 'LEAF-PDF-VERSION'/);
+    expect(getRule('PDF_VERSION')!.rationale).toContain('ectd-structural-validator.ts');
+  });
+
   it('PDF_NO_SECURITY is answered as checked by the platform, not by the agency validator', () => {
     const view = ruleView('PDF_NO_SECURITY');
     expect(view).not.toBeNull();

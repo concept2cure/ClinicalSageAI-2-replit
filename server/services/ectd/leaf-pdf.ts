@@ -32,6 +32,17 @@
  * and the producer strings are ours, so that upgrading pdfkit does not re-file
  * an entire application at an agency as a side effect of a dependency bump.
  *
+ * 2026-10-08 (W5/D7, sweep VP-3): leaves render as PDF 1.7 (was pdfkit's
+ * default 1.3, outside the PDF 1.4–1.7 every eCTD region accepts) and carry one
+ * bookmark, the leaf's heading. Still a pure function of the input. This is a
+ * deliberate change to the bytes: a sequence filed with leaves rendered BEFORE
+ * this change compares unequal to the same content rendered now, so its next
+ * follow-up re-files those rendered leaves as `replace`. Whether any deployment
+ * has filed a sequence from this renderer is not known here. Accepting that
+ * re-file, or re-baselining the filed `sourceMd5` values, is a lead or founder
+ * decision; it is handed off with this change and not made here. Any later
+ * change to the bytes needs the same decision.
+ *
  * @module server/services/ectd/leaf-pdf
  */
 import PDFDocument from 'pdfkit';
@@ -77,6 +88,9 @@ export async function buildLeafPdf(input: LeafPdfInput): Promise<Buffer> {
     );
   }
   const doc: any = new (PDFDocument as any)({
+    // PDF 1.7, inside the 1.4–1.7 every eCTD region accepts. pdfkit's default is
+    // 1.3, and that is what shipped whenever the PDF/A conversion did not run.
+    pdfVersion: '1.7',
     size: 'A4',
     margins: { top: 72, right: 72, bottom: 72, left: 72 },
     bufferPages: true,
@@ -94,6 +108,9 @@ export async function buildLeafPdf(input: LeafPdfInput): Promise<Buffer> {
   bufferStream.on('data', (chunk: Buffer) => chunks.push(chunk));
   doc.pipe(bufferStream);
 
+  // A bookmark for the document, opening its first page (FDA PDF
+  // Specifications ask for bookmarks; the leaf's heading is its one entry).
+  doc.outline.addItem(input.title);
   doc.fontSize(14).font('Helvetica-Bold').text(input.title);
   doc.moveDown();
   doc.fontSize(11).font('Helvetica');

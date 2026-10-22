@@ -354,8 +354,10 @@ export function validateLeavesAgainstMarketSpec(
         severity: 'error',
         rule: 'SUBMISSION_SIZE',
         message:
-          `Total size ${(knownBytes / MB).toFixed(0)} MB${allSizesMeasured ? '' : ' (including declared sizes)'} ` +
-          `exceeds the ${spec.authority} ${f.maxSubmissionSizeMb} MB limit.`,
+          // Two decimals: a whole-MB rounding of a total just over the limit
+          // read "9537 MB exceeds the 9536 MB limit" or "X exceeds X".
+          `Total size ${(knownBytes / MB).toFixed(2)} MB${allSizesMeasured ? '' : ' (including declared sizes)'} ` +
+          `exceeds the ${spec.authority} ${Number(f.maxSubmissionSizeMb.toFixed(2))} MB limit.`,
       });
     } else if (!allSizesMeasured) {
       notJudged('SUBMISSION_SIZE', null, 'not every file size was measured');
