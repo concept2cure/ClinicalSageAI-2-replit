@@ -1,0 +1,10 @@
+# Slice A, after: the same database test against the converted route.
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > is a non-superuser role without BYPASSRLS, and RLS is enforcing
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a member lists only their own organisation
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a member reads their own organisation's directory
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a member is refused another organisation's directory
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a platform admin lists every organisation, and reads any directory
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a platform admin renames an organisation, and a taken slug is a 409
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a platform admin creates an organisation
+ Test Files  1 passed (1)
+      Tests  7 passed (7)

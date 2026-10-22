@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T07:02:48.309Z",
+  "generatedAt": "2026-10-22T08:11:47.934Z",
   "git": {
-    "sha": "0e52573a11c7561bb9f0c19feae08d23bc5c73a3",
+    "sha": "5e71c9e8c5030a550ff89b6ede00a1b5ac689e4a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2388,6 +2388,10 @@
         "bytes": 121694
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "bytes": 120328
+      },
+      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 120300
       },
@@ -2398,10 +2402,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 119781
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "bytes": 119169
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2449,19 +2449,19 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 108047
+        "bytes": 108529
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 105125
+        "bytes": 104577
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 103840
       },
       {
         "file": "server/routes/concept2cure.ts",
         "bytes": 103735
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 101536
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2622,12 +2622,12 @@
         "lines": 2404
       },
       {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2386
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "lines": 2389
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2363
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2386
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2686,6 +2686,10 @@
         "lines": 2155
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2153
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 2149
       },
@@ -2698,16 +2702,12 @@
         "lines": 2136
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 2128
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "lines": 2124
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 2123
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2115
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2734,12 +2734,12 @@
         "lines": 2064
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2049
-      },
-      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 2047
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2035
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2919,11 +2919,11 @@
       },
       {
         "file": "server/services/submission-gateways/regional-packager.ts",
-        "lines": 1537
+        "lines": 1539
       },
       {
         "file": "shared/constants/ui-surface-registry.ui-v2.ts",
-        "lines": 1516
+        "lines": 1519
       }
     ]
   },

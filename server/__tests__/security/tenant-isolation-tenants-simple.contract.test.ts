@@ -7,7 +7,13 @@
  * rotate API keys. Reads are now membership-scoped (admins see all), and
  * mutations require a platform-admin role.
  *
- * Uses the real requireRole; authMiddleware and the postgres client are mocked.
+ * Uses the real requireRole; authMiddleware and the runtime pool are mocked.
+ *
+ * The route served its four directory handlers through a module-level
+ * `postgres` client on DATABASE_URL, the RDS master credential, so the request
+ * path held the owner connection (MR-03 OPS-16, MR-05 ARCH-08/DATA-03). It now
+ * uses the runtime pool (`pool` from server/db), under the system scope its
+ * mount applies; the file must not import a second driver or read the owner URL.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -20,8 +26,10 @@ vi.hoisted(() => {
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-const { ORG_A, TARGET_ORG, CREATED_ORG, queries, authState, provisionLaunchModules, grantQuery } = vi.hoisted(() => ({
+const { ORG_A, TARGET_ORG, CREATED_ORG, queries, authState, provisionLaunchModules, grantQuery, poolQuery } = vi.hoisted(() => ({
   ORG_A: 7,
   TARGET_ORG: 999,
   CREATED_ORG: 4242,
@@ -29,23 +37,8 @@ const { ORG_A, TARGET_ORG, CREATED_ORG, queries, authState, provisionLaunchModul
   queries: [] as Array<{ text: string; values: any[] }>,
   authState: { user: null as any },
   grantQuery: vi.fn(),
-}));
-
-// Mock the postgres tagged-template client used by the router.
-vi.mock('postgres', () => ({
-  default: () => {
-    const sql = (strings: TemplateStringsArray, ...values: any[]) => {
-      const text = strings.join(' ? ');
-      queries.push({ text, values });
-      // A created tenant comes back from INSERT ... RETURNING, so the
-      // provisioning step below has an id to act on.
-      if (/INSERT INTO organizations/i.test(text)) {
-        return Promise.resolve([{ id: CREATED_ORG, name: values[0], slug: values[1] }] as any[]);
-      }
-      return Promise.resolve([] as any[]);
-    };
-    return sql;
-  },
+  // The runtime pool's query, recording every statement the router sends.
+  poolQuery: vi.fn(),
 }));
 
 // Mock authentication only — the real requireRole runs against req.user.
@@ -76,6 +69,7 @@ const GRANTS = new Map<number, string>([[GRANT_HOLDER_ID, 'platform_admin'], [SU
 vi.mock('../../db', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../db')>()),
   query: grantQuery,
+  pool: { query: poolQuery },
 }));
 
 // The launch catalog is provisioned for every new tenant (D2). Its real SQL runs
@@ -100,6 +94,15 @@ beforeEach(async () => {
         && Array.isArray(params?.[1]) && (params![1] as string[]).includes(granted)
         ? [{ '?column?': 1 }] : [],
     };
+  });
+  poolQuery.mockImplementation(async (text: string, values: any[] = []) => {
+    queries.push({ text, values });
+    // A created tenant comes back from INSERT ... RETURNING, so the
+    // provisioning step below has an id to act on.
+    if (/INSERT INTO organizations/i.test(text)) {
+      return { rows: [{ id: CREATED_ORG, name: values[0], slug: values[1] }] };
+    }
+    return { rows: [] };
   });
   authState.user = { id: 1, organizationId: ORG_A, role: 'user', roles: ['user'] };
   const router = (await import('../../routes/tenants-simple')).default;
@@ -264,6 +267,37 @@ describe('Tenant creation — the launch catalog comes with it (D2)', () => {
   it('a refused creation provisions nothing', async () => {
     await request(app).post('/api/tenants').send({ name: 'Acme Corp', slug: 'acme' }).expect(403);
     expect(provisionLaunchModules).not.toHaveBeenCalled();
+  });
+});
+
+describe('Tenants — the owner connection is gone from the request path (OPS-16, ARCH-08)', () => {
+  const source = readFileSync(fileURLToPath(new URL('../../routes/tenants-simple.ts', import.meta.url)), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+
+  it('imports no second database driver', () => {
+    expect(source).not.toMatch(/from\s+['"](postgres|@neondatabase\/serverless|@supabase\/supabase-js)['"]/);
+  });
+
+  it('never reads the owner URL', () => {
+    expect(source).not.toMatch(/process\.env\.(DATABASE_URL|DATABASE_NEON_NEW_SECRET|NEON_DATABASE_URL)\b/);
+  });
+
+  it('sends every directory query through the runtime pool, parameterized', async () => {
+    authState.user = grantHolder;
+    await request(app).get('/api/tenants').expect(200);
+    await request(app).get(`/api/tenants/${TARGET_ORG}/users`).expect(200);
+    await request(app).post('/api/tenants').send({ name: 'Acme Corp', slug: 'acme' }).expect(201);
+    await request(app).patch(`/api/tenants/${TARGET_ORG}`).send({ name: 'Acme Renamed' }).expect(404);
+    expect(poolQuery).toHaveBeenCalled();
+    for (const q of dataQueries()) {
+      expect(Array.isArray(q.values), q.text).toBe(true);
+      // A value is a placeholder, never text spliced into the statement.
+      expect(q.text).not.toMatch(/Acme/);
+    }
+    const patch = dataQueries().find(q => /UPDATE organizations/i.test(q.text));
+    expect(patch?.values).toContain('Acme Renamed');
+    expect(patch?.values).toContain(TARGET_ORG);
   });
 });
 
