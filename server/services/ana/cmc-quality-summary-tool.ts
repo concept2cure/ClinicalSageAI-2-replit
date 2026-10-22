@@ -27,7 +27,10 @@ import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('cmc-quality-summary-tool');
 
-type Pool = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+/* A pool that also lends a connection: compose reads the submission spine
+   under a savepoint, and Postgres refuses SAVEPOINT outside a transaction. */
+type Pool = Queryable & { connect: () => Promise<Queryable & { release: () => void }> };
 type PoolSource = () => Promise<Pool>;
 
 const appPool: PoolSource = async () => (await import('../../db')).getPool() as unknown as Pool;
@@ -71,12 +74,17 @@ export async function draftQualityOverallSummary(
     if (!programId) {
       return JSON.stringify({ needs_project: 'No program is open. Open the program whose Quality Overall Summary to draft.' });
     }
-    const { composeProjectModule3 } = await import('../cmc/module3-compile.js');
+    const { composeProjectModule3, inReadOnlyTransaction } = await import('../cmc/module3-compile.js');
     const { buildM23QualityOverallSummary } = await import('../m2-summary-builders.js');
     const { isCompositionOutOfScope } = await import('../cmc/composition-scope.js');
     let composed: Awaited<ReturnType<typeof composeProjectModule3>>;
     try {
-      composed = await composeProjectModule3(pool as never, orgId, programId);
+      /* On a connection of its own, in a read-only transaction. This handed
+         compose the bare pool, and Postgres refuses compose's first SAVEPOINT
+         outside a transaction block — so on a real database every draft
+         answered "could not be read" (2026-10-22; composition-boundary-
+         readers.pglite.test.ts runs it on a real engine). */
+      composed = await inReadOnlyTransaction((client) => composeProjectModule3(client, orgId, programId), pool as never);
     } catch (err) {
       /* Outside the composition scope this platform ships — a biologic
          substance, an unestablished modality, or a submission that files

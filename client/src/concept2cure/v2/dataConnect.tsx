@@ -111,6 +111,8 @@ export interface DataResult<T> {
   meta?: Record<string, unknown>;
   /** HTTP status; 0 on a network/parse failure before a response arrived. */
   status: number;
+  /** The server's machine-readable error code, when it sent one (`ApiRequestError.code`). */
+  code?: string;
 }
 
 /**
@@ -154,7 +156,8 @@ export interface DataResult<T> {
 function failureFrom(e: unknown, path: string): DataResult<never> {
   const status = (e as { status?: unknown } | null)?.status;
   if (e instanceof Error && typeof status === 'number' && status > 0) {
-    return { data: null, error: e.message || `HTTP ${status} ${path}`, status };
+    const code = (e as { code?: unknown }).code;
+    return { data: null, error: e.message || `HTTP ${status} ${path}`, status, ...(typeof code === 'string' ? { code } : {}) };
   }
   return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
 }
@@ -332,6 +335,13 @@ export interface DataState<T> {
    * transport failure, where no status was received.
    */
   status?: number;
+  /**
+   * The server's machine-readable error code, when it sent one. Copy changes;
+   * codes do not: a surface that must tell two refusals of the same status
+   * apart (the CMC composition boundary's "not established yet" from "outside
+   * the boundary") branches on this, never on the wording.
+   */
+  code?: string;
   /** The route's envelope `meta` — `pendingStore` above all. A surface that
    *  renders an empty state MUST consult it: `empty` cannot tell "the store
    *  holds nothing" from "there is no store". */
@@ -379,6 +389,7 @@ export function useLiveData<T>(
         error: r.error,
         meta: r.meta,
         status: r.status,
+        ...(r.code ? { code: r.code } : {}),
         empty: isEmpty,
       });
     });

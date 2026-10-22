@@ -1,0 +1,84 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > cover letter PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 33ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > cover letter PDF: delivers nothing when the record does not persist, and says so 8ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > annual report PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 5ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > annual report PDF: delivers nothing when the record does not persist, and says so 4ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > SAE line listing CSV: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 5ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > SAE line listing CSV: delivers nothing when the record does not persist, and says so 4ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > letter of authorization PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 3ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > letter of authorization PDF: delivers nothing when the record does not persist, and says so 3ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > right-of-reference PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 5ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > right-of-reference PDF: delivers nothing when the record does not persist, and says so 3ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > briefing book PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 4ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > briefing book PDF: delivers nothing when the record does not persist, and says so 7ms
+   → expected 200 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > cover letter PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > annual report PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > SAE line listing CSV: records EXPORT_GENERATED with the SHA-256 of the bytes delivered
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > letter of authorization PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > right-of-reference PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > briefing book PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered
+AssertionError: no EXPORT_GENERATED row: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts:115:46
+    113|       expect(Buffer.compare(res.body as Buffer, c.bytes)).toBe(0);
+    114|       const row = logAction.mock.calls.map(([e]) => e).find((e: any) =…
+    115|       expect(row, 'no EXPORT_GENERATED row').toBeTruthy();
+       |                                              ^
+    116|       expect(row.organizationId).toBe(4);
+    117|       expect(row.userId).toBe(9);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > cover letter PDF: delivers nothing when the record does not persist, and says so
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > annual report PDF: delivers nothing when the record does not persist, and says so
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > SAE line listing CSV: delivers nothing when the record does not persist, and says so
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > letter of authorization PDF: delivers nothing when the record does not persist, and says so
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > right-of-reference PDF: delivers nothing when the record does not persist, and says so
+ FAIL  server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > briefing book PDF: delivers nothing when the record does not persist, and says so
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts:125:26
+    123|       logAction.mockResolvedValue({ persisted: false });
+    124|       const res = await request(app()).post(c.path).send(c.body);
+    125|       expect(res.status).toBe(503);
+       |                          ^
+    126|       expect(res.body.error.code).toBe('UNAUDITED_EXPORT_REFUSED');
+    127|       expect(res.headers['content-disposition']).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  05:10:01
+   Duration  4.13s (transform 2.51s, setup 91ms, import 3.67s, tests 88ms, environment 0ms)
+

@@ -36,6 +36,7 @@ import { captureOrchestratorInputs, captureOrchestratorSuspendedOutputs } from '
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome.js';
 import crypto from 'crypto';
 import { composeFullModule3, type RegionCode } from './module3-extensions.js';
+import { applicationRefusal } from './cmc/composition-scope.js';
 import { classifyModule3Regional } from './module3-regional-readiness.js';
 import {
   buildM23QualityOverallSummary,
@@ -1485,6 +1486,15 @@ export async function runOrchestrator(
            own audit reads it. */
         return inputs.module3ExportRefusal ? { skip: inputs.module3ExportRefusal } : null;
       }
+      /* The composition boundary, asked of the package's target (decision
+         P-28): Module 3 is composed here only for a US IND. A run for an NDA,
+         BLA or MAA carried the IND-composed text into a marketing application
+         — 3.2.R statements that say marketing items "do not apply to an IND"
+         — and signed it (2026-10-22, the launch-boundary re-proof's review).
+         The program itself was judged when its sources were loaded
+         (load-approved-cmc-sources-for-project.ts). */
+      const targetRefusal = applicationRefusal(inputs.submissionType, 'submission');
+      if (targetRefusal) return { skip: targetRefusal.message };
       const fullM3 = composeFullModule3(inputs.cmcSources, inputs.region);
       // Split: S/P core go to m3.compose; A/R get split into their own steps for traceability
       const core = fullM3.filter(s => /^3\.[123]|^3\.2\.[SP]/.test(s.sectionKey));
