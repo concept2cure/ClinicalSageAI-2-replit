@@ -55,13 +55,13 @@ both finders, and every verifier, were cut off by account usage limits
 | F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | **partially confirmed** 2026-10-01 (low); **fixed** (identifier rule, descriptor-authoritative metadata) |
 | F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01 (high); **fixed** — one bundle per filed sequence, and a governed action records an agency technical rejection; Ack3 ingestion remains procurement-blocked |
 | F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | **confirmed** 2026-10-08 (high); **mechanism fixed** 2026-10-08 — a 1.1 leaf whose bytes are FDA's completed 1571 or 356h is declared `<form form-type>` in the admin block, a rendered or blank one is not. On this spine no leaf can carry FDA's form until the leaf-source hand-off lands, and no 356h is recognised (vendored decrypted), so its admin block still has no `<form>`; other forms wait on the DTD — see "Lens findings fixed" |
-| HS-1 | honest state | high | The transmit success toast drops `filedSequenceWarning`: a filed-history write that failed, had no usable manifest, or conflicted (two bundles under one number) reads as a clean success. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
-| HS-2 | honest state | medium | The pre-transmit gate's failed checks and its "NOT an FDA-conformant Module 1 backbone" warning are returned and never shown; the assemble response carries no conformance verdict. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — transmit half `f0a6c43e9`, assemble half with VP-1–VP-7 — see "Lens findings fixed" |
-| HS-3 | honest state | medium | A pre-transmit gate refusal renders as "Structural gate refused · 0 findings · … assemble again": the blockers arrive as strings and are dropped. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-1 | honest state | high | The transmit success toast drops `filedSequenceWarning`: a filed-history write that failed, had no usable manifest, or conflicted (two bundles under one number) reads as a clean success. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); 2026-10-21: moot on trunk — the screen's transmit and assemble controls were removed (`8b75e6b5b`); the server half stays on the package route, which production refuses — see "Lens findings fixed" |
+| HS-2 | honest state | medium | The pre-transmit gate's failed checks and its "NOT an FDA-conformant Module 1 backbone" warning are returned and never shown; the assemble response carries no conformance verdict. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — transmit half `f0a6c43e9` (moot on trunk since `8b75e6b5b`), assemble half with VP-1–VP-7 — see "Lens findings fixed" |
+| HS-3 | honest state | medium | A pre-transmit gate refusal renders as "Structural gate refused · 0 findings · … assemble again": the blockers arrive as strings and are dropped. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); 2026-10-21: moot on trunk — the screen's transmit and assemble controls were removed (`8b75e6b5b`); the server half stays on the package route, which production refuses — see "Lens findings fixed" |
 | HS-4 | honest state | low | With the REST transport, FDA ESG reads "configured" and every transmit ends in a bare 500 INTERNAL_ERROR. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); on the 2026-10-21 merge trunk's model replaced this lane's (`configured` = credentials, `transportReadiness` apart, precheck refuses REST before signing) — see "Lens findings fixed" |
-| HS-5 | honest state | medium | A bundle the agency may hold (delivered, unconfirmed) is announced "Transmit failed", and the log is not reloaded, so the row holding the lock is invisible. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-5 | honest state | medium | A bundle the agency may hold (delivered, unconfirmed) is announced "Transmit failed", and the log is not reloaded, so the row holding the lock is invisible. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); 2026-10-21: moot on trunk — the screen's transmit and assemble controls were removed (`8b75e6b5b`); the server half stays on the package route, which production refuses — see "Lens findings fixed" |
 | HS-6 | honest state | medium | The active-transmittal refusal drops "the agency may already hold it" and advises a rollback that leads to sending the same sequence again. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); since the 2026-10-21 merge no rollback exists to offer, and a resend is a new sequence — see "Lens findings fixed" |
-| HS-7 | honest state | low | A clean assembly's warnings (cover letter missing, placeholder on file, empty section) are reduced to a count, with no way to see them. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-7 | honest state | low | A clean assembly's warnings (cover letter missing, placeholder on file, empty section) are reduced to a count, with no way to see them. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); 2026-10-21: moot on trunk — the screen's transmit and assemble controls were removed (`8b75e6b5b`); the server half stays on the package route, which production refuses — see "Lens findings fixed" |
 | HS-8 | honest state | low | The transmittal log silently truncates at 100 rows, and the header and AnA report the truncated count. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
 | VP-1 | validation parity | high | An IND sequence 0000 with no Form FDA 1571 assembles with 0 errors and clears the production guard. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
 | VP-2 | validation parity | high | The 1571 rule is met by any PDF at 1.1; on this spine that is always a rendering of an artifact's text, never FDA's fillable form. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
@@ -478,7 +478,7 @@ is a second us-regional envelope builder that always writes submission-id = sequ
 `ectd-regional-rules.ts` FDA-ESG-002 still requires the prefix F05 refuses.
 Not this lane's, seen in passing:
 `server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts`
-fails at HEAD (`[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope`)
+fails at HEAD (`[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope`; *passes since `f0a6c43e9` stubbed the pool it reaches*)
 since `b7bf25037` (gateway-account selection, D7) made the transmit guard query the
 database in a test that does not mock it.
 
@@ -496,7 +496,8 @@ message:
 - the duplicate-send refusal says the agency may already hold the bundle;
 - the transmittal log reports its true total;
 - the transmittals surface shows warnings, failed checks, uncertain sends and
-  filed-history failures, and stops calling them clean.
+  filed-history failures, and stops calling them clean. *(Not carried: those
+  controls left the screen in `8b75e6b5b`; see "Merged onto trunk".)*
 
 **`b649ac2ae` (two problems the HS-4 change left behind):**
 - The sequence spine (`transmitSequence`) read the REST transport's
@@ -531,8 +532,21 @@ work waited, and its model was kept where the two overlapped:
   placement in the client applies the same rule. FDA's 10 GB limit sits beside
   trunk's sourced-limit accessor (`getGatewaySizeLimitOnFile`), and Canada keeps
   its own 4 GiB figure, pending a source.
-- **The merge review (three lenses, 2026-10-22) found nothing must-fix** and
-  four should-fixes, all taken, each failing first with its fix removed:
+- **Where the VP fixes now run.** The package assemble route has no screen
+  caller since `8b75e6b5b`, and production refuses its transmit. So VP-1, VP-2,
+  VP-3's LEAF-PDF-VERSION and leaf PDF, VP-7's route path, F20 and HS-2's
+  assemble half guard API and AnA callers of the package spine only. Shared with
+  the sequence spine: the regional packager, the pre-transmit size limit
+  (VP-6, through getGateway's guard), the file/folder name rules (VP-7) and the
+  validator on the export path (VP-4). **Hand-off (IND lane):** the sequence
+  spine still meets the 1571 rule with any leaf at 1.1
+  (`ind-lifecycle/ind-sequence-validation.ts:146`, `submission-service.ts:1397`),
+  which is VP-2's defect on the production path; `fda1571Finding`'s byte check
+  is the rule to reach there.
+- **The merge review (three lenses, 2026-10-22) found one must-fix** (the
+  board row said all of this lane's engine work applies to both spines;
+  corrected above) and four should-fixes in code, all taken, each failing first
+  with its fix removed:
   - the "received" refusal no longer says "send sequence 0000 again … as a new
     sequence";
   - a test send holding production bytes says those bytes cannot be sent there

@@ -261,10 +261,12 @@ Gateway transmittals screen no longer offers it). A gate refusal is a 422 with
 text names the remedy (the agency's large-submission channel, re-assembly for the target
 region, a PDF/A or DTD setting). FDA ESG with `FDA_ESG_TRANSPORT=rest` answers 412
 `details: {code: 'TRANSPORT_NOT_VERIFIED', transmitted: false}` before anything is sent.
-`GET /api/mdx/gateways` lists it as `configured` (its credentials resolve) with
-`transportReadiness.implementation: 'unavailable'`; the sequence transmit's precheck refuses
-it before a signature is asked for. That refusal's sentence names no endpoint, submitter ID
-or variable; the server log (`[fda-esg]`) records them. An active transmittal holding the
+That 412's sentence names no endpoint, submitter ID or variable; the server log
+(`[fda-esg]`) records them. The gateway accounts in Setup (`GET /api/gateway-accounts`)
+and `GET /api/mdx/gateways` (also refused in production) list it as `configured` (its
+credentials resolve) with `transportReadiness.implementation: 'unavailable'`, and the
+sequence transmit's precheck refuses it before a signature is asked for, in
+`fdaEsgTransportImplementation`'s words (not logged). An active transmittal holding the
 package or its sequence is a 409 `ACTIVE_TRANSMITTAL` whose sentence names no route: the
 agency may already hold the bundle, so confirm receipt with the agency, and a resend is a
 new sequence from Submission Center (the rollback route was removed 2026-10-17). A
@@ -274,8 +276,9 @@ reverse): that refusal says where the holding send went and carries
 `details.holderEnvironment`. A 201 carries `preTransmitFailedChecks` (`"name: detail"`
 strings, as AnA's result and the sign record carry them) and `preTransmitWarnings`, `null` when the guard reported nothing.
 `GET /api/mdx/gateways/transmittals` returns a page (default 100, at most 500) with
-`meta: {count, total, hasMore, byStatus, awaitingAcknowledgement, signing}`, the middle four
-counted over every row the filters match, not over the page; the log screen shows
+`meta: {count, total, hasMore, byStatus, awaitingAcknowledgement, signing}`; `total`,
+`byStatus` and `awaitingAcknowledgement` are counted over every row the filters match, not
+over the page, and `hasMore` says the page is shorter than `total`; the log screen shows
 "N of TOTAL" and says when older transmittals are not listed.
 `awaitingAcknowledgement` counts rows the agency may still acknowledge and has not: an
 active status (`pending`, `in_transit`, `received`, the duplicate-send lock's set) with no
