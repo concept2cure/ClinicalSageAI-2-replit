@@ -70,7 +70,7 @@ const MINE = row({ id: 5, programId: PROGRAM_UUID });
 const OTHER = row({ id: 3, title: 'Other program NDA', applicationType: 'nda', programId: '7c1d5e0a-3b2f-4e61-9a8c-5d4f3e2b1a09' });
 const MINE_UNANCHORED = row({ id: 8, programId: null });
 
-function serve(opts: { scoped?: unknown[]; mySequences?: unknown[]; failList?: boolean; failProgram?: boolean; notOffered?: number } = {}) {
+function serve(opts: { scoped?: unknown[]; mySequences?: unknown[]; failList?: boolean; failProgram?: boolean } = {}) {
   apiRequest.mockImplementation(async (_m: string, rawUrl: unknown) => {
     const url = String(rawUrl ?? '');
     if (url === `/api/c2c/projects/${PROGRAM_UUID}`) {
@@ -79,7 +79,7 @@ function serve(opts: { scoped?: unknown[]; mySequences?: unknown[]; failList?: b
     }
     if (url === `/api/submissions?programId=${PROGRAM_UUID}`) {
       if (opts.failList) throw Object.assign(new Error('Server error'), { status: 500 });
-      return ok(opts.scoped ?? [MINE], opts.notOffered != null ? { notOffered: opts.notOffered } : undefined);
+      return ok(opts.scoped ?? [MINE]);
     }
     if (url === '/api/submissions') return ok([OTHER, MINE_UNANCHORED, MINE]);
     if (url === '/api/submissions/3/sequences') return ok([{ id: 7, sequenceNumber: '0000' }]);
@@ -130,13 +130,14 @@ describe('DispatchReadiness — the project’s markets are the server’s proje
     expect(document.querySelectorAll('[data-market]')).toHaveLength(1);
   });
 
-  it('a project with no market says so and gates nothing; the server’s count of left-out submissions is stated, never a name', async () => {
-    serve({ scoped: [], notOffered: 1 });
+  it('a project with no market says so and gates nothing, even when the organisation has same-named submissions', async () => {
+    serve({ scoped: [] });
     render(<DispatchReadiness {...props()} />);
     await waitFor(() => expect(text()).toMatch(/No market for this project yet/));
     expect(text()).toContain("Add one from the project's Submit tab.");
-    expect(text()).toMatch(/1 submission in this organisation is not recorded to this project/);
-    expect(text()).toMatch(/never matched to a project by name/);
+    // The unscoped list holds a same-named submission with no project; it is
+    // never offered, and the screen names none.
+    expect(text()).not.toContain('Other program NDA');
     expect(urls().some((u) => u.endsWith('/dispatch-readiness'))).toBe(false);
   });
 
