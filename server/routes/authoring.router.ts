@@ -45,6 +45,7 @@ import {
   commitSectionToFiling,
   type CommitSectionResult,
 } from '../services/c2c/commit-section-to-filing.js';
+import { readFilingLock } from '../services/c2c/filing-lock.js';
 import { filingAgreesWithEditing, filingResponse, signedFilingSectionTexts, type FilingDivergence } from '../services/c2c/filing-section-target.js';
 // Spine F1: the approval signature records the filing sections it approves
 // through the one governed-action writer (audit_logs + c2c_ana_actions).
@@ -7191,6 +7192,8 @@ type ApproveBoundSectionsResult =
       documentId: string;
       /** c2c_ana_actions id of the governed-action record; null when nothing moved. */
       actionId: string | null;
+      /** Why nothing moved, when the filing is locked or submitted (filing-lock.ts). */
+      reason?: string;
     }
   | { approved: []; notApproved: []; documentId: null; actionId: null; reason: string };
 
@@ -7267,7 +7270,11 @@ async function approveBoundFilingSections(
   // org column).
   const signed = await signedFilingSectionTexts(client, { authoringDocId, tenantId, documentId });
   const signedKeys = signed.map((t) => t.key);
-  const moved = await client.query(
+  // A locked or submitted filing's sections are not moved (filing-lock.ts).
+  // The signature still stands on the editing copy; the reply says why the
+  // filing did not move with it.
+  const lock = await readFilingLock(client, documentId, tenantId);
+  const moved = lock ? { rows: [] as Array<{ section_key: string }> } : await client.query(
     `UPDATE c2c_document_sections ds
         SET status = 'approved', updated_at = now()
        FROM unnest($2::text[], $3::text[]) AS sig(section_key, text)
@@ -7299,7 +7306,10 @@ async function approveBoundFilingSections(
   const notApproved: string[] = left.rows.map((r: { section_key: string }) => r.section_key);
 
   if (approved.length === 0) {
-    return { approved: [], notApproved, documentId, actionId: null };
+    return {
+      approved: [], notApproved, documentId, actionId: null,
+      ...(lock ? { reason: `The filing this document is written for ${lock.words}, so none of its sections was approved.` } : {}),
+    };
   }
 
   const userId = Number(actorId);

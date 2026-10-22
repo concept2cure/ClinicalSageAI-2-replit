@@ -45,6 +45,9 @@ beforeAll(async () => {
       ALTER TABLE c2c_documents ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
       -- The section-parent repair joins a document to its own rule pack.
       ALTER TABLE c2c_documents ADD COLUMN rule_pack_version text;
+      -- Every writer of the filing reads whether it is locked or submitted.
+      ALTER TABLE c2c_documents ADD COLUMN status text NOT NULL DEFAULT 'draft';
+      ALTER TABLE c2c_documents ADD COLUMN locked_at timestamptz;
     `,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',

@@ -1,0 +1,11 @@
+# Each mutation applied alone, the files restored and checked byte for byte after (mutate2.py).
+# Test: server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts. 8 mutations, 8 red.
+# Not shown here, by construction: the row-lock mode. PGlite runs one connection, so dropping FOR NO KEY UPDATE (or reading the lock before BEGIN) changes no outcome it can show. The mode is argued in filing-lock.ts.
+RED  the write-through does not read the lock (the head behaviour): 3 failed | → {"success":true,"section":{"id":"a7bdfcf2-6f09-497d-ab8d-d20a5cc24e22","doc_id":"5b027c4e-f31f-413e-8109-eb89160e373a","code":"2.5","title":"2.5","content":"Text that must not reach a locked filing.","order_index":1,"
+RED  a submitted filing is called locked: 1 failed | → expected 'FILING_LOCKED' to be 'FILING_SUBMITTED' // Object.is equality
+RED  locked_at alone is not a lock: 1 failed | → {"success":true,"section":{"id":"3d538f7f-207d-4a49-ad5e-07bcff45bf08","doc_id":"708c1ae0-9b27-4c4a-adad-6c3856db854a","code":"2.5","title":"2.5","content":"Text that must not reach a locked filing.","order_index":1,"track_changes":false,"tenant_id"
+RED  the approval moves a locked filing's sections: 1 failed | → expected { approved: [ '2.5' ], …(2) } to match object { approved: [], …(2) }
+RED  the approval does not say why nothing moved: 1 failed | → expected 'undefined' to match /is locked/
+RED  the filing PATCH does not read the lock: 1 failed | → {"id":6,"document_id":"doc_f1_6","section_key":"2.5","parent_key":null,"label":"2.5","path_order":1,"mandatory":false,"status":"review","owner_id":null,"content":{},"draft_source":null,"drafted_at":null,"accepted_by":null,"accepted_at":nul
+RED  the seal refusal releases its connection twice again (the head behaviour): 1 failed | → the seal refusal released its connection twice: expected [ Array(1) ] to deeply equal []
+RED  the lock refusal releases its connection itself as well: 2 failed | → a refusal released its connection twice: expected [ Array(1) ] to deeply equal []
