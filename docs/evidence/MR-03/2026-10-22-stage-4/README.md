@@ -9,7 +9,7 @@ Stage 4 (OPS-10, OPS-21, OPS-23). Branch `concept2cure-v2`. Session
 |---|---|---|
 | A | OPS-21: the frontend bucket versions; one SPA delivery path on the hosted deployment, pinned | done |
 | B | OPS-23: roll back on a failed smoke test; a `rollback_taskdef` dispatch; the migration's duration recorded | done |
-| C | OPS-10: target resolution, per-environment settings, build once on staging, promote the staging-verified digest to production | next |
+| C | OPS-10: target resolution, per-environment settings, build once on staging, promote the staging-verified digest to production | C1 landed, paused; C2 open |
 
 ## Re-confirmed at head before starting
 
@@ -124,9 +124,53 @@ the bundle out of the image it deploys.
     makes being granted to the role it assumes: 41 job×action pairs, up from
     38.
 
+## Slice C1: a staging target, build once, promote by digest (paused here)
+
+**Landed, paused by the founder's instruction before its full evidence pass.**
+
+- **Target and names.** `.github/deploy-targets.json` holds one entry each for
+  staging and production, and a new `resolve` job picks the target: `rc-*` →
+  staging, `v*` → production, or the dispatch input `target`. Every job loads
+  its names from it. `terraform/stack`'s `deploy_targets` is held to the file
+  for both environments. Every job's environment is the resolved target, with
+  no literal `production` left, and the concurrency group is per target.
+- **Build once.** `build-push` runs on staging only, and tags `sha-<12>`; a
+  re-run reuses the pushed image. Staging's smoke test, on success, tags that
+  manifest `staging-verified-<sha12>`.
+- **Promote.** On production, a `promote` job finds `staging-verified-<sha12>`
+  in staging's repository and refuses when it is absent. It copies the image
+  with `skopeo --preserve-digests`, and migrate and deploy-api take the digest
+  from it.
+- **Terraform.**
+  - Production has no build role.
+  - The deploy role may read the named staging repository (`staging_account_id`).
+  - Staging's repository grants read to `production_account_id`.
+  - The ECR lifecycle covers `sha-` tags.
+  - The account IDs are F-4 inputs.
+- **`provision-database.yml`** takes a `target` and that entry's names.
+- **Tests.**
+  - `tests/ci/deploy-staging-promote.contract.test.ts`: 32/32.
+  - The harness gained the real `resolve` outputs, and the frontend-ordering
+    test moved onto it.
+  - Terraform: the stack passes 78/78, deploy-roles 10/10, all roots
+    validate.
+  - The preflight proof holds every check, 54 job×action IAM pairs
+    (`raw/c1-terraform.txt`, `raw/c1-proof.txt`).
+
+**Not done (resume here).**
+
+- **C2:** `deploy-frontend` still runs `npm run build`. It should publish the
+  bundle from the image the API runs, and rollback should republish it.
+- **The C1 evidence pass:** head-versus-after runs and mutants for C1, the
+  full suite run, and this section's verification write-up.
+- **Before the first deploy:** create the GitHub environments `staging` and
+  `production`, with `AWS_DEPLOY_ROLE_ARN`, `FRONTEND_BUCKET`,
+  `CLOUDFRONT_DISTRIBUTION_ID` and, on production, `STAGING_ACCOUNT_ID`.
+  `AWS_BUILD_ROLE_ARN` is staging's build role. These are founder/F-4 steps.
+
 ## Not shown here
 
-- Slice C is not done yet; its section follows when it lands.
+- Anything against AWS (Stage 5).
 - **A rollback against AWS** (Stage 5's acceptance). The acceptance case is a
   staging dispatch with a broken readiness URL.
 - Anything against AWS (Stage 5).

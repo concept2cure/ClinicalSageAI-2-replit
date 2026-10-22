@@ -28,6 +28,8 @@ beforeAll(async () => {
   db = await createJourneyDb({ prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL, migrations: [
     'migrations/20260906_vault_documents_fulltext.sql',
     'migrations/20261006_document_data_dispositions.sql',
+    // A search hit carries its lifecycle stage (VR-18), read from canonical_documents.
+    'migrations/20260731c_canonical_documents.sql',
   ] });
   await db.pool.query(`INSERT INTO organization_users (organization_id,user_id,role) VALUES (2,${AUTHOR.id},'member')`);
   await db.pool.query(`INSERT INTO projects (id,organization_id,name,regulatory_program_id,owner_id,created_by_id)
