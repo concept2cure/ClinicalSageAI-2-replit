@@ -226,6 +226,16 @@ describe('create_qms_document — controlled document creation is audited atomic
     expect(permissions).toEqual(expect.arrayContaining([expect.objectContaining({role:'OWNER',principal_id:'10'}),expect.objectContaining({role:'AUTHOR',principal_id:'10'})]));
   });
 
+  it('stores the periodic review date the user named, which review-due reads (gap 5.1)', async () => {
+    const res = await call('create_qms_document', {
+      doc_number: 'SOP-102', title: 'Reviewed procedure', doc_type: 'sop', next_review_date: '2027-10-01',
+      reason: 'New controlled procedure with a yearly review.',
+    });
+    expect(res.ok, JSON.stringify(res)).toBe(true);
+    const due = (await docRow(res.id)).next_review_date;
+    expect(due instanceof Date ? due.toISOString().slice(0, 10) : String(due).slice(0, 10)).toBe('2027-10-01');
+  });
+
   it('FAILS CLOSED — a broken audit write rolls the document back', async () => {
     await breakAuditWrites();
     const res = await call('create_qms_document', {
