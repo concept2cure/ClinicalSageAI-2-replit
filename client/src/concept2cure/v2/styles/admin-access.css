@@ -205,3 +205,20 @@
 .adm-key-create fieldset label { display: flex; align-items: center; gap: 6px; }
 .adm-key-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .adm-key-secret { display: block; overflow-wrap: anywhere; user-select: all; }
+
+/* Skills (AdminSkills.tsx): the library list, a skill's method, the test. */
+.adm-access .adm-skills-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.adm-access .adm-skills-search { flex: 1 1 220px; min-width: 0; padding: 7px 10px; color: inherit; font: inherit; font-size: 13px; background: var(--bg-000); border: 1px solid var(--border-control, var(--border)); border-radius: var(--radius-sm, 8px); }
+.adm-access .adm-skills-filter { padding: 7px 8px; color: inherit; font: inherit; font-size: 12px; background: var(--bg-000); border: 1px solid var(--border-control, var(--border)); border-radius: var(--radius-sm, 8px); }
+.adm-access .adm-skill-row { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 60px 90px; }
+.adm-access .adm-skill-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.adm-access .adm-skill-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-access .adm-skill-name[data-depth="1"] { padding-left: var(--space-4); }
+.adm-access .adm-skill-name[data-depth="2"] { padding-left: var(--space-8); }
+.adm-access .adm-skill-refs { margin: 0 0 12px; padding-left: 18px; font-size: 12px; color: var(--text-200); line-height: 1.5; }
+.adm-access .adm-skill-method { max-height: 360px; overflow: auto; margin: 0 0 12px; padding: 12px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-200); background: var(--bg-000); border: 1px solid var(--border); border-radius: var(--radius-sm, 8px); }
+.adm-access .adm-skill-method:focus-visible { outline: 2px solid var(--accent-200, var(--text-100)); outline-offset: 2px; }
+.adm-access .adm-skills-test { display: grid; gap: var(--space-2); margin: 0 0 16px; }
+.adm-access .adm-skills-question { width: 100%; padding: 8px 10px; color: inherit; font: inherit; font-size: 13px; background: var(--bg-000); border: 1px solid var(--border-control, var(--border)); border-radius: var(--radius-sm, 8px); resize: vertical; }
+.adm-access .adm-skills-result { margin: 0 0 20px; }
+@media (max-width: 720px) { .adm-access .adm-skill-row { grid-template-columns: minmax(0, 1fr) 60px; } .adm-access .adm-skill-row > :nth-child(2), .adm-access .adm-skill-row > :nth-child(4) { display: none; } }

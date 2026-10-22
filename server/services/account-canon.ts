@@ -97,18 +97,6 @@ export interface ResolvedAccountContext {
     doNotUse: string[] | null;
     category: string | null;
   }>;
-  bundles: Array<{
-    id: number;
-    bundleId: string;
-    name: string;
-    bundleType: string;
-    promptFragments: Array<{ role: string; content: string; priority: number }>;
-    outputStructure: Record<string, unknown> | null;
-    evidencePreferences: Record<string, unknown> | null;
-    authorityResponseStyle: Record<string, unknown> | null;
-    policyBindings: Array<{ policyType: string; description: string; enforcement: string }>;
-    reviewerRequirements: Record<string, unknown> | null;
-  }>;
   templates: Array<{
     id: number;
     templateKey: string;
@@ -451,11 +439,19 @@ export async function getCanonItems(
 
 /**
  * Append an immutable event to the account event ledger.
+ *
+ * With `client`, the row is written on the caller's transaction, so the event
+ * commits or rolls back with the change it records, and the projection's
+ * event counter (a cache rebuildProjection recomputes) is not touched: a
+ * failed counter update would abort the caller's transaction.
  */
-export async function appendEvent(input: AccountEventInput): Promise<string> {
+export async function appendEvent(
+  input: AccountEventInput,
+  client?: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
+): Promise<string> {
   const eventId = generateId('aevt');
 
-  await pool.query(
+  await (client ?? pool).query(
     `INSERT INTO account_events
      (event_id, organization_id, event_type, canon_item_id, skill_bundle_id,
       target_type, target_id, previous_value, new_value, description, details,
@@ -484,6 +480,8 @@ export async function appendEvent(input: AccountEventInput): Promise<string> {
       input.ipAddress || null,
     ]
   );
+
+  if (client) return eventId;
 
   // Increment event counter on projection
   try {
@@ -543,8 +541,9 @@ export async function getEvents(
 /**
  * Resolve account context for an AI run.
  *
- * Selects only canon items, terms, bundles, and templates that match
- * the current work context (submission type, module, work type, region).
+ * Selects only canon items, terms and templates that match the current work
+ * context (submission type, module, work type, region). Skill bundles are
+ * selected per turn by the AnA skills selector instead (see below).
  * Logs what was resolved for audit.
  */
 export async function resolveAccountContext(
@@ -614,30 +613,12 @@ export async function resolveAccountContext(
   termQuery += ' ORDER BY category, term LIMIT 100';
   const termResult = await pool.query(termQuery, termParams);
 
-  // ── Resolve Skill Bundles ───────────────────────────────────────────
-  let bundleQuery = `SELECT * FROM account_skill_bundles
-    WHERE organization_id = $1 AND status IN ('active', 'locked')`;
-  const bundleParams: unknown[] = [ctx.organizationId];
-  let bundleIdx = 2;
-
-  if (ctx.submissionType) {
-    bundleQuery += ` AND (submission_types IS NULL OR submission_types::jsonb ? $${bundleIdx})`;
-    bundleParams.push(ctx.submissionType);
-    bundleIdx++;
-  }
-  if (ctx.moduleType) {
-    bundleQuery += ` AND (module_types IS NULL OR module_types::jsonb ? $${bundleIdx})`;
-    bundleParams.push(ctx.moduleType);
-    bundleIdx++;
-  }
-  if (ctx.workType) {
-    bundleQuery += ` AND (work_types IS NULL OR work_types::jsonb ? $${bundleIdx})`;
-    bundleParams.push(ctx.workType);
-    bundleIdx++;
-  }
-
-  bundleQuery += ' ORDER BY name LIMIT 10';
-  const bundleResult = await pool.query(bundleQuery, bundleParams);
+  // Skill bundles are not resolved here. An organization's skill bundles are
+  // its AnA skills (server/services/ana/skills/), selected per turn by what the
+  // person asked and what is on screen, and recorded with the turn. This
+  // resolver chose up to ten bundles by name, not relevance, for the cortex
+  // path and the /resolve preview; two selection paths for one store would
+  // load different instructions for the same question (2026-10-22).
 
   // ── Resolve Templates ───────────────────────────────────────────────
   let tmplQuery = `SELECT * FROM account_template_registry
@@ -667,12 +648,6 @@ export async function resolveAccountContext(
   for (const term of termResult.rows) {
     tokensEstimate += estimateTokens(`${term.term}: ${term.definition || ''}`);
   }
-  for (const bundle of bundleResult.rows) {
-    const fragments = (bundle.prompt_fragments || []) as Array<{ content: string }>;
-    for (const f of fragments) {
-      tokensEstimate += estimateTokens(f.content || '');
-    }
-  }
 
   const resolved: ResolvedAccountContext = {
     canonItems: canonResult.rows,
@@ -684,18 +659,6 @@ export async function resolveAccountContext(
       alternatives: t.alternatives,
       doNotUse: t.do_not_use,
       category: t.category,
-    })),
-    bundles: bundleResult.rows.map((b: any) => ({
-      id: b.id,
-      bundleId: b.bundle_id,
-      name: b.name,
-      bundleType: b.bundle_type,
-      promptFragments: b.prompt_fragments || [],
-      outputStructure: b.output_structure,
-      evidencePreferences: b.evidence_preferences,
-      authorityResponseStyle: b.authority_response_style,
-      policyBindings: b.policy_bindings || [],
-      reviewerRequirements: b.reviewer_requirements,
     })),
     templates: tmplResult.rows.map((t: any) => ({
       id: t.id,
@@ -728,10 +691,10 @@ export async function resolveAccountContext(
   await pool.query(
     `INSERT INTO account_canon_resolution_log
      (organization_id, request_id, project_id, conversation_id, thread_id,
-      resolved_canon_ids, resolved_bundle_ids, resolved_term_ids, resolved_template_ids,
+      resolved_canon_ids, resolved_term_ids, resolved_template_ids,
       submission_type, module_type, work_type, regulatory_region,
       total_tokens_injected, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
     [
       ctx.organizationId,
       requestId,
@@ -739,7 +702,6 @@ export async function resolveAccountContext(
       ctx.conversationId || null,
       ctx.threadId || null,
       JSON.stringify(resolved.canonItems.map(c => c.id)),
-      JSON.stringify(resolved.bundles.map(b => b.id)),
       JSON.stringify(resolved.terms.map(t => t.id)),
       JSON.stringify(resolved.templates.map(t => t.id)),
       ctx.submissionType || null,
@@ -799,41 +761,6 @@ export function formatResolvedContextForPrompt(resolved: ResolvedAccountContext)
       parts.push(line);
     }
     parts.push('');
-  }
-
-  // ── Skill Bundle Prompt Fragments ───────────────────────────────────
-  if (resolved.bundles.length > 0) {
-    for (const bundle of resolved.bundles) {
-      if (bundle.promptFragments.length > 0) {
-        parts.push(`### Execution Instructions: ${bundle.name}`);
-        // Sort by priority (higher = more important)
-        const sorted = [...bundle.promptFragments].sort((a, b) => (b.priority || 0) - (a.priority || 0));
-        for (const fragment of sorted) {
-          parts.push(fragment.content);
-        }
-        parts.push('');
-      }
-
-      if (bundle.evidencePreferences) {
-        const ep = bundle.evidencePreferences as Record<string, unknown>;
-        if (ep.preferredTypes) {
-          parts.push(`**Evidence Preferences**: Prefer ${(ep.preferredTypes as string[]).join(', ')}`);
-        }
-        if (ep.citationStyle) {
-          parts.push(`**Citation Style**: ${ep.citationStyle}`);
-        }
-      }
-
-      if (bundle.authorityResponseStyle) {
-        const ars = bundle.authorityResponseStyle as Record<string, unknown>;
-        if (ars.tone) {
-          parts.push(`**Response Tone**: ${ars.tone}`);
-        }
-        if (ars.requiredElements) {
-          parts.push(`**Required Elements**: ${(ars.requiredElements as string[]).join(', ')}`);
-        }
-      }
-    }
   }
 
   return parts.join('\n');

@@ -1,0 +1,105 @@
+[
+  {
+    "question": "How should we design the SLIT tablet program for our allergen immunotherapy?",
+    "expect": "therapeutic-area.allergy"
+  },
+  {
+    "question": "What do reviewers expect from a cardiovascular outcomes trial powered on MACE?",
+    "expect": "therapeutic-area.cardiology"
+  },
+  {
+    "question": "Is a fluoride varnish study with a caries increment endpoint enough?",
+    "expect": "therapeutic-area.dental"
+  },
+  {
+    "question": "Can EASI-75 sit beside vIGA-AD as a co-primary endpoint?",
+    "expect": "therapeutic-area.dermatology"
+  },
+  {
+    "question": "Which endpoints support growth hormone deficiency height velocity claims?",
+    "expect": "therapeutic-area.endocrinology"
+  },
+  {
+    "question": "Is the modified Mayo score the right primary endpoint for ulcerative colitis induction?",
+    "expect": "therapeutic-area.gastroenterology"
+  },
+  {
+    "question": "What does FDA expect for our AAV gene therapy capsid and serotype choice?",
+    "expect": "therapeutic-area.gene-cell-therapy"
+  },
+  {
+    "question": "Is annualized bleeding rate acceptable as the primary endpoint in hemophilia A?",
+    "expect": "therapeutic-area.hematology"
+  },
+  {
+    "question": "What do reviewers look for in an autoimmune lupus program?",
+    "expect": "therapeutic-area.immunology"
+  },
+  {
+    "question": "How are susceptibility testing breakpoints set for a new antibacterial?",
+    "expect": "therapeutic-area.infectious-disease"
+  },
+  {
+    "question": "Is HbA1c reduction at week 26 enough for type 2 diabetes mellitus?",
+    "expect": "therapeutic-area.metabolic"
+  },
+  {
+    "question": "Will a DAS28-CRP remission rate support approval in our musculoskeletal program?",
+    "expect": "therapeutic-area.musculoskeletal"
+  },
+  {
+    "question": "Can eGFR slope support accelerated approval in IgA nephropathy?",
+    "expect": "therapeutic-area.nephrology"
+  },
+  {
+    "question": "Which endpoints does the agency accept for an Alzheimer program?",
+    "expect": "therapeutic-area.neurology"
+  },
+  {
+    "question": "How do we use pregnancy exposure registry data for a major congenital malformation risk statement?",
+    "expect": "therapeutic-area.obstetrics-gynecology"
+  },
+  {
+    "question": "Is progression-free survival acceptable as the primary endpoint for our oncology trial?",
+    "expect": "therapeutic-area.oncology"
+  },
+  {
+    "question": "Best corrected visual acuity in ETDRS letters for an anti-VEGF intravitreal injection: what margin?",
+    "expect": "therapeutic-area.ophthalmology"
+  },
+  {
+    "question": "Is a 30% responder analysis on the numeric rating scale adequate for chronic pain?",
+    "expect": "therapeutic-area.pain"
+  },
+  {
+    "question": "Is MADRS change from baseline the right primary endpoint in our depression trial?",
+    "expect": "therapeutic-area.psychiatry"
+  },
+  {
+    "question": "Can natural history data serve as the external control in our rare disease program?",
+    "expect": "therapeutic-area.rare-disease"
+  },
+  {
+    "question": "Is trough FEV1 the right primary endpoint for our COPD bronchodilator?",
+    "expect": "therapeutic-area.respiratory"
+  },
+  {
+    "question": "What endpoints work for a kidney transplant immunosuppression trial?",
+    "expect": "therapeutic-area.transplant"
+  },
+  {
+    "question": "Is micturition frequency from the bladder diary acceptable in overactive bladder?",
+    "expect": "therapeutic-area.urology"
+  },
+  {
+    "question": "What do reviewers expect for seroconversion in a vaccine program?",
+    "expect": "therapeutic-area.vaccines"
+  },
+  {
+    "question": "What does an oncology program owe reviewers?",
+    "expect": "therapeutic-area.oncology",
+    "context": {
+      "therapeuticArea": "oncology"
+    }
+  }
+]

@@ -1,0 +1,185 @@
+[
+  {
+    "question": "We're putting together the clinical development plan for a first-in-class oral anticoagulant. Which studies do we need before the pivotal trial?",
+    "expect": "clinical"
+  },
+  {
+    "question": "Is one adequate and well-controlled trial enough for US approval, or do we need two phase 3 studies?",
+    "expect": "clinical",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How do we apply quality by design from E8(R1) when planning our proof of concept study?",
+    "expect": "clinical"
+  },
+  {
+    "question": "Can you look over the schedule of activities and the inclusion criteria in our phase 2 protocol?",
+    "expect": "clinical.protocol-design"
+  },
+  {
+    "question": "Draft the objectives and endpoints section using the ICH M11 template.",
+    "expect": "clinical.protocol-design",
+    "context": { "surfaceId": "protocol-dev" }
+  },
+  {
+    "question": "Check the eligibility criteria in this study protocol for anything a reviewer would flag.",
+    "expect": "clinical.protocol-design",
+    "context": { "documentType": "ICH_PROTOCOL", "segments": ["biotech"] }
+  },
+  {
+    "question": "We need to change the dosing schedule mid-study. Does this protocol amendment have to go to FDA before we implement it?",
+    "expect": "clinical.protocol-amendments"
+  },
+  {
+    "question": "Is adding a new cohort a substantial modification under the EU CTR, and can sites start before it is authorised in CTIS?",
+    "expect": "clinical.protocol-amendments"
+  },
+  {
+    "question": "Help me write the summary of changes for amendment 3, with a rationale for each change.",
+    "expect": "clinical.protocol-amendments",
+    "context": { "surfaceId": "protocol-dev" }
+  },
+  {
+    "question": "Which clinical outcome assessment should measure fatigue in our MS trial, a PRO or a ClinRO?",
+    "expect": "clinical.endpoints-and-coas"
+  },
+  {
+    "question": "How do we set a meaningful within-patient change threshold for the symptom score?",
+    "expect": "clinical.endpoints-and-coas"
+  },
+  {
+    "question": "Could a patient-reported outcome support a label claim if it is only a key secondary endpoint?",
+    "expect": "clinical.endpoints-and-coas",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Draft the CSR synopsis for study 301 from the final TLFs.",
+    "expect": "clinical.study-report"
+  },
+  {
+    "question": "Which MedDRA version should the adverse event tables in the clinical study report use, and where do we state it?",
+    "expect": "clinical.study-report"
+  },
+  {
+    "question": "Check that the subject disposition in this report reconciles from screening to completion.",
+    "expect": "clinical.study-report",
+    "context": { "documentType": "ICH_CSR" }
+  },
+  {
+    "question": "What needs to change in the investigator's brochure now that the first-in-human safety data are in?",
+    "expect": "clinical.investigator-brochure"
+  },
+  {
+    "question": "We want to add hepatotoxicity to the reference safety information in the IB. Does the EU have to approve that before we use it?",
+    "expect": "clinical.investigator-brochure"
+  },
+  {
+    "question": "Write the guidance for the investigator section.",
+    "expect": "clinical.investigator-brochure",
+    "context": { "documentType": "ICH_IB" }
+  },
+  {
+    "question": "Is our informed consent form missing any of the 21 CFR 50.25 required elements?",
+    "expect": "clinical.informed-consent"
+  },
+  {
+    "question": "Do enrolled participants need to re-consent after the new liver safety finding?",
+    "expect": "clinical.informed-consent"
+  },
+  {
+    "question": "What should the assent document for 8 to 11 year olds say, and how does parental permission work?",
+    "expect": "clinical.informed-consent",
+    "context": { "documentType": "ICH_ICF" }
+  },
+  {
+    "question": "We're expecting a BIMO inspection at our lead site next month. What should we fix first?",
+    "expect": "clinical.gcp-operations"
+  },
+  {
+    "question": "A subject was dosed after failing an entry criterion. Is that an important protocol deviation, and who has to be told?",
+    "expect": "clinical.gcp-operations"
+  },
+  {
+    "question": "Set up risk-based monitoring for a 40-site study under E6(R3).",
+    "expect": "clinical.gcp-operations",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Our MTD is 400 mg but responses plateau at 200 mg. How should we pick the RP2D?",
+    "expect": "clinical.oncology-dose-optimization"
+  },
+  {
+    "question": "Design a randomized dose comparison that meets Project Optimus expectations before the registrational trial.",
+    "expect": "clinical.oncology-dose-optimization",
+    "context": { "therapeuticArea": "oncology", "segments": ["biotech"] }
+  },
+  {
+    "question": "Should we use BOIN instead of 3+3 for the escalation part of the first-in-human study?",
+    "expect": "clinical.oncology-dose-optimization"
+  },
+  {
+    "question": "There are maybe 200 patients in the US with this disease. Can we use an external control arm built from natural history data?",
+    "expect": "clinical.rare-disease-development"
+  },
+  {
+    "question": "What trial design works for such a small population when randomization isn't feasible?",
+    "expect": "clinical.rare-disease-development",
+    "context": { "therapeuticArea": "rare_disease" }
+  },
+  {
+    "question": "How much information can we take from the historical control using Bayesian borrowing?",
+    "expect": "clinical.rare-disease-development"
+  },
+  {
+    "question": "Can we use immunobridging instead of a vaccine efficacy trial for the adolescent indication?",
+    "expect": "clinical.vaccines"
+  },
+  {
+    "question": "How should we set up the lot consistency study for our mRNA product?",
+    "expect": "clinical.vaccines",
+    "context": { "therapeuticArea": "vaccines", "segments": ["biotech"] }
+  },
+  {
+    "question": "Is anti-HA antibody titer a correlate of protection we could rely on?",
+    "expect": "clinical.vaccines"
+  },
+  {
+    "question": "How long does long-term follow-up need to be for our AAV gene therapy?",
+    "expect": "clinical.cell-and-gene-therapy"
+  },
+  {
+    "question": "Is our minimally manipulated autologous product an HCT/P under section 361, or does it need a BLA?",
+    "expect": "clinical.cell-and-gene-therapy"
+  },
+  {
+    "question": "What cytokine release syndrome and ICANS monitoring should the CAR-T protocol include?",
+    "expect": "clinical.cell-and-gene-therapy",
+    "context": { "segments": ["biotech"], "therapeuticArea": "gene_cell_therapy" }
+  },
+  {
+    "question": "When is the initial pediatric study plan due, and can we ask for a deferral?",
+    "expect": "clinical.pediatrics"
+  },
+  {
+    "question": "Can we extrapolate adult efficacy to adolescents under E11A?",
+    "expect": "clinical.pediatrics"
+  },
+  {
+    "question": "Which formulation suits children under two, and how should we scale the pediatric dose?",
+    "expect": "clinical.pediatrics",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Could a target trial emulation using claims data support a label expansion?",
+    "expect": "clinical.real-world-evidence"
+  },
+  {
+    "question": "Is this hospital registry fit for purpose as a real-world data source for an FDA submission?",
+    "expect": "clinical.real-world-evidence"
+  },
+  {
+    "question": "How do we handle confounding by indication with propensity scores in our observational study?",
+    "expect": "clinical.real-world-evidence",
+    "context": { "segments": ["device"] }
+  }
+]

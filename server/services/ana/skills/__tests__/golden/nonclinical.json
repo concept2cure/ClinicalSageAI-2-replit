@@ -1,0 +1,81 @@
+[
+  {
+    "question": "What IND-enabling nonclinical studies do we need before a four-week phase 1 study?",
+    "expect": "nonclinical"
+  },
+  {
+    "question": "How does ICH S6(R1) change the nonclinical package for a monoclonal antibody?",
+    "expect": "nonclinical",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Are our GLP studies enough under M3(R2) to dose women of childbearing potential in phase 2?",
+    "expect": "nonclinical",
+    "context": { "segments": ["pharma"], "submissionType": "US_IND" }
+  },
+  {
+    "question": "Which species should we use for the three-month repeat-dose toxicology studies, and do we need recovery animals?",
+    "expect": "nonclinical.toxicology"
+  },
+  {
+    "question": "Do we need rodent carcinogenicity studies for a chronic-use drug, and what genotoxicity battery comes first?",
+    "expect": "nonclinical.toxicology",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Plan the DART studies and the embryo-fetal development timing for women of childbearing potential.",
+    "expect": "nonclinical.toxicology"
+  },
+  {
+    "question": "What does the S7A core battery need before first dosing in humans, and is our hERG margin adequate?",
+    "expect": "nonclinical.safety-pharmacology"
+  },
+  {
+    "question": "Our compound is centrally active. Do we need abuse potential studies such as drug discrimination?",
+    "expect": "nonclinical.safety-pharmacology",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Design the cardiovascular safety pharmacology telemetry study in dogs.",
+    "expect": "nonclinical.safety-pharmacology"
+  },
+  {
+    "question": "Calculate the MRSD from our rat and dog NOAELs and compare it with MABEL.",
+    "expect": "nonclinical.first-in-human-dose"
+  },
+  {
+    "question": "What first-in-human dose should a CD28 agonist antibody start at, given our receptor occupancy data?",
+    "expect": "nonclinical.first-in-human-dose",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Convert our NOAEL to a human equivalent dose and justify the safety factor.",
+    "expect": "nonclinical.first-in-human-dose"
+  },
+  {
+    "question": "Do any of our human metabolites need qualification under metabolites in safety testing?",
+    "expect": "nonclinical.adme-and-metabolites"
+  },
+  {
+    "question": "Design the human 14C mass balance study and the metabolite profiling plan.",
+    "expect": "nonclinical.adme-and-metabolites",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Protein binding differs a lot between rat and human. How do we read the margins?",
+    "expect": "nonclinical.adme-and-metabolites"
+  },
+  {
+    "question": "Draft the Module 2.4 nonclinical overview from our study set.",
+    "expect": "nonclinical.written-summaries"
+  },
+  {
+    "question": "Build the toxicology tabulated summaries for 2.6.7.",
+    "expect": "nonclinical.written-summaries",
+    "context": { "documentType": "ICH_NONCLIN_SUMMARY", "segments": ["pharma"] }
+  },
+  {
+    "question": "Does our nonclinical summary agree with the Investigator's Brochure on the NOAEL?",
+    "expect": "nonclinical.written-summaries"
+  }
+]
