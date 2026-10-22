@@ -1,0 +1,6 @@
+ × server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > marks each row counted by the trigger's rule, and the figure is approved over exactly those 16ms
+   → expected [] to deeply equal [ Array(5) ]
+ × server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > the message names the counted denominator, not every row 4ms
+   → expected 'Outline with 6 sections. Call again w…' to match /^Outline with 6 sections; readiness 4…/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)
