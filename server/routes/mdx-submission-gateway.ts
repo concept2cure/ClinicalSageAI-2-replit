@@ -230,7 +230,7 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
           LIMIT $${args.length + 1}`,
         [...args, limit],
       ),
-      transmittalTotals(where, args),
+      transmittalTotals(orgId, { programId: pid, region, status }),
     ]);
     return ok(res, rows, {
       count: rows.length,
@@ -253,16 +253,25 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
  * row count alone, so the surface showed the newest 100 as the whole log and
  * AnA was told what awaited acknowledgement from that page.
  */
-async function transmittalTotals(where: string, args: unknown[]): Promise<{
-  total: number; byStatus: Record<string, number>; awaitingAcknowledgement: number;
-}> {
+/** The duplicate-send lock's statuses (fda-esg's SQL list), as a bind-parameter array. */
+const ACTIVE_STATUS_VALUES: readonly string[] = [...ACTIVE_TRANSMITTAL_STATUSES.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+
+/* Every filter and the status list are bind parameters, with no SQL text built
+   from values (ci:sql-interpolation, 2026-10-22); an absent filter is NULL. */
+async function transmittalTotals(
+  organizationId: number,
+  filters: { programId?: string; region?: string; status?: string },
+): Promise<{ total: number; byStatus: Record<string, number>; awaitingAcknowledgement: number }> {
   const { rows } = await pool.query<{ status: string; n: string | number; awaiting: string | number }>(
     `SELECT t.status, count(*) AS n,
-            count(*) FILTER (WHERE t.ack_received_at IS NULL AND t.status IN ${ACTIVE_TRANSMITTAL_STATUSES}) AS awaiting
+            count(*) FILTER (WHERE t.ack_received_at IS NULL AND t.status = ANY($5::text[])) AS awaiting
        FROM submission_transmittals t
-      WHERE ${where}
+      WHERE t.organization_id = $1
+        AND ($2::uuid IS NULL OR t.program_id = $2::uuid)
+        AND ($3::text IS NULL OR t.region = $3)
+        AND ($4::text IS NULL OR t.status = $4)
       GROUP BY t.status`,
-    args,
+    [organizationId, filters.programId ?? null, filters.region ?? null, filters.status ?? null, [...ACTIVE_STATUS_VALUES]],
   );
   const byStatus: Record<string, number> = {};
   let total = 0;
