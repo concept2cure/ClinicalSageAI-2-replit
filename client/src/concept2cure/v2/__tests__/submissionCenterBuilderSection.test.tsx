@@ -17,7 +17,7 @@
  *   • the section is applied once: back on the Builder after another tab, the
  *     form is closed again;
  *   • a frozen sequence says no leaf can be placed, and a failed leaves read
- *     says the section was not opened;
+ *     says what was not done (no form opened, no leaf marked) and how to retry;
  *   • an unknown act, an over-long code, a section without a sequence, or a
  *     section for another tab is dropped, never trusted.
  *
@@ -161,12 +161,21 @@ describe('F18: the Builder opens at the section a readiness finding names', () =
     expect(sectionInput()).toBeNull();
   });
 
-  it('a failed leaves read says the section was not opened', async () => {
+  it('a failed leaves read says the placement form was not opened, and how to retry', async () => {
     mockApi({ 'GET /api/submissions/sequences/7/leaves': () => json({ error: 'unavailable' }, 503) });
     sendTo('place', '1.2');
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
-    await waitFor(() => expect(arrival()?.textContent).toBe('The leaves could not be read, so section 1.2 was not opened.'));
+    await waitFor(() => expect(arrival()?.textContent).toBe(
+      'The leaves could not be read, so the placement form was not opened at 1.2. Open the finding on Submission Readiness again to retry.'));
     expect(sectionInput()).toBeNull();
+  });
+
+  it('a failed leaves read for a leaf act says no leaf was marked, not that a section was not opened', async () => {
+    mockApi({ 'GET /api/submissions/sequences/7/leaves': () => json({ error: 'unavailable' }, 503) });
+    sendTo('leaf', '2.7.3');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await waitFor(() => expect(arrival()?.textContent).toBe(
+      'The leaves could not be read, so the leaf at 2.7.3 was not marked. Open the finding on Submission Readiness again to retry.'));
   });
 });
 
@@ -184,5 +193,72 @@ describe('F18: the section a sender names is read, not trusted', () => {
     expect(readSubmissionNavTarget({ ...base, sequenceId: '', builderAct: 'place', sectionCode: '1.2' })?.section).toBeNull();
     expect(readSubmissionNavTarget({ ...base, ws: 'sequences', builderAct: 'place', sectionCode: '1.2' })?.section).toBeNull();
     expect(readSubmissionNavTarget(base)?.section).toBeNull();
+  });
+});
+
+describe('F18 review: the arrival is used once, then retires', () => {
+  const RECEIPT = { id: 79, sequenceId: 7, sectionCode: '1.2', title: 'Form FDA 1571', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 601, auditTrail: { persisted: true, chained: true } };
+  const placeIt = async () => {
+    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: '601' } });
+    fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Place the cover letter the readiness finding names' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Place leaf in the sequence' }));
+  };
+
+  it('after the placement it asked for, the form stays closed and the line is gone (at head it reopened at 1.2)', async () => {
+    let leaves = LEAVES_7;
+    mockApi({
+      'GET /api/submissions/sequences/7/leaves': () => json(leaves),
+      'PUT /api/submissions/sequences/7/leaves': () => { leaves = [...LEAVES_7, { ...RECEIPT, granularity: null, documentType: null }]; return json(RECEIPT); },
+    });
+    sendTo('place', '1.2');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await waitFor(() => expect(sectionInput()?.value).toBe('1.2'));
+    await placeIt();
+    await screen.findByText(/placed.*server-confirmed/);
+    await waitFor(() => expect(screen.getAllByText('Form FDA 1571').length).toBeGreaterThan(0));
+    await waitFor(() => expect(arrival()).toBeNull());
+    expect(sectionInput()).toBeNull();
+  });
+
+  it('Cancel retires the line, and a later write does not reopen the form', async () => {
+    mockApi();
+    sendTo('place', '1.2');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await waitFor(() => expect(sectionInput()?.value).toBe('1.2'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(arrival()).toBeNull());
+    expect(sectionInput()).toBeNull();
+  });
+
+  it('the place line sits by the form it describes, after the leaf table', async () => {
+    mockApi();
+    sendTo('place', '1.2');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await waitFor(() => expect(sectionInput()?.value).toBe('1.2'));
+    const table = document.querySelector('table.ub-inv')!;
+    expect(table.compareDocumentPosition(arrival()!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('a read that answers after the person has moved on leaves focus where they put it', async () => {
+    let answer!: (r: Response) => void;
+    const pending = new Promise<Response>((res) => { answer = res; });
+    mockApi({ 'GET /api/submissions/sequences/7/leaves': (() => pending) as unknown as () => Response });
+    sendTo('place', '1.2');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await waitFor(() => expect(tab('Builder').getAttribute('aria-selected')).toBe('true'));
+    tab('Validation').focus();
+    answer(json(LEAVES_7));
+    await waitFor(() => expect(arrival()).not.toBeNull());
+    expect(document.activeElement).toBe(tab('Validation'));
+  });
+
+  it('two leaves at the section: the line says how many, and neither is called the one named', async () => {
+    mockApi({ 'GET /api/submissions/sequences/7/leaves': () => json([...LEAVES_7, { ...LEAVES_7[0], id: 80, title: 'M2.7 Clinical Summary, addendum' }]) });
+    sendTo('leaf', '2.7.3');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await waitFor(() => expect(arrival()?.textContent).toBe('2 leaves are placed at 2.7.3 and are marked below. The finding on Submission Readiness names the one it is about.'));
+    expect(document.querySelectorAll('[data-section-target]')).toHaveLength(2);
+    expect(document.body.textContent).not.toContain('Named by readiness');
+    expect(document.body.textContent).toContain('At the section the finding names');
   });
 });

@@ -36,6 +36,7 @@ import { classNotSequencedReason, type FilingDocumentClass } from '@shared/regul
 import type { ReviewItem } from '../fixtures/review-data';
 import type { BuilderSection } from './submissionNavTarget';
 import {
+  awaitingOwnReleaseSignature,
   programTypeLabel,
   SUB_STATUS_LABEL,
   SUB_STATUS_TONE,
@@ -109,6 +110,12 @@ export function marketVerdict(read: MarketRead): VerdictWords {
   const { gate, assessment } = read;
   if (!gate) return { text: 'No verdict from the server', tone: 'warn', icon: I.alertTriangle, failed: false };
   if (gate.cleared) return { text: `Cleared to dispatch${clearedCaveat(assessment)}`, tone: externalIssue(assessment) ? 'warn' : 'ok', icon: I.shieldCheck, failed: false };
+  /* The Dispatch tab's third state: the only thing between this sequence and
+     dispatch is the release signature that the dispatch e-signature records.
+     "Dispatch blocked" sent people looking for a defect that does not exist. */
+  if (awaitingOwnReleaseSignature(assessment)) {
+    return { text: 'Clear except for the release signature, which the dispatch e-signature applies', tone: 'warn', icon: I.shieldCheck, failed: false };
+  }
   const n = gate.blockers.length;
   const text = n > 0 ? `Dispatch blocked · ${n} blocker${n === 1 ? '' : 's'}` : 'Dispatch blocked';
   return { text, tone: 'blocked', icon: I.lock, failed: false };
@@ -206,13 +213,23 @@ export function openSubmissionCenter(onNav: (id: string) => void, at: CenterTarg
   onNav('submission-center');
 }
 
-/** A market opens on its latest sequence: on Validation when the server
+/** A market opens on its latest sequence: on Dispatch when only the release
+ *  signature dispatch applies is outstanding, on Validation when the server
  *  blocked dispatch, otherwise on Sequences. */
 export function marketTarget(m: ProgramMarket): CenterTarget {
   const r = m.read;
   const sequence = r.state === 'verdict' || r.state === 'verdict-failed' ? r.sequence : null;
+  if (r.state === 'verdict' && awaitingOwnReleaseSignature(r.assessment)) {
+    return { submissionId: m.submission.id, sequenceId: sequence?.id, ws: 'dispatch' };
+  }
   const blocked = r.state === 'verdict' && r.gate != null && !r.gate.cleared;
   return { submissionId: m.submission.id, sequenceId: sequence?.id, ws: blocked ? 'validation' : 'sequences' };
+}
+
+/** A market's accessible name: its type and agency, and its title, so two
+ *  markets of one type to one agency are told apart. */
+export function marketAccessibleName(s: Pick<MarketSubmission, 'applicationType' | 'primaryRegion' | 'title'>): string {
+  return [marketName(s), s.title].filter(Boolean).join(', ');
 }
 
 function MarketRow({ m, onRetry, onOpen, detail }: {

@@ -7,6 +7,7 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 import { readShellProject, shellProgramId } from '../shellProject';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
+  awaitingOwnReleaseSignature,
   useProgramMarkets,
   type ExternalValidation,
   type GateView,
@@ -15,7 +16,7 @@ import {
   type ReadinessFinding,
   type RuleView,
 } from './programSequence';
-import { MarketsBody, NotSequencedState, VerdictDetail, marketName, marketTarget, marketVerdict, marketsForbidden, openSubmissionCenter } from './ProjectMarkets';
+import { MarketsBody, NotSequencedState, VerdictDetail, marketAccessibleName, marketName, marketTarget, marketVerdict, marketsForbidden, openSubmissionCenter } from './ProjectMarkets';
 import { findingAct, type FindingAct } from './readinessFindingActs';
 import { filingDocumentClassOf, filingTypeInSentence } from '@shared/regulatory/filing-document-classes';
 import '../styles/project-home-v2.css';
@@ -134,8 +135,7 @@ function openAct(onNav: (id: string) => void, m: ProgramMarket, sequenceId: numb
 }
 
 /** One structural finding, its rule, and the act that opens where it is fixed. */
-function FindingRow({ f, act, market }: { f: ReadinessFinding; act: (() => void) | null; market: string }) {
-  const a = findingAct(f);
+function FindingRow({ f, a, act, market }: { f: ReadinessFinding; a: FindingAct | null; act: (() => void) | null; market: string }) {
   return (
     <li data-finding={f.code} className={'dr2-find tone-' + (SEV_TONE[f.severity] || 'idle')}>
       <span className={'dr2-find-sev tone-' + (SEV_TONE[f.severity] || 'idle')}>{f.severity}</span>
@@ -153,13 +153,21 @@ function FindingRow({ f, act, market }: { f: ReadinessFinding; act: (() => void)
   );
 }
 
-/** A cleared gate opens the sequence's Dispatch tab; transmit is offered there
- *  once the sequence is dispatched, each behind its own e-signature. */
-function DispatchDoor({ m, sequenceId, sequenceNumber, status, onNav, market }: {
-  m: ProgramMarket; sequenceId: number; sequenceNumber: string; status: string | null; onNav: (id: string) => void; market: string;
+/** The next governed step is on the sequence's Dispatch tab: freeze, the
+ *  dispatch e-signature (which records the release signature where the
+ *  submission type requires one), or transmit once dispatched. Each step is
+ *  signed there, by a person permitted to sign it; this screen signs nothing. */
+const SIGNED_STEPS = 'Freeze, dispatch and transmit are each signed on the Dispatch tab by a person permitted to sign them.';
+
+function DispatchDoor({ m, sequenceId, sequenceNumber, transmit, awaiting, reauthorizing, onNav, market }: {
+  m: ProgramMarket; sequenceId: number; sequenceNumber: string;
+  /** Dispatched, cleared and not awaiting a new release signature. */
+  transmit: boolean;
+  awaiting: boolean; reauthorizing: boolean;
+  onNav: (id: string) => void; market: string;
 }) {
   const open = () => openSubmissionCenter(onNav, { submissionId: m.submission.id, sequenceId, ws: 'dispatch' });
-  if (status === 'dispatched') {
+  if (transmit) {
     return (
       <div className="dr2-door">
         <button type="button" className="dr2-transmit" onClick={open} aria-label={`Open governed transmit for ${market}`}>
@@ -168,14 +176,17 @@ function DispatchDoor({ m, sequenceId, sequenceNumber, status, onNav, market }: 
       </div>
     );
   }
+  const why = reauthorizing
+    ? 'The earlier release signature does not cover the current recorded facts. It is signed again on the Dispatch tab before anything is transmitted.'
+    : awaiting
+      ? 'This submission type requires a release signature: the dispatch e-signature on the Dispatch tab records it.'
+      : `Transmit opens once sequence ${sequenceNumber} is dispatched.`;
   return (
     <div className="dr2-door">
       <button type="button" className="dr2-transmit" onClick={open} aria-label={`Open Dispatch for sequence ${sequenceNumber} of ${market}`}>
         {I.send} Open Dispatch for sequence {sequenceNumber}
       </button>
-      <p className="pj-mkt-note">
-        Transmit opens once sequence {sequenceNumber} is dispatched. Dispatch and transmit each take your Part 11 e-signature on the Dispatch tab.
-      </p>
+      <p className="pj-mkt-note">{why} {SIGNED_STEPS}</p>
     </div>
   );
 }
@@ -187,18 +198,26 @@ function MarketGateDetail({ m, onNav, center }: { m: ProgramMarket; onNav: (id: 
   const r = m.read;
   if (r.state !== 'verdict' || !r.assessment) return <VerdictDetail read={r} />;
   const a = r.assessment;
-  const market = marketName(m.submission);
+  const market = marketAccessibleName(m.submission);
   const gates: GateView[] = Array.isArray(a.gates) ? a.gates : [];
   const sequenceNumber = r.sequence.sequenceNumber ?? `id ${r.sequence.id}`;
   const status = a.sequenceStatus ?? r.sequence.status;
   const findings = Array.isArray(a.readiness?.findings) ? a.readiness.findings : [];
+  const locked = status === 'frozen' || status === 'dispatched';
+  /* The door follows the server's verdict for the next step, read as it is
+     (the Dispatch tab reads the same fields): dispatch cleared; clear except
+     for the release signature the dispatch e-signature records; or a
+     validated sequence whose freeze is clear. Missing fields are not cleared. */
+  const awaiting = awaitingOwnReleaseSignature(a);
+  const reauthorizing = status === 'dispatched' && a.dispatchAuthorization?.reauthorizing === true;
+  const doorOpen = r.gate?.cleared === true || awaiting || (status === 'validated' && a.freezeGate?.cleared === true);
   return (
     <div className="dr2-market" data-testid="dr2-market-detail">
       {a.validatedStage?.holds === false && (
         <p role="status" className="pj-mkt-note" data-validated-stage="stale">{a.validatedStage.reason}</p>
       )}
       {gates.length > 0 ? (
-        <ul className="dr2-gates" aria-label={`Dispatch gates for ${market}`}>
+        <ul className="dr2-gates" role="list" aria-label={`Dispatch gates for ${market}`}>
           {gates.map((g) => <GateCard key={g.key} gate={g} externalValidation={a.externalValidation} />)}
         </ul>
       ) : (
@@ -215,17 +234,18 @@ function MarketGateDetail({ m, onNav, center }: { m: ProgramMarket; onNav: (id: 
             </span>
           </div>
           {findings.length > 0 && (
-            <ul className="dr2-finds" aria-label={`Structural findings for ${market}`}>
+            <ul className="dr2-finds" role="list" aria-label={`Structural findings for ${market}`}>
               {findings.map((f, i) => {
-                const act = findingAct(f);
-                return <FindingRow key={i} f={f} market={market} act={act && center ? () => openAct(onNav, m, r.sequence.id, act) : null} />;
+                const act = findingAct(f, { locked });
+                return <FindingRow key={i} f={f} a={act} market={market} act={act && center ? () => openAct(onNav, m, r.sequence.id, act) : null} />;
               })}
             </ul>
           )}
         </div>
       )}
-      {r.gate?.cleared && center && (
-        <DispatchDoor m={m} sequenceId={r.sequence.id} sequenceNumber={sequenceNumber} status={status} onNav={onNav} market={market} />
+      {doorOpen && center && (
+        <DispatchDoor m={m} sequenceId={r.sequence.id} sequenceNumber={sequenceNumber} market={market} onNav={onNav}
+          transmit={status === 'dispatched' && r.gate?.cleared === true && !reauthorizing} awaiting={awaiting} reauthorizing={reauthorizing} />
       )}
     </div>
   );
@@ -262,6 +282,7 @@ function marketFacts(m: ProgramMarket): Record<string, unknown> {
     Object.assign(out, { sequenceId: r.sequence.id, sequenceNumber: r.sequence.sequenceNumber, sequenceStatus: r.sequence.status });
   }
   if (r.state === 'verdict' && r.gate) Object.assign(out, { cleared: r.gate.cleared, blockers: r.gate.blockers });
+  if (r.state === 'verdict' && awaitingOwnReleaseSignature(r.assessment)) out.awaitingOwnReleaseSignature = true;
   const a = r.state === 'verdict' ? r.assessment : null;
   if (a) {
     Object.assign(out, {
@@ -371,7 +392,7 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
   } else {
     body = (
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
-        startHint=" Add one from the project's Submit tab."
+        startHint=" Add one from the project's Submit tab, or record an existing submission to this project in the Submission Center."
         detail={(m) => <MarketGateDetail m={m} onNav={onNav} center={center} />} />
     );
   }
@@ -385,7 +406,7 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
         <span className="dr2-foot-note">
           Every gate input is computed from server state — a client cannot pass{' '}
           <span className="mono">validationErrors:0</span> to talk the gate down. The AI dispatch-QC task advises; this gate{' '}
-          <b>enforces</b>. Dispatch and the wire transmit each stay behind a Part 11 e-signature, on the sequence&apos;s Dispatch tab.
+          <b>enforces</b>. Freeze, dispatch and transmit each stay behind a Part 11 e-signature, on the sequence&apos;s Dispatch tab.
         </span>
       </div>
     </div>

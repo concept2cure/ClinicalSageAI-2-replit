@@ -11,7 +11,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -26,6 +26,8 @@ function AnaContextProbe() {
   const context = useActiveSurfaceContext('dispatch-readiness');
   return <pre data-testid="ana-wire-context">{JSON.stringify(toModuleContext(context))}</pre>;
 }
+
+const wire = () => JSON.parse(screen.getByTestId('ana-wire-context').textContent!);
 
 const PROGRAM_UUID = '5b1c2d3e-0000-4000-8000-000000000009';
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data: payload }) }) as Response;
@@ -117,9 +119,9 @@ describe('the external validator gate', () => {
     serve(assessment({ assessmentStatus: 'invalid', assessmentNote }, { configured: true, ran: true, errorCount: 0, errorCountKnown: false, qualifyingRun: false, assessmentStatus: 'invalid', assessmentNote, validatorKind: 'external_engine', selectedValidatorName: 'LORENZ', reportedValidatorName: 'other-engine' }));
     render(<><DispatchReadiness {...props()} /><AnaContextProbe /></>);
     await screen.findByText('At least one Shadow Review has completed');
-    const wire = JSON.parse(screen.getByTestId('ana-wire-context').textContent!);
-    // F18: one entry per market; this project has one.
-    expect(wire.facts.markets[0]).toMatchObject({ externalValidationCleared: true, externalValidationStatus: 'invalid', externalQualifyingRun: false, externalErrorCountKnown: false, externalSelectedValidator: 'LORENZ', externalReportedValidator: 'other-engine', externalValidationNote: assessmentNote });
+    // F18: one entry per market; this project has one. AnA's context is
+    // published by an effect after the gate is drawn, so it is awaited too.
+    await waitFor(() => expect(wire().facts.markets[0]).toMatchObject({ externalValidationCleared: true, externalValidationStatus: 'invalid', externalQualifyingRun: false, externalErrorCountKnown: false, externalSelectedValidator: 'LORENZ', externalReportedValidator: 'other-engine', externalValidationNote: assessmentNote }));
     expect(document.body.textContent).not.toContain('external validator clean');
   });
 
@@ -178,8 +180,7 @@ describe('a Shadow Review waived by signature (P-34)', () => {
     serve(waived());
     render(<><DispatchReadiness {...props()} /><AnaContextProbe /></>);
     await screen.findByText('At least one Shadow Review has completed');
-    const wire = JSON.parse(screen.getByTestId('ana-wire-context').textContent!);
-    expect(wire.facts.markets[0].notAssessed).toEqual([{ gate: 'shadowPresence', note: WAIVED }]);
-    expect(wire.facts.markets[0].shadowReviewMissing).toBe(true);
+    await waitFor(() => expect(wire().facts.markets[0].notAssessed).toEqual([{ gate: 'shadowPresence', note: WAIVED }]));
+    expect(wire().facts.markets[0].shadowReviewMissing).toBe(true);
   });
 });

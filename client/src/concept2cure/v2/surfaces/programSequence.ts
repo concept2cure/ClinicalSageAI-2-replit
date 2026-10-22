@@ -152,6 +152,23 @@ export interface DispatchReadinessAssessment {
    *  validatedStageOf), and why not, in the server's words; shown beside the
    *  status (QA 2026-10-08, j7 finding 20). Null otherwise. */
   validatedStage?: { holds: boolean; reason?: string } | null;
+  /** The server's verdict for each governed step (assess-dispatch-readiness
+   *  composeStepVerdicts), read as it is, never recomputed. `freezeGate`: every
+   *  gate but the release signature. `dispatchGateOnSigning`: dispatch once the
+   *  dispatch e-signature, which records the release signature, is on record.
+   *  Optional on the wire: a response without them is read as not cleared. */
+  freezeGate?: DispatchGate;
+  dispatchGateOnSigning?: DispatchGate;
+  /** A dispatched sequence whose release no longer covers the current recorded
+   *  facts must be signed again before any transmission. */
+  dispatchAuthorization?: { reauthorizing: boolean; eligible: boolean; refusal: string | null };
+}
+
+/** The server says dispatch is clear except for the release signature the
+ *  dispatch e-signature itself records (the Dispatch tab's awaitingOwnSignature).
+ *  Read from the server's two verdicts; a missing field is false. */
+export function awaitingOwnReleaseSignature(a: DispatchReadinessAssessment | null | undefined): boolean {
+  return !!a && a.gate?.cleared === false && a.dispatchGateOnSigning?.cleared === true;
 }
 
 /* ── Which sequence the gate reads: the OPEN PROGRAM's ─────────────────────
