@@ -164,11 +164,18 @@ describe('a tenant that signed and locked an artifact', () => {
   it('is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays', async () => {
     await seedSignedArtifact();
     const ledgerBefore = await ledger();
-    const purged = await purgeTenant(owner, {
-      organizationId: ORG,
-      purgedByUserId: signer,
-      preconditions: { finalExportDigest: DIGEST },
-    });
+    // The route (tenants-simple.ts) runs the purge on the runtime pool, as
+    // app_service, in the platform scope; the source-read-receipt door
+    // (purge_tenant_source_read_receipts) refuses any other caller.
+    const { pool: runtime } = await import('../../server/db');
+    const { runWithSystemTenantScope } = await import('../../server/db/tenantStore');
+    const purged = await runWithSystemTenantScope('tests/db/tenant-purge-artifact-records.dbtest.ts', () =>
+      purgeTenant(runtime, {
+        organizationId: ORG,
+        purgedByUserId: signer,
+        preconditions: { finalExportDigest: DIGEST },
+      }),
+    );
     expect(purged.status).toBe('purged');
     expect(purged.artifactRecordErasure).toEqual({ signatures: 1, snapshots: 1 });
     expect(await signatures()).toBe(0);

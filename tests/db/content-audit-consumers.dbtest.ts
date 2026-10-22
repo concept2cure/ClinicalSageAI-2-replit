@@ -116,7 +116,7 @@ function registerContentAdmissionCases1() {
   });
   it('mandatory lineage failure rolls back its artifact and preserves the generated draft',async()=>{
     control='lineage-refusal';const res=await post('/api/audit-services/figures/generate',figureBody());
-    expect(res.status).toBe(422);expect(res.body.figure.storage.status).toBe('not_saved');expect(res.body.figure.figure.generatedContent).toContain('datasets');
+    expect(res.status).toBe(500);expect(res.body.figure.failure).toBe('internal');expect(res.body.figure.storage.status).toBe('not_saved');expect(res.body.figure.figure.generatedContent).toContain('datasets');
     expect((await owner.query('SELECT id FROM concept2cure_artifacts WHERE artifact_id=$1',[res.body.figure.storage.artifactId])).rows).toEqual([]);expect(h.chat).toHaveBeenCalledTimes(1);
     control='none';const recovery=await post('/api/audit-services/figures/generate',figureBody());expect(recovery.status).toBe(200);
   });

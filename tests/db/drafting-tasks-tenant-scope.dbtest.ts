@@ -115,14 +115,16 @@ describe('the drafting routes, positive control (D3)', () => {
     const start = await request(app)
       .post('/api/v1/drafting/start_task')
       .set(auth(accessToken(userA, ORG_A, 'member')))
-      .send({ project_id: programA, ectd_section: '2.5', document_title: `${TAG} A overview` });
+      .send({ project_id: programA, ectd_section: '2.5', document_title: `${TAG} A drug - ${TAG} A indication` });
     expect(start.status, JSON.stringify(start.body).slice(0, 300)).toBe(202);
     const status = await request(app)
       .get(`/api/v1/drafting/task_status/${start.body.task_id}`)
       .set(auth(accessToken(userA, ORG_A, 'member')));
     expect(status.status, JSON.stringify(status.body).slice(0, 300)).toBe(200);
     expect(status.body).toMatchObject({ project_id: programA, status: 'COMPLETED' });
-    expect(String(status.body.draft_content)).toContain(`${TAG} A overview`);
+    // 1fac924b2: [DRUG_NAME]/[INDICATION] are filled only from a "<drug> - <indication>" title.
+    expect(String(status.body.draft_content)).toContain(`${TAG} A drug`);
+    expect(String(status.body.draft_content)).toContain(`${TAG} A indication`);
   });
 
   it("the route refuses B's task and B's program to A's token", async () => {

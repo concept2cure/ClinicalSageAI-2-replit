@@ -67,8 +67,17 @@ const rows = (trial: string) => owner.query('SELECT * FROM tmf_artifact_filings 
 const auditRows = (resourceId: string) => owner.query(`SELECT tenant_id,user_id,action,table_name,record_id,sha256_chain,hmac_seal
   FROM audit_logs WHERE tenant_id=$1 AND record_id=$2 ORDER BY occurred_at`, [ORG, resourceId]);
 
+const priorAuditHmacKey = process.env.AUDIT_HMAC_KEY;
+const priorAuditHmacSecret = process.env.AUDIT_HMAC_SECRET;
+function restoreAuditKeys(): void {
+  if (priorAuditHmacKey === undefined) delete process.env.AUDIT_HMAC_KEY; else process.env.AUDIT_HMAC_KEY = priorAuditHmacKey;
+  if (priorAuditHmacSecret === undefined) delete process.env.AUDIT_HMAC_SECRET; else process.env.AUDIT_HMAC_SECRET = priorAuditHmacSecret;
+}
+
 beforeAll(async () => {
   if (!process.env.APP_DATABASE_URL) throw new Error('APP_DATABASE_URL is required for native non-bypass TMF/assessment proof.');
+  process.env.AUDIT_HMAC_KEY ??= 'synthetic-tmf-assessment-audit-hmac-key-no-production-use';
+  process.env.AUDIT_HMAC_SECRET ??= 'synthetic-tmf-assessment-tamper-proof-key-no-production-use';
   owner = new Pool({ connectionString: databaseUrl, max: 2 });
   runtime = new Pool({ connectionString: process.env.APP_DATABASE_URL, options: buildRlsStartupOptions(), max: 2 });
   // Canonical ID defaults give this invocation new tenants. Fixed IDs shared
@@ -164,6 +173,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   control = 'none';
+  restoreAuditKeys();
   auditSpy?.mockRestore();
   if (sharedPool && originalQuery) sharedPool.query = originalQuery;
   if (owner) await owner.end();

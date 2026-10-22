@@ -457,7 +457,12 @@ describe('D2 via POST /api/auth/signup — the self-serve path, end to end', () 
     const locked = launchSurfaces
       .filter((id) => v.has(id) && v.get(id)!.entitled !== true)
       .map((id) => `${id}:${v.get(id)!.source}`);
-    expect(locked).toEqual(['cmc:tier']);
+    // communication-center (Projects) and ind-checklist (Submission Center, P-32)
+    // are listed surfaces with no module of their own in their app: existing
+    // module licensing applies and signup grants nothing for them, so on the
+    // free plan they are tier-locked by design (launch-scope.ts). In
+    // launchSurfaces order, and nothing else is locked.
+    expect(locked).toEqual(['communication-center:tier', 'ind-checklist:tier', 'cmc:tier']);
     expect(v.get('cmc')).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
     expect((await grantRows(orgId)).some((grant) => grant.module_id === 'cmc')).toBe(false);
     for (const s of rail.surfaces) {

@@ -75,9 +75,18 @@ async function upload(suffix: string) {
 }
 const adopt = (fileId: string) => request(app).post(`/api/c2c/projects/${programId}/adopt`).set('Authorization', `Bearer ${token}`).send({ fileUploadId: fileId });
 
+const priorAuditHmacKey = process.env.AUDIT_HMAC_KEY;
+const priorAuditHmacSecret = process.env.AUDIT_HMAC_SECRET;
+function restoreAuditKeys(): void {
+  if (priorAuditHmacKey === undefined) delete process.env.AUDIT_HMAC_KEY; else process.env.AUDIT_HMAC_KEY = priorAuditHmacKey;
+  if (priorAuditHmacSecret === undefined) delete process.env.AUDIT_HMAC_SECRET; else process.env.AUDIT_HMAC_SECRET = priorAuditHmacSecret;
+}
+
 beforeAll(async () => {
   const target = new URL(databaseUrl);
   if (!['c2c_audit_remedies', 'concept2cure-ri_dbtest', 'c2c_audit_oct17_final_tls'].includes(target.pathname.slice(1)) || !process.env.APP_DATABASE_URL) throw new Error('Use the declared disposable audit database and restricted application role.');
+  process.env.AUDIT_HMAC_KEY ??= 'synthetic-adoption-commit-audit-hmac-key-no-production-use';
+  process.env.AUDIT_HMAC_SECRET ??= 'synthetic-adoption-commit-tamper-proof-key-no-production-use';
   owner = new Pool({ connectionString: databaseUrl, max: 2 });
   await seedActorAndProject();
   const { activeJwtSecret } = await import('../../server/utils/jwtVerify');
@@ -96,7 +105,7 @@ beforeAll(async () => {
   app.use('/api/c2c/projects', authMiddleware, (await import('../../server/routes/c2c/projects')).default);
 });
 // Retained captures must retain their source bytes as well as database history.
-afterAll(async () => { vi.restoreAllMocks(); await owner?.end(); await runtime?.end(); });
+afterAll(async () => { vi.restoreAllMocks(); restoreAuditKeys(); await owner?.end(); await runtime?.end(); });
 
 describe('capture COMMIT recovery on the actual registered schema', () => {
   it('uses genuine authenticated tenant scope, a restricted role, and the configured transport', async () => {

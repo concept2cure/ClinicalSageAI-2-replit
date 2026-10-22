@@ -70,14 +70,17 @@ function asMember<T>(fn: () => Promise<T>): Promise<T> {
 
 function review(project: number | string) {
   return asMember(() =>
-    orchestration.executeWorkflow({
-      templateId: 'submission_readiness_review',
-      projectId: project as number,
-      organizationId: ORG,
-      module: 'ind',
-      requestedBy: { userId: 1, userName: 'dbtcr@example.invalid', userRole: 'admin', organizationId: ORG },
-      sourceSurface: 'api',
-    } as Parameters<Orchestration['executeWorkflow']>[0]),
+    orchestration.executeWorkflow(
+      {
+        templateId: 'submission_readiness_review',
+        projectId: project as number,
+        organizationId: ORG,
+        module: 'ind',
+        requestedBy: { userId: 1, userName: 'dbtcr@example.invalid', userRole: 'admin', organizationId: ORG },
+        sourceSurface: 'api',
+      },
+      { ipAddress: '203.0.113.7' },
+    ),
   );
 }
 
