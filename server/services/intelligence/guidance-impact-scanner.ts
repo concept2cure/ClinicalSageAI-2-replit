@@ -691,7 +691,8 @@ export interface GuidanceAlertsSummary {
 
 const MAX_TOP_LIST = 10;
 
-const SCAN_HISTORY_NOTE =
+/** Exported for the alert list route, which says the same (2026-10-22). */
+export const GUIDANCE_SCAN_HISTORY_NOTE =
   'Scan history is not recorded: a guidance scan that finds no affected artifact leaves no record, ' +
   'so no alerts is not a clean result.';
 
@@ -819,7 +820,7 @@ export async function getGuidanceAlertsSummary(
     projectId,
     asOf: new Date().toISOString(),
     assessed: lastAlertAt !== null,
-    scanHistory: { recorded: false, note: SCAN_HISTORY_NOTE },
+    scanHistory: { recorded: false, note: GUIDANCE_SCAN_HISTORY_NOTE },
     lastAlertAt,
     bySeverity,
     openBySeverity,

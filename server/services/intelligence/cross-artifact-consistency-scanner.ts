@@ -458,7 +458,8 @@ export interface ConsistencyAlertsSummary {
 
 const TOP_LIST_CAP = 10;
 
-const SCAN_HISTORY_NOTE =
+/** Exported for the alert list route, which says the same (2026-10-22). */
+export const CONSISTENCY_SCAN_HISTORY_NOTE =
   'Scan history is not recorded: a consistency scan that finds no contradiction leaves no record, ' +
   'so no alerts is not a clean result.';
 
@@ -551,7 +552,7 @@ export async function getConsistencyAlertsSummary(
     projectId,
     asOf: new Date().toISOString(),
     assessed: lastAlertAt !== null,
-    scanHistory: { recorded: false, note: SCAN_HISTORY_NOTE },
+    scanHistory: { recorded: false, note: CONSISTENCY_SCAN_HISTORY_NOTE },
     lastAlertAt,
     bySeverity,
     openBySeverity,

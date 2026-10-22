@@ -38,7 +38,7 @@ vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: h.res
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole: h.resolveSignerOrgRole }));
 
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor';
-import importsRouter from '../../../routes/mdx-imports';
+import importsRouter, { IMPORT_JOB_FAILED_MESSAGE } from '../../../routes/mdx-imports';
 
 const ORG = 8471;
 const USER = 8472;
@@ -104,7 +104,8 @@ describe('start_legacy_import — a job that fails after it was created', () => 
     expect(out.error).toMatch(/^start_legacy_import failed: .*ENOENT/);
     const viaAna = await latestJob();
     expect(viaAna.status, 'the job was left as if detection were still running').toBe('failed');
-    expect(viaAna.error_message).toMatch(/ENOENT/);
+    // 2026-10-22: the stored error is a fixed sentence (the raw text named the archive's path).
+    expect(viaAna.error_message).toBe(IMPORT_JOB_FAILED_MESSAGE);
     expect(out, 'the reply did not name the job it marked failed').toMatchObject({ jobId: viaAna.id, jobMarkedFailed: true });
 
     const res = await request(app()).post('/api/mdx/imports').send({ sourcePath: gone });
@@ -112,7 +113,7 @@ describe('start_legacy_import — a job that fails after it was created', () => 
     const viaRoute = await latestJob();
     expect(viaRoute.id).not.toBe(viaAna.id);
     expect(viaRoute.status).toBe('failed');
-    expect(viaRoute.error_message).toMatch(/ENOENT/);
+    expect(viaRoute.error_message).toBe(IMPORT_JOB_FAILED_MESSAGE);
   });
 
   it('is marked failed with the error when a row write fails part-way through the import', async () => {
@@ -132,7 +133,7 @@ describe('start_legacy_import — a job that fails after it was created', () => 
       expect(out.error).toMatch(/findings store unavailable/);
       const job = await latestJob();
       expect(job.status, 'the job was left as if detection were still running').toBe('failed');
-      expect(job.error_message).toMatch(/findings store unavailable/);
+      expect(job.error_message).toBe(IMPORT_JOB_FAILED_MESSAGE);
       expect(out).toMatchObject({ jobId: job.id, jobMarkedFailed: true });
     } finally {
       await pg.exec(`DROP TRIGGER refuse_finding ON import_job_findings; DROP FUNCTION refuse_finding();`);

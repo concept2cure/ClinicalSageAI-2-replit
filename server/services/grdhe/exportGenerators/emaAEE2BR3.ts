@@ -410,14 +410,22 @@ function unrecordedHeaderWarnings(event: CanonicalAdverseEvent): ValidationWarni
   return warnings;
 }
 
-/** The date of death recorded: patient.death_date, else a fatal reaction's end date, each with its recorded precision. */
-function recordedDeathDate(event: CanonicalAdverseEvent): { field: string; value: unknown; precision: unknown } {
+/**
+ * The date of death recorded (patient.death_date, with its precision), or null.
+ * 2026-10-22: with none recorded, a fatal reaction's end date was filed as the
+ * date of death; the reaction ending is not the patient dying on that day.
+ */
+function recordedDeathDate(event: CanonicalAdverseEvent): { field: string; value: unknown; precision: unknown } | null {
   const patient = (event.patient || {}) as AnyData;
-  if (patient.death_date) return { field: 'patient.death_date', value: patient.death_date, precision: patient.death_date_precision };
-  const reactions = (event.reactions || []) as AnyData[];
-  const fatal = reactions.findIndex(r => r.outcome === 'fatal');
-  const reaction = reactions[fatal] ?? {};
-  return { field: `reactions[${fatal}].end_date`, value: reaction.end_date, precision: reaction.end_date_precision };
+  return isRecorded(patient.death_date)
+    ? { field: 'patient.death_date', value: patient.death_date, precision: patient.death_date_precision }
+    : null;
+}
+
+/** B.1.2.2.1 gestationperiod in weeks (803) for patient.gestation_weeks recorded as a positive number, else null. */
+function gestationWeeks(value: unknown): string | null {
+  const n = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
+  return Number.isFinite(n) && n > 0 ? String(n) : null;
 }
 
 /**
@@ -478,6 +486,15 @@ function unrecordedCodedValueWarnings(event: CanonicalAdverseEvent): ValidationW
         warn('E2B-W-drugadministrationroute', `${list}[${i}].route`,
           `The route of ${name} is recorded as "${String(product.route)}", not as an E2B route code (three digits); drugadministrationroute is omitted, and no code is filed for it by guess`);
       }
+      // 2026-10-22: the recorded text was written into both coded elements.
+      if (isRecorded(product.parent_route) && !e2bRouteCode(product.parent_route)) {
+        warn('E2B-W-drugparadministration', `${list}[${i}].parent_route`,
+          `The parent route of ${name} is recorded as "${String(product.parent_route)}", not as an E2B route code (three digits); drugparadministration is omitted`);
+      }
+      if ((isRecorded(product.frequency_value) || isRecorded(product.frequency_unit)) && !e2bTimeUnitCode(product.frequency_unit)) {
+        warn('E2B-W-drugintervaldosagedefinition', `${list}[${i}].frequency_unit`,
+          omitted(`The dosing interval unit of ${name}`, product.frequency_unit, 'drugintervaldosagedefinition (and its count, drugintervaldosageunitnumb)'));
+      }
     });
   }
   if (event.seriousnessDeath && !autopsyCode((event.patient as AnyData | undefined)?.autopsy_performed)) {
@@ -486,6 +503,27 @@ function unrecordedCodedValueWarnings(event: CanonicalAdverseEvent): ValidationW
   if ((event.medicalHistory?.relevant_tests || []).length > 0) {
     warn('E2B-W-moreinformation', 'moreinformation',
       'Whether more information is available for the test results is not recorded (whether a result was abnormal does not say); moreinformation is omitted');
+  }
+  return warnings;
+}
+
+/** The death date, gestation and authority number, omitted unless recorded as their elements take them (2026-10-22). */
+function recordedOnlyCaseWarnings(event: CanonicalAdverseEvent): ValidationWarning[] {
+  const warnings: ValidationWarning[] = [];
+  const warn = (code: string, field: string, message: string) => warnings.push({ code, field, message, severity: 'warning' });
+  if (event.seriousnessDeath && !recordedDeathDate(event)) {
+    warn('E2B-W-patientdeathdate', 'patient.death_date',
+      "The date of death is not recorded; patientdeathdate is omitted (a fatal reaction's end date is not filed as it)");
+  }
+  const gestation = (event.patient as AnyData | undefined)?.gestation_weeks;
+  if (isRecorded(gestation) && !gestationWeeks(gestation)) {
+    warn('E2B-W-gestationperiod', 'patient.gestation_weeks',
+      `The gestation is recorded as "${String(gestation)}", not a number of weeks; gestationperiod is omitted`);
+  }
+  // 2026-10-22: authoritynumb was the worldwide case id for every case.
+  if (isRecorded(event.worldwideCaseId)) {
+    warn('E2B-W-A.1.10.1', 'worldwideCaseId',
+      `A.1.10.1 - The worldwide case id "${String(event.worldwideCaseId)}" is recorded, but not whether a regulatory authority assigned it; authoritynumb (a regulatory authority's case report number) is omitted`);
   }
   return warnings;
 }
@@ -781,7 +819,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): {
 
   const dates = dateFindings(event);
   errors.push(...caseFactErrors(event), ...quantityUnitErrors(event), ...partyErrors(event), ...dates.errors);
-  warnings.push(...omittedCountryWarnings(event), ...unrecordedHeaderWarnings(event), ...unrecordedCodedValueWarnings(event), ...dates.warnings);
+  warnings.push(...omittedCountryWarnings(event), ...unrecordedHeaderWarnings(event), ...unrecordedCodedValueWarnings(event), ...recordedOnlyCaseWarnings(event), ...dates.warnings);
   return { errors, warnings };
 }
 
@@ -980,7 +1018,6 @@ function generateSafetyReportId(event: CanonicalAdverseEvent, meddraVersion: str
     <safetyreportid>${escapeXml(event.caseNumber)}</safetyreportid>${sourceCountry}${occurCountry}${e2bDateElements('transmissiondate', new Date(), 'day', '    ')}
     <reporttype>${reportType}</reporttype>
     ${seriousnessSection}${e2bDateElements('receivedate', event.receiveDate, undefined, '    ')}${e2bDateElements('receiptdate', event.mostRecentInfoDate || event.receiveDate, undefined, '    ')}
-    <authoritynumb>${escapeXml(event.worldwideCaseId || '')}</authoritynumb>
     <companynumb>${escapeXml(event.caseNumber)}</companynumb>${nullification}`;
 }
 
@@ -1131,7 +1168,7 @@ function generatePatientInformation(event: CanonicalAdverseEvent, meddraVersion:
     const death = recordedDeathDate(event);
     const autopsy = autopsyCode(patient.autopsy_performed);
     deathSection = `
-      <patientdeath>${e2bDateElements('patientdeathdate', death.value, death.precision, '        ')}${autopsy ? `
+      <patientdeath>${death ? e2bDateElements('patientdeathdate', death.value, death.precision, '        ') : ''}${autopsy ? `
         <patientautopsyyesno>${autopsy}</patientautopsyyesno>` : ''}
       </patientdeath>`;
   }
@@ -1155,9 +1192,13 @@ function generatePatientInformation(event: CanonicalAdverseEvent, meddraVersion:
   }
 
   const sexSection = sexCode ? `\n      <patientsex>${sexCode}</patientsex>` : '';
+  // With its unit, weeks (803), as the field records it, or omitted (2026-10-22: no unit was written).
+  const weeks = gestationWeeks(patient.gestation_weeks);
+  const gestationSection = weeks
+    ? `\n      <gestationperiod>${weeks}</gestationperiod>\n      <gestationperiodunit>803</gestationperiodunit>`
+    : '';
   return `    <patient>
-      <patientinitial>${escapeXml(patient.initials || '')}</patientinitial>${birthDateSection}${ageSection}${ageGroupSection}${sexSection}${weightSection}${heightSection}
-      <gestationperiod>${patient.gestation_weeks || ''}</gestationperiod>
+      <patientinitial>${escapeXml(patient.initials || '')}</patientinitial>${birthDateSection}${ageSection}${ageGroupSection}${sexSection}${weightSection}${heightSection}${gestationSection}
       <patientmedicalhistorytext>${cdataWrap(medicalHistory.summary || '')}</patientmedicalhistorytext>
       ${medicalHistorySection}${deathSection}
     </patient>`;
@@ -1245,6 +1286,12 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
         ? `\n      <drugauthorizationholder>${escapeXml(String(product.authorization_holder))}</drugauthorizationholder>`
         : '';
       const routeCode = e2bRouteCode(product.route);
+      // Coded, or omitted with a warning (2026-10-22: the recorded text was written).
+      const parentRoute = e2bRouteCode(product.parent_route);
+      const intervalUnit = e2bTimeUnitCode(product.frequency_unit);
+      const interval = intervalUnit && isRecorded(product.frequency_value)
+        ? `<drugintervaldosageunitnumb>${escapeXml(String(product.frequency_value))}</drugintervaldosageunitnumb>\n      <drugintervaldosagedefinition>${intervalUnit}</drugintervaldosagedefinition>\n      `
+        : '';
       const units = drugQuantityUnits(product);
       // 2026-10-15: an unrecorded rechallenge was filed as 3.
       const recurred = rechallengeCode(product.rechallenge);
@@ -1259,13 +1306,10 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
       <drugstructuredosagenumb>${doseNumber(product.dose) ?? ''}</drugstructuredosagenumb>
       <drugstructuredosageunit>${units.dose}</drugstructuredosageunit>
       <drugseparatedosagenumb>${product.number_of_units || ''}</drugseparatedosagenumb>
-      <drugintervaldosageunitnumb>${product.frequency_value || ''}</drugintervaldosageunitnumb>
-      <drugintervaldosagedefinition>${product.frequency_unit || ''}</drugintervaldosagedefinition>
-      <drugcumulativedosagenumb>${product.cumulative_dose || ''}</drugcumulativedosagenumb>
+      ${interval}<drugcumulativedosagenumb>${product.cumulative_dose || ''}</drugcumulativedosagenumb>
       <drugcumulativedosageunit>${units.cumulative}</drugcumulativedosageunit>
       <drugdosagetext>${cdataWrap(product.dose_text || '')}</drugdosagetext>
-      <drugdosageform>${escapeXml(product.dose_form || '')}</drugdosageform>${routeCode ? `\n      <drugadministrationroute>${routeCode}</drugadministrationroute>` : ''}
-      <drugparadministration>${escapeXml(product.parent_route || '')}</drugparadministration>${e2bDateElements('drugstartdate', product.start_date, product.start_date_precision)}${e2bDateElements('drugenddate', product.end_date, product.end_date_precision)}
+      <drugdosageform>${escapeXml(product.dose_form || '')}</drugdosageform>${routeCode ? `\n      <drugadministrationroute>${routeCode}</drugadministrationroute>` : ''}${parentRoute ? `\n      <drugparadministration>${parentRoute}</drugparadministration>` : ''}${e2bDateElements('drugstartdate', product.start_date, product.start_date_precision)}${e2bDateElements('drugenddate', product.end_date, product.end_date_precision)}
       <drugtreatmentduration>${product.duration_value || ''}</drugtreatmentduration>
       <drugtreatmentdurationunit>${units.duration}</drugtreatmentdurationunit>
       <drugindication>${cdataWrap(product.indication || '')}</drugindication>${actionCode ? `\n      <actiondrug>${actionCode}</actiondrug>` : ''}${recurred ? `\n      <drugrecurreadministration>${recurred}</drugrecurreadministration>` : ''}
