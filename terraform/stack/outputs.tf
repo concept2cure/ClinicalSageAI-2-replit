@@ -69,6 +69,13 @@ output "deploy_targets" {
   }
 }
 
+# The repository variable FRONTEND_BUCKET that deploy-aws.yml publishes the
+# frontend to: the bucket name carries the account id, so it is read from here
+# after apply rather than written into the workflow.
+output "frontend_bucket" {
+  value = local.frontend_bucket
+}
+
 # Every name this stack gives a resource, so staging can be checked for never
 # reusing one of production's.
 output "resource_names" {

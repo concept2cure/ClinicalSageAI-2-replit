@@ -5,14 +5,8 @@ variable "region" {
 
 variable "state_bucket_name" {
   type        = string
-  description = "S3 bucket for Terraform remote state"
-  default     = "c2c-terraform-state"
-}
-
-variable "lock_table_name" {
-  type        = string
-  description = "DynamoDB table for Terraform state locking"
-  default     = "c2c-terraform-lock"
+  description = "S3 bucket for Terraform remote state. Leave unset: the bucket is named for the account, c2c-tfstate-<account id>-<region>."
+  default     = null
 }
 
 variable "tags" {
