@@ -233,9 +233,14 @@ export function isHomeMarket(submissionRegion: unknown, primaryAgency: unknown):
 }
 
 /**
- * Resolve the submission's same-tenant program before reading recorded facts.
- * A submission for a market other than its project's home market carries the
- * number recorded on the submission, never the project's (P-44); the applicant
+ * Resolve the submission's same-tenant program before reading recorded facts,
+ * and the number the package's market carries (P-44). The market is the
+ * package's region (`options.region`, the sequence's), else the submission's
+ * own: the home market (the project's primary agency's region) reads the
+ * project's number; the submission's own market reads the number recorded on
+ * the submission; any other region has none recorded here, and is refused by
+ * name. A sequence of another region under a submission therefore never
+ * borrows its submission's number (security review, 2026-10-22). The applicant
  * and its contact are the project's either way. `application_number` is read
  * through to_jsonb, so a database the 20261022b column has not reached reads
  * every submission as before.
@@ -244,6 +249,7 @@ export async function readSubmissionPackageIdentity(
   q: PackageIdentityQueryable,
   organizationId: number,
   submissionId: number,
+  options: { region?: string | null } = {},
 ): Promise<RecordedPackageIdentity> {
   const row = (await q.query(
     `SELECT program_id, primary_region, to_jsonb(s)->>'application_number' AS market_number
@@ -252,11 +258,14 @@ export async function readSubmissionPackageIdentity(
   )).rows[0] as { program_id?: unknown; primary_region?: unknown; market_number?: unknown } | undefined;
   const programId = typeof row?.program_id === 'string' && row.program_id ? row.program_id : null;
   const identity = await readRecordedPackageIdentity(q, organizationId, programId);
-  if (!programId || isHomeMarket(row?.primary_region, identity.homeAgency)) return identity;
+  const packageRegion = options.region ?? row?.primary_region;
+  if (!programId || isHomeMarket(packageRegion, identity.homeAgency)) return identity;
+  const market = canonicalRegionOf(String(packageRegion)) as string;
+  const own = canonicalRegionOf(String(row?.primary_region ?? '')) === market;
   return {
     ...identity,
-    applicationNumber: usableIdentifier('applicationNumber', row?.market_number),
-    market: { region: canonicalRegionOf(String(row?.primary_region)) as string },
+    applicationNumber: own ? usableIdentifier('applicationNumber', row?.market_number) : null,
+    market: { region: market },
   };
 }
 

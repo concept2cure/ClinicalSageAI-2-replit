@@ -547,7 +547,7 @@ export interface AssembleSubmissionResult {
  * "UNASSIGNED (organization N)".
  */
 async function exportIdentity(
-  submission: { id: number; programId: string | null },
+  submission: { id: number; programId: string | null; region: string },
   organizationId: number,
   supplied: string | undefined,
   fda: boolean,
@@ -562,7 +562,7 @@ async function exportIdentity(
   }
   // The submission's own market's number (P-44): an added market's package never
   // carries the project's home-market number.
-  const identity = await readSubmissionPackageIdentity(queryableFromDrizzle(db), organizationId, submission.id);
+  const identity = await readSubmissionPackageIdentity(queryableFromDrizzle(db), organizationId, submission.id, { region: submission.region });
   const refusal = packageIdentityRefusal(identity, 'Nothing was built.', { fda });
   if (refusal) throw refusal;
   const recorded = identity.applicationNumber as string;
@@ -654,7 +654,7 @@ export async function assembleSubmissionEctd(
   // silently replace its DUNS or contact. Other regions retain their own ID
   // contract and never receive the sponsor's DUNS as an EMA/PMDA identifier.
   const fda = toPackagerRegion(sequence.region) === 'fda';
-  const { identity, sponsorId } = await exportIdentity(submission, organizationId, params.applicationNumber, fda, params.applicantId);
+  const { identity, sponsorId } = await exportIdentity({ ...submission, region: sequence.region }, organizationId, params.applicationNumber, fda, params.applicantId);
   const assembled = await assembleSequence({
     sequenceId: sequence.id,
     organizationId,

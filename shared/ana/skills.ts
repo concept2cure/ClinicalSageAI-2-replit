@@ -124,12 +124,31 @@ export const SKILL_LIMITS = {
   toolsMax: 24,
 } as const;
 
-/** Most skills AnA loads into one turn, and their combined size. */
+/**
+ * Most skills AnA loads into one turn, and their combined size.
+ *
+ * Skills a person chose (picked in the conversation, or deployed to the
+ * project) have their own allowance, `maxChosen`, so a choice never crowds out
+ * what the question calls for and the question never crowds out a choice.
+ * `maxSkills` is for the skills AnA selects herself; `maxChars` holds both.
+ */
 export const SKILL_TURN_BUDGET = {
   maxSkills: 3,
   maxContextOnly: 1,
-  maxChars: 24000,
+  maxChosen: 3,
+  maxChars: 32000,
 } as const;
+
+/** How a person can put a skill into AnA's turns without a trigger phrase. */
+export const SKILL_CHOICES = ['picked', 'deployed'] as const;
+export type SkillChoice = (typeof SKILL_CHOICES)[number];
+
+/** Skills a project can have always loaded; more would leave no room for the question. */
+export const PROJECT_ALWAYS_MAX = 3;
+
+/** A project's setting for one skill: always loaded there, or never loaded there. */
+export const PROJECT_SKILL_STATES = ['always', 'off'] as const;
+export type ProjectSkillState = (typeof PROJECT_SKILL_STATES)[number];
 
 // ─── Keys ───────────────────────────────────────────────────────────────────
 
@@ -257,6 +276,55 @@ export interface OrgSkillDto extends SkillFacets {
   status: OrgSkillStatus;
   version: number;
   updatedAt: string | null;
+  /** The project it was written for; null when it is the whole organization's. */
+  projectId: number | null;
+}
+
+/**
+ * One skill a person can choose for a conversation, or deploy to a project:
+ * what is on for the organization (and, in a project, not turned off there).
+ */
+export interface AvailableSkillDto {
+  key: string;
+  name: string;
+  description: string;
+  source: 'library' | 'organization';
+  disciplines: SkillDiscipline[];
+  useCases: SkillUseCase[];
+  segments: ClientSegmentId[];
+  /** Written for the project being asked about. */
+  projectOnly: boolean;
+  /** The project's setting for it; null outside a project or when the project has none. */
+  projectState: ProjectSkillState | null;
+}
+
+export interface ProjectSkillSettingDto {
+  key: string;
+  /** The skill's name; null when the key names no skill the organization still has. */
+  name: string | null;
+  state: ProjectSkillState;
+  reason: string;
+  updatedAt: string | null;
+}
+
+export interface ProjectSkillsDto {
+  projectId: number;
+  settings: ProjectSkillSettingDto[];
+  /** Skills written for this project. */
+  skills: OrgSkillDto[];
+  alwaysMax: number;
+  /** Whether the person asking may change the project's skills. */
+  canChange: boolean;
+}
+
+export interface SkillHistoryEntryDto {
+  occurredAt: string;
+  action: string;
+  actorName: string | null;
+  reason: string | null;
+  version: number | null;
+  instructions: string | null;
+  status: string | null;
 }
 
 export interface SkillSelectionEntryDto {
@@ -267,6 +335,8 @@ export interface SkillSelectionEntryDto {
   contentHash: string;
   score: number;
   reasons: string[];
+  /** Picked in the conversation or deployed to the project; null when AnA selected it. */
+  chosen: SkillChoice | null;
   /** Organization skills loaded with this one (addenda) or in its place. */
   attached: Array<{ key: string; name: string; mode: SkillExtensionMode; version: number }>;
 }

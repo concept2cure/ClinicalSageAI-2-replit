@@ -660,7 +660,7 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
           {/* AnA's skills for this organization: its own reads and doors
               (/api/ana-skills), so it renders whether or not the admin
               payload's other facets could be read. */}
-          {tab === 'skills' && <AdminSkills />}
+          {tab === 'skills' && <AdminSkills onAsk={onAsk} />}
 
           {tab === 'settings' && (
             <section className="section">

@@ -481,8 +481,9 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
               <div className="txw-row-l">
                 Client type
                 <small>
-                  Sets the default rail focus and AnA framing. Governed — saved to your
-                  organization's industry profile.
+                  Sets the default rail focus and AnA framing, and the skills AnA prefers
+                  when a question does not name the product (Admin and access → Skills).
+                  Governed — saved to your organization's industry profile.
                 </small>
               </div>
               <div className="txw-row-r">

@@ -65,6 +65,8 @@ export const orgSkillBody = z
       .refine(v => v === null || Boolean(getLibrarySkill(v)), 'names no skill in the platform library'),
     extensionMode: z.enum(SKILL_EXTENSION_MODES).nullable().default(null),
     status: z.enum(['draft', 'active', 'archived']).default('draft'),
+    // A skill written for one project. Set at creation; a change keeps the stored one.
+    projectId: z.number().int().positive().nullable().default(null),
     reason: z.unknown(),
   })
   .superRefine((v, ctx) => {
@@ -75,13 +77,14 @@ export const orgSkillBody = z
         message: 'A skill that extends a library skill says whether it adds to it or replaces it; one that stands alone says neither.',
       });
     }
-    const selectable = v.triggers.length > 0 || v.surfaces.length > 0 || v.documentTypes.length > 0;
-    const loadsWithBase = v.extensionMode === 'addendum';
-    if (v.status === 'active' && !selectable && !loadsWithBase && v.extensionMode !== 'replace') {
+    // An active skill with no trigger phrase, screen or document type is one
+    // AnA never selects herself: it loads when someone picks it in a
+    // conversation or deploys it to a project (2026-10-22). Allowed.
+    if (v.projectId !== null && v.extensionMode === 'replace') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ['triggers'],
-        message: 'An active skill needs at least one trigger phrase, screen or document type, or AnA can never select it.',
+        path: ['extensionMode'],
+        message: 'A project can add to a library skill; replacing one is the organization’s decision, made in Admin and access → Skills.',
       });
     }
     if (v.extendsSkillKey === null && (v.disciplines.length === 0 || v.useCases.length === 0)) {
@@ -114,6 +117,7 @@ export function fieldsOf(body: OrgSkillBody): OrgSkillFields {
     extendsSkillKey: body.extendsSkillKey,
     extensionMode: body.extensionMode,
     status: body.status,
+    projectId: body.projectId,
   };
 }
 

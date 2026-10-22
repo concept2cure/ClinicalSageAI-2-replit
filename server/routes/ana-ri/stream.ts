@@ -162,6 +162,7 @@ import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/tu
 import {
   NO_TURN_SKILLS,
   documentTypeIdOf,
+  pickedSkillKeysOf,
   renderSkillsBlock,
   resolveTurnSkills,
 } from '../../services/ana/skills/turn-skills.js';
@@ -1713,6 +1714,8 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
                 orchestration.detectedSubmissionType ||
                 null,
               projectId: streamProjectIdNumber,
+              // Skills the person picked in the composer for this conversation.
+              invokedKeys: pickedSkillKeysOf(req.body.skills),
             })
           : Promise.resolve(NO_TURN_SKILLS);
 

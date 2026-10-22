@@ -1,0 +1,54 @@
+/* AnA skills in use: the composer's Skills menu (ComposerSkills.tsx), the
+   skills each answer used (ConversationThread.tsx), the skill studio
+   (SkillStudio.tsx) and a project's Skills card (ProjectSkills.tsx).
+   Design: docs/design/ANA_SKILLS_2026-10-22.md §9. */
+
+/* ── Composer menu ─────────────────────────────────────────────────────── */
+.c2c-v2 .ct-skills-menu{display:flex;flex-direction:column;gap:8px;width:min(360px,90vw);max-height:min(460px,70vh);padding:10px;right:auto;left:0;}
+.c2c-v2 .ct-skills-help{font-size:12px;line-height:1.45;color:var(--text-300);}
+.c2c-v2 .ct-skills-search{width:100%;font-size:12.5px;}
+.c2c-v2 .ct-skills-list{display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0;}
+.c2c-v2 .ct-skills-opt{display:flex;align-items:flex-start;gap:8px;padding:6px 6px;border-radius:var(--radius-md);cursor:pointer;}
+.c2c-v2 .ct-skills-opt:hover{background:var(--bg-100);}
+.c2c-v2 .ct-skills-opt[data-on]{background:var(--bg-100);}
+.c2c-v2 .ct-skills-opt input{margin-top:2px;}
+.c2c-v2 .ct-skills-opt-t{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.c2c-v2 .ct-skills-name{font-size:12.5px;color:var(--text-100);}
+.c2c-v2 .ct-skills-meta{font-size:11px;color:var(--text-400);}
+.c2c-v2 .ct-skills-note{font-size:12px;color:var(--text-300);}
+.c2c-v2 .ct-skills-clear{align-self:flex-start;border:1px solid var(--border);background:transparent;color:var(--text-200);border-radius:var(--radius-md);padding:3px 10px;font-size:12px;cursor:pointer;}
+.c2c-v2 .ct-skills-clear:hover{background:var(--bg-100);}
+
+/* ── The skills an answer used ─────────────────────────────────────────── */
+.c2c-v2 .ct-skill-chip{display:inline-flex;align-items:center;gap:4px;}
+.c2c-v2 .ct-skill-how{font-size:10.5px;color:var(--text-400);}
+
+/* ── Skill studio (design, test, tune) ─────────────────────────────────── */
+.c2c-v2 .de.skill-studio{width:min(1040px,96vw);}
+.c2c-v2 .skill-studio-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start;}
+@media (max-width:860px){.c2c-v2 .skill-studio-cols{grid-template-columns:minmax(0,1fr);}}
+.c2c-v2 .skill-studio-pane{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.c2c-v2 .skill-studio-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.c2c-v2 .skill-studio-method{font-family:var(--font-mono);font-size:12px;line-height:1.5;min-height:220px;resize:vertical;}
+.c2c-v2 .skill-studio-side{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);}
+.c2c-v2 .skill-studio-side h4{margin:0;font-size:12.5px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .skill-studio-hit{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:var(--radius-md);background:var(--bg-100);}
+.c2c-v2 .skill-studio-hit[data-draft]{outline:1px solid var(--accent-200);}
+.c2c-v2 .skill-studio-hit-n{font-size:12.5px;color:var(--text-100);}
+.c2c-v2 .skill-studio-hit-w{font-size:11.5px;color:var(--text-300);}
+.c2c-v2 .skill-studio-verdict{font-size:12px;color:var(--text-200);}
+.c2c-v2 .skill-studio-hist{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;max-height:260px;overflow-y:auto;}
+.c2c-v2 .skill-studio-hist li{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--text-200);border-left:2px solid var(--border);padding-left:8px;}
+.c2c-v2 .skill-studio-hist-m{font-size:11px;color:var(--text-400);}
+
+/* ── A project's Skills card ───────────────────────────────────────────── */
+.c2c-v2 .pj-skills{display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .pj-skills-sub{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);margin-top:4px;}
+.c2c-v2 .pj-skills-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--border);}
+.c2c-v2 .pj-skills-item:first-of-type{border-top:0;}
+.c2c-v2 .pj-skills-item-t{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.c2c-v2 .pj-skills-name{font-size:12.5px;color:var(--text-100);}
+.c2c-v2 .pj-skills-why{font-size:11px;color:var(--text-400);}
+.c2c-v2 .pj-skills-acts{display:flex;flex-wrap:wrap;gap:6px;}
+.c2c-v2 .pj-skills-x{border:1px solid var(--border);background:transparent;color:var(--text-300);border-radius:var(--radius-md);padding:1px 8px;font-size:11px;cursor:pointer;white-space:nowrap;}
+.c2c-v2 .pj-skills-x:hover{background:var(--bg-100);}

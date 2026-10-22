@@ -15995,6 +15995,8 @@ export const accountSkillBundles = pgTable(
     surfaces: jsonb('surfaces').$type<string[]>().default([]).notNull(),
     documentTypes: jsonb('document_types').$type<string[]>().default([]).notNull(),
     toolNames: jsonb('tool_names').$type<string[]>().default([]).notNull(),
+    // A skill written for one project: selected only on that project's turns (20261022c).
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
 
     // ── Governance ──────────────────────────────────────────────
     version: integer('version').default(1).notNull(),
@@ -16045,6 +16047,35 @@ export const organizationSkillSettings = pgTable(
 );
 
 export type OrganizationSkillSetting = InferSelectModel<typeof organizationSkillSettings>;
+
+/**
+ * A project's own setting for one AnA skill (20261022c): 'always' loads it on
+ * every AnA turn in the project, 'off' never loads it there. Written with a
+ * stated reason and a chained audit row (server/services/ana/skills/project-skills.ts).
+ */
+export const projectSkillSettings = pgTable(
+  'project_skill_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    skillKey: text('skill_key').notNull(),
+    state: text('state').notNull(), // 'always' | 'off'
+    reason: text('reason').notNull(),
+    updatedById: integer('updated_by_id').references(() => users.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    projectKey: unique('project_skill_settings_project_key').on(table.projectId, table.skillKey),
+    orgProjectIdx: index('project_skill_settings_org_project_idx').on(table.organizationId, table.projectId),
+  })
+);
+
+export type ProjectSkillSetting = InferSelectModel<typeof projectSkillSettings>;
 export const insertAccountSkillBundleSchema = createInsertSchemaOmit(accountSkillBundles, {
   id: true,
   createdAt: true,

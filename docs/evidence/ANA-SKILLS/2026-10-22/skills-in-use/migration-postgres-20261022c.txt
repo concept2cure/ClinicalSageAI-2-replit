@@ -1,0 +1,85 @@
+--- base: projects, the parent 20261022c references (organizations, users and account_skill_bundles exist from the 20261022 proof)
+CREATE TABLE
+ id 
+----
+  1
+  2
+(2 rows)
+
+INSERT 0 2
+--- apply 1
+CREATE TABLE
+CREATE INDEX
+ALTER TABLE
+CREATE INDEX
+--- apply 2 (Rule 1: every deploy re-runs it)
+psql:migrations/20261022c_ana_project_skills.sql:42: NOTICE:  relation "project_skill_settings" already exists, skipping
+CREATE TABLE
+psql:migrations/20261022c_ana_project_skills.sql:45: NOTICE:  relation "project_skill_settings_org_project_idx" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022c_ana_project_skills.sql:48: NOTICE:  column "project_id" of relation "account_skill_bundles" already exists, skipping
+ALTER TABLE
+psql:migrations/20261022c_ana_project_skills.sql:52: NOTICE:  relation "acct_bundle_project_idx" already exists, skipping
+CREATE INDEX
+--- the table and the new column
+                                         Table "public.project_skill_settings"
+     Column      |           Type           | Collation | Nullable |                      Default                       
+-----------------+--------------------------+-----------+----------+----------------------------------------------------
+ id              | integer                  |           | not null | nextval('project_skill_settings_id_seq'::regclass)
+ organization_id | integer                  |           | not null | 
+ project_id      | integer                  |           | not null | 
+ skill_key       | text                     |           | not null | 
+ state           | text                     |           | not null | 
+ reason          | text                     |           | not null | 
+ updated_by_id   | integer                  |           |          | 
+ updated_at      | timestamp with time zone |           | not null | now()
+Indexes:
+    "project_skill_settings_pkey" PRIMARY KEY, btree (id)
+    "project_skill_settings_org_project_idx" btree (organization_id, project_id)
+    "project_skill_settings_project_key" UNIQUE CONSTRAINT, btree (project_id, skill_key)
+Check constraints:
+    "project_skill_settings_reason_check" CHECK (length(btrim(reason)) >= 8)
+    "project_skill_settings_state_check" CHECK (state = ANY (ARRAY['always'::text, 'off'::text]))
+Foreign-key constraints:
+    "project_skill_settings_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    "project_skill_settings_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+    "project_skill_settings_updated_by_id_fkey" FOREIGN KEY (updated_by_id) REFERENCES users(id)
+
+ column_name | data_type | is_nullable 
+-------------+-----------+-------------
+ project_id  | integer   | YES
+(1 row)
+
+--- a deployment with a reason: accepted
+INSERT 0 1
+--- a second row for the same project and skill: refused (one setting per skill per project)
+ERROR:  duplicate key value violates unique constraint "project_skill_settings_project_key"
+DETAIL:  Key (project_id, skill_key)=(1, labeling) already exists.
+--- a state that is neither always nor off: refused
+ERROR:  new row for relation "project_skill_settings" violates check constraint "project_skill_settings_state_check"
+DETAIL:  Failing row contains (3, 1, 1, cmc, sometimes, A state the selector does not know., null, 2026-10-22 19:48:00.679981+00).
+--- a reason shorter than 8 characters: refused
+ERROR:  new row for relation "project_skill_settings" violates check constraint "project_skill_settings_reason_check"
+DETAIL:  Failing row contains (4, 1, 1, cmc, off,    ok   , null, 2026-10-22 19:48:00.702973+00).
+--- no organization: refused
+ERROR:  null value in column "organization_id" of relation "project_skill_settings" violates not-null constraint
+DETAIL:  Failing row contains (5, null, 1, cmc, off, No organization named here., null, 2026-10-22 19:48:00.727349+00).
+--- a skill written for project 2
+ id | project_id 
+----+------------
+  9 |          2
+(1 row)
+
+INSERT 0 1
+--- deleting project 1 removes its settings; deleting project 2 removes its skill (ON DELETE CASCADE)
+DELETE 2
+ settings_left 
+---------------
+             0
+(1 row)
+
+ project_skills_left 
+---------------------
+                   0
+(1 row)
+

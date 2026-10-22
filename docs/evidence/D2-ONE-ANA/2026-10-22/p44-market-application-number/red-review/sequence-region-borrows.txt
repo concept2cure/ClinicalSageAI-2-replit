@@ -1,0 +1,7 @@
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the home market reads the project's number 15ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > another market reads the number recorded on its submission, never the project's 5ms
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the market is the package's region: a sequence of another region never borrows its submission's number 6ms
+   → expected '214321' to be null
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the export of an added market with no number recorded is refused, and nothing is built 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

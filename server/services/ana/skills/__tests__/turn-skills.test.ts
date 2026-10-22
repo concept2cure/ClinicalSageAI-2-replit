@@ -50,6 +50,7 @@ function org(id: number, over: Partial<OrgSkillRecord> = {}): OrgSkillRecord {
     status: 'active',
     version: 2,
     updatedAt: null,
+    projectId: null,
     ...over,
   };
 }

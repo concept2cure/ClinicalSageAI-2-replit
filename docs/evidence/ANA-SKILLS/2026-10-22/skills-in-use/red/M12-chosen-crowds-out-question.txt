@@ -1,0 +1,92 @@
+Mutation: server/services/ana/skills/selector.ts
+- if (!e.chosen && held.skills >= limits.maxSkills)
++ if (held.skills + held.chosen >= limits.maxSkills)
+Test: server/services/ana/skills/__tests__/skills-in-use.test.ts
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/skills/__tests__/skills-in-use.test.ts
+{
+  "timestamp": "2026-10-22T19:47:25.345Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T19:47:25.346Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/services/ana/skills/__tests__/skills-in-use.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > loads when picked, with no phrase calling for it and the program saying it is for another segment 2ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > loads when deployed to the project, on a turn about something else 1ms
+ × server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > has its own allowance: three chosen skills never crowd out what the question asks for 8ms
+   → expected [] to deeply equal [ 'asked.x', 'asked.y', 'asked.z' ]
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > puts a pick ahead of a deployment when the allowance is short 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > picks a library skill the organization replaced by either key 0ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a project’s skills > leaves out a skill turned off there, under its library key or its replacement’s, and names what it deploys 0ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a project’s skills > keeps the organization’s skills and this project’s, never another project’s 0ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > what the request may pick > keeps only skill-shaped keys, once each, up to the allowance 0ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > the organization’s client type > names the segment of a product-owning organization, and none for a service organization 0ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a turn in a project > loads a deployed skill on a turn about something else, and never a skill turned off there 39ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a turn in a project > loads a skill written for the project only in that project 33ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a turn in a project > reads the organization’s client type as the segment when the turn names no submission type 8ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  19:47:23
+   Duration  5.72s (transform 4.13s, setup 57ms, import 5.36s, tests 98ms, environment 0ms)
+
+stderr | server/services/ana/skills/__tests__/skills-in-use.test.ts
+{
+  "timestamp": "2026-10-22T19:47:25.346Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/skills/__tests__/skills-in-use.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/skills/__tests__/skills-in-use.test.ts
+{
+  "timestamp": "2026-10-22T19:47:25.455Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > has its own allowance: three chosen skills never crowd out what the question asks for
+AssertionError: expected [] to deeply equal [ 'asked.x', 'asked.y', 'asked.z' ]
+
+- Expected
++ Received
+
+- [
+-   "asked.x",
+-   "asked.y",
+-   "asked.z",
+- ]
++ []
+
+ ❯ server/services/ana/skills/__tests__/skills-in-use.test.ts:100:63
+     98|     });
+     99|     const loaded = sel.selected.map(x => x.skill.key);
+    100|     expect(loaded.filter(k => k.startsWith('asked.')).sort()).toEqual(…
+       |                                                               ^
+    101|     expect(loaded.filter(k => k.startsWith('chosen.')).length).toBe(3);
+    102|     expect(sel.passedOver.find(p => p.skill.key.startsWith('chosen.'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

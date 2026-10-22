@@ -84,6 +84,21 @@ describe('skills on a conversation turn', () => {
     expect(used).toMatchObject({ skills: [], skillsStatus: 'none' });
   });
 
+  it('loads a skill the person picked in the composer, with no phrase calling for it, and reports it as chosen', async () => {
+    const events = await turn(app, { message: 'Thanks, that is all for today.', skills: ['labeling'] });
+    expect(systemText()).toContain('## Skills for this turn');
+    expect(systemText()).toContain('Library skill labeling, version 1');
+    const used = events.find(e => e.type === 'context_used')!;
+    expect(used.skills.map((s: { key: string }) => s.key)).toEqual(['labeling']);
+    expect(used.skills[0]).toMatchObject({ chosen: 'picked', reasons: ['chosen in this conversation'] });
+  });
+
+  it('ignores a picked value that is not a skill key', async () => {
+    const events = await turn(app, { message: 'Thanks, that is all for today.', skills: ["labeling'; DROP TABLE x;--", 42] });
+    expect(systemText()).not.toContain('## Skills for this turn');
+    expect(events.find(e => e.type === 'context_used')).toMatchObject({ skills: [], skillsStatus: 'none' });
+  });
+
   it('loads nothing when the organization\u2019s skill state cannot be read, and warns', async () => {
     pool.query = async (sql: string, params?: unknown[]) => {
       if (/organization_skill_settings|account_skill_bundles/.test(sql)) throw new Error('relation does not exist');

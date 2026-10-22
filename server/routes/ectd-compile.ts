@@ -58,7 +58,7 @@ import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import { loadFiledStateBySubmission } from '../services/ectd/prior-sequence-loader';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
-import { readRecordedPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
+import { readSubmissionPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -1120,12 +1120,17 @@ async function compileFromSpine(
   let leftOut: string[] = [];
   let lifecycle: CompiledLifecycle | null = null;
   let auditTrail: AuditRowOutcome | undefined;
+  /** The number the package carries (P-44), stored with the compilation. */
+  let packagedNumber: string | null = null;
 
   try {
     // The application and the applicant from the record, or nothing is
     // assembled: the refusal becomes this compile's ASSEMBLY_REFUSED finding
     // and its `failed` status below (package-identity.ts, QA 2026-10-08 j6).
-    const identity = await readRecordedPackageIdentity(pool, orgId, anchor.programId);
+    // The sequence's own market's number (P-44): an added market, or a sequence
+    // of another region, never compiles under the project's home number.
+    const identity = await readSubmissionPackageIdentity(pool, orgId, spine.submissionId, { region: seq.region });
+    packagedNumber = identity.applicationNumber;
     const fda = toPackagerRegion(seq.region) === 'fda';
     const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
     if (missingIdentity) throw missingIdentity;
@@ -1317,7 +1322,7 @@ async function compileFromSpine(
         // The SAME identifier the backbone carries, so the compilation history
         // and the next sequence's manifest lookup agree with what was filed;
         // NULL when none is recorded (the assembly was then refused).
-        recordedApplicationNumber(anchor),
+        packagedNumber,
         seq.sequenceNumber,
         leafManifestJson,
         // Stable per-submission key: lets the NEXT sequence locate this manifest
