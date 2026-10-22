@@ -111,6 +111,9 @@ describe("a market's own part of the filing in the editor (F22b)", () => {
     expect(post[2]).toEqual({ title: 'Vorelinib — EU MAA', module: 'M1', client_program_id: PROJECT_ID, c2c_document_id: EMA });
     // Opened: the outline is now the EU document's.
     expect(await rowLabel('Summary of product characteristics')).toBeTruthy();
+    // Focus is on the opened document's name, not lost with the button
+    // (accessibility review, 2026-10-15).
+    await waitFor(() => expect(document.activeElement?.classList.contains('ed-tree-t')).toBe(true));
   });
 
   it('in the EU copy: its Module 1 and 3.2.R, the gaps named, a Module 1 node starts here', async () => {
