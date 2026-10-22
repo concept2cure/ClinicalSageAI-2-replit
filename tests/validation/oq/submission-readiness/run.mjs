@@ -289,7 +289,7 @@ await step(
     action: 'Open /concept2cure/dispatch-readiness with the program selected',
     expected: 'The surface shows the open program\'s sequence (number 0000) and its gate verdict',
     dependsOn: ['OQ-SRDY-00'],
-    note: 'VSR-001 F-8 (2026-09-20): DispatchReadiness.tsx took the FIRST submission in the organisation, not the open program\'s. Since 2026-09-21 the surface resolves the open program (shell id → GET /api/c2c/projects/:id), picks its submission by the platform\'s program↔submission identity convention, and gates that submission\'s latest sequence; OQ-SRDY-00 builds the sequence on the program\'s own submission so this step exercises exactly that. The surface prints the sequence NUMBER (0000) beside the row id.',
+    note: 'VSR-001 F-8 (2026-09-20): DispatchReadiness.tsx took the FIRST submission in the organisation, not the open program\'s. Since 2026-10-22 (F18) the surface lists the open program\'s markets from its scoped submission list (GET /api/submissions?programId=), each with its latest sequence and that sequence\'s gate; OQ-SRDY-00 builds the sequence on the program\'s own submission so this step exercises exactly that. Each market row prints the sequence NUMBER (0000).',
   },
   async (ctx) => {
     await ctx.newPage({ id: state.programId, name: state.programName });
