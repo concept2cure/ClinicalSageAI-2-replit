@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T05:43:48.827Z",
+  "generatedAt": "2026-10-22T06:09:45.239Z",
   "git": {
-    "sha": "f3d998d0430ee9845768f8b73f92222c4e242742",
+    "sha": "bc2e3a4a37d37623ea6405839da10f32ecb3ac39",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2385,7 +2385,7 @@
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 121186
+        "bytes": 121694
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
