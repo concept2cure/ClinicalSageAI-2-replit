@@ -66,7 +66,6 @@ vi.mock('../../services/auditService.js', () => ({
 }));
 
 import orchestratorRouter from '../submission-orchestrator';
-import { CsrScopeError } from '../../services/csr/project-scope';
 
 const ORG = 42;
 const PROGRAM = '11111111-2222-3333-4444-555555555555';

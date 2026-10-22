@@ -20,7 +20,7 @@ import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
-import { concept2cureArtifacts, projects } from '../../../shared/schema';
+import { concept2cureArtifacts } from '../../../shared/schema';
 
 const H = vi.hoisted(() => ({
   pg: null as any,
