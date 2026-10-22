@@ -107,7 +107,7 @@ export const LAUNCH_EXCLUDED_API: Readonly<Record<string, string>> = {
   '/api/regulatory/tasks/dashboard': 'DEAD: a legacy cross-module progress dashboard; nothing calls it, and it is not Submission Readiness',
   '/api/regulatory/tasks/sync': "DEAD: a legacy cross-module task importer, its device branch reading the device app's tables",
   '/api/concept2cure/projects/all': "DEAD: the deleted legacy Home dashboard's counter (consumer removed in 2895218b8)",
-  '/api/concept2cure/artifacts/export-pptx': 'DEAD: chat deck generation no client has ever called; its image models are not approved-models entries',
+  '/api/concept2cure/artifacts/export-pptx': 'DEAD: a deterministic PPTX export of supplied content that no client has ever called (its model path refused since f8af76fb1)',
   '/api/chat/actions': "DEAD: an 'Action Cards' runner that returns canned text and writes artifact rows claiming queued work; no client has ever called it",
   '/api/chat/health': 'DEAD: a provider-key health probe that counts chat_threads with no organisation filter; nothing calls it',
   '/api/chat/send-message': 'DEAD: a non-streaming AnA turn no client has ever called; AnA answers through /api/ana-ri',
@@ -125,7 +125,13 @@ export function launchScopeApiVerdict(
   neverGated: readonly string[],
   launchSurfaceIds: ReadonlySet<string> = LAUNCH_SURFACE_IDS,
 ): LaunchScopeApiVerdict {
-  const path = pathname.split('?')[0];
+  /* Lower-cased, because Express routes ignore letter case: a route mounted at
+     /api/chat serves /api/Chat/… and /API/chat/… too. Every key the verdict
+     matches (the registry's prefixes, NEVER_GATED and the lists here) is lower
+     case, and launch-reproof-narrowing.test.ts holds them to it. Matching the
+     case the caller sent let a changed case skip the exclusion list and any
+     longer claim under a launch root (2026-10-22). */
+  const path = pathname.split('?')[0].toLowerCase();
   if (neverGated.some((n) => onPrefix(path, n))) return 'never-gated';
   if (Object.keys(LAUNCH_INFRASTRUCTURE_API).some((p) => onPrefix(path, p))) return 'infrastructure';
   if (isPublicApiPath(path)) return 'infrastructure';
