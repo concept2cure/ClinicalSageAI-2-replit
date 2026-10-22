@@ -224,6 +224,11 @@ describe('assembly returns the exact supplied identity capture', () => {
 describe('non-FDA identifiers retain their regional meaning', () => {
   it('does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier', async () => {
     await harness.pglite.query("UPDATE ectd_sequences SET region = 'ema' WHERE id = 11");
+    // P-44: an EU package carries the EU market's own number, recorded on its
+    // submission, never the project's US IND number; so the EU submission
+    // records one for this case.
+    await harness.pglite.query('ALTER TABLE submissions ADD COLUMN IF NOT EXISTS application_number text');
+    await harness.pglite.query("UPDATE submissions SET primary_region = 'eu', application_number = 'EMEA-H-C-000512' WHERE id = 1");
     try {
       for (const applicantId of [undefined, 'EMA-ORG-42']) {
         const result = await assembleSubmissionEctd({ submissionId: 1, organizationId: ORG, userId: USER,
@@ -234,7 +239,12 @@ describe('non-FDA identifiers retain their regional meaning', () => {
         expect(xml).not.toContain('<id>123456789</id>');
         expect(xml).not.toContain('UNASSIGNED-ORG-');
         expect(xml).not.toContain('<applicant-contacts>');
+        expect(xml).toContain('EMEA-H-C-000512');
+        expect(xml).not.toMatch(/>000512</);
       }
-    } finally { await harness.pglite.query("UPDATE ectd_sequences SET region = 'fda' WHERE id = 11"); }
+    } finally {
+      await harness.pglite.query("UPDATE ectd_sequences SET region = 'fda' WHERE id = 11");
+      await harness.pglite.query("UPDATE submissions SET primary_region = 'fda', application_number = NULL WHERE id = 1");
+    }
   });
 });

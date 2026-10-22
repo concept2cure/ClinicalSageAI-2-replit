@@ -154,9 +154,14 @@ const ACTIVITY_EVENT_LABEL: Record<string, string> = {
   home_submission_added: 'Submission added',
 };
 
+/** Audited actions the feed names in words (P-44, 2026-10-22); any other reads as recorded. */
+const ACTIVITY_ACTION_LABEL: Record<string, string> = {
+  SUBMISSION_APPLICATION_NUMBER_RECORDED: 'Market application number recorded',
+};
+
 /** What the feed says a row was: the governed event by name, else the action as recorded. */
 export function activityLabel(a: Pick<ActivityRow, 'action' | 'resource_type' | 'event' | 'event_agency'>): string {
-  const named = a.event ? ACTIVITY_EVENT_LABEL[a.event] : undefined;
+  const named = (a.event ? ACTIVITY_EVENT_LABEL[a.event] : undefined) ?? (a.action ? ACTIVITY_ACTION_LABEL[a.action] : undefined);
   if (named) return a.event_agency ? `${named} · ${a.event_agency.toUpperCase()}` : named;
   return `${String(a.action ?? '').replace(/_/g, ' ')}${a.resource_type ? ' · ' + a.resource_type : ''}`;
 }

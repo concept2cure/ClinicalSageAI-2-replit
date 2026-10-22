@@ -8,7 +8,8 @@ vi.mock('../../db.js', () => ({ pool: { query: m.query }, getPool: () => ({ quer
 vi.mock('../../services/submission-package-orchestrator.js', () => ({ runOrchestrator: m.start, loadSubmissionFkBySubmissionIdText: vi.fn(), getRun: vi.fn(), getRunAudit: vi.fn(), regenerateAffected: vi.fn() }));
 vi.mock('../../services/submission-orchestrator-continuation.js', () => ({ continueOrchestratorRun: vi.fn(), requireOrchestratorProgramAccess: m.access, OrchestratorContinuationRefusal: class extends Error {} }));
 vi.mock('../../services/cmc/submission-spine.js', () => ({ resolveSubmissionSpine: vi.fn(async () => ({ submissionId: 91, match: 'program', applicationType: 'ind', sequence: { id: 4, sequenceNumber: '0002', region: 'FDA' } })), resolveSequenceSpine: vi.fn() }));
-vi.mock('../../services/ectd/package-identity.js', () => ({ readRecordedPackageIdentity: vi.fn(async () => ({ applicationNumber: 'IND-123' })), packageIdentityRefusal: vi.fn(() => null) }));
+// Read by submission since P-44 (the sequence's market); the same stand-in for both readers.
+vi.mock('../../services/ectd/package-identity.js', () => { const read = vi.fn(async () => ({ applicationNumber: 'IND-123' })); return { readRecordedPackageIdentity: read, readSubmissionPackageIdentity: read, packageIdentityRefusal: vi.fn(() => null) }; });
 vi.mock('../../services/cmc/load-approved-cmc-sources-for-project.js', () => ({ loadApprovedCmcSourcesForProject: m.cmc }));
 vi.mock('../../services/csr/load-csr-inputs-for-project.js', () => ({ loadCsrInputsForProject: m.csr }));
 vi.mock('../../services/auditService.js', () => ({ default: { logAction: vi.fn() } }));

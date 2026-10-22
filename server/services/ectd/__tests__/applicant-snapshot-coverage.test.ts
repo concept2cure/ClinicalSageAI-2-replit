@@ -35,7 +35,8 @@ describe('FDA signed manifest coverage includes recorded applicant facts', () =>
 
   it('covers identical leaves and the identical current recorded identity', async () => {
     expect(await signedManifestCoversSequence({ ...params, recordedPackageIdentity: snapshot })).toMatchObject({ covers: true, leafCount: 1 });
-    expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 42, 7);
+    // With the sequence's region, which names its market (P-44).
+    expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 42, 7, expect.objectContaining({ region: null }));
   });
 
   it.each(['applicationNumber', 'applicantName', 'applicantId', 'applicantSponsorId'] as const)('does not cover changed %s', async (field) => {

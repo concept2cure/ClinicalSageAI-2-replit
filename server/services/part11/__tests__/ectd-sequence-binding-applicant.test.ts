@@ -38,7 +38,8 @@ beforeEach(() => {
 describe('FDA sequence approval covers the recorded applicant', () => {
   it('captures the exact canonical identity read on the signing client', async () => {
     const result = await binding();
-    expect(state.read).toHaveBeenCalledWith(client, 7, 9);
+    // With the sequence's region, which names its market (P-44).
+    expect(state.read).toHaveBeenCalledWith(client, 7, 9, { region: expect.anything() });
     expect(result).toMatchObject({ recordedPackageIdentity: { version: 1, identity: state.identity } });
     expect(result.digest).toBe(sha256CanonicalJson({
       sequence, leaves: [leaf], recordedPackageIdentity: { version: 1, identity: state.identity },

@@ -88,7 +88,9 @@ export function mockSpineOn(poolQuery: Mock) {
       if (/FROM regulatory_programs/i.test(sql)) return { rows: [program] };
       // The program's own submission, anchored to it (submissions.program_id,
       // LX-22): resolveSubmissionSpine takes an anchored row as the program's.
-      if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind', anchored: true }] };
+      // program_id and primary_region: the package identity read takes the
+      // submission's project and market from this row (P-44).
+      if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind', anchored: true, program_id: program.id, primary_region: 'fda' }] };
       if (/FROM ectd_sequences/i.test(sql)) {
         return { rows: [{ id: 9, sequence_number: opts.sequenceNumber ?? '0000', region: 'fda' }] };
       }

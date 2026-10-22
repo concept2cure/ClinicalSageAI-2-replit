@@ -1,0 +1,6 @@
+ × server/routes/__tests__/submissions-market-number-route.test.ts > GET /:id/application-number is held to project access > answers the access refusal, and reads no number 24ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/submissions-market-number-route.test.ts > GET /:id/application-number is held to project access > reads the market's number once the read is admitted 7ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…}, …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)

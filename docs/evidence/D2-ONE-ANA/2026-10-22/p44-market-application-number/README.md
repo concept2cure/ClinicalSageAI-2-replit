@@ -76,3 +76,35 @@ Two read-only lenses reviewed the first commit: security and Part 11.
   - non-US signature coverage of the number (the identity lane's non-FDA recipe);
   - an unknown region reads as home;
   - the legacy no-spine draft backbone in `ectd-compile.ts:835`.
+
+
+## Completion of the review round (resumed after the stop)
+
+**Trunk red I caused.** I pushed the review round (`a23ad51fa`) on the focused suites alone, when told to stop. It turned 9 tests in 6 files red on trunk. Each was a stand-in that predated the submission reader:
+- the orchestrator mocks had no `readSubmissionPackageIdentity`;
+- the binding and coverage tests asserted the old three-argument call;
+- the compile-spine harness's submission row had no `program_id`.
+
+In one case the old expectation was the defect P-44 removes: an EU package carried the US IND number. That case now records the EU market's own number. All six are fixed here and pass at head.
+
+**Closed:**
+- **Freeze guard.** A number a frozen or dispatched sequence was built under is not changed (`red-review/freeze-guard-off.txt`: the test fails with the guard switched off).
+- **Access-scoped GET.** `red-review/get-without-access-scope.txt`: the route test fails with the access check removed.
+- **Audit and read.** The audit row names the project, and the read returns who recorded the number, when and why.
+- **Part 11 UI items** (`red-review/row-before-part11-fixes.txt`: 5 of 7 fail on the earlier row):
+  - an unchanged number is said to be no change;
+  - the form states what recording does, including that a signed release reads unsigned until it is signed again;
+  - the market's verdict is read again after a change;
+  - a refusal is said inside the form, which keeps what was typed;
+  - the reason's 8-character minimum is stated;
+  - someone who may not change the project is told who can;
+  - the row says who recorded the number, when and why.
+- **The project feed** names `SUBMISSION_APPLICATION_NUMBER_RECORDED` in words.
+
+**Still handed on:**
+- **To the identity lane:**
+  - non-US release signatures do not cover the number;
+  - the slash in EMA's `EMEA/H/C/…` form is not accepted.
+- An unknown region reads as home.
+- The legacy no-spine draft backbone (`ectd-compile.ts:835`).
+- A multi-region submission's non-primary regions (`submission_regions`) have no number of their own. Their packages are now refused by name, never given the project's.
