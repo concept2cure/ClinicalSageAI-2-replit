@@ -3,11 +3,20 @@
 # (ECS_CLUSTER c2c-production, ECS_API_TASK_FAMILY c2c-production-api, …), so
 # they are kept exactly; tests/names.tftest.hcl reads the workflow and checks.
 
+#
+# S3 bucket names are global, so every bucket carries the account id
+# (MR-03 OPS-03, 2026-10-21, before anything was created): a fixed name such as
+# c2c-prod-frontend can already belong to someone else, as the state bucket's
+# did, and the first apply fails. The pipeline reads the frontend bucket's name
+# from the repository variable FRONTEND_BUCKET, set from the frontend_bucket
+# output.
+
 locals {
   short           = var.environment == "production" ? "c2c-prod" : "c2c-stg"
   long            = "c2c-${var.environment}"
-  evidence_bucket = "${local.short}-part11-evidence"
-  frontend_bucket = "${local.short}-frontend"
+  account_suffix  = data.aws_caller_identity.current.account_id
+  evidence_bucket = "${local.short}-part11-evidence-${local.account_suffix}"
+  frontend_bucket = "${local.short}-frontend-${local.account_suffix}"
 }
 
 # ── Networking ───────────────────────────────────────────────────────────────
@@ -117,6 +126,10 @@ module "secrets" {
   source     = "../modules/secrets"
   prefix     = "c2c/${var.environment}"
   kms_key_id = aws_kms_key.secrets.arn
+  # Production keeps a deleted secret recoverable for 30 days. Staging deletes
+  # at once: otherwise re-applying it after a teardown is refused for a month,
+  # its names still scheduled for deletion (MR-03 OPS-26).
+  recovery_window_in_days = var.environment == "production" ? 30 : 0
   secrets = merge(local.openai_secret, {
     jwt_secret = {
       description = "JWT signing secret"

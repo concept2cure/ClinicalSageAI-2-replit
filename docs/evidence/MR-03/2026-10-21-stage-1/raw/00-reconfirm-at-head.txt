@@ -1,0 +1,70 @@
+# Re-confirmation at 28637579 (2026-10-21)
+
+## OPS-03
+terraform/environments/production/main.tf:20:    bucket         = "c2c-terraform-state"
+terraform/environments/staging/main.tf:20:    bucket         = "c2c-terraform-state"
+terraform/bootstrap/variables.tf:9:  default     = "c2c-terraform-state"
+
+## OPS-26
+terraform/stack/versions.tf:12:  required_version = ">= 1.5"
+terraform/stack/versions.tf:17:      version = ">= 5.0"
+terraform/stack/versions.tf:21:      version = ">= 3.5"
+terraform/environments/production/main.tf:6:  required_version = ">= 1.5"
+terraform/environments/production/main.tf:11:      version = ">= 5.0"
+terraform/environments/production/main.tf:15:      version = ">= 3.5"
+terraform/environments/production/main.tf:23:    dynamodb_table = "c2c-terraform-lock"
+terraform/environments/staging/main.tf:6:  required_version = ">= 1.5"
+terraform/environments/staging/main.tf:11:      version = ">= 5.0"
+terraform/environments/staging/main.tf:15:      version = ">= 3.5"
+terraform/environments/staging/main.tf:23:    dynamodb_table = "c2c-terraform-lock"
+terraform/bootstrap/main.tf:6:  required_version = ">= 1.5"
+terraform/bootstrap/main.tf:10:      version = ">= 5.0"
+terraform/bootstrap/main.tf:103:resource "aws_dynamodb_table" "tflock" {
+terraform/bootstrap/main.tf:123:  value = aws_dynamodb_table.tflock.name
+terraform/environments/production/.terraform.lock.hcl
+67:          terraform_version: 1.9.8
+99:          terraform_version: 1.9.8
+127:          terraform_version: 1.9.8
+
+## OPS-04 / OPS-30
+56:  performance_insights_enabled = true
+58:  performance_insights_kms_key_id = var.kms_key_id
+
+## DATA-13
+.github/workflows/ci.yml:1187:        image: pgvector/pgvector:pg15
+.github/workflows/ci.yml:1292:        image: pgvector/pgvector:pg15
+.github/workflows/ci.yml:1443:        image: pgvector/pgvector:pg15
+.github/workflows/ci.yml:1639:        image: pgvector/pgvector:pg15
+.github/workflows/ci.yml:1939:            pgvector/pgvector:pg15 \
+.github/workflows/ci.yml:2214:            pgvector/pgvector:pg15 \
+.github/workflows/database-dr-restore-proof.yml:32:        image: postgres:16
+.github/workflows/db-schema-validation.yml:38:        image: pgvector/pgvector:pg16
+.github/workflows/tier5-browser-smoke.yml:51:        image: pgvector/pgvector:pg15
+terraform/environments/production/main.tf:55:  rds_engine_version        = "15" # major only; RDS patches the minor (B10)
+terraform/environments/production/main.tf:66:  rds_instance_class   = var.rds_instance_class
+terraform/environments/staging/main.tf:57:  rds_engine_version        = "15" # major only; RDS patches the minor (B10)
+terraform/environments/staging/main.tf:68:  rds_instance_class   = var.rds_instance_class
+terraform/environments/production/variables.tf:31:variable "rds_instance_class" {
+terraform/environments/staging/variables.tf:31:variable "rds_instance_class" {
+terraform/environments/production/terraform.tfvars.example:42:rds_instance_class = "db.t3.medium"
+terraform/environments/staging/terraform.tfvars.example:44:rds_instance_class = "db.t3.small"
+
+## OPS-08
+24:resource "aws_cloudwatch_log_group" "worker" {
+25:  name              = "/ecs/${var.cluster_name}/worker"
+281:resource "aws_ecs_task_definition" "worker" {
+282:  family                   = "${var.cluster_name}-worker"
+285:  cpu                      = var.worker_cpu
+286:  memory                   = var.worker_memory
+291:    name      = "worker"
+292:    image     = var.worker_image
+297:    ], var.worker_environment)
+299:    secrets = [for s in var.worker_secrets : {
+307:        "awslogs-group"         = aws_cloudwatch_log_group.worker.name
+309:        "awslogs-stream-prefix" = "worker"
+terraform/environments/production/main.tf:70:  worker_desired_count = var.worker_desired_count
+terraform/environments/production/variables.tf:53:variable "worker_desired_count" {
+terraform/environments/production/terraform.tfvars.example:50:worker_desired_count = 0
+terraform/environments/staging/main.tf:72:  worker_desired_count = var.worker_desired_count
+terraform/environments/staging/variables.tf:54:variable "worker_desired_count" {
+terraform/environments/staging/terraform.tfvars.example:49:worker_desired_count = 0

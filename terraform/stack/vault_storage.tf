@@ -26,7 +26,7 @@
 #     (server/services/storage/s3-provider.ts), and no human principal is named.
 
 locals {
-  vault_bucket    = "${local.short}-vault"
+  vault_bucket    = "${local.short}-vault-${local.account_suffix}"
   vault_key_alias = "alias/${local.short}-vault"
 }
 

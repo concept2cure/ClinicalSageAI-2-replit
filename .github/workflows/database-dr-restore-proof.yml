@@ -29,7 +29,10 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16
+        # Production's major (rds_engine_version): a restore proven on another
+        # server proves nothing about production's (MR-03 DATA-13;
+        # ci:terraform-backend refuses any other).
+        image: postgres:15
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
           POSTGRES_DB: c2c_dr_source
