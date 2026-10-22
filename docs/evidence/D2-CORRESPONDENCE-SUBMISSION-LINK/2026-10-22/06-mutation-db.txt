@@ -1,0 +1,5 @@
+# MUTATION: the POST lookup checks the organisation only, not the project's program (2026-10-22T05:08:09Z)
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a submission of another program of the organisation, and writes nothing
+   → {"success":true,"data":{"id":"ace_1792645695413_7231c3b9","organizationId":468,"projectId":397,"sourceType":"uploaded_official_correspondence","communicationType":"Information request","sourceChannel":"esg","linke
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)

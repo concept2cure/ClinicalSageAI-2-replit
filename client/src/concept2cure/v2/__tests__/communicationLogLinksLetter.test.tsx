@@ -38,21 +38,30 @@ const SOURCE = (id: number, title: string) => ({
   id, title, checksum: null, ingestionStatus: 'complete', extractionStatus: 'complete', createdAt: null,
   mimeType: 'application/pdf', fileSize: 10, artifactId: null, origin: null, extractionMethod: null, isCurrent: true,
 });
+const SUBMISSIONS_URL = `/api/submissions?programId=${PID}`;
+const SUB = (id: number, title: string, applicationType: string, primaryRegion: string) => ({
+  id, title, productName: null, applicationType, primaryRegion, status: 'active', lifecycleStage: 'original',
+});
 const posted: Array<Record<string, unknown>> = [];
 let sourcesAnswer: () => Response;
+let submissionsAnswer: () => Response;
+let inboxRows: unknown[];
 
 beforeEach(() => {
   (window as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID };
   posted.length = 0;
   sourcesAnswer = () => ok({ sources: [SOURCE(77, 'IR-2026-10-12.pdf'), SOURCE(88, 'FDA advice letter 2026-03.pdf')] });
+  submissionsAnswer = () => ok({ success: true, data: [SUB(41, 'ONC-221 IND', 'ind', 'fda'), SUB(42, 'ONC-221 MAA', 'maa', 'eu')] });
+  inboxRows = [ROW];
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
     if (method === 'POST' && url === COMMS_URL) {
       posted.push(body ?? {});
       return ok({ success: true, data: { ...ROW, ...body, id: 'ace_2' } });
     }
-    if (url === COMMS_URL) return ok({ success: true, data: [ROW] });
+    if (url === COMMS_URL) return ok({ success: true, data: inboxRows });
     if (url === SOURCES_URL) return sourcesAnswer();
+    if (url === SUBMISSIONS_URL) return submissionsAnswer();
     return ok({ success: true, data: [] });
   });
 });
@@ -109,5 +118,44 @@ describe('"Log communication" links a letter already in the data room', () => {
     await openForm();
     expect(await screen.findByText(/could not be read/)).toBeTruthy();
     expect(screen.queryByText(/no sources/i)).toBeNull();
+  });
+});
+
+describe('"Log communication" names the submission the letter concerns (gap 6.5, 2026-10-22)', () => {
+  it("offers this project's submissions and sends the one chosen", async () => {
+    await openForm();
+    const picker = (await screen.findByLabelText(/Submission it concerns/)) as HTMLSelectElement;
+    await waitFor(() => expect(picker.querySelector('option[value="41"]')?.textContent).toBe('ONC-221 IND (IND, FDA)'));
+    fillRequired();
+    fireEvent.change(picker, { target: { value: '42' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /^Log communication$/ }).at(-1)!);
+    await waitFor(() => expect(posted).toHaveLength(1));
+    expect(posted[0].linkedSubmissionId).toBe('42');
+  });
+
+  it('sends no submission when none is chosen', async () => {
+    await openForm();
+    await screen.findByLabelText(/Submission it concerns/);
+    fillRequired();
+    fireEvent.click(screen.getAllByRole('button', { name: /^Log communication$/ }).at(-1)!);
+    await waitFor(() => expect(posted).toHaveLength(1));
+    expect(posted[0]).not.toHaveProperty('linkedSubmissionId');
+  });
+
+  it("says the project's submissions could not be read rather than that it has none", async () => {
+    submissionsAnswer = () => ({ ok: false, status: 503, json: async () => ({ error: { message: 'down' } }) }) as Response;
+    await openForm();
+    expect(await screen.findByText(/submissions could not be read, so none can be named now/)).toBeTruthy();
+    expect(screen.queryByText(/has no submission yet/)).toBeNull();
+  });
+
+  it('shows on the card the submission a letter concerns, and says when a stored one names none of this project\u2019s', async () => {
+    inboxRows = [
+      { ...ROW, linkedSubmissionId: '41', linkedSubmission: { id: 41, title: 'ONC-221 IND', applicationType: 'ind', primaryRegion: 'fda' } },
+      { ...ROW, id: 'ace_9', communicationType: 'Older letter', linkedArtifactIds: [], linkedSubmissionId: 'IND 123456', linkedSubmission: null },
+    ];
+    render(<CommunicationCenter surface={'communication-center' as never} segment="biotech" onAsk={vi.fn()} onNav={vi.fn()} />);
+    expect(await screen.findByText(/concerns ONC-221 IND \(IND, FDA\)/)).toBeTruthy();
+    expect(screen.getByText(/the submission it names is not one of this project\u2019s/)).toBeTruthy();
   });
 });

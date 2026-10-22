@@ -278,3 +278,50 @@ describe('POST /projects/:projectId/agency-communications — a linked data-room
     expect(poolQuery.mock.calls.some(([q]) => /cre_evidence_sources/.test(String(q)))).toBe(false);
   });
 });
+
+describe('POST /projects/:projectId/agency-communications — the submission a letter concerns (gap 6.5)', () => {
+  const body = (linkedSubmissionId?: string) => ({
+    sourceType: 'uploaded_official_correspondence', communicationType: 'Information request', sourceChannel: 'esg',
+    linkedSectionCodes: [], linkedArtifactIds: [], urgency: 'high', responseRequired: true, extractedIssues: [],
+    visibilityTier: 'shared_client_c2c', ...(linkedSubmissionId === undefined ? {} : { linkedSubmissionId }),
+  });
+  const inserted = () => poolQuery.mock.calls.find(([q]) => /INSERT INTO concept2cure_agency_communications/.test(String(q))) as [string, unknown[]] | undefined;
+
+  it('refuses a reference that is not a submission id without looking anything up', async () => {
+    wire([tables(ALL_TABLES)]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body('IND 123456'));
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toMatch(/not a submission id/);
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a submission the organisation-and-program lookup does not find, and writes nothing", async () => {
+    wire([tables(ALL_TABLES), { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body('41'));
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toMatch(/not one of this project's submissions/);
+    expect(inserted()).toBeUndefined();
+    const [sqlText, params] = poolQuery.mock.calls[1] as [string, unknown[]];
+    expect(sqlText).toMatch(/FROM submissions sub/);
+    expect(sqlText).toMatch(/p\.regulatory_program_id = sub\.program_id/);
+    expect(sqlText).toMatch(/sub\.deleted_at IS NULL/);
+    expect(params).toEqual([7, 3, 41]);
+  });
+
+  it('stores the id the lookup found and returns the submission it names', async () => {
+    wire([tables(ALL_TABLES), { rows: [{ id: 41, title: 'IND 123456', application_type: 'ind', primary_region: 'fda' }] }, { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body(' 41 '));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data).toMatchObject({ linkedSubmissionId: '41', linkedSubmission: { id: 41, title: 'IND 123456', applicationType: 'ind', primaryRegion: 'fda' } });
+    expect(inserted()![1][6]).toBe('41');
+  });
+
+  it('treats an empty choice as no submission and looks nothing up', async () => {
+    wire([tables(ALL_TABLES), { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body(''));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.linkedSubmission).toBeNull();
+    expect(poolQuery.mock.calls.some(([q]) => /FROM submissions/.test(String(q)))).toBe(false);
+    expect(inserted()![1][6]).toBeNull();
+  });
+});

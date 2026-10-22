@@ -36,11 +36,22 @@ import { stashNavParamsForTarget } from '../navParams';
 import { useChatUpload, CHAT_UPLOAD_ACCEPT, type ChatAttachment } from '../../hooks/useChatUpload';
 import { ComingLater } from './ProjectComingLater';
 import { C2CToast, useToast } from '../toast';
-import { AgencyInboxList, letterSourceRef, useAgencyInbox, type LogCommunicationBody, type LogResult } from './AgencyInbox';
-import type { ProgramMarkets } from './programSequence';
+import { AgencyInboxList, letterSourceRef, submissionLabel, useAgencyInbox, type LogCommunicationBody, type LogResult } from './AgencyInbox';
+import type { MarketSubmission, ProgramMarkets } from './programSequence';
 
-const marketLabel = (m: { title: string; applicationType: string; primaryRegion: string }) =>
-  `${m.title} (${m.applicationType.toUpperCase()}, ${m.primaryRegion.toUpperCase()})`;
+/**
+ * The market a letter came from, chosen once for the step that logs the letter
+ * and the step that starts its response sequence. 'none' is a letter about no
+ * submission; null is no choice yet.
+ */
+type MarketChoice = number | 'none' | null;
+
+/** The submission a letter is logged against: the one chosen, or a project's only one; never a guess between several. */
+export function letterSubmission(rows: readonly MarketSubmission[], choice: MarketChoice): MarketSubmission | null {
+  if (choice === 'none') return null;
+  if (choice === null) return rows.length === 1 ? rows[0] : null;
+  return rows.find((m) => m.id === choice) ?? null;
+}
 
 /**
  * What is known of an uploaded letter, and nothing more: its file name and that
@@ -48,13 +59,14 @@ const marketLabel = (m: { title: string; applicationType: string; primaryRegion:
  * field and starts at medium, as Communication's form does; due date and issues
  * are left for triage, never guessed from a letter nobody has read yet.
  */
-export function uploadedLetterCommunication(name: string, sourceId: number): LogCommunicationBody {
+export function uploadedLetterCommunication(name: string, sourceId: number, submissionId: number | null = null): LogCommunicationBody {
   return {
     sourceType: 'uploaded_official_correspondence',
     communicationType: `Agency letter: ${name}`,
     sourceChannel: 'Uploaded in Respond',
     linkedSectionCodes: [],
     linkedArtifactIds: [letterSourceRef(sourceId)],
+    ...(submissionId != null ? { linkedSubmissionId: String(submissionId) } : {}),
     urgency: 'medium',
     responseRequired: true,
     extractedIssues: [],
@@ -64,8 +76,17 @@ export function uploadedLetterCommunication(name: string, sourceId: number): Log
 
 type LogNote = { name: string; tone: 'ok' | 'error'; text: string; retry?: () => void };
 
-function LetterStep({ pid, log }: { pid: string; log: (b: LogCommunicationBody) => Promise<LogResult> }) {
+function LetterStep({ pid, log, markets, choice, onChoose }: {
+  pid: string;
+  log: (b: LogCommunicationBody) => Promise<LogResult>;
+  markets: ProgramMarkets;
+  choice: MarketChoice;
+  onChoose: (c: MarketChoice) => void;
+}) {
+  const id = useId();
   const fileRef = useRef<HTMLInputElement>(null);
+  const rows = markets.list.rows;
+  const linked = letterSubmission(rows, choice);
   const { attachments, addFiles, uploading, statusMessage } = useChatUpload({ projectId: pid });
   const [notes, setNotes] = useState<LogNote[]>([]);
   // Each upload is logged once; a re-render never logs a second communication.
@@ -73,8 +94,9 @@ function LetterStep({ pid, log }: { pid: string; log: (b: LogCommunicationBody) 
 
   useEffect(() => {
     const note = (n: LogNote) => setNotes((ns) => [...ns.filter((x) => x.name !== n.name), n]);
+    const submissionId = linked?.id ?? null;
     const logOne = async (a: ChatAttachment, sourceId: number) => {
-      const r = await log(uploadedLetterCommunication(a.name, sourceId));
+      const r = await log(uploadedLetterCommunication(a.name, sourceId, submissionId));
       note(r.ok
         ? { name: a.name, tone: 'ok', text: `${a.name} is in the data room and logged in the agency inbox below.` }
         : {
@@ -92,12 +114,24 @@ function LetterStep({ pid, log }: { pid: string; log: (b: LogCommunicationBody) 
       }
       void logOne(a, a.sourceId);
     }
-  }, [attachments, log]);
+  }, [attachments, log, linked]);
 
   return (
     <li className="pj-respond-step">
       <h3 className="pj-respond-t">Add the agency's letter</h3>
       <p className="pj-desc">It goes into the project's data room, and is logged in this project's agency inbox, the one Communication shows.</p>
+      {markets.list.error ? (
+        <p className="pj-desc" role="alert">This project's submissions could not be read, so the letter is logged without one.</p>
+      ) : rows.length > 0 ? (
+        <div className="de-field pj-respond-pick">
+          <label className="de-label" htmlFor={`${id}-submission`}>The submission this letter concerns</label>
+          <select id={`${id}-submission`} className="c2c-input" value={linked?.id ?? ''}
+            onChange={(e) => onChoose(e.target.value ? Number(e.target.value) : 'none')}>
+            <option value="">Not linked to a submission</option>
+            {rows.map((m) => <option key={m.id} value={m.id}>{submissionLabel(m)}</option>)}
+          </select>
+        </div>
+      ) : null}
       <input ref={fileRef} type="file" accept={CHAT_UPLOAD_ACCEPT} hidden
         onChange={(e) => { if (e.target.files?.length) addFiles(Array.from(e.target.files)); e.target.value = ''; }} />
       {/* aria-disabled, not disabled: a disabled button drops the focus to the
@@ -150,11 +184,15 @@ function InboxStep({ inbox, onAsk, onNav, onAdvance }: {
   );
 }
 
-function SequenceStep({ markets, onNav }: { markets: ProgramMarkets; onNav: (id: string) => void }) {
+function SequenceStep({ markets, choice, onChoose, onNav }: {
+  markets: ProgramMarkets;
+  choice: MarketChoice;
+  onChoose: (c: MarketChoice) => void;
+  onNav: (id: string) => void;
+}) {
   const id = useId();
   const rows = markets.list.rows;
-  const [chosen, setChosen] = useState<number | null>(null);
-  const market = rows.find((m) => m.id === chosen) ?? rows[0] ?? null;
+  const market = rows.find((m) => m.id === choice) ?? rows[0] ?? null;
   const open = () => {
     if (!market) return;
     stashNavParamsForTarget('submission-center', { submissionId: String(market.id), ws: 'sequences', followUp: 'response' });
@@ -172,12 +210,12 @@ function SequenceStep({ markets, onNav }: { markets: ProgramMarkets; onNav: (id:
       ) : rows.length > 1 ? (
         <div className="de-field pj-respond-pick">
           <label className="de-label" htmlFor={`${id}-market`}>The market the letter came from</label>
-          <select id={`${id}-market`} className="c2c-input" value={market?.id ?? ''} onChange={(e) => setChosen(Number(e.target.value))}>
-            {rows.map((m) => <option key={m.id} value={m.id}>{marketLabel(m)}</option>)}
+          <select id={`${id}-market`} className="c2c-input" value={market?.id ?? ''} onChange={(e) => onChoose(Number(e.target.value))}>
+            {rows.map((m) => <option key={m.id} value={m.id}>{submissionLabel(m)}</option>)}
           </select>
         </div>
       ) : (
-        <p className="pj-desc">In {marketLabel(rows[0])}.</p>
+        <p className="pj-desc">In {submissionLabel(rows[0])}.</p>
       )}
       {/* Submission Center opens with the next sequence's type set to
           response; the person creates it there. */}
@@ -196,14 +234,15 @@ export function ProjectRespond({ pid, markets, onNav, onAsk }: {
 }) {
   const [toast, fire] = useToast();
   const inbox = useAgencyInbox(pid, fire);
+  const [choice, setChoice] = useState<MarketChoice>(null);
   return (
     <div className="pj-stagebody">
       <section className="pj-sec" data-testid="pj-respond">
         <div className="pj-sec-h"><h2>Respond</h2><span className="sec-sub">Answer the agency's letter, then place the answer into filing</span></div>
         <ol className="pj-respond">
-          <LetterStep pid={pid} log={inbox.log} />
+          <LetterStep pid={pid} log={inbox.log} markets={markets} choice={choice} onChoose={setChoice} />
           <InboxStep inbox={inbox} onAsk={onAsk} onNav={onNav} onAdvance={(id) => void inbox.advance(id)} />
-          <SequenceStep markets={markets} onNav={onNav} />
+          <SequenceStep markets={markets} choice={choice} onChoose={setChoice} onNav={onNav} />
         </ol>
       </section>
       <ComingLater stage="respond" />

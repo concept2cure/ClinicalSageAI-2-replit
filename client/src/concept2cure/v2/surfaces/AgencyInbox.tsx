@@ -43,6 +43,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { CC_SOURCE_TYPES, CC_TONE, CC_CLOSURE } from '../fixtures/commcenter';
 import type { C2CFormFieldOption } from '../C2CForm';
 import type { SourceRow } from './projectSources';
+import type { LinkedSubmission } from '@shared/types/communication-center';
 import { AgencyResponses } from './AgencyResponses';
 import '../styles/commcenter-v2.css';
 
@@ -60,6 +61,10 @@ export interface CommRow {
   linkedSectionCodes: string[];
   /** Documents the communication is about; a letter's source is `cre_source:<id>`. */
   linkedArtifactIds?: string[];
+  /** The submission id as stored; read with linkedSubmission, which says whether it names one. */
+  linkedSubmissionId?: string | null;
+  /** The live submission of this project's program the id names, or null when it names none. */
+  linkedSubmission?: LinkedSubmission | null;
   receivedDate: string;
   dueDate?: string | null;
   urgency: 'critical' | 'high' | 'medium' | 'low';
@@ -79,6 +84,8 @@ export interface LogCommunicationBody {
   sourceChannel: string;
   linkedSectionCodes: string[];
   linkedArtifactIds?: string[];
+  /** A submission of this project's program; the server refuses any other. */
+  linkedSubmissionId?: string;
   dueDate?: string;
   urgency: CommRow['urgency'];
   responseRequired: boolean;
@@ -101,6 +108,22 @@ const LETTER_SOURCE_PREFIX = 'cre_source:';
 /** The linkedArtifactIds entry that ties a communication to its letter's data-room source. */
 export function letterSourceRef(sourceId: number): string {
   return LETTER_SOURCE_PREFIX + String(sourceId);
+}
+
+/** A submission as the inbox, the log form and Respond name it: title, then application type and market. */
+export function submissionLabel(s: Pick<LinkedSubmission, 'id' | 'title' | 'applicationType' | 'primaryRegion'>): string {
+  const where = [s.applicationType, s.primaryRegion].filter((v): v is string => Boolean(v)).map((v) => v.toUpperCase());
+  return `${s.title || `Submission ${s.id}`}${where.length ? ` (${where.join(', ')})` : ''}`;
+}
+
+/**
+ * What a communication's card says of its submission. A stored id that names
+ * none of this project's live submissions (an older unchecked value, or a
+ * submission since removed) is said as such, never shown as a link.
+ */
+export function submissionLinkText(c: Pick<CommRow, 'linkedSubmissionId' | 'linkedSubmission'>): string {
+  if (c.linkedSubmission) return ' · concerns ' + submissionLabel(c.linkedSubmission);
+  return c.linkedSubmissionId ? ' · the submission it names is not one of this project\u2019s' : '';
 }
 
 /** The data-room source ids of the letter(s) linked to a communication. */
@@ -349,6 +372,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, responses, opening }
               the list read narrows or that predate the columns. */}
           {c.linkedSectionCodes?.length ? ' · §' + c.linkedSectionCodes.join(' §') : ''}
           {letterSourceIds(c).length ? ' · letter in the data room' : ''}
+          {submissionLinkText(c)}
         </div>
         {c.extractedIssues && c.extractedIssues.length > 0 && (
           <ul className="cc-comm-issues">

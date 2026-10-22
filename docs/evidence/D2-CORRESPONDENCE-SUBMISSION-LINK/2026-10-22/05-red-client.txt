@@ -1,0 +1,17 @@
+# RED at d4be3c13f: Communication Center and Respond as on trunk, the new cases (2026-10-22T05:07:32Z)
+ × client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > A letter uploaded in Respond names the submission it concerns (gap 6.5, 2026-10-22) > with the project's only submission, links it, and the person can see and change that
+   → Unable to find a label with the text of: /The submission this letter concerns/
+ × client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > A letter uploaded in Respond names the submission it concerns (gap 6.5, 2026-10-22) > with several, links none until one is chosen, and the chosen one is also the response sequence's marke
+   → Unable to find a label with the text of: /The submission this letter concerns/
+ × client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > A letter uploaded in Respond names the submission it concerns (gap 6.5, 2026-10-22) > a letter the person marks as about no submission is logged with none
+   → Unable to find a label with the text of: /The submission this letter concerns/
+ × client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" names the submission the letter concerns (gap 6.5, 2026-10-22) > offers this project's submissions and sends the one chosen
+   → Unable to find a label with the text of: /Submission it concerns/
+ × client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" names the submission the letter concerns (gap 6.5, 2026-10-22) > sends no submission when none is chosen
+   → Unable to find a label with the text of: /Submission it concerns/
+ × client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" names the submission the letter concerns (gap 6.5, 2026-10-22) > says the project's submissions could not be read rather than that it has none
+   → Unable to find an element with the text: /submissions could not be read, so none can be named now/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher mor
+ × client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" names the submission the letter concerns (gap 6.5, 2026-10-22) > shows on the card the submission a letter concerns, and says when a stored one names none of th
+   → Unable to find an element with the text: /concerns ONC-221 IND \(IND, FDA\)/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 11 passed (18)
