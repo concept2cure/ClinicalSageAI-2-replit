@@ -610,8 +610,11 @@ export interface AnaChatMessage {
   /** Intelligence flow completion — summary + suggested actions. */
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
   /**
-   * War Game report — FDA auditor simulation results. Rendered as a rich
-   * advisory report component inline in the message thread.
+   * War Game report — FDA auditor simulation results, as the stream's
+   * `war_game_report` event carries them (server war-game/types.ts
+   * WarGameReport). No component renders it since WarGameReport.tsx was
+   * deleted on 2026-08-04 (2895218b8); AnA narrates the report, and its
+   * executiveSummary states how many checks could not be assessed.
    */
   warGameReport?: {
     id: string;
@@ -636,6 +639,11 @@ export interface AnaChatMessage {
     executiveSummary: string;
     topPriorities: string[];
     regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
+    /** Checks in the auditor, and how many its source interview could feed (2026-10-22). */
+    rulesTotal?: number;
+    rulesAssessed?: number;
+    /** Checks that read a question the interview does not ask: no finding, no score. */
+    notAssessed?: Array<{ ruleId: string; title: string; unaskedFields: string[] }>;
   };
   /**
    * Reporting Canvas — a governed report render or a best-practices suggestion

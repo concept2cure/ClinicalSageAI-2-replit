@@ -32,7 +32,6 @@ async function click1() {
   await settle(page, 3000);
   await shot(page, 'c1-project-home');
   const t = await mainText(page, 20000);
-  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- label is one of four uppercase literals at the call site below
   const grab = (label) => { const m = t.match(new RegExp(`${label}\\n([^\\n]+)`)); return m ? m[1] : '(absent)'; };
   say(`   identity: Sponsor=${grab('SPONSOR')} | Product=${grab('PRODUCT')} | Indication=${grab('INDICATION')} | IND number=${grab('IND NUMBER')}`);
 }
@@ -183,11 +182,25 @@ async function openVault() {
   await settle(page, 4000);
 }
 
+/** Add a file through the Vault's upload list (VaultUploadStaging, 2026-10-22): the file is
+ *  staged with its type, then recorded by "Upload 1 file"; the list says what became of it.
+ *  The list stays open until closeUploadList(), so a name conflict's check-in offer can be taken. */
 async function vaultUpload(file) {
-  await page.getByLabel('Document type for uploaded files').selectOption({ label: 'Module 3 · quality' });
+  await page.getByLabel('Document type for files added next').selectOption({ label: 'Module 3 · quality' });
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByTestId('vault-upload-button').click()]);
   await chooser.setFiles(file);
+  const staging = page.getByTestId('vault-upload-staging');
+  await staging.waitFor();
+  await staging.getByTestId('vault-stage-upload').click();
   await settle(page, 5000);
+  const rows = (await staging.innerText().catch(() => '')).split('\n').filter((l) => /^(Recorded|Not recorded|Already in the Vault)/.test(l.trim()));
+  say(`   upload list: ${rows.join(' | ') || '(no row status)'}`);
+}
+
+async function closeUploadList() {
+  const staging = page.getByTestId('vault-upload-staging');
+  if (await staging.count()) await staging.getByRole('button', { name: /^(Close|Cancel)$/ }).click();
+  await settle(page, 1000);
 }
 
 /** Open the uploaded document in the Vault, as a person would, by clicking its row. Nothing
@@ -258,7 +271,8 @@ async function click3b() {
   setStage('Click 3b');
   await openVault();
   await vaultUpload(V1);
-  say(`   upload: ${(await page.locator('[role="status"]').allInnerTexts()).map((s) => s.trim()).filter((s) => /Auto-filed|uploaded|version/i.test(s)).join(' | ').slice(0, 400)}`);
+  say(`   upload: ${(await page.locator('[role="status"]').allInnerTexts()).map((s) => s.trim()).filter((s) => /Auto-filed|uploaded|version|recorded/i.test(s)).join(' | ').slice(0, 400)}`);
+  await closeUploadList();
   await openVaultDocument();
   await page.getByLabel('Reason for this filing decision').fill('Analytical procedures belong in Module 3, at 3.2.S.4.2.');
   await page.getByRole('button', { name: /Confirm filing/ }).click();
@@ -277,6 +291,7 @@ async function vaultReviseV2() {
   say(`   check-in offered: ${await offer.count()}`);
   await offer.click();
   await settle(page, 4000);
+  await closeUploadList();
   const lines = (await mainText(page, 60000)).split('\n').filter((l) => /v2\.0|v1\.0|version/i.test(l)).slice(0, 8);
   say(`   versions: ${lines.join(' | ')}`);
   await shot(page, 'c6c-vault-v2-checked-in');
