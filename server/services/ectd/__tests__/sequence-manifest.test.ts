@@ -57,10 +57,12 @@ describe('manifestToPriorLeaves', () => {
     ]);
   });
 
-  it('is defensive: a non-array or malformed entries yield a filtered list, never a throw', () => {
-    expect(manifestToPriorLeaves(null)).toEqual([]);
-    expect(manifestToPriorLeaves('not-json')).toEqual([]);
-    expect(manifestToPriorLeaves([{ ctdSection: '2.5' }, { md5: 'x' }, 42, null])).toEqual([]);
+  // 2026-10-15: this pinned the defect — an unreadable manifest read as "no
+  // prior leaves". It is now an error (sequence-manifest-unreadable-is-an-error-naming-the-sequence.test.ts).
+  it('refuses a non-array or a malformed entry', () => {
+    expect(() => manifestToPriorLeaves(null)).toThrow(/not a list/);
+    expect(() => manifestToPriorLeaves('not-json')).toThrow(/not a list/);
+    expect(() => manifestToPriorLeaves([{ ctdSection: '2.5' }, { md5: 'x' }, 42, null])).toThrow(/entry 0/);
   });
 
   it('carries the recorded backbone ID into the prior leaf', () => {

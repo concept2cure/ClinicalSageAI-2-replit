@@ -68,6 +68,8 @@ function safePackError(error: any): SafePackError {
     return { code: 'IVDR_NOT_READY', label: 'Required binder claims not approved' };
   if (msg.includes('IVDR_NO_CLAIMS'))
     return { code: 'IVDR_NO_CLAIMS', label: 'No required claims found for this pack type' };
+  if (msg.includes('IVDR_NO_REQUESTER'))
+    return { code: 'IVDR_NO_REQUESTER', label: 'The job records no requesting user' };
   if (msg.includes('IVDR_NO_PROGRAM'))
     return { code: 'IVDR_NO_PROGRAM', label: 'Project is not a live regulatory programme of this organization' };
   if (msg.includes('IVDR_MISSING_EVIDENCE'))
@@ -92,17 +94,34 @@ function safePackError(error: any): SafePackError {
 
 // ── Audit event emitter ─────────────────────────────────────────────────────
 
+/** Who an audit row names: the job's recorded requester, or — only for a
+ *  refusal of a job that records none — no user, with the worker named. */
+interface PackAuditActor {
+  userId: number | null;
+  userName: string;
+}
+
+/** The job's requesting user as a positive integer id, or null when none is recorded. */
+function requesterOf(job: { requested_by_user_id: string | null }): number | null {
+  const raw = String(job.requested_by_user_id ?? '').trim();
+  const n = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
+/* 2026-10-15: user_id was `Number(userId) || 0`, so a job with no requester
+   ('system') was audited as user 0. The actor is now the recorded requester;
+   a job without one is refused (IVDR_NO_REQUESTER). entity_id stays 0:
+   audit_events.entity_id is INTEGER and a pack id is a UUID, so the pack id is
+   carried in metadata (packId). */
 async function emitAudit(
   client: PoolClient | Pool,
   orgId: number,
   projectId: string,
-  userId: string,
-  userName: string,
+  actor: PackAuditActor,
   eventType: string,
   payload: Record<string, unknown>
 ): Promise<void> {
   try {
-    const numericUserId = Number(userId) || 0;
     const now = new Date();
     await client.query(
       `INSERT INTO audit_events
@@ -111,8 +130,8 @@ async function emitAudit(
       [
         orgId,
         eventType,
-        numericUserId,
-        userName || userId,
+        actor.userId,
+        actor.userName,
         JSON.stringify({ ...payload, projectId }),
         now,
       ]
@@ -131,7 +150,7 @@ interface ClaimedJob {
   organization_id: number;
   project_id: string;
   pack_type: string;
-  requested_by_user_id: string;
+  requested_by_user_id: string | null;
   outputs: string[];
   use_latest_approved: boolean;
   sign_build: boolean;
@@ -184,13 +203,18 @@ async function claimNextJob(pool: Pool): Promise<ClaimedJob | null> {
 
 /**
  * Main pack build pipeline.
- * Runs inside a transaction for atomicity.
+ * Runs inside a transaction for atomicity. Exported for its tests.
  */
-async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
+export async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
   const orgId = job.organization_id;
   const projectId = job.project_id;
   const packType = job.pack_type;
-  const userId = job.requested_by_user_id || 'system';
+  const requester = requesterOf(job);
+  if (requester === null) {
+    throw new Error(`IVDR_NO_REQUESTER: job ${job.id} records no requesting user`);
+  }
+  const userId = String(requester);
+  const actor: PackAuditActor = { userId: requester, userName: userId };
 
   // TENANT LIFECYCLE. This worker claims queued jobs system-wide and then does
   // real per-tenant work — document assembly, evidence collation, PDF
@@ -436,10 +460,22 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
       console.warn(
         `[IVDR-PackWorker] Puppeteer unavailable — PDF rendered via plain-text fallback for pack ${packId}`
       );
-      await emitAudit(pool, orgId, projectId, userId, userId, 'PACK_BUILD_WARNING', {
+      await emitAudit(pool, orgId, projectId, actor, 'PACK_BUILD_WARNING', {
         packId,
         packVersion,
         warning: warning.message,
+      });
+    }
+
+    // An Annex II section whose read failed renders INCOMPLETE; the pack says
+    // so. 2026-10-15: these never reached buildWarnings, so such a pack was
+    // stored SUCCEEDED with has_warnings=false. The read error's text is not
+    // copied (warnings are served to the client); the section is named.
+    for (const failure of packContent.readFailures ?? []) {
+      buildWarnings.push({
+        code: 'SECTION_UNREAD',
+        message: `Section "${failure.section}" could not be read; the pack shows it as INCOMPLETE.`,
+        timestamp: new Date().toISOString(),
       });
     }
 
@@ -579,7 +615,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
 
     // ── Step 9: Emit audit event ───────────────────────────────────────────
 
-    await emitAudit(pool, orgId, projectId, userId, userId, 'PACK_BUILD_COMPLETED', {
+    await emitAudit(pool, orgId, projectId, actor, 'PACK_BUILD_COMPLETED', {
       packId,
       packVersion,
       manifestHash: mHash,
@@ -701,12 +737,14 @@ export function startPackBuildWorker(pool: Pool, intervalMs = 2000): void {
                 [job.id, code, label]
               );
 
+              const requester = requesterOf(job);
               await emitAudit(
                 pool,
                 job.organization_id,
                 job.project_id,
-                job.requested_by_user_id || 'system',
-                job.requested_by_user_id || 'system',
+                requester !== null
+                  ? { userId: requester, userName: String(requester) }
+                  : { userId: null, userName: 'ivdr-pack-worker' },
                 'PACK_BUILD_FAILED',
                 {
                   jobId: job.id,

@@ -504,7 +504,8 @@ export function buildIndSafetyReportDocument(
         event.eventDescription,
         event.reactionPt ? `MedDRA PT: ${event.reactionPt}${event.reactionPtCode ? ` (${event.reactionPtCode})` : ''}.` : '',
         event.reactionSoc ? `SOC: ${event.reactionSoc}.` : '',
-        `Onset: ${onsetText(event)}. Sponsor awareness (clock-start): ${toIsoDate(event.reportDate)}.`,
+        // 2026-10-15: reportDate is null when the case records none (it read as 1970-01-01).
+        `Onset: ${onsetText(event)}. Sponsor awareness (clock-start): ${isValidDate(event.reportDate) ? toIsoDate(event.reportDate) : 'not recorded'}.`,
         event.narrative ?? '',
       ]
         .filter(Boolean)

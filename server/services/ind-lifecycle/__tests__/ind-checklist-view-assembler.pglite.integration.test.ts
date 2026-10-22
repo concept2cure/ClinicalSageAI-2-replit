@@ -118,10 +118,9 @@ describe('assembleOrgIndChecklists', () => {
     // never an invented offset.
     expect(ind.targetReceiptDate).toBeNull();
 
-    // Forms — 1571/1572 complete (approved), 3674 open (draft). Form sections are
-    // NOT duplicated into the section list.
-    const byId: Record<string, boolean> = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
-    expect(byId).toMatchObject({ FDA_1571: true, FDA_1572: true, FDA_3674: false });
+    // Forms — 1571/1572 authored and approved but unsigned (2026-10-15: not done), 3674 draft.
+    expect(Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]))).toMatchObject({ FDA_1571: false, FDA_1572: false, FDA_3674: false });
+    expect(ind.forms.find((f: any) => f.id === 'FDA_1571').authored).toEqual({ status: 'approved', signed: false });
     expect(ind.forms.find((f: any) => f.id === 'FDA_1571').ref).toBe('21 CFR 312.23(a)(1)');
     expect(ind.sections.some((sec: any) => sec.code.startsWith('m1.1.'))).toBe(false);
 
@@ -255,13 +254,11 @@ describe('assembleOrgIndChecklists — sponsor-completed official form leaves', 
   }
 
   it('a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state', async () => {
-    const subId = await seedIND(ORG);            // 1571/1572 approved, 3674 still draft
+    const subId = await seedIND(ORG);            // 1571/1572 approved (not signed), 3674 still draft
     await placeUploadedForm(ORG, await sequenceOf(subId), 'form_3674');
     const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
-    const byId: Record<string, boolean> = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
-    expect(byId).toMatchObject({ FDA_1571: true, FDA_1572: true, FDA_3674: true });
-    // The uploaded form is a Module 1 form, not a tracked eCTD section.
-    expect(ind.sections.some((sec: any) => sec.code === 'm1.1')).toBe(false);
+    expect(Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]))).toMatchObject({ FDA_1571: false, FDA_1572: false, FDA_3674: true });
+    expect(ind.sections.some((sec: any) => sec.code === 'm1.1')).toBe(false); // a Module 1 form, not a tracked eCTD section
   });
 
   it('a leaf whose file belongs to another organisation does not complete the form', async () => {
@@ -360,8 +357,7 @@ describe('assembleOrgIndChecklists — a section is the same section however it 
   it('completes a form and enriches a blueprint section whatever the stored spelling', async () => {
     await seedSpelled(ORG, [['1.1.1', 'approved'], ['M1.2', 'finalized'], ['3.2.s.4', 'draft']]);
     const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
-    const done = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
-    expect(done.FDA_1571).toBe(true);
+    expect(ind.forms.find((f: any) => f.id === 'FDA_1571').authored).toEqual({ status: 'approved', signed: false });
     const sec = Object.fromEntries(ind.sections.map((x: any) => [x.code, x]));
     // Shown under the blueprint's own spelling, with the blueprint's title and
     // reference — not as an unrecognised code titled by its file name.
@@ -618,7 +614,9 @@ describe('IND checklist: the forms heading counts only the forms an IND requires
   it('m1.1 is complete when the IND\'s own forms are, whatever else sits at the heading', async () => {
     const sub = await seedIND(ORG, { withLeaves: false });
     const seq = await sequence(sub, '0000');
-    for (const code of ['m1.1.1', 'm1.1.2', 'm1.1.3']) await place(seq, code, 'approved');
+    for (const type of ['form_1571', 'form_1572', 'form_3674']) { // attested sponsor files: an approved authored form is not signed
+      const f = await pglite.query(`INSERT INTO rendered_leaf_files (organization_id, file_name, required_fields_missing, completed_signed_attested_by, completed_signed_attested_at) VALUES ($1, $2, '{}', 9, now()) RETURNING id`, [ORG, `${type}.pdf`]);
+      await pglite.query(`INSERT INTO submission_leaves (organization_id, sequence_id, section_code, document_table, document_id, document_type) VALUES ($1, $2, 'm1.1', 'rendered_leaf_files', $3, $4)`, [ORG, seq, (f.rows[0] as { id: number }).id, type]); }
     await place(seq, '1.1', 'draft'); // a draft at the heading itself does not hold the forms back either
 
     const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
