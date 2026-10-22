@@ -3,7 +3,8 @@
  * (FILING_SPINE F23). The figures themselves are pinned on PostgreSQL by
  * server/services/c2c/__tests__/dossier-read.pglite.test.ts; this pins the
  * route: who may read it, what an unprovisioned store answers, and that a
- * failure is a failure. /workstreams, which it replaces, is gone.
+ * failure is a failure. /workstreams, which it replaces, is gone, and so is
+ * /vault-structure, which no client called (F23 4/9).
  */
 import express from 'express';
 import request from 'supertest';
@@ -101,5 +102,16 @@ describe('GET /api/c2c/projects/:id/dossier', () => {
     queryMock.mockImplementation(async (sql: string) => (isOwnership(sql) ? { rows: [{ id: P1 }] } : { rows: [] }));
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}/workstreams`);
     expect(res.status).toBe(404);
+  });
+
+  it('/vault-structure, which no client called, is gone: the Vault tree is project-vault /:id and the figures are /dossier', async () => {
+    // Its own project read is answered, so while the route existed this was a
+    // 200 with a section tree (red against the router before F23 4/9).
+    queryMock.mockImplementation(async (sql: string) =>
+      (/FROM regulatory_programs\s+WHERE id = \$1 AND organization_id = \$2/.test(String(sql))
+        ? { rows: [{ id: P1, name: 'NDA', product_type: 'drug' }] } : { rows: [] }));
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}/vault-structure`);
+    expect(res.status).toBe(404);
+    expect(queryMock.mock.calls.some(([sql]) => /c2c_documents/.test(String(sql)))).toBe(false);
   });
 });

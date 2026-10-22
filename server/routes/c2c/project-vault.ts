@@ -16,12 +16,13 @@
  *   vault.documents          → the "Uploaded files" branch: what this surface's
  *                              own Upload button ingests
  *
- * This is the same document/section data the existing
- * `GET /api/c2c/projects/:id/vault-structure` endpoint reads, but mapped
- * SERVER-SIDE straight into the Vault.tsx display shape (folder tree of
- * VaultDoc/VaultFolder) so the surface can render it with a single fetch and
- * no client-side converter — and with real owner + relative-modified
- * provenance instead of the client converter's placeholders.
+ * It maps the project's document/section data SERVER-SIDE straight into the
+ * Vault.tsx display shape (folder tree of VaultDoc/VaultFolder) so the surface
+ * can render it with a single fetch and no client-side converter — and with
+ * real owner + relative-modified provenance instead of the client converter's
+ * placeholders. (`GET /api/c2c/projects/:id/vault-structure` read the same
+ * data with no client caller and was deleted in FILING_SPINE F23 4/9; the
+ * tree is this read's, and the figures are GET /api/c2c/projects/:id/dossier.)
  *
  * Response envelope: { success: true, data: <displayShape> }.
  *
