@@ -12,6 +12,9 @@
  * expression the GIN index is built on (migrations/20260906_vault_documents_fulltext.sql).
  * Paginated with a real `total`. Current versions only unless asked (VR-09).
  * An empty query is not "match everything": it answers no results and says why.
+ * Metadata filters (vault-document-filter.ts) narrow the same predicate; with
+ * filters and no text the query browses the filtered set, newest first
+ * ('browse' mode). Filters with no text are a question; an empty box alone is not.
  *
  * Every count and page binds the verified accessible programs and checks their
  * organization through regulatory_programs. The document's recorded parent
@@ -20,6 +23,7 @@
 import { supersededSql } from './vault-version-family.js';
 import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
+import { hasVaultFilters, vaultFilterSql, vaultLifecycleStageSql, type VaultDocumentFilters } from './vault-document-filter.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -43,6 +47,8 @@ export interface VaultSearchParams {
   match?: 'all' | 'any';
   /** Additional server-admitted source restriction; never establishes access. */
   allowedProgramIds?: readonly string[];
+  /** Metadata filters, already validated (parseVaultFilters). They only narrow. */
+  filters?: VaultDocumentFilters;
 }
 
 /**
@@ -68,6 +74,12 @@ export interface VaultSearchHit {
   folderId: string | null;
   ctdSection: string | null;
   placementStatus: string | null;
+  evidenceKind: string | null;
+  classification: string | null;
+  /** The version's lifecycle stage; null when none is recorded ("Not sent for review"). */
+  lifecycleStage: string | null;
+  /** ISO 8601, or null when the row has none. */
+  updatedAt: string | null;
   version: string | null;
   current: boolean;
   snippet: string | null;
@@ -78,7 +90,24 @@ export interface VaultSearchHit {
 const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
                @@ websearch_to_tsquery('english', $2)`;
 
-export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[] }> {
+/** The metadata a row shows beside its title, as the tree shows it. */
+function metadataOf(r: Record<string, unknown>): Pick<VaultSearchHit, 'evidenceKind' | 'classification' | 'lifecycleStage' | 'updatedAt'> {
+  const text = (v: unknown) => (typeof v === 'string' ? v : null);
+  return {
+    evidenceKind: text(r.evidence_kind),
+    classification: text(r.classification),
+    lifecycleStage: text(r.lifecycle_stage),
+    updatedAt: isoOrNull(r.updated_at),
+  };
+}
+
+function isoOrNull(v: unknown): string | null {
+  if (v == null) return null;
+  const d = v instanceof Date ? v : new Date(String(v));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse' }> {
   p = Object.freeze({ ...p, allowedProgramIds: p.allowedProgramIds ? Object.freeze([...p.allowedProgramIds]) : undefined });
   // Verify on the same executor before counting, ranking or returning prose.
   // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
@@ -87,7 +116,12 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
   const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
   const permitted = p.allowedProgramIds === undefined ? scope.programIds
     : scope.programIds.filter(id => p.allowedProgramIds!.includes(id));
-  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q, permitted];
+  // Browse: filters and no text, newest version first. $2 stays bound (null)
+  // and referenced, so every position after it is where the tenant-scope test
+  // pins it; with no rank, the order is the tie-break the search already uses.
+  const browse = !p.q.trim() && hasVaultFilters(p.filters);
+  const params: unknown[] = [p.organizationId, browse ? null : p.match === 'any' ? anyTermsQuery(p.q) : p.q, permitted];
+  const filterSql = vaultFilterSql(p.filters, params, 'd');
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
   const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
@@ -97,7 +131,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
           )
-          AND ${MATCH}${p.includeSuperseded ? '' : `
+          AND ${browse ? '$2::text IS NULL' : MATCH}${filterSql}${p.includeSuperseded ? '' : `
           AND NOT ${supersededSql('d')}`}`;
 
   // The count and the page share `where`, each on its own line after FROM.
@@ -110,8 +144,12 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             ${vaultDispositionChoiceSql('d')} AS disposition,
             d.folder_id, d.ctd_section, d.placement_status, d.created_at, d.version,
+            d.evidence_kind, d.classification::text AS classification, d.updated_at,
+            ${vaultLifecycleStageSql('d')} AS lifecycle_stage,
             NOT ${supersededSql('d')} AS current,
             d.program_id::text AS program_id, prog.name AS program_name,
+            -- In browse, $2 is null: both functions are strict, so rank and
+            -- snippet are null and ts_headline does no work.
             ts_rank_cd(
               vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000)),
               websearch_to_tsquery('english', $2)
@@ -130,6 +168,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
   );
   await requireProgramScopeStillCurrent(db, identity, scope);
   return {
+    mode: browse ? 'browse' : 'search',
     total: counted.rows[0]?.total ?? 0,
     results: rows.rows.map((r) => ({
       originalFileAvailable: r.original_file_available ?? true,
@@ -143,6 +182,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
       folderId: r.folder_id ?? null,
       ctdSection: r.ctd_section ?? null,
       placementStatus: r.placement_status ?? null,
+      ...metadataOf(r),
       version: r.version ?? null,
       current: Boolean(r.current),
       // Only offered when the match was in the body; a snippet echoing the
