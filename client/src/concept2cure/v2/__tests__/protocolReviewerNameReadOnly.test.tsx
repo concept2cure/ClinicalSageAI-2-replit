@@ -126,7 +126,7 @@ describe('the reviewer name once an account is chosen', () => {
     chooseAccount(dialog, '21');
     fireEvent.change(within(dialog).getByLabelText(/Reason for change/), { target: { value: REASON } });
     fireEvent.click(within(dialog).getByRole('button', { name: /Request review/ }));
-    await waitFor(() => expect(onDone).toHaveBeenCalledWith('review-request'));
+    await waitFor(() => expect(onDone).toHaveBeenCalledWith('review-request', undefined));
     expect(onError).not.toHaveBeenCalled();
     expect(lastWrite()[2]).toMatchObject({ reviewerUserId: 21, reviewerName: 'Dr Amara Okafor' });
   });
@@ -140,7 +140,7 @@ describe('the reviewer name once an account is chosen', () => {
     fireEvent.change(nameField(dialog), { target: { value: 'Dr Iyer' } });
     fireEvent.change(within(dialog).getByLabelText(/Reason for change/), { target: { value: REASON } });
     fireEvent.click(within(dialog).getByRole('button', { name: /Request review/ }));
-    await waitFor(() => expect(onDone).toHaveBeenCalledWith('review-request'));
+    await waitFor(() => expect(onDone).toHaveBeenCalledWith('review-request', undefined));
     expect(lastWrite()[2]).toMatchObject({ reviewerName: 'Dr Iyer' });
     expect(lastWrite()[2]).not.toHaveProperty('reviewerUserId');
   });
