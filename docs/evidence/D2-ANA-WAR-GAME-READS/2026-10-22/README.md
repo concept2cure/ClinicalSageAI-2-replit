@@ -123,3 +123,13 @@ The floor in the test is raised to these counts.
 - **Labeling medication-guide rules:** these were not converged. The agent believed the flow's `visibleWhen: 'yes'` gates never open in the UI. That is wrong: `shared/ana/question-predicate.ts` coerces yes/no. These rules can be converged next.
 - **The labeling `no_boxed_warning` rule** is pinned by `boxed-warning-findings-cite-the-guidance-that-states-the-criteria.test.ts`, which calls it with `serious_risks`, a field the interview does not ask. Converging the rule needs that test's input updated.
 - **Partly gated rules:** a few rules read an unasked field only behind an asked gate. They count as assessed on empty answers and become not assessed when the gate opens. The engine handles this at run time.
+
+## Third change: the labeling boxed-warning and Medication Guide rules
+
+- **`lbl_no_boxed_warning`** read `serious_risks`, which the labeling interview does not ask. It now reads the interview's own determination: it fires when `boxed_warning_required === 'yes'` and `boxed_warning_text` is blank, on the prescribing path only.
+  - `boxed-warning-findings-cite-the-guidance-that-states-the-criteria.test.ts` called the rule with `serious_risks`. It now passes `boxed_warning_required: 'yes'`. The assertions on the cited guidance are unchanged.
+- **`lbl_no_medication_guide`** and **`lbl_rems_no_medguide`** read `medication_guide`, which is also not asked. They now read `medication_guide_required` and `medication_guide_status`.
+  - A blank status or `not_started` counts as "no Medication Guide".
+  - For a REMS, an explicit "No Medication Guide" counts as well.
+- **Correction:** the convergence agent's note, that the flow's `visibleWhen: 'yes'` gates never open in the UI, was wrong. `shared/ana/question-predicate.ts` coerces yes/no on both sides.
+- **Red → green:** the new labeling behaviour case fails on trunk at cf07e244c+ and passes after. The labeling floor rises to 18 assessable checks on empty answers; the two Medication Guide rules stop at their gate there.

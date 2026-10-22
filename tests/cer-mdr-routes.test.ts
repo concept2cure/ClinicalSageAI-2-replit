@@ -14,6 +14,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
+// The current actor's persisted organization_users row. POST /mdr/generate
+// admits its actor from persisted membership (requireCurrentProjectActor →
+// readCsrProjectActor), never from the session claim, so the pool answers that
+// read with the row the real table would hold for (org 99, user 777).
+const membership = vi.hoisted(() => ({ rows: [{ role: 'member' }] as Array<{ role: string }> }));
+
 // Chainable drizzle-like mock; every select resolves to [] (no rows). Built
 // inside the factory because vi.mock is hoisted above top-level declarations.
 vi.mock('../server/db', () => {
@@ -31,7 +37,10 @@ vi.mock('../server/db', () => {
     delete: () => chain,
     execute: () => Promise.resolve({ rows: [] }),
   };
-  const query = () => Promise.resolve({ rows: [], rowCount: 0 });
+  const query = (sql: string, params?: unknown[]) =>
+    /FROM organization_users/.test(sql) && params?.[0] === 99 && params?.[1] === 777
+      ? Promise.resolve({ rows: membership.rows, rowCount: membership.rows.length })
+      : Promise.resolve({ rows: [], rowCount: 0 });
   return { db: chain, pool: { query }, getPool: () => ({ query }) };
 });
 
@@ -48,6 +57,7 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
   if (opts.withAuth) {
     app.use((req, _res, next) => {
       (req as any).user = { id: 777, organizationId: 99 };
+      (req as any).userId = 777; // set by the real auth middleware alongside req.user
       next();
     });
   }
@@ -57,6 +67,7 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  membership.rows = [{ role: 'member' }];
 });
 
 describe('CER MDR routes — auth gate', () => {
@@ -90,6 +101,24 @@ describe('POST /api/cer/mdr/generate', () => {
       .send({ deviceId: 999999, regulatoryFramework: 'MDR_2017_745' });
     expect(res.status).toBe(422);
     expect(res.body.error).toMatch(/failed/i);
+  });
+
+  it('refuses (403) an actor whose organization membership was revoked, before generating', async () => {
+    membership.rows = [];
+    const res = await request(makeApp())
+      .post('/api/cer/mdr/generate')
+      .send({ deviceId: 999999, regulatoryFramework: 'MDR_2017_745' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('PROJECT_MEMBERSHIP_REQUIRED');
+  });
+
+  it('refuses (403) a read-only role that cannot write a CER, before generating', async () => {
+    membership.rows = [{ role: 'viewer' }];
+    const res = await request(makeApp())
+      .post('/api/cer/mdr/generate')
+      .send({ deviceId: 999999, regulatoryFramework: 'MDR_2017_745' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('PROJECT_WRITE_PERMISSION_DENIED');
   });
 });
 

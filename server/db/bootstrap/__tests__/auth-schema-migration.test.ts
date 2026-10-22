@@ -4,9 +4,13 @@
  * The auth-schema statements moved from the API's boot, where they ran on the
  * owner connection, to migrations/20261022_auth_schema_and_seeded_organizations.sql.
  * The boot now only asks whether their result is there (missingAuthSchema).
- * Two lists of the same columns drift unless something holds them together:
- * this test reads the migration and requires AUTH_SCHEMA_COLUMNS to be exactly
- * what it creates and adds, table by table.
+ * Two lists of the same columns drift unless something holds them together.
+ * The tables are migrations/0000_sweet_joseph.sql's (install-fresh applies it
+ * to every database); the 20261022 file adds the columns 0000 lacks. So this
+ * test requires the boot to check nothing the deploy does not create, the
+ * migration to add nothing the boot does not check, and the migration to
+ * define no table of its own (a second definition is what
+ * ci:duplicate-table-ddl refuses).
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -15,37 +19,54 @@ import { AUTH_SCHEMA_COLUMNS, missingAuthSchema } from '../auth-schema';
 import { C2C_MIGRATION_FILES } from '../../../../scripts/db/migration-set.mjs';
 
 const MIGRATION = 'migrations/20261022_auth_schema_and_seeded_organizations.sql';
+const CREATOR = 'migrations/0000_sweet_joseph.sql';
 const root = (p: string) => fileURLToPath(new URL(`../../../../${p}`, import.meta.url));
-const sql = readFileSync(root(MIGRATION), 'utf8').replace(/--[^\n]*/g, '');
+const uncomment = (text: string) => text.replace(/--[^\n]*/g, '');
+const sql = uncomment(readFileSync(root(MIGRATION), 'utf8'));
+const creatorSql = uncomment(readFileSync(root(CREATOR), 'utf8'));
 
-/** table → columns the migration creates (CREATE TABLE) or adds (ADD COLUMN IF NOT EXISTS). */
-function migrationColumns(text: string): Map<string, Set<string>> {
+/** table → columns `ADD COLUMN IF NOT EXISTS` adds. */
+function addedColumns(text: string): Map<string, Set<string>> {
   const out = new Map<string, Set<string>>();
-  const add = (table: string, column: string) => {
-    if (!out.has(table)) out.set(table, new Set());
-    out.get(table)!.add(column);
-  };
   for (const m of text.matchAll(/ALTER TABLE\s+(\w+)\s+([\s\S]*?);/g)) {
-    for (const c of m[2].matchAll(/ADD COLUMN IF NOT EXISTS\s+(\w+)/g)) add(m[1], c[1]);
-  }
-  for (const m of text.matchAll(/CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\(([\s\S]*?)\n\);/g)) {
-    for (const line of m[2].split('\n')) {
-      const col = line.trim().match(/^(\w+)\s+[A-Z]/);
-      if (col && col[1] !== 'UNIQUE') add(m[1], col[1]);
+    for (const c of m[2].matchAll(/ADD COLUMN IF NOT EXISTS\s+(\w+)/g)) {
+      if (!out.has(m[1])) out.set(m[1], new Set());
+      out.get(m[1])!.add(c[1]);
     }
   }
   return out;
 }
 
-describe('the auth schema: what the boot checks is what the deploy creates', () => {
-  const created = migrationColumns(sql);
+/** The columns a CREATE TABLE in `text` gives `table` (quoted or bare identifiers). */
+function createdColumns(text: string, table: string): Set<string> {
+  const m = text.match(new RegExp(`CREATE TABLE (?:IF NOT EXISTS )?"?${table}"?\\s*\\(([\\s\\S]*?)\\n\\);`));
+  const cols = new Set<string>();
+  for (const line of (m?.[1] ?? '').split('\n')) {
+    const col = line.trim().match(/^"?(\w+)"?\s+[a-zA-Z]/);
+    if (col && !['CONSTRAINT', 'UNIQUE', 'PRIMARY'].includes(col[1].toUpperCase())) cols.add(col[1]);
+  }
+  return cols;
+}
 
-  it('names the same tables', () => {
-    expect([...created.keys()].sort()).toEqual(Object.keys(AUTH_SCHEMA_COLUMNS).sort());
+describe('the auth schema: what the boot checks is what the deploy creates', () => {
+  const added = addedColumns(sql);
+  const tables = Object.keys(AUTH_SCHEMA_COLUMNS);
+
+  it('defines no table: 0000_sweet_joseph.sql creates each one the boot checks', () => {
+    expect(sql).not.toMatch(/CREATE TABLE/i);
+    for (const table of tables) expect(createdColumns(creatorSql, table).size, table).toBeGreaterThan(0);
   });
 
-  it.each(Object.keys(AUTH_SCHEMA_COLUMNS))('%s: the same columns', (table) => {
-    expect([...(created.get(table) ?? [])].sort()).toEqual([...AUTH_SCHEMA_COLUMNS[table]].sort());
+  it.each(tables)('%s: every column the boot checks is created or added by the deploy', (table) => {
+    const deployed = new Set([...createdColumns(creatorSql, table), ...(added.get(table) ?? [])]);
+    expect(AUTH_SCHEMA_COLUMNS[table].filter((c) => !deployed.has(c))).toEqual([]);
+  });
+
+  it('adds no column the boot does not check, to no table it does not check', () => {
+    for (const [table, cols] of added) {
+      expect(tables, table).toContain(table);
+      expect([...cols].filter((c) => !AUTH_SCHEMA_COLUMNS[table].includes(c)), table).toEqual([]);
+    }
   });
 
   it('is in the migration set, immediately before the default-workspace sweep', () => {

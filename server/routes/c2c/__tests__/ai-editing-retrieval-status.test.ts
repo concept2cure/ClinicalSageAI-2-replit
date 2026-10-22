@@ -31,9 +31,20 @@ vi.mock('../../../middleware/tenantContext', () => ({
 vi.mock('../shared', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   concept2cureRateLimiter: (_q: unknown, _s: unknown, n: () => void) => n(),
-  logAuditEntry: vi.fn(async () => undefined),
+  // logAuditEntry's AuditEntryOutcome: the row committed and is attributed.
+  logAuditEntry: vi.fn(async () => ({ written: true, attributed: true })),
   getUserId: () => 42,
   getOrganizationId: () => 7,
+}));
+// Project admission reads persisted membership and the project row through
+// Drizzle, which this harness stubs out. Admission is answered for the one
+// project these requests name (11, org 7); the refusals themselves — revoked
+// membership, private and foreign projects — are exercised against real tables
+// in server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts.
+const { admit } = vi.hoisted(() => ({ admit: vi.fn() }));
+vi.mock('../project-access', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  requireProjectAdmission: (...a: unknown[]) => admit(...a),
 }));
 vi.mock('../../../services/enhancedEmbeddingService', () => ({
   getEmbeddingService: () => ({ searchHybrid: (...a: unknown[]) => searchHybrid(...a) }),
@@ -68,6 +79,10 @@ function app() {
 const HIT = { id: 'a1', title: 'Study 101 CSR', content: 'Renal clearance was measured.', score: 0.8, sourceId: 'art-1' };
 
 beforeEach(() => {
+  admit.mockReset().mockImplementation(async (_req: unknown, projectId: string) => {
+    if (projectId !== '11') throw new Error(`unexpected admission for project ${projectId}`);
+    return { id: 11, organizationId: 7, status: 'active' };
+  });
   searchHybrid.mockReset();
   gatewayRoute.mockReset();
   query.mockReset();
@@ -106,6 +121,7 @@ describe.each([
     searchHybrid.mockRejectedValue(new Error(OUTAGE));
     const res = await call({ projectId: 11 });
     expect(res.status).toBe(200);
+    expect(admit).toHaveBeenCalledWith(expect.anything(), '11', false);
     const c = carrier(res.body);
     expect(c.retrievalStatus).toBe('failed');
     expect(c.retrievalMessage).toMatch(/not grounded/i);
@@ -127,6 +143,7 @@ describe.each([
   it('not_requested: no project, no retrieval attempted', async () => {
     const c = carrier((await call({ contextAttachment: 'adhoc' })).body);
     expect(searchHybrid).not.toHaveBeenCalled();
+    expect(admit).not.toHaveBeenCalled();
     expect(c.retrievalStatus).toBe('not_requested');
   });
 });

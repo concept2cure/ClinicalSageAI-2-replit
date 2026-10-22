@@ -748,6 +748,45 @@ So the line is drawn by where the process runs, not by `NODE_ENV`:
 No CI escape variable is added. The CI boots are not ECS tasks, so they keep working without one, and an escape would
 be one more override to guard. Evidence: `docs/evidence/MR-03/2026-10-22-stage-2/`.
 
+### P-44 — A package carries its own market's application number; the project's number is its home market's
+
+Decided 2026-10-22 under the founder's delegation of that day ("You decide and continue"). It answers the open question
+of the package-identity rule's owner (`b86baf55`; FILING_SPINE F22): a project records one application number
+(`regulatory_programs.application_number`), and every package read it, whatever its market.
+
+That was a live defect, not a hypothetical one. The EU packager writes the number verbatim into `<procedure-number>`,
+JP into `<application-number>` and CA into `<dossier-id>` (`regional-packager.ts`). So an MAA added to an NDA project
+(F22) would be compiled, exported or transmitted under the US NDA number. AnA's `package_ectd_for_region` did the
+same for any region it was asked for.
+
+- **The project's number belongs to its home market**, the market of its primary agency. It is never written into
+  another market's package.
+- **A submission for another market carries the number its own agency assigned**, recorded on that submission
+  (`submissions.application_number`). A home-market submission keeps reading the project's number, so there is one
+  source for each number and no second copy of either.
+- **Until a market's number is recorded, its packages refuse by name.** This covers compile, export, transmit and
+  AnA's package tool. Nothing borrows another market's number. Dry runs keep their placeholder (P-27).
+- **The number is recorded by one governed act.** It takes the project lead or an organisation manager, a stated
+  reason, a chained audit row that names the old and new value, and the existing identifier rules (`usableIdentifier`;
+  six digits when the market is FDA). A home-market submission is refused there: its number is the project's.
+- **AnA packages a project's home market only, from the record.** For any other region it refuses and points to the
+  submission that market's package is built from.
+- Not decided here, and handed to the identity lane (MR-10 Stage 4): `REGULATORY_IDENTIFIER_PATTERN` refuses the slash
+  that EMA's `EMEA/H/C/…` form carries, while rule EMA-CESP-002 expects it.
+
+### P-45 — The Planner's multi-region compare (F21's remainder) waits until after D10
+
+Decided 2026-10-22 under the same delegation. F21's remaining part is the Planner calling `POST /api/submissions/:id/plan`
+with a "Compare with". The defect F21 existed for, the Cross-region model verdict (a model producing a verdict, Rule 2),
+was retired on 2026-10-08. What remains would put a new multi-region comparison in front of a route that has no client
+caller at head. That is new capability, and no launch row needs it (Rule 2). An added market's own Module 1 outline
+(F22b) is where a filer now sees that market's sections. `WORKFLOW_DECISION_2026-10-08.md` §6 already places F21 after D10.
+
+When it is taken, one rule applies from its design. A region the reasoning engine holds no rules for shows "No rule data
+for <agency>" and no sections. Today `buildSubmissionStructure` answers such a region with FDA's sections, discloses
+the substitution in a note, and still marks it `supported: true`. AnA's two tools that call the engine read that answer,
+so F21's design owns correcting `supported` for a proxied region.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

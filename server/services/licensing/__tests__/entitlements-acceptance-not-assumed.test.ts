@@ -65,8 +65,15 @@ function wireAgreements(opts: { failing?: RegExp; accepted?: string[] } = {}) {
     if (opts.failing?.test(s)) throw new Error('connection terminated unexpectedly');
     if (/CREATE TABLE|WHERE NOT EXISTS \(SELECT 1 FROM license_agreements/.test(s)) return { rows: [] };
     if (/FROM license_agreements WHERE status = 'active'/.test(s)) return { rows: [EULA_ROW] };
-    if (/SELECT DISTINCT agreement_id FROM license_acceptances/.test(s)) {
-      return { rows: (opts.accepted ?? []).map((agreement_id) => ({ agreement_id })) };
+    // The EULA is user-scoped, so only the user-scoped acceptance read can
+    // satisfy it; the organization-scoped read answers nothing for it.
+    const acceptanceRead = /SELECT DISTINCT acceptance\.agreement_id\s+FROM license_acceptances acceptance\s+JOIN license_agreements agreement ON agreement\.id = acceptance\.agreement_id\s+WHERE acceptance\.(user_id|organization_id) = \$1 AND agreement\.scope = '(user|organization)'/.exec(s);
+    if (acceptanceRead) {
+      const [, keyColumn, scope] = acceptanceRead;
+      if (keyColumn === 'user_id' && scope === 'user') {
+        return { rows: (opts.accepted ?? []).map((agreement_id) => ({ agreement_id })) };
+      }
+      if (keyColumn === 'organization_id' && scope === 'organization') return { rows: [] };
     }
     throw new Error(`unexpected statement in test: ${s.slice(0, 80)}`);
   });
