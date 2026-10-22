@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
-import { ok } from '../lib/api-response';
+import { ok, respondIfConverterBusy } from '../lib/api-response';
 import { requestDb, requestPgClient } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
@@ -128,6 +128,10 @@ function handleKnownCodeFailure(res: Response, err: unknown): boolean {
 }
 function fail(res: Response, err: unknown): void {
   if (handleReadRefusal(res, err)) return;
+  // Assemble, freeze, dispatch and transmit all assemble the package, which
+  // converts PDF leaves in conversion slots: a slot that never freed is 503
+  // with Retry-After, not a 500 (OPS-13, MR-03 Stage 2).
+  if (respondIfConverterBusy(res, err)) return;
   if (handleKnownCodeFailure(res, err)) return;
   const code = (err as { code?: string } | null)?.code;
 

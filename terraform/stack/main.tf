@@ -235,6 +235,13 @@ resource "terraform_data" "boot_contract" {
     # The API task carries the virus scanner (modules/ecs-fargate), whose hard
     # memory limit comes out of the task's. What is left is the application's,
     # which ran in 2048 MiB before the scanner was added.
+    # OPS-13 (MR-03 Stage 2): one vCPU carried Node, clamd and every converter,
+    # so one large package could fail the health check and get the task
+    # replaced mid-job. Staging may run smaller.
+    precondition {
+      condition     = var.environment != "production" || var.api_cpu >= 2048
+      error_message = "api_cpu must be at least 2048 (two vCPUs) in production: the API task also runs the virus scanner and the document converters."
+    }
     precondition {
       condition     = var.api_memory - module.ecs.scanner_memory >= 2048
       error_message = "api_memory must leave the application 2048 MiB beside the virus scanner's ${module.ecs.scanner_memory} MiB: at least ${module.ecs.scanner_memory + 2048}."
@@ -418,6 +425,9 @@ module "ecs" {
   api_cpu           = var.api_cpu
   api_memory        = var.api_memory
   api_desired_count = var.api_desired_count
+  api_max_count     = var.api_max_count
+  # The request-count scaling policy's metric: this ALB, this target group.
+  api_request_count_resource_label = "${module.alb.alb_arn_suffix}/${module.alb.api_target_group_arn_suffix}"
 
   secret_arns = module.secrets.secret_arns_list
   # database_keys.tf: the execution role decrypts the secrets through this key.

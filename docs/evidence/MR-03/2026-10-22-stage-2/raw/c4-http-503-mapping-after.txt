@@ -1,0 +1,93 @@
+# c4 — HTTP mapping tests AFTER respondIfConverterBusy (server/lib/api-response.ts) and its callers
+# HEAD (uncommitted changes on top): 178f0b477c8e92257827a5f64c7f0441af7aa8a1
+# date: 2026-10-22T01:36:44Z
+ M server/integrations/ocrmypdf/client.ts
+ M server/integrations/verapdf/client.ts
+ M server/lib/api-response.ts
+ M server/routes/ectd-compile.ts
+ M server/routes/ectd-export.ts
+ M server/routes/submissions.ts
+ M server/services/docx-pdf-pipeline.ts
+ M server/services/ectd/pdfa-pipeline.ts
+ M server/services/pdf-compression-service.ts
+ M server/services/pdf-converter.ts
+ M server/services/submission-service/submission-service.ts
+ M server/src/mw/observability.ts
+?? docs/evidence/MR-03/2026-10-22-stage-2/
+?? server/services/__tests__/conversion-capacity-compile-http.test.ts
+?? server/services/__tests__/conversion-capacity-http.test.ts
+?? server/services/__tests__/conversion-capacity-submissions-http.test.ts
+?? server/services/__tests__/conversion-slots.test.ts
+?? server/services/conversion-slots.ts
+# command: npx vitest run server/services/__tests__/conversion-capacity-http.test.ts server/services/__tests__/conversion-capacity-submissions-http.test.ts server/services/__tests__/conversion-capacity-compile-http.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/__tests__/conversion-capacity-compile-http.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/conversion-capacity-compile-http.test.ts
+{
+  "timestamp": "2026-10-22T01:36:47.636Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row 1574ms
+stdout | server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId (export)
+[eCTD Export] Generating package for submission 42, org 100
+
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > serverError answers a busy converter 503 with Retry-After > instead of 500 "something went wrong" 22ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > serverError answers a busy converter 503 with Retry-After > leaves every other error a 500 5ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the global error handler answers a busy converter 503 with Retry-After > in production too, where a 5xx message is otherwise replaced by "Internal server error" 8ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId (export) 19ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > GET /:submissionId/preview 5ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId/validate (generate, then validate) 5ms
+stdout | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+{
+  "timestamp": "2026-10-22T01:36:56.038Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T01:36:56.039Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+{
+  "timestamp": "2026-10-22T01:36:56.039Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+{
+  "timestamp": "2026-10-22T01:36:56.351Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/conversion-capacity-submissions-http.test.ts > POST /api/submissions/sequences/:seqId/assemble with every conversion slot busy > answers 503 with Retry-After and says the converter is busy 55ms
+
+ Test Files  3 passed (3)
+      Tests  8 passed (8)
+   Start at  01:36:45
+   Duration  13.59s (transform 5.41s, setup 123ms, import 11.09s, tests 1.71s, environment 0ms)
+
+# exit code: 0

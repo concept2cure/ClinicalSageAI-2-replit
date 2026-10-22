@@ -332,6 +332,21 @@ The scan used `trivy config` with CI's exact settings: HIGH and CRITICAL,
 - The binary is v0.69.3, built from the Go module proxy because GitHub release
   downloads are not reachable from here.
 
+## CI on the push that carried all three slices
+
+`terraform-tests.yml` run 40 (id 39704694471), head `934722ec7`: **success**,
+11 of 11 jobs. The jobs were:
+
+- `terraform validate` for bootstrap, production and staging, each from its
+  committed lock file with `-lockfile=readonly`;
+- `terraform test` for `terraform/stack` and the alb, cloudfront,
+  compliance-evidence, github-deploy-roles and vpc-secure modules;
+- the state backend guard, with its self-test;
+- the deploy preflight run against the rendered task definition.
+
+The run for slice B alone (run 39, `b2f799d6b`) was cancelled by this one
+before it finished, so run 40 is the first CI result for slices A and B too.
+
 ## Not shown here
 
 - **The real-AWS acceptance** (bootstrap creates `c2c-tfstate-<account>-us-east-1`;
