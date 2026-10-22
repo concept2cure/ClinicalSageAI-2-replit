@@ -1,0 +1,14 @@
+ ✓ tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows 14ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 29889ms
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 35569ms
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher 35228ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 24744ms
+ × tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not 60006ms
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence 33289ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called 34072ms
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records 34779ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 109, severity: 'ERROR', code: '57014', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postgres.c', routine: 'ProcessInterrupts' }
+Serialized Error: { length: 109, severity: 'ERROR', code: '57014', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postgres.c', routine: 'ProcessInterrupts' }
+ Test Files  2 failed (2)
+      Tests  5 failed | 4 passed (9)

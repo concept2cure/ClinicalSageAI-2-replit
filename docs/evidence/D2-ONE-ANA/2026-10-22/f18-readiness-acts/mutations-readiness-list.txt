@@ -1,0 +1,11 @@
+Mutations against dispatchReadinessActs + dispatchReadinessProgramScope (each applied alone, file restored after; RED = the suite failed):
+RED  LOA sent to a placement: 1
+RED  leaf defect sent to a new placement: 1
+RED  warnings get an act: 1
+RED  section not carried through the door: 1
+RED  act opens the first market's sequence: 1
+RED  transmit promised before dispatch: 1
+RED  door shown on a blocked gate: 1
+RED  AnA told cleared:false for an unanswered market: 1
+RED  markets read only after the project: 1
+RED  chat ask instead of navigation: 1

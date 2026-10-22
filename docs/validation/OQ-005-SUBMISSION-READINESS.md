@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-005 |
-| Version | 0.6 |
+| Version | 0.7 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-005 |
 | Runner (the executable protocol) | `tests/validation/oq/submission-readiness/run.mjs` — `npm run validation:oq -- submission-readiness` |
@@ -19,6 +19,7 @@
 | 0.4 | 2026-09-23 | W3 | OQ-SRDY-05 is scripted and can fail. It had executed the readiness review for the program and passed on any 2xx, and this protocol called it unscripted while the record called it a scripted pass. The review completed for a program none of whose data it could read, with "No critical issues found" (VSR-001 F-23). The step now requires a program id the engine cannot read to be refused or to fail with the reason. OQ-SRDY-05b is new: the review of the program's anchored project must name the program; without an anchor it is a deviation naming the reason intake gave. On the code before F-23's fix OQ-SRDY-05 fails; after it, it passes (`docs/evidence/W3/2026-09-23b/OQ-005-v0.4/`). |
 | 0.5 | 2026-09-23 | W3 | OQ-SRDY-06 requires the scan of the program id (400) and of a project the organisation does not hold (404) to be refused. It had scanned project 1 and passed on 200 with zero findings, in an organisation that holds no project 1 (VSR-001 F-25). OQ-SRDY-06b is new: the scan of the program's anchored project must run; without an anchor it is a deviation. OQ-SRDY-08 is scripted: both boards must be locked by launch scope and their deep links must show the launch-scope gate (launch scope decided, VSR-001 §16). |
 | 0.6 | 2026-09-25 | WO-16C / D2 | Launch scope is enforced at the API as well as in the navigation (`server/services/entitlements/launch-scope-api.ts`; evidence `docs/evidence/D2-API-SCOPE/2026-09-25/`). Until then a signed-in tenant could call the locked boards' routes directly. OQ-SRDY-08 now also requires the boards' own APIs, the contradiction scan and the execution history, to answer 403 `LAUNCH_SCOPE`. OQ-SRDY-06: with launch scope enforced, the posture this protocol runs in, both scans are refused 403 `LAUNCH_SCOPE`; neither may be answered as clean, which was the step's point (F-25). OQ-SRDY-06b: the scan is locked in this posture, so its positive half is a deviation that says so; it stays executable with launch scope off. OQ-SRDY-05b no longer reads `GET /executions/:id`, which is the Orchestration board's history. It reads the status and steps from the execution the response returns. **Not yet executed at this version.** |
+| 0.7 | 2026-10-22 | D2 / F18 | OQ-SRDY-07's note describes the surface as it is: the open program's markets from its scoped submission list, each with its newest sequence and gate. The step, its expected result (sequence `0000` and its gate visible) and its check are unchanged. Executed results recorded at 0.6 still apply. |
 
 ## 1. Method
 

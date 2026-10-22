@@ -74,8 +74,17 @@ async function audits(label: string) {
     AND record_id=$2 AND action='submission_digest_read'`, [org, digest(label)])).rows;
 }
 
+const priorAuditHmacKey = process.env.AUDIT_HMAC_KEY;
+const priorAuditHmacSecret = process.env.AUDIT_HMAC_SECRET;
+function restoreAuditKeys(): void {
+  if (priorAuditHmacKey === undefined) delete process.env.AUDIT_HMAC_KEY; else process.env.AUDIT_HMAC_KEY = priorAuditHmacKey;
+  if (priorAuditHmacSecret === undefined) delete process.env.AUDIT_HMAC_SECRET; else process.env.AUDIT_HMAC_SECRET = priorAuditHmacSecret;
+}
+
 beforeAll(async () => {
   if (!process.env.APP_DATABASE_URL) throw new Error('A provisioned restricted application role is required.');
+  process.env.AUDIT_HMAC_KEY ??= 'synthetic-digest-access-audit-hmac-key-no-production-use';
+  process.env.AUDIT_HMAC_SECRET ??= 'synthetic-digest-access-tamper-proof-key-no-production-use';
   owner = new Pool({ connectionString: databaseUrl, max: 2 });
   org = Number((await owner.query("INSERT INTO organizations(name,slug,status) VALUES($1,$1,'active') RETURNING id", [tag])).rows[0].id);
   reader = await actor('reader'); viewer = await actor('viewer', 'viewer'); other = await actor('other'); revoked = await actor('revoked');
@@ -95,7 +104,7 @@ beforeAll(async () => {
   });
   app.use('/api/submission-ops', authMiddleware, (await import('../../server/routes/submission-ops')).default);
 });
-afterAll(async () => { fault = 'none'; vi.restoreAllMocks(); await runtime?.end(); await owner?.end(); });
+afterAll(async () => { fault = 'none'; vi.restoreAllMocks(); restoreAuditKeys(); await runtime?.end(); await owner?.end(); });
 
 describe('retained digest recipient admission on the actual deployed schema', () => {
   it('uses authenticated tenant scope, restricted role, configured transport and enforced RLS', async () => {

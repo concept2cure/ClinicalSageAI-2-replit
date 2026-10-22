@@ -1172,7 +1172,8 @@ describe('D2 end to end — a fresh org, the real launch provisioning, the rail 
     const appsWithNothingOpen = LAUNCH_APPS.filter((app) => !app.modules.some((m) => v.get(m)?.entitled === true)).map(
       (app) => app.id,
     );
-    expect(appsWithNothingOpen).toEqual(expect.arrayContaining(['submission-readiness', 'qms']));
+    // P-36 (1e18cdd49): Submission Readiness folded into Submission Center.
+    expect(appsWithNothingOpen).toEqual(expect.arrayContaining(['submission-center', 'qms']));
     // 3 min: in this vitest lane `'../../db'` resolves to server/db.js, whose
     // query() retries a failed statement 3x with backoff (~2.5 s per module);
     // production's esbuild bundle resolves it to server/db.ts, which does not.

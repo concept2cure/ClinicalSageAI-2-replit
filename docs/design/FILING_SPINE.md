@@ -444,6 +444,7 @@ Two corrections to the readers:
 | F15: Respond answers the agency | This commit | Landed 2026-10-15 | Yes | Add the letter, draft from it with AnA (pinned), start the response sequence (`followUp: 'response'`). F0's red-hop list is empty. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f15-respond/` |
 | F22 (part a): add a market | This commit | Landed 2026-10-15 | Yes | `POST /api/c2c/projects/:id/markets`: the market's Module 1 and 3.2.R (`filing_scope = 'market'`), its anchored submission, the reason; refusals by name. The outline and the binding take the home filing. Not yet: the market's Module 1 in the editor's outline and the gap rows (F22b). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22-add-a-market/` |
 | F22 (part b): each market's Module 1 in the editor | `77ac97d85`, `bf366c650` (server) and this commit (editor) | Landed 2026-10-15 | Yes | The editor's outline is the filing the open document is the editing copy of: an added market's Module 1 and 3.2.R, with its gaps named and never inserted. The pane lists the project's filings, and a market's editing copy is created there, bound by the server. Commits, section creates and binds are refused outside the market's part (`shared/regulatory/filing-scope.ts`). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22b-market-outline/` |
+| F18: readiness is one list, and its buttons do the job | `3eb8e0eab0`, `0d39b20cb6` and this commit | Landed 2026-10-22 | Yes | Submission Readiness lists every market from the scoped list (`useProgramMarkets`, ProjectMarkets' rows), each with its gates and findings; a finding opens the Builder at the section, the placed leaf, or Validation (`readinessFindingActs.ts`, through the F10 door, which now carries a section); a cleared gate opens the sequence's Dispatch tab. The single-sequence walk (`useProgramSequence`) is deleted. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-22/f18-readiness-acts/` |
 
 ### 7.2 New slices
 
@@ -645,11 +646,11 @@ Every slice files its red run, then its green run, under `docs/evidence/D2-ONE-A
 - **Fails first:** `__tests__/placeIntoFilingApprovalState.test.tsx`. Red.
 - **Depends on:** none. Unverified: which field the dialog reads for the source's state.
 
-**F18. Readiness is one list, and its buttons do the job. S.**
+**F18. Readiness is one list, and its buttons do the job. S.** *Landed 2026-10-22 (§7.1). The line references below were stale by then; the evidence README names the code as built.*
 - **Files:** `DispatchReadiness.tsx`.
   - It renders `ProjectMarkets`.
-  - "Fix" (`:363`) opens the Builder at that code through F10.
-  - "Prepare governed transmit" (`:389-398`) opens the Dispatch tab.
+  - "Fix" opens the Builder at that code through F10.
+  - "Prepare governed transmit" opens the Dispatch tab.
 - **Fails first:** `__tests__/dispatchReadinessActs.test.tsx`: no call to `ask()`. Red.
 - **Depends on:** F9, F10. Opening the source document straight from a finding needs the leaf's link back to its source, which is unverified, so that is not promised.
 

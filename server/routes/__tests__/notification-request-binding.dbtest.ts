@@ -47,7 +47,8 @@ const get=(path:string)=>request(app).get('/api/mdx/'+path);
 const post=(path:string)=>request(app).post('/api/mdx/'+path);
 beforeAll(async()=>{
   const adminAddress=new URL(databaseUrl);
-  if(adminAddress.pathname!=='/c2c_audit_remedies')throw new Error('This fixture requires the explicitly created c2c_audit_remedies database');
+  const disposableCi=process.env.CI==='true'&&process.env.NODE_ENV==='test'&&adminAddress.pathname==='/concept2cure-ri_dbtest';
+  if(adminAddress.pathname!=='/c2c_audit_remedies'&&!disposableCi)throw new Error('This fixture requires the explicitly created c2c_audit_remedies database or the CI disposable test database');
   admin=new Client({connectionString:adminAddress.href});await admin.connect();
   const existingOrganizations=await admin.query('SELECT id FROM organizations WHERE id=ANY($1::int[])',[fixtureOrganizations]);
   const existingUsers=await admin.query('SELECT id FROM users WHERE id=ANY($1::int[])',[fixtureUsers]);
