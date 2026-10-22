@@ -1,0 +1,181 @@
+[
+  {
+    "question": "Walk me through what Module 3 needs to cover for our product and how the control strategy ties it together.",
+    "expect": "cmc"
+  },
+  {
+    "question": "How should the QTPP and our CQAs drive the CMC package?",
+    "expect": "cmc",
+    "context": { "surfaceId": "cmc", "segments": ["pharma"] }
+  },
+  {
+    "question": "Where does this program stand on CMC, and which sections are still missing inputs?",
+    "expect": "cmc",
+    "context": { "surfaceId": "cmc", "segments": ["pharma"], "submissionType": "US_IND" }
+  },
+  {
+    "question": "What does 3.2.S.2 need to say about the synthetic route and the regulatory starting material?",
+    "expect": "cmc.drug-substance"
+  },
+  {
+    "question": "We found a second polymorph of the API late in development. How should solid form be characterised and controlled in the drug substance section?",
+    "expect": "cmc.drug-substance",
+    "context": { "documentType": "ICH_M3_DS", "segments": ["pharma"] }
+  },
+  {
+    "question": "Is our choice of starting materials defensible under ICH Q11?",
+    "expect": "cmc.drug-substance"
+  },
+  {
+    "question": "What belongs in 3.2.P.2 pharmaceutical development for an immediate-release tablet?",
+    "expect": "cmc.drug-product"
+  },
+  {
+    "question": "Can we show f2 similarity between the clinical and the commercial dissolution profile?",
+    "expect": "cmc.drug-product",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Do we need full information on a novel excipient in our drug product section?",
+    "expect": "cmc.drug-product",
+    "context": { "documentType": "ICH_M3_DP", "segments": ["pharma"] }
+  },
+  {
+    "question": "How do we justify the acceptance criteria in our drug substance specification when we only have three batches?",
+    "expect": "cmc.specifications"
+  },
+  {
+    "question": "Which universal tests does ICH Q6A expect for a solid oral product, and how should we write the justification of specification?",
+    "expect": "cmc.specifications",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Should the release specification for our phase 1 batch be tighter than the shelf-life specification?",
+    "expect": "cmc.specifications"
+  },
+  {
+    "question": "Check batch poolability for our three registration stability studies before we propose a shelf life.",
+    "expect": "cmc.stability"
+  },
+  {
+    "question": "What long-term and accelerated conditions do we need for a refrigerated product going to climatic zone IVb?",
+    "expect": "cmc.stability",
+    "context": { "documentType": "ICH_STABILITY_PROTOCOL", "segments": ["pharma"] }
+  },
+  {
+    "question": "Is anything out of trend in stability study 42, and how far can Q1E extrapolation take the retest period?",
+    "expect": "cmc.stability"
+  },
+  {
+    "question": "A late-step reagent is Ames positive. What acceptable intake and control option apply to this mutagenic impurity under ICH M7?",
+    "expect": "cmc.impurities"
+  },
+  {
+    "question": "Do we need a nitrosamine risk assessment for a secondary amine API, and what limit applies to an NDSRI?",
+    "expect": "cmc.impurities",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "What qualification threshold applies under Q3A to an impurity in a drug substance dosed at 50 mg a day?",
+    "expect": "cmc.impurities"
+  },
+  {
+    "question": "How should elemental impurities and residual solvents be handled for a parenteral product?",
+    "expect": "cmc.impurities",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Which validation characteristics does ICH Q2(R2) require for a quantitative impurity method, and how does Q14 change method development?",
+    "expect": "cmc.analytical-procedures"
+  },
+  {
+    "question": "How do we show our HPLC assay is stability-indicating with forced degradation data?",
+    "expect": "cmc.analytical-procedures"
+  },
+  {
+    "question": "Plan a method transfer of the release assay to the contract manufacturer's QC laboratory.",
+    "expect": "cmc.analytical-procedures",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How much phase 1 CMC does FDA expect in an original IND for a small molecule?",
+    "expect": "cmc.phase-appropriate-ind"
+  },
+  {
+    "question": "Is our clinical batch exempt from Part 211, and what does CGMP for phase 1 look like in practice?",
+    "expect": "cmc.phase-appropriate-ind",
+    "context": { "submissionType": "US_IND", "segments": ["pharma"] }
+  },
+  {
+    "question": "What goes in 3.2.R for a US IND, and how do we file manufacturing changes as a CMC information amendment?",
+    "expect": "cmc.phase-appropriate-ind"
+  },
+  {
+    "question": "What viral clearance studies and cell bank testing do we need before first dosing with a CHO-derived antibody?",
+    "expect": "cmc.biologics"
+  },
+  {
+    "question": "How should we set the potency assay and the host cell protein limits for our monoclonal antibody?",
+    "expect": "cmc.biologics",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Can the platform build Module 3 for our biologic, and what does Q5A(R2) expect from us?",
+    "expect": "cmc.biologics",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "What release testing does our CAR-T need under cell therapy CMC expectations, and how is chain of identity kept?",
+    "expect": "cmc.cell-and-gene-therapy"
+  },
+  {
+    "question": "How do we control empty capsids and vector copy number in AAV manufacturing?",
+    "expect": "cmc.cell-and-gene-therapy",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Our lentiviral vector manufacturing moves to a new site before phase 2. What does ATMP CMC comparability need?",
+    "expect": "cmc.cell-and-gene-therapy",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "We are changing the cell culture media after approval. How big a comparability exercise does Q5E call for?",
+    "expect": "cmc.comparability-and-changes"
+  },
+  {
+    "question": "Is moving tablet compression to a new site a prior approval supplement or a CBE-30, and what EU variation type would it be?",
+    "expect": "cmc.comparability-and-changes",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Which elements of our dossier should be established conditions, and is a PACMP worth filing?",
+    "expect": "cmc.comparability-and-changes",
+    "context": { "documentType": "ICH_COMPARABILITY", "segments": ["biotech"] }
+  },
+  {
+    "question": "What goes into the PPQ protocol, and how do we set up continued process verification afterwards?",
+    "expect": "cmc.process-validation"
+  },
+  {
+    "question": "What is the process capability, as Cpk, of our tablet assay across the recorded batches?",
+    "expect": "cmc.process-validation",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "What does EU Annex 15 expect for process validation compared with FDA's three stages?",
+    "expect": "cmc.process-validation"
+  },
+  {
+    "question": "Draft the Quality Overall Summary for our IND from what is recorded.",
+    "expect": "cmc.quality-overall-summary"
+  },
+  {
+    "question": "Check that our Module 2.3 agrees with Module 3 on shelf life and impurity limits.",
+    "expect": "cmc.quality-overall-summary",
+    "context": { "documentType": "ICH_QOS", "segments": ["pharma"] }
+  },
+  {
+    "question": "What goes in 2.3.P of the QOS?",
+    "expect": "cmc.quality-overall-summary"
+  }
+]

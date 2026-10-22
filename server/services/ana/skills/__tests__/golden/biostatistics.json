@@ -1,0 +1,185 @@
+[
+  {
+    "question": "Can you walk me through the type I error implications of our superiority trial and whether the hypothesis testing approach holds up?",
+    "expect": "biostatistics"
+  },
+  {
+    "question": "Our biostatistician says the confidence interval excludes 1 but the p-value is 0.06. How do we reconcile that?",
+    "expect": "biostatistics"
+  },
+  {
+    "question": "How many patients do we need per arm if we assume a 30% dropout rate and 90% power?",
+    "expect": "biostatistics.sample-size"
+  },
+  {
+    "question": "Please check the sample size justification in the protocol. I think we're underpowered for the non-inferiority margin we picked.",
+    "expect": "biostatistics.sample-size"
+  },
+  {
+    "question": "Given how unsure we are about the effect size, what's the realistic probability of success for phase 3?",
+    "expect": "biostatistics.sample-size",
+    "context": {
+      "segments": [
+        "pharma"
+      ]
+    }
+  },
+  {
+    "question": "How should rescue medication be handled as an intercurrent event in the estimand for our 12-week trial?",
+    "expect": "biostatistics.estimands"
+  },
+  {
+    "question": "For discontinuation due to adverse events, is a hypothetical strategy defensible or should we stay with treatment policy?",
+    "expect": "biostatistics.estimands"
+  },
+  {
+    "question": "Draft the E9(R1) wording for the primary estimand, including the population-level summary.",
+    "expect": "biostatistics.estimands",
+    "context": {
+      "segments": [
+        "biotech"
+      ]
+    }
+  },
+  {
+    "question": "Review our statistical analysis plan: is the full analysis set defined consistently with the ITT principle?",
+    "expect": "biostatistics.statistical-analysis-plan"
+  },
+  {
+    "question": "Which analyses should run on the per-protocol set versus the safety population?",
+    "expect": "biostatistics.statistical-analysis-plan",
+    "context": {
+      "documentType": "ICH_SAP"
+    }
+  },
+  {
+    "question": "What does the SAP need to say about key secondary endpoints and the subgroup analyses we plan?",
+    "expect": "biostatistics.statistical-analysis-plan"
+  },
+  {
+    "question": "We have two primary endpoints and three key secondaries. Hierarchical testing or a graphical approach to hold the family-wise error?",
+    "expect": "biostatistics.multiplicity"
+  },
+  {
+    "question": "Can we use Hochberg rather than Holm for the three doses compared with placebo?",
+    "expect": "biostatistics.multiplicity"
+  },
+  {
+    "question": "If the first endpoint in our fixed-sequence procedure fails, is alpha recycling to the next one allowed?",
+    "expect": "biostatistics.multiplicity"
+  },
+  {
+    "question": "We plan one interim analysis at half the information with an O'Brien-Fleming spending function. What are the boundaries?",
+    "expect": "biostatistics.adaptive-and-interim"
+  },
+  {
+    "question": "Who on our side can see unblinded results from the DSMB, and what belongs in the data monitoring committee charter?",
+    "expect": "biostatistics.adaptive-and-interim"
+  },
+  {
+    "question": "Would FDA accept a seamless phase 2/3 adaptive design with sample size re-estimation at the end of stage one?",
+    "expect": "biostatistics.adaptive-and-interim"
+  },
+  {
+    "question": "Is LOCF still acceptable as the primary approach, or do we need multiple imputation with a tipping point analysis?",
+    "expect": "biostatistics.missing-data"
+  },
+  {
+    "question": "What sensitivity analyses should we pre-specify if the data are missing not at random?",
+    "expect": "biostatistics.missing-data"
+  },
+  {
+    "question": "How much power do we lose with 20% missing data if the primary analysis is MMRM?",
+    "expect": "biostatistics.missing-data",
+    "context": {
+      "segments": [
+        "biotech"
+      ]
+    }
+  },
+  {
+    "question": "How do we deal with prior-data conflict if we use dynamic borrowing in a Bayesian design?",
+    "expect": "biostatistics.bayesian-and-borrowing"
+  },
+  {
+    "question": "What effective sample size does our informative prior contribute, and is that too much?",
+    "expect": "biostatistics.bayesian-and-borrowing"
+  },
+  {
+    "question": "Can we augment the concurrent control with a historical control using a power prior?",
+    "expect": "biostatistics.bayesian-and-borrowing",
+    "context": {
+      "segments": [
+        "device"
+      ]
+    }
+  },
+  {
+    "question": "The hazard ratio looks shaky because the curves separate late. Should we use RMST instead of the log-rank test?",
+    "expect": "biostatistics.time-to-event-and-alternatives"
+  },
+  {
+    "question": "For our event-driven design we need an event projection: how long until 300 events at 20 patients enrolled per month?",
+    "expect": "biostatistics.time-to-event-and-alternatives"
+  },
+  {
+    "question": "Is a win ratio a sound primary analysis for a hierarchical composite of death and heart-failure hospitalisation?",
+    "expect": "biostatistics.time-to-event-and-alternatives",
+    "context": {
+      "segments": [
+        "pharma"
+      ]
+    }
+  },
+  {
+    "question": "Our comparator isn't a reference standard, so should we report PPA and NPA instead of sensitivity and specificity?",
+    "expect": "biostatistics.diagnostic-accuracy"
+  },
+  {
+    "question": "How many readers do we need in an MRMC reader study comparing AI-assisted reads with unaided reads?",
+    "expect": "biostatistics.diagnostic-accuracy",
+    "context": {
+      "segments": [
+        "device"
+      ]
+    }
+  },
+  {
+    "question": "How large does the study need to be so the lower bound of clinical sensitivity clears our performance goal?",
+    "expect": "biostatistics.diagnostic-accuracy",
+    "context": {
+      "segments": [
+        "ivd"
+      ]
+    }
+  },
+  {
+    "question": "Which SDTM and ADaM versions will FDA accept for our NDA, and do we need define-xml 2.1?",
+    "expect": "biostatistics.data-standards"
+  },
+  {
+    "question": "Pinnacle 21 flagged errors in ADSL. What should go in the reviewer's guide?",
+    "expect": "biostatistics.data-standards"
+  },
+  {
+    "question": "Are our datasets ready for FDA's technical conformance expectations before we file?",
+    "expect": "biostatistics.data-standards",
+    "context": {
+      "segments": [
+        "pharma"
+      ]
+    }
+  },
+  {
+    "question": "The CSR calls the result statistically significant, but it's only a nominal p-value after the hierarchy failed. How should it be worded?",
+    "expect": "biostatistics.reporting-results"
+  },
+  {
+    "question": "Draft the topline results paragraph for the primary endpoint and describe the forest plot.",
+    "expect": "biostatistics.reporting-results"
+  },
+  {
+    "question": "Enrolled N in Module 2.7.3 doesn't match the CSR. Can you reconcile numbers across the dossier?",
+    "expect": "biostatistics.reporting-results"
+  }
+]

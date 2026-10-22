@@ -15983,6 +15983,19 @@ export const accountSkillBundles = pgTable(
       signatureRequired?: boolean;
     }>(),
 
+    // ── AnA skill (migrations/20261022_ana_skills.sql) ──────────
+    // A bundle is an organization's own AnA skill. module_types holds its
+    // disciplines and work_types its use cases (shared/ana/skills.ts); these
+    // are the facets and links that had no column. Empty list = any.
+    extendsSkillKey: text('extends_skill_key'), // platform-library skill it extends, or null
+    extensionMode: text('extension_mode'), // 'addendum' | 'replace' when extendsSkillKey is set
+    triggers: jsonb('triggers').$type<string[]>().default([]).notNull(),
+    segments: jsonb('segments').$type<string[]>().default([]).notNull(),
+    therapeuticAreas: jsonb('therapeutic_areas').$type<string[]>().default([]).notNull(),
+    surfaces: jsonb('surfaces').$type<string[]>().default([]).notNull(),
+    documentTypes: jsonb('document_types').$type<string[]>().default([]).notNull(),
+    toolNames: jsonb('tool_names').$type<string[]>().default([]).notNull(),
+
     // ── Governance ──────────────────────────────────────────────
     version: integer('version').default(1).notNull(),
     status: text('status').default('active').notNull(), // draft, active, locked, archived
@@ -16005,6 +16018,33 @@ export const accountSkillBundles = pgTable(
 );
 
 export type AccountSkillBundle = InferSelectModel<typeof accountSkillBundles>;
+
+/**
+ * An administrator's on/off for each platform-library AnA skill, with the
+ * reason they stated (migrations/20261022_ana_skills.sql). No row means the
+ * library skill is on. The change and its reason are also in the chained
+ * audit row written in the same transaction.
+ */
+export const organizationSkillSettings = pgTable(
+  'organization_skill_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    skillKey: text('skill_key').notNull(),
+    enabled: boolean('enabled').notNull(),
+    reason: text('reason').notNull(),
+    updatedById: integer('updated_by_id').references(() => users.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgKey: unique('organization_skill_settings_org_key').on(table.organizationId, table.skillKey),
+    orgIdx: index('organization_skill_settings_org_idx').on(table.organizationId),
+  })
+);
+
+export type OrganizationSkillSetting = InferSelectModel<typeof organizationSkillSettings>;
 export const insertAccountSkillBundleSchema = createInsertSchemaOmit(accountSkillBundles, {
   id: true,
   createdAt: true,

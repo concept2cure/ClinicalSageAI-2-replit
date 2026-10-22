@@ -1,0 +1,102 @@
+--- base: the two parents the file references
+CREATE TABLE
+CREATE TABLE
+INSERT 0 2
+INSERT 0 1
+--- apply 1
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+--- apply 2 (Rule 1: every deploy re-runs it)
+psql:migrations/20261022_ana_skills.sql:53: NOTICE:  relation "account_skill_bundles" already exists, skipping
+CREATE TABLE
+psql:migrations/20261022_ana_skills.sql:55: NOTICE:  relation "acct_bundle_org_idx" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022_ana_skills.sql:56: NOTICE:  relation "acct_bundle_id_idx" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022_ana_skills.sql:57: NOTICE:  relation "acct_bundle_type_idx" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022_ana_skills.sql:58: NOTICE:  relation "acct_bundle_status_idx" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022_ana_skills.sql:59: NOTICE:  relation "acct_bundle_profile_idx" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "extends_skill_key" of relation "account_skill_bundles" already exists, skipping
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "extension_mode" of relation "account_skill_bundles" already exists, skipping
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "triggers" of relation "account_skill_bundles" already exists, skipping
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "segments" of relation "account_skill_bundles" already exists, skipping
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "therapeutic_areas" of relation "account_skill_bundles" already exists, skipping
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "surfaces" of relation "account_skill_bundles" already exists, skipping
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "document_types" of relation "account_skill_bundles" already exists, skipping
+psql:migrations/20261022_ana_skills.sql:73: NOTICE:  column "tool_names" of relation "account_skill_bundles" already exists, skipping
+ALTER TABLE
+DO
+psql:migrations/20261022_ana_skills.sql:96: NOTICE:  relation "acct_bundle_one_replacement" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022_ana_skills.sql:100: NOTICE:  relation "acct_bundle_extends_idx" already exists, skipping
+CREATE INDEX
+psql:migrations/20261022_ana_skills.sql:112: NOTICE:  relation "organization_skill_settings" already exists, skipping
+CREATE TABLE
+psql:migrations/20261022_ana_skills.sql:115: NOTICE:  relation "organization_skill_settings_org_idx" already exists, skipping
+CREATE INDEX
+--- columns added
+    column_name    | data_type | is_nullable | column_default 
+-------------------+-----------+-------------+----------------
+ document_types    | jsonb     | NO          | '[]'::jsonb
+ extends_skill_key | text      | YES         | 
+ extension_mode    | text      | YES         | 
+ segments          | jsonb     | NO          | '[]'::jsonb
+ surfaces          | jsonb     | NO          | '[]'::jsonb
+ therapeutic_areas | jsonb     | NO          | '[]'::jsonb
+ tool_names        | jsonb     | NO          | '[]'::jsonb
+ triggers          | jsonb     | NO          | '[]'::jsonb
+(8 rows)
+
+--- a standalone skill: accepted
+INSERT 0 1
+--- extends with no mode: refused
+INSERT 0 1
+--- a mode with nothing extended: refused
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/16a7fead-3565-58d8-8dc3-fec36dffdb80/scratchpad/proof.sql:18: ERROR:  new row for relation "account_skill_bundles" violates check constraint "account_skill_bundles_extension_check"
+DETAIL:  Failing row contains (3, bundle_3, 1, null, Bad, null, review, null, null, null, null, [], null, null, null, [], null, null, 1, active, null, null, null, null, 2026-10-22 17:12:28.011652, 2026-10-22 17:12:28.011652, null, addendum, [], [], [], [], [], []).
+--- an unknown mode: refused
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/16a7fead-3565-58d8-8dc3-fec36dffdb80/scratchpad/proof.sql:20: ERROR:  new row for relation "account_skill_bundles" violates check constraint "account_skill_bundles_extension_check"
+DETAIL:  Failing row contains (4, bundle_4, 1, null, Bad, null, review, null, null, null, null, [], null, null, null, [], null, null, 1, active, null, null, null, null, 2026-10-22 17:12:28.011861, 2026-10-22 17:12:28.011861, cmc.stability, merge, [], [], [], [], [], []).
+--- first replacement of cmc.stability in Org A: accepted
+INSERT 0 1
+--- second active replacement in Org A: refused
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/16a7fead-3565-58d8-8dc3-fec36dffdb80/scratchpad/proof.sql:24: ERROR:  duplicate key value violates unique constraint "acct_bundle_one_replacement"
+DETAIL:  Key (organization_id, extends_skill_key)=(1, cmc.stability) already exists.
+--- a draft replacement beside it, and Org B's own: accepted
+INSERT 0 1
+INSERT 0 1
+--- a setting with a stated reason: accepted; again for the same key: refused (one row per key)
+INSERT 0 1
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/16a7fead-3565-58d8-8dc3-fec36dffdb80/scratchpad/proof.sql:30: ERROR:  duplicate key value violates unique constraint "organization_skill_settings_org_key"
+DETAIL:  Key (organization_id, skill_key)=(1, cmc.stability) already exists.
+--- a reason under eight characters: refused
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/16a7fead-3565-58d8-8dc3-fec36dffdb80/scratchpad/proof.sql:32: ERROR:  new row for relation "organization_skill_settings" violates check constraint "organization_skill_settings_reason_check"
+DETAIL:  Failing row contains (3, 1, cmc.impurities, f, nope, null, 2026-10-22 17:12:28.01455+00).
+--- rows that survived
+ bundle_id | organization_id | extends_skill_key | extension_mode | status 
+-----------+-----------------+-------------------+----------------+--------
+ bundle_1  |               1 |                   |                | active
+ bundle_2  |               1 | cmc.stability     |                | active
+ bundle_5  |               1 | cmc.stability     | replace        | active
+ bundle_7  |               1 | cmc.stability     | replace        | draft
+ bundle_8  |               2 | cmc.stability     | replace        | active
+(5 rows)
+
+ organization_id |   skill_key   | enabled |        reason        
+-----------------+---------------+---------+----------------------
+               1 | cmc.stability | f       | Replaced by our SOP.
+(1 row)
+

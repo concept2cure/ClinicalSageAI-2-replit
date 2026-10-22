@@ -1,0 +1,111 @@
+[
+  {
+    "question": "Can you help me put together the regulatory strategy for our lead asset before the board meeting? I need the path to approval and the main risks.",
+    "expect": "regulatory-strategy"
+  },
+  {
+    "question": "Is there regulatory precedent for approval on a single pivotal study in this setting, and what does the regulatory landscape look like?",
+    "expect": "regulatory-strategy"
+  },
+  {
+    "question": "Run a pre-mortem on our regulatory roadmap so we know where FDA is likely to push back.",
+    "expect": "regulatory-strategy",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Should our extended-release reformulation go as a 505(b)(2) or a full 505(b)(1) NDA, given there is a reference listed drug?",
+    "expect": "regulatory-strategy.drug-pathways"
+  },
+  {
+    "question": "For our adalimumab program, what does a 351(k) filing commit us to compared with a stand-alone 351(a) BLA, and could we claim interchangeable status?",
+    "expect": "regulatory-strategy.drug-pathways",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "For the EU generic, is the decentralised procedure or mutual recognition the better route, and what legal basis applies?",
+    "expect": "regulatory-strategy.drug-pathways",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "We have no clear predicate. Is this a De Novo or 510(k) situation, and should we file a 513(g) first to pin down the product code?",
+    "expect": "regulatory-strategy.device-pathways"
+  },
+  {
+    "question": "What MDR classification would a long-term implantable sensor get under the Annex VIII classification rules, and which conformity assessment route follows?",
+    "expect": "regulatory-strategy.device-pathways",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Does our assay qualify for the Breakthrough Devices Program, or is a humanitarian device exemption more realistic?",
+    "expect": "regulatory-strategy.device-pathways",
+    "context": { "segments": ["ivd"] }
+  },
+  {
+    "question": "Do we have enough phase 1b response data to request breakthrough therapy designation, or should we start with fast track?",
+    "expect": "regulatory-strategy.expedited-programs"
+  },
+  {
+    "question": "Could we pursue accelerated approval on ORR with a confirmatory trial running, and would rolling review be open to us?",
+    "expect": "regulatory-strategy.expedited-programs",
+    "context": { "segments": ["biotech"], "therapeuticArea": "oncology" }
+  },
+  {
+    "question": "Is the product a fit for EMA's PRIME scheme, and would accelerated assessment follow from it?",
+    "expect": "regulatory-strategy.expedited-programs",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How should we support the prevalence estimate in our orphan drug designation request, and is an orphan subset defensible here?",
+    "expect": "regulatory-strategy.orphan-and-pediatric"
+  },
+  {
+    "question": "When is our initial pediatric study plan due under PREA, and can we ask for a pediatric waiver for children under two?",
+    "expect": "regulatory-strategy.orphan-and-pediatric",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Do we need an agreed paediatric investigation plan from the PDCO before the MAA can be validated?",
+    "expect": "regulatory-strategy.orphan-and-pediatric",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Our prefilled syringe delivers a monoclonal antibody. What is the primary mode of action and which lead center will review it?",
+    "expect": "regulatory-strategy.combination-products"
+  },
+  {
+    "question": "Should we file a request for designation with the Office of Combination Products, or is a pre-RFD inquiry enough?",
+    "expect": "regulatory-strategy.combination-products"
+  },
+  {
+    "question": "How does part 4 cGMP work for our drug-device combination if we run on the device quality system as the base?",
+    "expect": "regulatory-strategy.combination-products",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Help me draft the questions for our pre-IND meeting briefing package.",
+    "expect": "regulatory-strategy.agency-meetings"
+  },
+  {
+    "question": "We got the meeting minutes back from FDA after our Type C meeting and they do not match our notes. What now?",
+    "expect": "regulatory-strategy.agency-meetings",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How do we put together a Pre-Sub meeting request under the Q-Sub program so CDRH can comment on our pivotal study design?",
+    "expect": "regulatory-strategy.agency-meetings",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "What filing sequence makes sense across the US, EU and Japan, and is there a reliance pathway we could use?",
+    "expect": "regulatory-strategy.global-planning"
+  },
+  {
+    "question": "Could Project Orbis or the Access Consortium get us into Australia and Canada sooner after the FDA approval?",
+    "expect": "regulatory-strategy.global-planning",
+    "context": { "segments": ["pharma"], "therapeuticArea": "oncology" }
+  },
+  {
+    "question": "Will Japan expect a bridging study because of ethnic factors, or can an MRCT cover it?",
+    "expect": "regulatory-strategy.global-planning"
+  }
+]
