@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-21T02:31:19.825Z",
+  "generatedAt": "2026-10-22T00:09:36.348Z",
   "git": {
-    "sha": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+    "sha": "eac5a4de46dfe6042815c01d0b97c89d64a157d5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2400,12 +2400,12 @@
         "bytes": 119001
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 118827
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "bytes": 118776
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 117305
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2453,7 +2453,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 103982
+        "bytes": 105125
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2638,10 +2638,6 @@
         "lines": 2324
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2296
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "lines": 2294
       },
@@ -2652,6 +2648,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2268
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
@@ -2734,16 +2734,16 @@
         "lines": 2064
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2049
+      },
+      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 2044
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2027
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
