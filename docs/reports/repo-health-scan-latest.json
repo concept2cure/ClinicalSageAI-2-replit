@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T05:43:48.827Z",
+  "generatedAt": "2026-10-22T07:02:48.309Z",
   "git": {
-    "sha": "f3d998d0430ee9845768f8b73f92222c4e242742",
+    "sha": "0e52573a11c7561bb9f0c19feae08d23bc5c73a3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2257,7 +2257,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 416656
+        "bytes": 415074
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2277,7 +2277,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 204181
+        "bytes": 204506
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2290,6 +2290,10 @@
       {
         "file": "server/routes/c2c/artifacts.ts",
         "bytes": 172271
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 168454
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2308,16 +2312,12 @@
         "bytes": 159896
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 157173
-      },
-      {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 156427
+        "bytes": 157433
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 151270
+        "bytes": 151308
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2353,7 +2353,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 133828
+        "bytes": 136059
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2385,7 +2385,7 @@
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 121186
+        "bytes": 121694
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2429,7 +2429,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "bytes": 111986
+        "bytes": 112270
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2483,7 +2483,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8821
+        "lines": 8794
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2515,7 +2515,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 4058
+        "lines": 4063
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2523,7 +2523,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 3651
+        "lines": 3847
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2531,7 +2531,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3578
+        "lines": 3592
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2578,12 +2578,12 @@
         "lines": 2889
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2798
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2817
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2774
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2798
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2607,7 +2607,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2604
+        "lines": 2605
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2695,7 +2695,7 @@
       },
       {
         "file": "server/routes/ectd-compile.ts",
-        "lines": 2134
+        "lines": 2136
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2719,7 +2719,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 2076
+        "lines": 2080
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2883,7 +2883,7 @@
       },
       {
         "file": "server/services/module3-extensions.ts",
-        "lines": 1637
+        "lines": 1645
       },
       {
         "file": "server/services/ana/run-control.ts",
@@ -2919,7 +2919,7 @@
       },
       {
         "file": "server/services/submission-gateways/regional-packager.ts",
-        "lines": 1517
+        "lines": 1537
       },
       {
         "file": "shared/constants/ui-surface-registry.ui-v2.ts",

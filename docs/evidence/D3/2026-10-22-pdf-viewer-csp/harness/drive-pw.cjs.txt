@@ -1,0 +1,32 @@
+// node drive-pw.cjs <url> <label> : the served page in Chromium (Playwright, the pre-installed /opt/pw-browsers
+// build, full Chromium so its PDF viewer is present). Reports the served frame-src, every frame's URL, the CSP
+// violations the page recorded, and saves a screenshot. A frame the policy blocks ends at chrome-error://.
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+(async () => {
+  const [url, label] = process.argv.slice(2);
+  const header = (await fetch(url)).headers.get('content-security-policy') ?? '';
+  const dir = (name) => header.split(';').map((d) => d.trim()).find((d) => d.startsWith(name)) ?? '(none)';
+  console.log('served frame-src:', dir('frame-src'));
+  console.log('served object-src:', dir('object-src'));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', headless: true, args: ['--no-sandbox'] });
+  try {
+    const page = await browser.newPage({ viewport: { width: 900, height: 640 } });
+    const consoleLines = [];
+    page.on('console', (m) => { if (/Content Security Policy|Refused/i.test(m.text())) consoleLines.push(m.text().replace(/[0-9a-f-]{36}/, '<uuid>').replace(/127\.0\.0\.1:\d+/g, '127.0.0.1:<port>')); });
+    await page.goto(url);
+    await page.waitForTimeout(5000);
+    const clean = (u) => u.replace(/[0-9a-f-]{36}/, '<uuid>').replace(/127\.0\.0\.1:\d+/g, '127.0.0.1:<port>');
+    for (const f of page.frames()) console.log(`frame url=${clean(f.url())}`);
+    const child = page.frames().find((f) => f !== page.mainFrame());
+    console.log('violations recorded by the page:', await page.evaluate(() => JSON.stringify(window.__violations)));
+    if (/\/html(-no-policy)?$/.test(url)) {
+      const ran = await page.evaluate(() => window.__ran);
+      console.log(ran ? 'VERDICT: the framed HTML ran its script' : 'VERDICT: the framed HTML did not run its script');
+      return;
+    }
+    for (const l of consoleLines) console.log('console:', l);
+    await page.screenshot({ path: `${label}.png` });
+    const blocked = !child || child.url().startsWith('chrome-error://');
+    console.log(blocked ? 'VERDICT: the policy blocked the PDF frame' : `VERDICT: the PDF frame loaded (${clean(child.url()).slice(0, 40)})`);
+  } finally { await browser.close(); }
+})().catch((e) => { console.error(e); process.exit(1); });

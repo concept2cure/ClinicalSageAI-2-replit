@@ -1,0 +1,2448 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > finds the callers it exists to watch 2ms
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.get(\'/quality/qbd/:projectId\…'` asks before it calls [ 'analyzeQbdFromSources' ] 7ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/ich-compliance\', asyn…'` asks before it calls [ 'runIchComplianceCheck' ] 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/control-strategy\', as…'` asks before it calls [ 'generateControlStrategy' ] 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/:id/…'` asks before it calls [ 'estimateRecordedShelfLife' ] 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/pool…'` asks before it calls [ 'assessRecordedPoolability' ] 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function ichCompliance('` asks before it calls [ 'runIchComplianceCheck' ] 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function controlStrategy('` asks before it calls [ 'generateControlStrategy' ] 0ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/module3-convergence-s…': `'export async function getModule3Build…'` asks before it calls [ …(3) ] 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/submission-package-orchestrator.ts asks through the file named 6ms
+   → expected '\nimport { pool } from \'../db.js\';\…' to contain 'applicationRefusal('
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'estimate_record…'` is listed with a reason, and still needs to be 1ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'assess_recorded…'` is listed with a reason, and still needs to be 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/routes/orchestration.ts': `'router.post(\'/pre-submission-gate\''` is listed with a reason, and still needs to be 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.get(\'/quality/qbd/:projectId\…'` asks before it calls [ 'analyzeQbdFromSources' ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/ich-compliance\', asyn…'` asks before it calls [ 'runIchComplianceCheck' ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/control-strategy\', as…'` asks before it calls [ 'generateControlStrategy' ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/:id/…'` asks before it calls [ 'estimateRecordedShelfLife' ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/pool…'` asks before it calls [ 'assessRecordedPoolability' ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function ichCompliance('` asks before it calls [ 'runIchComplianceCheck' ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function controlStrategy('` asks before it calls [ 'generateControlStrategy' ]
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/module3-convergence-s…': `'export async function getModule3Build…'` asks before it calls [ …(3) ]
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts:191:20
+    189|     '$file: `$opens` asks before it calls $engines',
+    190|     ({ asks }) => {
+    191|       expect(asks).toBe(true);
+       |                    ^
+    192|     },
+    193|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/submission-package-orchestrator.ts asks through the file named
+AssertionError: expected '\nimport { pool } from \'../db.js\';\…' to contain 'applicationRefusal('
+
+- Expected
++ Received
+
+- applicationRefusal(
++
++ import { pool } from '../db.js';
++ import { captureOrchestratorInputs, captureOrchestratorSuspendedOutputs } from './submission-orchestrator-inputs.js';
++ import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome.js';
++ import crypto from 'crypto';
++ import { composeFullModule3, type RegionCode } from './module3-extensions.js';
++ import { classifyModule3Regional } from './module3-regional-readiness.js';
++ import {
++   buildM23QualityOverallSummary,
++   buildM24NonclinicalOverview,
++   buildM25ClinicalOverview,
++   buildM27ClinicalSummary,
++   type M2Summary,
++   type NonclinicalStudy,
++   type CSRSummaryInput,
++ } from './m2-summary-builders.js';
++ import { buildCSRTables, type StudyData, type CSRTables } from './csr-tabulation-builders.js';
++ import type { CanonicalSource, ComposedSection } from './module3Composer.js';
++ import {
++   buildModule3WithNarrative,
++   type SectionRefinementMeta,
++ } from './cmc/module3-narrative-builder.js';
++ import {
++   validateEctdPackageHardened,
++   type HardenedValidationResult,
++   type HardenedValidationContext,
++ } from './ectd/ectd-validator-hardening.js';
++ import type { ECTDLeaf } from './ectd/ectd4-validator.js';
++ import {
++   assembleRealPackage,
++   isPackagerBuildableRegion,
++ } from './ectd/orchestrator-real-package.js';
++ import { dryRunPackageIdentity, fdaContactsForPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, type RecordedPackageIdentitySnapshot } from './ectd/package-identity.js';
++ import { canonicalRegionOf } from '../../shared/regulatory/region-identity.js';
++ import { resolveRunPackageIdentity } from './ectd/run-package-identity.js';
++ import {
++   isSignSealConfigured,
++   sealSignPayloadDigest,
++   verifySignPayloadSeal,
++   isKmsSignerConfigured,
++   signSignPayloadDigest,
++   verifySignPayloadSignature,
++   type PayloadSignatureEnvelope,
++ } from './ectd/sign-payload-seal.js';
++ import { launchCSRBuildAsync } from './csr-builder.js';
++ import { getCSRBuildJobStatus } from './csr/csr-job-runner.js';
++ import {
++   recordOrchestratorRunStarted,
++   recordOrchestratorStepCompleted,
++   recordOrchestratorStepFailed,
++   recordOrchestratorRunCompleted,
++   recordOrchestratorGatewayReady,
++   recordOrchestratorSequenceQueryFailed,
++ } from './submission-orchestrator-metrics.js';
++
++ function classifyStepError(err: unknown): string {
++   const msg = err instanceof Error ? err.message : String(err);
++   if (
++     err !== null &&
++     typeof err === 'object' &&
++     ((err as { name?: unknown }).name === 'ValidationError' ||
++       (err as { errorClass?: unknown }).errorClass === 'validation')
++   ) {
++     return 'validation_failed';
++   }
++   if (/tenant|organization_id|organizationId.+required/i.test(msg))
++     return 'tenant_isolation_violation';
++   if (/SEQ_QUERY_FAILED|sequence history|sequence query/i.test(msg)) return 'sequence_query_failed';
++   if (/gatewayReady|gateway not ready|hardenedScore/i.test(msg)) return 'gateway_not_ready';
++   if (/hallucination|prompt-injection/i.test(msg)) return 'ai_hallucination_guard';
++   if (/AI gateway|getGateway|provider|completion/i.test(msg)) return 'ai_gateway_error';
++   if (/db|pool|query|postgres|connection/i.test(msg)) return 'db_query_failed';
++   if (/validation|Zod|invalid input/i.test(msg)) return 'validation_failed';
++   return 'unknown';
++ }
++
++
++ export type StepKey =
++   | 'm3.compose'
++   | 'm3.refine'
++   | 'm3.appendices'
++   | 'm3.regional'
++   | 'csr.tabulate'
++   | 'csr.draft-narrative'
++   | 'm2.3.qos'
++   | 'm2.4.nonclinical'
++   | 'm2.5.clinical'
++   | 'm2.7.clinical'
++   | 'm1.admin'
++   | 'package.assemble'
++   | 'package.validate'
++   | 'package.sign';
++
++ export type StepStatus =
++   | 'pending'
++   | 'running'
++   | 'awaiting-async'
++   | 'awaiting-signature'
++   | 'complete'
++   | 'failed'
++   | 'stale'
++   | 'skipped';
++
++ export interface OrchestratorRun {
++   runId: string;
++   organizationId: number;
++   submissionId: string;
++   submissionFk?: number | null;
++   applicationNumber: string;
++   region: RegionCode;
++   submissionType: string;
++   startedAt: string;
++   completedAt?: string;
++   status:
++     | 'running'
++     | 'awaiting-async'
++     | 'awaiting-signature'
++     | 'complete'
++     | 'failed'
++     | 'partial';
++   steps: StepRecord[];
++   workflowVersion?: string | null;
++   dependencyGraphDigest?: string | null;
++ }
++
++ export interface StepRecord {
++   key: StepKey;
++   status: StepStatus;
++   startedAt?: string;
++   completedAt?: string;
++   durationMs?: number;
++   inputHash: string;
++   outputHash?: string;
++   outputRef?: string;
++   error?: string;
++   dependsOn: StepKey[];
++ }
++
++ export interface OrchestratorInputs {
++   programId?: string;
++   organizationId: number;
++   submissionId: string;
++   submissionFk?: number;
++   applicationNumber: string;
++   sequenceNumber?: string;
++   region: RegionCode;
++   submissionType: 'IND' | 'NDA' | 'BLA' | '510k' | 'PMA' | 'JNDA' | 'MAA';
++   cmcSources: CanonicalSource[];
++   nonclinicalStudies: NonclinicalStudy[];
++   clinicalStudyData: StudyData[];
++   clinicalSourceReceipts?: import('../../shared/csr-source-input.js').CsrSourceReceipt[];
++   csrInputs: CSRSummaryInput[];
++   drugSubstanceName?: string;
++   drugProductName?: string;
++   indication?: string;
++   skipValidation?: boolean;
++   module3ExportRefusal?: string | null;
++   useAI?: boolean;
++   userId?: number;
++   projectId?: number;
++   enableCSRNarrative?: boolean;
++ }
++
++ export interface OrchestratorOutputs {
++   module3Sections: ComposedSection[];
++   csrTables: CSRTables[];
++   m23?: M2Summary;
++   m24?: M2Summary;
++   m25?: M2Summary;
++   m27?: M2Summary;
++   assembly?: AssembledPackage;
++   validation?: HardenedValidationResult;
++   refinementMeta?: {
++     meta: SectionRefinementMeta[];
++     totalTokenCost: number;
++     gatewayErrorFallbackCount: number;
++   };
++   csrNarrativeJobs?: {
++     jobs: Array<{
++       studyId: string;
++       protocolNumber: string;
++       jobId: number;
++       status: string;
++       progress: number;
++       sectionsComplete: number;
++       error?: unknown;
++     }>;
++     pendingJobIds: number[];
++   };
++ }
++
++ export interface AssembledPackage {
++   recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
++   leaves: ECTDLeaf[];
++   totalSizeBytes: number;
++   applicationNumber: string;
++   sequenceNumber: string;
++   region: RegionCode;
++   submissionType: string;
++   backboneXml?: string;
++   dryRun?: boolean;
++   dryRunReason?: string;
++ }
++
++
++ const STEP_DEPENDENCIES: Record<StepKey, StepKey[]> = {
++   'm3.compose': [],
++   'm3.refine': ['m3.compose'],
++   'm3.appendices': ['m3.compose'],
++   'm3.regional': ['m3.compose', 'm3.refine'],
++   'csr.tabulate': [],
++   'csr.draft-narrative': ['csr.tabulate'],
++   'm2.3.qos': ['m3.compose', 'm3.refine', 'm3.appendices', 'm3.regional'],
++   'm2.4.nonclinical': [],
++   'm2.5.clinical': ['csr.tabulate'],
++   'm2.7.clinical': ['csr.tabulate', 'csr.draft-narrative'],
++   'm1.admin': [],
++   'package.assemble': [
++     'm2.3.qos',
++     'm2.4.nonclinical',
++     'm2.5.clinical',
++     'm2.7.clinical',
++     'm1.admin',
++   ],
++   'package.validate': ['package.assemble'],
++   'package.sign': ['package.validate'],
++ };
++
++ export const WORKFLOW_DEFINITION_VERSION = 'wdv-2026.07.30-1';
++
++ export function computeDependencyGraphDigest(): string {
++   const canonical = JSON.stringify({
++     dependencies: STEP_DEPENDENCIES,
++     order: ORDERED_STEPS,
++   });
++   return crypto.createHash('sha256').update(canonical).digest('hex');
++ }
++
++ const ORDERED_STEPS: StepKey[] = [
++   'm3.compose',
++   'm3.refine',
++   'm3.appendices',
++   'm3.regional',
++   'csr.tabulate',
++   'm2.3.qos',
++   'm2.4.nonclinical',
++   'm2.5.clinical',
++   'csr.draft-narrative',
++   'm2.7.clinical',
++   'm1.admin',
++   'package.assemble',
++   'package.validate',
++   'package.sign',
++ ];
++
++
++ function hashInputs(...inputs: unknown[]): string {
++   const h = crypto.createHash('sha256');
++   for (const input of inputs) {
++     const serialized = input === undefined ? '' : JSON.stringify(input);
++     h.update(serialized ?? '');
++   }
++   return h.digest('hex');
++ }
++
++ function hashOutput(output: unknown): string {
++   return crypto.createHash('sha256').update(JSON.stringify(output)).digest('hex');
++ }
++
++
++ function assembleStepOutputRef(assembled: AssembledPackage): string {
++   return (
++     `package.assemble:${assembled.leaves.length}-leaves (Module 3 only; M1/M2/CSR outputs are reported on the run but are not in this package)` +
++     (assembled.dryRun ? ` — dry run, not a package: ${assembled.dryRunReason} It is validated but cannot be signed.` : '')
++   );
++ }
++
++ async function assembleForValidation(
++   sections: ComposedSection[],
++   inputs: OrchestratorInputs,
++   sequenceNumber: string
++ ): Promise<{ assembled: AssembledPackage; leafBuffers: Record<string, Buffer> }> {
++   const identity = await resolveRunPackageIdentity(inputs);
++   const dryRun = identity.recorded
++     ? { dryRun: false, ...(identity.recordedPackageIdentity ? { recordedPackageIdentity: identity.recordedPackageIdentity } : {}) }
++     : { dryRun: true, dryRunReason: identity.reason };
++   if (!isPackagerBuildableRegion(inputs.region)) {
++     const leaves = buildDerivedManifest(sections);
++     return {
++       assembled: {
++         leaves,
++         totalSizeBytes: leaves.reduce((sum, l) => sum + (l.fileSize || 0), 0),
++         applicationNumber: inputs.applicationNumber,
++         sequenceNumber,
++         region: inputs.region,
++         submissionType: inputs.submissionType,
++         ...dryRun,
++       },
++       leafBuffers: {},
++     };
++   }
++
++   const placeholder = dryRunPackageIdentity(sequenceNumber, inputs.organizationId);
++   const real = await assembleRealPackage(sections, {
++     region: inputs.region,
++     applicationNumber: inputs.applicationNumber,
++     sequenceNumber,
++     submissionType: inputs.submissionType,
++     applicantId: identity.recorded ? (identity.applicantId ?? '') : placeholder.sponsorId,
++     ...(identity.recorded && identity.recordedPackageIdentity
++       ? { contacts: fdaContactsForPackageIdentity(identity.recordedPackageIdentity.identity) } : {}),
++     sponsorName: identity.recorded ? identity.applicantName : placeholder.sponsorName,
++     productName: inputs.drugProductName ?? inputs.drugSubstanceName,
++   });
++   return {
++     assembled: {
++       leaves: real.leaves,
++       totalSizeBytes: real.totalSizeBytes,
++       applicationNumber: inputs.applicationNumber,
++       sequenceNumber,
++       region: inputs.region,
++       submissionType: inputs.submissionType,
++       backboneXml: real.backboneXml,
++       ...dryRun,
++     },
++     leafBuffers: real.leafBuffers,
++   };
++ }
++
++ function buildDerivedManifest(sections: ComposedSection[]): ECTDLeaf[] {
++   return sections.map(s => {
++     const payload = JSON.stringify({
++       narrative: s.narrativeDraft,
++       tables: s.tables,
++       structured: s.structuredPayload,
++     });
++     return {
++       sectionCode: `m${s.sectionKey}`,
++       title: s.sectionKey,
++       checksum: crypto.createHash('md5').update(payload).digest('hex'),
++       checksumType: 'md5' as const,
++       operation: 'new' as const,
++       filePath: `m3/${s.sectionKey.toLowerCase().replace(/\./g, '-')}/content.xml`,
++       mimeType: 'text/xml',
++       fileSize: Buffer.byteLength(payload, 'utf8'),
++     };
++   });
++ }
++
++
++ const SIGNATURE_REQUIRED_SUBMISSION_TYPES = new Set<OrchestratorInputs['submissionType']>([
++   'IND',
++   'NDA',
++   'BLA',
++   'MAA',
++ ]);
++
++ export const PACKAGE_SIGN_SIGNATURE_MEANING = 'approval' as const;
++
++ export interface BoundDigestValidatorOutcome {
++   gatewayReady: boolean;
++   hardenedScore: number;
++   summary: HardenedValidationResult['summary'];
++ }
++
++ export function computeBoundPayloadDigestFromComponents(params: {
++   leaves: ECTDLeaf[];
++   validatorOutcome: BoundDigestValidatorOutcome;
++   submissionId: string;
++   applicationNumber: string;
++   region: RegionCode;
++   submissionType: string;
++   organizationId: number;
++   backboneXml?: Buffer | string;
++   recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
++ }): string {
++   const leafManifestDigest = crypto
++     .createHash('sha256')
++     .update(JSON.stringify(params.leaves))
++     .digest('hex');
++
++   const validatorOutcomeDigest = crypto
++     .createHash('sha256')
++     .update(
++       JSON.stringify({
++         gatewayReady: params.validatorOutcome.gatewayReady,
++         hardenedScore: params.validatorOutcome.hardenedScore,
++         summary: params.validatorOutcome.summary,
++       })
++     )
++     .digest('hex');
++
++   const submissionIdentityCanonical = [
++     params.submissionId,
++     params.applicationNumber,
++     params.region,
++     params.submissionType,
++     String(params.organizationId),
++   ].join('|');
++
++   const h = crypto.createHash('sha256');
++   h.update(leafManifestDigest);
++   h.update(validatorOutcomeDigest);
++   h.update(submissionIdentityCanonical);
++   if (params.backboneXml) {
++     h.update(
++       typeof params.backboneXml === 'string'
++         ? Buffer.from(params.backboneXml, 'utf8')
++         : params.backboneXml
++     );
++   }
++   if (params.recordedPackageIdentity !== undefined) {
++     h.update('\0recorded-package-identity\0');
++     const captured = params.recordedPackageIdentity;
++     const canonical = sameRecordedPackageIdentitySnapshot(captured, captured)
++       ? recordedPackageIdentitySnapshot(captured.identity) : captured;
++     h.update(JSON.stringify(canonical));
++   }
++   return h.digest('hex');
++ }
++
++ export function computeBoundPayloadDigest(params: {
++   assembly: AssembledPackage;
++   validation: HardenedValidationResult;
++   submissionId: string;
++   applicationNumber: string;
++   region: RegionCode;
++   submissionType: string;
++   organizationId: number;
++   backboneXml?: Buffer | string;
++ }): string {
++   return computeBoundPayloadDigestFromComponents({
++     leaves: params.assembly.leaves,
++     validatorOutcome: {
++       gatewayReady: params.validation.gatewayReady,
++       hardenedScore: params.validation.hardenedScore,
++       summary: params.validation.summary,
++     },
++     submissionId: params.submissionId,
++     applicationNumber: params.applicationNumber,
++     region: params.region,
++     submissionType: params.submissionType,
++     organizationId: params.organizationId,
++     backboneXml: params.backboneXml,
++     recordedPackageIdentity: params.assembly.recordedPackageIdentity,
++   });
++ }
++
++ export interface SignedPackageSnapshot {
++   recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
++   leaves: ECTDLeaf[];
++   backboneXml: string;
++   validatorOutcome: BoundDigestValidatorOutcome;
++   submissionId: string;
++   organizationId: number;
++   applicationNumber: string;
++   sequenceNumber: string;
++   region: RegionCode;
++   submissionType: string;
++   totalSizeBytes: number;
++ }
++
++ interface PackageSignStepPayload {
++   payloadDigest: string;
++   payloadSeal?: string;
++   payloadSignature?: PayloadSignatureEnvelope;
++   signatureId?: number;
++   awaitingSince: string;
++   signedSnapshot?: SignedPackageSnapshot;
++ }
++
++ function stripLeafBytes(leaves: ECTDLeaf[]): ECTDLeaf[] {
++   return leaves.map(leaf => {
++     if (!('buffer' in leaf) || (leaf as { buffer?: unknown }).buffer === undefined) return leaf;
++     const { buffer: _drop, ...rest } = leaf as ECTDLeaf & { buffer?: unknown };
++     return rest as ECTDLeaf;
++   });
++ }
++
++ function packageSignIdentityRefusal(assembly: AssembledPackage | undefined): string | null {
++   if (!assembly) return null;
++   if (assembly.dryRun) {
++     return `dry run, not a package: ${assembly.dryRunReason ?? 'its identity is not recorded.'} ` +
++       'A release signature binds the recorded application number and applicant, so nothing was signed.';
++   }
++   if (canonicalRegionOf(assembly.region) !== 'US') return null;
++   const captured = assembly.recordedPackageIdentity;
++   if (!sameRecordedPackageIdentitySnapshot(captured, captured) ||
++       packageIdentityRefusal(captured!.identity, '', { fda: true }) ||
++       captured!.identity.applicationNumber !== assembly.applicationNumber) {
++     return 'Reassemble this FDA package with recorded applicant facts before requesting a release signature.';
++   }
++   return null;
++ }
++
++ function buildSignedSnapshot(
++   assembly: AssembledPackage,
++   validation: HardenedValidationResult,
++   submissionId: string,
++   organizationId: number
++ ): SignedPackageSnapshot {
++   return {
++     leaves: stripLeafBytes(assembly.leaves),
++     backboneXml: assembly.backboneXml ?? '',
++     validatorOutcome: {
++       gatewayReady: validation.gatewayReady,
++       hardenedScore: validation.hardenedScore,
++       summary: validation.summary,
++     },
++     submissionId,
++     organizationId,
++     applicationNumber: assembly.applicationNumber,
++     sequenceNumber: assembly.sequenceNumber,
++     region: assembly.region,
++     submissionType: assembly.submissionType,
++     totalSizeBytes: assembly.totalSizeBytes,
++     ...(assembly.recordedPackageIdentity ? { recordedPackageIdentity: assembly.recordedPackageIdentity } : {}),
++   };
++ }
++
++ function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | null {
++   if (!raw) return null;
++   try {
++     const parsed = JSON.parse(raw);
++     if (
++       parsed &&
++       typeof parsed === 'object' &&
++       typeof (parsed as PackageSignStepPayload).payloadDigest === 'string'
++     ) {
++       return parsed as PackageSignStepPayload;
++     }
++   } catch {
++   }
++   return null;
++ }
++
++ export interface ActiveReleaseSignature {
++   id: number;
++   signerId: number | null;
++   signerName: string | null;
++   signerTitle: string | null;
++   meaning: string | null;
++   signedAt: string | null;
++ }
++
++ function nullableText(v: unknown): string | null {
++   return typeof v === 'string' && v.trim() ? v : null;
++ }
++
++ function isoInstantOrNull(v: unknown): string | null {
++   if (v == null) return null;
++   const d = v instanceof Date ? v : new Date(String(v));
++   return Number.isNaN(d.getTime()) ? null : d.toISOString();
++ }
++
++ export async function findActiveReleaseSignature(params: {
++   organizationId: number;
++   boundPayloadDigest: string;
++ }): Promise<ActiveReleaseSignature | null> {
++   if (!Number.isFinite(params.organizationId) || params.organizationId <= 0) {
++     return null;
++   }
++   if (!params.boundPayloadDigest) return null;
++   try {
++     const result = await pool.query(
++          electronicSignatures Drizzle model but NO migration ever adds it to
++          electronic_signatures — the drizzle journal ships `signed_at` only, and
++          nothing in migrations/ or db/migrations/ creates it. On a database
++          provisioned from the migration set this query therefore raised 42703,
++          was swallowed by the catch below as "non-fatal", and returned null —
++          which resolveSignedPackageForExport maps to 'signature-revoked'. So on
++          such a database the §11.70 release gate could never clear for ANY
++          IND/NDA/BLA/MAA, and told the operator the signature "was superseded or
++          rolled back" when nothing of the sort had happened.
++          `id` is the serial primary key, so newest-first is identical, and it
++          exists on every provisioning path. This is the only consumer of that
++          column anywhere in the server. */
++       `SELECT id, signer_id, signer_name, signer_title, signature_meaning, signed_at
++          FROM electronic_signatures
++         WHERE organization_id = $1
++           AND bound_payload_digest = $2
++           AND superseded_by IS NULL
++         ORDER BY id DESC
++         LIMIT 1`,
++       [params.organizationId, params.boundPayloadDigest]
++     );
++     if (result.rows.length === 0) return null;
++     const row = result.rows[0] as Record<string, unknown>;
++     const id = Number(row.id);
++     if (!Number.isFinite(id) || id <= 0) return null;
++     const signerId = row.signer_id == null ? null : Number(row.signer_id);
++     return {
++       id,
++       signerId: Number.isFinite(signerId) ? signerId : null,
++       signerName: nullableText(row.signer_name),
++       signerTitle: nullableText(row.signer_title),
++       meaning: nullableText(row.signature_meaning),
++       signedAt: isoInstantOrNull(row.signed_at),
++     };
++   } catch (err) {
++     console.error(
++       '[Orchestrator] findActiveReleaseSignature could not run — not treating this as "no active signature":',
++       describeFailure(err)
++     );
++     throw new VerificationUnavailableError('release-signature lookup', describeFailure(err));
++   }
++ }
++
++
++ const SCHEMA_SHAPE_ERROR_CODES = new Set(['42703', '42P01', '23502', '23503', '23514']);
++
++ function isSchemaShapeError(err: unknown): boolean {
++   if (!err || typeof err !== 'object') return false;
++   const code = (err as { code?: unknown }).code;
++   return typeof code === 'string' && SCHEMA_SHAPE_ERROR_CODES.has(code);
++ }
++
++ async function persistRun(run: OrchestratorRun): Promise<void> {
++   if (!Number.isFinite(run.organizationId) || run.organizationId <= 0) {
++     throw new Error(
++       `[Orchestrator] persistRun: organizationId must be a positive integer (got: ${String(
++         run.organizationId
++       )})`
++     );
++   }
++   try {
++     const submissionFkParam =
++       typeof run.submissionFk === 'number' &&
++       Number.isFinite(run.submissionFk) &&
++       run.submissionFk > 0
++         ? run.submissionFk
++         : null;
++     await pool.query(
++       `INSERT INTO submission_orchestrator_runs
++         (run_id, organization_id, submission_id, submission_id_fk, application_number, region, submission_type, started_at, completed_at, status, steps, workflow_version, dependency_graph_digest)
++        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
++        ON CONFLICT (run_id) DO UPDATE SET
++          completed_at = EXCLUDED.completed_at,
++          status = EXCLUDED.status,
++          steps = EXCLUDED.steps,
++          submission_id_fk = COALESCE(EXCLUDED.submission_id_fk, submission_orchestrator_runs.submission_id_fk),
++          -- Write-once provenance: the ORIGINAL definition version survives every
++          -- resume-write; a resume under a newer deploy must not relabel history.
++          workflow_version = COALESCE(submission_orchestrator_runs.workflow_version, EXCLUDED.workflow_version),
++          dependency_graph_digest = COALESCE(submission_orchestrator_runs.dependency_graph_digest, EXCLUDED.dependency_graph_digest)`,
++       [
++         run.runId,
++         run.organizationId,
++         run.submissionId,
++         submissionFkParam,
++         run.applicationNumber,
++         run.region,
++         run.submissionType,
++         run.startedAt,
++         run.completedAt || null,
++         run.status,
++         JSON.stringify(run.steps),
++         run.workflowVersion ?? null,
++         run.dependencyGraphDigest ?? null,
++       ]
++     );
++   } catch (err) {
++     if (isSchemaShapeError(err)) {
++       const code = (err as { code?: string }).code;
++       console.error(
++         `[Orchestrator] persistRun: schema-shape error ${code} — re-throwing to avoid silent dark-row creation:`,
++         err instanceof Error ? err.message : err
++       );
++       throw err;
++     }
++     throw err;
++   }
++ }
++
++ async function persistStepEvent(
++   runId: string,
++   organizationId: number,
++   step: StepRecord,
++   eventType: 'start' | 'complete' | 'fail' | 'stale',
++   submissionFk?: number | null
++ ): Promise<void> {
++   if (!Number.isFinite(organizationId) || organizationId <= 0) {
++     throw new Error(
++       `[Orchestrator] persistStepEvent: organizationId must be a positive integer (got: ${String(
++         organizationId
++       )})`
++     );
++   }
++   try {
++     const submissionFkParam =
++       typeof submissionFk === 'number' && Number.isFinite(submissionFk) && submissionFk > 0
++         ? submissionFk
++         : null;
++     await pool.query(
++       `INSERT INTO submission_orchestrator_steps
++         (run_id, organization_id, submission_id_fk, step_key, event_type, status, input_hash, output_hash, output_ref, error, occurred_at)
++        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())`,
++       [
++         runId,
++         organizationId,
++         submissionFkParam,
++         step.key,
++         eventType,
++         step.status,
++         step.inputHash,
++         step.outputHash || null,
++         step.outputRef || null,
++         step.error || null,
++       ]
++     );
++   } catch (err) {
++     if (isSchemaShapeError(err)) {
++       const code = (err as { code?: string }).code;
++       console.error(
++         `[Orchestrator] persistStepEvent: schema-shape error ${code} — re-throwing to avoid silent dark-audit-row creation:`,
++         err instanceof Error ? err.message : err
++       );
++       throw err;
++     }
++     throw err;
++   }
++ }
++
++
++ export interface RunOrchestratorOptions {
++   resumeRunId?: string;
++   resumeOutputs?: OrchestratorOutputs;
++   onInputsCaptured?: () => Promise<void>;
++ }
++
++ interface CSRNarrativeStepPayload {
++   jobs: Array<{ studyId: string; protocolNumber: string; jobId: number }>;
++ }
++
++ function tryParseNarrativePayload(raw: string | undefined): CSRNarrativeStepPayload | null {
++   if (!raw) return null;
++   try {
++     const parsed = JSON.parse(raw);
++     if (
++       parsed &&
++       typeof parsed === 'object' &&
++       Array.isArray((parsed as CSRNarrativeStepPayload).jobs)
++     ) {
++       return parsed as CSRNarrativeStepPayload;
++     }
++   } catch {
++   }
++   return null;
++ }
++
++ export async function runOrchestrator(
++   inputs: OrchestratorInputs,
++   opts?: RunOrchestratorOptions
++ ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
++   if (!Number.isFinite(inputs.organizationId) || inputs.organizationId <= 0) {
++     throw new Error(
++       `[Orchestrator] organizationId is required and must be a positive integer (got: ${String(
++         inputs.organizationId
++       )})`
++     );
++   }
++
++   if (opts?.resumeRunId) {
++     return resumeOrchestratorRun(inputs, opts.resumeRunId, opts.resumeOutputs);
++   }
++
++   const runId = crypto.randomUUID();
++   const startedAt = new Date().toISOString();
++
++   const run: OrchestratorRun = {
++     runId,
++     organizationId: inputs.organizationId,
++     submissionId: inputs.submissionId,
++     submissionFk: inputs.submissionFk,
++     applicationNumber: inputs.applicationNumber,
++     region: inputs.region,
++     submissionType: inputs.submissionType,
++     startedAt,
++     status: 'running',
++     steps: ORDERED_STEPS.map(key => ({
++       key,
++       status: 'pending',
++       inputHash: '',
++       dependsOn: STEP_DEPENDENCIES[key],
++     })),
++     workflowVersion: WORKFLOW_DEFINITION_VERSION,
++     dependencyGraphDigest: computeDependencyGraphDigest(),
++   };
++
++   await persistRun(run);
++   await captureOrchestratorInputs(run.runId, inputs);
++   await opts?.onInputsCaptured?.();
++
++   recordOrchestratorRunStarted({
++     submissionType: run.submissionType,
++     region: run.region,
++   });
++
++   const outputs: OrchestratorOutputs = {
++     module3Sections: [],
++     csrTables: [],
++   };
++
++   const runT0 = Date.now();
++
++   const stepOf = (key: StepKey): StepRecord => run.steps.find(s => s.key === key)!;
++
++   const runStep = async (
++     key: StepKey,
++     inputHash: string,
++     fn: () => Promise<{ outputRef: string; output: unknown } | { skip: string } | null>
++   ): Promise<void> => {
++     const step = stepOf(key);
++     step.inputHash = inputHash;
++     step.status = 'running';
++     step.startedAt = new Date().toISOString();
++     const t0 = Date.now();
++     try {
++       await persistStepEvent(runId, run.organizationId, step, 'start', run.submissionFk);
++       const result = await fn();
++       step.completedAt = new Date().toISOString();
++       step.durationMs = Date.now() - t0;
++       if (result === null || 'skip' in result) {
++         step.status = 'skipped';
++         step.outputHash = undefined;
++         step.outputRef = result === null ? 'skipped (no inputs)' : `skipped (${result.skip})`;
++       } else {
++         step.status = 'complete';
++         step.outputHash = hashOutput(result.output);
++         step.outputRef = result.outputRef;
++         recordOrchestratorStepCompleted({
++           step: key,
++           durationMs: step.durationMs,
++         });
++       }
++       await persistStepEvent(runId, run.organizationId, step, 'complete', run.submissionFk);
++     } catch (err) {
++       step.completedAt = new Date().toISOString();
++       step.durationMs = Date.now() - t0;
++       step.status = 'failed';
++       step.error = err instanceof Error ? err.message : String(err);
++       recordOrchestratorStepFailed({
++         step: key,
++         errorCode: classifyStepError(err),
++       });
++       await persistStepEvent(runId, run.organizationId, step, 'fail', run.submissionFk);
++       throw err;
++     }
++   };
++
++   try {
++     const m3Hash = hashInputs(inputs.cmcSources, inputs.region);
++     await runStep('m3.compose', m3Hash, async () => {
++       if (inputs.cmcSources.length === 0) {
++            and it is not cleared to leave. Say so on the step, where the run's
++            own audit reads it. */
++         return inputs.module3ExportRefusal ? { skip: inputs.module3ExportRefusal } : null;
++       }
++       const fullM3 = composeFullModule3(inputs.cmcSources, inputs.region);
++       const core = fullM3.filter(s => /^3\.[123]|^3\.2\.[SP]/.test(s.sectionKey));
++       outputs.module3Sections = fullM3;
++       return { outputRef: `m3.compose:${core.length}-core-sections`, output: core };
++     });
++
++     const refineHash = hashInputs(
++       inputs.useAI ?? false,
++       inputs.useAI ? inputs.cmcSources : null,
++       inputs.useAI ? inputs.organizationId : null,
++       inputs.useAI ? inputs.userId ?? null : null
++     );
++     await runStep('m3.refine', refineHash, async () => {
++       if (!inputs.useAI) {
++         return null;
++       }
++       if (outputs.module3Sections.length === 0) {
++         return null;
++       }
++       if (inputs.userId === undefined || inputs.userId === null) {
++         throw new Error(
++           '[Orchestrator] m3.refine: inputs.userId is required when inputs.useAI=true (Part-11 audit-trail attribution)'
++         );
++       }
++       const refineProjectId =
++         inputs.projectId !== undefined && inputs.projectId !== null
++           ? inputs.projectId
++           : (() => {
++               const pid = Number(inputs.submissionId);
++               if (!Number.isInteger(pid) || pid <= 0) {
++                 throw new Error(
++                   `[Orchestrator] m3.refine: inputs.projectId is required (and inputs.submissionId=${inputs.submissionId} ` +
++                     `cannot be coerced to a positive integer); narrative-builder requires a projectId for tenant scoping.`
++                 );
++               }
++               return pid;
++             })();
++       const result = await buildModule3WithNarrative(
++         inputs.organizationId,
++         refineProjectId,
++         inputs.userId,
++         inputs.cmcSources,
++         { useAI: true }
++       );
++
++       outputs.module3Sections = result.sections;
++
++       outputs.refinementMeta = {
++         meta: result.refinementMeta,
++         totalTokenCost: result.totalTokenCost,
++         gatewayErrorFallbackCount: result.gatewayErrorFallbackCount,
++       };
++
++       return {
++         outputRef:
++           `m3.refine:${result.refinementMeta.length}-sections ` +
++           `fallbacks=${result.refinementMeta.filter(m => m.fallback).length} ` +
++           `gateway_errors=${result.gatewayErrorFallbackCount} ` +
++           `cost=$${result.totalTokenCost.toFixed(4)}`,
++         output: outputs.refinementMeta,
++       };
++     });
++
++     const appendicesPresent = outputs.module3Sections.filter(s => s.sectionKey.startsWith('3.2.A'));
++     await runStep('m3.appendices', hashOutput(appendicesPresent), async () => {
++       if (appendicesPresent.length === 0) return null;
++       return { outputRef: `m3.appendices:${appendicesPresent.length}`, output: appendicesPresent };
++     });
++
++     const regionalPresent = outputs.module3Sections.filter(s => s.sectionKey.startsWith('3.2.R'));
++     await runStep('m3.regional', hashOutput(regionalPresent), async () => {
++       if (regionalPresent.length === 0) {
++            answer. Module 3 holds a 3.2.R template for four regions; the route
++            accepts thirteen. When sources WERE supplied and the region simply has
++            no template, say that — reporting it as 'no inputs' blames the caller
++            for a gap in the product and hides an absent required section behind a
++            status a reviewer reads as routine. The packaging layer already draws
++            this same line with isPackagerBuildableRegion. */
++         if (inputs.cmcSources.length > 0) {
++              and any surface all say the same thing about a region — and so GLOBAL,
++              which is not a jurisdiction at all, is reported as "3.2.R does not
++              apply to it" rather than as a missing template. */
++           const coverage = classifyModule3Regional(inputs.region);
++           if (coverage.coverage !== 'authored') return { skip: coverage.reason! };
++         }
++         return null;
++       }
++       return { outputRef: `m3.regional:${regionalPresent.length}`, output: regionalPresent };
++     });
++
++     const csrHash = hashInputs(inputs.clinicalStudyData);
++     await runStep('csr.tabulate', csrHash, async () => {
++       if (inputs.clinicalStudyData.length === 0) return null;
++       outputs.csrTables = inputs.clinicalStudyData.map(buildCSRTables);
++       return {
++         outputRef: `csr.tabulate:${outputs.csrTables.length}-studies`,
++         output: outputs.csrTables,
++       };
++     });
++
++     const m23Hash = hashInputs(
++       outputs.module3Sections,
++       inputs.drugSubstanceName ?? '',
++       inputs.drugProductName ?? ''
++     );
++     await runStep('m2.3.qos', m23Hash, async () => {
++       if (outputs.module3Sections.length === 0) return null;
++       outputs.m23 = buildM23QualityOverallSummary({
++         module3Sections: outputs.module3Sections,
++         drugSubstanceName: inputs.drugSubstanceName,
++         drugProductName: inputs.drugProductName,
++       });
++       return {
++         outputRef: `m2.3.qos:completeness=${outputs.m23.completeness}`,
++         output: outputs.m23,
++       };
++     });
++
++     const m24Hash = hashInputs(
++       inputs.nonclinicalStudies,
++       inputs.drugSubstanceName ?? '',
++       inputs.indication ?? ''
++     );
++     await runStep('m2.4.nonclinical', m24Hash, async () => {
++       if (inputs.nonclinicalStudies.length === 0) return null;
++       outputs.m24 = buildM24NonclinicalOverview({
++         nonclinicalStudies: inputs.nonclinicalStudies,
++         drugSubstanceName: inputs.drugSubstanceName,
++         indication: inputs.indication,
++       });
++       return {
++         outputRef: `m2.4.nonclinical:completeness=${outputs.m24.completeness}`,
++         output: outputs.m24,
++       };
++     });
++
++     const m25Hash = hashInputs(
++       inputs.csrInputs,
++       inputs.indication ?? '',
++       inputs.drugProductName ?? ''
++     );
++     await runStep('m2.5.clinical', m25Hash, async () => {
++       if (inputs.csrInputs.length === 0) return null;
++       outputs.m25 = buildM25ClinicalOverview({
++         csrs: inputs.csrInputs,
++         indication: inputs.indication || '[indication not specified]',
++         investigationalProduct: inputs.drugProductName || inputs.drugSubstanceName || '[product]',
++       });
++       return {
++         outputRef: `m2.5.clinical:completeness=${outputs.m25.completeness}`,
++         output: outputs.m25,
++       };
++     });
++
++     const narrativeHash = hashInputs(
++       inputs.enableCSRNarrative ?? false,
++       inputs.enableCSRNarrative ? inputs.csrInputs : null,
++       inputs.enableCSRNarrative ? inputs.organizationId : null,
++       inputs.enableCSRNarrative ? inputs.projectId ?? null : null,
++       inputs.enableCSRNarrative ? inputs.userId ?? null : null
++     );
++
++     if (inputs.enableCSRNarrative && inputs.csrInputs.length > 0) {
++       const narrativeStep = stepOf('csr.draft-narrative');
++       narrativeStep.inputHash = narrativeHash;
++       narrativeStep.status = 'running';
++       narrativeStep.startedAt = new Date().toISOString();
++       await persistStepEvent(runId, run.organizationId, narrativeStep, 'start', run.submissionFk);
++
++       if (inputs.userId === undefined || inputs.userId === null) {
++         const err = new Error(
++           '[Orchestrator] csr.draft-narrative: inputs.userId is required when inputs.enableCSRNarrative=true (Part-11 audit-trail attribution)'
++         );
++         narrativeStep.completedAt = new Date().toISOString();
++         narrativeStep.durationMs = 0;
++         narrativeStep.status = 'failed';
++         narrativeStep.error = err.message;
++         await persistStepEvent(runId, run.organizationId, narrativeStep, 'fail', run.submissionFk);
++         throw err;
++       }
++
++       const tNarrative = Date.now();
++       try {
++         const sectionsToGenerate = [
++           '1',
++           '2',
++           '3',
++           '4',
++           '5',
++           '6',
++           '7',
++           '8',
++           '9',
++           '13',
++           '14',
++           '15',
++           '16',
++         ];
++
++         const enqueuedJobs: Array<{
++           studyId: string;
++           protocolNumber: string;
++           jobId: number;
++         }> = [];
++
++         for (const csr of inputs.csrInputs) {
++           const enqueued = await launchCSRBuildAsync(
++             {
++               organizationId: inputs.organizationId,
++               userId: inputs.userId!,
++               projectId: inputs.projectId,
++               studyInfo: {
++                 title: `${csr.protocolNumber} — ${inputs.indication ?? 'indication not specified'}`,
++                 protocolNumber: csr.protocolNumber,
++                 phase: csr.phase,
++                 indication: inputs.indication ?? '[indication not specified]',
++                 sponsor: '[sponsor]',
++                 investigationalProduct:
++                   inputs.drugProductName || inputs.drugSubstanceName || '[product]',
++                 studyDesign: csr.studyDesign,
++                 primaryEndpoint: csr.primaryEndpoint,
++                 sampleSize: csr.sampleSize ?? undefined,
++               },
++               sectionsToGenerate,
++             },
++             {
++               organizationId: inputs.organizationId,
++               projectId: inputs.projectId,
++               requestedBy: inputs.userId,
++             }
++           );
++
++           enqueuedJobs.push({
++             studyId: csr.studyId,
++             protocolNumber: csr.protocolNumber,
++             jobId: enqueued.jobId,
++           });
++         }
++
++         const payload: CSRNarrativeStepPayload = { jobs: enqueuedJobs };
++         narrativeStep.completedAt = undefined; // not yet complete
++         narrativeStep.durationMs = Date.now() - tNarrative;
++         narrativeStep.status = 'awaiting-async';
++         narrativeStep.outputRef = JSON.stringify(payload);
++         narrativeStep.outputHash = hashOutput(payload);
++
++         outputs.csrNarrativeJobs = {
++           jobs: enqueuedJobs.map(j => ({
++             studyId: j.studyId,
++             protocolNumber: j.protocolNumber,
++             jobId: j.jobId,
++             status: 'queued',
++             progress: 0,
++             sectionsComplete: 0,
++           })),
++           pendingJobIds: enqueuedJobs.map(j => j.jobId),
++         };
++
++         await persistStepEvent(
++           runId,
++           run.organizationId,
++           narrativeStep,
++           'complete',
++           run.submissionFk
++         );
++
++         run.status = 'awaiting-async';
++         run.completedAt = undefined;
++         await captureOrchestratorSuspendedOutputs(runId, run.organizationId, outputs);
++         await persistRun(run);
++         return { run, outputs };
++       } catch (err) {
++         narrativeStep.completedAt = new Date().toISOString();
++         narrativeStep.durationMs = Date.now() - tNarrative;
++         narrativeStep.status = 'failed';
++         narrativeStep.error = err instanceof Error ? err.message : String(err);
++         await persistStepEvent(runId, run.organizationId, narrativeStep, 'fail', run.submissionFk);
++         throw err;
++       }
++     } else {
++       const narrativeStep = stepOf('csr.draft-narrative');
++       narrativeStep.inputHash = narrativeHash;
++       narrativeStep.status = 'running';
++       narrativeStep.startedAt = new Date().toISOString();
++       await persistStepEvent(runId, run.organizationId, narrativeStep, 'start', run.submissionFk);
++       narrativeStep.status = 'skipped';
++       narrativeStep.completedAt = new Date().toISOString();
++       narrativeStep.durationMs = 0;
++       narrativeStep.outputRef = inputs.enableCSRNarrative
++         ? 'skipped (no csrInputs)'
++         : 'skipped (enableCSRNarrative=false)';
++       await persistStepEvent(
++         runId,
++         run.organizationId,
++         narrativeStep,
++         'complete',
++         run.submissionFk
++       );
++     }
++
++     const m27Hash = hashInputs(inputs.csrInputs, inputs.indication ?? '');
++     await runStep('m2.7.clinical', m27Hash, async () => {
++       if (inputs.csrInputs.length === 0) return null;
++       outputs.m27 = buildM27ClinicalSummary({
++         csrs: inputs.csrInputs,
++         indication: inputs.indication || '[indication not specified]',
++         investigationalProduct: inputs.drugProductName || inputs.drugSubstanceName || '[product]',
++       });
++       return {
++         outputRef: `m2.7.clinical:completeness=${outputs.m27.completeness}`,
++         output: outputs.m27,
++       };
++     });
++
++     await runStep('m1.admin', hashInputs(inputs.applicationNumber, inputs.region), async () => {
++       return {
++         outputRef: `m1.admin:not-generated (delegated to the ${inputs.region.toLowerCase()} regional template; no Module 1 content is in this package)`,
++         output: { region: inputs.region, applicationNumber: inputs.applicationNumber },
++       };
++     });
++
++     const sequenceNumber = inputs.sequenceNumber ?? '0000';
++     let assembledLeafBuffers: Record<string, Buffer> | undefined;
++     await runStep('package.assemble', hashOutput(outputs), async () => {
++       const { assembled, leafBuffers } = await assembleForValidation(
++         outputs.module3Sections,
++         inputs,
++         sequenceNumber
++       );
++       outputs.assembly = assembled;
++       assembledLeafBuffers = leafBuffers;
++       return {
++         outputRef: assembleStepOutputRef(assembled),
++         output: assembled,
++       };
++     });
++
++     if (!inputs.skipValidation) {
++       const assembly = outputs.assembly;
++       if (!assembly) {
++         throw new Error(
++           '[Orchestrator] package.validate: no assembled package available — package.assemble must run first'
++         );
++       }
++       await runStep('package.validate', hashOutput(assembly), async () => {
++         const context: HardenedValidationContext = {
++           submissionId: inputs.submissionId,
++           organizationId: inputs.organizationId,
++           region: assembly.region as HardenedValidationContext['region'],
++           applicationNumber: assembly.applicationNumber,
++           sequenceNumber: assembly.sequenceNumber,
++           submissionType: assembly.submissionType,
++           totalSizeBytes: assembly.totalSizeBytes,
++           leafBuffers: assembledLeafBuffers,
++         };
++         const result = await validateEctdPackageHardened(
++           assembly.leaves,
++           context,
++           assembly.backboneXml
++         );
++         outputs.validation = result;
++
++         recordOrchestratorGatewayReady({ ready: result.gatewayReady });
++
++         const seqQueryFailed = result.sequence.some(f => f.code === 'SEQ_QUERY_FAILED');
++         if (seqQueryFailed) {
++           recordOrchestratorSequenceQueryFailed();
++         }
++
++         if (!result.gatewayReady) {
++           const errCount = result.summary.errors;
++           const regionalErrCount = result.regional.filter(f => f.severity === 'error').length;
++           const seqErrCount = result.sequence.filter(f => f.severity === 'error').length;
++           throw new Error(
++             `package not gateway-ready: ${errCount} structural error(s), ${regionalErrCount} regional error(s), ${seqErrCount} sequence error(s); hardenedScore=${result.hardenedScore}`
++           );
++         }
++
++         return {
++           outputRef: `package.validate:gateway-ready (Module 3 only) score=${result.hardenedScore}`,
++           output: {
++             gatewayReady: result.gatewayReady,
++             hardenedScore: result.hardenedScore,
++             summary: result.summary,
++           },
++         };
++       });
++     } else {
++       stepOf('package.validate').status = 'skipped';
++     }
++
++     if ((await runPackageSignGate({ run, inputs, outputs, stepOf })) === 'suspended') {
++       return { run, outputs };
++     }
++
++     run.status = finalRunStatus(run.steps, inputs);
++   } catch (err) {
++     run.status = 'failed';
++     console.error('[Orchestrator] run failed:', err);
++   }
++
++   run.completedAt = new Date().toISOString();
++   await persistRun(run);
++
++   recordOrchestratorRunCompleted({
++     submissionType: run.submissionType,
++     region: run.region,
++     status: run.status as 'complete' | 'failed' | 'partial',
++     durationMs: Date.now() - runT0,
++   });
++
++   return { run, outputs };
++ }
++
++
++ function rederiveSyncOutputsForResume(inputs: OrchestratorInputs): OrchestratorOutputs {
++   const outputs: OrchestratorOutputs = {
++     module3Sections: [],
++     csrTables: [],
++   };
++
++   if (inputs.cmcSources.length > 0) {
++     outputs.module3Sections = composeFullModule3(inputs.cmcSources, inputs.region);
++   }
++   if (inputs.clinicalStudyData.length > 0) {
++     outputs.csrTables = inputs.clinicalStudyData.map(buildCSRTables);
++   }
++
++   return outputs;
++ }
++
++ function finalRunStatus(
++   steps: StepRecord[],
++   inputs: Pick<OrchestratorInputs, 'submissionType' | 'skipValidation'>
++ ): 'complete' | 'failed' | 'partial' {
++   if (steps.some(s => s.status === 'failed')) return 'partial';
++   if (steps.every(s => s.status === 'skipped')) return 'failed';
++   const validate = steps.find(s => s.key === 'package.validate');
++   if (validate?.status === 'skipped') return 'partial';
++   const sign = steps.find(s => s.key === 'package.sign');
++   if (
++     sign?.status === 'skipped' &&
++     SIGNATURE_REQUIRED_SUBMISSION_TYPES.has(inputs.submissionType)
++   ) {
++     return 'partial';
++   }
++   return 'complete';
++ }
++
++ function signStepInputHash(inputs: OrchestratorInputs, outputs: OrchestratorOutputs): string {
++   return hashInputs(
++     inputs.submissionId,
++     inputs.applicationNumber,
++     inputs.region,
++     inputs.submissionType,
++     inputs.organizationId,
++     outputs.assembly?.leaves ?? null,
++     outputs.validation
++       ? {
++           gatewayReady: outputs.validation.gatewayReady,
++           hardenedScore: outputs.validation.hardenedScore,
++           summary: outputs.validation.summary,
++         }
++       : null
++   );
++ }
++
++ async function recordSignStepSkipped(
++   run: OrchestratorRun,
++   signStep: StepRecord,
++   signInputHash: string,
++   outputRef: string
++ ): Promise<void> {
++   const now = new Date().toISOString();
++   signStep.inputHash = signInputHash;
++   signStep.startedAt = now;
++   signStep.status = 'skipped';
++   signStep.completedAt = now;
++   signStep.durationMs = 0;
++   signStep.outputRef = outputRef;
++   await persistStepEvent(run.runId, run.organizationId, signStep, 'complete', run.submissionFk);
++ }
++
++ async function runPackageSignGate(args: {
++   run: OrchestratorRun;
++   inputs: OrchestratorInputs;
++   outputs: OrchestratorOutputs;
++   stepOf: (key: StepKey) => StepRecord;
++ }): Promise<'suspended' | 'settled'> {
++   const { run, inputs, outputs, stepOf } = args;
++   const signStep = stepOf('package.sign');
++   const validateStep = stepOf('package.validate');
++
++   const signInputHash = signStepInputHash(inputs, outputs);
++   const identityRefusal = packageSignIdentityRefusal(outputs.assembly);
++
++   if (!SIGNATURE_REQUIRED_SUBMISSION_TYPES.has(inputs.submissionType)) {
++     await recordSignStepSkipped(
++       run,
++       signStep,
++       signInputHash,
++       `skipped (submissionType=${inputs.submissionType} not in REQUIRED allowlist)`
++     );
++   } else if (identityRefusal) {
++     await recordSignStepSkipped(
++       run,
++       signStep,
++       signInputHash,
++       `skipped (${identityRefusal})`
++     );
++   } else if (validateStep.status !== 'complete' || !outputs.assembly || !outputs.validation) {
++     await recordSignStepSkipped(
++       run,
++       signStep,
++       signInputHash,
++       `skipped (package.validate status=${validateStep.status}; cannot sign a non-gateway-ready package)`
++     );
++   } else {
++     signStep.inputHash = signInputHash;
++     signStep.status = 'running';
++     signStep.startedAt = new Date().toISOString();
++     await persistStepEvent(run.runId, run.organizationId, signStep, 'start', run.submissionFk);
++
++     const tSign = Date.now();
++     try {
++       const sequenceNumberForDigest = outputs.assembly.sequenceNumber;
++       const payloadDigest = computeBoundPayloadDigest({
++         assembly: outputs.assembly,
++         validation: outputs.validation,
++         submissionId: inputs.submissionId,
++         applicationNumber: inputs.applicationNumber,
++         region: inputs.region,
++         submissionType: inputs.submissionType,
++         organizationId: inputs.organizationId,
++         backboneXml: outputs.assembly.backboneXml,
++       });
++
++       const signedSnapshot = buildSignedSnapshot(
++         outputs.assembly,
++         outputs.validation,
++         inputs.submissionId,
++         inputs.organizationId
++       );
++
++       const payloadSeal = sealSignPayloadDigest(payloadDigest, inputs.organizationId) ?? undefined;
++
++       const payloadSignature =
++         (await signSignPayloadDigest(payloadDigest, inputs.organizationId)) ?? undefined;
++
++       const existing = await findActiveReleaseSignature({
++         organizationId: inputs.organizationId,
++         boundPayloadDigest: payloadDigest,
++       });
++
++       if (existing) {
++         const completePayload: PackageSignStepPayload = {
++           payloadDigest,
++           payloadSeal,
++           payloadSignature,
++           signatureId: existing.id,
++           awaitingSince: new Date().toISOString(),
++           signedSnapshot,
++         };
++         signStep.status = 'complete';
++         signStep.completedAt = new Date().toISOString();
++         signStep.durationMs = Date.now() - tSign;
++         signStep.outputRef = JSON.stringify(completePayload);
++         signStep.outputHash = hashOutput(completePayload);
++         await persistStepEvent(
++           run.runId,
++           run.organizationId,
++           signStep,
++           'complete',
++           run.submissionFk
++         );
++         recordOrchestratorStepCompleted({
++           step: 'package.sign',
++           durationMs: signStep.durationMs,
++         });
++         void sequenceNumberForDigest;
++       } else {
++         const awaitingPayload: PackageSignStepPayload = {
++           payloadDigest,
++           payloadSeal,
++           payloadSignature,
++           awaitingSince: new Date().toISOString(),
++           signedSnapshot,
++         };
++         signStep.status = 'awaiting-signature';
++         signStep.completedAt = undefined;
++         signStep.durationMs = Date.now() - tSign;
++         signStep.outputRef = JSON.stringify(awaitingPayload);
++         signStep.outputHash = hashOutput(awaitingPayload);
++         await persistStepEvent(
++           run.runId,
++           run.organizationId,
++           signStep,
++           'complete',
++           run.submissionFk
++         );
++
++         run.status = 'awaiting-signature';
++         run.completedAt = undefined;
++         await persistRun(run);
++         return 'suspended';
++       }
++     } catch (err) {
++       signStep.completedAt = new Date().toISOString();
++       signStep.durationMs = Date.now() - tSign;
++       signStep.status = 'failed';
++       signStep.error = err instanceof Error ? err.message : String(err);
++       recordOrchestratorStepFailed({
++         step: 'package.sign',
++         errorCode: classifyStepError(err),
++       });
++       await persistStepEvent(run.runId, run.organizationId, signStep, 'fail', run.submissionFk);
++       throw err;
++     }
++   }
++   return 'settled';
++ }
++
++ async function resumeOrchestratorRun(
++   inputs: OrchestratorInputs,
++   resumeRunId: string,
++   resumeOutputs?: OrchestratorOutputs
++ ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
++   const previousRun = await getRun(resumeRunId, inputs.organizationId);
++   if (!previousRun) {
++     throw new Error(`[Orchestrator] resume: run ${resumeRunId} not found or org mismatch`);
++   }
++   if (previousRun.organizationId !== inputs.organizationId) {
++     throw new Error(
++       `[Orchestrator] resume: tenant mismatch — previousRun.organizationId=${previousRun.organizationId} but inputs.organizationId=${inputs.organizationId}`
++     );
++   }
++
++   if (
++     previousRun.dependencyGraphDigest &&
++     previousRun.dependencyGraphDigest !== computeDependencyGraphDigest()
++   ) {
++     console.warn(
++       `[Orchestrator] resume: workflow definition drift — run ${resumeRunId} was created under ` +
++         `${
++           previousRun.workflowVersion ?? 'unknown version'
++         } (digest ${previousRun.dependencyGraphDigest.slice(0, 12)}…) ` +
++         `but the live definition is ${WORKFLOW_DEFINITION_VERSION} (digest ${computeDependencyGraphDigest().slice(
++           0,
++           12
++         )}…). ` +
++         'The run resumes under its own step snapshot; new steps use the live definition.'
++     );
++   }
++
++   const awaitingAsyncStep = previousRun.steps.find(s => s.status === 'awaiting-async');
++   const awaitingSignatureStep = previousRun.steps.find(s => s.status === 'awaiting-signature');
++
++   if (!awaitingAsyncStep && !awaitingSignatureStep) {
++     const outputs = rederiveSyncOutputsForResume(inputs);
++     return { run: previousRun, outputs };
++   }
++
++   if (awaitingAsyncStep === undefined && awaitingSignatureStep) {
++     return resumeAwaitingSignature(inputs, previousRun, awaitingSignatureStep);
++   }
++
++   const awaitingStep = awaitingAsyncStep!;
++
++   if (awaitingStep.key !== 'csr.draft-narrative') {
++     throw new Error(
++       `[Orchestrator] resume: unexpected awaiting-async step '${awaitingStep.key}' — only csr.draft-narrative is supported today`
++     );
++   }
++
++   const payload = tryParseNarrativePayload(awaitingStep.outputRef);
++   if (!payload) {
++     throw new Error(
++       `[Orchestrator] resume: csr.draft-narrative step has no parseable jobs payload (outputRef='${
++         awaitingStep.outputRef ?? ''
++       }')`
++     );
++   }
++
++   const jobStatuses: Array<{
++     studyId: string;
++     protocolNumber: string;
++     jobId: number;
++     status: string;
++     progress: number;
++     sectionsComplete: number;
++     error?: unknown;
++   }> = [];
++
++   for (const job of payload.jobs) {
++     const status = await getCSRBuildJobStatus(job.jobId, inputs.organizationId);
++     if (!status) {
++       jobStatuses.push({
++         studyId: job.studyId,
++         protocolNumber: job.protocolNumber,
++         jobId: job.jobId,
++         status: 'missing',
++         progress: 0,
++         sectionsComplete: 0,
++         error: 'job not found or org mismatch',
++       });
++       continue;
++     }
++     jobStatuses.push({
++       studyId: job.studyId,
++       protocolNumber: job.protocolNumber,
++       jobId: job.jobId,
++       status: status.status,
++       progress: status.progress,
++       sectionsComplete: status.sectionsComplete,
++       error: status.error,
++     });
++   }
++
++   const PENDING_STATUSES = new Set(['queued', 'drafting']);
++   const anyFailed = jobStatuses.some(
++     j =>
++       j.status === 'failed' ||
++       j.status === 'missing' ||
++       (j.status !== 'complete' && !PENDING_STATUSES.has(j.status))
++   );
++   const allComplete = jobStatuses.every(j => j.status === 'complete');
++
++   const outputs = resumeOutputs
++     ? { ...resumeOutputs, csrNarrativeJobs: undefined }
++     : rederiveSyncOutputsForResume(inputs);
++   outputs.csrNarrativeJobs = {
++     jobs: jobStatuses,
++     pendingJobIds: jobStatuses
++       .filter(j => j.status !== 'complete' && j.status !== 'failed' && j.status !== 'missing')
++       .map(j => j.jobId),
++   };
++
++   if (anyFailed) {
++     const stepRef = previousRun.steps.find(s => s.key === 'csr.draft-narrative');
++     if (stepRef) {
++       stepRef.status = 'failed';
++       stepRef.completedAt = new Date().toISOString();
++       stepRef.error = jobStatuses
++         .filter(j => j.status === 'failed' || j.status === 'missing')
++         .map(
++           j =>
++             `${j.protocolNumber}/${j.jobId}: ${
++               typeof j.error === 'string' ? j.error : JSON.stringify(j.error)
++             }`
++         )
++         .join('; ');
++       await persistStepEvent(
++         previousRun.runId,
++         previousRun.organizationId,
++         stepRef,
++         'fail',
++         previousRun.submissionFk
++       );
++     }
++     previousRun.status = 'failed';
++     previousRun.completedAt = new Date().toISOString();
++     await persistRun(previousRun);
++     return { run: previousRun, outputs };
++   }
++
++   if (!allComplete) {
++     return { run: previousRun, outputs };
++   }
++
++   const narrativeStepRef = previousRun.steps.find(s => s.key === 'csr.draft-narrative');
++   if (narrativeStepRef) {
++     narrativeStepRef.status = 'complete';
++     narrativeStepRef.completedAt = new Date().toISOString();
++     const completePayload = { jobs: jobStatuses };
++     narrativeStepRef.outputRef = JSON.stringify(completePayload);
++     narrativeStepRef.outputHash = hashOutput(completePayload);
++     await persistStepEvent(
++       previousRun.runId,
++       previousRun.organizationId,
++       narrativeStepRef,
++       'complete',
++       previousRun.submissionFk
++     );
++   }
++
++   const runId = previousRun.runId;
++   const stepOf = (key: StepKey): StepRecord => previousRun.steps.find(s => s.key === key)!;
++
++   const runStep = async (
++     key: StepKey,
++     inputHash: string,
++     fn: () => Promise<{ outputRef: string; output: unknown } | null>
++   ): Promise<void> => {
++     const step = stepOf(key);
++     if (step.status !== 'pending' && step.status !== 'stale') {
++       return;
++     }
++     step.inputHash = inputHash;
++     step.status = 'running';
++     step.startedAt = new Date().toISOString();
++     await persistStepEvent(
++       runId,
++       previousRun.organizationId,
++       step,
++       'start',
++       previousRun.submissionFk
++     );
++     const t0 = Date.now();
++     try {
++       const result = await fn();
++       step.completedAt = new Date().toISOString();
++       step.durationMs = Date.now() - t0;
++       if (result === null) {
++         step.status = 'skipped';
++         step.outputHash = undefined;
++         step.outputRef = 'skipped (no inputs)';
++       } else {
++         step.status = 'complete';
++         step.outputHash = hashOutput(result.output);
++         step.outputRef = result.outputRef;
++       }
++       await persistStepEvent(
++         runId,
++         previousRun.organizationId,
++         step,
++         'complete',
++         previousRun.submissionFk
++       );
++     } catch (err) {
++       step.completedAt = new Date().toISOString();
++       step.durationMs = Date.now() - t0;
++       step.status = 'failed';
++       step.error = err instanceof Error ? err.message : String(err);
++       await persistStepEvent(
++         runId,
++         previousRun.organizationId,
++         step,
++         'fail',
++         previousRun.submissionFk
++       );
++       throw err;
++     }
++   };
++
++   try {
++     const m27Hash = hashInputs(inputs.csrInputs, inputs.indication ?? '');
++     await runStep('m2.7.clinical', m27Hash, async () => {
++       if (inputs.csrInputs.length === 0) return null;
++       outputs.m27 = buildM27ClinicalSummary({
++         csrs: inputs.csrInputs,
++         indication: inputs.indication || '[indication not specified]',
++         investigationalProduct: inputs.drugProductName || inputs.drugSubstanceName || '[product]',
++       });
++       return {
++         outputRef: `m2.7.clinical:completeness=${outputs.m27.completeness}`,
++         output: outputs.m27,
++       };
++     });
++
++     await runStep('m1.admin', hashInputs(inputs.applicationNumber, inputs.region), async () => {
++       return {
++         outputRef: `m1.admin:not-generated (delegated to the ${inputs.region.toLowerCase()} regional template; no Module 1 content is in this package)`,
++         output: { region: inputs.region, applicationNumber: inputs.applicationNumber },
++       };
++     });
++
++     const sequenceNumber = inputs.sequenceNumber ?? '0000';
++     let assembledLeafBuffers: Record<string, Buffer> | undefined;
++     await runStep('package.assemble', hashOutput(outputs), async () => {
++       const { assembled, leafBuffers } = await assembleForValidation(
++         outputs.module3Sections,
++         inputs,
++         sequenceNumber
++       );
++       outputs.assembly = assembled;
++       assembledLeafBuffers = leafBuffers;
++       return {
++         outputRef: assembleStepOutputRef(assembled),
++         output: assembled,
++       };
++     });
++
++     if (!inputs.skipValidation) {
++       const assembly = outputs.assembly;
++       if (!assembly) {
++         throw new Error(
++           '[Orchestrator] resume: package.validate has no assembled package — package.assemble must run first'
++         );
++       }
++       await runStep('package.validate', hashOutput(assembly), async () => {
++         const context: HardenedValidationContext = {
++           submissionId: inputs.submissionId,
++           organizationId: inputs.organizationId,
++           region: assembly.region as HardenedValidationContext['region'],
++           applicationNumber: assembly.applicationNumber,
++           sequenceNumber: assembly.sequenceNumber,
++           submissionType: assembly.submissionType,
++           totalSizeBytes: assembly.totalSizeBytes,
++           leafBuffers: assembledLeafBuffers,
++         };
++         const result = await validateEctdPackageHardened(
++           assembly.leaves,
++           context,
++           assembly.backboneXml
++         );
++         outputs.validation = result;
++         if (!result.gatewayReady) {
++           const errCount = result.summary.errors;
++           const regionalErrCount = result.regional.filter(f => f.severity === 'error').length;
++           const seqErrCount = result.sequence.filter(f => f.severity === 'error').length;
++           throw new Error(
++             `package not gateway-ready: ${errCount} structural error(s), ${regionalErrCount} regional error(s), ${seqErrCount} sequence error(s); hardenedScore=${result.hardenedScore}`
++           );
++         }
++         return {
++           outputRef: `package.validate:gateway-ready (Module 3 only) score=${result.hardenedScore}`,
++           output: {
++             gatewayReady: result.gatewayReady,
++             hardenedScore: result.hardenedScore,
++             summary: result.summary,
++           },
++         };
++       });
++     } else {
++       const pv = stepOf('package.validate');
++       if (pv.status === 'pending') pv.status = 'skipped';
++     }
++
++     if (stepOf('package.sign').status === 'pending') {
++       const gate = await runPackageSignGate({ run: previousRun, inputs, outputs, stepOf });
++       if (gate === 'suspended') return { run: previousRun, outputs };
++     }
++
++     previousRun.status = finalRunStatus(previousRun.steps, inputs);
++   } catch (err) {
++     previousRun.status = 'failed';
++     console.error('[Orchestrator] resume failed:', err);
++   }
++
++   previousRun.completedAt = new Date().toISOString();
++   await persistRun(previousRun);
++   return { run: previousRun, outputs };
++ }
++
++
++ async function failResumeSignStep(
++   signStep: StepRecord,
++   previousRun: OrchestratorRun,
++   outputs: OrchestratorOutputs,
++   error: string
++ ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
++   signStep.status = 'failed';
++   signStep.error = error;
++   signStep.completedAt = new Date().toISOString();
++   await persistStepEvent(
++     previousRun.runId,
++     previousRun.organizationId,
++     signStep,
++     'fail',
++     previousRun.submissionFk
++   );
++   previousRun.status = 'failed';
++   previousRun.completedAt = new Date().toISOString();
++   await persistRun(previousRun);
++   recordOrchestratorRunCompleted({
++     submissionType: previousRun.submissionType,
++     region: previousRun.region,
++     status: 'failed',
++     durationMs: Math.max(0, Date.now() - new Date(previousRun.startedAt).getTime()),
++   });
++   return { run: previousRun, outputs };
++ }
++
++ async function resumeAwaitingSignature(
++   inputs: OrchestratorInputs,
++   previousRun: OrchestratorRun,
++   signStep: StepRecord
++ ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
++   const persistedPayload = tryParseSignPayload(signStep.outputRef);
++   if (!persistedPayload) {
++     throw new Error(
++       `[Orchestrator] resume: package.sign step has no parseable payload (outputRef='${
++         signStep.outputRef ?? ''
++       }')`
++     );
++   }
++
++   let outputs: OrchestratorOutputs;
++   let recomputedDigest: string;
++
++   if (persistedPayload.signedSnapshot) {
++     const snap = persistedPayload.signedSnapshot;
++     outputs = rederiveSyncOutputsForResume(inputs);
++
++     const snapshotWellFormed =
++       Array.isArray(snap.leaves) &&
++       snap.validatorOutcome != null &&
++       typeof snap.validatorOutcome === 'object' &&
++       typeof snap.submissionId === 'string' &&
++       typeof snap.organizationId === 'number' &&
++       typeof snap.applicationNumber === 'string' &&
++       typeof snap.region === 'string' &&
++       typeof snap.submissionType === 'string';
++     if (!snapshotWellFormed) {
++       return failResumeSignStep(
++         signStep,
++         previousRun,
++         outputs,
++         'signature_snapshot_integrity_failure'
++       );
++     }
++
++     if (
++       snap.submissionId !== inputs.submissionId ||
++       snap.organizationId !== inputs.organizationId ||
++       snap.applicationNumber !== inputs.applicationNumber ||
++       snap.region !== inputs.region ||
++       snap.submissionType !== inputs.submissionType
++     ) {
++       return failResumeSignStep(
++         signStep,
++         previousRun,
++         outputs,
++         'signature_resume_identity_mismatch'
++       );
++     }
++
++     outputs.assembly = {
++       leaves: snap.leaves,
++       totalSizeBytes: snap.totalSizeBytes,
++       applicationNumber: snap.applicationNumber,
++       sequenceNumber: snap.sequenceNumber,
++       region: snap.region,
++       submissionType: snap.submissionType,
++       backboneXml: snap.backboneXml,
++       ...(snap.recordedPackageIdentity ? { recordedPackageIdentity: snap.recordedPackageIdentity } : {}),
++     };
++
++     recomputedDigest = computeBoundPayloadDigestFromComponents({
++       leaves: snap.leaves,
++       validatorOutcome: snap.validatorOutcome,
++       submissionId: snap.submissionId,
++       applicationNumber: snap.applicationNumber,
++       region: snap.region,
++       submissionType: snap.submissionType,
++       organizationId: snap.organizationId,
++       backboneXml: snap.backboneXml || undefined,
++       recordedPackageIdentity: snap.recordedPackageIdentity,
++     });
++
++     if (recomputedDigest !== persistedPayload.payloadDigest) {
++       return failResumeSignStep(
++         signStep,
++         previousRun,
++         outputs,
++         'signature_snapshot_integrity_failure'
++       );
++     }
++
++     const sealVerdict = verifySignPayloadSeal(
++       recomputedDigest,
++       snap.organizationId,
++       persistedPayload.payloadSeal
++     );
++     if (sealVerdict === 'failed' || (sealVerdict === 'unsealed' && isSignSealConfigured())) {
++       return failResumeSignStep(
++         signStep,
++         previousRun,
++         outputs,
++         'signature_seal_verification_failed'
++       );
++     }
++
++     const kmsVerdict = await verifySignPayloadSignature(
++       recomputedDigest,
++       snap.organizationId,
++       persistedPayload.payloadSignature
++     );
++     if (kmsVerdict === 'failed' || (kmsVerdict === 'unsigned' && isKmsSignerConfigured())) {
++       return failResumeSignStep(
++         signStep,
++         previousRun,
++         outputs,
++         'signature_kms_verification_failed'
++       );
++     }
++   } else {
++     outputs = rederiveSyncOutputsForResume(inputs);
++
++     outputs.m23 =
++       outputs.module3Sections.length > 0
++         ? buildM23QualityOverallSummary({
++             module3Sections: outputs.module3Sections,
++             drugSubstanceName: inputs.drugSubstanceName,
++             drugProductName: inputs.drugProductName,
++           })
++         : undefined;
++     outputs.m24 =
++       inputs.nonclinicalStudies.length > 0
++         ? buildM24NonclinicalOverview({
++             nonclinicalStudies: inputs.nonclinicalStudies,
++             drugSubstanceName: inputs.drugSubstanceName,
++             indication: inputs.indication,
++           })
++         : undefined;
++     outputs.m25 =
++       inputs.csrInputs.length > 0
++         ? buildM25ClinicalOverview({
++             csrs: inputs.csrInputs,
++             indication: inputs.indication || '[indication not specified]',
++             investigationalProduct:
++               inputs.drugProductName || inputs.drugSubstanceName || '[product]',
++           })
++         : undefined;
++     outputs.m27 =
++       inputs.csrInputs.length > 0
++         ? buildM27ClinicalSummary({
++             csrs: inputs.csrInputs,
++             indication: inputs.indication || '[indication not specified]',
++             investigationalProduct:
++               inputs.drugProductName || inputs.drugSubstanceName || '[product]',
++           })
++         : undefined;
++
++     const sequenceNumber = inputs.sequenceNumber ?? '0000';
++     const { assembled, leafBuffers } = await assembleForValidation(
++       outputs.module3Sections,
++       inputs,
++       sequenceNumber
++     );
++     outputs.assembly = assembled;
++     if (assembled.dryRun) {
++       return failResumeSignStep(
++         signStep,
++         previousRun,
++         outputs,
++         `signature_dry_run_identity: ${assembled.dryRunReason ?? 'its identity is not recorded.'}`
++       );
++     }
++
++     if (!inputs.skipValidation) {
++       const context: HardenedValidationContext = {
++         submissionId: inputs.submissionId,
++         organizationId: inputs.organizationId,
++         region: outputs.assembly.region as HardenedValidationContext['region'],
++         applicationNumber: outputs.assembly.applicationNumber,
++         sequenceNumber: outputs.assembly.sequenceNumber,
++         submissionType: outputs.assembly.submissionType,
++         totalSizeBytes: outputs.assembly.totalSizeBytes,
++         leafBuffers,
++       };
++       outputs.validation = await validateEctdPackageHardened(
++         outputs.assembly.leaves,
++         context,
++         outputs.assembly.backboneXml
++       );
++     }
++
++     if (!outputs.validation) {
++       return failResumeSignStep(
++         signStep,
++         previousRun,
++         outputs,
++         'package.sign cannot resume: validation outcome missing (skipValidation set?)'
++       );
++     }
++
++     recomputedDigest = computeBoundPayloadDigest({
++       assembly: outputs.assembly,
++       validation: outputs.validation,
++       submissionId: inputs.submissionId,
++       applicationNumber: inputs.applicationNumber,
++       region: inputs.region,
++       submissionType: inputs.submissionType,
++       organizationId: inputs.organizationId,
++     });
++
++     if (recomputedDigest !== persistedPayload.payloadDigest) {
++       return failResumeSignStep(signStep, previousRun, outputs, 'signature_payload_drift');
++     }
++   }
++
++   const identityRefusal = packageSignIdentityRefusal(outputs.assembly);
++   if (identityRefusal) return failResumeSignStep(signStep, previousRun, outputs, identityRefusal);
++
++   const found = await findActiveReleaseSignature({
++     organizationId: inputs.organizationId,
++     boundPayloadDigest: recomputedDigest,
++   });
++
++   if (!found) {
++     return { run: previousRun, outputs };
++   }
++
++   const completePayload: PackageSignStepPayload = {
++     payloadDigest: recomputedDigest,
++     payloadSeal: persistedPayload.payloadSeal,
++     payloadSignature: persistedPayload.payloadSignature,
++     signatureId: found.id,
++     awaitingSince: persistedPayload.awaitingSince,
++     signedSnapshot: persistedPayload.signedSnapshot,
++   };
++   signStep.status = 'complete';
++   signStep.completedAt = new Date().toISOString();
++   signStep.outputRef = JSON.stringify(completePayload);
++   signStep.outputHash = hashOutput(completePayload);
++   await persistStepEvent(
++     previousRun.runId,
++     previousRun.organizationId,
++     signStep,
++     'complete',
++     previousRun.submissionFk
++   );
++
++   previousRun.status = finalRunStatus(previousRun.steps, inputs);
++   previousRun.completedAt = new Date().toISOString();
++   await persistRun(previousRun);
++   recordOrchestratorRunCompleted({
++     submissionType: previousRun.submissionType,
++     region: previousRun.region,
++     status: previousRun.status as 'complete' | 'failed' | 'partial',
++     durationMs: Math.max(0, Date.now() - new Date(previousRun.startedAt).getTime()),
++   });
++   return { run: previousRun, outputs };
++ }
++
++ export async function getRunResumeReadiness(
++   runId: string,
++   organizationId: number
++ ): Promise<{ ready: boolean; jobStatus?: string }> {
++   if (!Number.isFinite(organizationId) || organizationId <= 0) {
++     return { ready: false };
++   }
++
++   const run = await getRun(runId, organizationId);
++   if (!run) return { ready: false };
++
++   const awaitingStep = run.steps.find(s => s.status === 'awaiting-async');
++   if (!awaitingStep) return { ready: false };
++
++   const payload = tryParseNarrativePayload(awaitingStep.outputRef);
++   if (!payload || payload.jobs.length === 0) {
++     return { ready: false };
++   }
++
++   const PENDING_STATUSES = new Set(['queued', 'drafting']);
++   let anyFailed = false;
++   let anyPending = false;
++   for (const job of payload.jobs) {
++     const status = await getCSRBuildJobStatus(job.jobId, organizationId);
++     if (!status) {
++       anyFailed = true;
++       continue;
++     }
++     if (status.status === 'complete') {
++       continue;
++     }
++     if (PENDING_STATUSES.has(status.status)) {
++       anyPending = true;
++     } else {
++       anyFailed = true;
++     }
++   }
++
++   if (anyFailed) return { ready: true, jobStatus: 'failed' };
++   if (anyPending) return { ready: false, jobStatus: 'awaiting' };
++   return { ready: true, jobStatus: 'complete' };
++ }
++
++
++ export function markDownstreamStale(steps: StepRecord[], changedStep: StepKey): StepKey[] {
++   const stale = new Set<StepKey>();
++   const queue: StepKey[] = [changedStep];
++
++   const edgesFor = (s: StepRecord): StepKey[] =>
++     Array.isArray(s.dependsOn) ? s.dependsOn : STEP_DEPENDENCIES[s.key] ?? [];
++
++   while (queue.length > 0) {
++     const current = queue.shift()!;
++     for (const step of steps) {
++       if (edgesFor(step).includes(current) && !stale.has(step.key)) {
++         stale.add(step.key);
++         queue.push(step.key);
++       }
++     }
++   }
++
++   for (const step of steps) {
++     if (!stale.has(step.key)) continue;
++     if (
++       step.status === 'complete' ||
++       step.status === 'awaiting-async' ||
++       step.status === 'running'
++     ) {
++       step.status = 'stale';
++     }
++   }
++
++   return Array.from(stale);
++ }
++
++ export async function regenerateAffected(
++   previousRun: OrchestratorRun,
++   inputs: OrchestratorInputs,
++   changedStep?: StepKey
++ ): Promise<{
++   run: OrchestratorRun;
++   outputs: OrchestratorOutputs;
++   regenerated: StepKey[];
++   supersededRunId: string;
++ }> {
++   if (!Number.isFinite(inputs.organizationId) || inputs.organizationId <= 0) {
++     throw new Error(
++       `[Orchestrator] regenerateAffected: inputs.organizationId is required and must be a positive integer (got: ${String(
++         inputs.organizationId
++       )})`
++     );
++   }
++   if (previousRun.organizationId !== inputs.organizationId) {
++     throw new Error(
++       `[Orchestrator] regenerateAffected: tenant mismatch — previousRun.organizationId=${previousRun.organizationId} but inputs.organizationId=${inputs.organizationId}`
++     );
++   }
++
++   if (changedStep) {
++     markDownstreamStale(previousRun.steps, changedStep);
++   }
++
++   const m3Hash = hashInputs(inputs.cmcSources, inputs.region);
++   const csrHash = hashInputs(inputs.clinicalStudyData);
++   const m24Hash = hashInputs(
++     inputs.nonclinicalStudies,
++     inputs.drugSubstanceName ?? '',
++     inputs.indication ?? ''
++   );
++
++   const m3Step = previousRun.steps.find(s => s.key === 'm3.compose');
++   const csrStep = previousRun.steps.find(s => s.key === 'csr.tabulate');
++   const m24Step = previousRun.steps.find(s => s.key === 'm2.4.nonclinical');
++
++   if (m3Step && m3Step.inputHash !== m3Hash) markDownstreamStale(previousRun.steps, 'm3.compose');
++   if (csrStep && csrStep.inputHash !== csrHash)
++     markDownstreamStale(previousRun.steps, 'csr.tabulate');
++   if (m24Step && m24Step.inputHash !== m24Hash)
++     markDownstreamStale(previousRun.steps, 'm2.4.nonclinical');
++
++   const stale = previousRun.steps.filter(s => s.status === 'stale').map(s => s.key);
++
++   if (stale.length > 0) await persistRun(previousRun);
++
++   const fresh = await runOrchestrator(inputs);
++
++   return {
++     run: fresh.run,
++     outputs: fresh.outputs,
++     regenerated: stale,
++     supersededRunId: previousRun.runId,
++   };
++ }
++
++
++ export class OrchestratorReadError extends Error {
++   readonly operation: 'getRun' | 'getRunAudit';
++   readonly cause: unknown;
++   constructor(operation: 'getRun' | 'getRunAudit', cause: unknown) {
++     super(
++       `[Orchestrator] ${operation} failed: ${
++         cause instanceof Error ? cause.message : String(cause)
++       }`
++     );
++     this.name = 'OrchestratorReadError';
++     this.operation = operation;
++     this.cause = cause;
++   }
++ }
++
++ function readRecordedRunTimestamps(
++   row: Record<string, unknown>
++ ): Pick<OrchestratorRun, 'startedAt' | 'completedAt'> {
++   const startedAt = isoInstantOrNull(row.started_at);
++   const completedAt = row.completed_at == null ? null : isoInstantOrNull(row.completed_at);
++   if (!startedAt || (row.completed_at != null && !completedAt)) {
++     throw new Error('The recorded orchestrator timestamps could not be read.');
++   }
++   return { startedAt, completedAt: completedAt ?? undefined };
++ }
++
++ export async function getRun(
++   runId: string,
++   organizationId: number
++ ): Promise<OrchestratorRun | null> {
++   if (!Number.isFinite(organizationId) || organizationId <= 0) {
++     console.warn('[Orchestrator] getRun called with invalid organizationId:', organizationId);
++     return null;
++   }
++   try {
++     const result = await pool.query(
++       `SELECT run_id, organization_id, submission_id, submission_id_fk, application_number, region, submission_type,
++               started_at, completed_at, status, steps, workflow_version, dependency_graph_digest
++        FROM submission_orchestrator_runs
++        WHERE run_id = $1 AND organization_id = $2`,
++       [runId, organizationId]
++     );
++     if (result.rows.length === 0) return null;
++     const row = result.rows[0] as Record<string, unknown>;
++     let submissionFkOut: number | null = null;
++     const rawFk = row.submission_id_fk;
++     if (typeof rawFk === 'number' && Number.isFinite(rawFk) && rawFk > 0) {
++       submissionFkOut = rawFk;
++     } else if (typeof rawFk === 'string') {
++       const n = Number(rawFk);
++       if (Number.isFinite(n) && n > 0) submissionFkOut = n;
++     }
++     const { startedAt, completedAt } = readRecordedRunTimestamps(row);
++     return {
++       runId: String(row.run_id),
++       organizationId: Number(row.organization_id),
++       submissionId: String(row.submission_id),
++       submissionFk: submissionFkOut,
++       applicationNumber: String(row.application_number),
++       region: String(row.region) as RegionCode,
++       submissionType: String(row.submission_type),
++       startedAt,
++       completedAt,
++       status: String(row.status) as OrchestratorRun['status'],
++       steps: typeof row.steps === 'string' ? JSON.parse(row.steps) : (row.steps as StepRecord[]),
++       workflowVersion: typeof row.workflow_version === 'string' ? row.workflow_version : null,
++       dependencyGraphDigest:
++         typeof row.dependency_graph_digest === 'string' ? row.dependency_graph_digest : null,
++     };
++   } catch (err) {
++     throw new OrchestratorReadError('getRun', err);
++   }
++ }
++
++ export async function getRunAudit(
++   runId: string,
++   organizationId: number
++ ): Promise<
++   Array<{
++     stepKey: string;
++     eventType: string;
++     status: string;
++     inputHash: string;
++     outputHash: string | null;
++     outputRef: string | null;
++     error: string | null;
++     occurredAt: string;
++   }>
++ > {
++   if (!Number.isFinite(organizationId) || organizationId <= 0) {
++     console.warn('[Orchestrator] getRunAudit called with invalid organizationId:', organizationId);
++     return [];
++   }
++   try {
++     const result = await pool.query(
++       `SELECT step_key, event_type, status, input_hash, output_hash, output_ref, error, occurred_at
++        FROM submission_orchestrator_steps
++        WHERE run_id = $1 AND organization_id = $2
++        ORDER BY occurred_at ASC`,
++       [runId, organizationId]
++     );
++     return (result.rows as Array<Record<string, unknown>>).map(r => ({
++       stepKey: String(r.step_key),
++       eventType: String(r.event_type),
++       status: String(r.status),
++       inputHash: String(r.input_hash),
++       outputHash: r.output_hash ? String(r.output_hash) : null,
++       outputRef: r.output_ref ? String(r.output_ref) : null,
++       error: r.error ? String(r.error) : null,
++       occurredAt: String(r.occurred_at),
++     }));
++   } catch (err) {
++     throw new OrchestratorReadError('getRunAudit', err);
++   }
++ }
++
++ export async function loadSubmissionFkBySubmissionIdText(
++   text: string,
++   organizationId: number
++ ): Promise<number | null> {
++   if (!Number.isFinite(organizationId) || organizationId <= 0) {
++     return null;
++   }
++   if (typeof text !== 'string') return null;
++   const trimmed = text.trim();
++   if (trimmed.length === 0) return null;
++
++   const candidate = Number(trimmed);
++   if (!Number.isInteger(candidate) || candidate <= 0) {
++     return null;
++   }
++
++   try {
++     const result = await pool.query(
++       `SELECT id FROM submissions WHERE id = $1 AND organization_id = $2 LIMIT 1`,
++       [candidate, organizationId]
++     );
++     if (result.rows.length === 0) return null;
++     const row = result.rows[0] as Record<string, unknown>;
++     const id = Number(row.id);
++     if (!Number.isFinite(id) || id <= 0) return null;
++     return id;
++   } catch (err) {
++     console.warn(
++       '[Orchestrator] loadSubmissionFkBySubmissionIdText failed (non-fatal):',
++       err instanceof Error ? err.message : err
++     );
++     return null;
++   }
++ }
++
+
+ ❯ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts:198:58
+    196|     expect(reason.length).toBeGreaterThan(40);
+    197|     expect(callerFiles.has(file), `${file} calls no engine any more: r…
+    198|     expect(code(readFileSync(join(ROOT, file), 'utf8'))).toContain(her…
+       |                                                          ^
+    199|     expect(code(readFileSync(join(ROOT, there[0]), 'utf8'))).toContain…
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 4 passed (13)
+   Start at  06:06:04
+   Duration  4.36s (transform 259ms, setup 103ms, import 3.93s, tests 27ms, environment 0ms)
+

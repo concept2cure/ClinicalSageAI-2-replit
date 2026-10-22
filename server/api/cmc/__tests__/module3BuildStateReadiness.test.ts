@@ -24,6 +24,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 
 const mockQuery = vi.fn();
+/* The composition boundary admits this suite's program: these tests are about
+   the figures the board reports for one it admits. Its refusals, judged on a
+   real engine, are in services/cmc/__tests__/composition-boundary-readers.pglite.test.ts. */
+vi.mock('../../../services/cmc/module3-compile', async (orig) => ({
+  ...(await orig<object>()),
+  admitProgramComposition: async () => ({ region: null, applicationType: 'ind', programType: 'ind', productType: 'drug' }),
+}));
 /* The project guard (PF-15) admits this suite's fixture project; its refusals
    are in module3ProjectScope.test.ts. */
 vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));

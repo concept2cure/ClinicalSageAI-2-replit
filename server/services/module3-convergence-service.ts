@@ -30,7 +30,7 @@ import {
   REGIONAL_SECTION_LABELS,
   regionalRequiredFields,
 } from './module3-extensions';
-import { resolveProjectRegional } from './cmc/module3-compile';
+import { admitProgramComposition } from './cmc/module3-compile';
 import { createScopedLogger } from '../utils/logger';
 import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
 import { governedActor } from './part11/governed-actor';
@@ -168,7 +168,8 @@ export async function getModule3BuildStatus(
               source_payload AS "sourcePayload", source_hash AS "sourceHash",
               updated_at AS "updatedAt"
        FROM cmc_source_objects
-       WHERE organization_id = $1 AND project_id = $2`,
+       WHERE organization_id = $1 AND project_id = $2
+       ORDER BY updated_at DESC`,
       [orgId, projectId],
     ),
     pool.query(
@@ -281,22 +282,34 @@ export async function getModule3BuildStatus(
      3.2.A.* is marked stale when its sources change), so they are reported
      here too — a board that walked only the seventeen core keys reported zero
      stale sections while the export gate refused on a stale appendix. */
-  /* 3.2.R composes for the region the linked submission records, through the
-     SAME reader the compile uses — so the board enumerates exactly the
-     sections the compile persisted. Without this the board walked core rules
-     and appendices only: a persisted 3.2.R.1.<region> row had no label, no
-     row on the board and no way to be approved from it, while the export gate
-     counted it and refused. The board could therefore read 100% ready against
-     a gate that would not let the project export.
+  /* The composition boundary first (decision P-28), judged as compose judges
+     it, on the same sources. The board used to run the small-molecule composer
+     for any program: a monoclonal antibody, or a program filing an NDA, was
+     scored on Q3A impurity inputs, given a marketing-application 3.2.R row and
+     counted "ready to compile", while compile refused it. A program outside the
+     boundary has no board here; the refusal is thrown, typed, and every reader
+     relays it (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/cmc-boundary/).
 
-     A failure here is SAID and skipped, as the compile's own regional pass is:
-     a board that cannot resolve a region still reports every other section. */
+     3.2.R composes for the region the linked submission records, from the
+     regional facts the boundary was judged on — read through the SAME reader
+     the compile uses, so the board enumerates exactly the sections the compile
+     persisted. Without it the board walked core rules and appendices only: a
+     persisted 3.2.R.1.<region> row had no label, no row on the board and no way
+     to be approved from it, while the export gate counted it and refused.
+
+     That reader runs under a savepoint, so it needs a transaction. It used to
+     be handed the bare pool, which Postgres refuses at the first SAVEPOINT, so
+     the regional pass below was skipped on every call (2026-10-22). It now
+     reads on a connection of its own, in a read-only transaction.
+
+     A failure composing 3.2.R is SAID and skipped, as the compile's own
+     regional pass is: a board that cannot compose a region still reports every
+     other section. */
+  const regional = await admitProgramComposition(orgId, projectId, canonicalSources);
+  const regionalApplication: string | null = regional.applicationType;
   let regionalComposed: ComposedSection[] = [];
-  let regionalApplication: string | null = null;
   try {
-    const { region, applicationType } = await resolveProjectRegional(pool, orgId, projectId);
-    regionalApplication = applicationType;
-    if (region) regionalComposed = composeRegional(canonicalSources, region, { applicationType });
+    if (regional.region) regionalComposed = composeRegional(canonicalSources, regional.region, { applicationType: regionalApplication });
   } catch (regionalErr) {
     logger.warn('[module3-convergence] regional (3.2.R) enumeration skipped', {
       orgId,

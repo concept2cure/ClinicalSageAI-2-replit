@@ -1,0 +1,7 @@
+# RED at c6556aa1a: the policy as on trunk, the new frame-src cases (2026-10-22T05:50:29Z)
+ × server/middleware/__tests__/csp-nonce.test.ts > CSP frame-src — the in-browser PDF viewer (gap 3.1, 2026-10-22) > production enforces frame-src 'self' blob: and nothing else: no data:, no scheme or host wildcard
+   → expected [ '\'self\'' ] to deeply equal [ '\'self\'', 'blob:' ]
+ × server/middleware/__tests__/csp-nonce.test.ts > CSP frame-src — the in-browser PDF viewer (gap 3.1, 2026-10-22) > development reports against the same frame-src, so the viewer raises no report there either
+   → expected [ '\'self\'' ] to deeply equal [ '\'self\'', 'blob:' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 19 passed (21)

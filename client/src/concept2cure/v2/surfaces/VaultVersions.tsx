@@ -21,6 +21,7 @@ import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/l
 import { I } from '../icons';
 import { useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
 import { VaultVersionCompare } from './VaultVersionCompare';
+import { VaultVersionViewer, VersionViewButton, useVaultVersionViewer } from './VaultVersionViewer';
 import { useVaultCanWrite } from './VaultViewOnly';
 import { downloadBlob, safeFileName } from '../download';
 import {
@@ -277,12 +278,15 @@ function supersededBy(versions: VaultVersion[]): string[] {
 }
 
 /** Every version, newest first, each downloadable through the page's audited download. */
-function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged, onCompare, projectId, signing }: {
+function VersionRows({ versions, title, onDownload, downloadingId, onView, viewingId, onLifecycleChanged, onCompare, projectId, signing }: {
   versions: VaultVersion[];
   signing?: VaultSigningPosture | null;
   title: string;
   onDownload: Props['onDownload'];
   downloadingId: string;
+  /** Show a version in the page (VaultVersionViewer.tsx), through the same audited download. */
+  onView?: (versionId: string, label: string, hash: string | null) => void;
+  viewingId?: string | null;
   onLifecycleChanged?: () => void;
   /** Compare an earlier version with the current one (plan critique 15). */
   onCompare?: (versionId: string) => void;
@@ -311,6 +315,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
             <span data-testid={`vault-version-cmc-${v.id}`}>{cmcEvidenceText(v.cmcEvidence)}</span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
+          <VersionViewButton version={v} title={title} onView={onView} viewingId={viewingId} />
           <button
             className="sp-ask"
             disabled={downloadingId === v.id}
@@ -395,6 +400,7 @@ export function VaultVersions({
   const versions = confirmed?.versions ?? [];
   const currentId = versions.find((v) => v.current)?.id;
   const [comparing, setComparing] = useState<string | null>(null);
+  const viewer = useVaultVersionViewer(projectId);
 
   let body: React.ReactNode;
   if (st.loading) body = <div className="vd-d-idx">Loading versions…</div>;
@@ -412,6 +418,8 @@ export function VaultVersions({
         title={title}
         onDownload={onDownload}
         downloadingId={downloadingId}
+        onView={(id, label, hash) => void viewer.view(id, label, hash)}
+        viewingId={viewer.viewing}
         onLifecycleChanged={onLifecycleChanged}
         onCompare={setComparing}
         projectId={projectId}
@@ -427,6 +435,7 @@ export function VaultVersions({
         <div className="vd-d-idx">Submission placements, eSTAR exports and CMC evidence are limited to records you can currently access.</div>
       ) : null}
       {body}
+      <VaultVersionViewer state={viewer} />
       {comparing && currentId ? (
         <VaultVersionCompare projectId={projectId} documentId={currentId} againstId={comparing} onClose={() => setComparing(null)} />
       ) : null}

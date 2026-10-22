@@ -80,7 +80,9 @@ const rules: AuditRule[] = [
     title: 'Efficacy Summary Not Provided',
     question: 'The briefing book lacks a comprehensive efficacy summary. Without a consolidated presentation of efficacy data across pivotal trials, how can the Committee assess the strength of the efficacy evidence?',
     check(answers) {
-      if (isBlank(answers.efficacy_summary)) {
+      // The interview's efficacy section asks the primary and key secondary results;
+      // there is no efficacy summary only when both are blank.
+      if (isBlank(answers.primary_endpoint_result) && isBlank(answers.key_secondary_endpoints)) {
         return finding(
           this.id,
           this.dimension,
@@ -91,7 +93,7 @@ const rules: AuditRule[] = [
           'FDA Advisory Committee briefing documents must present a complete summary of efficacy findings from all adequate and well-controlled studies per 21 CFR 314.126.',
           '21 CFR 314.126; FDA Advisory Committee Guidance (2008); ICH E9 Section 2.2',
           'Provide a comprehensive efficacy summary including primary endpoint results from all pivotal trials, key secondary endpoint data, responder analyses, and time-to-event analyses where applicable.',
-          ['efficacy_summary', 'primary_endpoint_results', 'pivotal_trial_data'],
+          ['primary_endpoint_result', 'key_secondary_endpoints'],
         );
       }
       return null;
@@ -103,7 +105,7 @@ const rules: AuditRule[] = [
     title: 'No 120-Day Safety Update',
     question: 'The briefing document does not contain a 120-day safety update. Has the sponsor provided the most current safety data available to support the Committee\'s deliberations, consistent with the NDA safety update required by 21 CFR 314.50(d)(5)(vi)(b)?',
     check(answers) {
-      if (isBlank(answers.safety_update_120_day)) {
+      if (answers.safety_update_available !== true) {
         return finding(
           this.id,
           this.dimension,
@@ -114,7 +116,7 @@ const rules: AuditRule[] = [
           '21 CFR 314.50(d)(5)(vi)(b) requires an NDA applicant to update its pending application with new safety information 4 months after submission (the 120-day safety update), after receipt of a complete response letter, and at other times FDA requests; the briefing document should reflect the most recent safety update so the Advisory Committee deliberates on current safety data.',
           '21 CFR 314.50(d)(5)(vi)(b) (NDA safety update)',
           'Include a 120-day safety update covering all adverse events, serious adverse events, and deaths occurring since the NDA/BLA safety database lock. Present new safety signals and any changes to the known safety profile.',
-          ['safety_update_120_day', 'safety_database_cutoff_date'],
+          ['safety_update_available', 'safety_update_data_cutoff'],
         );
       }
       return null;
@@ -272,8 +274,7 @@ const rules: AuditRule[] = [
     title: 'Voting Questions Misaligned with Label Claims',
     question: 'The proposed voting questions do not appear to align with the indication and claims in the proposed labeling. Can the sponsor explain how the voting questions will inform the labeled indication if they do not match the proposed label?',
     check(answers) {
-      const misaligned = answers.voting_questions_label_aligned;
-      if (misaligned === false || misaligned === 'no' || misaligned === 'No') {
+      if (answers.voting_question_alignment === false) {
         return finding(
           this.id,
           this.dimension,
@@ -284,7 +285,7 @@ const rules: AuditRule[] = [
           'Voting questions must reflect the proposed indication and labeling claims to ensure the Committee\'s vote is actionable per FDA Advisory Committee Guidance.',
           'FDA Advisory Committee Guidance (2008); 21 CFR Part 14; 21 CFR 201.57',
           'Align voting questions with the exact proposed indication statement and key labeling claims. Ensure each voting question maps to a specific approvability criterion.',
-          ['voting_questions_label_aligned', 'proposed_indication', 'proposed_labeling'],
+          ['voting_question_alignment', 'proposed_indication', 'proposed_voting_questions'],
         );
       }
       return null;
@@ -296,7 +297,7 @@ const rules: AuditRule[] = [
     title: 'No Structured Benefit-Risk per FDA B-R Framework',
     question: 'The briefing document does not present a structured benefit-risk assessment using FDA\'s recommended framework. Given that the Benefit-Risk Framework is central to FDA\'s regulatory decision-making, how does the sponsor justify this omission?',
     check(answers) {
-      if (isBlank(answers.structured_benefit_risk_table)) {
+      if (answers.benefit_risk_table_prepared !== true) {
         return finding(
           this.id,
           this.dimension,
@@ -307,7 +308,7 @@ const rules: AuditRule[] = [
           'FDA\'s Benefit-Risk Framework (2023) is the standard for presenting benefit-risk assessments in Advisory Committee briefing documents and throughout the drug review process.',
           'FDA Benefit-Risk Framework (2023); PDUFA VII Commitment Letter Section III; FDA Advisory Committee Guidance (2008)',
           'Create a structured benefit-risk summary table using the four dimensions of FDA\'s Benefit-Risk Framework, followed by an overall conclusion. Include quantitative measures of benefit (NNT, effect sizes) and risk (NNH, incidence rates) alongside qualitative assessments.',
-          ['structured_benefit_risk_table', 'benefit_risk_framework', 'nnt_nnh_data'],
+          ['benefit_risk_table_prepared', 'benefit_summary', 'risk_summary'],
         );
       }
       return null;
@@ -319,7 +320,7 @@ const rules: AuditRule[] = [
     title: 'REMS Discussion Absent',
     question: 'Given the safety profile of this product, the briefing document does not discuss whether a Risk Evaluation and Mitigation Strategy is warranted. Has the sponsor considered whether a REMS is necessary to ensure benefits outweigh risks?',
     check(answers) {
-      if (isBlank(answers.rems_discussion) && !isBlank(answers.serious_safety_signals)) {
+      if (isBlank(answers.rems_required) && !isBlank(answers.serious_safety_signals)) {
         return finding(
           this.id,
           this.dimension,
@@ -330,7 +331,7 @@ const rules: AuditRule[] = [
           'Under 21 USC 355-1 (FDAAA Section 901), FDA may require a REMS when necessary to ensure a drug\'s benefits outweigh its risks. Sponsors should proactively address this in briefing documents.',
           '21 USC 355-1; FDA Guidance: REMS (2022); 21 CFR Part 14',
           'Include a dedicated section discussing whether a REMS is warranted based on the identified safety signals. If REMS is proposed, outline Elements to Assure Safe Use (ETASU).',
-          ['rems_discussion', 'serious_safety_signals', 'risk_management_plan'],
+          ['rems_required', 'serious_safety_signals'],
         );
       }
       return null;
@@ -438,7 +439,7 @@ const rules: AuditRule[] = [
     title: 'No Mock Advisory Committee Conducted',
     question: 'Has the sponsor conducted a mock Advisory Committee meeting to stress-test the briefing document and sponsor presentation? Without rehearsal, the sponsor may be inadequately prepared for Committee questions.',
     check(answers) {
-      if (isBlank(answers.mock_advisory_committee_conducted) || answers.mock_advisory_committee_conducted === false || answers.mock_advisory_committee_conducted === 'no' || answers.mock_advisory_committee_conducted === 'No') {
+      if (answers.mock_ac_conducted === false) {
         return finding(
           this.id,
           this.dimension,
@@ -449,7 +450,7 @@ const rules: AuditRule[] = [
           'Industry best practices strongly recommend conducting at least one full mock Advisory Committee meeting to identify weaknesses in the briefing document and sponsor presentation.',
           'FDA Advisory Committee Guidance (2008); PDUFA VII Commitment Letter; Industry Best Practice',
           'Conduct a mock Advisory Committee meeting with external KOLs and former Advisory Committee members. Include a mock voting exercise and document areas requiring additional data or clarification in the briefing book.',
-          ['mock_advisory_committee_conducted', 'presentation_prepared', 'kol_engagement'],
+          ['mock_ac_conducted', 'kol_involvement'],
         );
       }
       return null;
@@ -461,7 +462,7 @@ const rules: AuditRule[] = [
     title: 'Backup Slides Not Prepared',
     question: 'Has the sponsor prepared backup slides to address anticipated difficult questions from the Advisory Committee? Without supplementary materials, the sponsor may be unable to address Committee concerns in real time.',
     check(answers) {
-      if (isBlank(answers.backup_slides_prepared) || answers.backup_slides_prepared === false || answers.backup_slides_prepared === 'no' || answers.backup_slides_prepared === 'No') {
+      if (isBlank(answers.backup_slides_prepared) || numericVal(answers.backup_slides_prepared) === 0) {
         return finding(
           this.id,
           this.dimension,
@@ -484,7 +485,7 @@ const rules: AuditRule[] = [
     title: 'Post-Marketing Commitment Plan Missing',
     question: 'The briefing document does not outline proposed post-marketing commitments or requirements. The Advisory Committee frequently asks about the sponsor\'s post-approval plans. How does the sponsor intend to address this gap?',
     check(answers) {
-      if (isBlank(answers.postmarketing_commitment_plan)) {
+      if (isBlank(answers.post_marketing_studies_planned)) {
         return finding(
           this.id,
           this.dimension,
@@ -495,7 +496,7 @@ const rules: AuditRule[] = [
           'Post-marketing commitments are a standard topic of Advisory Committee discussion per PDUFA VII and 21 CFR 314.81(b)(2)(vii).',
           'PDUFA VII Commitment Letter; 21 CFR 314.81(b)(2)(vii); FDA Guidance: Postmarketing Studies and Clinical Trials (2011)',
           'Include a post-marketing plan section covering proposed PMR/PMC studies, post-marketing safety surveillance, any planned registries, and long-term follow-up studies. Align with anticipated FDA post-marketing requirements.',
-          ['postmarketing_commitment_plan', 'proposed_pmr_pmc', 'long_term_safety_plan'],
+          ['post_marketing_studies_planned', 'pharmacovigilance_plan'],
         );
       }
       return null;
@@ -627,7 +628,11 @@ const rules: AuditRule[] = [
     title: 'Competitive Landscape Not Addressed',
     question: 'The briefing document does not discuss the competitive landscape, including approved therapies and drugs in late-stage development for the same indication. How does the sponsor position this product relative to existing and emerging treatment options?',
     check(answers) {
-      if (isBlank(answers.competitive_landscape)) {
+      // The competitive_landscape section asks approved therapies, late-stage
+      // investigational therapies and the differentiation narrative; the
+      // landscape is unaddressed only when all three are blank.
+      if (isBlank(answers.approved_therapies) && isBlank(answers.investigational_therapies) &&
+          isBlank(answers.differentiation_narrative)) {
         return finding(
           this.id,
           this.dimension,
@@ -638,7 +643,7 @@ const rules: AuditRule[] = [
           'Advisory Committee members need context on available treatment alternatives to assess the clinical significance of a new therapy per FDA Advisory Committee Guidance.',
           'FDA Advisory Committee Guidance (2008); FDA Benefit-Risk Framework (2023); ICH E10 Section 2',
           'Include a competitive landscape section covering: (1) currently approved therapies with their efficacy and safety profiles, (2) head-to-head trial data if available, (3) indirect treatment comparisons, and (4) drugs in late-stage development that may change the treatment paradigm.',
-          ['competitive_landscape', 'current_treatment_options', 'indirect_comparisons'],
+          ['approved_therapies', 'investigational_therapies', 'differentiation_narrative', 'head_to_head_data'],
         );
       }
       return null;
@@ -650,7 +655,10 @@ const rules: AuditRule[] = [
     title: 'No Risk Management Strategy',
     question: 'The briefing document does not present a risk management strategy for identified safety concerns. The Committee will want to understand how the sponsor plans to mitigate known risks in clinical practice. What is the sponsor\'s risk management approach?',
     check(answers) {
-      if (isBlank(answers.risk_management_strategy)) {
+      // The risk_management_plan section asks labeling risk communications, REMS,
+      // monitoring and dose modification; no strategy is presented only when all are blank.
+      if (isBlank(answers.proposed_labeling_risk_communications) && isBlank(answers.rems_required) &&
+          isBlank(answers.monitoring_recommendations) && isBlank(answers.dose_modification_guidelines)) {
         return finding(
           this.id,
           this.dimension,
@@ -661,7 +669,7 @@ const rules: AuditRule[] = [
           'A risk management strategy is expected per ICH E2E and FDA Guidance on REMS when significant safety concerns are identified.',
           'ICH E2E; FDA Guidance: REMS (2022); FDA Benefit-Risk Framework (2023); 21 CFR Part 14',
           'Present a comprehensive risk management strategy including: (1) risk characterization for each identified safety signal, (2) proposed risk minimization measures (e.g., labeling, Medication Guide, ETASU), (3) pharmacovigilance plans, and (4) risk communication strategy.',
-          ['risk_management_strategy', 'safety_signals', 'rems_discussion'],
+          ['proposed_labeling_risk_communications', 'rems_required', 'monitoring_recommendations', 'dose_modification_guidelines'],
         );
       }
       return null;

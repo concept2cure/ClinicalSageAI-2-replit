@@ -1,0 +1,13 @@
+# RED at c6556aa1a: Vault Versions as on trunk, the new View cases (2026-10-22T05:49:50Z)
+ × client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > frames a PDF version through the audited download, typed application/pdf, with the served hash
+   → Unable to find role="button" and name "View version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > releases the object URL when the viewer is closed
+   → Unable to find role="button" and name "View version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > does not frame HTML saved under a .pdf name; it downloads it and says why
+   → Unable to find role="button" and name "View version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > says what the Vault said when it refuses, and frames nothing
+   → Unable to find role="button" and name "View version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > offers no view for a version whose file is not named as a PDF
+   → Unable to find role="button" and name "View version 2.0 of Clinical protocol"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed (5)

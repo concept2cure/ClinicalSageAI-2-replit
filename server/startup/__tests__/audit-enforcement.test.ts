@@ -32,10 +32,22 @@ describe('assertAuditTrailForProduction', () => {
     expect(logger.warn).not.toHaveBeenCalled();
   });
 
-  it('warns (but does not throw) in production when the audit trail is off', () => {
+  // Enforce is the production default (MR-03 Stage 2, SEC-18; decision P-43).
+  // Only an explicit AUDIT_REQUIRE_ENFORCE=false, which a self-hosted install
+  // may write and the hosted deployment refuses (env.ts), turns it into a warning.
+  it('fails closed in production when the audit trail is off and AUDIT_REQUIRE_ENFORCE is unset', () => {
+    expect(() =>
+      assertAuditTrailForProduction(
+        { NODE_ENV: 'production', AUDIT_TRAIL_ENABLED: 'false' } as NodeJS.ProcessEnv,
+        { warn: () => {} },
+      ),
+    ).toThrow(/FAIL-CLOSED/);
+  });
+
+  it('warns (but does not throw) in production when the audit trail is off and AUDIT_REQUIRE_ENFORCE=false', () => {
     const logger = { warn: vi.fn() };
     const active = assertAuditTrailForProduction(
-      { NODE_ENV: 'production', AUDIT_TRAIL_ENABLED: 'false' } as NodeJS.ProcessEnv,
+      { NODE_ENV: 'production', AUDIT_TRAIL_ENABLED: 'false', AUDIT_REQUIRE_ENFORCE: 'false' } as NodeJS.ProcessEnv,
       logger,
     );
     expect(active).toBe(false);
@@ -142,11 +154,18 @@ describe('assertAuditImmutabilityForProduction', () => {
     ).rejects.toThrow(/FAIL-CLOSED[\s\S]*could not be verified[\s\S]*connection refused/);
   });
 
-  it('warns loudly, and never reports a pass, when the check cannot run in production without the enforce flag', async () => {
+  it('refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE is unset (the production default)', async () => {
+    const check = vi.fn().mockRejectedValue(new Error('connection refused'));
+    await expect(
+      assertAuditImmutabilityForProduction(client, { NODE_ENV: 'production' } as NodeJS.ProcessEnv, quiet(), check),
+    ).rejects.toThrow(/FAIL-CLOSED[\s\S]*could not be verified/);
+  });
+
+  it('warns loudly, and never reports a pass, when the check cannot run in production with AUDIT_REQUIRE_ENFORCE=false', async () => {
     const logger = quiet();
     const check = vi.fn().mockRejectedValue(new Error('connection refused'));
     const report = await assertAuditImmutabilityForProduction(
-      client, { NODE_ENV: 'production' } as NodeJS.ProcessEnv, logger, check,
+      client, { NODE_ENV: 'production', AUDIT_REQUIRE_ENFORCE: 'false' } as NodeJS.ProcessEnv, logger, check,
     );
     expect(report).toBeNull();
     expect(logger.warn).toHaveBeenCalledOnce();
@@ -169,13 +188,21 @@ describe('assertAuditImmutabilityForProduction', () => {
 });
 
 describe('assertAuditIntegritySweepForProduction', () => {
-  it('is a no-op outside production and without the enforce flag', () => {
+  it('is a no-op outside production, and in production with AUDIT_REQUIRE_ENFORCE=false', () => {
     expect(() =>
       assertAuditIntegritySweepForProduction({ NODE_ENV: 'development', ENABLE_AUDIT_CHAIN_CHECK: 'false' } as NodeJS.ProcessEnv),
     ).not.toThrow();
     expect(() =>
-      assertAuditIntegritySweepForProduction({ NODE_ENV: 'production', ENABLE_AUDIT_CHAIN_CHECK: 'false' } as NodeJS.ProcessEnv),
+      assertAuditIntegritySweepForProduction({
+        NODE_ENV: 'production', AUDIT_REQUIRE_ENFORCE: 'false', ENABLE_AUDIT_CHAIN_CHECK: 'false',
+      } as NodeJS.ProcessEnv),
     ).not.toThrow();
+  });
+
+  it('throws in production when the sweep is disabled and AUDIT_REQUIRE_ENFORCE is unset (the production default)', () => {
+    expect(() =>
+      assertAuditIntegritySweepForProduction({ NODE_ENV: 'production', ENABLE_AUDIT_CHAIN_CHECK: 'false' } as NodeJS.ProcessEnv),
+    ).toThrow(/FAIL-CLOSED/);
   });
 
   it('throws in production when AUDIT_REQUIRE_ENFORCE=true and the sweep is disabled', () => {

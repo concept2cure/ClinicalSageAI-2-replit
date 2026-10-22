@@ -28,6 +28,7 @@ import { renderedLeafFiles } from '../../../shared/schema/submissions';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
 import { readLocalUploadBuffer } from '../anthropic-files';
+import { isConversionCapacityError } from '../conversion-slots';
 import { sectionPlainText } from '../c2c/section-content';
 import {
   externalDocumentTableReason,
@@ -1532,6 +1533,10 @@ async function assertSequencePackageable(
       } : { dryRun: true as const }),
     });
   } catch (err) {
+    // A busy converter (OPS-13) is not a sequence that fails to assemble, and
+    // there is nothing in the leaves to fix: it passes through to the route's
+    // fail(), which answers 503 with Retry-After.
+    if (isConversionCapacityError(err)) throw err;
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
       `Refusing to ${step}: the sequence does not assemble into a package (${err instanceof Error ? err.message : String(err)}). ` +

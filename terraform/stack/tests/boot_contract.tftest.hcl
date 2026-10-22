@@ -112,9 +112,10 @@ variables {
   alb_deletion_protection         = true
   evidence_object_lock_mode       = "COMPLIANCE"
   evidence_retention_days         = 2555
-  api_cpu                         = 1024
-  api_memory                      = 6144
+  api_cpu                         = 2048
+  api_memory                      = 8192
   api_desired_count               = 2
+  api_max_count                   = 2
   image_tag                       = "v1.0.0"
   acm_certificate_arn             = "arn:aws:acm:us-east-1:111122223333:certificate/alb"
   cloudfront_certificate_arn      = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
@@ -751,6 +752,93 @@ run "refuses_an_api_task_too_small_for_the_scanner" {
     api_memory = 4096
   }
   expect_failures = [terraform_data.boot_contract]
+}
+
+# OPS-13 (MR-03 Stage 2). One vCPU carried Node, clamd, LibreOffice, OCR and
+# veraPDF, so one large package could fail the health check and ECS would
+# replace the task mid-job. Production runs two vCPUs; staging may run less.
+run "refuses_a_production_api_task_below_two_vcpu" {
+  command = plan
+  variables {
+    api_cpu    = 1024
+    api_memory = 6144
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "staging_may_run_a_one_vcpu_api_task" {
+  command = plan
+  variables {
+    environment = "staging"
+    api_cpu     = 1024
+    api_memory  = 6144
+  }
+}
+
+# The API container stops cleanly and bounds its own heap. ECS sends SIGTERM,
+# then SIGKILL after stopTimeout (default 30 s). The server drains for up to
+# FORCE_EXIT_MS (12 s, server/startup/shutdown.ts) while the load balancer
+# deregisters it (deregistration_delay 30 s, modules/alb), so 30 s cut that
+# short; 60 covers both. The init process reaps the converters' children and
+# forwards the signal. Node's heap is held to 60% of what the scanner leaves,
+# so a large conversion fails one request instead of the whole container.
+run "the_api_container_stops_cleanly_and_bounds_its_heap" {
+  command = apply
+  assert {
+    condition     = module.ecs.api_container.stopTimeout == 60
+    error_message = "The API container must have stopTimeout = 60 (the drain plus the load balancer's deregistration delay)."
+  }
+  assert {
+    condition     = try(module.ecs.api_container.linuxParameters.initProcessEnabled, false) == true
+    error_message = "The API container must run with an init process (linuxParameters.initProcessEnabled)."
+  }
+  assert {
+    condition     = try(module.ecs.api_container.memoryReservation, 0) == var.api_memory - module.ecs.scanner_memory
+    error_message = "The API container's memoryReservation must be the task memory less the scanner's."
+  }
+  assert {
+    condition     = one([for e in module.ecs.api_container.environment : e.value if e.name == "NODE_OPTIONS"]) == "--max-old-space-size=${floor((var.api_memory - module.ecs.scanner_memory) * 0.6)}"
+    error_message = "NODE_OPTIONS must cap the heap at 60% of the memory the scanner leaves the API."
+  }
+}
+
+# Scale on CPU and on requests per target. min is the desired count; max is
+# held at 2 in production until MR-14 closes OPS-07 (three opt-in schedulers
+# still run on every task), and ECS, not Terraform, owns the running count.
+run "the_api_service_scales_on_cpu_and_requests" {
+  command = plan
+  assert {
+    condition = (
+      module.ecs.api_autoscaling.min_capacity == var.api_desired_count &&
+      module.ecs.api_autoscaling.max_capacity == var.api_max_count &&
+      module.ecs.api_autoscaling.scalable_dimension == "ecs:service:DesiredCount"
+    )
+    error_message = "The API service needs an autoscaling target from api_desired_count to api_max_count."
+  }
+  assert {
+    condition = (
+      module.ecs.api_autoscaling.policies["cpu"].metric == "ECSServiceAverageCPUUtilization" &&
+      module.ecs.api_autoscaling.policies["cpu"].target == 60 &&
+      module.ecs.api_autoscaling.policies["requests"].metric == "ALBRequestCountPerTarget" &&
+      module.ecs.api_autoscaling.policies["requests"].resource_label == "${module.alb.alb_arn_suffix}/${module.alb.api_target_group_arn_suffix}"
+    )
+    error_message = "The API service must track average CPU at 60% and requests per target on its own target group."
+  }
+  # Lifecycle is not observable in a plan, so it is read from the module: an
+  # apply that reset desired_count would undo every scale-out.
+  assert {
+    condition     = module.ecs.api_autoscaling.max_capacity > 0 && can(regex("ignore_changes\\s*=\\s*\\[task_definition, desired_count\\]", file("../modules/ecs-fargate/main.tf")))
+    error_message = "aws_ecs_service.api must ignore desired_count, which autoscaling owns."
+  }
+}
+
+run "refuses_a_max_count_below_the_desired_count" {
+  command = plan
+  variables {
+    api_desired_count = 2
+    api_max_count     = 1
+  }
+  expect_failures = [var.api_max_count]
 }
 
 run "refuses_a_refresh_secret_equal_to_the_jwt_secret" {
