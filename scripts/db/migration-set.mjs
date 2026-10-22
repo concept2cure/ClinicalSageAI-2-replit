@@ -3493,6 +3493,10 @@ export const C2C_MIGRATION_FILES = [
   // nothing, drops nothing.
   'migrations/20261015m_claim_confidence_and_drift_severity_unstated.sql',
 
+  // P-44 (2026-10-22): a non-home market's submission records its own agency's
+  // application number; packages read it instead of the project's. Additive.
+  'migrations/20261022b_submissions_market_application_number.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -46,6 +46,8 @@ vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => (
 vi.mock('../../ectd/package-identity', async original => ({
   ...await original<object>(),
   readRecordedPackageIdentity: h.readIdentity,
+  // Transmit reads by submission since P-44 (a market's own number); the same stand-in.
+  readSubmissionPackageIdentity: h.readIdentity,
   lockRecordedPackageIdentity: h.lockIdentity,
 }));
 vi.mock('../../part11/signature-persistence', async original => ({
