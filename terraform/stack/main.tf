@@ -37,7 +37,7 @@ module "vpc" {
 module "ecr" {
   source           = "../modules/ecr"
   prefix           = local.short
-  repository_names = ["api", "worker"]
+  repository_names = ["api"]
   tags             = var.tags
 }
 
@@ -323,8 +323,8 @@ locals {
   # APP_URL and ALLOWED_ORIGINS cannot disagree with the domain browsers use.
   app_origin = "https://${var.domain_aliases[0]}"
 
-  # What every container of this image needs to boot. The API and the worker
-  # run the same image and the same import-time refusals, so they share it.
+  # What every container of this image needs to boot. The API is the only one
+  # (no worker: P-10, amended 2026-10-22); the API adds its own two below.
   boot_secrets = concat([
     { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
     { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
@@ -411,15 +411,13 @@ module "ecs" {
   # deploy a mutable `:latest` tag — that breaks rollback and reproducibility.
   # TODO(GA-blocker): pin to image digest (e.g. "...@sha256:<digest>") rather
   # than a tag once the deploy pipeline resolves the pushed image digest.
-  api_image    = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
-  worker_image = "${module.ecr.repository_urls["worker"]}:${var.image_tag}"
+  api_image = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
   # The virus scanner the API task carries (variables.tf says how it is pinned).
   scanner_image = var.scanner_image
 
-  api_cpu              = var.api_cpu
-  api_memory           = var.api_memory
-  api_desired_count    = var.api_desired_count
-  worker_desired_count = var.worker_desired_count
+  api_cpu           = var.api_cpu
+  api_memory        = var.api_memory
+  api_desired_count = var.api_desired_count
 
   secret_arns = module.secrets.secret_arns_list
   # database_keys.tf: the execution role decrypts the secrets through this key.
@@ -437,7 +435,7 @@ module "ecs" {
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this
   # renders is the one it accepts (tests/boot_contract.tftest.hcl reads the
-  # preflight's list and checks it against both containers). The API adds
+  # preflight's list and checks it against the container). The API adds
   # APP_SERVICE_DB_PASSWORD: the migrate task is cloned from its definition and
   # re-aligns app_service from it (provision-app-role.mjs sends only its SCRAM
   # verifier). The API never mints; APP_DATABASE_URL already holds the password.
@@ -447,20 +445,14 @@ module "ecs" {
     { name = "SETUP_TOKEN", value_from = module.secrets.secret_arns["setup_token"] },
   ])
 
-  # The worker runs the same image, so the same import-time refusals: with less
-  # than the full contract it exits at boot. Whether a worker exists at all is
-  # a founder decision (B6+B7). As defined here it CANNOT boot: since MR-08
-  # stage 1 a production process with no CLAMAV_HOST fails the boot security
-  # self-test (clamav_connectivity, server/services/securityHealth.ts) and
-  # exits, and the worker task has no scanner and no CLAMAV_HOST, by design
-  # (tests/boot_contract.tftest.hcl). There is no worker image to run either
-  # (.github/workflows/deploy-aws.yml, "No worker image"). Giving it a scanner
-  # or retiring it is left to MR-14; nothing here changes the worker's behaviour.
-  worker_secrets = local.boot_secrets
+  # No worker service (P-10, amended 2026-10-22 under NEW-1 of MR-03). It had
+  # no command, so it booted a third API server outside the load balancer, and
+  # with no scanner beside it the boot self-test refused it (clamav_connectivity,
+  # server/services/securityHealth.ts). Background work runs in the API's own
+  # schedulers, once per window across tasks (server/db/scheduledOnce.ts).
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
-  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment, local.embedding_environment)
-  worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.embedding_environment)
+  api_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment, local.embedding_environment)
 
   tags = var.tags
 }
@@ -505,7 +497,7 @@ locals {
   # Unconditional: no variable moves it (INF-36, resolved by the decision above).
   embedding_provider = "local"
 
-  # The API and the worker both run the embedding runtime. With local and no
+  # The API runs the embedding runtime. With local and no
   # address, resolveEmbeddingProvider refuses rather than falling back to OpenAI.
   # EMBEDDING_LOCAL_MODEL is the model the server loads, so the ledger names
   # what served each call; the readiness probe refuses a server that answers as

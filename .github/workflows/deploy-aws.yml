@@ -50,7 +50,7 @@ env:
   #     scheduleOfEvents, taskDue (server/jobs/*) — is started IN-PROCESS by
   #     server/index.ts. There is no queue consumer to run separately.
   #   • The ECS worker task definition (terraform/modules/ecs-fargate/main.tf)
-  #     sets no `command`, so a container built from the app image would run the
+  #     set no `command`, so a container built from the app image would run the
   #     app's CMD (`npm run start`) — a SECOND copy of the API, with a SECOND
   #     copy of every scheduler. Duplicated retention deletes and audit sweeps
   #     are worse than no worker, so pointing the "worker" build at
@@ -61,10 +61,8 @@ env:
   # never the NODE_ENV=production image this ECS service expects. It was deleted
   # (D9, 2026-08-13) along with docker-compose.e2e.yml and its workflows.
   #
-  # TODO(infra): the `c2c-production-worker` ECS service + `worker` ECR repo are
-  # still declared in terraform/ with nothing to deploy into them. Remove them
-  # there (out of scope for this workflow) or land a real worker entrypoint and
-  # restore this path alongside it.
+  # The worker service, task definition, log group and ECR repository were
+  # removed from terraform/ on 2026-10-22 (MR-03 OPS-08, P-10 as amended).
   #
   # Task definition family and container name for the digest-pinned
   # register-then-deploy path in deploy-api. The container name must match the
@@ -716,8 +714,9 @@ jobs:
           # ready, and refuses every Vault upload. On loopback, clamd must run
           # in this task: an essential, health-checked container the API
           # container waits on (dependsOn HEALTHY), which
-          # terraform/modules/ecs-fargate renders. Not in the name list above:
-          # the worker carries that list and has no scanner beside it.
+          # terraform/modules/ecs-fargate renders. Checked here rather than in
+          # the name list above, because its value and the scanner beside it
+          # matter, not only its name.
           CLAMAV_HOST_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
             .containerDefinitions[] | select(.name == $c)
             | (.environment // []) | map(select(.name == "CLAMAV_HOST")) | .[0].value // ""

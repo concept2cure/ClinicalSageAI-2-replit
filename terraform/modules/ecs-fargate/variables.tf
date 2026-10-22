@@ -30,11 +30,6 @@ variable "api_image" {
   description = "Full ECR image URI for the API"
 }
 
-variable "worker_image" {
-  type        = string
-  description = "Full ECR image URI for the Worker"
-}
-
 variable "scanner_image" {
   type        = string
   description = "The clamd image that runs beside the API (main.tf, the scanner container), pinned by digest."
@@ -62,16 +57,6 @@ variable "scanner_memory" {
   default     = 4096
 }
 
-variable "worker_cpu" {
-  type    = number
-  default = 1024
-}
-
-variable "worker_memory" {
-  type    = number
-  default = 2048
-}
-
 variable "api_container_port" {
   type    = number
   default = 5000
@@ -96,11 +81,6 @@ variable "trust_proxy_hops" {
 variable "api_desired_count" {
   type    = number
   default = 2
-}
-
-variable "worker_desired_count" {
-  type    = number
-  default = 1
 }
 
 # ── Secrets ──────────────────────────────────────────────────────────────────
@@ -133,24 +113,6 @@ variable "api_environment" {
   }))
   default     = []
   description = "Plain (non-secret) environment variables for the API container, after the module's own."
-}
-
-variable "worker_environment" {
-  type = list(object({
-    name  = string
-    value = string
-  }))
-  default     = []
-  description = "Plain (non-secret) environment variables for the worker container, after NODE_ENV."
-}
-
-variable "worker_secrets" {
-  type = list(object({
-    name       = string
-    value_from = string
-  }))
-  description = "Secrets injected into the Worker container"
-  default     = []
 }
 
 # ── S3 access ────────────────────────────────────────────────────────────────

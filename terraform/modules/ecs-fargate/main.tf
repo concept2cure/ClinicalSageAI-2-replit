@@ -1,4 +1,4 @@
-// ECS Fargate cluster + services for C2C API and Worker
+// ECS Fargate cluster + the C2C API service (no worker: P-10, amended 2026-10-22)
 
 # ── Cluster ──────────────────────────────────────────────────────────────────
 
@@ -17,12 +17,6 @@ resource "aws_ecs_cluster" "this" {
 
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/ecs/${var.cluster_name}/api"
-  retention_in_days = var.log_retention_days
-  tags              = var.tags
-}
-
-resource "aws_cloudwatch_log_group" "worker" {
-  name              = "/ecs/${var.cluster_name}/worker"
   retention_in_days = var.log_retention_days
   tags              = var.tags
 }
@@ -280,44 +274,6 @@ locals {
   scanner_port = 3310
 }
 
-# ── Worker task definition ──────────────────────────────────────────────────
-
-resource "aws_ecs_task_definition" "worker" {
-  family                   = "${var.cluster_name}-worker"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.worker_cpu
-  memory                   = var.worker_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name      = "worker"
-    image     = var.worker_image
-    essential = true
-
-    environment = concat([
-      { name = "NODE_ENV", value = "production" },
-    ], var.worker_environment)
-
-    secrets = [for s in var.worker_secrets : {
-      name      = s.name
-      valueFrom = s.value_from
-    }]
-
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.worker.name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "worker"
-      }
-    }
-  }])
-
-  tags = var.tags
-}
-
 # ── API service ─────────────────────────────────────────────────────────────
 
 resource "aws_ecs_service" "api" {
@@ -365,32 +321,4 @@ resource "aws_ecs_service" "api" {
   lifecycle {
     ignore_changes = [task_definition]
   }
-}
-
-# ── Worker service ──────────────────────────────────────────────────────────
-
-resource "aws_ecs_service" "worker" {
-  name            = "${var.cluster_name}-worker"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.worker.arn
-  desired_count   = var.worker_desired_count
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = var.private_subnet_ids
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-
-  deployment_circuit_breaker {
-    enable   = true
-    rollback = true
-  }
-
-  tags = var.tags
-
-  # No ignore_changes here, unlike the api service: no pipeline deploys the
-  # worker (deploy-aws.yml has no worker job; B7), so Terraform is the only
-  # thing that moves it to a new revision. Ignoring task_definition would pin
-  # it to its first revision for good.
 }
