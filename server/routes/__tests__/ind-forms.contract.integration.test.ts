@@ -61,6 +61,7 @@ vi.mock('../../services/auditService', () => ({
 }));
 
 import formsRouter from '../ind-forms.routes';
+import auditService from '../../services/auditService';
 import { createSponsor, createInvestigator } from '../../services/ind-master-data/ind-master-data-service';
 import { templatePathFor } from '../../services/ind-forms/ind-form-fill-service';
 
@@ -188,6 +189,71 @@ describe('cross-form QC', () => {
   it('POST /qc → 400 without forms[]', async () => {
     const res = await request(app).post('/api/ind-forms/qc').send({});
     expect(res.status).toBe(400);
+  });
+});
+
+/**
+ * A rendered form is recorded before it is delivered (D5). The render route
+ * described itself as one "the platform does not record that it was
+ * produced", so a filled FDA form left the system with no record of who took
+ * it (2026-10-15 launch-boundary re-proof). It is still a preview, not a
+ * governed artifact; its delivery now carries an EXPORT_GENERATED row with the
+ * SHA-256 of the exact bytes, and nothing is sent when that row does not persist.
+ */
+describe('a rendered form is recorded before it is delivered (D5)', () => {
+  const logAction = () => vi.mocked(auditService.logAction);
+  const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
+  const exported = () =>
+    logAction().mock.calls.map(([e]) => e as any).filter((e) => e.action === 'EXPORT_GENERATED');
+  const raw = (res: any, cb: any) => {
+    const chunks: Buffer[] = [];
+    res.on('data', (c: Buffer) => chunks.push(c));
+    res.on('end', () => cb(null, Buffer.concat(chunks)));
+  };
+
+  it('POST /FDA_3674/pdf records the SHA-256 of the PDF it delivers', async () => {
+    logAction().mockClear();
+    const res = await request(app).post('/api/ind-forms/FDA_3674/pdf').send({ drugName: 'C2C-001' }).buffer(true).parse(raw);
+    expect(res.status).toBe(200);
+    const rows = exported();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].organizationId).toBe(1);
+    expect(rows[0].userId).toBe(9);
+    expect(JSON.stringify(rows[0])).toContain(sha(res.body));
+    expect(res.headers['x-export-sha256']).toBe(sha(res.body));
+  });
+
+  it('POST /1572/pdf-all records the body it delivers, and each PDF’s own SHA-256', async () => {
+    logAction().mockClear();
+    const res = await request(app)
+      .post('/api/ind-forms/1572/pdf-all')
+      .send({ investigators: [{ firstName: 'Pat', lastName: 'Smith' }] })
+      .buffer(true)
+      .parse(raw);
+    expect(res.status).toBe(200);
+    const body = JSON.parse((res.body as Buffer).toString('utf8'));
+    const rows = exported();
+    expect(rows).toHaveLength(1);
+    expect(JSON.stringify(rows[0])).toContain(sha(res.body));
+    for (const d of body.documents) {
+      expect(d.sha256).toBe(sha(Buffer.from(d.pdfBase64, 'base64')));
+      expect(JSON.stringify(rows[0])).toContain(d.sha256);
+    }
+  });
+
+  it('delivers nothing when the record does not persist, and says why', async () => {
+    logAction().mockResolvedValueOnce({ persisted: false } as never);
+    const one = await request(app).post('/api/ind-forms/FDA_3674/pdf').send({ drugName: 'C2C-001' });
+    expect(one.status).toBe(503);
+    expect(one.body.error.code).toBe('UNAUDITED_EXPORT_REFUSED');
+    expect(one.headers['content-disposition']).toBeUndefined();
+
+    logAction().mockResolvedValueOnce({ persisted: false } as never);
+    const all = await request(app)
+      .post('/api/ind-forms/1572/pdf-all')
+      .send({ investigators: [{ firstName: 'Pat', lastName: 'Smith' }] });
+    expect(all.status).toBe(503);
+    expect(all.body.documents).toBeUndefined();
   });
 });
 
