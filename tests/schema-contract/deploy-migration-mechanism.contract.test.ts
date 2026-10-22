@@ -38,9 +38,9 @@ describe('deploy migration mechanism', () => {
     const dockerfile = read('Dockerfile.optimized');
 
     it.each([
-      ['the root migrations tree', /COPY --from=builder \/app\/migrations \.\/migrations/],
-      ['the db/migrations tree', /COPY --from=builder \/app\/db\/migrations \.\/db\/migrations/],
-      ['the provisioning scripts', /COPY --from=builder \/app\/scripts\/db \.\/scripts\/db/],
+      ['the root migrations tree', /COPY (?:--chown=\S+ )?--from=builder \/app\/migrations \.\/migrations/],
+      ['the db/migrations tree', /COPY (?:--chown=\S+ )?--from=builder \/app\/db\/migrations \.\/db\/migrations/],
+      ['the provisioning scripts', /COPY (?:--chown=\S+ )?--from=builder \/app\/scripts\/db \.\/scripts\/db/],
     ])('copies %s into the production stage', (_label, pattern) => {
       expect(dockerfile).toMatch(pattern);
     });
@@ -106,7 +106,7 @@ describe('deploy migration mechanism', () => {
       expect(
         dockerfile,
         'the server reads vendored agency artifacts out of assets/ at runtime, so the production image must COPY it',
-      ).toMatch(/COPY --from=builder \/app\/assets \.\/assets/);
+      ).toMatch(/COPY (?:--chown=\S+ )?--from=builder \/app\/assets \.\/assets/);
 
       // Shipping the directory is no use if the artifacts are not in it. Only
       // the REQUIRED drop-points are asserted present: `assets/tessdata` is one

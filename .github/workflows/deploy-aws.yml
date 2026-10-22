@@ -325,7 +325,10 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
         run: |
+          # BUILD_COMMIT: .dockerignore keeps .git out of the context, so the
+          # image is told which commit it is (/api/version; MR-03 OPS-19).
           docker build -f Dockerfile.optimized --target production \
+            --build-arg BUILD_COMMIT="${{ github.sha }}" \
             -t "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" \
             .
 
