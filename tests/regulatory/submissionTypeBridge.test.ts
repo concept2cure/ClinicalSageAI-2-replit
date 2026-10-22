@@ -51,7 +51,10 @@ describe('Submission Type Bridge', () => {
       expect(resolveToRegistryId('505B2')).toBe('US_505B2');
       expect(resolveToRegistryId('DMF')).toBe('US_DMF');
       expect(resolveToRegistryId('MDR_TD')).toBe('EU_MDR_TECHDOC');
-      expect(resolveToRegistryId('IVDR_TD')).toBe('EU_IVDR_TECHDOC');
+      // 352ca5aae: EU_IVDR_TECHDOC is not a registry id; IVDR_TD and the old
+      // alias target both resolve to the registry's EU_IVDR entry.
+      expect(resolveToRegistryId('IVDR_TD')).toBe('EU_IVDR');
+      expect(resolveToRegistryId('EU_IVDR_TECHDOC')).toBe('EU_IVDR');
     });
 
     it('resolves international types', () => {

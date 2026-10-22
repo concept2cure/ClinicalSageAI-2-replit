@@ -36,6 +36,9 @@
 #     or deployed here. The config scans in ci.yml and deploy-aws.yml now skip
 #     that file alone (`skip-files`), so a new Dockerfile running as root
 #     anywhere else fails the scan again.
+#   2026-10-22 (MR-02): that skip-files entry is gone too. 7df89f4f7 made
+#     .claude/skills/gstack a submodule no workflow checks out, so the file is
+#     never on disk for the scan and the entry named nothing.
 
 # owner: Security Engineering (dependency-risk-ledger.json rows
 #   GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq; expires with the ledger, 2026-11-25)

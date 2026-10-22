@@ -32,7 +32,8 @@ vi.mock('../../../db', () => ({
 import { getGateway, listGateways, refusedBeforeWire } from '../index';
 import { FdaEsgGateway } from '../fda-esg';
 import { MhraGateway } from '../mhra-gateway';
-import { CredentialError, type GatewayTransmitRequest } from '../types';
+import { EmaCespGateway } from '../ema-cesp';
+import { CredentialError, UnverifiedTransportError, type GatewayTransmitRequest } from '../types';
 import {
   GATEWAY_ACCOUNT_SPECS,
   GatewayAccountInputError,
@@ -153,15 +154,31 @@ describe('what the organisation sees', () => {
 });
 
 describe('the guarded transmit honours the choice, before the wire', () => {
-  it('an organisation that chose its own MHRA account is refused — never sent under the platform identity', async () => {
+  // 2026-10-22 (MR-02 Stage 1): the record-only client refusal is exercised on
+  // EMA CESP, a sourced gateway. Since e1f3fd425 the guard refuses the
+  // unsourced MHRA adapter (UnverifiedTransportError) before any account is
+  // resolved, so MHRA can no longer reach clientAccountRefusal — pinned below.
+  it('an organisation that chose its own CESP account is refused — never sent under the platform identity', async () => {
+    h.account = { account_mode: 'client', sender_identifier: 'CESP-ACME', credentials_ciphertext: null };
+    const wire = vi.spyOn(EmaCespGateway.prototype, 'transmit');
+    const err = await failureOf(getGateway('ema', 'cesp').transmit(request({ metadata: { applicationId: 'EMEA/H/C/000000', sequence: '0000' } })));
+    expect(err).toBeInstanceOf(CredentialError);
+    expect(String((err as Error).message)).toMatch(/its own EMA account/);
+    expect(wire).not.toHaveBeenCalled();
+    expect(refusedBeforeWire(err)).toBe(true);
+    expect(h.calls.some((c) => /FROM organization_gateway_accounts/.test(c.text))).toBe(true);
+    expect(h.calls.some((c) => /INSERT INTO submission_transmittals/.test(c.text))).toBe(false);
+  });
+
+  it('an unsourced gateway (MHRA) is refused before any account is read, whatever the organisation chose', async () => {
     h.account = { account_mode: 'client', sender_identifier: 'MHRA-ACME', credentials_ciphertext: null };
     const wire = vi.spyOn(MhraGateway.prototype, 'transmit');
     const err = await failureOf(getGateway('uk', 'mhra_gateway').transmit(request()));
-    expect(err).toBeInstanceOf(CredentialError);
-    expect(String((err as Error).message)).toMatch(/its own MHRA account/);
+    expect(err).toBeInstanceOf(UnverifiedTransportError);
+    expect((err as UnverifiedTransportError).transmitted).toBe(false);
     expect(wire).not.toHaveBeenCalled();
     expect(refusedBeforeWire(err)).toBe(true);
-    expect(h.calls.some((c) => /INSERT INTO submission_transmittals/.test(c.text))).toBe(false);
+    expect(h.calls.some((c) => /FROM organization_gateway_accounts|submission_transmittals/.test(c.text))).toBe(false);
   });
 
   it('an FDA client account missing its key is refused, naming what is missing', async () => {

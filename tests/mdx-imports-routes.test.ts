@@ -23,7 +23,12 @@ vi.mock('../server/services/legacy-importer/detector', () => ({
   detectArchive: (...args: unknown[]) => detectFn(...args),
 }));
 
-import importsRouter from '../server/routes/mdx-imports';
+const { recordAuditRowFn } = vi.hoisted(() => ({ recordAuditRowFn: vi.fn() }));
+vi.mock('../server/services/audit/audit-write-outcome', () => ({
+  recordAuditRow: (...args: unknown[]) => recordAuditRowFn(...args),
+}));
+
+import importsRouter, { IMPORT_JOB_FAILED_MESSAGE } from '../server/routes/mdx-imports';
 
 function makeApp(opts: { withAuth?: boolean; role?: string } = { withAuth: true }) {
   const app = express();
@@ -47,6 +52,8 @@ beforeEach(() => {
   detectFn.mockReset();
   queryFn.mockResolvedValue({ rows: [], rowCount: 0 });
   connectFn.mockReset();
+  recordAuditRowFn.mockReset();
+  recordAuditRowFn.mockResolvedValue({ persisted: true, chained: true });
 });
 
 describe('auth gate', () => {
@@ -152,7 +159,10 @@ describe('POST /imports', () => {
        'detecting' after the detector threw polls forever. */
     const failed = queryFn.mock.calls.find((c) => /SET status = 'failed'/.test(String(c[0])));
     expect(failed, 'the job was never marked failed').toBeDefined();
-    expect(failed?.[1]).toEqual([99, 'zip corrupt']);
+    /* 1354c0f5f: the job row carries a fixed message, never the thrown text,
+       which can name host paths. The raw error goes to the server log. */
+    expect(failed?.[1]).toEqual([99, IMPORT_JOB_FAILED_MESSAGE]);
+    expect(JSON.stringify(failed?.[1]), 'the raw error must not be stored').not.toContain('zip corrupt');
   });
 
   /* INJ-PATH-002: the detector reads, hashes and lists every entry of the
@@ -203,14 +213,40 @@ describe('PATCH /imports/:id/files/:fileId', () => {
   });
 
   it('marks mapping_source=manual on override', async () => {
+    /* The UPDATE returns the row and, as `before`, the placement it replaced
+       (to_jsonb of the locked sub-select), which the audit row records. */
+    const before = {
+      id: 10, status: 'pending', mapped_ctd_section: null,
+      mapped_section_key: null, mapped_artifact_kind: null, mapping_source: 'auto',
+    };
     queryFn.mockResolvedValueOnce({
-      rows: [{ id: 10, mapped_section_key: 'substantial-equivalence' }],
+      rows: [{
+        id: 10, status: 'mapped', mapped_ctd_section: null,
+        mapped_section_key: 'substantial-equivalence', mapped_artifact_kind: null,
+        mapping_source: 'manual', before,
+      }],
     });
     const res = await request(makeApp())
       .patch('/api/mdx/imports/1/files/10')
       .send({ mappedSectionKey: 'substantial-equivalence', status: 'mapped' });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.mapped_section_key).toBe('substantial-equivalence');
+    expect(res.body.data.before, '`before` is for the audit row, not the response').toBeUndefined();
+    expect(String(queryFn.mock.calls[0][0])).toMatch(/mapping_source = 'manual'/);
+
+    /* 2026-10-22: an override is audited with the placement before and after. */
+    expect(recordAuditRowFn).toHaveBeenCalledTimes(1);
+    const [entry] = recordAuditRowFn.mock.calls[0];
+    expect(entry).toMatchObject({
+      tenantId: 99, userId: 777, action: 'mdx.onboarding.import.file.override',
+      resourceType: 'import_job_file', resourceId: 10,
+      details: {
+        importJobId: 1,
+        before: { status: 'pending', mapped_section_key: null, mapping_source: 'auto' },
+        after: { status: 'mapped', mapped_section_key: 'substantial-equivalence', mapping_source: 'manual' },
+      },
+    });
+    expect(res.body.meta?.auditTrail).toEqual({ persisted: true, chained: true });
   });
 });
 

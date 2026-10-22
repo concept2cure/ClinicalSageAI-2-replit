@@ -130,8 +130,13 @@ describe('Governed decision reads: a database that answers is reported as it is'
   });
 
   it('a decision is found by the code its caller holds, before the primary key is tried', async () => {
-    database.byCode = { id: 'pk-1', decisionCode: 'governed-fabric:d-1' };
-    expect(await getGovernedDecision('d-1', 7)).not.toBeNull();
+    /* A stored row always carries created_at; the read refuses one without it
+       (9b5a2a24f) rather than stamping the current time. */
+    const createdAt = new Date('2026-10-01T12:00:00.000Z');
+    database.byCode = { id: 'pk-1', decisionCode: 'governed-fabric:d-1', createdAt };
+    const decision = await getGovernedDecision('d-1', 7);
+    expect(decision).not.toBeNull();
+    expect(decision?.timestamp).toBe(createdAt.toISOString());
     expect(database.lookups).toEqual(['code:governed-fabric:d-1']);
   });
 

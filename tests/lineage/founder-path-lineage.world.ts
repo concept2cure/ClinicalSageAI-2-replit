@@ -288,6 +288,10 @@ async function mountApp(jdb: JourneyDb): Promise<express.Express> {
   const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
   const { default: projectsManagementRouter } = await import('../../server/routes/projects-management');
+  // The applicant registry and the Module 1 program facts: where a sponsor records
+  // who files the application (ccd509c06, 2026-10-21; recordApplicant below).
+  const { default: indMasterDataRouter } = await import('../../server/routes/ind-master-data.routes');
+  const { default: indFormsRouter } = await import('../../server/routes/ind-forms.routes');
 
   const app = express();
   app.use(express.json({ limit: '5mb' }));
@@ -311,6 +315,8 @@ async function mountApp(jdb: JourneyDb): Promise<express.Express> {
   app.use('/api/submissions', submissionsRouter);
   // The legacy integer-project routes, still served (register-project-routes.ts): their hard delete reaches the program's anchor row.
   app.use('/api/projects', projectsManagementRouter);
+  app.use('/api/ind-master-data', indMasterDataRouter);
+  app.use('/api/ind-forms', indFormsRouter);
   // server/routes/chat.ts:53-87 — the same memory-storage parser, then the same handler.
   app.post('/api/chat/upload', multer({ storage: multer.memoryStorage() }).single('file'), uploadHandler);
   // The authoring router verifies its own JWT and re-checks membership; the tenant scope is the request's.
@@ -328,6 +334,35 @@ async function mountApp(jdb: JourneyDb): Promise<express.Express> {
     reverify: async () => ({ ok: true as const, authenticationMethod: 'password+totp', secondFactorVerified: true }),
   }));
   return app;
+}
+
+/**
+ * The applicant a US package names (ccd509c06, 2026-10-21): a sponsor record
+ * with its D-U-N-S and FDA regulatory contact, bound to the project. Recorded
+ * the way a sponsor records it — POST /api/ind-master-data/sponsors, then PUT
+ * /api/ind-forms/program-facts against the facts revision it just read — as
+ * tests/golden-journeys/drug-nda-ectd.journey.test.ts does (841b93056).
+ */
+export async function recordApplicant(w: World): Promise<void> {
+  const as = asPrincipal(ORG_A, 3);
+  const sponsor = await as(request(w.app).post('/api/ind-master-data/sponsors')).send({
+    name: 'C2C Therapeutics, Inc.',
+    duns: '123456789',
+    contactName: 'Morgan Regulatory',
+    contactPhone: '+1 617 555 0100',
+    contactEmail: 'regulatory@c2c-therapeutics.example',
+    reason: 'Record the applicant that files the C2C-101 IND.',
+  });
+  if (sponsor.status !== 201) throw new Error(`recordApplicant: sponsor ${sponsor.status} ${JSON.stringify(sponsor.body)}`);
+  const read = await as(request(w.app).get('/api/ind-forms/')).query({ projectIdent: w.k.programId });
+  if (read.status !== 200) throw new Error(`recordApplicant: facts ${read.status} ${JSON.stringify(read.body)}`);
+  const saved = await as(request(w.app).put('/api/ind-forms/program-facts')).send({
+    projectIdent: w.k.programId,
+    reason: 'Bind the recorded applicant that files this IND.',
+    expectedFactsVersion: read.body.program.factsVersion,
+    applicantSponsorId: String(sponsor.body.id),
+  });
+  if (saved.status !== 200) throw new Error(`recordApplicant: bind ${saved.status} ${JSON.stringify(saved.body)}`);
 }
 
 export async function buildWorld(h: Holder, migrations: readonly string[], testOnlySql: string): Promise<World> {

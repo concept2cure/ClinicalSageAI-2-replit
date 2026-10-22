@@ -23,7 +23,16 @@ const A11Y: ComplianceRail = 'accessibility-enforcement';
 const TONE: ComplianceRail = 'microcopy-tone';
 const PART11: ComplianceRail = 'regulatory-compliance-ux';
 
-export const UI_V2_SURFACES: UiSurface[] = [
+/**
+ * A ui-v2 surface may claim no REST prefix only by saying why, here, in words.
+ * An empty `apiPrefixes` without `noApiPrefixReason` fails the registry test
+ * (tests/ui-readiness/ui-surface-registry.test.ts), and so does a reason on a
+ * surface that does claim a prefix. Added 2026-10-22 (MR-02 Stage 1) for
+ * haq-manager, whose empty claim the founder decided in 0308ee257 (P-32, P-36).
+ */
+export type UiV2Surface = UiSurface & { noApiPrefixReason?: string };
+
+export const UI_V2_SURFACES: UiV2Surface[] = [
   // ─── ui-v2 additions: global ─────────────────────────────────────────────
   {
     id: 'ana-command',
@@ -337,6 +346,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // Still outside the launch catalog: the capability ships in Communication and
     // Respond, and a second home for it is the founder's call, not a session's (P-32, P-36).
     apiPrefixes: [],
+    noApiPrefixReason: 'A view of the project agency inbox: the paths it calls belong to the launch surfaces Communication and Respond, and a locked surface claiming them would lock them for everyone (0308ee257, P-32, P-36).',
     anaToolFamilies: ['draft_haq_response', 'search_precedent_responses'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -1393,6 +1403,13 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // /upload-logo and /upload-letterhead, and '/api/c2c/templates' is the template library's
     // whole namespace. Claiming either parent would make every route under it answer as
     // launch — the same mistake '/api/mdx' made before it was narrowed to /api/mdx/gateways.
+    // 2026-10-22 (MR-02 Stage 1): both prefixes removed from this claim again. The panel now
+    // extracts through /api/client-branding/company-documents/letterhead/extract
+    // (useCompanyDocumentSettings.ts), and that whole subtree is a LAUNCH_PLATFORM_API entry
+    // (server/services/entitlements/launch-scope-api.ts), served to every tenant without a
+    // module. A claim here routed it through admin-console's module check instead, and kept
+    // the template library's /api/c2c/templates/extract answering as launch, which 67d96c060
+    // pins as outside launch (company-documents-launch-claim.test.ts).
     // Noted, not introduced, and not fixed here: 'admin-console' is a SHELL surface and no
     // row in available_modules, so moduleEntitlementGate resolves every prefix claimed only
     // by it through canAccessModule, which answers "Module 'admin-console' does not exist".
@@ -1401,7 +1418,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // /api/admin/scim-tenants all serve. Turning enforcement on would refuse all of them plus
     // these two together — one condition across six prefixes, a packaging decision to make
     // deliberately rather than a line to widen here.
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/client-branding/company-documents', '/api/c2c/templates/extract'],
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
