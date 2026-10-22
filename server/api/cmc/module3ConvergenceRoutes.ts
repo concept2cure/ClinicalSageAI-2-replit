@@ -28,7 +28,7 @@ import { bridgeCompileToArtifact } from '../../services/module3-convergence-serv
    3.2.A appendices + 3.2.R for the recorded region; one row, one lineage
    rewrite and one provenance event per section. */
 import { composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
-import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
+import { compositionRefusalBody, compositionRefusalStatus, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 import { NO_CANONICAL_SOURCES_REMEDY } from '../../services/cmc/link-to-module3';
 
 /** Said the same way by every build path, so the remedy does not depend on which one the user hit. */
@@ -150,7 +150,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
     // The composition boundary, on the same terms as the compile route
     // (services/cmc/composition-scope.ts).
     if (isCompositionOutOfScope(error)) {
-      return res.status(409).json(compositionRefusalBody(error.refusal));
+      return res.status(compositionRefusalStatus(error.refusal)).json(compositionRefusalBody(error.refusal));
     }
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });

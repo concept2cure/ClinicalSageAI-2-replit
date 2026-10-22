@@ -112,6 +112,23 @@ export function cmcWriteFailed(subject: string, json: unknown, status: number): 
  * "[object Object]". Both were being shown to scientists as the reason their
  * regulated record did not save.
  */
+/**
+ * The toast for an assessment that failed or was refused — not a write. The
+ * Q1E shelf life and batch poolability compute evidence and save nothing, so
+ * "Couldn't save the shelf-life estimate" misdescribed both a refusal (the
+ * composition boundary's 409) and a failure.
+ */
+export function cmcAssessmentThrew(action: string, e: unknown): string {
+  const known =
+    typeof e === 'object' && e !== null &&
+    (e as { name?: unknown }).name === 'ApiRequestError' &&
+    typeof (e as { message?: unknown }).message === 'string' &&
+    (e as { message: string }).message.trim();
+  return known
+    ? `Couldn’t ${action} — ${(e as { message: string }).message}`
+    : `Couldn’t ${action}. Check your connection and try again.`;
+}
+
 export function cmcWriteThrew(subject: string, e: unknown): string {
   const known =
     typeof e === 'object' && e !== null &&

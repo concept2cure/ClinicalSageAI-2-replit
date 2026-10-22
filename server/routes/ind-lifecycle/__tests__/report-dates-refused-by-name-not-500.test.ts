@@ -21,6 +21,10 @@ vi.mock('../../../middleware/rateLimiter', () => ({
   default: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 vi.mock('../../../db', () => ({ db: {} }));
+/* A rendered report is recorded before it is delivered (D5,
+   documents-recorded.test.ts pins that rule); this suite is about dates, so the
+   record persists. */
+vi.mock('../../../services/auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 
 import documentsRoutes from '../documents.routes';
 import computeRoutes from '../compute.routes';

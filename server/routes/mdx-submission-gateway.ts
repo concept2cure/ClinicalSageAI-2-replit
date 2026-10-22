@@ -26,6 +26,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
 import {
   getGateway, listGateways, gatewayConfigurationStatus,
   CredentialError, GatewayError, TransportError, ValidationError,
@@ -513,18 +514,42 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
     );
     if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
     const gw = getGateway(own.rows[0].region as Region, own.rows[0].gateway as GatewayName);
+    const userId = getUserId(req);
+    if (userId === null) return res.status(401).json({ error: 'Authentication required' });
     const ack = await gw.downloadAcknowledgment(id);
-    res.setHeader('Content-Type', ack.contentType);
-    // The filename carries the provenance, because a downloaded file outlives
-    // the page that served it — and the previous name, `ack-<id>.txt`, said
-    // "acknowledgement" for a document this platform wrote about itself.
-    res.setHeader('Content-Disposition', `attachment; filename="${acknowledgementFilename(ack)}"`);
     // Machine-readable for the surface, which decides what to tell the user.
     res.setHeader('X-Ack-Provenance', ack.provenance);
     if (ack.receivedAt) res.setHeader('X-Ack-Received-At', ack.receivedAt.toISOString());
     if (ack.generatedAt) res.setHeader('X-Ack-Generated-At', ack.generatedAt.toISOString());
-    return res.send(ack.buffer);
+    /* Recorded before it is delivered (D5): an EXPORT_GENERATED row with the
+       SHA-256 of these exact bytes, and nothing sent when it does not persist.
+       For every gateway but FDA ESG with a stored MDN this is a rendition the
+       platform composes from the transmittal row at request time, and it was
+       handed back with nothing recorded (2026-10-15 launch-boundary re-proof).
+       The filename carries the provenance, because a downloaded file outlives
+       the page that served it — and the previous name, `ack-<id>.txt`, said
+       "acknowledgement" for a document this platform wrote about itself. */
+    await sendAuditedDownload(res, {
+      organizationId: orgId,
+      userId,
+      sourceType: ack.contentType.startsWith('text/') ? 'export_txt' : 'export_stored_file',
+      backendRoute: '/api/mdx/gateways/transmittals/:id/ack',
+      resourceType: 'submission_transmittal_ack',
+      resourceId: String(id),
+      programUuid: null,
+      filename: acknowledgementFilename(ack),
+      mimeType: ack.contentType,
+      buffer: ack.buffer,
+      metadata: { provenance: ack.provenance, transmissionId: ack.transmissionId },
+    });
+    return;
   } catch (err: unknown) {
+    if (isUnauditedExportRefusal(err)) {
+      return res.status(503).json({
+        error: 'Acknowledgement not delivered',
+        detail: 'Its record could not be written, so the file was not sent. Try again.',
+      });
+    }
     if (err instanceof GatewayError) return clientError(res, 502, err.message);
     return serverError(res, log, 'ack', err);
   }

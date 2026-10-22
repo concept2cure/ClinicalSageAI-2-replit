@@ -640,6 +640,25 @@ describe('submission-package-orchestrator', () => {
     expect(outputs.m27).toBeUndefined();
   });
 
+  /* The composition boundary (decision P-28: small-molecule Module 3 for a
+     US IND), asked of the package's target. An NDA or MAA run composed the
+     IND Module 3 into a marketing application and signed it (2026-10-22). */
+  it.each([
+    ['NDA', 'US', 'NDA123456'],
+    ['MAA', 'EU', 'EMEA/H/C/12345'],
+  ] as const)('composes no Module 3 for a %s target, and says why on the step', async (submissionType, region, applicationNumber) => {
+    const { run, outputs } = await runOrchestrator({ ...baseInputs, submissionType, region, applicationNumber });
+    const m3 = run.steps.find(s => s.key === 'm3.compose')!;
+    expect(m3.status).toBe('skipped');
+    expect(m3.outputRef).toMatch(new RegExp(`This submission files ${submissionType}, and Module 3 is composed and placed here only for a US IND`));
+    expect(outputs.module3Sections ?? []).toEqual([]);
+  });
+
+  it('composes Module 3 for its US IND target', async () => {
+    const { run } = await runOrchestrator(baseInputs);
+    expect(run.steps.find(s => s.key === 'm3.compose')?.status).toBe('complete');
+  });
+
   it('marks downstream steps stale when an upstream step changes', () => {
     const steps: StepRecord[] = [
       { key: 'm3.compose', status: 'complete', inputHash: 'a', dependsOn: [] },

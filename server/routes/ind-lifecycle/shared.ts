@@ -7,6 +7,11 @@
 import { Request, Response } from 'express';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { createScopedLogger } from '../../utils/logger.js';
+import {
+  isUnauditedExportRefusal,
+  sendAuditedDownload,
+  type ExportSourceType,
+} from '../../services/export/governedExportConsequence';
 import { evaluateIndReadiness } from '../../services/ind-lifecycle/ind-readiness-service';
 import {
   validateSequenceLeaves,
@@ -61,6 +66,18 @@ export function fail(res: Response, err: unknown): void {
       error: { code, message: err instanceof Error ? err.message : 'Request failed.' },
     });
   }
+  /* A rendered document is delivered only once its EXPORT_GENERATED row
+     persists (sendRecordedFile). Asked before the `CODE:` rule below, which
+     would otherwise answer this server-side refusal 400, as if the caller had
+     sent something wrong. */
+  if (isUnauditedExportRefusal(err)) {
+    return void res.status(503).json({
+      error: {
+        code: 'UNAUDITED_EXPORT_REFUSED',
+        message: 'The document was not delivered because its record could not be written. Nothing was sent. Try again.',
+      },
+    });
+  }
   const msg = err instanceof Error ? err.message : String(err);
   // The lifecycle services throw `CODE: message` strings for caller errors
   // (e.g. IND_AMENDMENT_NO_DOCUMENTS); treat those as 400, everything else 500.
@@ -76,10 +93,46 @@ export function noAuth(res: Response) {
   return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 }
 
-export function sendPdf(res: Response, filename: string, buf: Buffer): void {
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  res.status(200).send(buf);
+/**
+ * Deliver a rendered IND document, recorded (D5).
+ *
+ * These routes render the cover letter, the 312.33 annual report and its SAE
+ * line listing, the letter of authorization, the right-of-reference
+ * statement, the briefing book and the sequence PDFs, and handed the file back
+ * with nothing recorded: no audit row, no hash, no answer to "who took which
+ * document, and when" (2026-10-15 launch-boundary re-proof). The one
+ * implementation every generated download uses (sendAuditedDownload) writes
+ * EXPORT_GENERATED with the SHA-256 of these exact bytes, and delivers nothing
+ * when that row does not persist; `fail` answers that refusal 503.
+ */
+export async function sendRecordedFile(
+  req: Request,
+  res: Response,
+  file: { filename: string; buffer: Buffer; mimeType?: string; sourceType?: ExportSourceType },
+): Promise<void> {
+  const ctx = ctxOf(req);
+  if (!ctx) {
+    noAuth(res);
+    return;
+  }
+  const backendRoute = `${req.baseUrl}${req.route?.path ?? req.path}`;
+  await sendAuditedDownload(res, {
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    sourceType: file.sourceType ?? 'export_pdf',
+    backendRoute,
+    resourceType: 'ind_lifecycle_document',
+    resourceId: backendRoute,
+    programUuid: null,
+    filename: file.filename,
+    mimeType: file.mimeType ?? 'application/pdf',
+    buffer: file.buffer,
+  });
+}
+
+/** A rendered IND PDF, recorded: `sendRecordedFile`. */
+export function sendPdf(req: Request, res: Response, filename: string, buf: Buffer): Promise<void> {
+  return sendRecordedFile(req, res, { filename, buffer: buf });
 }
 
 /** Build a readiness report from a `readinessInput` body fragment, or null. */

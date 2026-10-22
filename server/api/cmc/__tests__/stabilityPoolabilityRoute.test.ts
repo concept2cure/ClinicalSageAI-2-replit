@@ -32,6 +32,14 @@ vi.mock('../../../db', () => ({
   getPool: () => ({ query: vi.fn() }),
 }));
 
+/* The composition boundary admits every study's program here: these tests are
+   about the Q1E verdict. The route's refusals are in
+   composition-boundary-routes.test.ts. */
+vi.mock('../../../services/cmc/module3-compile', async (orig) => ({
+  ...(await orig<object>()),
+  assessProgramCompositionScope: async () => null,
+}));
+
 vi.mock('../../../services/cmc-write-through', () => ({
   writeThroughDrugSubstance: vi.fn(),
   writeThroughDrugProduct: vi.fn(),
@@ -85,6 +93,8 @@ const study = (over: Partial<Record<string, unknown>> = {}) => ({
   studyTitle: 'S',
   productName: 'Compound A',
   batchNumber: 'B-001',
+  /* The program the study is filed under: the boundary judges it. */
+  projectId: '0b6f0f86-6f2d-4c1b-9a2e-0d1c7f5d0a11',
   storageConditions: ['LT'],
   duration: 24,
   stabilityData: { results: series('Assay', '>= 95.0%', 100, 0.2) },
