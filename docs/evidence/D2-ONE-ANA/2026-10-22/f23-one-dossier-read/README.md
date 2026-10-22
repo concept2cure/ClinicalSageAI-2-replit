@@ -115,6 +115,13 @@ An inventory workflow ran at `59105431a9`: five read-only angles, each claim put
 - **Only a NULL parent is filled.** A parent already set is not this repair's to change.
 - **These are left alone:** a key the pack lists twice, a key that is its own parent, and a pack whose `required_sections` is not an array. Without that last guard `jsonb_array_elements` raises and the deploy fails.
 - **Locked and approved rows are filed too.** `parent_key` is structure taken from the pack. It is not text, a status or a signature, and no version is written.
+  - No signed digest moves. `server/services/part11/signature-persistence.ts:573-611` hashes a document's id, type, agency, pack version, title and status, and each section's key, version, status and content. It hashes no `parent_key`, `readiness` or `updated_at`.
+  - The stored readiness of a locked or submitted *document* is recounted too, as the commit-8 backfill already does. Readiness is derived and is in no lock snapshot.
+- **Market documents.** The PATCH has never checked filing scope, and a client called it until `981c27b3a7` (2026-10-17) deleted its last caller. So a market document can hold a key outside its own part, for example `2.5`.
+  - The repair files such a row too. Its pack parent is either a heading the market document has no row for (`M2`) or the market's `M3` container (for `3.2.S`).
+  - Neither changes a figure. A parent with no row marks nothing. `M3` already holds `3.2.R`, so it was already a heading.
+  - No tree shows the row: the Vault and the outline cut a market document to its regional subtree of the pack.
+  - A filter on `filing_scope` cannot be put in this block. That column arrives at set index 404 (`20261015e`), and the reference fails a fresh install with 42703 even on empty tables (the inventory critic's probe).
 - **The repair does not require the parent's row to exist.** The canonical writers do not either, and every reader tolerates a parent with no row. With that guard, a heading inserted later as `todo` would be counted again.
 - **Idempotent.** A filed row no longer matches, and with nothing to file the block returns before it sets any trigger aside.
 - **A row `20260529` inserts in the same run is filed on the next replay.** That file runs after this one, and its keys are not pack keys in practice.
@@ -128,7 +135,9 @@ An inventory workflow ran at `59105431a9`: five read-only angles, each claim put
 | Green | `green-parent-repair.txt` | The readiness suite and the contract test, 18/18. Every suite that applies the migration: 37 files. The fixture failure was this change's and is fixed. The two trunk reds fail the same 7 tests with the head migration |
 | Mutations | `mutations-parent-repair.txt` | 9/9 red: no repair; overwriting a set parent; the trigger left in place (it stamps the document); the section stamp not set aside, or left off; no array guard (the deploy raises); a doubled key filed; a self-parent filed; the early return inverted |
 
-**Not measured:** how many rows a deployed database holds. No deployment exists yet (D1). The deploy log's NOTICE gives the count on the first deploy.
+**Not measured:** how many rows a deployed database holds. No deployment exists yet (D1). When a deploy files any row, its log carries a NOTICE with the count. No NOTICE means none was filed: the block returns early when nothing matches. The applier sets no `app.rls_enforce`, so the block sees every row, as the commit-8 backfill does.
+
+The inventory's critic read the landed block at `7730e04ab4` and found no defect. It ran `ci:json-operator-types` and `db:sync-manifest:check` besides the gates above, all OK, and four test files, 38/38. The market, digest, locked-document and NOTICE notes above are its findings about this record.
 
 ## Handed on
 
@@ -142,7 +151,7 @@ An inventory workflow ran at `59105431a9`: five read-only angles, each claim put
   - For L33 (`…01E8btkB`).
 - **The trigger has no DELETE branch.** No production path deletes a section. The replayed backfill corrects a deletion at the next deploy.
 - ~~**Rows the old PATCH path wrote have no `parent_key`.**~~ Closed: a replay files them under the parent their own pack gives them ("After landing", above).
-- **Denominators shown beside the figure.** AnA's `read_governed_document` says "Outline with N sections" and the editor's tree header says "N sections". Both count every outline row, beside a figure that leaves empty headings out. Owner: the AnA and editor lanes.
+- ~~**Denominators shown beside the figure.**~~ Closed by `dfe94a3002` (another lane, evidence `../ana-outline-denominator/`): AnA's outline read states the counted denominator. Its editor half does not apply, because no editor file draws the figure beside its "N sections".
 - ~~**`server/services/ectd/leaf-source-resolver.ts`** comments named the old function.~~ Closed in `59105431a9`: it and two test headers name `c2c_document_counted_readiness()` and the counted sections.
 - **`notOffered` on the scoped list** is still never sent (F18's hand-on).
 
