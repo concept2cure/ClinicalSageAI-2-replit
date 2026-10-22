@@ -20,7 +20,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
-import { createJourneyDb, type JourneyDb } from './golden-journeys/harness';
+import { createJourneyDb, extractTableDdl, type JourneyDb } from './golden-journeys/harness';
 
 const JWT_SECRET = 'authoring-market-binding-secret';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -46,6 +46,7 @@ const PREREQ = `
   INSERT INTO organizations (id, name) VALUES (1, 'market-org');
   INSERT INTO users (id, name, email) VALUES (42, '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 42, 'member');
+  ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['audit_logs'])}
 `;
 
 const T = 180_000;
@@ -61,10 +62,17 @@ beforeAll(async () => {
     migrations: [
       'migrations/20260524_program_workbench_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // Section create writes its Part 11 row in the same transaction
+      // (authoring-section-seed.ts, ad372567d), so the route 500s without it.
+      'db/migrations/20260725_authoring_audit_trail.sql',
       'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'migrations/20260527_mutation_primitives.sql',
+      // ...and its chained audit_logs row (baseline table in PREREQ), sealed and
+      // placed in chain_seq order, as the deploy set applies them after 20260527.
+      'migrations/20260609_audit_hmac_seal.sql',
+      'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260804_phase9_rule_pack_outlines.sql',
       'migrations/20260728_authoring_document_governed_binding.sql',

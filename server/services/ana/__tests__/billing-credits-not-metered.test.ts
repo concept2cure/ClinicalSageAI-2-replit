@@ -9,11 +9,17 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('../../credit-ledger.js', () => ({
-  getCreditBalance: async () => 5000,
-  getCreditLedger: async () => [],
-  getAutoReload: async () => ({ enabled: false }),
-}));
+// Only the reads that touch storage are stubbed; the capability statement is
+// the product's own, so the test pins what the tool really reports.
+vi.mock('../../credit-ledger.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../credit-ledger.js')>();
+  return {
+    getCreditCapabilities: actual.getCreditCapabilities,
+    getCreditBalance: async () => 5000,
+    getCreditLedger: async () => [],
+    getAutoReload: async () => ({ enabled: false }),
+  };
+});
 
 import { getToolHandler } from '../AnaToolExecutor';
 import { GET_BILLING_CREDITS } from '../document-surface-tool-defs';
@@ -24,6 +30,9 @@ describe('get_billing_credits', () => {
     expect(out.ok).toBe(true);
     expect(out.metered).toBe(false);
     expect(out.note).toMatch(/not metered/i);
+    // Nothing debits the balance, and the tool says so in its capabilities.
+    expect(out.capabilities.usageDebit.available).toBe(false);
+    expect(out.capabilities.balanceMode).toBe('administrative_allocation');
   });
 
   it('its definition does not offer the balance as usage', () => {

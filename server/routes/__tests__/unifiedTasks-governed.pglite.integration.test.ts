@@ -87,6 +87,9 @@ const DDL = [
     // stability_studies.project_id — the Drizzle model the CMC sync selects
     // through names it (90b34d33c), so the sync fails without it.
     'migrations/20261005_cmc_core_registers_project.sql',
+    // stability_studies.shelf_life_signed_by / _at — the Drizzle model names
+    // them (8dcedc2fc), so the CMC sync's select fails without them.
+    'migrations/20261019_stability_shelf_life_signature.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
   // No column is added here: cross_module_task_links is exactly what the
   // migration set builds (the baseline's columns plus organization_id), so the
