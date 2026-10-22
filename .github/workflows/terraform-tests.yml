@@ -30,6 +30,7 @@ on:
       - 'scripts/ops/terraform-preflight-proof.mjs'
       - '.github/workflows/provision-database.yml'
       - 'scripts/ops/ecs-one-off-task.sh'
+      - 'scripts/ci/check-terraform-backend.mjs'
   workflow_dispatch:
 
 permissions:
@@ -64,7 +65,7 @@ jobs:
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           # The version the evidence under docs/evidence/W2/ was produced with.
-          terraform_version: 1.9.8
+          terraform_version: 1.11.4
           terraform_wrapper: false
 
       - name: init (no backend)
@@ -96,7 +97,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.11.4
           # The wrapper re-emits stdout; the proof parses `terraform test -json`.
           terraform_wrapper: false
       - name: Setup Node.js
@@ -110,13 +111,16 @@ jobs:
       - name: Proof
         run: node scripts/ops/terraform-preflight-proof.mjs
 
+  # Bootstrap and both roots, each from its committed .terraform.lock.hcl:
+  # -lockfile=readonly fails when the lock no longer satisfies the
+  # configuration's provider bounds, instead of quietly rewriting it (OPS-26).
   environments-validate:
     name: terraform validate (${{ matrix.env }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        env: [production, staging]
+        env: [environments/production, environments/staging, bootstrap]
     env:
       TF_IN_AUTOMATION: true
     steps:
@@ -124,10 +128,26 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.11.4
           terraform_wrapper: false
       - name: init and validate
-        working-directory: terraform/environments/${{ matrix.env }}
+        working-directory: terraform/${{ matrix.env }}
         run: |
-          terraform init -backend=false -input=false
+          terraform init -backend=false -input=false -lockfile=readonly
           terraform validate
+
+  # The state backend can be created and locks without DynamoDB (MR-03 OPS-03,
+  # OPS-26): no backend names its bucket in source, every backend uses an S3
+  # lock file, bootstrap names the bucket per account. Self-test first, so a
+  # guard that cannot refuse is caught before it passes the repository.
+  backend-guard:
+    name: state backend guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: ci:terraform-backend (with self-test)
+        run: node scripts/ci/check-terraform-backend.mjs --self-test && node scripts/ci/check-terraform-backend.mjs

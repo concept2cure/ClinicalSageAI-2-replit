@@ -5,7 +5,7 @@ resource "aws_vpc" "this" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags = merge(var.tags, { Name = "ros-part11-vpc" })
+  tags                 = merge(var.tags, { Name = "ros-part11-vpc" })
 }
 
 # ── Public subnets (ALB) ────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ resource "aws_subnet" "public" {
   cidr_block              = var.public_subnets[count.index]
   availability_zone       = element(var.azs, count.index)
   map_public_ip_on_launch = true
-  tags = merge(var.tags, { Name = "ros-part11-public-${count.index}" })
+  tags                    = merge(var.tags, { Name = "ros-part11-public-${count.index}" })
 }
 
 # ── Private subnets (ECS tasks, RDS) ────────────────────────────────────────
@@ -27,7 +27,7 @@ resource "aws_subnet" "private" {
   cidr_block              = var.private_subnets[count.index]
   availability_zone       = element(var.azs, count.index)
   map_public_ip_on_launch = false
-  tags = merge(var.tags, { Name = "ros-part11-private-${count.index}" })
+  tags                    = merge(var.tags, { Name = "ros-part11-private-${count.index}" })
 }
 
 # ── Internet gateway ────────────────────────────────────────────────────────

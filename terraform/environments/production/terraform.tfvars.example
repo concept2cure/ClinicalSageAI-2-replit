@@ -62,6 +62,9 @@ domain_aliases             = ["app.example.com"] # REPLACE_ME
 #   AWS_DEPLOY_ROLE_ARN          = terraform output -raw github_deploy_role_arn
 #   AWS_BUILD_ROLE_ARN           = terraform output -raw github_build_role_arn
 #   CLOUDFRONT_DISTRIBUTION_ID   = terraform output -raw cloudfront_distribution_id
+# and the repository variable (not a secret) the frontend is published to; its
+# name carries the account id, so deploy-aws.yml refuses to run without it:
+#   FRONTEND_BUCKET              = terraform output -raw frontend_bucket
 # and create the GitHub environment "production": its jobs are the only ones the
 # deploy role trusts.
 

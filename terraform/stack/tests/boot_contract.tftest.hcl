@@ -452,8 +452,8 @@ run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
     error_message = "Both containers must name S3 and this stack's vault bucket."
   }
   assert {
-    condition     = aws_s3_bucket.vault.bucket == "c2c-prod-vault"
-    error_message = "Production's vault bucket is c2c-prod-vault."
+    condition     = aws_s3_bucket.vault.bucket == "c2c-prod-vault-123456789012"
+    error_message = "Production's vault bucket is c2c-prod-vault-<account id>."
   }
   assert {
     condition     = one(aws_s3_bucket_versioning.vault.versioning_configuration).status == "Enabled"
@@ -545,14 +545,14 @@ run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket" {
     error_message = "Both containers must name the evidence bucket in AUDIT_ANCHOR_BUCKET; without it the sweep reports the anchor not configured."
   }
   assert {
-    condition     = module.evidence.evidence_bucket == "c2c-prod-part11-evidence" && module.evidence.object_lock.mode == "COMPLIANCE" && module.evidence.object_lock.days >= 2555
-    error_message = "Production's anchors go to c2c-prod-part11-evidence, under COMPLIANCE object lock for at least seven years."
+    condition     = module.evidence.evidence_bucket == "c2c-prod-part11-evidence-123456789012" && module.evidence.object_lock.mode == "COMPLIANCE" && module.evidence.object_lock.days >= 2555
+    error_message = "Production's anchors go to c2c-prod-part11-evidence-<account id>, under COMPLIANCE object lock for at least seven years."
   }
   assert {
     condition = anytrue([
       for st in jsondecode(module.evidence.bucket_policy).Statement :
       st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
-      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence/anchors/*" &&
+      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence-123456789012/anchors/*" &&
       length(setsubtract(toset(["s3:PutObject", "s3:GetObject"]), toset(flatten([st.Action])))) == 0
     ])
     error_message = "The task role must put and get objects under anchors/ in the evidence bucket."
@@ -561,7 +561,7 @@ run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket" {
     condition = anytrue([
       for st in jsondecode(module.evidence.bucket_policy).Statement :
       st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
-      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence" && contains(flatten([st.Action]), "s3:ListBucket") &&
+      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence-123456789012" && contains(flatten([st.Action]), "s3:ListBucket") &&
       try(st.Condition.StringLike["s3:prefix"], "") == "anchors/*"
     ])
     error_message = "The verifier must list the anchors/ prefix, and only it, to find the latest anchor."
@@ -569,7 +569,7 @@ run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket" {
   assert {
     condition = alltrue([
       for st in jsondecode(module.evidence.bucket_policy).Statement :
-      alltrue([for r in flatten([st.Resource]) : r == "arn:aws:s3:::c2c-prod-part11-evidence" || startswith(r, "arn:aws:s3:::c2c-prod-part11-evidence/anchors/")]) &&
+      alltrue([for r in flatten([st.Resource]) : r == "arn:aws:s3:::c2c-prod-part11-evidence-123456789012" || startswith(r, "arn:aws:s3:::c2c-prod-part11-evidence-123456789012/anchors/")]) &&
       length(setintersection(toset(flatten([st.Action])), toset(["s3:*", "s3:DeleteObject", "s3:DeleteObjectVersion", "s3:PutObjectRetention", "s3:BypassGovernanceRetention", "s3:PutObjectLegalHold"]))) == 0
       if st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn
     ])
@@ -632,8 +632,63 @@ run "production_names_are_the_ones_the_deploy_workflow_targets" {
     condition = alltrue([
       for k, v in output.deploy_targets :
       v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))
+      if k != "FRONTEND_BUCKET"
     ])
-    error_message = "A production name differs from deploy-aws.yml: ${join("; ", [for k, v in output.deploy_targets : "${k} terraform=${v} workflow=${one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))}" if v != one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))])}"
+    error_message = "A production name differs from deploy-aws.yml: ${join("; ", [for k, v in output.deploy_targets : "${k} terraform=${v} workflow=${one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))}" if k != "FRONTEND_BUCKET" && v != one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))])}"
+  }
+  # The frontend bucket's name carries the account id, so the workflow reads it
+  # from the repository variable set from this stack's frontend_bucket output.
+  assert {
+    condition     = one(regex("\n  FRONTEND_BUCKET: ([^\n]+)", file("../../.github/workflows/deploy-aws.yml"))) == "$${{ vars.FRONTEND_BUCKET }}" && output.frontend_bucket == output.deploy_targets.FRONTEND_BUCKET
+    error_message = "deploy-aws.yml must publish to $${{ vars.FRONTEND_BUCKET }}, the repository variable set from `terraform output -raw frontend_bucket`, not a literal name."
+  }
+}
+
+# OPS-26 (MR-03), the two remaining lines of its fix:
+#   - The task role's own S3 grant on the evidence bucket is anchors/ objects.
+#     s3:ListBucket only ever matches a bucket ARN, so on an object ARN it
+#     grants nothing and reads as if it did; listing anchors/ is the bucket
+#     policy's statement (AnchorWriterListsTheAnchors), conditioned on prefix.
+#   - Production keeps a deleted secret for 30 days; staging deletes at once, so
+#     tearing staging down and applying it again is not refused for a month by
+#     names still scheduled for deletion.
+run "task_grants_and_secret_recovery_are_what_they_say" {
+  command = plan
+  assert {
+    condition = alltrue([
+      for st in jsondecode(module.ecs.task_s3_policy).Statement :
+      !contains(flatten([st.Action]), "s3:ListBucket") || alltrue([for r in flatten([st.Resource]) : !strcontains(r, "/")])
+    ])
+    error_message = "The task role grants s3:ListBucket on an object ARN, which matches nothing: ${module.ecs.task_s3_policy}"
+  }
+  assert {
+    condition     = length(module.secrets.recovery_windows) > 0 && alltrue([for k, d in module.secrets.recovery_windows : d == 30])
+    error_message = "Every production secret must be recoverable for 30 days after deletion: ${jsonencode(module.secrets.recovery_windows)}"
+  }
+}
+
+run "staging_secrets_can_be_recreated_after_a_teardown" {
+  command = plan
+  variables {
+    environment = "staging"
+  }
+  assert {
+    condition     = length(module.secrets.recovery_windows) > 0 && alltrue([for k, d in module.secrets.recovery_windows : d == 0])
+    error_message = "Staging secrets must be deleted at once, or re-applying staging after a teardown is refused: ${jsonencode(module.secrets.recovery_windows)}"
+  }
+}
+
+# S3 bucket names are global. Every bucket this stack names carries the account
+# id, so none can already belong to someone else: the state bucket's fixed name
+# did, and bootstrap could not create it (MR-03 OPS-03).
+run "every_bucket_name_carries_the_account_id" {
+  command = plan
+  assert {
+    condition = alltrue([
+      for n in [output.resource_names.evidence_bucket, output.resource_names.frontend_bucket, output.resource_names.vault_bucket] :
+      endswith(n, "-123456789012") && length(n) <= 63
+    ])
+    error_message = "Every bucket name must end with the account id and fit S3's 63 characters: ${jsonencode(output.resource_names)}"
   }
 }
 
