@@ -12,7 +12,6 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { AUTH_SCHEMA_COLUMNS, missingAuthSchema } from '../auth-schema';
-// @ts-expect-error — plain .mjs, no declaration file
 import { C2C_MIGRATION_FILES } from '../../../../scripts/db/migration-set.mjs';
 
 const MIGRATION = 'migrations/20261022_auth_schema_and_seeded_organizations.sql';
