@@ -1,0 +1,13 @@
+# RED at b7c70e012: no route returns what the agency holds. Real PostgreSQL 16, RLS_ENFORCE=on, app_service (2026-10-22T16:24:02Z)
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 4733ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 7ms
+   → expected undefined to deeply equal [ …(4) ]
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 4ms
+   → expected 404 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+AssertionError: expected undefined to deeply equal [ …(4) ]
+AssertionError: expected 404 to be 200 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

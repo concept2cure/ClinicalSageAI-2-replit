@@ -47,7 +47,8 @@ import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } 
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval, sendQmsDocumentForReview } from './qmsApproval';
 import { useAuthUser } from '@/services/portal/authService';
-import type { QmsDoc } from './data';
+import { reviewRowOf, type QmsDoc } from './data';
+import { PeriodicReviewPanel, RecordPeriodicReview, canRecordReview, lastReviewLine, useRecordPeriodicReview } from './PeriodicReview';
 import { ErrorState } from '../v2/dataConnect';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
@@ -114,6 +115,35 @@ const NO_DOCS: QmsDoc[] = [];
 const NO_TEMPLATES: NonNullable<ReturnType<typeof useSopTemplates>['templates']> = [];
 const NO_TRAINING: NonNullable<ReturnType<typeof useTrainingCompliance>['rows']> = [];
 
+/**
+ * The register's Next review: when the version in force is next due. After a
+ * signed periodic review that is the reviewer's date, not the one the approval
+ * signed, so the cell says which review set it (PeriodicReview.tsx).
+ */
+function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) {
+  const review = d.lastReview;
+  const title = review
+    ? `${lastReviewLine(review)} The date its approval signed: ${d.signedReviewDate ? formatDate(d.signedReviewDate) : 'none'}.`
+    : undefined;
+  return (
+    <div className="qms-cell" title={title}>
+      {d.nextReviewDate ? (
+        <span className={overdue ? 'qms-overdue' : undefined}>
+          {formatDate(d.nextReviewDate)}
+          {overdue && <> {I.flag}</>}
+        </span>
+      ) : (
+        '—'
+      )}
+      {review && (
+        <span className="qms-review-by" data-testid="qms-register-last-review">
+          {review.outcome === 'current' ? 'Reviewed' : 'Revision required,'} {formatDate(review.reviewedAt)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function SopRegister(props: SopRegisterProps) {
   const user = useAuthUser();
   return <SopRegisterSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
@@ -165,6 +195,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const [revising, setRevising] = React.useState<QmsDoc | null>(null);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [history, setHistory] = React.useState<QmsDoc | null>(null);
+  /** The document whose periodic review is being recorded (PeriodicReview.tsx). */
+  const recordReview = useRecordPeriodicReview();
   const target=useControlledDocumentTarget(qmsDocumentId,qmsTargetRequest);
   React.useEffect(()=>{
     const d=target.document;
@@ -434,16 +466,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                   </span>
                 </div>
                 <div className="qms-cell">{formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}</div>
-                <div className="qms-cell">
-                  {d.nextReviewDate ? (
-                    <span className={overdue ? 'qms-overdue' : undefined}>
-                      {formatDate(d.nextReviewDate)}
-                      {overdue && <> {I.flag}</>}
-                    </span>
-                  ) : (
-                    '—'
-                  )}
-                </div>
+                <NextReviewCell doc={d} overdue={overdue} />
                 <div className="qms-cell qms-rowacts">
                   <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
                   {d.status === 'draft' && (
@@ -474,6 +497,14 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                       >
                         {I.history} Revise
                       </button>
+                      {canRecordReview(reviewRowOf(d)) && <button
+                        className="qms-chip"
+                        aria-label={`Record review: ${d.docNumber} ${d.title}`}
+                        title="Record a periodic review with your electronic signature. The document and its approval are not changed."
+                        onClick={(event) => recordReview.start(reviewRowOf(d), event.currentTarget)}
+                      >
+                        {I.check} Record review
+                      </button>}
                       {d.status === 'effective' && <button
                         className="qms-chip"
                         title="Retire with your electronic signature (password and second factor). Retirement is the terminal state; the document leaves use for everyone trained on it."
@@ -506,62 +537,9 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
 
       {/* ── Periodic review + training ── */}
       <div className="qms-grid2">
-        <section className="qms-sec">
-          <div className="qms-sec-head">
-            <h2>Periodic review</h2>
-            {!reviewUnread && (
-              <span className="meta">
-                {overdueCount} overdue · {reviewDue.length} within 120 days
-              </span>
-            )}
-          </div>
-          <div className="qms-review">
-            {reviewFailed && (
-              <ErrorState
-                title="Periodic review dates could not be read"
-                message={rev.error ?? reg.error}
-                retry={() => {
-                  reg.refresh?.();
-                  rev.refresh?.();
-                }}
-                testId="sop-review-failed"
-              />
-            )}
-            {reviewUnread && !reviewFailed && (
-              <div className="qms-empty" role="status">Loading review dates…</div>
-            )}
-            {!reviewUnread && reviewDue.length === 0 && (
-              <div className="qms-empty">No documents due for review.</div>
-            )}
-            {reviewDue.map((r) => (
-              /* Opens the document for its periodic review. It used to ask AnA to
-                 "schedule" the review, and no route schedules one: the next-review
-                 date of an effective document is part of what was signed, so it
-                 changes through a revision (Revise, in the register above). */
-              <button
-                key={r.id}
-                className="qms-review-row"
-                data-overdue={r.overdue || undefined}
-                aria-label={`Open ${r.docNumber} ${r.title} for its periodic review (${r.overdue ? 'overdue' : `due ${formatDate(r.nextReviewDate)}`})`}
-                title="Open the document to review it. An effective document changes through Revise in the register."
-                disabled={!canOpen(r.id)}
-                onClick={() => openReader(r.id)}
-              >
-                <span className="qms-review-num mono">{r.docNumber}</span>
-                <span className="qms-review-title" title={r.title}>
-                  {r.title}
-                </span>
-                <span className="qms-review-when">
-                  {r.overdue ? (
-                    <span className="qms-flag-txt">{I.flag} Overdue</span>
-                  ) : (
-                    formatDate(r.nextReviewDate)
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+        <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error ?? reg.error}
+          retry={() => { reg.refresh?.(); rev.refresh?.(); }} overdueCount={overdueCount}
+          canOpen={canOpen} onOpen={openReader} onRecord={recordReview.start} />
 
         <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
           refresh={trainComp.refresh}
@@ -581,6 +559,11 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         }} />}
       {reading && reading.scope === readerScope && (
         <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} onClose={() => setReading(null)} onAcknowledged={() => { trainComp.refresh(); reg.refresh(); }} />
+      )}
+      {recordReview.row && (
+        <RecordPeriodicReview row={recordReview.row} signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={recordReview.close} onRecorded={() => { recordReview.recorded(); reg.refresh?.(); rev.refresh?.(); }}
+          onRefused={() => { reg.refresh?.(); rev.refresh?.(); }} />
       )}
       {approving && (
         <EsignModal

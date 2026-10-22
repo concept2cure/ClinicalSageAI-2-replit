@@ -338,6 +338,39 @@ All run on the pushed tree: trunk `892739bb7` plus this change.
   decision (`docs/work-orders/README.md`, "Found by the IND eCTD demo lane",
   item 1). BX-512 has no hold, so Click 5 does not exercise it.
 
+## Re-walked at `4c2562b72`, later on 2026-10-22
+
+Trunk moved about 200 commits after the push, three of them on this path:
+
+- the Vault's upload became an upload list (`cb472b8c0`, `56aa900f5`): each file
+  is staged with what it is before anything is recorded;
+- the compile route's `/status` readiness moved into `compile-placement.ts` (F23);
+- P-44 began giving a package its own market's application number.
+
+The snapshot was brought forward with `deploy-migrate` (422/422), and the six
+clicks were walked again (`rewalk-4c2562b72/`). The outcome is the same:
+
+- **Click 6c.** The list says "Not recorded: A different document is already
+  recorded at code … Add it as a new version", and the check-in offer then
+  records v2.0.
+- **Click 6d.** It holds `replace` 3.2.S.4.2 against v1.0's filed leaf and
+  `delete` 3.2.S.4.
+- **Packages.** Both re-verify (5 and 3 checksums). Both carry IND 000512, with
+  sub-types `fdasst1` and `fdasst4`, and both pointers resolve.
+
+`driver/walk.mjs` now follows the upload list. The lane's nine suites pass at
+that head (116 tests).
+
+Every failure listed in "Failures met on the way" passes at `4c2562b72`. Other
+lanes fixed them on trunk after the push; the ICSR suite, for one, was fixed by
+MR-02's trunk-green lane (`84deef2fe`, `b1ada7455`).
+
+- **Journeys and client suites.** The four golden journeys and the two client
+  suites pass: 24 tests.
+- **The audit's 2026-10-20 "Gateway TLS" group.** All four files pass, 66 tests:
+  `icsr-delivery-outcome`, `mdx-esg-transmit-gateway`, and the MHRA pair
+  `gateway-accounts` and `refused-before-wire`.
+
 ## Files
 
 | Path | What it is |
@@ -353,6 +386,7 @@ All run on the pushed tree: trunk `892739bb7` plus this change.
 | `before/mutation-*.txt` | Each guard removed from the final code, and the test that then fails. |
 | `green/lane-suites.txt` | The nine suites this lane touches, on the final tree. |
 | `not-ours/` | The regression's failures on the pushed tree, and the same failures on `892739bb7` without this change. |
+| `rewalk-4c2562b72/` | The walk again at `4c2562b72`: transcript, package inspection, Clicks 6c and 6d. |
 | `what-already-exists-searches.txt` | The searches behind "What already exists". |
 | `driver/` | The walk (`walk.mjs`, `lib.mjs`), the stand-in form (`complete-form.mjs`, `make-pdfs.mjs`), the reader (`inspect_packages.py`) and the reset script. |
 

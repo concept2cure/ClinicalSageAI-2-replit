@@ -1,0 +1,35 @@
+# Mutations of the review fixes (2026-10-22T15:59:25Z). Each is applied alone, run, and reverted.
+
+## MUTATION: a review is taken on a release whose approval signature was withdrawn
+##   server/services/qms/periodic-review.ts
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a version whose approval signature no longer stands 63ms
+   → {"data":{"kind":"qms-periodic-review","documentId":190,"docNumber":"qms-review-9dc7a81d-WDN","version":"1.0","approvedAt":"2026-10-22T15:59:34.455Z","contentDigest":"eb9c58d567c918507f901305a28ed3effd7fbb61a3828068ea43c853264e0d79","outcome":"current","nextReviewDate":"2027-05-10","previousNextReviewDate":"2026-12-01","previousNextReviewDue":"2026-12-01"},"actionId":"act_44dc35f014c0481799078a6b8e9a64aa","auditId":"31387d71-f96f-427c-b649-fccdd81174c1","sha256Chain":"9e05fa1fa731709d7fd0f4e94baccca27a5c3b9581a8dba7f54c237bcd8dd6b4","signatureId":415,"signedAt":"2026-10-22T15:59:35.109Z","meaning":"review"}: expected 201 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+
+## MUTATION: EsignModal does not restore focus when its host unmounts it
+##   client/src/concept2cure/_shared/components/EsignModal.tsx
+ × client/src/concept2cure/_shared/components/__tests__/esignModalFocusAndSignedRows.test.tsx > EsignModal returns focus when its host unmounts it > on Escape, focus goes back to the control that opened it 308ms
+   → expected <body><div>…(1)</div></body> to be <button></button> // Object.is equality
+ × client/src/concept2cure/_shared/components/__tests__/esignModalFocusAndSignedRows.test.tsx > EsignModal returns focus when its host unmounts it > once signed, Done has focus and carries the summary, the attested rows are shown, and Done returns focus 171ms
+   → expected <body><div>…(1)</div></body> to be <button></button> // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 9 passed (11)
+
+## MUTATION: after a recorded review from the panel, focus returns to a control whose row is leaving
+##   client/src/concept2cure/quality/PeriodicReview.tsx
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > focus returns where the review started > to the Record review control on Cancel, and to the panel heading once a review from the panel is recorded 5187ms
+   → expected <button class="qms-chip" …(2)>…(1)</button> to be <h2 …(2)></h2> // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 10 passed (11)
+
+## MUTATION: a dropped connection is reported as the transport error, not as unconfirmed
+##   client/src/concept2cure/quality/qmsApproval.ts
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a dropped connection is not "nothing was signed": it says to check before signing again 5131ms
+   → expected 'Failed to fetch' to be 'The server did not confirm the review…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 10 passed (11)
