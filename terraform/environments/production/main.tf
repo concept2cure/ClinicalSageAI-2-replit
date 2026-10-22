@@ -69,11 +69,10 @@ module "stack" {
   evidence_object_lock_mode = "COMPLIANCE"
   evidence_retention_days   = 2555 # 7 years
 
-  rds_instance_class   = var.rds_instance_class
-  api_cpu              = var.api_cpu
-  api_memory           = var.api_memory
-  api_desired_count    = var.api_desired_count
-  worker_desired_count = var.worker_desired_count
+  rds_instance_class = var.rds_instance_class
+  api_cpu            = var.api_cpu
+  api_memory         = var.api_memory
+  api_desired_count  = var.api_desired_count
 
   image_tag                  = var.image_tag
   acm_certificate_arn        = var.acm_certificate_arn
@@ -122,10 +121,6 @@ output "cloudfront_domain" {
 
 output "ecr_api_url" {
   value = module.stack.ecr_api_url
-}
-
-output "ecr_worker_url" {
-  value = module.stack.ecr_worker_url
 }
 
 output "rds_endpoint" {

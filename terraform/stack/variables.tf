@@ -102,10 +102,6 @@ variable "api_desired_count" {
   type = number
 }
 
-variable "worker_desired_count" {
-  type = number
-}
-
 variable "alb_deletion_protection" {
   type = bool
 }

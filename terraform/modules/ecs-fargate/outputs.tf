@@ -10,10 +10,6 @@ output "api_service_name" {
   value = aws_ecs_service.api.name
 }
 
-output "worker_service_name" {
-  value = aws_ecs_service.worker.name
-}
-
 output "ecs_tasks_security_group_id" {
   value = aws_security_group.ecs_tasks.id
 }
@@ -56,11 +52,6 @@ output "scanner_memory" {
   value       = var.scanner_memory
 }
 
-output "worker_container" {
-  description = "The worker container definition as rendered, for the same checks."
-  value       = jsondecode(aws_ecs_task_definition.worker.container_definitions)[0]
-}
-
 output "execution_secrets_policy" {
   description = "The execution role's Secrets Manager grant (JSON policy document)"
   value       = aws_iam_role_policy.ecs_execution_secrets.policy
@@ -83,4 +74,9 @@ output "api_service_arn" {
 
 output "api_log_group_arn" {
   value = aws_cloudwatch_log_group.api.arn
+}
+
+output "service_names" {
+  description = "Every ECS service this module creates, so the stack's tests can say which exist."
+  value       = [aws_ecs_service.api.name]
 }

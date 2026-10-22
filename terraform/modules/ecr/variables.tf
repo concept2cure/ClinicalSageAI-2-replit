@@ -6,7 +6,7 @@ variable "prefix" {
 variable "repository_names" {
   type        = list(string)
   description = "List of image names to create repos for"
-  default     = ["api", "worker"]
+  default     = ["api"]
 }
 
 variable "tags" {

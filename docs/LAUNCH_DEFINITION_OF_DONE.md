@@ -191,6 +191,18 @@ nothing to consume, and scheduled jobs run once across the API tasks (`scheduled
 stays 0 and the deploy builds no worker image. A worker returns when a job has to be isolated from request latency
 (the sandbox of plan WS16 is the first candidate), on its own evidence.
 
+**Amended 2026-10-22 (NEW-1 of MR-03, decided under the CPO mandate): removed, not kept at zero.** The worker's ECS
+service, task definition, log group and ECR repository are deleted from `terraform/`, with every variable and output
+that fed them. Kept at zero, they were a hazard rather than an option. The task definition named no command, so one
+change of `worker_desired_count` (whose production default was still 1) would boot a third copy of the API server,
+outside the load balancer, from a repository nothing pushes to. Since MR-08 Stage 1 that copy could not boot anyway: a
+production process with no scanner beside it fails the boot self-test. Nothing user-facing is removed. Background
+work runs in the API's own schedulers (`server/index.ts`, `server/startup/services.ts`), once per window across tasks
+(`server/db/scheduledOnce.ts`; `tests/db/scheduled-once-lease.dbtest.ts`, `scheduled-once-window.dbtest.ts`). A
+worker that returns under this decision's condition comes back as a new service with its own entrypoint, its own
+command and its own evidence, not by raising a count. `terraform/stack/tests/boot_contract.tftest.hcl` asserts one
+service and one repository. Evidence: `docs/evidence/MR-03/2026-10-21-stage-1/`.
+
 ### P-11 — A WAF on CloudFront at launch (AWS-0011)
 
 Security questionnaires will ask, and it costs about $10 a month. The web ACL on the distribution blocks with the IP
