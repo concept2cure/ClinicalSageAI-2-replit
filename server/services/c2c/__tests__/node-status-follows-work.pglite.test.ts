@@ -320,7 +320,7 @@ describe('2. the approval signature approves the sections it covers', () => {
     });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await statuses(f.doc)).toEqual({ '2.5': 'approved', '2.6': 'approved', '2.7': 'todo' });
-    // c2c_recompute_document_readiness: approved/locked over all sections.
+    // c2c_document_counted_readiness: approved/locked over the counted sections.
     expect(await readiness(f.doc)).toBe(67);
     expect(res.body.filingApproval).toEqual({ approved: ['2.5', '2.6'], notApproved: ['2.7'], documentId: f.doc });
 
