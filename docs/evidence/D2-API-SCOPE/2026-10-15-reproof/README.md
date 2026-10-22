@@ -42,7 +42,7 @@ Measured, not reasoned:
 | Launch claims wider than what launch uses | 79 | All 79 no longer served. 65 by narrowed claims, 14 through `LAUNCH_EXCLUDED_API`. 120 of 3,358 routes changed verdict, all under the 79 | `api-scope/` |
 | A launch screen refused (found while measuring) | 1 | The IND applicant-identity screen's sponsor records, `/api/ind-master-data/sponsors` | `ind-sponsors/` |
 | Downloads delivered with no record (D5) | 12 | All 12 recorded before delivery, with the SHA-256 of the bytes and refused without the row | `docs/evidence/D5/2026-10-22-ind-documents-recorded/` |
-| CMC entry points outside the composition boundary | 12 | 9 fixed, plus the submission-package orchestrator, found by this change's own review. 3 wait on another lane's window (below). 3 more were refused by the skeptics as neutral statistics | `cmc-boundary/` |
+| CMC entry points outside the composition boundary | 12 | All 12 fixed, plus the submission-package orchestrator, found by this change's own review. The last 3, AnA's stability tools and its CMC interview, were edited inside other lanes' window on `AnaToolExecutor.ts`, disclosed. 3 more were refused by the skeptics as neutral statistics | `cmc-boundary/` |
 
 The CMC change found two older defects on the way, both a `SAVEPOINT` on a bare
 pool. The Module 3 board had never listed its 3.2.R section, and AnA's 2.3
@@ -52,12 +52,10 @@ fixed (`cmc-boundary/README.md`).
 
 ## Still open
 
-- **AnA's `estimate_recorded_shelf_life`, `assess_recorded_batch_poolability`
-  and the `answer_intelligence_question` CMC flows** are not yet behind the
-  composition boundary. `server/services/ana/AnaToolExecutor.ts` was edited by
-  another lane at 2026-10-22T00:12Z. The work is scheduled for 2026-10-23T00:20Z,
-  and `composition-boundary-callers.contract.test.ts` names both tools with an
-  expiry of 2026-10-24, so the deadline cannot pass quietly.
+- **`POST /api/orchestration/pre-submission-gate`** runs the ICH check without
+  the boundary. It is outside the launch catalog and refused in production, and
+  the callers contract checks that reason against the verdict itself
+  (`cmc-boundary/README.md`).
 - **Tests red on trunk, found while validating,** are handed on in
   `docs/work-orders/README.md` under "Found by the launch-boundary re-proof".
   That includes an ordering defect in the same file's 00:12Z change: a reason

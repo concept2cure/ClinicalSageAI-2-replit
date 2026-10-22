@@ -1,0 +1,24 @@
+# RED at 149ef8ccd (trunk, implementation stashed; final test file): no periodic review act. Real PostgreSQL 16, RLS_ENFORCE=on, app_service (2026-10-22T15:16:10Z)
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > moves the next review out, leaves the effective row and its approval untouched, and says who reviewed it 43ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is one review signature bound to the release content, with the decision on its manifest 5ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is in the controlled document register report beside the date its approval signed 179ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review that finds a revision is required > is recorded, and the document stays due 12ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a next review date that has passed 11ms
+   → {}: expected 404 to be 400 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > "remains current" with no next date 15ms
+   → {}: expected 404 to be 400 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a viewer, who has no signing authority 14ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a wrong password 11ms
+   → {}: expected 404 to be 401 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review counts only for the version it reviewed > is refused while a revision is open, and stops counting once the next version is approved 12ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > readiness counts what is overdue after the last standing review > stops counting a reviewed document, and counts it again once that review is voided 28ms
+   → {}: expected 404 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  10 failed (10)

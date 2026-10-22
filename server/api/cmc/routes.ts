@@ -73,7 +73,7 @@ import {
   withoutSignatureFields,
 } from '../../services/cmc/signed-record';
 import { createScopedLogger } from '../../utils/logger';
-import { compositionRefusalBody, compositionRefusalStatus, studyFiledUnderNoProgram } from '../../services/cmc/composition-scope';
+import { compositionRefusalBody, compositionRefusalStatus } from '../../services/cmc/composition-scope';
 import * as metricsModule from '../../metrics.js';
 import { serverError } from '../../lib/api-response';
 import { launchScopeEnforced } from '../../services/entitlements/launch-scope';
@@ -2315,21 +2315,21 @@ async function refusedAtCompositionBoundary(res: express.Response, orgId: number
   return true;
 }
 
-/** The boundary for stability studies: each is judged on the program it is filed under. */
+/**
+ * The boundary for stability studies: each is judged on the program it is
+ * filed under (services/cmc/study-composition-scope.ts, which AnA's stability
+ * tools ask too).
+ */
 async function studiesRefusedAtCompositionBoundary(
   res: express.Response,
   orgId: number,
   studies: ReadonlyArray<{ id: number; projectId: string | null }>,
 ): Promise<boolean> {
-  const unfiled = studies.filter((s) => !s.projectId).map((s) => s.id);
-  if (unfiled.length) {
-    res.status(409).json(compositionRefusalBody(studyFiledUnderNoProgram(unfiled)));
-    return true;
-  }
-  for (const projectId of new Set(studies.map((s) => s.projectId as string))) {
-    if (await refusedAtCompositionBoundary(res, orgId, projectId)) return true;
-  }
-  return false;
+  const { studiesCompositionRefusal } = await import('../../services/cmc/study-composition-scope');
+  const refusal = await studiesCompositionRefusal(orgId, studies);
+  if (!refusal) return false;
+  res.status(compositionRefusalStatus(refusal)).json(compositionRefusalBody(refusal));
+  return true;
 }
 
 async function answeredUnknownProgram(res: express.Response, orgId: number, projectId: string): Promise<boolean> {

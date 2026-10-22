@@ -1,0 +1,39 @@
+# Mutations (2026-10-22T16:29:42Z). Each is applied alone, run, and reverted.
+
+## MUTATION: the shared filed-compile read counts a sequence never sent
+##   server/services/ectd/prior-sequence-loader.ts
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 4141ms
+   → expected { …(6) } to match object { submissionId: 82, …(1) }
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 21ms
+   → expected [ …(4) ] to deeply equal [ …(4) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+
+## MUTATION: the current view stops before the newest filed sequence (an as-of read, not now)
+##   server/services/ectd/prior-sequence-loader.ts
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 4384ms
+   → expected { …(6) } to match object { submissionId: 84, …(1) }
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 17ms
+   → expected [ …(4) ] to deeply equal [ …(4) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+
+## MUTATION: a failed read is shown as an empty dossier
+##   client/src/concept2cure/v2/surfaces/EctdFiledState.tsx
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries 5013ms
+   → Unable to find an element with the text: What is on file didn’t respond.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+
+## MUTATION: the sequences not folded are not named
+##   client/src/concept2cure/v2/surfaces/EctdFiledState.tsx
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it folds and the ones it does not, with the reason 46ms
+   → expected 'On file at the agencythrough sequence…' to contain 'Not included: 0002 (not sent), 0003 (…'
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed" 18ms
+   → expected 'On file at the agencynothing on fileN…' to contain 'Not included: 0000 (pending, not file…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)

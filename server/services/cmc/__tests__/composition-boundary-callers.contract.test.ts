@@ -5,17 +5,19 @@
  *
  * Compose was the only caller of the boundary until 2026-10-22. The QbD
  * analysis, the ICH compliance verdict, the control strategy, the ICH Q1E
- * shelf life and batch poolability were each reached from routes and AnA
- * commands that never asked it, so a monoclonal antibody was given Q3A(R2)
- * impurity bases, Q6A release defaults and a Q1E-extrapolated shelf life
- * (2026-10-15 launch-boundary re-proof,
+ * shelf life and batch poolability were each reached from routes, AnA
+ * commands and AnA tools that never asked it, so a monoclonal antibody was
+ * given Q3A(R2) impurity bases, Q6A release defaults and a Q1E-extrapolated
+ * shelf life; AnA's CMC specification interview judged its answers by Q3A(R2)
+ * and M7 (2026-10-15 launch-boundary re-proof,
  * docs/evidence/D2-API-SCOPE/2026-10-15-reproof/cmc-boundary/).
  *
  * This is the static half: a file that calls one of these engines also names
  * the boundary decision. It is per file, so it cannot tell which handler in a
  * file asked; the behaviour per entry point is pinned by
- * api/cmc/__tests__/composition-boundary-routes.test.ts and
- * ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts, and
+ * api/cmc/__tests__/composition-boundary-routes.test.ts,
+ * ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts and
+ * ana/__tests__/cmc-tools-composition-boundary.test.ts, and
  * the decision itself on a real engine by composition-boundary-readers.pglite.test.ts.
  *
  * A caller that does not ask is listed below WITH ITS REASON, and the list is
@@ -45,6 +47,11 @@ const ENGINES = [
   'buildModule3WithNarrative',
   'composeRegional',
   'composeAppendices',
+  // The interview engine: the CMC specification flow judges each answer by
+  // small-molecule rules (ICH Q3A(R2), M7, Q1A(R2)), and resume re-presents
+  // that judgement.
+  'advanceFlow',
+  'resumeFlow',
 ];
 const ENGINE_FILES = new Set([
   'server/services/cmc/qbd-analyzer.ts',
@@ -56,12 +63,15 @@ const ENGINE_FILES = new Set([
   'server/services/cmc/module3-narrative-builder.ts',
   // Defines the boundary decision and asks it before it composes.
   'server/services/cmc/module3-compile.ts',
+  'server/services/ana/intelligence-questions/engine.ts',
 ]);
 
 /**
  * The boundary decision, by the names a handler reaches it through: the
- * decision itself (services/cmc/module3-compile.ts) and the route and command
- * helpers that ask it (api/cmc/routes.ts, ana-ri/quality-engine-command-handlers.ts).
+ * decision itself (services/cmc/module3-compile.ts), its study and interview
+ * forms (study-composition-scope.ts, interview-composition-scope.ts), and the
+ * route and command helpers that ask it (api/cmc/routes.ts,
+ * ana-ri/quality-engine-command-handlers.ts).
  */
 const BOUNDARY = [
   'assessProgramCompositionScope',
@@ -69,6 +79,8 @@ const BOUNDARY = [
   'admitProgramComposition',
   'refusedAtCompositionBoundary',
   'studiesRefusedAtCompositionBoundary',
+  'studiesCompositionRefusal',
+  'interviewCompositionRefusalResult',
 ];
 
 /**
@@ -94,20 +106,6 @@ const ASKED_THROUGH: Record<string, { reason: string; here: string; there: [file
  * path the launch-scope gate refuses in production).
  */
 const NOT_YET: Array<{ file: string; handler: string; reason: string; until?: string; unreachable?: string }> = [
-  {
-    file: 'server/services/ana/AnaToolExecutor.ts',
-    handler: "registerToolHandler('estimate_recorded_shelf_life'",
-    reason:
-      'Another lane edited this file at 2026-10-22T00:12Z; wired after its 24-hour window, with the ' +
-      'answer_intelligence_question CMC flows (cmc-boundary/README.md, "Still open").',
-    until: '2026-10-24',
-  },
-  {
-    file: 'server/services/ana/AnaToolExecutor.ts',
-    handler: "registerToolHandler('assess_recorded_batch_poolability'",
-    reason: 'As estimate_recorded_shelf_life, in the same file and the same window.',
-    until: '2026-10-24',
-  },
   {
     file: 'server/routes/orchestration.ts',
     handler: "router.post('/pre-submission-gate'",
@@ -179,6 +177,7 @@ describe('callers of the CMC engines ask the composition boundary', () => {
         'server/api/cmc/routes.ts',
         'server/services/ana-ri/quality-engine-command-handlers.ts',
         'server/services/module3-convergence-service.ts',
+        'server/services/ana/AnaToolExecutor.ts',
       ]),
     );
     // Each route of the five is its own handler, so each is judged on its own.
