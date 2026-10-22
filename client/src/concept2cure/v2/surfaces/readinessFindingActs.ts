@@ -37,9 +37,15 @@ const LEAF = new Set([
 
 /** The act for an error finding, or null for a warning or info. A
  *  cross-reference letter, a sequence number or a regional format is not
- *  changed by a placement, so those go to Validation, never to a false fix. */
-export function findingAct(f: Pick<ReadinessFinding, 'severity' | 'code' | 'sectionCode'>): FindingAct | null {
+ *  changed by a placement, so those go to Validation, never to a false fix.
+ *  A frozen or dispatched sequence's leaves cannot change at all, so every
+ *  finding on it goes to Validation; the Builder would only refuse. */
+export function findingAct(
+  f: Pick<ReadinessFinding, 'severity' | 'code' | 'sectionCode'>,
+  sequence: { locked: boolean } = { locked: false },
+): FindingAct | null {
   if (f.severity !== 'error') return null;
+  if (sequence.locked) return { kind: 'validation', label: 'Open in Validation' };
   const code = typeof f.sectionCode === 'string' && f.sectionCode.trim() ? f.sectionCode.trim() : null;
   if (PLACE.has(f.code)) return { kind: 'place', code, label: code ? `Place a leaf at ${code}` : 'Place a leaf' };
   if (LEAF.has(f.code) && code) return { kind: 'leaf', code, label: `Open the leaf at ${code}` };

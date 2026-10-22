@@ -1,0 +1,28 @@
+# F23 (4/9): GET /api/c2c/projects/:id/vault-structure deleted
+
+## Who called it
+No client, server or test outside its own file. The last client reference was a comment, removed in bc4cda37d0 (2026-07-21). It was added in f1d2c91ae3 (#1000).
+git log --all --diff-filter=D on '*vault-structure*' '*VaultStructure*' '*vaultStructure*': nothing deleted before.
+
+## What delivers its outcome
+- The Vault's project tree: GET /api/c2c/project-vault/:id (server/routes/c2c/project-vault.ts), built from the same foldersForView/productTypesToSegments taxonomy. ProjectFilesPanel.tsx reaches it, and client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx pins it.
+- The section figures: GET /api/c2c/projects/:id/dossier (F23 2/9), which Project home reads. projectHomeReadiness.test.tsx and projectHomeDocuments.test.tsx pin it.
+
+## Red at head e6058e4126 (the pin run against that router, then restored and checked with cmp)
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > reads the project’s sections in the caller’s organization and answers the dossier 24ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > a project the caller cannot read is 404 and no section is read 5ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > an unprovisioned store is every figure unavailable, with the reason, and no 0 5ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > any other failure is a 500, never an empty dossier 4ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > /workstreams, which it replaces, is gone 5ms
+ × server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > /vault-structure, which no client called, is gone: the Vault tree is project-vault /:id and the figures are /dossier 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+
+The first version of this pin passed against the old router: the old route's own project read was not answered, so it 404'd anyway. The pin now answers that read, so the old route returns 200, and the pin is red against it.
+
+## Green
+ Test Files  28 passed (28)
+      Tests  342 passed (342)
+(every projects-*, project-vault-* route test, the parent-access pglite suite with the route list re-pointed, and the dossier service test)
+ci:launch-scope-api: 421 API paths named by launch and shell screens; none refused.

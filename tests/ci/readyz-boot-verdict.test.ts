@@ -24,6 +24,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const ensureCoreTables = vi.fn();
 vi.mock('../../server/db/ensureCoreTables', () => ({ ensureCoreTables }));
+// The auth-schema check the boot runs beside it (MR-03 Stage 3): complete
+// unless a case says otherwise.
+const missingAuthSchema = vi.fn();
+vi.mock('../../server/db/bootstrap/auth-schema', () => ({ missingAuthSchema }));
 
 // The remaining imports services.ts pulls in at module load. Stubbed so this
 // test exercises the readiness logic and nothing else.
@@ -61,6 +65,8 @@ describe('boot always records a schema-readiness verdict', () => {
   beforeEach(() => {
     resetSchemaReadinessForTests();
     ensureCoreTables.mockReset();
+    missingAuthSchema.mockReset();
+    missingAuthSchema.mockResolvedValue([]);
     vi.stubEnv('NODE_ENV', 'test');
   });
 
@@ -163,4 +169,42 @@ describe('boot always records a schema-readiness verdict', () => {
       expect(isSchemaReadinessServing()).toBe(false);
     });
   });
+});
+
+// MR-03 Stage 3: the boot no longer ALTERs the auth tables into shape on the
+// owner connection; the deploy does. A column the deploy did not create is
+// reported, never added, and the probe does not serve.
+describe('the auth schema, and the verify-only production boot', () => {
+  beforeEach(() => {
+    resetSchemaReadinessForTests();
+    ensureCoreTables.mockReset();
+    ensureCoreTables.mockResolvedValue(clean());
+    missingAuthSchema.mockReset();
+    missingAuthSchema.mockResolvedValue([]);
+    vi.stubEnv('NODE_ENV', 'test');
+  });
+
+  it('auth schema incomplete → missing, does NOT serve, and names the columns', async () => {
+    missingAuthSchema.mockResolvedValue(['users.bio', 'users.mfa_totp_last_step']);
+    await verifyDatabaseConnection(okPool);
+    expect(getSchemaReadiness()).toBe('missing');
+    expect(isSchemaReadinessServing()).toBe(false);
+    expect(getSchemaReadinessDetail()).toBe('auth schema incomplete: users.bio, users.mfa_totp_last_step');
+  });
+
+  it('the auth-schema check THREW → error, does NOT serve', async () => {
+    missingAuthSchema.mockRejectedValue(new Error('permission denied for schema information_schema'));
+    await verifyDatabaseConnection(okPool);
+    expect(getSchemaReadiness()).toBe('error');
+    expect(isSchemaReadinessServing()).toBe(false);
+  });
+
+  it('production verifies only: ensureCoreTables gets no connection string and verifyOnly', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    // Production goes on to the audit-trigger check, which refuses this stub
+    // pool (it has no query); only the schema call is under test here.
+    await verifyDatabaseConnection(okPool).catch(() => undefined);
+    expect(ensureCoreTables).toHaveBeenCalledWith(undefined, { verifyOnly: true });
+  });
+
 });

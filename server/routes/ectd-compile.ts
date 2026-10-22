@@ -46,7 +46,14 @@ import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/l
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
 import { resolveSequenceSpine, resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
-import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
+import {
+  loadSpineLeaves,
+  namesLeafDocument,
+  isWithdrawal,
+  leafSatisfies,
+  measureStatus,
+  type SpineLeafRow,
+} from '../services/ectd/compile-placement';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
@@ -933,65 +940,10 @@ function resolveUserId(req: Request): number {
    REQUIRED_SECTION_UNPLACED on 3.2.S/3.2.P/3.2.R while the sections sat in the
    sequence.) */
 
-interface SpineLeafRow {
-  section_code: string | null;
-  title: string | null;
-  lifecycle_op: string | null;
-  document_table: string | null;
-  document_id: number | null;
-  /** The uuid half of the reference, for uuid-keyed stores (vault.documents);
-   *  set instead of document_id. */
-  document_uuid?: string | null;
-  /** form_<number> for a filed FDA form; how a form proves its requirement. */
-  document_type?: string | null;
-}
-
-/** The sequence's placed (not deleted) leaves, org-scoped: the one read that
- *  compile, validate and status share.
- *
- *  2026-09-23 (W5/D7, round-2 review): document_uuid is read too. Without it a
- *  vault leaf (document_id NULL) that the assembler packages by its uuid was
- *  reported "could not be materialized" by the compile, shown as
- *  'unresolved-source', and not counted as placed by the status roll-up. */
-async function loadSpineLeaves(sequenceId: number, orgId: number): Promise<SpineLeafRow[]> {
-  const leafRes = await pool.query(
-    `SELECT section_code, title, lifecycle_op, document_table, document_id, document_uuid, document_type
-       FROM submission_leaves
-      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
-      ORDER BY section_code`,
-    [sequenceId, orgId],
-  );
-  return leafRes.rows as SpineLeafRow[];
-}
-
-/**
- * Does the leaf name a document? A table plus either key: integer-keyed stores
- * carry document_id, uuid-keyed ones (vault.documents) carry document_uuid —
- * the rule the assembler's resolveFile applies. Requiring document_id read
- * every vault leaf as having nothing behind it (2026-09-23, W5/D7, round-2
- * review).
- */
-function namesLeafDocument(l: SpineLeafRow): boolean {
-  return !!l.document_table && (!!l.document_id || !!l.document_uuid);
-}
-
-/** A declared withdrawal: it acts on a filed leaf and places no content. */
-function isWithdrawal(l: SpineLeafRow): boolean {
-  return String(l.lifecycle_op ?? '').trim().toLowerCase() === 'delete';
-}
-
-/**
- * Does this placed leaf satisfy a required section? By section (a leaf at or
- * beneath the requirement), or — for an FDA form, which is filed at 1.1 and
- * told apart by type — by the form requirement its document_type proves. A
- * withdrawal satisfies nothing: it takes a document off file.
- */
-function leafSatisfies(l: SpineLeafRow, requiredCode: string): boolean {
-  if (isWithdrawal(l)) return false;
-  if (sectionMatches(l.section_code, requiredCode)) return true;
-  const formRequirement = formRequirementForDocumentType(l.document_type);
-  return formRequirement != null && sectionMatches(formRequirement, requiredCode);
-}
+/* SpineLeafRow, loadSpineLeaves, namesLeafDocument, isWithdrawal and
+   leafSatisfies (what a sequence has placed, and which required sections it
+   satisfies) live in services/ectd/compile-placement, with the module roll-up
+   /status reports (FILING_SPINE F23 5/9, moved unchanged). */
 
 /**
  * Validation findings over the PLACED leaves of a sequence. `isMaterialized`
@@ -1444,61 +1396,19 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       { orderBy: 'section_code' },
     );
 
-    // Module-level readiness, against the program's own required set.
-    const required = await resolveRequiredSections(pool, {
-      programType: anchor.programType,
-      primaryAgency: anchor.primaryAgency,
-    });
-
-    // The leaf-rendering half of readiness comes from the submission spine's
-    // REAL state (documents placed into the sequence), not a capability flag.
-    // A named sequence (F14) is read when this project owns it.
+    // The sequence a compile would build (F14: a named one when this project
+    // owns it), and what /status measures for it: its placement, against the
+    // required set of its own market (F23 6/9, services/ectd/compile-placement).
     const chosen = await spineForRequest(req, res, anchor, orgId);
     if (!chosen) return;
     const spine = chosen.spine;
-    // A program has no linked section store, so for it the section-store count
-    // was always 0 of N — shown beside documents already placed in its
-    // sequence. Where the sequence carries leaves, readiness counts what is
-    // PLACED with a document behind it, and says so (`readinessBasis`), so a
-    // placed section is never read as an approved one.
-    const placedLeaves =
-      spine?.sequence && spine.sequence.leafCount > 0
-        ? (await loadSpineLeaves(spine.sequence.id, orgId)).filter(namesLeafDocument)
-        : null;
-
-    const moduleReadiness = required.modules.map((def) => {
-      const code = def.code;
-      const digit = code.replace('m', '');
-      const moduleSections = sections.filter(
-        s => sectionMatches(s.section_code, digit) || s.module?.toLowerCase() === code
-      );
-      const totalRequired = def.requiredSections.length;
-      const completedRequired = placedLeaves
-        ? def.requiredSections.filter((rs) => placedLeaves.some((l) => leafSatisfies(l, rs))).length
-        : def.requiredSections.filter(rs =>
-            moduleSections.some(
-              ms =>
-                sectionMatches(ms.section_code, rs) && ['approved', 'locked', 'final'].includes(ms.status)
-            )
-          ).length;
-
-      return {
-        moduleCode: code,
-        moduleName: def.name,
-        totalSections: placedLeaves
-          ? placedLeaves.filter((l) => sectionMatches(l.section_code, digit)).length
-          : moduleSections.length,
-        requiredSections: totalRequired,
-        completedRequired,
-        completionPct:
-          totalRequired > 0 ? Math.round((completedRequired / totalRequired) * 100) : 0,
-        ready: completedRequired === totalRequired,
-      };
+    const measure = await measureStatus({
+      program: { programType: anchor.programType, primaryAgency: anchor.primaryAgency, hasSectionStore: anchor.numericProjectId !== null },
+      spine,
+      orgId,
+      sections,
     });
-
-    const totalRequired = moduleReadiness.reduce((a, m) => a + m.requiredSections, 0);
-    const totalCompleted = moduleReadiness.reduce((a, m) => a + m.completedRequired, 0);
-    const overallPct = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
+    const { modules: moduleReadiness, totalRequired, totalCompleted, overallPct } = measure;
 
     res.json({
       projectId: anchor.numericProjectId,
@@ -1516,14 +1426,16 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       submissionReady: overallPct === 100 && submissionBlockers([], anchor, spine).length === 0,
       submissionBlockers: overallPct === 100
         ? submissionBlockers([], anchor, spine)
-        : ['Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
+        : [measure.note ?? 'Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
       modules: moduleReadiness,
       /** 'placed' — counted from documents placed in the sequence; 'approved' —
-       *  from the section store's approved/locked/final statuses. */
-      readinessBasis: placedLeaves ? 'placed' : 'approved',
+       *  from the section store's approved/locked/final statuses; 'no-sequence'
+       *  and 'unavailable' — nothing counted, `readinessNote` says why. */
+      readinessBasis: measure.basis,
+      readinessNote: measure.note,
       /** The sequence a compile would build: its recorded region and type. */
       sequence: await statusSequence(spine, orgId),
-      requiredSectionSource: required.provenance,
+      requiredSectionSource: measure.required?.provenance ?? null,
       totalSections: sections.length,
       totalRequired,
       totalCompleted,

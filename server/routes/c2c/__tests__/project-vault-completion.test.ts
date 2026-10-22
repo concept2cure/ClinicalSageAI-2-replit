@@ -158,3 +158,67 @@ describe('GET /api/c2c/project-vault/:id — section completion', () => {
     expect(leaves['2.7'].blocker).toBe(true);
   });
 });
+
+/* F23 (7/9). A market added to a project (F22) holds only its own part of the
+   filing: Module 1 and 3.2.R. Its folder was built from the whole market pack,
+   so an MAA showed every Module 2-5 section as "Mandatory section — no content
+   yet", sections the home filing holds and the market never will. And a
+   document with no section spec and no sections showed 0%, a measured-looking
+   figure over nothing. */
+describe('GET /api/c2c/project-vault/:id — a market document shows its own part', () => {
+  const MAA_PACK = [
+    { key: 'M1', label: 'Module 1 · Administrative (EU)', mandatory: false, path_order: 1 },
+    { key: '1.2', parent_key: 'M1', label: 'Application form', mandatory: true, path_order: 2 },
+    { key: 'M2', label: 'Module 2', mandatory: false, path_order: 3 },
+    { key: '2.5', parent_key: 'M2', label: 'Clinical overview', mandatory: true, path_order: 4 },
+    { key: 'M3', label: 'Module 3', mandatory: false, path_order: 5 },
+    { key: '3.2.P', parent_key: 'M3', label: 'Drug product', mandatory: true, path_order: 6 },
+    { key: '3.2.R', parent_key: 'M3', label: 'Regional information', mandatory: false, path_order: 7 },
+    { key: '3.2.R.1', parent_key: '3.2.R', label: 'Process validation scheme', mandatory: true, path_order: 8 },
+  ];
+  function seedDocs(docs: unknown[], live: unknown[] = []) {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ id: PROJECT, name: 'BX-204', product_type: 'drug' }] })
+      .mockResolvedValueOnce({ rows: docs })
+      .mockResolvedValueOnce({ rows: live })
+      .mockResolvedValue({ rows: [] });
+  }
+  const doc = (over: Record<string, unknown>) => ({
+    id: 'doc1', doc_type: 'nda', agency: 'fda', rule_pack_version: 'v1', title: 'NDA', status: 'draft',
+    readiness: 0, updated_at: null, owner_name: null, filing_scope: 'home', required_sections: null, ...over,
+  });
+
+  it('a market document holds Module 1 and 3.2.R only, never the home filing’s Module 2 (at head: 2.5 and 3.2.P too)', async () => {
+    seedDocs([doc({ id: 'ema1', doc_type: 'maa', agency: 'ema', title: 'MAA (EU)', filing_scope: 'market', required_sections: MAA_PACK })]);
+    const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
+    expect(res.status).toBe(200);
+    const nums = Object.keys(leavesByNum(res.body));
+    expect(nums).toEqual(expect.arrayContaining(['1.2', '3.2.R.1']));
+    expect(nums).not.toContain('2.5');
+    expect(nums).not.toContain('3.2.P');
+    // The documents read carries the scope, tolerantly (a database before
+    // 20261015e reads every document as home).
+    const docsSql = String(queryMock.mock.calls.find(([sql]) => /FROM c2c_documents d/.test(String(sql)))?.[0]);
+    expect(docsSql).toMatch(/to_jsonb\(d\)->>'filing_scope' AS filing_scope/);
+  });
+
+  it('the home filing still shows its whole outline', async () => {
+    seedDocs([doc({ required_sections: MAA_PACK })]);
+    const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
+    expect(Object.keys(leavesByNum(res.body))).toEqual(expect.arrayContaining(['1.2', '2.5', '3.2.P', '3.2.R.1']));
+  });
+
+  it('a document with no section spec and no sections has no completion figure (at head: 0)', async () => {
+    seedDocs([doc({ readiness: 0 })]);
+    const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
+    const leaf = leavesByNum(res.body)['—'];
+    expect(leaf).toBeTruthy();
+    expect(leaf.pct).toBeNull();
+  });
+
+  it('a document with no section spec but with sections keeps its measured figure', async () => {
+    seedDocs([doc({ readiness: 40 })], [{ document_id: 'doc1', section_key: 'A', status: 'approved', version: 1, updated_at: null, has_content: true, owner_name: null }]);
+    const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
+    expect(leavesByNum(res.body)['—'].pct).toBe(40);
+  });
+});

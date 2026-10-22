@@ -229,8 +229,8 @@ describe('actual authenticated native controls',() => {
 });
 
 describe('all parent read families deny before content or download effects', () => {
-  const projectPaths = ['', '/workstreams', '/drafts', '/team', '/evidence', '/activity', '/records',
-    '/conversation-files', '/vault-structure', '/sources', '/source-changes'];
+  const projectPaths = ['', '/dossier', '/drafts', '/team', '/evidence', '/activity', '/records',
+    '/conversation-files', '/sources', '/source-changes'];
   it.each(projectPaths)('protects the Project read %s', async suffix => {
     const denied = await get(actors.unassigned, `/api/c2c/projects/${programs.privateA.id}${suffix}`);
     expect(denied.status, JSON.stringify(denied.body)).toBe(404);

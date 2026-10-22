@@ -16,12 +16,13 @@
  *   vault.documents          → the "Uploaded files" branch: what this surface's
  *                              own Upload button ingests
  *
- * This is the same document/section data the existing
- * `GET /api/c2c/projects/:id/vault-structure` endpoint reads, but mapped
- * SERVER-SIDE straight into the Vault.tsx display shape (folder tree of
- * VaultDoc/VaultFolder) so the surface can render it with a single fetch and
- * no client-side converter — and with real owner + relative-modified
- * provenance instead of the client converter's placeholders.
+ * It maps the project's document/section data SERVER-SIDE straight into the
+ * Vault.tsx display shape (folder tree of VaultDoc/VaultFolder) so the surface
+ * can render it with a single fetch and no client-side converter — and with
+ * real owner + relative-modified provenance instead of the client converter's
+ * placeholders. (`GET /api/c2c/projects/:id/vault-structure` read the same
+ * data with no client caller and was deleted in FILING_SPINE F23 4/9; the
+ * tree is this read's, and the figures are GET /api/c2c/projects/:id/dossier.)
  *
  * Response envelope: { success: true, data: <displayShape> }.
  *
@@ -69,6 +70,7 @@ import { sourceReadView } from '../../../shared/data-room-processing-status.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
+import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
@@ -275,6 +277,9 @@ interface DocRow {
   updated_at: string | Date | null;
   owner_name: string | null;
   required_sections: unknown;
+  /** 'home' or 'market' (F22); read tolerantly, so a database before 20261015e
+   *  reads every document as home. */
+  filing_scope?: string | null;
 }
 
 interface SectionSpec {
@@ -706,8 +711,10 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
   return leaf;
 }
 
-/** Fallback leaf for a document with no rule-pack section spec. */
-function docLevelLeaf(doc: DocRow): VaultDoc {
+/** Fallback leaf for a document with no rule-pack section spec. With no live
+ *  sections there is nothing its readiness counted, so it has no completion
+ *  figure; it read 0% (F23 7/9). */
+function docLevelLeaf(doc: DocRow, hasSections: boolean): VaultDoc {
   const readiness = typeof doc.readiness === 'number' ? doc.readiness : 0;
   const docTitle = doc.title || doc.doc_type || 'Document';
   return {
@@ -716,7 +723,7 @@ function docLevelLeaf(doc: DocRow): VaultDoc {
     title: docTitle,
     type: 'Document',
     status: normalizeStatus(doc.status, readiness > 0),
-    pct: readiness,
+    pct: hasSections ? readiness : null,
     owner: doc.owner_name ?? '—',
     ver: '—',
     updated: relativeTime(doc.updated_at),
@@ -756,14 +763,19 @@ function sectionsToNodes(
   return roots.map(toNode);
 }
 
-/** One document → its top-level VaultFolder. */
+/** One document → its top-level VaultFolder. A market added to the project
+ *  (F22) holds only its own part of the filing, Module 1 and 3.2.R, so its
+ *  folder is that part of its pack; the home filing holds the rest. It was the
+ *  whole market pack, which showed every Module 2-5 section of an MAA as
+ *  "Mandatory section — no content yet" (F23 7/9). */
 function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolder {
-  const specs = Array.isArray(doc.required_sections)
+  const pack = Array.isArray(doc.required_sections)
     ? (doc.required_sections as SectionSpec[])
     : [];
+  const specs = doc.filing_scope === 'market' ? regionalSubtree<SectionSpec>(pack) : pack;
   const children = specs.length > 0
     ? sectionsToNodes(doc, specs, live)
-    : [docLevelLeaf(doc)];
+    : [docLevelLeaf(doc, live.size > 0)];
   return {
     id: `vaultdoc-${doc.id}`,
     code: (doc.doc_type ?? '').toUpperCase(),
@@ -1195,7 +1207,8 @@ export default function createProjectVaultRoutes(): Router {
         `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
                 d.status, d.readiness, d.updated_at,
                 COALESCE(du.name, du.email) AS owner_name,
-                rp.required_sections
+                rp.required_sections,
+                to_jsonb(d)->>'filing_scope' AS filing_scope
            FROM c2c_documents d
            LEFT JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency

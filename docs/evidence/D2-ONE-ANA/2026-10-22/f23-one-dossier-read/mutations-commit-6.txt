@@ -1,0 +1,14 @@
+# F23 (6/9): each mutation applied alone, the file restored and the restore checked after (mutate.py)
+# 12 mutations, 12 red.
+RED  the required set is the program's again, not the sequence's market: the tests went red
+RED  an empty sequence reads as no sequence: the tests went red
+RED  a market with no agency is measured anyway: the tests went red
+RED  nothing required reads 0%: the tests went red
+RED  nothing required reads ready: the tests went red
+RED  a program with no sequence is counted from a store it does not have: the tests went red
+RED  the blockers do not say why nothing is counted: the tests went red
+RED  a reply without modules is drawn: the tests went red
+RED  nothing counted is drawn as an empty table: the tests went red
+RED  nothing required drawn as a bar: the tests went red
+RED  nothing required gets a status chip: the tests went red
+RED  the placed chip does not name the sequence: the tests went red

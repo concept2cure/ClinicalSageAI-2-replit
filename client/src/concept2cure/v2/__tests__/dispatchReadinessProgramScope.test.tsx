@@ -134,7 +134,7 @@ describe('DispatchReadiness — the project’s markets are the server’s proje
     serve({ scoped: [] });
     render(<DispatchReadiness {...props()} />);
     await waitFor(() => expect(text()).toMatch(/No market for this project yet/));
-    expect(text()).toContain("Add one from the project's Submit tab.");
+    expect(text()).toContain("Add one from the project's Submit tab, or record an existing submission to this project in the Submission Center.");
     // The unscoped list holds a same-named submission with no project; it is
     // never offered, and the screen names none.
     expect(text()).not.toContain('Other program NDA');

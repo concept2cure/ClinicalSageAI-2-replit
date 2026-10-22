@@ -2074,9 +2074,11 @@ jobs:
           # through it, and /readyz pings it.
           CLAMAV_HOST: 127.0.0.1
           CLAMAV_PORT: '3310'
-          # Migrations/admin keep the owner URL; the request-serving pool is the
-          # least-privilege role. This split is the whole point of the job.
-          DATABASE_URL: postgresql://postgres@localhost:5432/c2c_boot
+          # The runtime role only, as production runs: no DATABASE_URL. The
+          # owner URL provisioned the schema above and is the deploy's; the
+          # boot verifies on app_service and creates nothing (MR-03 Stage 3,
+          # OPS-16). This split is the whole point of the job. Before that
+          # change a boot without the owner URL exited at import.
           APP_DATABASE_URL: postgresql://app_service:ci-boot-smoke-app-service-password@localhost:5432/c2c_boot
           NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/pgcerts/server.crt
           # Production refuses to start without each of these. They are
@@ -2273,12 +2275,12 @@ jobs:
         run: |
           # The production posture production-boot-smoke runs, as an env file.
           # Throwaway values for a container destroyed with the job; each
-          # acceptance below is explained in production-boot-smoke's env.
+          # acceptance below is explained in production-boot-smoke's env. No
+          # DATABASE_URL: the image serves as app_service only (MR-03 OPS-16).
           cat > "$RUNNER_TEMP/app.env" <<ENV
           NODE_ENV=production
           RLS_ENFORCE=on
           PORT=5199
-          DATABASE_URL=postgresql://postgres@localhost:5432/c2c_image
           APP_DATABASE_URL=postgresql://app_service:${APP_SERVICE_PASSWORD}@localhost:5432/c2c_image
           NODE_EXTRA_CA_CERTS=/ca/server.crt
           PGSSLROOTCERT=/ca/server.crt

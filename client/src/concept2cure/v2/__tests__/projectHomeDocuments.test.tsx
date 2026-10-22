@@ -49,11 +49,15 @@ const DOCS = [
   doc({ id: 'doc-32s', title: 'Drug substance (3.2.S)', module: 'M3', updated_at: '2026-10-05T10:00:00Z' }),
   doc({ id: 'doc-24', title: 'Nonclinical overview (2.4)', module: 'M2', updated_at: '2026-10-01T10:00:00Z' }),
 ];
-const WORKSTREAMS = [
-  { module: 'M2', total: 1, todo: 1, completion_pct: 0, last_updated: null },
-  { module: '3', total: 3, todo: 3, completion_pct: 0, last_updated: null },
-  { module: '5', total: 2, todo: 2, completion_pct: 0, last_updated: null },
-];
+/* GET /:id/dossier (F23): one row per module of the home filing. */
+const dossierRow = (module: string, label: string, counted: number) => ({
+  group: 'module', module, agency: null, label, documentId: 'doc_home', counted, complete: 0, inReview: 0, drafted: 0,
+  figure: { state: 'measured', pct: 0, counted, complete: 0 }, lastUpdated: null,
+});
+const DOSSIER = {
+  projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 0, counted: 6, complete: 0 }, markets: [],
+  rows: [dossierRow('2', 'Module 2 · Summaries', 1), dossierRow('3', 'Module 3 · Quality (CMC)', 3), dossierRow('5', 'Module 5 · Clinical', 2)],
+};
 const source = (id: number, title: string, extractionStatus: string) => ({
   id, title, checksum: `sha-${id}`, ingestionStatus: 'ingested', extractionStatus, createdAt: '2026-10-01T09:00:00Z',
   mimeType: 'application/pdf', fileSize: 1000, artifactId: null, origin: 'chat_upload', extractionMethod: 'pdf-text',
@@ -71,7 +75,7 @@ function serve(opts: Opts = {}) {
       return ok({ id: PID, name: 'BX-410', product_name: 'Torvanib', program_type: 'IND', status: 'active', ...opts.program });
     }
     if (url === DOCS_URL) return (opts.docs ?? (() => ok({ documents: DOCS })))();
-    if (url === `/api/c2c/projects/${PID}/workstreams`) return ok({ workstreams: WORKSTREAMS });
+    if (url === `/api/c2c/projects/${PID}/dossier`) return ok(DOSSIER);
     if (url === `/api/c2c/projects/${PID}/sources`) {
       if (opts.sources) return opts.sources();
       return ok({ projectId: PID, sources: [source(11, 'csr-study-101.pdf', 'extracted'), source(12, 'scan.pdf', 'failed')] });
@@ -143,7 +147,7 @@ describe('Author — the project\'s documents', () => {
   it('"Recent drafts" and the Workspace grid are gone, and nothing reads the drafts', async () => {
     serve();
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(moduleRow('M2')).toBeTruthy());
+    await waitFor(() => expect(moduleRow('Module 2')).toBeTruthy());
     expect(screen.queryByText(/Every capability, scoped to this project/)).toBeNull();
     expect(document.querySelector('.pj-toolgrp'), 'a workspace tool group').toBeNull();
     expect(screen.queryByText('Recent drafts')).toBeNull();
@@ -155,17 +159,17 @@ describe('Author — the project\'s documents', () => {
     const p = props();
     render(<ProjectHome {...p} />);
     // A row is a button once there is a document to open.
-    await waitFor(() => expect(moduleRow('M2 · 1 section')?.tagName).toBe('BUTTON'));
-    fireEvent.click(moduleRow('M2 · 1 section')!);
+    await waitFor(() => expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('BUTTON'));
+    fireEvent.click(moduleRow('Module 2 · Summaries')!);
     expect(target(), 'the row named no document').toMatchObject({ docId: 'doc-25', programId: PID });
     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
 
-    // "3" is the Module 3 sections' rollup: it opens the Module 3 document.
-    fireEvent.click(screen.getByRole('button', { name: /^3 sections \(3 sections\): 0% complete\. Open Drug substance \(3\.2\.S\)$/ }));
+    // Module 3's row opens the Module 3 document.
+    fireEvent.click(screen.getByRole('button', { name: /^Module 3 · Quality \(CMC\): 0 of 3 approved or locked, 0%\. Open Drug substance \(3\.2\.S\)$/ }));
     expect(target()).toMatchObject({ docId: 'doc-32s' });
 
     // Module 5 has no document of this project: a row with nothing to click.
-    expect(moduleRow('5 · 2 sections')?.tagName, 'a module with no document is not a button').toBe('DIV');
+    expect(moduleRow('Module 5 · Clinical')?.tagName, 'a module with no document is not a button').toBe('DIV');
   });
 
   it('offers the editor and the organisation\'s protocols as doors', async () => {
@@ -185,7 +189,7 @@ describe('Evidence — every way a source comes in', () => {
   it('Evidence has the data room and Author does not', async () => {
     serve();
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(moduleRow('M2')).toBeTruthy());
+    await waitFor(() => expect(moduleRow('Module 2')).toBeTruthy());
     expect(screen.queryByRole('heading', { name: 'Data room' }), 'the data room under Author').toBeNull();
     await open('Evidence');
     expect(await screen.findByRole('heading', { name: 'Data room' })).toBeTruthy();
@@ -197,7 +201,7 @@ describe('Evidence — every way a source comes in', () => {
     const p = props();
     render(<ProjectHome {...p} />);
     // Wherever the data room is: the claim here is what its button does.
-    await waitFor(() => expect(moduleRow('M2')).toBeTruthy());
+    await waitFor(() => expect(moduleRow('Module 2')).toBeTruthy());
     if (!screen.queryByRole('heading', { name: 'Data room' })) await open('Evidence');
     await screen.findByText('csr-study-101.pdf');
     fireEvent.click(screen.getByRole('button', { name: /Write from these sources/ }));
@@ -232,10 +236,10 @@ describe('Review findings — the row, the handoff and the filing type say what 
   it('a module row names the sections as the figure and the document it opens in words, and how many the module holds', async () => {
     serve();
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(moduleRow('M2 · 1 section')?.tagName).toBe('BUTTON'));
-    // The percent is the module's section rollup, not the document's progress.
-    expect(moduleRow('M2 · 1 section')!.getAttribute('aria-label'))
-      .toBe('M2 sections (1 section): 0% complete. Open Clinical overview (2.5), the newest of 2 Module 2 documents');
+    await waitFor(() => expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('BUTTON'));
+    // The figure is the module's sections approved or locked, not the document's progress.
+    expect(moduleRow('Module 2 · Summaries')!.getAttribute('aria-label'))
+      .toBe('Module 2 · Summaries: 0 of 1 approved or locked, 0%. Open Clinical overview (2.5), the newest of 2 Module 2 documents');
     // The document is visible in words, not only in a hover title.
     const named = Array.from(document.querySelectorAll('[data-testid="pj-lmod-doc"]')).map((e) => e.textContent);
     expect(named).toEqual([
