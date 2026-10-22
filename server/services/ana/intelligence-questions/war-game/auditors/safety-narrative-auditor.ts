@@ -11,6 +11,16 @@
 
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 
+/* 2026-10-22 (D2): rules converged onto the field ids the safety narrative
+   interview (flows/safety-narrative.ts) actually asks. Several old keys were
+   that interview's NODE ids (medical_history, concomitant_medications,
+   event_timeline, causality_assessment), never answers. A rule still reading a
+   key the interview does not ask (CRF/tabulation/MedDRA discrepancy flags,
+   CIOMS/E2B completeness, processing days, site-to-sponsor days, SDV,
+   investigator signature, notification log, narrative version, signal
+   evaluation, aggregate/PBRER/DSUR references, risk mitigation) is left as is
+   and reported NOT ASSESSED by the engine: no equivalent question exists. */
+
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
@@ -28,6 +38,21 @@ function numericVal(val: unknown): number | null {
   if (val === undefined || val === null) return null;
   const n = Number(val);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Seriousness by the interview's case_type: these three types are serious by definition. */
+const SERIOUS_CASE_TYPES = new Set(['death_case', 'non_fatal_sae', 'susar']);
+function isSeriousCase(answers: Record<string, unknown>): boolean {
+  return SERIOUS_CASE_TYPES.has(String(answers.case_type ?? '')) || answers.is_susar === true;
+}
+
+/** Whole calendar days from one ISO date (YYYY-MM-DD) answer to another; null if either is not a date. */
+function calendarDaysBetween(from: unknown, to: unknown): number | null {
+  if (typeof from !== 'string' || typeof to !== 'string') return null;
+  const a = Date.parse(from.slice(0, 10) + 'T00:00:00Z');
+  const b = Date.parse(to.slice(0, 10) + 'T00:00:00Z');
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return Math.round((b - a) / 86_400_000);
 }
 
 function finding(
@@ -57,7 +82,9 @@ const rules: AuditRule[] = [
     title: 'Patient Demographics Missing from Narrative',
     question: 'The safety narrative does not include basic patient demographics (age, sex, race, weight). How does the sponsor expect the Agency to assess whether the adverse event profile is consistent with the enrolled population?',
     check(answers) {
-      if (isBlank(answers.patient_demographics)) {
+      // The interview asks which sections the narrative includes.
+      const sections = answers.narrative_sections_included;
+      if (!Array.isArray(sections) || !sections.includes('patient_demographics')) {
         return finding(
           this.id,
           this.dimension,
@@ -68,7 +95,7 @@ const rules: AuditRule[] = [
           'ICH E3 Section 12.3.2 requires that individual patient narratives include patient demographics to contextualize the adverse event.',
           'ICH E3 Section 12.3.2; ICH E2B(R3) data elements D.1-D.6 (patient characteristics); CIOMS VI Section 3.1',
           'Include complete patient demographics: age, sex, race/ethnicity, body weight, and relevant baseline characteristics. These are essential for causality assessment and signal evaluation.',
-          ['patient_demographics', 'subject_id'],
+          ['narrative_sections_included', 'age', 'sex', 'race_ethnicity', 'subject_id'],
         );
       }
       return null;
@@ -80,7 +107,7 @@ const rules: AuditRule[] = [
     title: 'Medical History Absent',
     question: 'The narrative does not document the patient\'s relevant medical history. Without this context, how can the reviewer differentiate drug-related events from pre-existing conditions or comorbid disease progression?',
     check(answers) {
-      if (isBlank(answers.medical_history)) {
+      if (isBlank(answers.relevant_medical_history)) {
         return finding(
           this.id,
           this.dimension,
@@ -91,7 +118,7 @@ const rules: AuditRule[] = [
           'ICH E2B(R3) data element D.7 (relevant medical history) captures documentation of relevant past medical history, including pre-existing conditions, to support causality assessment.',
           'ICH E2B(R3) D.7; ICH E3 Section 12.3.2; CIOMS I',
           'Document all relevant medical history including pre-existing conditions, surgeries, allergies, and risk factors that may inform differential diagnosis.',
-          ['medical_history', 'patient_demographics'],
+          ['relevant_medical_history', 'narrative_sections_included'],
         );
       }
       return null;
@@ -103,7 +130,7 @@ const rules: AuditRule[] = [
     title: 'Concomitant Medications Not Listed',
     question: 'The narrative fails to list concomitant medications. Drug-drug interactions represent a major confounding factor in causality assessment. Why has the sponsor omitted this critical information?',
     check(answers) {
-      if (isBlank(answers.concomitant_medications)) {
+      if (isBlank(answers.concomitant_medications_list)) {
         return finding(
           this.id,
           this.dimension,
@@ -114,7 +141,7 @@ const rules: AuditRule[] = [
           'ICH E2B(R3) drug data elements G.k (including concomitant drugs) and ICH E3 Section 12.3.2 call for documentation of all concomitant therapies to assess potential drug-drug interactions.',
           'ICH E2B(R3) G.k; ICH E3 Section 12.3.2; 21 CFR 312.32(c)(1)(i)',
           'Provide a complete list of concomitant medications, including dose, route, frequency, indication, and start/stop dates relative to the adverse event onset.',
-          ['concomitant_medications', 'drug_interactions'],
+          ['concomitant_medications_list', 'number_of_concomitant_meds', 'medications_potentially_causative'],
         );
       }
       return null;
@@ -126,10 +153,12 @@ const rules: AuditRule[] = [
     title: 'No Autopsy Report for Fatal Case',
     question: 'This narrative describes a fatal outcome, yet no autopsy findings are reported. Given the gravity of a treatment-related death, can the sponsor explain why an autopsy was not obtained or, if conducted, why results are not included?',
     check(answers) {
-      const outcome = String(answers.event_outcome ?? '').toLowerCase();
+      // autopsy_results is shown only when autopsy_performed is true; a fatal case
+      // with an autopsy performed and no results is the gap the interview can show.
       if (
-        (outcome.includes('death') || outcome.includes('fatal')) &&
-        isBlank(answers.autopsy_report)
+        answers.event_outcome === 'fatal' &&
+        answers.autopsy_performed === true &&
+        isBlank(answers.autopsy_results)
       ) {
         return finding(
           this.id,
@@ -137,11 +166,11 @@ const rules: AuditRule[] = [
           'critical',
           this.title,
           this.question,
-          'A fatal outcome is reported but no autopsy findings are included in the narrative.',
+          'A fatal outcome is reported and an autopsy was performed, but no autopsy findings are included in the narrative.',
           'ICH E2B(R3) data element D.9 (death details, including autopsy) provides for autopsy results (if performed) to be included in individual case safety reports for fatal cases. ICH E3 Section 12.3.2 emphasizes detailed narratives for deaths.',
           'ICH E2B(R3) D.9; ICH E3 Section 12.3.2; 21 CFR 312.32(c)(1)(i)',
           'Include autopsy findings if available. If autopsy was not performed, document the reason (e.g., family refusal) and provide the best available clinical determination of cause of death.',
-          ['autopsy_report', 'event_outcome', 'cause_of_death'],
+          ['autopsy_results', 'autopsy_performed', 'event_outcome', 'primary_cause_of_death'],
         );
       }
       return null;
@@ -249,25 +278,30 @@ const rules: AuditRule[] = [
     title: 'SUSAR Not Reported within Required Timeframe',
     question: 'This suspected unexpected serious adverse reaction (SUSAR) was not reported to regulatory authorities within the mandatory 15-day (or 7-day for fatal/life-threatening) window. What systemic failures led to this reporting violation?',
     check(answers) {
-      const daysSinceEvent = numericVal(answers.days_to_report);
-      const isSusar = answers.is_susar === true || answers.is_susar === 'yes';
-      const isFatal = String(answers.event_outcome ?? '').toLowerCase().includes('death') ||
-                      String(answers.event_outcome ?? '').toLowerCase().includes('fatal');
-      if (isSusar && daysSinceEvent !== null) {
-        if ((isFatal && daysSinceEvent > 7) || (!isFatal && daysSinceEvent > 15)) {
-          return finding(
-            this.id,
-            this.dimension,
-            'critical',
-            this.title,
-            this.question,
-            `SUSAR was reported ${daysSinceEvent} calendar days after the sponsor's initial receipt of the information (day 0), exceeding the ${isFatal ? '7-day (fatal/life-threatening)' : '15-day'} regulatory reporting deadline.`,
-            'ICH E2A Section III.B requires expedited reporting of SUSARs: 7 calendar days for fatal/life-threatening unexpected suspected adverse reactions (with a complete report within 8 additional days), 15 calendar days for all other serious unexpected suspected adverse reactions, measured from the sponsor\'s first knowledge of the case. 21 CFR 312.32(c)(1) mandates 15-day IND safety reports and 21 CFR 312.32(c)(2) mandates 7-day reports for unexpected fatal or life-threatening suspected adverse reactions.',
-            'ICH E2A Section III.B; 21 CFR 312.32(c)(1) and (c)(2); ICH E2D Section III',
-            'Investigate the root cause of the reporting delay and implement corrective actions. File a late report with explanation. Review all SUSARs in the database for similar delays.',
-            ['days_to_report', 'is_susar', 'event_outcome', 'reporting_date'],
-          );
-        }
+      // The interview asks no day count. It asks the Date of Initial Awareness
+      // (initial_awareness_date: its guidance says this date and the reporting
+      // date "establish the regulatory reporting timeline", i.e. day 0) and, on
+      // the SUSAR branch, the SUSAR Report Date (susar_report_date). The delay is
+      // the calendar days between them.
+      if (answers.is_susar !== true) return null;
+      const daysToReport = calendarDaysBetween(answers.initial_awareness_date, answers.susar_report_date);
+      if (daysToReport === null || daysToReport < 0) return null;
+      const criteria = Array.isArray(answers.event_seriousness_criteria) ? answers.event_seriousness_criteria : [];
+      // 7 days for a fatal or life-threatening case (21 CFR 312.32(c)(2); ICH E2A III.B), else 15.
+      const isFatal = answers.event_outcome === 'fatal' || criteria.includes('death') || criteria.includes('life_threatening');
+      if ((isFatal && daysToReport > 7) || (!isFatal && daysToReport > 15)) {
+        return finding(
+          this.id,
+          this.dimension,
+          'critical',
+          this.title,
+          this.question,
+          `SUSAR was reported ${daysToReport} calendar days after the recorded date of initial awareness (day 0), exceeding the ${isFatal ? '7-day (fatal/life-threatening)' : '15-day'} regulatory reporting deadline.`,
+          'ICH E2A Section III.B requires expedited reporting of SUSARs: 7 calendar days for fatal/life-threatening unexpected suspected adverse reactions (with a complete report within 8 additional days), 15 calendar days for all other serious unexpected suspected adverse reactions, measured from the sponsor\'s first knowledge of the case. 21 CFR 312.32(c)(1) mandates 15-day IND safety reports and 21 CFR 312.32(c)(2) mandates 7-day reports for unexpected fatal or life-threatening suspected adverse reactions.',
+          'ICH E2A Section III.B; 21 CFR 312.32(c)(1) and (c)(2); ICH E2D Section III',
+          'Investigate the root cause of the reporting delay and implement corrective actions. File a late report with explanation. Review all SUSARs in the database for similar delays.',
+          ['initial_awareness_date', 'susar_report_date', 'is_susar', 'event_outcome', 'event_seriousness_criteria', 'expedited_reporting_timeline'],
+        );
       }
       return null;
     },
@@ -324,8 +358,7 @@ const rules: AuditRule[] = [
     title: 'Seriousness Criteria Not Documented',
     question: 'The narrative describes a serious adverse event but does not explicitly state which seriousness criterion is met (death, life-threatening, hospitalization, disability, congenital anomaly, or medically important). How was the seriousness determination made?',
     check(answers) {
-      const isSerious = answers.is_serious === true || answers.is_serious === 'yes';
-      if (isSerious && isBlank(answers.seriousness_criteria)) {
+      if (isSeriousCase(answers) && isBlank(answers.event_seriousness_criteria)) {
         return finding(
           this.id,
           this.dimension,
@@ -336,7 +369,7 @@ const rules: AuditRule[] = [
           'ICH E2A Section II defines seriousness criteria. Each SAE narrative must explicitly state which criterion was met for regulatory categorization.',
           'ICH E2A Section II; ICH E2B(R3) E.i (seriousness criteria); 21 CFR 312.32(a)',
           'Explicitly document the applicable seriousness criterion: results in death, is life-threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect, or is a medically important event.',
-          ['seriousness_criteria', 'is_serious', 'event_outcome'],
+          ['event_seriousness_criteria', 'case_type', 'event_outcome'],
         );
       }
       return null;
@@ -350,7 +383,10 @@ const rules: AuditRule[] = [
     title: 'No Causality Assessment Provided',
     question: 'The narrative lacks a formal causality assessment using an accepted methodology (e.g., WHO-UMC, Naranjo scale). Without this, how does the sponsor expect the Agency to evaluate the drug-event relationship?',
     check(answers) {
-      if (isBlank(answers.causality_assessment)) {
+      if (
+        (isBlank(answers.investigator_causality) && isBlank(answers.sponsor_causality)) ||
+        isBlank(answers.causality_assessment_method)
+      ) {
         return finding(
           this.id,
           this.dimension,
@@ -361,7 +397,7 @@ const rules: AuditRule[] = [
           'ICH E2A Section II.A.2 defines an adverse drug reaction by a reasonable possibility of a causal relationship between the drug and the event, so the narrative must assess that relationship. WHO-UMC or Naranjo algorithms provide standardized assessment frameworks.',
           'ICH E2A Section II.A.2; WHO-UMC Causality Categories; ICH E2B(R3) G.k.9 (drug-reaction assessment)',
           'Include a formal causality assessment using a validated algorithm (WHO-UMC preferred). Document the assessment criteria: temporal relationship, dechallenge/rechallenge, confounders, and biological plausibility.',
-          ['causality_assessment', 'causality_method'],
+          ['investigator_causality', 'sponsor_causality', 'causality_assessment_method'],
         );
       }
       return null;
@@ -396,7 +432,7 @@ const rules: AuditRule[] = [
     title: 'Alternative Etiologies Not Explored',
     question: 'The narrative attributes the event to the investigational product without exploring alternative etiologies. Has the sponsor considered underlying disease progression, concomitant medications, or intercurrent illness as potential causes?',
     check(answers) {
-      if (isBlank(answers.alternative_etiologies)) {
+      if (isBlank(answers.alternative_explanations)) {
         return finding(
           this.id,
           this.dimension,
@@ -407,7 +443,7 @@ const rules: AuditRule[] = [
           'The ICH E2A Section II.A.2 causality standard requires consideration of alternative explanations as part of a thorough causality evaluation. CIOMS VI emphasizes differential diagnosis in individual case assessment.',
           'ICH E2A Section II.A.2; CIOMS VI Section 3.3; ICH E2D Section II.C',
           'Discuss and systematically evaluate alternative etiologies including: underlying disease progression, concomitant drug effects, intercurrent illness, pre-existing conditions, procedural complications, and natural history of the condition.',
-          ['alternative_etiologies', 'medical_history', 'concomitant_medications'],
+          ['alternative_explanations', 'relevant_medical_history', 'concomitant_medications_list'],
         );
       }
       return null;
@@ -444,12 +480,12 @@ const rules: AuditRule[] = [
     title: 'Unblinding Procedure Not Documented',
     question: 'The narrative describes an SAE in a blinded study but does not document whether unblinding occurred or the procedure followed. Was the blind broken, and if so, was the emergency unblinding procedure properly followed?',
     check(answers) {
-      const isBlinded = String(answers.study_blinding ?? '').toLowerCase();
-      const isSerious = answers.is_serious === true || answers.is_serious === 'yes';
+      // The interview asks unblinding_performed only on its SUSAR branch
+      // (is_susar === true), so the check applies to SUSARs in a blinded study.
       if (
-        isSerious &&
-        (isBlinded.includes('double') || isBlinded.includes('single') || isBlinded.includes('blind')) &&
-        isBlank(answers.unblinding_documented)
+        answers.is_susar === true &&
+        answers.blinding_status === 'blinded' &&
+        isBlank(answers.unblinding_performed)
       ) {
         return finding(
           this.id,
@@ -461,7 +497,7 @@ const rules: AuditRule[] = [
           'ICH E6(R3) Appendix B and Annex 1 §2.11 require pre-specified procedures for emergency unblinding. ICH E2A Section III.D (Managing Blinded Therapy Cases) advises that the sponsor break the blind for the individual patient when a serious adverse reaction is judged reportable on an expedited basis.',
           'ICH E6(R3) Appendix B; ICH E6(R3) Annex 1 §2.11; ICH E2A Section III.D; 21 CFR 312.32(c)(1)(iv)',
           'Document whether unblinding occurred, who authorized it, the date, and the treatment assignment revealed. If unblinding was not performed, state the rationale and how SUSAR determination was made without unblinding.',
-          ['unblinding_documented', 'study_blinding', 'is_serious'],
+          ['unblinding_performed', 'blinding_status', 'is_susar'],
         );
       }
       return null;
@@ -498,9 +534,9 @@ const rules: AuditRule[] = [
     title: 'Patient Follow-Up Incomplete',
     question: 'The narrative describes an unresolved or ongoing event but no follow-up information has been obtained. Without adequate follow-up, the final event outcome and any sequelae remain unknown. What efforts have been made to obtain follow-up?',
     check(answers) {
-      const outcome = String(answers.event_outcome ?? '').toLowerCase();
+      const outcome = String(answers.event_outcome ?? '');
       if (
-        (outcome.includes('ongoing') || outcome.includes('unresolved') || outcome.includes('not recovered') || outcome.includes('unknown')) &&
+        (outcome === 'not_recovered' || outcome === 'recovering' || outcome === 'unknown') &&
         isBlank(answers.follow_up_obtained)
       ) {
         return finding(
@@ -668,8 +704,7 @@ const rules: AuditRule[] = [
     title: 'Aggregate Safety Analysis Not Referenced',
     question: 'This narrative describes a serious event but does not reference aggregate safety data or line listings. Is this event consistent with the known safety profile, or does it represent a new finding? The reviewer cannot determine this without aggregate context.',
     check(answers) {
-      const isSerious = answers.is_serious === true || answers.is_serious === 'yes';
-      if (isSerious && isBlank(answers.aggregate_analysis_referenced)) {
+      if (isSeriousCase(answers) && isBlank(answers.aggregate_analysis_referenced)) {
         return finding(
           this.id,
           this.dimension,
@@ -680,7 +715,7 @@ const rules: AuditRule[] = [
           'ICH E3 Section 12.2.2 requires that individual serious case narratives be interpretable in the context of the overall safety summary. ICH E2F (DSUR) expects ongoing aggregate review of cumulative safety data during development.',
           'ICH E3 Section 12.2.2; ICH E2F; CIOMS VI Section 2',
           'Include a brief reference to the cumulative incidence of similar events in the study population. Note whether this event is consistent with the known safety profile or represents a potentially new finding.',
-          ['aggregate_analysis_referenced', 'similar_cases_count', 'is_serious'],
+          ['aggregate_analysis_referenced', 'similar_cases_count', 'case_type'],
         );
       }
       return null;
@@ -715,10 +750,9 @@ const rules: AuditRule[] = [
     title: 'No Risk Mitigation Measures Proposed',
     question: 'Given the severity of this event, the narrative does not propose any risk mitigation measures such as protocol amendments, informed consent updates, or enhanced monitoring. What actions does the sponsor intend to take to protect remaining study participants?',
     check(answers) {
-      const severity = String(answers.event_severity ?? '').toLowerCase();
-      const isSerious = answers.is_serious === true || answers.is_serious === 'yes';
+      const severity = String(answers.event_severity_grade ?? '');
       if (
-        (isSerious || severity.includes('severe') || severity.includes('life') || severity.includes('grade 4') || severity.includes('grade 5')) &&
+        (isSeriousCase(answers) || severity === 'severe' || severity === 'life_threatening' || severity === 'fatal') &&
         isBlank(answers.risk_mitigation_proposed)
       ) {
         return finding(
@@ -731,7 +765,7 @@ const rules: AuditRule[] = [
           'ICH E6(R3) Annex 1 §3.13 requires sponsors to implement risk mitigation actions when safety findings warrant. 21 CFR 312.32(d) requires IND safety report follow-up actions.',
           'ICH E6(R3) Annex 1 §3.13; ICH E2E Section 3 (post-authorisation pharmacovigilance plan); 21 CFR 312.32(d); ICH E2D Section IV',
           'Evaluate whether risk mitigation is warranted: protocol amendment (e.g., additional exclusion criteria, enhanced monitoring), informed consent revision, Investigator Brochure update, REMS modification, or study suspension. Document the rationale for the chosen course of action.',
-          ['risk_mitigation_proposed', 'event_severity', 'is_serious'],
+          ['risk_mitigation_proposed', 'event_severity_grade', 'case_type'],
         );
       }
       return null;
