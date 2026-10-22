@@ -17,7 +17,9 @@
  *   - an empty heading is not counted, and a heading someone has written in is
  *     (review of F23 8/9: unsigned text at a heading must not read 100);
  *   - a 'todo' section that gains a child stops being counted;
- *   - re-parenting a section recounts the document.
+ *   - re-parenting a section recounts the document;
+ *   - a replay files a section the old PATCH inserted without its parent under
+ *     the parent its own pack gives it, and touches nothing else (F23 hand-on).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
@@ -171,5 +173,85 @@ describe('readiness counts sections, not headings', () => {
     // Q moves under P: P is now an empty heading, and is not counted.
     await jdb.pool.query(`UPDATE c2c_document_sections SET parent_key = 'P' WHERE document_id = 'tiny-move' AND section_key = 'Q'`);
     expect(await readiness()).toBe(100);
+  });
+});
+
+/* The old PATCH (server/routes/c2c/documents.ts, until F23 8/9) inserted a
+   missing section without parent_key. Such a row reads as a root, so the pack
+   heading above it reads as holding nothing and is counted. The replay files
+   it under the parent the document's own pack gives it. */
+describe('a replay files a section the old PATCH wrote without its parent', () => {
+  const replay = () => jdb.pglite.exec(fs.readFileSync(path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql'), 'utf8'));
+  const parentOf = async (doc: string, key: string) =>
+    (await one(`SELECT parent_key FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2`, [doc, key])).parent_key;
+  async function doc(id: string, version: string, rows: Array<[string, string | null, string]>) {
+    await jdb.pool.query(
+      `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness)
+       VALUES ($1, $2, $3, 'ind', 'fda', $4, $1, 'draft', 0)`,
+      [id, ORG, IND, version],
+    );
+    for (const [i, [key, parent, status]] of rows.entries()) {
+      await jdb.pool.query(
+        `INSERT INTO c2c_document_sections (document_id, section_key, parent_key, label, path_order, mandatory, status, content, draft_source, version)
+         VALUES ($1, $2, $3, $2, $4, false, $5, '{}'::jsonb, 'template', 1)`,
+        [id, key, parent, i + 1, status],
+      );
+    }
+  }
+
+  it('the heading stops being counted; a locked row is filed too; nothing else moves, updated_at included', async () => {
+    const version = String((await one(`SELECT rule_pack_version FROM c2c_documents WHERE id = 'ind-doc'`)).rule_pack_version);
+    const pack = (await jdb.pool.query(
+      `SELECT elem ->> 'key' AS k, elem ->> 'parent_key' AS p FROM c2c_rule_packs rp, jsonb_array_elements(rp.required_sections) AS elem
+        WHERE rp.doc_type = 'ind' AND rp.agency = 'fda' AND rp.version = $1`, [version])).rows as Array<{ k: string; p: string | null }>;
+    const child = pack.find((e) => e.p && pack.some((h) => h.k === e.p))!;
+    const heading = pack.find((e) => e.k === child.p)!;
+    const other = pack.find((e) => e.p && e.k !== child.k && e.k !== heading.k)!;
+    await doc('pk-doc', version, [
+      [heading.k, heading.p, 'todo'],
+      [child.k, null, 'locked'], // as the old PATCH wrote it
+      ['X.9', null, 'approved'], // not in the pack: a root, legitimately
+      [other.k, 'X.9', 'approved'], // a parent the pack does not give: not the repair's to change
+    ]);
+    const readiness = async () => Number((await one(`SELECT readiness FROM c2c_documents WHERE id = 'pk-doc'`)).readiness);
+    // The heading is counted: nothing names it. 3 of 4.
+    expect(await readiness()).toBe(75);
+    await jdb.pool.query(`UPDATE c2c_document_sections SET updated_at = '2026-03-03T00:00:00Z' WHERE document_id = 'pk-doc'`);
+    await jdb.pool.query(`UPDATE c2c_documents SET updated_at = '2026-03-03T00:00:00Z' WHERE id = 'pk-doc'`);
+
+    await replay();
+
+    expect(await parentOf('pk-doc', child.k)).toBe(child.p);
+    expect(await readiness()).toBe(100);
+    expect(await parentOf('pk-doc', 'X.9')).toBeNull();
+    expect(await parentOf('pk-doc', other.k)).toBe('X.9');
+    const stamped = await one(`SELECT
+        (SELECT count(*)::int FROM c2c_document_sections WHERE document_id = 'pk-doc' AND updated_at <> '2026-03-03T00:00:00Z') AS sections,
+        (SELECT count(*)::int FROM c2c_documents WHERE id = 'pk-doc' AND updated_at <> '2026-03-03T00:00:00Z') AS documents`);
+    expect(stamped, 'a structural repair is not an edit').toEqual({ sections: 0, documents: 0 });
+    const trig = await one(`SELECT tgenabled FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'c2c_document_sections'::regclass`);
+    expect(trig.tgenabled, 'the section stamp is back on').toBe('O');
+
+    // A second replay has nothing to do.
+    await replay();
+    expect(await readiness()).toBe(100);
+    expect(await parentOf('pk-doc', child.k)).toBe(child.p);
+  });
+
+  it('a pack it cannot read one way does not fail the deploy: no array, a key listed twice, a section its own parent', async () => {
+    await jdb.pool.query(
+      `INSERT INTO c2c_rule_packs (doc_type, agency, version, label, required_sections) VALUES
+         ('ind', 'fda', 'test-not-an-array', 'Not an array', '{"key": "D"}'::jsonb),
+         ('ind', 'fda', 'test-odd', 'Odd', '[{"key": "D", "parent_key": "P1"}, {"key": "D", "parent_key": "P2"}, {"key": "S", "parent_key": "S"}]'::jsonb)`,
+    );
+    await doc('pk-object', 'test-not-an-array', [['D', null, 'approved']]);
+    await doc('pk-odd', 'test-odd', [['D', null, 'approved'], ['S', null, 'todo']]);
+    await replay();
+    expect(await parentOf('pk-object', 'D')).toBeNull();
+    // Listed twice with two parents: which is meant cannot be told, so neither.
+    expect(await parentOf('pk-odd', 'D')).toBeNull();
+    // Its own parent would make a 'todo' section an empty heading of itself.
+    expect(await parentOf('pk-odd', 'S')).toBeNull();
+    expect(Number((await one(`SELECT readiness FROM c2c_documents WHERE id = 'pk-odd'`)).readiness)).toBe(50);
   });
 });

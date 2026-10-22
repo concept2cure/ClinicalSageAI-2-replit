@@ -58,6 +58,9 @@
 -- c2c_document_counted_readiness(), which the trigger and an idempotent
 -- backfill at the end of section 6a share. The backfill writes only rows whose
 -- stored value differs and leaves updated_at alone: a recount is not an edit.
+-- Also 2026-10-22 (F23 hand-on): section 6a files a section the old PATCH
+-- inserted without parent_key under the parent its own pack gives it, before
+-- the trigger is re-created and the backfill recounts. See the note there.
 -- Pinned by tests/schema-contract/c2c-section-completion.contract.test.ts
 -- (the rule is countedSectionSql() in server/services/c2c/section-content.ts)
 -- and server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts.
@@ -224,6 +227,53 @@ BEGIN
 END $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS c2c_doc_readiness_after_section ON c2c_document_sections;
+
+-- Repair (2026-10-22, F23 hand-on): a section the old PATCH
+-- (server/routes/c2c/documents.ts, until F23 8/9) inserted without its parent
+-- is filed under the parent its document's own rule pack gives it. Without it
+-- the section reads as a root, so the heading above it reads as holding
+-- nothing and is counted. Only a NULL parent is filled; a parent already set is
+-- not this repair's to change. A key the pack lists twice, a key that is its
+-- own parent, and a pack whose sections are not an array are left alone. It
+-- runs here, with the readiness trigger dropped, so the backfill below
+-- recounts the documents without stamping them. parent_key is structure taken
+-- from the pack, not text, status or a signature, so a locked or approved row
+-- is filed like any other. Idempotent: a filled row no longer matches.
+DO $$
+DECLARE
+  stamps boolean := EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgname = 'set_updated_at' AND tgrelid = 'c2c_document_sections'::regclass AND NOT tgisinternal);
+  filed integer;
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+      FROM c2c_document_sections s
+      JOIN c2c_documents d ON d.id = s.document_id
+      JOIN c2c_rule_packs rp ON rp.doc_type = d.doc_type AND rp.agency = d.agency AND rp.version = d.rule_pack_version
+      CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(rp.required_sections) = 'array' THEN rp.required_sections ELSE '[]'::jsonb END) AS elem
+     WHERE s.parent_key IS NULL AND elem ->> 'key' = s.section_key
+     GROUP BY s.id, s.section_key
+    HAVING count(*) = 1 AND min(elem ->> 'parent_key') <> '' AND min(elem ->> 'parent_key') <> s.section_key) THEN
+    RETURN;
+  END IF;
+  IF stamps THEN EXECUTE 'ALTER TABLE c2c_document_sections DISABLE TRIGGER set_updated_at'; END IF;
+  UPDATE c2c_document_sections t
+     SET parent_key = want.parent_key
+    FROM (SELECT s.id, min(elem ->> 'parent_key') AS parent_key
+            FROM c2c_document_sections s
+            JOIN c2c_documents d ON d.id = s.document_id
+            JOIN c2c_rule_packs rp ON rp.doc_type = d.doc_type AND rp.agency = d.agency AND rp.version = d.rule_pack_version
+            CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(rp.required_sections) = 'array' THEN rp.required_sections ELSE '[]'::jsonb END) AS elem
+           WHERE s.parent_key IS NULL AND elem ->> 'key' = s.section_key
+           GROUP BY s.id, s.section_key
+          HAVING count(*) = 1 AND min(elem ->> 'parent_key') <> '' AND min(elem ->> 'parent_key') <> s.section_key) want
+   WHERE t.id = want.id AND t.parent_key IS NULL;
+  GET DIAGNOSTICS filed = ROW_COUNT;
+  IF stamps THEN EXECUTE 'ALTER TABLE c2c_document_sections ENABLE TRIGGER set_updated_at'; END IF;
+  RAISE NOTICE 'c2c_document_sections: % section(s) filed under the parent their rule pack gives them', filed;
+END $$;
+
 -- parent_key too (2026-10-22): which sections are counted depends on it.
 CREATE TRIGGER c2c_doc_readiness_after_section
 AFTER INSERT OR UPDATE OF status, parent_key ON c2c_document_sections
