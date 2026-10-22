@@ -87,6 +87,14 @@ function serve(opts: ServeOpts = {}) {
 }
 
 const select = (label: RegExp) => screen.getByLabelText(label) as HTMLSelectElement;
+/** The region field's description: the fixed part is not live, the statement is. */
+function expectOnlyStatementLive() {
+  const regionDesc = document.getElementById(select(/Primary region/).getAttribute('aria-describedby')!.split(' ')[0])!;
+  expect(regionDesc.getAttribute('aria-live')).toBeNull();
+  const live = regionDesc.querySelector('[aria-live="polite"]')!;
+  expect(live.textContent).not.toMatch(/From this project's record/);
+  expect(live.textContent?.trim().length).toBeGreaterThan(0);
+}
 const desc = (label: RegExp) => document.getElementById(select(label).getAttribute('aria-describedby')?.split(' ')[0] ?? '')?.textContent ?? '';
 const optionText = (label: RegExp, value: string) =>
   Array.from(select(label).options).find((o) => o.value === value)?.textContent ?? '';
@@ -182,8 +190,9 @@ describe('New submission takes the open project\'s filing (F20)', () => {
     expect(desc(/Application type/)).toBe("From this project's record.");
     expect(desc(/Primary region/)).toMatch(/^From this project's record\. /);
     expect(desc(/Client type/)).toBe("From this project's product type.");
-    // The region description changes as its read lands: a polite live region.
-    expect(document.getElementById(select(/Primary region/).getAttribute('aria-describedby')!.split(' ')[0])!.getAttribute('aria-live')).toBe('polite');
+    // The region's statement changes as its read lands: only that part is a
+    // polite live region, not where the default came from (2026-10-22).
+    expectOnlyStatementLive();
   });
 
   /* Design review 2026-10-08 (honest-state lens): the filing type's bucket put

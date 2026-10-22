@@ -129,7 +129,14 @@ export interface CerStructureAssessment {
   sectionsNeedingClinicalData: string[];
   presentCount: number;
   totalRequired: number;
-  equivalenceAddressed: boolean;
+  /**
+   * Mirrors server cer-structure.ts: null when the equivalence claim is not
+   * recorded and the section is absent — undetermined, not "not addressed".
+   * (Typed boolean until 2026-10-15, which hid that third state.)
+   */
+  equivalenceAddressed: boolean | null;
+  /** Facts to record before readiness can be stated (server `missingFacts`). */
+  missingFacts: string[];
 }
 
 /**

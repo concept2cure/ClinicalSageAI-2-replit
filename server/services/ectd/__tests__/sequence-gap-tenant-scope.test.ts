@@ -65,7 +65,9 @@ describe('every sequence-history query is tenant-scoped', () => {
 
     const secondary = query.mock.calls.find(c => /ectd_submissions/.test(String(c[0])));
     expect(secondary, 'the secondary history table must be queried').toBeTruthy();
-    expect(String(secondary![0])).toMatch(/organization_id\s*=\s*\$2/);
+    // 2026-10-15: its tenant column is org_id (migration 082); this pinned
+    // organization_id, a column the table does not have.
+    expect(String(secondary![0])).toMatch(/org_id\s*=\s*\$2/);
     expect(secondary![1]).toEqual([APP, ORG]);
   });
 
@@ -100,15 +102,17 @@ describe('an unusable tenant scope blocks rather than falling back', () => {
 });
 
 describe('a secondary table that cannot be scoped is dropped, not read', () => {
-  it('carries on with the primary when ectd_submissions has no organization_id', async () => {
+  // 2026-10-15: this pinned the defect — the read named organization_id, hit
+  // 42703 on every deploy and dropped the source. An absent tenant column is
+  // now a schema mismatch and blocks.
+  it('blocks when ectd_submissions has no tenant column, rather than dropping its history', async () => {
     query.mockImplementation(async (sqlText: string) => {
       if (/ectd_submissions/.test(String(sqlText))) throw pgError('42703'); // undefined_column
       return { rows: [{ sequence_number: '0000' }] };
     });
 
     const findings = await detectSequenceGaps(APP, '0001', ORG);
-    // 0000 known from the primary, 0001 is the expected next → no gap finding.
-    expect(findings.filter(f => f.severity === 'error')).toHaveLength(0);
+    expect(findings.some(f => f.code === 'SEQ_QUERY_FAILED' && f.severity === 'error')).toBe(true);
   });
 
   it('still tolerates the table being absent entirely', async () => {
@@ -121,17 +125,17 @@ describe('a secondary table that cannot be scoped is dropped, not read', () => {
     expect(findings.filter(f => f.severity === 'error')).toHaveLength(0);
   });
 
-  it('dropping the secondary fails toward BLOCKING, never toward a silent pass', async () => {
-    // Primary empty + secondary unscopable: the history is now empty, and an
-    // empty history with a non-0000 sequence must block rather than wave it
-    // through as a first-ever submission.
+  it('an unscopable secondary blocks even where the primary alone would pass', async () => {
+    // 2026-10-15: this pinned the drop (empty history → SEQ_FIRST_NOT_0000).
+    // A missing tenant column now blocks as SEQ_QUERY_FAILED, so 0000 — which
+    // the dropped history would have waved through — blocks too.
     query.mockImplementation(async (sqlText: string) => {
       if (/ectd_submissions/.test(String(sqlText))) throw pgError('42703');
       return { rows: [] };
     });
 
-    const findings = await detectSequenceGaps(APP, '0007', ORG);
-    expect(findings.some(f => f.code === 'SEQ_FIRST_NOT_0000' && f.severity === 'error')).toBe(true);
+    const findings = await detectSequenceGaps(APP, '0000', ORG);
+    expect(findings.some(f => f.code === 'SEQ_QUERY_FAILED' && f.severity === 'error')).toBe(true);
   });
 
   it('a real outage on the secondary still blocks (not treated as unscopable)', async () => {

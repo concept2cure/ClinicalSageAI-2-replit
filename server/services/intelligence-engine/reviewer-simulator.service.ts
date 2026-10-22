@@ -415,6 +415,11 @@ export async function runReviewerSimulation(
   // 8. Persist (unless dryRun)
   let runId: string | null = null;
   if (!req.dryRun) {
+    // 2026-10-15: an unstated trigger was recorded as 'manual'. The column is
+    // NOT NULL, so a run to be persisted must name its trigger.
+    if (!req.trigger?.trim()) {
+      throw Object.assign(new Error('trigger is required to record a run (e.g. manual, scheduled, api)'), { statusCode: 422, field: 'trigger' });
+    }
     // Record reads can yield while access changes. Recheck immediately before
     // the one canonical INSERT, on the same verified producer executor.
     const currentScope = await admitProgramRecords(req, admittedScope, true);
@@ -425,7 +430,7 @@ export async function runReviewerSimulation(
          defense_packet_id, summary)
        VALUES ($1,$2::uuid,$3,$4,$5::json,$6,$7::json,$8,$9,$10,$11,$12::json,$13::uuid,$14::json)
        RETURNING id`,
-      [req.organizationId, req.programId, String(currentScope.userId), req.trigger ?? 'manual',
+      [req.organizationId, req.programId, String(currentScope.userId), req.trigger, // checked on entry
         JSON.stringify(scope), inputsHash, JSON.stringify(questions), questions.length, criticalCount, warningCount, infoCount,
         JSON.stringify(perPersonaCounts), inputsSource.defensePacketId,
         JSON.stringify({ personaQuestionCount: personaQuestions.length, notAssessedQuestionCount: notAssessed.length, inputsSource })],

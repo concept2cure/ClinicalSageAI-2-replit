@@ -63,3 +63,12 @@ Two tests that pinned implementation rather than behaviour were updated:
 
 - **Training reach depends on manual sharing.** An authored SOP version is readable only by the people its editing copy is shared with. After v2.0 is approved, trainees must be shared onto it to read it; the dbtest shares the trainee through `grantAuthoringPermission`, as the product does. Whether an effective SOP should be readable by every member is a product decision for MR-12 Stage 4 (training assignment).
 - **Not covered yet.** The compliance report's controlled-documents register (`audit/compliance-reports/queries/controlled-documents.ts`) still lists the working row. It shows a document under revision as its draft, without the version in force.
+
+## The 7 trunk failures, closed after
+
+All seven were mocks lagging two deliberate production changes, not defects:
+
+- **The five approval-signature route tests.** The strict transaction script refused the filing-agreement check that `338fda664` added before every write. The script now answers it as a store with no bound filing, and the two pinned statement sequences gain that read.
+- **The two create tests.** The mocks answered the section insert with a fixed id. Since `ad372567d` the writer verifies it got back the row it saved, so the mocks now echo the insert.
+
+QMS unit, PGlite and client suites: 528/528.

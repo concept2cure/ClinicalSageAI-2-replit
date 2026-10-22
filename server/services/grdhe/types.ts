@@ -201,14 +201,21 @@ export interface SubmissionTerminologyUsage {
 // REGULATORY FORMAT TYPES
 // =============================================================================
 
+/**
+ * regulatory_harmonization.regulatory_format as db/migrations/081 defines it:
+ * the values export_jobs.target_format and mapping_rules.target_format hold.
+ * 2026-10-22: this also listed FDA_AE_3500A, FDA_AE_3500B and EMA_AE_E2B_R3,
+ * which the enum has no value for, so an export generator key typed as a
+ * RegulatoryFormat compiled and then failed at the ::regulatory_format cast.
+ * The generator keys are SupportedFormat (exportGenerators/index.ts), and
+ * RECORDED_AS is the one place a key is mapped to a value here.
+ */
 export type RegulatoryFormat =
   // FDA formats
   | 'FDA_ECTD_4_0'
   | 'FDA_ECTD_3_2_2'
   | 'FDA_3500A'
   | 'FDA_3500B'
-  | 'FDA_AE_3500A'
-  | 'FDA_AE_3500B'
   | 'FDA_GUDID'
   | 'FDA_SPL'
   | 'FDA_ESG'
@@ -218,7 +225,6 @@ export type RegulatoryFormat =
   | 'EMA_XEVMPD'
   | 'EMA_IDMP_SPOR'
   | 'EMA_E2B_R3'
-  | 'EMA_AE_E2B_R3'
   | 'EMA_EUDAMED'
   | 'EMA_PSUR'
   // Other jurisdictions

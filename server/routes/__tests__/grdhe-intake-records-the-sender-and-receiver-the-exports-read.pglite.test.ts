@@ -98,7 +98,7 @@ describe('intake records the sender and receiver the exports read', () => {
     const failed = (validation.body.data.errors as Array<{ field: string }>).map(e => e.field);
     expect(failed, 'an API-created case fails E2B on a sender it recorded').not.toContain('sender.sender_type');
 
-    const xml = generateE2BR3XML(await service.getCanonicalAdverseEventById(row.id), {} as ExportJob, LOCKED).content ?? '';
+    const xml = generateE2BR3XML(await service.getCanonicalAdverseEventById(TENANT, row.id), {} as ExportJob, LOCKED).content ?? '';
     expect(xml).toContain('<sendertype>1</sendertype>');
     expect(xml).toContain('<senderorganization>Example Pharma GmbH</senderorganization>');
     expect(xml).toContain('<messagereceiveridentifier>EVHUMAN</messagereceiveridentifier>');

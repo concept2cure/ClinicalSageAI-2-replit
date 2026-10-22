@@ -102,7 +102,7 @@ describe('an export job status change and its audit row commit together', () => 
   it('keeps no status change whose audit row could not be written', async () => {
     const id = await pendingJob();
     await withAuditInsertsFailing(async () => {
-      expect(await databaseMessage(service.updateExportJobStatus(id, 'cancelled', { errorMessage: 'duplicate' }, ACTOR))).toMatch(
+      expect(await databaseMessage(service.updateExportJobStatus(TENANT, id, 'cancelled', { errorMessage: 'duplicate' }, ACTOR))).toMatch(
         /export audit store unavailable/
       );
     });
@@ -113,7 +113,7 @@ describe('an export job status change and its audit row commit together', () => 
   it('keeps no completion whose audit row could not be written', async () => {
     const id = await pendingJob();
     await withAuditInsertsFailing(async () => {
-      expect(await databaseMessage(service.completeExportJob(id, OUTPUT, ACTOR))).toMatch(/export audit store unavailable/);
+      expect(await databaseMessage(service.completeExportJob(TENANT, id, OUTPUT, ACTOR))).toMatch(/export audit store unavailable/);
     });
     expect(await job(id), 'an unaudited completion was kept').toMatchObject({
       status: 'pending',
@@ -125,14 +125,14 @@ describe('an export job status change and its audit row commit together', () => 
 
   it('writes a status change with its audit row, attributed to the caller', async () => {
     const id = await pendingJob();
-    await service.updateExportJobStatus(id, 'cancelled', { errorMessage: 'duplicate' }, ACTOR);
+    await service.updateExportJobStatus(TENANT, id, 'cancelled', { errorMessage: 'duplicate' }, ACTOR);
     expect(await job(id)).toMatchObject({ status: 'cancelled', error_message: 'duplicate' });
     expect(await auditRows(id)).toEqual([{ action: 'status_change', user_id: ACTOR }]);
   });
 
   it('writes a completion with its audit row, attributed to the caller', async () => {
     const id = await pendingJob();
-    await service.completeExportJob(id, OUTPUT, ACTOR);
+    await service.completeExportJob(TENANT, id, OUTPUT, ACTOR);
     expect(await job(id)).toMatchObject({ status: 'completed', completed_by: ACTOR });
     expect(await auditRows(id)).toEqual([{ action: 'job_completed', user_id: ACTOR }]);
   });

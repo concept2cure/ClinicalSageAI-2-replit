@@ -14,10 +14,6 @@ output "ecr_api_url" {
   value = module.ecr.repository_urls["api"]
 }
 
-output "ecr_worker_url" {
-  value = module.ecr.repository_urls["worker"]
-}
-
 output "rds_endpoint" {
   value     = module.rds.endpoint
   sensitive = true

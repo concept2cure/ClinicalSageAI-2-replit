@@ -1,8 +1,8 @@
 // The self-hosted embedding lane (P1-54, ADR-0014 §1.5).
 //
 // An OpenAI-compatible embedding server — Hugging Face Text Embeddings
-// Inference serving BAAI bge-m3 — on Fargate in the private subnets. The API and
-// the worker reach it at EMBEDDING_LOCAL_BASE_URL with EMBEDDING_PROVIDER=local
+// Inference serving BAAI bge-m3 — on Fargate in the private subnets. The API
+// reaches it at EMBEDDING_LOCAL_BASE_URL with EMBEDDING_PROVIDER=local
 // (server/services/ai-gateway/embeddings/embedding-provider.ts), so no tenant's
 // text leaves the VPC to be embedded and every tenant has Vault and
 // knowledge-base search without electing a second vendor. Since P1-45 the
@@ -59,7 +59,7 @@ resource "aws_security_group" "this" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "Embedding requests from the API and worker tasks only"
+    description     = "Embedding requests from the API tasks only"
     from_port       = var.port
     to_port         = var.port
     protocol        = "tcp"

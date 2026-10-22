@@ -326,6 +326,58 @@ async function readDocumentText(
 
 
 /**
+ * Steps 5-7 of a client ingest — entries, document row, profile counters — as
+ * one transaction, returning the inserted entry ids.
+ */
+async function commitClientIngest(p: {
+  profileId: number;
+  organizationId: number;
+  docId: number;
+  fileName: string;
+  entries: Parameters<typeof memoryEntryRow>[0][];
+  text: string;
+  tokenCount: number;
+  pageCount: number | null;
+}): Promise<Array<{ id: number }>> {
+  return db.transaction(async (tx) => {
+    // 5. Persist memory entries
+    const rows = p.entries.length === 0
+      ? []
+      : ((await tx
+          .insert(clientMemoryEntries as any)
+          .values(p.entries.map(e => ({ profileId: p.profileId, organizationId: p.organizationId, ...memoryEntryRow(e, p.fileName) })))
+          .returning({ id: (clientMemoryEntries as any).id })) as Array<{ id: number }>);
+
+    // 6. Update the document record
+    await tx
+      .update(clientIngestedDocuments)
+      .set({
+        extractedText: p.text.slice(0, 100000), // Store first 100K chars
+        tokenCount: p.tokenCount,
+        pageCount: p.pageCount,
+        processingStatus: 'completed',
+        memoryEntriesGenerated: p.entries.length,
+        processedAt: new Date(),
+      })
+      .where(eq(clientIngestedDocuments.id, p.docId));
+
+    // 7. Update profile counters
+    if (p.profileId != null) {
+      await tx
+        .update(clientIntelligenceProfiles)
+        .set({
+          totalDocumentsIngested: sql`${clientIntelligenceProfiles.totalDocumentsIngested} + 1`,
+          totalTokensProcessed: sql`${clientIntelligenceProfiles.totalTokensProcessed} + ${p.tokenCount}`,
+          lastDocumentIngestedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(clientIntelligenceProfiles.id, p.profileId));
+    }
+    return rows;
+  });
+}
+
+/**
  * Ingest a document into client intelligence memory.
  */
 export async function ingestDocument(
@@ -376,42 +428,17 @@ export async function ingestDocument(
       heuristic: () => extractMemoryEntriesFromText(text, file.originalname, profileName),
     });
 
-    // 5. Persist memory entries — embedded, because semantic recall filters
-    // `embedding IS NOT NULL` and an unembedded entry is durable but invisible.
-    let memoryEntriesEmbedded = 0;
-    if (extractedEntries.length > 0) {
-      const inserted = (await db
-        .insert(clientMemoryEntries as any)
-        .values(extractedEntries.map(e => ({ profileId, organizationId, ...memoryEntryRow(e, file.originalname) })))
-        .returning({ id: (clientMemoryEntries as any).id })) as Array<{ id: number }>;
-      memoryEntriesEmbedded = await embedInsertedMemoryEntries('client_memory_entries', inserted, extractedEntries);
-    }
+    // 5-7 in one transaction. 2026-10-15: they were separate statements, so a
+    // failure in 6 or 7 marked the document 'failed' with 0 entries while the
+    // entries inserted in 5 stayed active and reached AnA.
+    const inserted = await commitClientIngest({
+      profileId, organizationId, docId: docRecord.id, fileName: file.originalname,
+      entries: extractedEntries, text, tokenCount, pageCount,
+    });
 
-    // 6. Update the document record
-    await db
-      .update(clientIngestedDocuments)
-      .set({
-        extractedText: text.slice(0, 100000), // Store first 100K chars
-        tokenCount,
-        pageCount,
-        processingStatus: 'completed',
-        memoryEntriesGenerated: extractedEntries.length,
-        processedAt: new Date(),
-      })
-      .where(eq(clientIngestedDocuments.id, docRecord.id));
-
-    // 7. Update profile counters
-    if (profileId != null) {
-      await db
-        .update(clientIntelligenceProfiles)
-        .set({
-          totalDocumentsIngested: sql`${clientIntelligenceProfiles.totalDocumentsIngested} + 1`,
-          totalTokensProcessed: sql`${clientIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
-          lastDocumentIngestedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(clientIntelligenceProfiles.id, profileId));
-    }
+    // Embedded after commit (another connection writes the vectors), because
+    // semantic recall filters `embedding IS NOT NULL`; a failure is logged, not thrown.
+    const memoryEntriesEmbedded = await embedInsertedMemoryEntries('client_memory_entries', inserted, extractedEntries);
 
     return {
       documentId: docRecord.id,
@@ -825,38 +852,43 @@ export async function ingestProjectDocument(
       heuristic: () => extractProjectMemoryEntries(text, file.originalname, projectName),
     });
 
-    // Embedded for the same reason as the client path: recall filters
-    // `embedding IS NOT NULL`, so an unembedded entry cannot be found again.
-    let memoryEntriesEmbedded = 0;
-    if (extractedEntries.length > 0) {
-      const inserted = (await db
-        .insert(projectMemoryEntries as any)
-        .values(extractedEntries.map(e => ({ projectProfileId, projectId, organizationId, ...memoryEntryRow(e, file.originalname) })))
-        .returning({ id: (projectMemoryEntries as any).id })) as Array<{ id: number }>;
-      memoryEntriesEmbedded = await embedInsertedMemoryEntries('project_memory_entries', inserted, extractedEntries);
-    }
+    // One transaction, as in the client path (2026-10-15: entries inserted before
+    // a later failure stayed active under a 'failed' document).
+    const inserted = await db.transaction(async (tx) => {
+      const rows = extractedEntries.length === 0
+        ? []
+        : ((await tx
+            .insert(projectMemoryEntries as any)
+            .values(extractedEntries.map(e => ({ projectProfileId, projectId, organizationId, ...memoryEntryRow(e, file.originalname) })))
+            .returning({ id: (projectMemoryEntries as any).id })) as Array<{ id: number }>);
 
-    await db
-      .update(projectIngestedDocuments)
-      .set({
-        extractedText: text.slice(0, 100000),
-        tokenCount,
-        pageCount,
-        processingStatus: 'completed',
-        memoryEntriesGenerated: extractedEntries.length,
-        processedAt: new Date(),
-      })
-      .where(eq(projectIngestedDocuments.id, docRecord.id));
+      await tx
+        .update(projectIngestedDocuments)
+        .set({
+          extractedText: text.slice(0, 100000),
+          tokenCount,
+          pageCount,
+          processingStatus: 'completed',
+          memoryEntriesGenerated: extractedEntries.length,
+          processedAt: new Date(),
+        })
+        .where(eq(projectIngestedDocuments.id, docRecord.id));
 
-    await db
-      .update(projectIntelligenceProfiles)
-      .set({
-        totalDocumentsIngested: sql`${projectIntelligenceProfiles.totalDocumentsIngested} + 1`,
-        totalTokensProcessed: sql`${projectIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
-        lastDocumentIngestedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(projectIntelligenceProfiles.id, projectProfileId as number));
+      await tx
+        .update(projectIntelligenceProfiles)
+        .set({
+          totalDocumentsIngested: sql`${projectIntelligenceProfiles.totalDocumentsIngested} + 1`,
+          totalTokensProcessed: sql`${projectIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
+          lastDocumentIngestedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(projectIntelligenceProfiles.id, projectProfileId as number));
+      return rows;
+    });
+
+    // Embedded after commit, for the same reason as the client path: recall
+    // filters `embedding IS NOT NULL`, so an unembedded entry cannot be found again.
+    const memoryEntriesEmbedded = await embedInsertedMemoryEntries('project_memory_entries', inserted, extractedEntries);
 
     return {
       documentId: docRecord.id,

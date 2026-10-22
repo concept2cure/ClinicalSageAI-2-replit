@@ -46,7 +46,6 @@ api_cpu            = 1024
 # 4096 MiB of it is the virus scanner beside the API; the stack refuses less than 6144.
 api_memory         = 6144
 api_desired_count  = 1
-worker_desired_count = 0
 
 # Replace with your actual ACM certificate ARN
 acm_certificate_arn       = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"

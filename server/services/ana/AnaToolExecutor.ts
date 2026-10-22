@@ -5673,6 +5673,10 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
         'Pass studies into draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, presentStudies into assess_nonclinical_program, and speciesNoaels into compute_fih_dose. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
     });
   } catch (err: any) {
+    // 2026-10-22: a program outside the organization read as a failed load.
+    if (err instanceof Error && err.name === 'CtdProgramNotFoundError') {
+      return JSON.stringify({ status: 'not_found', message: err.message });
+    }
     return JSON.stringify({ error: `Loading nonclinical program failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -10939,12 +10943,12 @@ function expiryText(e: { expirationDate: string; expirationSource: 'recorded' | 
 
 type IacucReviewStatusShape =
   | { undetermined: true; reason: string }
-  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null };
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null; annualReviewUndeterminedReason?: string | null };
 
 function iacucReviewStatusText(rs: IacucReviewStatusShape): string {
   if (rs.undetermined) return ` Review status: ${rs.reason}`;
   const annual = rs.annualReviewDue === null
-    ? '; whether annual review is due is not determined: no approval date is recorded'
+    ? '; whether annual review is due is not determined: ' + (rs.annualReviewUndeterminedReason ?? 'no approval date is recorded')
     : rs.annualReviewDue ? '; annual review due' : '';
   return ` Expiry: ${expiryText(rs, 'approval + 3 years')}${annual}.`;
 }
@@ -13803,16 +13807,22 @@ registerToolHandler('log_inspection_finding', async (input, ctx) => {
 registerToolHandler('review_inspection_readiness', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_inspection_readiness requires tenant context.' });
   const inspectionId = typeof input.inspection_id === 'number' ? input.inspection_id : undefined;
-  const { listReadinessAreas } = await import('../inspection/inspection-service.js');
-  const { scoreReadiness } = await import('../inspection/inspection-logic.js');
+  // GET /api/inspections/readiness/score's own read. 2026-10-22: this scored
+  // listReadinessAreas() with no inspection type, holding every inspection to
+  // all 8 domains, and did not say which domains nobody recorded.
+  const { getReadinessScore } = await import('../inspection/inspection-service.js');
   try {
-    const areas = await listReadinessAreas(ctx.organizationId, inspectionId);
-    const score = scoreReadiness(areas);
+    const score = await getReadinessScore(ctx.organizationId, inspectionId);
     return JSON.stringify({
       ok: true, score: score.score, verdict: score.verdict, blockers: score.blockers,
-      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}.`,
+      requiredDomains: score.requiredDomains, notRecorded: score.notRecorded,
+      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}` +
+        `${score.notRecorded.length ? `; not recorded: ${score.notRecorded.join(', ')}` : ''}.`,
     });
   } catch (err) {
+    if (err instanceof Error && (err as Error & { code?: string }).code === 'NOT_FOUND') {
+      return JSON.stringify({ status: 'not_found', message: err.message });
+    }
     return JSON.stringify({ error: `review_inspection_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });

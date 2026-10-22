@@ -120,8 +120,8 @@ export interface AdverseEvent {
   eventDescription: string;
   /** Date the adverse event first manifested; null when the case records none. */
   onsetDate: Date | null;
-  /** Date the event was reported to the sponsor */
-  reportDate: Date;
+  /** Date the event was reported to the sponsor; null when the case records none. */
+  reportDate: Date | null;
   /** ICH E2A seriousness criterion that qualifies this event */
   seriousnessCriteria: SeriousnessCriteria;
   /** WHO-UMC causality assessment */
@@ -389,7 +389,7 @@ function expeditedWindowDays(region: RegulatoryRegion, isFatalOrLifeThreatening:
  * not be serious; an SAE is expedited only when also unexpected) and a missing
  * type read false.
  */
-function requiresExpeditedReport(eventType: EventType | null | undefined): boolean | null {
+export function requiresExpeditedReport(eventType: EventType | null | undefined): boolean | null {
   if (eventType === 'SUSAR') return true;
   return eventType === 'AE' ? false : null;
 }
@@ -417,12 +417,12 @@ export async function reportAdverseEvent(
 
   // Map country to primary regulatory region for deadline calculation
   const region = mapCountryToRegion(event.countryOfOccurrence);
-  const { deadline: regulatoryReportingDeadline, reason: deadlineReason } = calculateReportingDeadline(
-    event.eventType,
-    event.seriousnessCriteria,
-    region,
-    event.reportDate,
-  );
+  const { deadline: regulatoryReportingDeadline, reason: deadlineReason } = region
+    ? calculateReportingDeadline(event.eventType, event.seriousnessCriteria, region, event.reportDate)
+    : {
+        deadline: null,
+        reason: `regulatory region undetermined: country of occurrence ${event.countryOfOccurrence ? `"${event.countryOfOccurrence}" ` : ''}maps to no region on record`,
+      };
 
   const adverseEvent: AdverseEvent = {
     ...event,
@@ -969,8 +969,11 @@ export async function getRMPsForProject(projectId: string): Promise<RiskManageme
  * Uses ISO 3166-1 alpha-2 codes. Falls back to FDA for unmapped countries
  * as the most conservative baseline.
  */
-function mapCountryToRegion(countryCode: string): RegulatoryRegion {
-  const upperCode = countryCode.toUpperCase();
+/** The regulatory region of a country of occurrence, or null when none is on
+ *  record. 2026-10-15: an unknown country defaulted to 'FDA' ("most
+ *  conservative"), giving the case a clock nobody determined applied. */
+export function mapCountryToRegion(countryCode: string | null | undefined): RegulatoryRegion | null {
+  const upperCode = String(countryCode ?? '').trim().toUpperCase();
 
   // United States & territories
   if (['US', 'PR', 'GU', 'VI', 'AS'].includes(upperCode)) {
@@ -1002,8 +1005,7 @@ function mapCountryToRegion(countryCode: string): RegulatoryRegion {
     return 'Health_Canada';
   }
 
-  // Default to FDA timelines (most conservative)
-  return 'FDA';
+  return null;
 }
 
 /** Generate a UUID v4 */
@@ -1060,7 +1062,8 @@ function mapRowToAdverseEvent(row: any): AdverseEvent {
     patientId: row.patient_id,
     eventDescription: row.event_description,
     onsetDate: recordedDate(row.onset_date),
-    reportDate: new Date(row.report_date),
+    // 2026-10-15: new Date(NULL) read an unrecorded report date as 1970-01-01.
+    reportDate: recordedDate(row.report_date),
     seriousnessCriteria: row.seriousness_criteria,
     causality: row.causality,
     outcome: row.outcome,

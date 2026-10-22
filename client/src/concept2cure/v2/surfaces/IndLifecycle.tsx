@@ -62,6 +62,8 @@ interface IndlChecklist {
    which is not "none". */
 interface IndlFormRow extends IndlForm {
   attachment?: { attested: boolean; requiredFieldsMissing: string[] | null } | null;
+  /** The co-authored form at this code, if any; it counts only when signed. */
+  authored?: { status: string; signed: boolean } | null;
 }
 
 /** The attached file at a form's place, in words — what the chip and AnA both say. */
@@ -81,6 +83,12 @@ function formFileState(f: IndlFormRow): string {
 function formChip(f: IndlFormRow): { label: string; note: string | null } {
   if (f.done) return { label: 'Complete', note: null };
   const a = f.attachment;
+  if (!a && f.authored && !f.authored.signed) {
+    return {
+      label: 'Authored — not signed',
+      note: 'The form is authored, but no signed copy is recorded, so it does not count. Attach the signed form in 2a with the attestation.',
+    };
+  }
   if (!a) return { label: 'Open', note: null };
   if (!a.attested) {
     return {

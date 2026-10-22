@@ -155,6 +155,12 @@ export interface E2bIcsrResult {
 // Composition
 // ---------------------------------------------------------------------------
 
+/** C.1.7 as stated; blank when undetermined. 2026-10-15: null (an SAE / AESI
+ *  record does not say "unexpected") printed "2 (No)"; blank is a tracked gap. */
+function expeditedFlagCode(flag: boolean | null | undefined): string {
+  return flag === true ? '1 (Yes)' : flag === false ? '2 (No)' : '';
+}
+
 function isoDate(d: Date | string | undefined | null): string {
   if (!d) return '';
   const date = d instanceof Date ? d : new Date(d);
@@ -216,7 +222,7 @@ export function composeE2bR3Icsr(
   const outcome = OUTCOME_CODE[event.outcome];
   const seriousness = SERIOUSNESS_ELEMENT[event.seriousnessCriteria];
   // C.1.7: prefer the explicit option; fall back to the intake flag.
-  const isExpedited = typeof expedited === 'boolean' ? expedited : event.expeditedReportRequired;
+  const expeditedCode = expeditedFlagCode(typeof expedited === 'boolean' ? expedited : event.expeditedReportRequired);
   // Report lifecycle stage (C.1.* admin). Defaults to an initial report.
   const lifecycle = icsr?.icsrType ?? 'initial';
   const isNullification = lifecycle === 'nullification';
@@ -232,7 +238,7 @@ export function composeE2bR3Icsr(
     { id: 'C.1.3', label: 'Type of report', value: reportTypeCode },
     { id: 'C.1.4', label: 'Date report was first received from source', value: isoDate(event.reportDate) },
     { id: 'C.1.5', label: 'Date of most recent information', value: isoDate(mostRecentInfoDate ?? event.reportDate) },
-    { id: 'C.1.7', label: 'Fulfils local criteria for an expedited report', value: isExpedited ? '1 (Yes)' : '2 (No)' },
+    { id: 'C.1.7', label: 'Fulfils local criteria for an expedited report', value: expeditedCode },
     { id: 'C.1.8.1', label: 'Worldwide unique case identification number', value: icsr?.worldwideUniqueId ?? '' },
     { id: 'C.1.8.2', label: 'First sender of this case', value: statedFirstSender(icsr) },
     // C.5.1.r.1 — the study a study report arose from; mandatory when C.1.3 is a study report.
@@ -303,6 +309,7 @@ export function composeE2bR3Icsr(
   const mandatory: Array<{ id: string; label: string; value: string }> = [
     { id: 'C.1.1', label: "Sender's safety report unique identifier", value: event.id },
     { id: 'C.1.3', label: 'Type of report', value: reportTypeCode },
+    { id: 'C.1.7', label: 'Fulfils local criteria for an expedited report', value: expeditedCode },
     { id: 'C.1.8.1', label: 'Worldwide unique case identification number', value: icsr?.worldwideUniqueId ?? '' },
     { id: 'C.1.8.2', label: 'First sender of this case', value: statedFirstSender(icsr) },
     { id: 'C.2.r.4', label: 'Reporter qualification', value: statedQualification(icsr) },

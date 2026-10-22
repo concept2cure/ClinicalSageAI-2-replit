@@ -12,18 +12,23 @@
 import { pool } from '../../db';
 import { summarizePortfolio, type PortfolioSummary, type PortfolioProtocolRow } from './protocol-portfolio-logic';
 
+/**
+ * Closed (IRB) and withdrawn (IACUC) protocols are left out. 2026-10-15: every
+ * status was read, so ended work was bucketed by its dates as expired or due
+ * and listed as needing continuing review.
+ */
 export async function getPortfolioAnalytics(orgId: number, today?: string): Promise<PortfolioSummary> {
   const day = today ?? new Date().toISOString().slice(0, 10);
   const iacuc = await pool.query(
     `SELECT id, protocol_number, title, status, review_type, pain_category,
             approval_date::text AS approval_date, expiration_date::text AS expiration_date
-       FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL`,
+       FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL AND status <> 'withdrawn'`,
     [orgId],
   );
   const irb = await pool.query(
     `SELECT id, protocol_number, title, status, review_type, risk_level,
             approval_date::text AS approval_date, expiration_date::text AS expiration_date
-       FROM irb_submissions WHERE organization_id = $1 AND deleted_at IS NULL`,
+       FROM irb_submissions WHERE organization_id = $1 AND deleted_at IS NULL AND status <> 'closed'`,
     [orgId],
   );
   return summarizePortfolio(iacuc.rows as PortfolioProtocolRow[], irb.rows as PortfolioProtocolRow[], day);

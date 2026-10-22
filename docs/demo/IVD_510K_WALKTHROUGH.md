@@ -38,19 +38,19 @@ Determination: SE
   • Performance data demonstrate equivalence? Yes
 
 === §524B cybersecurity, human factors, UDI ===
-§524B readiness: 100% (ready)
+§524B artifacts recorded present: 100% (all present)
 HFE (IEC 62366-1): 100% complete
 UDI DI 00012345678905: valid; GUDID 100% complete
 
 === Submission-readiness capstone — pathway: ivd-510k ===
-Overall readiness: 100%  →  VERDICT: READY
-Per-domain:
-  ✓ analyticalPerformance: 100%
-  ✓ clinicalPerformance: 100%
+Completeness of the assessed domains: 100% (2 of 5 required domains)  →  verdict: not-assessed
+Per assessed domain:
   ✓ substantialEquivalence: 100%
   ✓ udiGudid: 100%
-  ✓ postMarketPlan: 100%
+Not assessed: analyticalPerformance, clinicalPerformance, postMarketPlan
 ```
+
+(Output of the run on 2026-10-15.)
 
 ## Talking points (per section)
 
@@ -64,17 +64,18 @@ Per-domain:
 | ROC/AUC | Discrimination with a confidence interval | Mann–Whitney + DeLong | same |
 | Substantial equivalence | The actual SE decision, with the audit path | FDA 510(k) SE flowchart | `/api/substantial-equivalence` |
 | §524B / HFE / UDI | Cyber, usability, and identification readiness | NTIA SBOM, IEC 62366-1, GS1 GTIN-14 | `/api/cybersecurity-524b`, `/api/human-factors`, `/api/udi-ivdr` |
-| **Capstone** | One weighted verdict + the prioritized gap | composition over all domains | `/api/submission-readiness` |
+| **Capstone** | Completeness of the assessed domains, and the required domains not assessed | composition over the assessed domains | `/api/submission-readiness` |
 
 ## The narrative
 
-The headline is the capstone: every required domain — analytical, clinical,
-substantial-equivalence, UDI, and the post-market plan — is **complete**, so the
-program is **READY** at 100%. That is the product thesis in one screen: a dozen
-standards-grounded checks reduced to one defensible answer. (To show the
-gap-surfacing case live, lower any domain input in the script — e.g. set
-`postMarketPlan` to 0.4 — and the verdict drops to NEARLY-READY with that item at
-the top of a prioritized gap list.)
+The headline is the capstone, and it reports completeness, not readiness. Of
+the five required domains it assessed two — substantial equivalence and
+UDI/GUDID, both complete — and it names the three it did not: analytical and
+clinical performance and the post-market plan, for which the script computes no
+completeness figure. So the verdict is **not-assessed**: nothing assessed is
+incomplete, but the required set was not all assessed. (To show an incomplete
+domain live, lower an assessed input in the script — e.g. a GUDID record with
+fields missing — and the verdict reads incomplete.)
 
 ## Defensibility
 

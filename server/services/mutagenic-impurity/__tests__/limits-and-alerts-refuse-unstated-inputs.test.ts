@@ -84,10 +84,12 @@ describe('controlMutagenicImpurity — no specification limit from an unstated i
 });
 
 describe('assessStructuralAlerts — a keyword miss is not a negative assessment', () => {
-  it('reports an epoxide or an aldehyde that the keyword list misses as inconclusive, never NEGATIVE', () => {
-    for (const group of ['epoxide', 'aldehyde']) {
+  // 2026-10-15: epoxide/aldehyde now match their categories (singular names are
+  // curated); a term no category names still comes back inconclusive.
+  it('reports a term the keyword list misses as inconclusive, never NEGATIVE', () => {
+    for (const group of ['thiophene', 'carboxylic acid']) {
       const r = assessStructuralAlerts({ functionalGroupsPresent: [group] });
-      expect(r.overallAssessment, `${group} is an ICH M7 alert`).not.toBe('negative');
+      expect(r.overallAssessment, `${group} matched nothing`).not.toBe('negative');
       expect(r.overallAssessment).toBe('inconclusive');
       expect(r.regulatorySummary).not.toMatch(/NEGATIVE/);
       expect(r.assessmentDescription).toMatch(/not a \(Q\)SAR prediction/);

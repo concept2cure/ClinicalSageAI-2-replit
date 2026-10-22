@@ -150,18 +150,13 @@ describe('C-31: the gate runs off ectd_compilations alone when ectd_submissions 
 });
 
 describe('C-31: when ectd_submissions IS present its sequences join the history', () => {
-  /* THE TABLE'S TWO REAL DEPLOY SHAPES, IN THE ORDER A DEPLOY MEETS THEM.
-     082_ectd_submission_agent.sql puts organization_id on ectd_submissions only
-     on the install-fresh path, so a deploy that predates it has the table
-     WITHOUT the tenant column. The scoped read then fails with SQLSTATE 42703,
-     and the validator drops the source rather than reading it across tenants.
-     That branch is pinned against a mock in
-     server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts; what a
-     mock cannot establish is that real Postgres actually raises 42703 for this
-     query — and the whole branch turns on that code. This suite exists to run
-     the validator's real SQL against real (PGlite) Postgres, so it proves it
-     here. */
-  it('an ectd_submissions with no organization_id is DROPPED, not read across tenants', async () => {
+  /* 2026-10-15: 082_ectd_submission_agent.sql (in the deploy set) creates
+     ectd_submissions with its tenant column named org_id. The validator read
+     organization_id, which the table never has, so every deploy hit 42703 and
+     the source was dropped; this suite pinned that drop against a table built
+     WITHOUT a tenant column, citing an "install-fresh path" the migration does
+     not have. It now reads org_id, and a table with no tenant column blocks. */
+  it('an ectd_submissions with no tenant column blocks rather than dropping its history', async () => {
     await pg.exec(`
       CREATE TABLE ectd_submissions (
         id                 SERIAL PRIMARY KEY,
@@ -175,17 +170,14 @@ describe('C-31: when ectd_submissions IS present its sequences join the history'
     // scoped — so the history is empty. That must read as "first submission
     // must be 0000", never as a swallowed outage and never as a duplicate
     // matched against another tenant's row.
-    const findings = await detectSequenceGaps('IND-3', '0001', ORG);
-    expect(codes(findings)).toContain('SEQ_FIRST_NOT_0000');
-    expect(codes(findings)).not.toContain('SEQ_QUERY_FAILED');
-    // Losing a source can only shrink the history, so it fails toward blocking.
-    expect(await detectSequenceGaps('IND-3', '0000', ORG)).toHaveLength(0);
+    const findings = await detectSequenceGaps('IND-3', '0000', ORG);
+    expect(codes(findings)).toContain('SEQ_QUERY_FAILED');
   }, T);
 
-  it('a sequence recorded only in a SCOPABLE ectd_submissions joins the history', async () => {
+  it('a sequence recorded only in ectd_submissions (org_id, as 082 creates it) joins the history', async () => {
     await pg.exec(`
-      ALTER TABLE ectd_submissions ADD COLUMN organization_id INTEGER;
-      UPDATE ectd_submissions SET organization_id = ${ORG};
+      ALTER TABLE ectd_submissions ADD COLUMN org_id INTEGER;
+      UPDATE ectd_submissions SET org_id = ${ORG};
     `);
     const findings = await detectSequenceGaps('IND-3', '0000', ORG);
     expect(codes(findings)).toContain('SEQ_DUPLICATE');

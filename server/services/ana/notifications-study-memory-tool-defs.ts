@@ -1488,16 +1488,17 @@ export const CREATE_TMF: AnaTool = {
   },
 };
 
+// 2026-10-15: said a zone-less artifact "is AUTO-CLASSIFIED"; an unmatched name is refused (etmf-logic).
 export const CLASSIFY_TMF_ARTIFACT: AnaTool = {
   name: 'classify_tmf_artifact',
   description:
-    "File a TMF artifact: when no zone is given, it is AUTO-CLASSIFIED into a DIA TMF Reference Model zone by name (deterministic). Set status (expected/received/in_review/final/missing/not_applicable). Returns the artifact id and the assigned zone. Governed + audited, org-scoped.",
+    "File a TMF artifact into a DIA TMF Reference Model zone. When no zone is given, the name is matched against deterministic zone keywords; a name that matches no zone keyword is unclassified and is not filed (the tool refuses, naming the missing zone): ask the user which zone (1-11) it belongs in and pass it. Set status (expected/received/in_review/final/missing/not_applicable). Returns the artifact id and the assigned zone. Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
       tmf_file_id: { type: 'number' },
       artifact_name: { type: 'string' },
-      zone: { type: 'number', description: 'DIA RM zone 1-11; omit to auto-classify.' },
+      zone: { type: 'number', description: 'DIA RM zone 1-11; omit to classify by name (an unmatched name is refused).' },
       status: { type: 'string', enum: ['expected','received','in_review','final','missing','not_applicable'] },
       document_date: { type: 'string' },
       reason: STATED_REASON_INPUT,

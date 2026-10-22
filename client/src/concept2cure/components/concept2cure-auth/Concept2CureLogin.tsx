@@ -259,17 +259,22 @@ export const Concept2CureLogin: React.FC = () => {
   const validateEmail = useCallback((v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), []);
 
   const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+  /* The account dev login signs in as is configuration (VITE_DEV_LOGIN_EMAIL,
+     seeded by DEMO_USER_EMAIL). 2026-10-15: both buttons posted one person's
+     personal address; with no identity configured there is now no button. */
+  const devLoginEmail = String(import.meta.env.VITE_DEV_LOGIN_EMAIL ?? '').trim();
 
   /* Handlers — preserved verbatim from ZenLogin to keep capability parity */
 
   const handleDemoAccess = useCallback(async () => {
+    if (!devLoginEmail) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/auth/dev-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'jonmichaelpsmith@gmail.com' }),
+        body: JSON.stringify({ email: devLoginEmail }),
       });
       const data = await res.json();
       if (data.success && data.accessToken) {
@@ -291,7 +296,7 @@ export const Concept2CureLogin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [devLoginEmail]);
 
   const handleLogin = useCallback(async () => {
     if (!validateEmail(email)) {
@@ -566,7 +571,7 @@ export const Concept2CureLogin: React.FC = () => {
                 {t('action.signIn')}
               </button>
 
-              {isDev && (
+              {isDev && devLoginEmail && (
                 <>
                   <div className={styles.demoDivider}>{t('action.devOnly')}</div>
                   <button

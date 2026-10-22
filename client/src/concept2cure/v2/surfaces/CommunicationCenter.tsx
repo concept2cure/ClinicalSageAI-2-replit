@@ -914,8 +914,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                 label: 'Letter in the data room (optional)',
                 type: 'select',
                 options: letterOptions,
-                desc: letterDesc,
-                descLive: true,
+                descStatus: letterDesc,
               },
               {
                 key: 'urgency',
