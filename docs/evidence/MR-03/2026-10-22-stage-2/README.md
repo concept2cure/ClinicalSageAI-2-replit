@@ -13,7 +13,7 @@ on staging, no task replaced) is Stage 5's, after the founder's AWS account
 | A | OPS-13, Terraform half: task size, stop timeout, init process, heap, autoscaling | done |
 | C | OPS-13, application half: one converter limiter, 503 with Retry-After | done |
 | B | OPS-28, SEC-18: boot refusals | done |
-| D | OPS-19: the image (base pin, `chown`, `BUILD_COMMIT`, PID 1) | open |
+| D | OPS-19: the image (base pin, `chown`, `BUILD_COMMIT`, PID 1) | done; the image build is proven by CI, not here |
 
 ## Re-confirmed at head before starting
 
@@ -52,6 +52,7 @@ Every Stage 2 finding was still open at `178f0b477`:
 | Override refusal in the pipeline | `deploy-aws.yml` preflight (`*_ACCEPT_*` by name, `AUDIT_*` exactly `true`) | Refuses a revision the pipeline registers if it carries an override | Stop a revision registered or edited outside the pipeline; name `ENABLE_TEST_ROUTES` |
 | Manifest guard | `scripts/ci/check-compose-boot-contract.mjs` | Holds both production compose stacks to the boot contract; refuses `SECURITY_SELF_TEST_NONBLOCKING`; pins `AUDIT_REQUIRE_ENFORCE=true` | Refuse the route flags; read the Helm values. **Extended by slice B**, not duplicated |
 | Audit enforcement | `server/startup/audit-enforcement.ts` | Fails closed on a missing trail, a failed immutability probe or a disabled sweep, when `AUDIT_REQUIRE_ENFORCE=true` | Fail closed by default in production |
+| Image guards | `scripts/ci/check-image-document-runtime.mjs`, `check-image-runtime-assets.mjs` | Prove the production stage copies the document runtimes and every file the server reads | Check the base pin, the ownership layer, the commit stamp or the start command. **A sibling guard was added**, since neither checks any of these |
 
 ## Slice A: the API task, sized and stopped cleanly, and autoscaled
 
@@ -292,6 +293,76 @@ the process runs:
   - enforcement opt-in again;
   - the guard skipping the route flags;
   - the guard ignoring Helm's `extra`.
+
+## Slice D: the image is pinned, owned once, stamped and started as node
+
+**What changed** (`Dockerfile.optimized`):
+
+- **The base is pinned by digest.** Both stages start from
+  `node:22-slim@sha256:de170b39…`, the tag's multi-arch index on 2026-10-22
+  (Node 22.23.4, `raw/d0`). The header says how to move it.
+- **Ownership is set once.**
+  - The user is created before anything is copied into `/app`. Every COPY into
+    `/app` carries `--chown=appuser:appuser`, and `npm ci` runs as `appuser`.
+  - This replaces `chown -R appuser:appuser /app`, which wrote a second copy of
+    every file, `node_modules` included, into its own layer.
+  - Ownership is otherwise what it was. `/app` stays the user's, because the
+    server creates `uploads/`, `data/`, `exports/` and `temp/` under it at run
+    time.
+- **The commit is stamped.**
+  - The builder declares `ARG BUILD_COMMIT` before `npm run build`
+    (`scripts/build-server.mjs` bakes it into the bundle). The production stage
+    declares it as `ENV`.
+  - `deploy-aws.yml` and `ci.yml` pass `--build-arg BUILD_COMMIT=${{ github.sha }}`.
+    `.dockerignore` keeps `.git` out of the build, so until now every image
+    reported "unknown" at `/api/version`.
+- **node is the process ECS signals.** The image sets `ENV NODE_ENV=production`
+  and `CMD ["node", "dist/index.js"]`, not `npm run start`. With slice A's init
+  process, node is PID 1's direct child and receives SIGTERM.
+  `package.json`'s `start` stays for local use.
+- **`scripts/ci/check-image-hardening.mjs`** is new, a sibling of the two image
+  guards; neither of those checks any of this. It refuses:
+  - an unpinned `FROM`;
+  - a recursive `chown` in the production stage;
+  - a missing `BUILD_COMMIT`;
+  - a production `CMD` that is not exec-form node;
+  - a production build in either workflow that does not pass the commit.
+
+  It has a self-test, and it runs in `ci.yml` next to the compose guard
+  (`ci:image-hardening`, `:selftest`).
+- **Three test patterns** that spelled `COPY --from=builder …` now accept an
+  optional `--chown`, and nothing looser:
+  `tests/schema-contract/deploy-migration-mechanism.contract.test.ts`,
+  `rds-ca-bundle.contract.test.ts` and
+  `scripts/ci/__tests__/image-document-runtime.test.mjs`.
+
+**Verified by making it fail.**
+
+- **Before** (`raw/d1`): the guard refuses HEAD's Dockerfile and workflows
+  with 8 problems: two unpinned FROMs, the recursive `chown`, no
+  `BUILD_COMMIT` in either stage, the npm CMD, and both workflows' builds.
+- **After** (`raw/d2`): the self-test passes 12/12 and the guard passes.
+- **Every other check that reads the Dockerfile** (`raw/d3`):
+  - `ci:image-document-runtime` and `ci:image-runtime-assets` (with its
+    self-test) pass;
+  - the bundle-resolution and contract tests pass 446/446, and the node test
+    8/8, after the pattern fix.
+- **Mutants** (`raw/d4`), eight, each failing:
+  - the production FROM by tag;
+  - CMD npm;
+  - `chown -R`;
+  - the builder's ARG removed;
+  - either workflow dropping the commit;
+  - the migrations COPY deleted, or the assets COPY deleted. These two show
+    the loosened patterns still catch a removal.
+- **Trivy** (`raw/d5`): `trivy config` on the Dockerfile reports 0 HIGH or
+  CRITICAL.
+
+**Not shown here: a local image build.** A Docker daemon started here, but
+Docker Hub answered the pull of the pinned digest with 429 Too Many Requests,
+its anonymous rate limit. CI's production-image-boot job builds both targets,
+checks the image runs as `appuser`, and boots it to `/readyz`. Its result on
+this push is recorded below once it reports.
 
 ## Not shown here
 

@@ -158,6 +158,8 @@
     "ci:committed-secrets:selftest": "node scripts/ci/check-committed-secrets.selftest.mjs",
     "ci:compose-boot-contract": "node scripts/ci/check-compose-boot-contract.mjs",
     "ci:compose-boot-contract:selftest": "node scripts/ci/check-compose-boot-contract.mjs --self-test",
+    "ci:image-hardening": "node scripts/ci/check-image-hardening.mjs",
+    "ci:image-hardening:selftest": "node scripts/ci/check-image-hardening.mjs --self-test",
     "ci:requirements-pins": "node scripts/ci/check-requirements-pins.mjs",
     "ci:node-runtime": "node scripts/ci/check-node-runtime.mjs",
     "ci:node-runtime:self-test": "node scripts/ci/check-node-runtime.mjs --self-test",

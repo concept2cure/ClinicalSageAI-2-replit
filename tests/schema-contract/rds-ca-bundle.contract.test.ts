@@ -39,10 +39,10 @@ describe('the image trusts the RDS certificate authority', () => {
   it('sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in', () => {
     expect(envMatch, 'Dockerfile.optimized must set ENV NODE_EXTRA_CA_CERTS').not.toBeNull();
     const productionStage = DOCKERFILE.slice(DOCKERFILE.indexOf('AS production'));
-    expect(productionStage).toContain('COPY --from=builder /app/assets ./assets');
-    expect(productionStage.indexOf('NODE_EXTRA_CA_CERTS')).toBeGreaterThan(
-      productionStage.indexOf('COPY --from=builder /app/assets ./assets'),
-    );
+    // Ownership is set at copy time (--chown, MR-03 OPS-19); the flag is optional here.
+    const assetsCopy = /COPY (?:--chown=\S+ )?--from=builder \/app\/assets \.\/assets/.exec(productionStage);
+    expect(assetsCopy, 'the production stage must COPY assets/ from the builder').not.toBeNull();
+    expect(productionStage.indexOf('NODE_EXTRA_CA_CERTS')).toBeGreaterThan(assetsCopy!.index);
   });
 
   it('names a committed file that .dockerignore does not drop', () => {
