@@ -63,8 +63,10 @@ describe('GET /api/c2c/projects/:id/dossier', () => {
     });
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}/dossier`);
     expect(res.status).toBe(200);
-    expect(res.body.home).toEqual({ state: 'measured', pct: 50, counted: 2, complete: 1 });
-    expect(res.body.rows).toEqual([expect.objectContaining({ module: '1', label: 'Module 1 · Administrative (US)', counted: 2, complete: 1 })]);
+    // 'M1' holds 1.1, so it is a heading and is not counted (F23 8/9); the
+    // module row is still named by it.
+    expect(res.body.home).toEqual({ state: 'measured', pct: 100, counted: 1, complete: 1 });
+    expect(res.body.rows).toEqual([expect.objectContaining({ module: '1', label: 'Module 1 · Administrative (US)', counted: 1, complete: 1 })]);
     const [, params] = queryMock.mock.calls.find(([sql]) => isDossier(sql))!;
     expect(params).toEqual([[P1], 7]);
   });

@@ -1,0 +1,14 @@
+# F23 (8/9) red at 1a9a7d2291: the trigger divides by every row, headings included
+## server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts (new; real migration, real IND pack, on PGlite)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > the pack has headings, and they are never approved 4ms
+ × server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > with every content section approved, the document reads 100, and so does the home figure (at head: 78) 15ms
+   → expected 79 to be 100 // Object.is equality
+ × server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > replaying the migration keeps the value, corrects a stale one and leaves updated_at alone 12ms
+   → expected 40 to be 100 // Object.is equality
+ × server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a section that gains a child stops being counted 7ms
+   → expected 76 to be 95 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)
+
+At head an IND with every content section approved read 79 (the design measured 78 on an earlier pack version).
+The legacy-document and updated_at-stamp cases were added after this run. Their mutations ('the backfill zeroes a document with no sections', 'the backfill stamps updated_at') are shown red in mutations-commit-8.txt.
