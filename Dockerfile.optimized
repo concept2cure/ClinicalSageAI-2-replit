@@ -1,6 +1,15 @@
 # Multi-stage Docker build for reduced image size
+#
+# Both stages start FROM the same base, pinned by digest (MR-03 OPS-19): a tag
+# moves, so two builds of one commit could ship different Node and Debian
+# packages. The digest is node:22-slim's multi-arch index as of 2026-10-22
+# (Node 22.23.4, Debian bookworm). To move it, resolve the tag's current index
+# digest, change both FROM lines together, and let CI's production-image-boot
+# job build and boot the result. scripts/ci/check-image-hardening.mjs refuses
+# an unpinned FROM.
+#
 # Build stage
-FROM node:22-slim AS builder
+FROM node:22-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS builder
 
 WORKDIR /app
 
@@ -13,7 +22,11 @@ RUN npm ci --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application. The commit is passed in (--build-arg BUILD_COMMIT;
+# deploy-aws.yml and ci.yml pass github.sha) because .dockerignore keeps .git
+# out of the context: scripts/build-server.mjs bakes it into the bundle, and
+# without it /api/version reported "unknown" for every deployed image.
+ARG BUILD_COMMIT
 RUN npm run build
 
 # The production stage installs with --omit=dev, and the server bundle keeps
@@ -45,7 +58,7 @@ CMD ["npm", "run", "db:provision"]
 # Production stage — the default target is named explicitly by the pipeline
 # (`docker build --target production`), so adding a stage never changes what
 # ships.
-FROM node:22-slim AS production
+FROM node:22-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS production
 
 WORKDIR /app
 
@@ -122,20 +135,37 @@ COPY scripts/ops/check-pdfa-toolchain.sh /usr/local/bin/check-pdfa-toolchain
 RUN chmod 0755 /usr/local/bin/check-pdfa-toolchain && \
     PDFA_CHECK_STRICT_PIPELINE_ARGS=1 VERAPDF_EXPECTED_VERSION="${VERAPDF_VERSION}" check-pdfa-toolchain
 
-# Copy package files and npm config
-COPY package*.json .npmrc ./
+# Create non-root user for security, before anything is copied into /app, so
+# every COPY below can own its files as it writes them (--chown). This was a
+# `chown -R appuser:appuser /app` after the last COPY, which wrote a second copy
+# of every file in /app, node_modules included, into its own layer (MR-03
+# OPS-19). /app itself stays the user's: the server creates uploads/, data/,
+# exports/ and temp/ under it at run time. storage/ is created here so that it
+# is owned by that user: a volume mounted there (docker-compose's `vaultdata`)
+# takes the directory's ownership on first use, and the local vault provider
+# writes to /app/storage/vault. Without it the mountpoint is root's and every
+# local-disk vault write is refused.
+RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && \
+    mkdir -p /app/storage/vault && \
+    chown appuser:appuser /app /app/storage /app/storage/vault
 
-# Install production dependencies only
+# Copy package files and npm config
+COPY --chown=appuser:appuser package*.json .npmrc ./
+
+# Install production dependencies only, as the runtime user, so node_modules is
+# the user's, as it was after the recursive chown, without the second copy.
+# Every later step is a COPY (ownership from --chown) or metadata.
+USER appuser
 RUN npm ci --legacy-peer-deps --omit=dev && npm cache clean --force
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --chown=appuser:appuser --from=builder /app/dist ./dist
 
 # Copy necessary runtime files
-COPY --from=builder /app/server ./server
-COPY --from=builder /app/shared ./shared
+COPY --chown=appuser:appuser --from=builder /app/server ./server
+COPY --chown=appuser:appuser --from=builder /app/shared ./shared
 # The document runtimes the server spawns (see the virtualenv above).
-COPY --from=builder /app/workers/artifact-compute ./workers/artifact-compute
+COPY --chown=appuser:appuser --from=builder /app/workers/artifact-compute ./workers/artifact-compute
 
 # Migration payload. `npm run db:migrate:deploy` (scripts/db/deploy-migrate.mjs)
 # runs from THIS image as a one-off ECS task before the services roll — see the
@@ -149,9 +179,9 @@ COPY --from=builder /app/workers/artifact-compute ./workers/artifact-compute
 # to drizzle-kit, a devDependency pruned by `npm ci --omit=dev`; from-scratch
 # provisioning runs from a repo checkout, and deploy-migrate.mjs fails closed
 # (exit 3) rather than pretending it can bootstrap a blank database.
-COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/db/migrations ./db/migrations
-COPY --from=builder /app/scripts/db ./scripts/db
+COPY --chown=appuser:appuser --from=builder /app/migrations ./migrations
+COPY --chown=appuser:appuser --from=builder /app/db/migrations ./db/migrations
+COPY --chown=appuser:appuser --from=builder /app/scripts/db ./scripts/db
 
 # Vendored agency artifacts, read from disk at RUNTIME by cwd-relative
 # drop-points that all resolve under `assets/`:
@@ -174,7 +204,7 @@ COPY --from=builder /app/scripts/db ./scripts/db
 # 11 MB, almost all of it the two eSTAR PDFs. They are committed and pinned;
 # .dockerignore excludes only *.md here, so the PDFs and checksums.txt both ship
 # and template integrity still verifies at runtime.
-COPY --from=builder /app/assets ./assets
+COPY --chown=appuser:appuser --from=builder /app/assets ./assets
 
 # The vendored official FDA IND forms — 1571, 1572, 3454, 356h, 3674 — and the
 # manifest beside each PDF. server/services/ind-forms/template-locations.ts
@@ -187,18 +217,18 @@ COPY --from=builder /app/assets ./assets
 # packaged. Only acroforms/ — the rest of templates/ is not read by the server
 # bundle. ci:image-runtime-assets compares this stage's COPY set with every
 # repository path the bundled server resolves, and fails on the next one.
-COPY --from=builder /app/templates/forms/acroforms ./templates/forms/acroforms
+COPY --chown=appuser:appuser --from=builder /app/templates/forms/acroforms ./templates/forms/acroforms
 
 # The vulnerability-disclosure policy, served whole at /.well-known/security-policy
 # (server/routes/well-known.ts reads <cwd>/SECURITY.md; without it the route falls
 # back to a short summary). .dockerignore re-includes it.
-COPY --from=builder /app/SECURITY.md ./SECURITY.md
+COPY --chown=appuser:appuser --from=builder /app/SECURITY.md ./SECURITY.md
 
 # The GAMP 5 validation kit: the IQ/OQ protocols a regulated client validates
 # the system with, listed and served by server/routes/validation-kit.ts from
 # <cwd>/docs/validation. Without it production listed an honest but empty
 # catalog. .dockerignore re-includes only this directory of docs/.
-COPY --from=builder /app/docs/validation ./docs/validation
+COPY --chown=appuser:appuser --from=builder /app/docs/validation ./docs/validation
 
 # The Amazon RDS certificate bundle, from the assets copied above
 # (assets/rds-ca/README.md). Production verifies the database certificate, and
@@ -211,17 +241,11 @@ ENV NODE_EXTRA_CA_CERTS=/app/assets/rds-ca/global-bundle.pem
 # user does not have. The same vendored bundle, for the same reason.
 ENV PGSSLROOTCERT=/app/assets/rds-ca/global-bundle.pem
 
-# Create non-root user for security. storage/ is created here so that it is
-# owned by that user: a volume mounted there (docker-compose's `vaultdata`)
-# takes the directory's ownership on first use, and the local vault provider
-# writes to /app/storage/vault. Without it the mountpoint is root's and every
-# local-disk vault write is refused.
-RUN mkdir -p /app/storage/vault && groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app
-
 # Expose port
 EXPOSE 5000
 
-# Switch to non-root user
+# The runtime user, set before `npm ci` above; restated so the final user is
+# visible here (ci.yml checks the built image runs as appuser).
 USER appuser
 
 # Docker's own health status, for docker compose (depends_on: service_healthy).
@@ -234,5 +258,15 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD ["node", "-e", "const h=require('http');h.get('http://localhost:'+(process.env.PORT||5000)+'/readyz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
 
-# Start the application
-CMD ["npm", "run", "start"]
+# The commit this image was built from, for anything that reads it at run time
+# (the bundle carries its own copy from the builder stage).
+ARG BUILD_COMMIT
+ENV BUILD_COMMIT=${BUILD_COMMIT}
+
+# Start the application: node directly, not `npm run start` (OPS-19). Under npm,
+# npm took ECS's SIGTERM and the server's drain (server/startup/shutdown.ts)
+# depended on npm passing it on; with the task definition's init process
+# (initProcessEnabled) node is its direct child and receives it. NODE_ENV is
+# what `npm run start` set (package.json, kept for local use).
+ENV NODE_ENV=production
+CMD ["node", "dist/index.js"]

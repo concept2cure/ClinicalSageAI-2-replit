@@ -210,6 +210,13 @@ jobs:
         # is required here too (docs/evidence/W2/2026-10-01-compose-boot-contract/).
         run: npm run ci:compose-boot-contract:selftest && npm run ci:compose-boot-contract
 
+      - name: Guardrails — the production image is pinned, stamped and starts node
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Dockerfile.optimized built FROM a moving tag, wrote every file twice
+        # with chown -R, never learned its commit and ran npm as the process ECS
+        # signals (MR-03 OPS-19). The self-test shows each of those refused.
+        run: npm run ci:image-hardening:selftest && npm run ci:image-hardening
+
       - name: Guardrails — requirements.txt pins must install on the declared Python
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Dependabot #1014 proposed numpy 2.4.6 -> 2.5.1. numpy 2.5.1 is
@@ -2185,8 +2192,9 @@ jobs:
 
       - name: Build the provision and production images (as deploy-aws.yml does)
         run: |
-          docker build -f Dockerfile.optimized --target provision -t c2c-provision:ci .
-          docker build -f Dockerfile.optimized --target production -t c2c-app:ci .
+          # The same BUILD_COMMIT for both, so they share the builder's layers.
+          docker build -f Dockerfile.optimized --target provision --build-arg BUILD_COMMIT="${{ github.sha }}" -t c2c-provision:ci .
+          docker build -f Dockerfile.optimized --target production --build-arg BUILD_COMMIT="${{ github.sha }}" -t c2c-app:ci .
           echo "production image runs as: $(docker inspect --format '{{.Config.User}}' c2c-app:ci)"
           if [ "$(docker inspect --format '{{.Config.User}}' c2c-app:ci)" != "appuser" ]; then
             echo "::error::the production image must run as appuser"; exit 1
