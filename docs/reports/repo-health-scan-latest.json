@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T09:59:36.294Z",
+  "generatedAt": "2026-10-22T13:25:21.352Z",
   "git": {
-    "sha": "dcb6abe903ae2e25ff0e735c7560df11a3a85e5f",
+    "sha": "1a9a7d22914c96cc345e057dc924103d4cee05b6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 56,
-    "largeFilesByLines": 113
+    "largeFilesByLines": 114
   },
   "findings": {
     "duplicateBasenames": [
@@ -2389,7 +2389,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "bytes": 120328
+        "bytes": 120674
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2412,20 +2412,16 @@
         "bytes": 117106
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 116737
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 116716
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "bytes": 115858
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 116159
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 115150
+        "file": "server/services/intelligent-report-engine.ts",
+        "bytes": 115858
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2442,6 +2438,10 @@
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 110107
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 109244
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2610,16 +2610,16 @@
         "lines": 2511
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 2417
+      },
+      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2416
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2404
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2389
+        "lines": 2394
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2644,10 +2644,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2247
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
@@ -2694,10 +2690,6 @@
         "lines": 2137
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 2136
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 2128
       },
@@ -2718,6 +2710,10 @@
         "lines": 2080
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2078
+      },
+      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 2068
       },
@@ -2728,6 +2724,10 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 2064
+      },
+      {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2048
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2758,12 +2758,12 @@
         "lines": 1942
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1940
-      },
-      {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1939
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1933
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2772,10 +2772,6 @@
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
         "lines": 1908
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1904
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2832,6 +2828,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
         "lines": 1814
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1808
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2920,6 +2920,10 @@
       {
         "file": "shared/constants/ui-surface-registry.ui-v2.ts",
         "lines": 1519
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "lines": 1516
       }
     ]
   },
@@ -2947,7 +2951,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 58,
       "largeByBytes": 12,
-      "largeByLines": 17
+      "largeByLines": 18
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
