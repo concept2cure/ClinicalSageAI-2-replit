@@ -106,13 +106,6 @@ interface ProgramRow {
   intended_use: string | null;
   primary_agency: string | null;
   target_submission_date: string | null;
-  /** The share of this program's governed sections that are approved or
-   *  locked — the figure its card in the Projects list reports. Null when the
-   *  server could not measure it. (This read `progress_percent` until
-   *  2026-09-24: a column written once as 0 and never updated.) */
-  readiness?: number | null;
-  /** When the server measured `readiness` (ISO); null with no figure. */
-  readinessAsOf?: string | null;
   /** Whether this caller may change the project; absent on an older server. */
   canChange?: boolean;
   /** The device taxonomy intake stores for a device / IVD program

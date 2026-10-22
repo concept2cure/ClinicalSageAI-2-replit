@@ -18,7 +18,7 @@ import {
 } from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
-import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, isMeasuredReadiness, type DossierFigureState } from '../dossierReadiness';
 import {
   listedChoices,
   notifySurfaceActionReady,
@@ -1002,8 +1002,8 @@ function PortfolioPagedNote({ paged, settled, count }: { paged: boolean; settled
 /**
  * Portfolio row — the display contract projected by GET /api/c2c/projects
  * (server/routes/c2c/projects.ts), one field per real `regulatory_programs`
- * column (progress_percent → readiness, phase → stage, target_submission_date →
- * due, lead_user_id → lead). `blocker` is in the projection but the list query
+ * column (phase → stage, target_submission_date → due, lead_user_id → lead),
+ * and the home filing's dossier readiness, measured on each read. `blocker` is in the projection but the list query
  * returns it as a literal NULL — no blocker is computed at list level — so it is
  * typed nullable and rendered null-safe, never fabricated. Null means "not
  * assessed here", never "none": the card says nothing about blockers then.
@@ -1014,9 +1014,12 @@ interface ProjPortfolioEntry {
   ws: string;
   code: string;
   stage: string;
-  /** Share of the program's governed sections approved; null when there is
-   *  nothing to measure or the measurement failed. */
+  /** Share of the home filing's sections approved or locked; null with no
+   *  figure, and `readinessState` says why: nothing to count, or not read. */
   readiness: number | null;
+  readinessState?: DossierFigureState;
+  /** Why a figure is unavailable, in the server's words. */
+  readinessReason?: string;
   status: string;
   lead: string;
   blocker: string | null;
@@ -1024,6 +1027,20 @@ interface ProjPortfolioEntry {
   /** target_submission_date as YYYY-MM-DD, or null when none is set. */
   due_date?: string | null;
   activity: string;
+}
+
+/**
+ * The portfolio's mean dossier readiness, over the programs measured, and how
+ * many it covers when that is not all of them (`cover`, '' until the read has
+ * settled). A mean over no programmes has no value: `kv` covers a read that has
+ * not settled, and this covers one that settled with nothing measured, where a
+ * `|| 1` divisor once produced a confident "0%".
+ */
+function portfolioMean(projects: ProjPortfolioEntry[], settled: boolean): { mean: string; cover: string } {
+  const measured = projects.filter((p): p is ProjPortfolioEntry & { readiness: number } => isMeasuredReadiness(p.readiness, p.readinessState));
+  const mean = measured.length ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%' : '—';
+  const partial = settled && measured.length > 0 && measured.length < projects.length;
+  return { mean, cover: partial ? `${measured.length} of ${projects.length} measured` : '' };
 }
 
 /** Whole days from today to a YYYY-MM-DD date, in the viewer's calendar; null
@@ -1092,13 +1109,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      "0%", a portfolio-mean readiness computed over no programs. A director
      reading the header learned they run nothing and have nothing blocked. */
   const kv = (v: string) => (live.loading || live.error ? '—' : v);
-  /* A mean over no programmes has no value. `kv` covers a read that has not
-     settled; this covers one that settled with zero rows, where the `|| 1`
-     divisor still produced a confident "0%". */
-  const measured = projects.filter((p): p is ProjPortfolioEntry & { readiness: number } => p.readiness != null);
-  const meanReadiness = measured.length
-    ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%'
-    : '—';
+  const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, !live.loading && !live.error);
   /* No "Blocked" figure. A program's status is only ever written as active or
      archived (POST and the close-out routes in server/routes/c2c/projects.ts),
      and the list computes no blocker, so the count could only read 0: an
@@ -1110,7 +1121,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   }).length;
   const health = [
     { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
-    { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '' },
+    // A mean over some of the programs says how many it covers (`q`).
+    { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '', q: measuredCover },
     { l: 'Filing < 60 days', n: kv(countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
   ];
   /* The status filter offers the statuses the portfolio actually holds. It
@@ -1175,7 +1187,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         `Projects portfolio: ${projects.length} regulatory program(s)` +
         (truncated ? ` — the first ${projects.length} only; more exist, and every figure here covers the first ${projects.length}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
-        `. Average readiness ${health[1].n}; ${health[2].n} with a target filing date in the next 60 days. ` +
+        `. Average readiness ${health[1].n}${measuredCover ? ` (${measuredCover})` : ''}; ${health[2].n} with a target filing date in the next 60 days. ` +
         'Blockers are not assessed on this list; each program\'s readiness is on its project home. ' +
         `Shown as a ${view}.`,
       facts: {
@@ -1196,7 +1208,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         // drops the team member's email for the same reason.
         programs: list.slice(0, 12).map(p => ({
           id: p.id, code: p.code, title: p.title, workstream: p.ws, stage: p.stage,
-          status: p.status, readiness: p.readiness, due: p.due,
+          status: p.status, readiness: p.readiness, readinessState: p.readinessState ?? null, due: p.due,
           blocker: p.blocker ?? null,
         })),
       },
@@ -1208,7 +1220,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health, truncated]);
+  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health, measuredCover, truncated]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
@@ -1355,7 +1367,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       <div className="pj-summary">
         {health.map((h, i) => (
           <span key={i} className="pj-summary-i" data-tone={h.t || undefined}>
-            <strong>{h.n}</strong> {h.l.toLowerCase()}
+            <strong>{h.n}</strong> {h.l.toLowerCase()}{'q' in h && h.q ? `, ${h.q}` : ''}
           </span>
         ))}
       </div>
@@ -1431,11 +1443,14 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
             <button key={p.id} className="pj-card" onClick={() => openProj(p)}>
               <div className="pj-card-t">{p.title}</div>
               <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}</div>
-              <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
-                <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
-              </div>
+              {/* No figure draws no bar: an empty track reads as 0. */}
+              {isMeasuredReadiness(p.readiness, p.readinessState) ? (
+                <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
+                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+                </div>
+              ) : <div style={{ height: 12 }} />}
               <div className="pj-card-r">
-                <span title={DOSSIER_READINESS_MEANS}>{DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness)}</span><span>{p.due}</span>
+                <span title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>{DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness, p.readinessState)}</span><span>{p.due}</span>
               </div>
               <div className="pj-card-f">
                 <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
@@ -1472,11 +1487,13 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               <div><span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span></div>
               <div>
                 <div style={{ fontSize: 11.5 }}>{p.stage}</div>
-                <div className="ph-bar-track" style={{ marginTop: 5 }}>
-                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 3 }} title={DOSSIER_READINESS_MEANS}>
-                  {DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness)}
+                {isMeasuredReadiness(p.readiness, p.readinessState) && (
+                  <div className="ph-bar-track" style={{ marginTop: 5 }}>
+                    <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 3 }} title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>
+                  {DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness, p.readinessState)}
                 </div>
               </div>
               <div

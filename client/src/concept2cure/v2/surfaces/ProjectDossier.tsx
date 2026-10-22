@@ -17,7 +17,7 @@
 import React from 'react';
 import { I } from '../icons';
 import { EmptyState, hasKeys, useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
-import { DOSSIER_READINESS_LABEL, dossierReadinessAsOf } from '../dossierReadiness';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
 import { Ring } from '../fixtures/project-home-data';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
 
@@ -85,10 +85,10 @@ export function useProjectDossier(pid: string | null): DossierState {
   return React.useMemo(() => ({ state, retry }), [state, retry]);
 }
 
-/** A figure in a word or two: "62%", "not measured", "unavailable". */
+/** A figure in a word or two: "62%", "not measured", "unavailable", in the
+ *  words the Projects card uses for the same figure. */
 export function figureValue(f: DossierFigure): string {
-  if (f.state === 'measured') return `${f.pct}%`;
-  return f.state === 'no_sections' ? 'not measured' : 'unavailable';
+  return dossierReadinessValue(f.pct, f.state);
 }
 
 /** What a figure counts, in a sentence; never a 0 for no figure. */
@@ -99,9 +99,6 @@ function figureLine(f: DossierFigure): string {
 }
 
 const marketName = (m: DossierMarket) => `${m.agency.toUpperCase()} · ${m.docType.toUpperCase()}`;
-
-const DOSSIER_MEANS =
-  'The share of this program’s own filing sections that are approved or locked. A market added to the project is measured on its own line.';
 
 /** The aside card: the home filing's figure, and each added market's line. */
 export function DossierReadinessCard({ read }: { read: DossierState }) {
@@ -122,7 +119,7 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
     body = (
       <>
         {d.home.state === 'measured' && (
-          <div className="pj-map" title={DOSSIER_MEANS}>
+          <div className="pj-map" title={DOSSIER_READINESS_MEANS}>
             <div className="pj-map-ring"><Ring value={d.home.pct} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
           </div>
         )}
@@ -140,7 +137,7 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
             ))}
           </ul>
         )}
-        <p className="pj-card-note">{DOSSIER_MEANS}</p>
+        <p className="pj-card-note">{DOSSIER_READINESS_MEANS}</p>
         {d.home.state === 'measured' && dossierReadinessAsOf(d.measuredAt) && <p className="pj-card-note">{dossierReadinessAsOf(d.measuredAt)}</p>}
       </>
     );

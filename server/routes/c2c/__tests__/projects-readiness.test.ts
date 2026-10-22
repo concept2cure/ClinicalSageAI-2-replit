@@ -1,23 +1,25 @@
 /**
- * Route test for GET /api/c2c/projects — where "readiness" comes from.
+ * Route test for GET /api/c2c/projects, GET /:id and POST — where "readiness"
+ * comes from.
  *
- * ── The defect ────────────────────────────────────────────────────────────────
- * The list reported `COALESCE(p.progress_percent, 0) AS readiness`.
- * `regulatory_programs.progress_percent` is written exactly ONCE — the literal
- * `0` in this router's own INSERT — and no `UPDATE` of that column exists
- * anywhere in server/. Two seed scripts set it; nothing in the product ever
- * does.
+ * ── The history ───────────────────────────────────────────────────────────────
+ * The list once reported `COALESCE(p.progress_percent, 0) AS readiness`, a
+ * column written once as 0 and never updated, so every project read 0%
+ * forever. It was replaced by `readinessByProject`, which counted approved or
+ * locked sections over EVERY document of the project, the home filing and its
+ * added markets pooled. So adding EMA's MAA to an FDA NDA lowered the NDA's
+ * figure, and Project home's own card (F23 2/9, one dossier read) disagreed
+ * with the Projects card for the same program.
  *
- * So every project a customer created reported 0% readiness forever. Draft and
- * approve an entire IND and the card still read 0%, while the documents inside
- * it carried a number a database trigger genuinely maintained.
- *
- * A figure that looks measured and can never move is worse than no figure: it
- * reads as "no progress" rather than as "not computed".
- *
- * The list now derives it from the governed sections, on the same predicate
- * c2c_recompute_document_readiness() uses for a single document — so a project
- * is measured the way its documents are, weighted by how many sections each has.
+ * ── Now (FILING_SPINE F23 3/9) ────────────────────────────────────────────────
+ * The list, the detail and the create read the home filing's figure from
+ * server/services/c2c/dossier-read.ts (`readDossierFigures`), the figure
+ * Project home's card prints. Each row carries the figure's state:
+ *   - 'measured': `readiness` is the share;
+ *   - 'no_sections': nothing to count, `readiness` null;
+ *   - 'unavailable': the sections could not be read, `readiness` null and
+ *     `readinessReason` says why. The list still answers: it is the primary
+ *     surface, and a failed enrichment is shown as unavailable, never 0.
  */
 
 import express from 'express';
@@ -53,19 +55,47 @@ function app(orgId: number | null) {
   return a;
 }
 
-/**
- * The two rows the list SELECT returns — both carrying the stale stored 0.
- *
- * A FACTORY, not a shared literal: the route overwrites `readiness` on the row
- * objects it got back from the driver. In production every query returns fresh
- * objects; a shared fixture here would carry one test's result into the next.
- */
-const listRows = () => ({
-  rows: [
-    { id: P1, title: 'BX-204', ws: 'Biotech', code: 'BX-204', stage: 'Planning', readiness: 0, status: 'active', lead: '—', blocker: null, due: '—', activity: 'Updated Aug 10' },
-    { id: P2, title: 'DX-9', ws: 'MDX', code: 'DX-9', stage: 'Planning', readiness: 0, status: 'active', lead: '—', blocker: null, due: '—', activity: 'Updated Aug 10' },
-  ],
+const isList = (sql: unknown) => /FROM regulatory_programs p[\s\S]*LIMIT \$2 OFFSET \$3/.test(String(sql));
+const isDetail = (sql: unknown) => /FROM regulatory_programs p[\s\S]*WHERE p\.id = \$1 AND p\.organization_id = \$2/.test(String(sql)) && !/AS ws/.test(String(sql));
+const isSections = (sql: unknown) => /FROM c2c_documents d\s+JOIN c2c_document_sections s/.test(String(sql));
+
+/** A FACTORY: the route sets the readiness fields on the rows it got back. */
+const listRows = () => [
+  { id: P1, title: 'BX-204', ws: 'Biotech', code: 'BX-204', stage: 'Planning', status: 'active', lead: '—', blocker: null, due: '—', activity: 'Updated Aug 10' },
+  { id: P2, title: 'DX-9', ws: 'MDX', code: 'DX-9', stage: 'Planning', status: 'active', lead: '—', blocker: null, due: '—', activity: 'Updated Aug 10' },
+];
+const detailRow = () => ({
+  id: P1, code: 'BX-204', name: 'BX-204', program_type: 'IND', status: 'active', phase: 'planning',
+  priority: 'high', description: null, product_name: null, indication: null, intended_use: null,
+  primary_agency: 'FDA', target_agencies: null, target_submission_date: null, actual_submission_date: null,
+  approval_date: null, lead_user_id: null, team_members: null,
+  created_at: '2026-09-01', updated_at: '2026-09-02', application_number: null, product_type: 'drug',
+  device_class: null, regulatory_path: null, product_code: null, predicate_devices: null, metadata: null,
+  sponsor_name: 'Org',
 });
+
+let n = 0;
+/** One governed section of a project's document, as DOSSIER_SECTIONS_SQL returns it. */
+const section = (project: string, status: string, scope: 'home' | 'market' = 'home', doc = scope === 'home' ? 'home-doc' : 'ema-doc') => ({
+  project_id: project, document_id: `${project}:${doc}`, doc_type: scope === 'home' ? 'ind' : 'maa', agency: scope === 'home' ? 'fda' : 'ema',
+  title: null, filing_scope: scope, section_key: `2.${++n}`, parent_key: null, label: null, status, updated_at: null,
+});
+
+/** Answer each statement by what it is, not by its position. */
+function serve(sections: unknown[] | Error) {
+  queryMock.mockImplementation(async (sql: string) => {
+    if (isList(sql)) return { rows: listRows() };
+    if (isDetail(sql)) return { rows: [detailRow()] };
+    if (isSections(sql)) {
+      if (sections instanceof Error) throw sections;
+      return { rows: sections };
+    }
+    return { rows: [] };
+  });
+}
+
+const unprovisioned = () => Object.assign(new Error('relation "c2c_document_sections" does not exist'), { code: '42P01' });
+const connectionReset = () => Object.assign(new Error('connection reset'), { code: '08006' });
 
 beforeEach(() => {
   queryMock.mockReset();
@@ -75,149 +105,101 @@ beforeEach(() => {
   seatProgram(7, P2);
 });
 
-describe('GET /api/c2c/projects — readiness is measured, not stored', () => {
-  it('reports the governed section completion, not the frozen progress_percent', async () => {
-    queryMock
-      .mockResolvedValueOnce(listRows())
-      // The aggregate over c2c_documents × c2c_document_sections.
-      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
-
+describe('GET /api/c2c/projects: each card reads its home filing’s figure', () => {
+  it('is the share of the home filing’s sections approved or locked, with its state', async () => {
+    serve([section(P1, 'approved'), section(P1, 'locked'), section(P1, 'in_review'), section(P1, 'todo')]);
     const res = await request(app(7)).get('/api/c2c/projects');
     expect(res.status).toBe(200);
-
-    const byId = Object.fromEntries(res.body.data.map((p: any) => [p.id, p.readiness]));
-    // THE defect: this was 0 no matter how much of the filing had been approved.
-    expect(byId[P1]).toBe(62);
-    // A project with no governed sections has nothing to measure: no figure,
-    // not "0% ready" (a share over no sections is undefined).
-    expect(byId[P2]).toBeNull();
+    const byId = Object.fromEntries(res.body.data.map((p: any) => [p.id, p]));
+    expect(byId[P1]).toMatchObject({ readiness: 50, readinessState: 'measured' });
+    // Nothing to count is no figure, and says so: never "0% ready".
+    expect(byId[P2]).toMatchObject({ readiness: null, readinessState: 'no_sections' });
+    expect(byId[P2]).not.toHaveProperty('readinessReason');
   });
 
-  it('asks only about the projects on this page, and scopes to the caller org', async () => {
-    queryMock
-      .mockResolvedValueOnce(listRows())
-      .mockResolvedValueOnce({ rows: [] });
-
-    await request(app(7)).get('/api/c2c/projects');
-
-    const [sql, params] = queryMock.mock.calls[1];
-    expect(sql).toMatch(/FROM c2c_documents d/);
-    // Org predicate — a readiness figure must never aggregate another tenant's
-    // filing, even though project ids are uuids.
-    expect(sql).toMatch(/d\.org_id = \$2/);
-    expect(params[0]).toEqual([P1, P2]);
-    expect(params[1]).toBe(7);
-  });
-
-  it('uses the same status set as the readiness trigger', async () => {
-    queryMock.mockResolvedValueOnce(listRows()).mockResolvedValueOnce({ rows: [] });
-    await request(app(7)).get('/api/c2c/projects');
-
-    const [sql] = queryMock.mock.calls[1];
-    // Rendered from C2C_SECTION_COMPLETE_STATUSES, which
-    // c2c-section-completion.contract.test.ts pins against the migration.
-    expect(sql).toMatch(/FILTER \(WHERE s\.status IN \('approved', 'locked'\)\)/);
-  });
-
-  it('still returns the list when the governed store is absent', async () => {
-    // c2c_documents may not exist on a database without the phase-9 schema —
-    // the vault route already fails closed on exactly that. The project list is
-    // the primary surface and must not be taken down by an enrichment.
-    queryMock
-      .mockResolvedValueOnce(listRows())
-      .mockRejectedValueOnce(Object.assign(new Error('relation "c2c_documents" does not exist'), { code: '42P01' }));
-
+  it('a market added to the project does not move the home figure (at head the two were pooled: 25)', async () => {
+    serve([section(P1, 'approved'), section(P1, 'todo'), section(P1, 'todo', 'market'), section(P1, 'todo', 'market')]);
     const res = await request(app(7)).get('/api/c2c/projects');
+    expect(res.body.data.find((p: any) => p.id === P1)).toMatchObject({ readiness: 50, readinessState: 'measured' });
+  });
 
+  it('asks only about the projects on this page, in the caller’s organization', async () => {
+    serve([]);
+    await request(app(7)).get('/api/c2c/projects');
+    const [sql, params] = queryMock.mock.calls.find(([s]) => isSections(s))!;
+    expect(String(sql)).toMatch(/d\.org_id = \$2/);
+    expect(params).toEqual([[P1, P2], 7]);
+  });
+
+  it('never reads the stored progress_percent', async () => {
+    serve([]);
+    await request(app(7)).get('/api/c2c/projects');
+    const [sql] = queryMock.mock.calls.find(([s]) => isList(s))!;
+    expect(String(sql)).not.toMatch(/progress_percent/);
+  });
+
+  it('an unprovisioned section store: the list still answers, each figure unavailable with the reason', async () => {
+    serve(unprovisioned());
+    const res = await request(app(7)).get('/api/c2c/projects');
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(2);
-    // Could not measure is no figure — never the stored 0, which nothing
-    // maintains. The route logs the failure.
-    expect(res.body.data[0].readiness).toBeNull();
+    expect(res.body.data[0]).toMatchObject({
+      readiness: null, readinessState: 'unavailable', readinessReason: 'The governed section store is not provisioned in this environment.',
+    });
+  });
+
+  it('any other failure: the list still answers, each figure unavailable, never 0 and never "no sections"', async () => {
+    serve(connectionReset());
+    const res = await request(app(7)).get('/api/c2c/projects');
+    expect(res.status).toBe(200);
+    for (const p of res.body.data) {
+      expect(p).toMatchObject({ readiness: null, readinessState: 'unavailable', readinessReason: 'The governed sections could not be read.' });
+    }
   });
 });
 
-/**
- * GET /api/c2c/projects/:id — the detail read ProjectHome's "Dossier readiness"
- * ring draws from.
- *
- * The list was fixed (above); the detail was not. It returned the raw
- * `progress_percent`, so the same program read, say, 62% on its Projects card
- * and "0% complete" on its own page — and AnA was told the 0. Found by the
- * 2026-09-24 vault/projects re-baseline.
- */
-describe('GET /api/c2c/projects/:id — the same readiness the list reports', () => {
-  const detailRow = () => ({
-    rows: [{
-      id: P1, code: 'BX-204', name: 'BX-204', program_type: 'IND', status: 'active', phase: 'planning',
-      priority: 'high', description: null, product_name: null, indication: null, intended_use: null,
-      primary_agency: 'FDA', target_agencies: null, target_submission_date: null, actual_submission_date: null,
-      approval_date: null, lead_user_id: null, team_members: null,
-      created_at: '2026-09-01', updated_at: '2026-09-02', application_number: null, product_type: 'drug',
-      device_class: null, regulatory_path: null, product_code: null, predicate_devices: null, metadata: null,
-      sponsor_name: 'Org',
-    }],
-  });
-
-  it('reports the governed section share, not the frozen progress_percent', async () => {
-    queryMock
-      .mockResolvedValueOnce(detailRow())
-      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
-    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
-    expect(res.status).toBe(200);
-    expect(res.body.readiness).toBe(62);
-    // The stored column nothing updates is not offered to a reader at all.
-    expect(String(queryMock.mock.calls[0][0])).not.toMatch(/progress_percent/);
-  });
-
-  it('agrees with the list for the same program', async () => {
-    queryMock
-      .mockResolvedValueOnce(listRows())
-      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] })
-      .mockResolvedValueOnce(detailRow())
-      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
-    const list = await request(app(7)).get('/api/c2c/projects');
-    const detail = await request(app(7)).get(`/api/c2c/projects/${P1}`);
-    const card = list.body.data.find((p: { id: string }) => p.id === P1);
-    expect(detail.body.readiness).toBe(card.readiness);
-  });
-
-  it('a program with no governed sections has no figure, as on its card', async () => {
-    queryMock.mockResolvedValueOnce(detailRow()).mockResolvedValueOnce({ rows: [] });
-    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
-    expect(res.body.readiness).toBeNull();
-    expect(res.body.readinessAsOf).toBeNull();
-  });
-
-  /* Filing-spine design review, open item 9 (2026-10-08): the figure is
-     measured on each read and a project page stays open for hours, so the read
-     says when it measured. No figure, no time. */
-  it('says when the figure was measured', async () => {
-    queryMock
-      .mockResolvedValueOnce(detailRow())
-      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
+describe('GET /api/c2c/projects/:id: the same figure the card reads', () => {
+  it('reads the home figure, its state and when it was measured', async () => {
+    serve([section(P1, 'approved'), section(P1, 'todo'), section(P1, 'todo', 'market')]);
     const before = Date.now();
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ readiness: 50, readinessState: 'measured' });
     const at = Date.parse(res.body.readinessAsOf);
     expect(at).toBeGreaterThanOrEqual(before - 1000);
     expect(at).toBeLessThanOrEqual(Date.now());
+    const [sql] = queryMock.mock.calls.find(([s]) => isDetail(s))!;
+    expect(String(sql)).not.toMatch(/progress_percent/);
   });
 
-  it('a failed readiness read is null — not assessed — never the stored 0', async () => {
-    queryMock
-      .mockResolvedValueOnce(detailRow())
-      .mockRejectedValueOnce(Object.assign(new Error('relation "c2c_documents" does not exist'), { code: '42P01' }));
+  it('agrees with the list for the same program', async () => {
+    serve([section(P1, 'approved'), section(P1, 'locked'), section(P1, 'todo'), section(P1, 'todo', 'market')]);
+    const list = await request(app(7)).get('/api/c2c/projects');
+    const detail = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    const card = list.body.data.find((p: { id: string }) => p.id === P1);
+    expect({ readiness: detail.body.readiness, readinessState: detail.body.readinessState })
+      .toEqual({ readiness: card.readiness, readinessState: card.readinessState });
+  });
+
+  it('no governed sections: no figure, no time, and the state says why', async () => {
+    serve([]);
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    expect(res.body).toMatchObject({ readiness: null, readinessState: 'no_sections', readinessAsOf: null });
+  });
+
+  it('a failed read: the page still loads, the figure is unavailable with the reason, never the stored 0', async () => {
+    serve(connectionReset());
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
     expect(res.status).toBe(200);
-    expect(res.body.readiness).toBeNull();
-    expect(res.body.readinessAsOf).toBeNull();
+    expect(res.body).toMatchObject({
+      readiness: null, readinessState: 'unavailable', readinessReason: 'The governed sections could not be read.', readinessAsOf: null,
+    });
   });
 
-  it('scopes the aggregate to this program and the caller org', async () => {
-    queryMock.mockResolvedValueOnce(detailRow()).mockResolvedValueOnce({ rows: [] });
+  it('scopes the read to this program and the caller’s organization', async () => {
+    serve([]);
     await request(app(7)).get(`/api/c2c/projects/${P1}`);
-    const [sql, params] = queryMock.mock.calls[1];
-    expect(sql).toMatch(/FROM c2c_documents d/);
+    const [, params] = queryMock.mock.calls.find(([s]) => isSections(s))!;
     expect(params).toEqual([[P1], 7]);
   });
 });

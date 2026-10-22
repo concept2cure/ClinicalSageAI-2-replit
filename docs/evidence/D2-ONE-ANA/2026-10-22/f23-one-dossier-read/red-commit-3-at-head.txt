@@ -1,0 +1,30 @@
+# F23 (3/9) red at head 55b37595a0: the list, detail and create read the pooled readinessByProject
+## server/routes/c2c/__tests__/projects-readiness.test.ts (rewritten)
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > is the share of the home filing’s sections approved or locked, with its state 31ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > a market added to the project does not move the home figure (at head the two were pooled: 25) 6ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > asks only about the projects on this page, in the caller’s organization 4ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > never reads the stored progress_percent 5ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > an unprovisioned section store: the list still answers, each figure unavailable with the reason 6ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > any other failure: the list still answers, each figure unavailable, never 0 and never "no sections" 4ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > reads the home figure, its state and when it was measured 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > agrees with the list for the same program 7ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > no governed sections: no figure, no time, and the state says why 4ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > a failed read: the page still loads, the figure is unavailable with the reason, never the stored 0 3ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > scopes the read to this program and the caller’s organization 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  8 failed | 3 passed (11)
+
+## client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx (4 cases added)
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 152ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program with a recorded blocker shows that blocker, not the no-cause line 51ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 331ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 25ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > a measured 0 draws its empty bar; no sections and an unavailable figure draw none 31ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > an unavailable figure says so, and why, never "not measured" 23ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the list view draws the same bars 124ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the portfolio mean says how many programs it covers when some are not measured 26ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)

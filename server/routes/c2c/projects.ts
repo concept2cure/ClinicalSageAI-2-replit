@@ -22,7 +22,7 @@ import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
-import { readDossier } from '../../services/c2c/dossier-read.js';
+import { readDossier, readDossierFigures, type DossierFigure } from '../../services/c2c/dossier-read.js';
 import { requestPgClient } from '../../db/requestDb';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import type { PoolClient } from 'pg';
@@ -49,7 +49,7 @@ import {
   filingTypesForView,
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
-import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
+import { sectionHasContentSql } from '../../services/c2c/section-content.js';
 import { workstreamSqlCase, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
@@ -322,71 +322,43 @@ function send404(res: Response) {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const READ_FAILED_REASON = 'The governed sections could not be read.';
+const unread = (): DossierFigure => ({ state: 'unavailable', pct: null, reason: READ_FAILED_REASON });
+
 /**
- * Real readiness for a set of projects: the share of each project's governed
- * sections that the filing has approved or locked.
+ * Each project's dossier readiness: the home filing's figure from
+ * server/services/c2c/dossier-read.ts, the figure Project home's card prints
+ * (FILING_SPINE F23). The list, the detail and the create read it here, so a
+ * program reads the same on its card, its page and its create response.
  *
- * ── Why this exists ───────────────────────────────────────────────────────────
- * The list used to report `COALESCE(p.progress_percent, 0) AS readiness`.
- * `regulatory_programs.progress_percent` is written exactly ONCE — as the
- * literal `0` in this file's own INSERT — and no UPDATE of that column exists
- * anywhere in server/. So every project a customer created reported 0% forever.
- * Draft and approve an entire IND and the card still read 0%, while the
- * documents inside it carried a genuinely maintained number.
+ * It replaces `readinessByProject`, which counted approved or locked sections
+ * over every document of the project, the home filing and its added markets
+ * pooled: adding EMA's MAA lowered an FDA NDA's figure, and the card disagreed
+ * with Project home's own card. Before that the list read
+ * `regulatory_programs.progress_percent`, written once as 0 and never updated;
+ * that column is read nowhere now.
  *
- * A figure that looks measured and can never move is worse than no figure: it
- * reads as "no progress" rather than as "not computed".
- *
- * ── The definition is the document one, one level up ──────────────────────────
- * c2c_documents.readiness is maintained by c2c_recompute_document_readiness()
- * as the share of that document's sections which are approved or locked. This
- * aggregates the same predicate across all of a project's governed documents,
- * so a project is measured exactly the way its documents are, weighted by how
- * many sections each actually has. The status list comes from the single
- * constant, so it cannot drift from the trigger.
- *
- * ── Separate query, on purpose ────────────────────────────────────────────────
- * Folding this into the list SELECT would make the projects list — the primary
- * surface — depend on c2c_documents existing. The vault route already fails
- * closed on 42P01 for exactly that store, so its absence is a real state in
- * this codebase, not a hypothetical. Keeping it separate means a database
- * without the phase-9 schema still gets its project list.
- *
- * On that failure it answers null, not an empty map: "could not measure" and
- * "measured, nothing approved" are different answers. The list keeps the stored
- * value on null — not a good answer, it is the same 0, but it is the
- * pre-existing one and it is logged. The detail read reports null, which
- * ProjectHome renders as no figure.
+ * A store this environment has not provisioned is answered by the service as
+ * 'unavailable'. Any other failure is logged here and each figure is
+ * 'unavailable' with the reason: the list is the primary surface and still
+ * answers, and a figure that could not be read is shown as such, never as 0
+ * and never as "no sections".
  */
-async function readinessByProject(
-  projectIds: string[],
-  orgId: number,
-): Promise<Map<string, number> | null> {
-  const out = new Map<string, number>();
-  if (projectIds.length === 0) return out;
+async function homeFigures(projectIds: string[], orgId: number): Promise<Map<string, DossierFigure>> {
   try {
-    const { rows } = await pool.query(
-      `SELECT d.project_id::text AS project_id,
-              COALESCE(ROUND(100.0
-                * COUNT(*) FILTER (WHERE s.status IN (${completeStatusSqlList()}))
-                / NULLIF(COUNT(*), 0))::integer, 0) AS readiness
-         FROM c2c_documents d
-         JOIN c2c_document_sections s ON s.document_id = d.id
-        WHERE d.project_id = ANY($1::uuid[]) AND d.org_id = $2
-        GROUP BY d.project_id`,
-      [projectIds, orgId],
-    );
-    for (const r of rows as Array<{ project_id: string; readiness: number }>) {
-      out.set(r.project_id, Number(r.readiness));
-    }
+    return await readDossierFigures(pool, orgId, projectIds);
   } catch (err) {
-    logger.warn('Governed readiness unavailable; project cards keep their stored value', {
+    logger.warn('Dossier readiness could not be read; each figure is unavailable', {
       err: err instanceof Error ? err.message : String(err),
       code: (err as { code?: string })?.code,
     });
-    return null;
+    return new Map(projectIds.map((id) => [id, unread()]));
   }
-  return out;
+}
+
+/** A figure as a program row carries it: the share, its state, and why there is none. */
+function readinessFields(f: DossierFigure): { readiness: number | null; readinessState: DossierFigure['state']; readinessReason?: string } {
+  return { readiness: f.pct, readinessState: f.state, ...(f.state === 'unavailable' ? { readinessReason: f.reason } : {}) };
 }
 
 /**
@@ -544,36 +516,41 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
 /**
  * The detail row for one program in one organization, or null.
  *
- * `readiness` is the figure the list reports for the same program
- * (readinessByProject), so a program reads the same on its card and on its own
- * page. It used to return the raw `progress_percent` — written once as 0 and
- * never updated — which ProjectHome drew as "Dossier readiness 0%" and told AnA,
- * while the card beside it showed the real share. `progress_percent` is left
- * out of the projection: a column nothing maintains is not offered to a reader.
- * Null when the aggregate could not be read: not assessed, never 0.
+ * `readiness`, `readinessState` and `readinessReason` are the figure the list
+ * reports for the same program (homeFigures), so a program reads the same on
+ * its card and on its own page. `progress_percent` is left out of the
+ * projection: a column nothing maintains is not offered to a reader.
  * `readinessAsOf` is when this read measured it, null with no figure.
  */
 async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
   const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
   if (!rows.length) return null;
-  const measured = await readinessByProject([id], orgId);
-  const readiness = measured?.get(id) ?? null;
+  const figure = (await homeFigures([id], orgId)).get(id) ?? unread();
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness,
+    ...readinessFields(figure),
     // When it was measured: on this read, and a project page stays open for
     // hours. No figure, no time (filing-spine design review, open item 9).
-    readinessAsOf: readiness === null ? null : new Date().toISOString(),
+    readinessAsOf: figure.state === 'measured' ? new Date().toISOString() : null,
   };
+}
+
+/** The figure a detail read measured, for the card a create returns, so the
+ *  two agree. No detail read, no figure read. */
+function readinessOfDetail(program: Record<string, unknown> | null): ReturnType<typeof readinessFields> {
+  if (!program) return readinessFields(unread());
+  const { readiness, readinessState, readinessReason } = program as ReturnType<typeof readinessFields>;
+  return { readiness, readinessState, ...(readinessReason ? { readinessReason } : {}) };
 }
 
 // ── GET /api/c2c/projects ─────────────────────────────────────────────────────
 //
 // Portfolio list shaped to the v2 Projects surface's display contract
-// ({ id, title, ws, code, stage, readiness, status, lead, blocker, due,
-// activity }) — every field projected from a real regulatory_programs column
-// (progress_percent → readiness, phase → stage, target_submission_date → due,
-// lead_user_id → lead). Fails closed to an empty envelope when the store is
+// ({ id, title, ws, code, stage, readiness, readinessState, status, lead,
+// blocker, due, activity }) — every field projected from a real
+// regulatory_programs column (phase → stage, target_submission_date → due,
+// lead_user_id → lead), except readiness, which is the home filing's measured
+// figure (homeFigures). Fails closed to an empty envelope when the store is
 // not provisioned.
 //
 // Paged: ?limit= (default 50, max 200) and ?offset=. The read previously had no
@@ -606,7 +583,6 @@ router.get('/', async (req: Request, res: Response) => {
               ${WS_CASE}                                            AS ws,
               COALESCE(p.code, '—')                                 AS code,
               initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
-              COALESCE(p.progress_percent, 0)                       AS readiness,
               p.status                                              AS status,
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
@@ -627,23 +603,14 @@ router.get('/', async (req: Request, res: Response) => {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
 
-    // Replace the stored progress_percent — which nothing has ever updated —
-    // with the share of each project's governed sections the filing has
-    // approved. Only for the page being returned, so the aggregate is bounded
-    // by the page size rather than by the org's project count.
-    const real = await readinessByProject(
-      (page as Array<{ id: string }>).map((p) => p.id),
-      orgId,
-    );
-    /* A measurement that failed, or a program with no governed sections to
-       measure, is no figure: null, which the card renders as "not measured".
-       Both used to fall back to the stored progress_percent 0 — a failed read
-       rendered as a measured "0% ready", which the note above admits was "not
-       a good answer". A share over no sections is undefined, as a mean over
-       no programs is. (A program with its dossier spine and nothing approved
-       is a real, measured 0 and still reads 0%.) */
-    for (const p of page as Array<{ id: string; readiness: number | null }>) {
-      p.readiness = real?.get(p.id) ?? null;
+    // Each card's dossier readiness, for the page being returned only, so the
+    // read is bounded by the page size rather than by the org's project count.
+    // A program with nothing to count is 'no_sections' and one whose sections
+    // could not be read is 'unavailable', each with a null figure; a program
+    // with its sections and nothing approved is a measured 0.
+    const figures = await homeFigures((page as Array<{ id: string }>).map((p) => p.id), orgId);
+    for (const p of page as Array<Record<string, unknown> & { id: string }>) {
+      Object.assign(p, readinessFields(figures.get(p.id) ?? unread()));
     }
 
     await requireProgramScopeStillCurrent(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined }, scope);
@@ -1075,7 +1042,6 @@ router.post('/', async (req: Request, res: Response) => {
               ${WS_CASE}                                            AS ws,
               COALESCE(p.code, '—')                                 AS code,
               initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
-              COALESCE(p.progress_percent, 0)                       AS readiness,
               p.status                                              AS status,
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
@@ -1096,7 +1062,7 @@ router.post('/', async (req: Request, res: Response) => {
     // return a field the read then omits.
     const program = await readProgramDetail(newId, orgId);
     return res.status(201).json({
-      data: rows[0],
+      data: rows[0] ? { ...rows[0], ...readinessOfDetail(program) } : rows[0],
       program,
       meta: {
         created: true,
