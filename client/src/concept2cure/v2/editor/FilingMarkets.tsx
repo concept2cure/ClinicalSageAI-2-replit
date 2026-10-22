@@ -121,12 +121,14 @@ export function useCreateMarketCopy(deps: {
   programId: string | null;
   fireToast: (msg: string, kind?: 'error') => void;
   openDocument: (docId: string) => Promise<void>;
+  /** Move focus to the opened document: the button that was pressed is gone. */
+  focusOpened: () => void;
 }) {
   const depsRef = useRef(deps);
   depsRef.current = deps;
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const create = useCallback(async (market: FilingMarket) => {
-    const { programId, fireToast, openDocument } = depsRef.current;
+    const { programId, fireToast, openDocument, focusOpened } = depsRef.current;
     if (!programId) return;
     setCreatingId(market.id);
     try {
@@ -141,6 +143,7 @@ export function useCreateMarketCopy(deps: {
       }
       fireToast(`Document created · ${market.title}, bound to the ${market.agency.toUpperCase()} filing.`);
       await openDocument(String(id));
+      focusOpened();
     } catch (err) {
       const why = err instanceof ApiRequestError ? err.message : redactInternals(err instanceof Error ? err.message : '', 'the server could not be reached');
       fireToast(`The ${market.agency.toUpperCase()} document was not created — ${why}`, 'error');
