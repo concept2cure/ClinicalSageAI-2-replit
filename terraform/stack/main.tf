@@ -49,18 +49,19 @@ module "ecr" {
 # verbatim, and the app reads DATABASE_URL as a connection string, so no task
 # could connect.
 #
-#   DATABASE_URL      the owner role (c2c_admin). Migrations run as it, and so
-#                     does the API at boot: ensureCoreTables / ensureAuthTables
-#                     run DDL on it, and server/routes/tenants-simple.ts serves
-#                     routes through a client on it, outside RLS. A known
-#                     exposure (docs/evidence/W2/2026-09-23b/README.md).
-#   APP_DATABASE_URL  app_service, LOGIN NOSUPERUSER NOBYPASSRLS. The runtime
-#                     connects as it; under RLS_ENFORCE=on the boot posture probe
-#                     refuses a superuser or BYPASSRLS role.
+#   DATABASE_URL      the owner role (c2c_admin). Migrations run as it, in the
+#                     one-off database task (local.owner_secrets below), and
+#                     nothing else does. Until MR-03 Stage 3 (OPS-16) the API
+#                     carried it too: the boot ran DDL on it and /api/tenants
+#                     served through a client on it, outside RLS. The boot now
+#                     only verifies the schema, as app_service, and the API
+#                     task and its execution role hold neither owner secret.
+#   APP_DATABASE_URL  app_service, LOGIN NOSUPERUSER NOBYPASSRLS. The API
+#                     connects as it and as nothing else; under RLS_ENFORCE=on
+#                     the boot posture probe refuses a superuser or BYPASSRLS role.
 #
 # deploy-migrate mints app_service from APP_SERVICE_DB_PASSWORD
-# (scripts/db/provision-app-role.mjs), and the migrate task is derived from the
-# API task definition, so that password rides in the API task's secrets too.
+# (scripts/db/provision-app-role.mjs), so that password is an owner secret too.
 # The mint works as the RDS master (not a superuser) and sends the server only
 # the password's SCRAM verifier: RDS logs DDL to CloudWatch.
 #
@@ -330,10 +331,10 @@ locals {
   # APP_URL and ALLOWED_ORIGINS cannot disagree with the domain browsers use.
   app_origin = "https://${var.domain_aliases[0]}"
 
-  # What every container of this image needs to boot. The API is the only one
-  # (no worker: P-10, amended 2026-10-22); the API adds its own two below.
+  # What every container of this image needs to boot: the API, and the one-off
+  # database task (no worker: P-10, amended 2026-10-22). The API adds its setup
+  # token below; the database task adds the owner's secrets.
   boot_secrets = concat([
-    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
     { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
     { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
     { name = "REFRESH_TOKEN_SECRET", value_from = module.secrets.secret_arns["refresh_token_secret"] },
@@ -350,6 +351,14 @@ locals {
     # Present exactly when the secret is: only when a tenant elected OpenAI.
     for k in keys(local.openai_secret) : { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns[k] }
   ])
+
+  # The database owner's credential and the password deploy-migrate mints
+  # app_service with. Only the one-off database task carries them, and only its
+  # execution role can read them (modules/ecs-fargate; MR-03 OPS-16).
+  owner_secrets = [
+    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
+    { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
+  ]
 }
 
 # Optional error reporting (server/utils/sentry.ts): absent rather than empty
@@ -429,8 +438,7 @@ module "ecs" {
   # The request-count scaling policy's metric: this ALB, this target group.
   api_request_count_resource_label = "${module.alb.alb_arn_suffix}/${module.alb.api_target_group_arn_suffix}"
 
-  secret_arns = module.secrets.secret_arns_list
-  # database_keys.tf: the execution role decrypts the secrets through this key.
+  # database_keys.tf: the execution roles decrypt the secrets through this key.
   secrets_kms_key_arn = aws_kms_key.secrets.arn
   # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
   # role publishes it. A task that could write it could rewrite the site every
@@ -445,15 +453,15 @@ module "ecs" {
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this
   # renders is the one it accepts (tests/boot_contract.tftest.hcl reads the
-  # preflight's list and checks it against the container). The API adds
-  # APP_SERVICE_DB_PASSWORD: the migrate task is cloned from its definition and
-  # re-aligns app_service from it (provision-app-role.mjs sends only its SCRAM
-  # verifier). The API never mints; APP_DATABASE_URL already holds the password.
+  # preflight's list and checks it against the container). The preflight
+  # refuses an API container carrying an owner secret.
   api_secrets = concat(local.boot_secrets, [
-    { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
     # First-run setup (setup_token above). Only the API serves the route.
     { name = "SETUP_TOKEN", value_from = module.secrets.secret_arns["setup_token"] },
   ])
+  # deploy-migrate and the first provision: the API's boot secrets, so they
+  # verify the readiness contract as the API would boot, and the owner's.
+  migrate_secrets = concat(local.boot_secrets, local.owner_secrets)
 
   # No worker service (P-10, amended 2026-10-22 under NEW-1 of MR-03). It had
   # no command, so it booted a third API server outside the load balancer, and

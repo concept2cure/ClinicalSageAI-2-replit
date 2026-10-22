@@ -304,6 +304,13 @@ export function allowUnverifiedDbTls(): boolean {
 export interface EnsureCoreTablesOptions {
   /** Report what is missing and create nothing (the production boot). */
   verifyOnly?: boolean;
+  /**
+   * The non-production boot: when the owner URL (DATABASE_URL) is set, run on
+   * a standalone pool on it, so a developer's database can still be filled in,
+   * as when the boot passed that URL itself. Read here so server/startup never
+   * names the owner URL (MR-03 Stage 3). Ignored with verifyOnly.
+   */
+  ownerUrlWhenSet?: boolean;
 }
 
 export async function ensureCoreTables(
@@ -311,6 +318,8 @@ export async function ensureCoreTables(
   options: EnsureCoreTablesOptions = {},
 ): Promise<EnsureTablesResult> {
   const verifyOnly = options.verifyOnly === true;
+  const explicitUrl =
+    connectionString || (options.ownerUrlWhenSet && !verifyOnly ? process.env.DATABASE_URL : undefined);
   // Import cleanDatabaseUrl inline to avoid circular dependencies
   const cleanDatabaseUrl = (url: string | undefined): string | undefined => {
     if (!url) return url;
@@ -330,7 +339,7 @@ export async function ensureCoreTables(
   // The verify-only boot has only the runtime role's URL (APP_DATABASE_URL);
   // the owner URL is not in that process.
   const rawUrl =
-    connectionString ||
+    explicitUrl ||
     process.env.DATABASE_URL ||
     process.env.DATABASE_NEON_NEW_SECRET ||
     process.env.APP_DATABASE_URL;
@@ -364,7 +373,7 @@ export async function ensureCoreTables(
   let pool: Pool;
   let shouldEndPool = false;
 
-  if (isCliMode || connectionString) {
+  if (isCliMode || explicitUrl) {
     // CLI mode or explicit connectionString: create standalone pool
     pool = new Pool({
       connectionString: dbUrl,
