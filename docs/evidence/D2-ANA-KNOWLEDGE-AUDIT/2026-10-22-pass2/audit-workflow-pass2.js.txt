@@ -1,0 +1,56 @@
+export const meta = {
+  name: 'ana-knowledge-audit-2',
+  description: "Second pass: find remaining factual regulatory errors (incl. our own 2026-10-22 recall corrections) in AnA's interviews and auditors, adversarially verify each",
+  phases: [{ title: 'Find', detail: 'two finders (citations; timelines/requirements) per file group' }, { title: 'Verify', detail: 'two skeptics per deduplicated finding' }],
+}
+const FIND = { type: 'object', properties: { findings: { type: 'array', items: { type: 'object', properties: {
+  file: { type: 'string' }, line: { type: 'integer' }, quote: { type: 'string', description: 'the exact text as it appears in the file, verbatim, short enough to be unique' },
+  error: { type: 'string', description: 'what is factually wrong, specifically' },
+  correct: { type: 'string', description: 'the correct statement' },
+  severity: { type: 'string', enum: ['high', 'medium', 'low'] },
+  confidence: { type: 'string', enum: ['high', 'medium'] } },
+  required: ['file', 'line', 'quote', 'error', 'correct', 'severity', 'confidence'] } } }, required: ['findings'] }
+const VERDICT = { type: 'object', properties: { real: { type: 'boolean' }, why: { type: 'string' }, correctedText: { type: 'string' } }, required: ['real', 'why', 'correctedText'] }
+
+const COMMON = `You are a senior regulatory affairs expert (FDA drugs/biologics/devices, ICH, EU MDR/IVDR/CTR, EMA GVP) auditing the regulatory knowledge an AI assistant (AnA) serves to pharma, biotech, CRO and device clients. Today is 2026-10-22. Facts in force that you may rely on: FDA's QMSR amended 21 CFR Part 820 effective 2026-02-02, incorporating ISO 13485:2016 by reference (old QSR subsections 820.20/.30/.70 etc. no longer exist unless marked "formerly"); ICH E6(R3) is the current GCP guideline; ICH M12 replaced FDA's drug-interaction guidances; ICH E9(R1) is current.
+
+This is a SECOND pass. A first pass already corrected 322 errors in these files on 2026-10-22, and those corrections were made from model recall without access to the source texts (look for dated "2026-10-22" comments and corrected strings). Scrutinise those corrections as hard as everything else — a wrong correction is a finding.
+
+Read these files IN FULL (question flows / war-game auditors / helpers whose strings are shown to clients):
+FILES
+
+Report ONLY statements in client-facing strings (questions, guidance, help text, option labels, finding text, regulatory references) that are FACTUALLY WRONG and that you are confident about. Do NOT report style, wording, emphasis, missing nice-to-haves, code comments, or anything you are unsure of; if you are not sure, leave it out — a fabricated finding is worse than a missed one. Do NOT edit files. Cite line numbers and quote verbatim.`
+const LENS = {
+  citations: `${COMMON}\n\nYOUR FOCUS: citations. A CFR part/section/paragraph that does not exist or says something else; a statute section misattributed; an ICH/ISO/IEC/MDCG/MEDDEV/GVP section or annex number that does not exist or covers a different topic; a guidance cited by a wrong title or wrong year/status (draft vs final); a superseded document cited as current; a regulation attributed to the wrong jurisdiction.`,
+  substance: `${COMMON}\n\nYOUR FOCUS: substance. Wrong timelines and clocks (IND safety reports, 30-day IND review, PDUFA/MDUFA goal dates, 510(k)/PMA review clocks, MDR/vigilance windows, annual reports, DSUR/PBRER periods, CTR/CTIS deadlines); wrong numbers, thresholds and limits (ICH Q3A/B/C/D, Q1A conditions, M7, E1 exposure); something stated as required that is not, or not required that is; wrong classification rules or pathway eligibility; wrong definitions.`,
+}
+const groups = args.groups
+const found = await pipeline(
+  groups.flatMap((files, gi) => ['citations', 'substance'].map((lens) => ({ files, gi, lens }))),
+  (g) => agent(LENS[g.lens].replace('FILES', g.files.join('\n')), { label: `find-${g.gi + 1}-${g.lens}`, phase: 'Find', schema: FIND }),
+)
+// Deduplicate across the two lenses by file + normalised quote.
+const seen = new Set()
+const unique = []
+for (const r of found.filter(Boolean)) {
+  for (const f of r.findings ?? []) {
+    const key = `${f.file}::${String(f.quote).replace(/\s+/g, ' ').trim().slice(0, 120)}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    unique.push(f)
+  }
+}
+log(`${unique.length} unique candidate findings from ${found.filter(Boolean).length} finders`)
+const verified = await parallel(unique.map((f, j) => () =>
+  parallel(['regulation', 'code'].map((lens) => () => agent(
+    lens === 'regulation'
+      ? `Adversarially verify a claimed regulatory error. Try to REFUTE it; default to real=false if you are not confident it is a genuine factual error a regulator would recognise. Today is 2026-10-22 (QMSR in force since 2026-02-02; ICH E6(R3) current). Claim: in ${f.file}:${f.line} the text "${f.quote}" is wrong because: ${f.error}. Proposed correct statement: ${f.correct}. Judge on regulatory substance only. If real, give correctedText: the exact replacement wording for the quoted text, keeping its meaning and style; do NOT invent paragraph numbers, titles or years you are unsure of — prefer citing the Part, statute section or guidance topic.`
+      : `Read ${f.file} around line ${f.line} (read-only). Confirm the quoted text "${f.quote}" really exists there and is shown to clients (a string, not a code comment or test), and that the claimed error ("${f.error}") reads the text correctly in its context (e.g. not already qualified as "formerly", not about a different section, not a machine key). real=true only if both hold. correctedText: the replacement for the quoted text if real.`,
+    { label: `verify-${j + 1}-${lens}`, phase: 'Verify', schema: VERDICT })))
+    .then((vs) => ({ ...f, verdicts: vs, confirmed: vs.filter(Boolean).length === 2 && vs.filter(Boolean).every((v) => v.real) }))))
+const all = verified.filter(Boolean)
+return {
+  total: all.length,
+  confirmed: all.filter((f) => f.confirmed),
+  rejected: all.filter((f) => !f.confirmed).map((f) => ({ file: f.file, line: f.line, quote: f.quote, why: (f.verdicts || []).filter(Boolean).map((v) => v.why).join(' | ') })),
+}
