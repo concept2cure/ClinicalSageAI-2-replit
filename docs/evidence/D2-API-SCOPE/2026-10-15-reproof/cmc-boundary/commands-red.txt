@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'ich_compliance' asks the composition boundary first > relays the refusal for a program outside it, and runs nothing 12ms
+   → expected { success: true, …(3) } to deeply equal { success: false, …(2) }
+ ✓ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'ich_compliance' asks the composition boundary first > runs its engine for a program inside it 1ms
+ × server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'control_strategy' asks the composition boundary first > relays the refusal for a program outside it, and runs nothing 2ms
+   → expected { success: true, …(3) } to deeply equal { success: false, …(2) }
+ ✓ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'control_strategy' asks the composition boundary first > runs its engine for a program inside it 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'ich_compliance' asks the composition boundary first > relays the refusal for a program outside it, and runs nothing
+AssertionError: expected { success: true, …(3) } to deeply equal { success: false, …(2) }
+
+- Expected
++ Received
+
+  {
+    "action": "ich_compliance",
+-   "message": "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
+-   "success": false,
++   "data": {
++     "counts": {
++       "fail": 0,
++       "pass": 0,
++       "warning": 0,
++     },
++     "findings": [],
++     "guidelineStatus": {},
++     "overallStatus": "compliant",
++   },
++   "message": "**ICH compliance:** **COMPLIANT**
++
++ Findings: 0 pass / 0 warnings / 0 fail
++
++ **Guideline status**
++ ",
++   "success": true,
+  }
+
+ ❯ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts:52:17
+     50|     assessProgramCompositionScope.mockResolvedValue(MAB);
+     51|     const out = await run();
+     52|     expect(out).toEqual({ success: false, action, message: MAB.message…
+       |                 ^
+     53|     expect(assessProgramCompositionScope).toHaveBeenCalledWith(ORG, P);
+     54|     expect(engine).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts > 'control_strategy' asks the composition boundary first > relays the refusal for a program outside it, and runs nothing
+AssertionError: expected { success: true, …(3) } to deeply equal { success: false, …(2) }
+
+- Expected
++ Received
+
+  {
+    "action": "control_strategy",
+-   "message": "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
+-   "success": false,
++   "data": {
++     "citations": [],
++     "controlElements": [],
++     "cpps": [],
++     "cqas": [],
++     "gaps": [],
++   },
++   "message": "**Control strategy (both)**
++
++ Control elements: 0
++
++
++ CQAs covered: 0  ·  CPPs covered: 0
++ Citations: 
++
++ No open gaps identified.",
++   "success": true,
+  }
+
+ ❯ server/services/ana-ri/__tests__/quality-engine-commands-composition-boundary.test.ts:52:17
+     50|     assessProgramCompositionScope.mockResolvedValue(MAB);
+     51|     const out = await run();
+     52|     expect(out).toEqual({ success: false, action, message: MAB.message…
+       |                 ^
+     53|     expect(assessProgramCompositionScope).toHaveBeenCalledWith(ORG, P);
+     54|     expect(engine).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  04:50:43
+   Duration  437ms (transform 107ms, setup 96ms, import 38ms, tests 20ms, environment 0ms)
+

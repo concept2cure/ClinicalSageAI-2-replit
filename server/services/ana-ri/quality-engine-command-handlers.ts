@@ -21,6 +21,26 @@
  */
 import type { CommandContext, CommandResult } from './command-types';
 
+/**
+ * The composition boundary (decision P-28: small-molecule Module 3 for a US
+ * IND), asked before an engine states CMC content for a program; its refusal,
+ * as the command's answer, so the assistant relays the reason and where the
+ * program's quality content is authored instead. The ICH check judged a
+ * monoclonal antibody on Q3A(R2) impurity bases, and the control strategy gave
+ * it Q6A small-molecule release defaults (2026-10-15 launch-boundary re-proof,
+ * docs/evidence/D2-API-SCOPE/2026-10-15-reproof/cmc-boundary/). The same
+ * decision the CMC routes ask.
+ */
+async function refusedAtCompositionBoundary(
+  action: string,
+  orgId: number,
+  projectId: string,
+): Promise<CommandResult | null> {
+  const { assessProgramCompositionScope } = await import('../cmc/module3-compile');
+  const refusal = await assessProgramCompositionScope(orgId, projectId);
+  return refusal ? { success: false, action, message: refusal.message } : null;
+}
+
 // ── ich_compliance ────────────────────────────────────────────────────────────
 //
 // Runs the deterministic ICH compliance check for the active CMC project
@@ -37,6 +57,8 @@ export async function ichCompliance(
   if (!projectId) {
     return { success: false, action: 'ich_compliance', message: 'Project ID required' };
   }
+  const refused = await refusedAtCompositionBoundary('ich_compliance', orgId, projectId);
+  if (refused) return refused;
   const { runIchComplianceCheck } = await import('../cmc/ich-compliance-checker');
   const report = await runIchComplianceCheck(orgId, projectId);
 
@@ -92,6 +114,8 @@ export async function controlStrategy(
     return { success: false, action: 'control_strategy', message: 'Project ID required' };
   }
   const scope = (params.scope as 'drug_substance' | 'drug_product' | 'both') || 'both';
+  const refused = await refusedAtCompositionBoundary('control_strategy', orgId, projectId);
+  if (refused) return refused;
   const { generateControlStrategy } = await import('../cmc/control-strategy-generator');
   const strategy = await generateControlStrategy(orgId, projectId, scope);
 
