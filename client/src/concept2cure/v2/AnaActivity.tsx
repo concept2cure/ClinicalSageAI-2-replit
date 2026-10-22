@@ -178,7 +178,7 @@ export function hasReportableWork(a: AnaActivityProps): boolean {
       a.draftTitle ||
       // A turn stopped short has something to say even with nothing else:
       // no host may drop it as a plain answer.
-      stoppedNoteText(a.stoppedReason, a.rounds, a.pendingSteps, a.interruptedWithPartialResponse) ||
+      stoppedNoteText(a.stoppedReason, a.rounds, a.pendingSteps, a.interruptedWithPartialResponse, a.runPolicy) ||
       replacedNoteText(a.replacedSteps));
 }
 
@@ -440,6 +440,7 @@ export function AnaActivity({
   stoppedReason,
   interruptedWithPartialResponse,
   rounds,
+  runPolicy,
   pendingSteps,
   replacedSteps,
   onContinue,
@@ -506,7 +507,7 @@ export function AnaActivity({
      guard stopped her, and a reader must not have to open the record to learn
      that. Continue is offered only where the host offers it (the latest
      settled turn) and only for a stop that picking up again can help. */
-  const stoppedText = streaming ? null : stoppedNoteText(stoppedReason, rounds, pendingSteps, interruptedWithPartialResponse);
+  const stoppedText = streaming ? null : stoppedNoteText(stoppedReason, rounds, pendingSteps, interruptedWithPartialResponse, runPolicy);
   /* Continue unmounts in the render after its own click: the host's send makes
      a new turn the latest, and this one stops being offered it. Focus on a
      removed button falls to <body>, so it moves first to the note the button

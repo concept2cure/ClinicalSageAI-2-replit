@@ -1,0 +1,13 @@
+# r-standing-cause-collapsed: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-standing.test.ts  -t organisation unavailable|membership ended
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a suspended, read-only, inactive or deleting organisation: session_ended, the organisation unavailable 19ms
+   → expected { reason: 'session_ended', …(1) } to deeply equal { reason: 'session_ended', …(1) }
+ × server/services/ana/__tests__/run-standing.test.ts > runStanding > a membership that is gone, or cannot be read: session_ended, the membership ended 2ms
+   → expected { reason: 'session_ended', …(1) } to deeply equal { reason: 'session_ended', …(1) }
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > a suspended, read-only, inactive or deleting organisation: session_ended, the organisation unavailable
+AssertionError: expected { reason: 'session_ended', …(1) } to deeply equal { reason: 'session_ended', …(1) }
+ FAIL  server/services/ana/__tests__/run-standing.test.ts > runStanding > a membership that is gone, or cannot be read: session_ended, the membership ended
+AssertionError: expected { reason: 'session_ended', …(1) } to deeply equal { reason: 'session_ended', …(1) }

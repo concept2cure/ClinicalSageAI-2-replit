@@ -1,0 +1,9 @@
+# r-notice-never-expires: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-notice.test.ts  -t sendRunNotice
+ × server/services/ana/__tests__/run-notice.test.ts > sendRunNotice (DT3 review, DP-84) > the notice expires, like the turn it points at, and carries no question text 5ms
+   → expected undefined to be an instance of Date
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-notice.test.ts > sendRunNotice (DT3 review, DP-84) > the notice expires, like the turn it points at, and carries no question text
+AssertionError: expected undefined to be an instance of Date

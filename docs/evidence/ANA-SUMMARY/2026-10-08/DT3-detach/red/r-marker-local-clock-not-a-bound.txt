@@ -1,0 +1,17 @@
+# r-marker-local-clock-not-a-bound: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx  -t workingMarkerLine
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > "Working" while someone watches; when it has stopped by, once nobody does 9ms
+   → expected 'Working · stops by 14:31 if nobody op…' to be 'Working · stops by 14:33 UTC if nobod…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > the same instant, in UTC, whatever zone this device is in (DT3 review 4.7) 2ms
+   → expected 'Working · stops by 07:31 if nobody op…' to be 'Working · stops by 14:33 UTC if nobod…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > a run waiting on its person is "Waiting for you", never "Working" (DT3 review 2.3) 1ms
+   → expected 'Waiting for you · stops by 14:31 if n…' to be 'Waiting for you · stops by 14:33 UTC …' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > "Working" while someone watches; when it has stopped by, once nobody does
+AssertionError: expected 'Working · stops by 14:31 if nobody op…' to be 'Working · stops by 14:33 UTC if nobod…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > the same instant, in UTC, whatever zone this device is in (DT3 review 4.7)
+AssertionError: expected 'Working · stops by 07:31 if nobody op…' to be 'Working · stops by 14:33 UTC if nobod…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > a run waiting on its person is "Waiting for you", never "Working" (DT3 review 2.3)
+AssertionError: expected 'Waiting for you · stops by 14:31 if n…' to be 'Waiting for you · stops by 14:33 UTC …' // Object.is equality

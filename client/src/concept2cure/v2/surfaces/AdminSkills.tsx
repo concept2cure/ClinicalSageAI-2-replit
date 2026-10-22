@@ -145,7 +145,6 @@ export function AdminSkills() {
 interface LiveRead<T> {
   data: T | null | undefined;
   loading: boolean;
-  /* Optional, as useLiveData's DataState has it: required here, the library read did not typecheck. */
   error?: unknown;
 }
 

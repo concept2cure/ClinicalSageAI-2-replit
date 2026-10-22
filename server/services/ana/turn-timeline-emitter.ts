@@ -36,6 +36,7 @@
 
 import type { StepFact, StepSource } from '@shared/ana/step-verbs';
 import type { StepEvent, StepRecordTimes as RecordedStepTimes, StepStatus, TimelineEvent, TurnEndOutcome } from '@shared/ana/turn-timeline';
+import { notAuthorisedStep } from '@shared/ana/turn-timeline';
 import { TaskIds, taskChanges, type PlanStep } from '@shared/ana/plan-diff';
 import type { GatewayServerToolUse } from '../ai-gateway/types.js';
 import { presentStep, stepMessage } from './step-presentation.js';
@@ -74,6 +75,8 @@ interface Shown {
 export interface FinishedStep extends Shown {
   status: StepStatus;
   heldBack: boolean;
+  /** Held back because the person asked for a read-only answer: not "not authorised". */
+  readOnly?: boolean;
   facts?: StepFact[];
   message?: string;
   usedModel?: boolean | null;
@@ -95,6 +98,8 @@ export class TurnTimeline {
   private pendingNote = '';
   private plan: PlanStep[] = [];
   private readonly tasks = new TaskIds();
+  /** Steps a person did not authorise (turn-timeline.ts notAuthorisedStep), for the closing notification (AnA detach §2.7). */
+  private heldBackSteps = 0;
 
   constructor(private readonly sink: TimelineSink) {}
 
@@ -173,6 +178,7 @@ export class TurnTimeline {
 
   /** A step that ended; returns what its record adds (/4). */
   finished(round: number, call: StepCall, f: FinishedStep): RecordedStepTimes {
+    if (notAuthorisedStep(f)) this.heldBackSteps += 1;
     const e = this.step(round, call, {
       phase: 'finished',
       label: f.label,
@@ -180,6 +186,7 @@ export class TurnTimeline {
       preview: f.preview,
       status: f.status,
       heldBack: f.heldBack,
+      ...(f.readOnly ? { readOnly: true } : {}),
       ...(f.message ? { message: f.message } : {}),
       usedModel: f.usedModel ?? null,
       ms: f.ms,
@@ -194,6 +201,15 @@ export class TurnTimeline {
       ...(f.message ? { message: f.message } : {}),
       usedModel: f.usedModel ?? null,
     };
+  }
+
+  /**
+   * How many steps a person did not authorise and that did not run, by the
+   * same rule the Summary counts with (notAuthorisedStep): "{n} step(s) were
+   * not authorised and did not run." (AnA detach §2.7, §5.5).
+   */
+  heldBackCount(): number {
+    return this.heldBackSteps;
   }
 
   /** A step she chose that the turn stopped before it ran (a Manual hold, a stop). */

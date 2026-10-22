@@ -1,0 +1,42 @@
+head-stream-and-run-control: exit 1
+head-hooks-reads-notices: exit 1
+head-client: exit 1
+m-lease-released-on-close: exit 1
+m-stream-does-not-retain: exit 1
+m-detach-settles-first: exit 1
+m-detach-without-conversation: exit 1
+m-no-wait-for-the-thread: exit 1
+m-failed-does-not-abort: exit 1
+m-abort-carries-no-reason: exit 1
+m-shutdown-writes-cancelled: exit 1
+m-step-credited-to-person: exit 1
+m-cancelled-hold-reads-the-row: exit 1
+m-ended-hold-carries-on: exit 1
+m-ended-hold-read-as-a-stop: exit 1
+m-hold-names-refused-steps: exit 1
+m-hold-not-written: exit 1
+m-unattended-never-due: exit 1
+m-no-round-standing-check: exit 1
+m-sign-out-everywhere-stops-nothing: exit 1
+m-scim-delete-stops-nothing: exit 1
+m-member-removal-stops-nothing: exit 1
+m-purge-does-not-stop-runs-first: exit 1
+m-shutdown-ends-no-runs: exit 1
+m-admin-cancel-refused: exit 1
+m-admin-audit-outcome-discarded: exit 1
+m-no-watched-stamp: exit 1
+m-notice-when-watched: exit 1
+m-failed-turn-notice-says-finished: exit 1
+m-notice-names-no-record: exit 1
+m-resolver-has-no-conversation: exit 1
+m-client-opens-no-conversation: exit 1
+m-read-only-counted-not-authorised: exit 1
+m-attached-row-stop-read-as-error: exit 1
+m-client-drops-row-reasons: exit 1
+m-transcript-has-no-row-note: exit 1
+m-timeout-shows-stopped-responding: exit 1
+m-admin-stop-hidden: exit 1
+m-no-working-marker: exit 1
+exit=0
+md5 restore check: OK
+(m-transcript-has-no-row-note rerun after the complexity refactor of stoppedNoteText: exit 1; md5 restore check OK)

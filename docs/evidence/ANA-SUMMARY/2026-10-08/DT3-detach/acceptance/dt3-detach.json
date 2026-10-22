@@ -1,0 +1,763 @@
+{
+  "checks": {
+    "A_detachedNotStopped": true,
+    "A_finishedAndSealed": true,
+    "A_noLostConnection": true,
+    "B_rejoined": true,
+    "B_finished": true,
+    "B_noLostConnection": true,
+    "C_adminHadStopOnly": true,
+    "C_rowSaysAdmin": true,
+    "C_askerReadsAdminLine": true,
+    "E_holdWrittenForFollower": true,
+    "E_phoneShowsHoldButtons": true,
+    "E_detachedAtHold": true,
+    "E_stoppedFromPhone": true,
+    "F_noticeNamesConversation": true,
+    "F_openedTheConversation": true,
+    "G_liveDriveStopsOnClose": true,
+    "G_phoneReadsLostConnection": true,
+    "D_sigtermAt": "2026-10-22T06:55:40.317Z",
+    "D_rowSaysShutdown": true,
+    "D_phoneReadsRestart": true,
+    "D_continueOffered": true
+  },
+  "views": {
+    "A_desktopBeforeClose": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792651953383_8si7sctws",
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Working Pause Stop",
+      "stripButtons": [
+        "Pause",
+        "Stop"
+      ],
+      "buttons": [
+        "Stop"
+      ],
+      "lastTurn": "✻ Planned 4 steps I will take this in four parts. Create Evidence Memo Create Risk Memo Rewrite Section Create Strategy Note",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "A_phoneFollowing": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792651953383_8si7sctws",
+      "phase": [
+        "Working · step 2 · 16s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Working Pause Stop",
+      "stripButtons": [
+        "Pause",
+        "Stop"
+      ],
+      "buttons": [
+        "Summary",
+        "Stop"
+      ],
+      "lastTurn": "✻ Working · step 2 · 16s Plan · 4 steps Working · step 2 · 16s Summary",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "A_phoneEnd": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792651953383_8si7sctws",
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Recorded e2e2ff40feb6"
+      ],
+      "lastTurn": "✻ 2 steps did not complete 4 tools run · 2 failed Summary I will take this in four parts. Searching the Vault for the stability reports. Reading the two archived reports. Marking the last part done. The archived reports could not be read, so the shelf-life claims come from the stability protocol only. No specific claims to check against this turn's sources",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "B_afterReload": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792651990180_4dgrprhi1",
+      "phase": [
+        "Working · step 1 · 13s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Working Pause Stop",
+      "stripButtons": [
+        "Pause",
+        "Stop"
+      ],
+      "buttons": [
+        "Summary",
+        "Stop"
+      ],
+      "lastTurn": "✻ Working · step 1 · 13s Plan · 4 steps Working · step 1 · 13s Summary",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "B_end": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792651990180_4dgrprhi1",
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Recorded 84d356b324c8"
+      ],
+      "lastTurn": "✻ 2 steps did not complete 4 tools run · 2 failed Summary I will take this in four parts. Searching the Vault for the stability reports. Reading the two archived reports. Marking the last part done. The archived reports could not be read, so the shelf-life claims come from the stability protocol only. No specific claims to check against this turn's sources",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "C_admin": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652027215_30wvgz94p",
+      "phase": [
+        "Working · step 1 · 13s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Working Stop",
+      "stripButtons": [
+        "Stop"
+      ],
+      "buttons": [
+        "Summary",
+        "Stop"
+      ],
+      "lastTurn": "✻ Working · step 1 · 13s Plan · 4 steps Working · step 1 · 13s Summary",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "C_askerAfter": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652027215_30wvgz94p",
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "Stopped by an administrator."
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Recorded b1842966b92d"
+      ],
+      "lastTurn": "✻ Stopped by an administrator. 2 tools run · in 15s Summary Stopped by an administrator. I will take this in four parts. Searching the Vault for the stability reports. No specific claims to check against this turn's sources Create Evidence Memo Create Risk Memo Rewrite Section Create Strategy Note",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": true,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "C_askerFrames": [
+      {
+        "type": "run_started"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "context_used"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "thread_id"
+      },
+      {
+        "type": "orchestration"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "step"
+      },
+      {
+        "type": "tool_use"
+      },
+      {
+        "type": "timeline",
+        "kind": "note"
+      },
+      {
+        "type": "tool_result"
+      },
+      {
+        "type": "plan"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "step"
+      },
+      {
+        "type": "tool_use"
+      },
+      {
+        "type": "timeline",
+        "kind": "note"
+      },
+      {
+        "type": "tool_use"
+      },
+      {
+        "type": "tool_result"
+      },
+      {
+        "type": "tool_result"
+      },
+      {
+        "type": "plan"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "step"
+      },
+      {
+        "type": "tool_use"
+      },
+      {
+        "type": "tool_use"
+      },
+      {
+        "type": "tool_result"
+      },
+      {
+        "type": "tool_result"
+      },
+      {
+        "type": "plan"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "timeline",
+        "kind": "task"
+      },
+      {
+        "type": "status"
+      },
+      {
+        "type": "timeline",
+        "kind": "end",
+        "outcome": "stopped",
+        "stoppedReason": "admin_cancelled"
+      },
+      {
+        "type": "done",
+        "stoppedReason": "admin_cancelled"
+      },
+      {
+        "type": "grounding_strip"
+      },
+      {
+        "type": "post_done"
+      }
+    ],
+    "C_adminAfter": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652027215_30wvgz94p",
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "Stopped by an administrator."
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Recorded b1842966b92d"
+      ],
+      "lastTurn": "✻ Stopped by an administrator. 2 tools run Summary Stopped by an administrator. I will take this in four parts. Searching the Vault for the stability reports. No specific claims to check against this turn's sources",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": true,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "E_phoneAtHold": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652050845_r5i7bbdq2",
+      "phase": [
+        "Paused · 14s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "AnA is waiting for you before: Searching the Vault; Updating the plan Waiting for you before the next step Next: Searching the Vault; Updating the plan If nobody answers within 10 minutes, the turn ends. Run this step Stop",
+      "stripButtons": [
+        "Run this step",
+        "Stop"
+      ],
+      "buttons": [
+        "Summary",
+        "Run this step",
+        "Stop",
+        "Do this instead"
+      ],
+      "lastTurn": "✻ Paused · 14s Plan · 4 steps Paused · 14s Summary",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": true,
+        "doThisInstead": true
+      }
+    },
+    "F_notice": "AnA finished your request\n06:54 UTC · s5 tasks: find the stability reports, list the project docum…\nOpen conversation",
+    "F_opened": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652078794_knh6xwehc",
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Recorded e8e98cef4e1c"
+      ],
+      "lastTurn": "✻ 2 tools run Summary I will take this in four parts. Searching the Vault for the stability reports. FAKE: the tool read_project_document was not offered on this turn. No specific claims to check against this turn's sources",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "G_beforeClose": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652118090_feajt95pb",
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Working Pause Stop",
+      "stripButtons": [
+        "Pause",
+        "Stop"
+      ],
+      "buttons": [
+        "Stop"
+      ],
+      "lastTurn": "✻ Planned 4 steps I will take this in four parts. Create Evidence Memo Create Risk Memo Rewrite Section Create Strategy Note",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "G_phoneAfter": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652118090_feajt95pb",
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "This page lost its connection, so the run was stopped before AnA finished. Continue picks it up. Continue"
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Continue",
+        "Summary"
+      ],
+      "lastTurn": "✻ This page lost its connection, so the run was stopped before AnA finished. Continue picks it up. This page lost its connection, so the run was stopped before AnA finished. Continue picks it up. Continue Summary I will take this in four parts.",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": true,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "D_phoneWhileDown": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct",
+      "phase": [
+        "Working · 15s Summary"
+      ],
+      "alerts": [
+        "Can't reach the server. Retrying."
+      ],
+      "stopped": [],
+      "strip": "Working Pause Stop",
+      "stripButtons": [
+        "Pause",
+        "Stop"
+      ],
+      "buttons": [
+        "Summary",
+        "Stop"
+      ],
+      "lastTurn": "✻ Working · 15s. Can't reach the server. Retrying. Can't reach the server. Retrying. Plan · 4 steps Working · 15s Summary",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": false,
+        "unreachable": true,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "D_phoneAfter": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct",
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "Stopped: the server restarted for an update. Continue picks it up. Continue"
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Continue",
+        "Recorded 27dd0e7b6097"
+      ],
+      "lastTurn": "✻ 1 step did not complete. Stopped: the server restarted for an update. Continue picks it up. 1 tool run · 1 failed Summary Stopped: the server restarted for an update. Continue picks it up. Continue I will take this in four parts. Searching the Vault for the stability reports. No specific claims to check against this turn's sources",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": true,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    },
+    "D_desktopAfter": {
+      "url": "/concept2cure/conversation-thread/ana-ri_1792652129341_ey5xy79ct",
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "Stopped: the server restarted for an update. Continue picks it up. Continue"
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "buttons": [
+        "Summary",
+        "Continue",
+        "Recorded 27dd0e7b6097"
+      ],
+      "lastTurn": "✻ 1 step did not complete. Stopped: the server restarted for an update. Continue picks it up. 1 tool run · 1 failed Summary Stopped: the server restarted for an update. Continue picks it up. Continue I will take this in four parts. Searching the Vault for the stability reports. No specific claims to check against this turn's sources",
+      "bodyHas": {
+        "stoppedResponding": false,
+        "lostConnection": false,
+        "byAdmin": false,
+        "restarted": true,
+        "unreachable": false,
+        "runThisStep": false,
+        "doThisInstead": false
+      }
+    }
+  },
+  "shots": {
+    "A_desktopBeforeClose": "01-A-desktop-turn-running.png",
+    "A_phoneFollowing": "02-A-phone-following-after-desktop-closed.png",
+    "A_phoneEnd": "03-A-phone-handed-over-to-record.png",
+    "B_afterReload": "04-B-desktop-reloaded-rejoined.png",
+    "B_end": "05-B-desktop-after-reload-handed-over.png",
+    "C_admin": "06-C-admin-follower-with-stop.png",
+    "C_askerAfter": "07-C-asker-stopped-by-an-administrator.png",
+    "C_adminAfter": "08-C-admin-after-stop.png",
+    "E_desktopAtHold": "09-E-desktop-manual-hold.png",
+    "E_phoneAtHold": "10-E-phone-run-this-step-do-this-instead.png",
+    "E_phoneAfterRun": "11-E-phone-after-run-this-step.png",
+    "E_phoneEnd": "12-E-phone-stopped.png",
+    "F_tray": "13-F-tasktray-notice-names-the-conversation.png",
+    "F_opened": "14-F-notice-opened-the-conversation.png",
+    "G_phoneAfter": "15-G-live-drive-turn-stops-on-close.png",
+    "D_phoneWhileDown": "16-D-phone-while-server-down.png",
+    "D_phoneAfter": "17-D-phone-server-restarted-for-an-update.png",
+    "D_desktopAfter": "18-D-desktop-server-restarted-for-an-update.png"
+  },
+  "runs": {
+    "A": {
+      "threadId": "ana-ri_1792651953383_8si7sctws",
+      "runId": "run_230a76ee-7ddf-4e21-893b-355f19b77066",
+      "liveDriveRequested": false,
+      "runPolicySent": "auto",
+      "afterClose": {
+        "http": 200,
+        "status": "running",
+        "stoppedReason": null,
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": "2026-10-22T06:52:39.390Z",
+        "unattendedStopsAt": "2026-10-22T07:07:47.782Z",
+        "sealed": null,
+        "releasedAt": null
+      },
+      "end": {
+        "http": 200,
+        "status": "finished",
+        "stoppedReason": "no_more_tools",
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": "2026-10-22T06:52:39.390Z",
+        "unattendedStopsAt": "2026-10-22T07:08:00.044Z",
+        "sealed": {
+          "recordId": "3b261d36-68ef-40b4-a54b-612ec832a2cd",
+          "assistantMessageId": 56
+        },
+        "releasedAt": "2026-10-22T06:53:06.077Z"
+      }
+    },
+    "B": {
+      "threadId": "ana-ri_1792651990180_4dgrprhi1",
+      "runId": "run_5abf24ad-da46-437c-8f35-c5a82d659198",
+      "liveDriveRequested": false,
+      "runPolicySent": "auto",
+      "afterReload": {
+        "http": 200,
+        "status": "running",
+        "stoppedReason": null,
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": "2026-10-22T06:53:17.876Z",
+        "unattendedStopsAt": "2026-10-22T07:08:20.413Z",
+        "sealed": null,
+        "releasedAt": null
+      },
+      "end": {
+        "http": 200,
+        "status": "finished",
+        "stoppedReason": "no_more_tools",
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": "2026-10-22T06:53:17.876Z",
+        "unattendedStopsAt": "2026-10-22T07:08:38.811Z",
+        "sealed": {
+          "recordId": "da9847e2-c2ad-4f7e-8fde-642039cf101c",
+          "assistantMessageId": 58
+        },
+        "releasedAt": "2026-10-22T06:53:42.659Z"
+      }
+    },
+    "C": {
+      "threadId": "ana-ri_1792652027215_30wvgz94p",
+      "runId": "run_bbaece56-99df-4e59-a563-97e7a2620744",
+      "liveDriveRequested": false,
+      "runPolicySent": "auto",
+      "end": {
+        "http": 200,
+        "status": "cancelled",
+        "stoppedReason": "admin_cancelled",
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": null,
+        "unattendedStopsAt": null,
+        "sealed": {
+          "recordId": "bfadbb40-c6ae-45ed-b72e-2bf58b227b11",
+          "assistantMessageId": 60
+        },
+        "releasedAt": "2026-10-22T06:54:02.219Z"
+      }
+    },
+    "E": {
+      "threadId": "ana-ri_1792652050845_r5i7bbdq2",
+      "runId": "run_a74c255d-db48-490f-9273-35527b101958",
+      "liveDriveRequested": false,
+      "runPolicySent": "manual",
+      "atHold": {
+        "http": 200,
+        "status": "paused",
+        "stoppedReason": null,
+        "runPolicy": "manual",
+        "hold": {
+          "reason": "manual",
+          "next": [
+            "Searching the Vault",
+            "Updating the plan"
+          ]
+        },
+        "detachedAt": "2026-10-22T06:54:22.025Z",
+        "unattendedStopsAt": "2026-10-22T07:09:24.892Z",
+        "sealed": null,
+        "releasedAt": null
+      },
+      "afterRun": {
+        "http": 200,
+        "status": "running",
+        "stoppedReason": null,
+        "runPolicy": "manual",
+        "hold": null,
+        "detachedAt": "2026-10-22T06:54:22.025Z",
+        "unattendedStopsAt": "2026-10-22T07:09:24.892Z",
+        "sealed": null,
+        "releasedAt": null
+      },
+      "end": {
+        "http": 200,
+        "status": "cancelled",
+        "stoppedReason": "cancelled",
+        "runPolicy": "manual",
+        "hold": null,
+        "detachedAt": "2026-10-22T06:54:22.025Z",
+        "unattendedStopsAt": "2026-10-22T07:09:24.892Z",
+        "sealed": {
+          "recordId": "68882e56-3607-4a43-9a97-9746ebc1dd79",
+          "assistantMessageId": 62
+        },
+        "releasedAt": "2026-10-22T06:54:30.349Z"
+      }
+    },
+    "F": {
+      "threadId": "ana-ri_1792652078794_knh6xwehc",
+      "runId": "run_96e2ddc0-4134-4485-b1d0-16560783e69b",
+      "liveDriveRequested": false,
+      "runPolicySent": "auto",
+      "end": {
+        "http": 200,
+        "status": "finished",
+        "stoppedReason": "no_more_tools",
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": "2026-10-22T06:54:44.518Z",
+        "unattendedStopsAt": "2026-10-22T07:09:44.518Z",
+        "sealed": {
+          "recordId": "84c53aa9-ef33-4c5f-9f79-84d3a8c4b549",
+          "assistantMessageId": 64
+        },
+        "releasedAt": "2026-10-22T06:54:59.285Z"
+      }
+    },
+    "G": {
+      "threadId": "ana-ri_1792652118090_feajt95pb",
+      "runId": "run_0858a6f8-ca9c-40ec-8bf4-d5e6cfa2a68e",
+      "liveDriveRequested": true,
+      "runPolicySent": "auto",
+      "end": {
+        "http": 200,
+        "status": "cancelled",
+        "stoppedReason": "client_disconnected",
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": null,
+        "unattendedStopsAt": null,
+        "sealed": {
+          "recordId": "34725d48-8ed3-4fb9-93c6-3810f30a25d4",
+          "assistantMessageId": 66
+        },
+        "releasedAt": "2026-10-22T06:55:23.891Z"
+      }
+    },
+    "D": {
+      "threadId": "ana-ri_1792652129341_ey5xy79ct",
+      "runId": "run_b6eda0a7-a9d9-4199-95cb-3f47d1bc1f1e",
+      "liveDriveRequested": false,
+      "runPolicySent": "auto",
+      "end": {
+        "http": 200,
+        "status": "failed",
+        "stoppedReason": "server_shutdown",
+        "runPolicy": "auto",
+        "hold": null,
+        "detachedAt": null,
+        "unattendedStopsAt": null,
+        "sealed": {
+          "recordId": "9d0d313f-55d7-4a30-b80d-18f6aa62401b",
+          "assistantMessageId": 68
+        },
+        "releasedAt": "2026-10-22T06:55:40.378Z"
+      }
+    }
+  }
+}

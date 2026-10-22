@@ -1,0 +1,9 @@
+# m-client-opens-no-conversation: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx  -t names the conversation
+ × client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > names the conversation, and opens it once the server confirms it 229ms
+   → expected undefined to deeply equal { id: 'th_9' }
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > names the conversation, and opens it once the server confirms it
+AssertionError: expected undefined to deeply equal { id: 'th_9' }

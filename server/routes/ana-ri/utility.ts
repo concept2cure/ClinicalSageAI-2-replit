@@ -34,7 +34,6 @@ import { verifyGovernedESignature } from './governed-esignature.js';
 import {
   readPendingApproval,
   isRunAwaitingApproval,
-  recordApprovalDecision,
 } from '../../services/ana/run-control.js';
 import { resolveOrgId } from '../../types/auth-request.js';
 import { requestPgClient, type RequestSqlClient } from '../../db/requestDb';
@@ -51,6 +50,7 @@ import {
 } from './shared.js';
 import { clientIpOf } from '../../utils/client-ip';
 import { proposalAsConfirmed } from './proposal-as-confirmed.js';
+import { claimRefusal, giveBackClaim, handBackResult, releaseWaitingRun } from './held-run-release.js';
 
 const log = createScopedLogger('ana-ri/utility');
 
@@ -134,50 +134,6 @@ async function resolveAuthorisedAction(
     command: pendingForRun.command,
     params: pendingForRun.params,
   };
-}
-
-/**
- * Hand a decided approval back to the turn that is waiting on it.
- *
- * Best-effort by design: the command has already run and been audited by the
- * time this is called, so a failure here costs AnA her continuation, not the
- * person's action or its record. Refusing the whole request at this point would
- * report a governed action as failed after it had already taken effect, which
- * is the worse of the two lies.
- */
-async function releaseWaitingRun(
-  req: Request,
-  runId: string,
-  toolUseId: string,
-  userId: number,
-  reasonForChange: string,
-  outcome: { result?: unknown; error?: string; declined?: true },
-): Promise<void> {
-  // Bound with the SAME resolver the lookup used (resolveAuthorisedAction), so
-  // the decision is written against exactly the tenant whose run was proven to
-  // be waiting. Only reached when that lookup found the run, which already
-  // required a non-null org — the guard is for the type, not a live branch.
-  const organizationId = resolveOrgId(req);
-  if (organizationId === null) {
-    log.error('Refusing to record an approval decision with no organization', { runId, toolUseId });
-    return;
-  }
-  try {
-    await recordApprovalDecision(requestPgClient(req), runId, organizationId, {
-      toolUseId,
-      decided: outcome.error || outcome.declined ? 'denied' : 'approved',
-      decidedAt: new Date().toISOString(),
-      byUserId: userId,
-      reasonForChange,
-      ...outcome,
-    });
-  } catch (err: any) {
-    log.error('Approved action ran but the waiting run could not be released', {
-      runId,
-      toolUseId,
-      error: err?.message,
-    });
-  }
 }
 
 /**
@@ -306,7 +262,7 @@ async function declineHeldAction(
       reason: audit.error ?? 'no durable store accepted the row',
     });
   }
-  await releaseWaitingRun(req, held.runId, held.toolUseId, held.userId, '', { declined: true });
+  await releaseWaitingRun(req, held, '', { declined: true });
   return sendSuccess(res, {
     success: true,
     declined: true,
@@ -660,6 +616,12 @@ export function mountUtilityRoutes(router: Router): void {
     // `persisted` and abort on it.
     const trace = governedActionTrace(runId, toolUseId, pendingForRun, params);
     const personsReason = isTool && tier === 'reason' ? personsReasonFor(command, params, reasonForChange) : null;
+    // DT3 review (finding 4.3): the held run may have ended while the person
+    // signed — an administrator's stop, the session's end, the 40-minute cap,
+    // a shutdown. Claimed atomically on a run still waiting, before anything
+    // is signed off or executed: one that ended refuses, and nothing runs.
+    const refused = pendingForRun ? await claimRefusal(requestPgClient(req), { runId, organizationId: numericOrgId, userId, toolUseId }) : null;
+    if (refused) return sendError(res, 409, refused.message, null, refused.code);
     const signoffAudit = await auditService.logAction({
       tenantId: numericOrgId,
       userId,
@@ -680,6 +642,8 @@ export function mountUtilityRoutes(router: Router): void {
         eSignRequired,
         reason: signoffAudit.error ?? 'no durable store accepted the row',
       });
+      // Nothing ran under the claim: give it back, so the person can try again.
+      if (pendingForRun) await giveBackClaim(requestPgClient(req), { runId, organizationId: numericOrgId, toolUseId });
       return sendError(res, 500, 'Could not record the sign-off in the audit trail; action aborted', null, 'SIGNOFF_AUDIT_FAILED');
     }
 
@@ -738,19 +702,16 @@ export function mountUtilityRoutes(router: Router): void {
       // the partition guard asserts it has exactly one. So AnA resumes with
       // what a person's decision produced, and there is still one execution,
       // one signature and one audit row.
-      if (pendingForRun) {
-        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, { result });
-      }
-      return sendSuccess(res, result);
+      // A run that ended while the action ran is said in the answer (handBackResult).
+      const held = { runId, toolUseId, userId, organizationId: numericOrgId, command };
+      return sendSuccess(res, pendingForRun ? await handBackResult(req, held, reasonForChange, result) : result);
     } catch (error: any) {
       const failure = error?.message || 'Governed action failed';
       const failedRow = await recordGovernedExecution(executedRow, { error: failure });
       // A failed execution must still release the run. Otherwise the turn sits
       // at a gate nobody will ever answer again until the pause ceiling expires
       // — the person signed, something broke, and AnA is left silent.
-      if (pendingForRun) {
-        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, { error: failure });
-      }
+      if (pendingForRun) await releaseWaitingRun(req, { runId, toolUseId, userId }, reasonForChange, { error: failure });
       // A failure whose own row was lost says that too.
       const lost = failedRow.persisted ? null : { auditTrail: failedRow };
       return sendError(res, 500, failure, lost, 'GOVERNED_ACTION_FAILED');

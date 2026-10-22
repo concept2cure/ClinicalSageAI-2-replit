@@ -8,6 +8,7 @@ import { authorizeAuthoringProgram, AuthoringProgramAccessError } from '../autho
 import { resolveAuthoringDocumentScope, resolveAuthoringSectionScope, decideAuthoringPermission } from '../authoring/authoring-permissions';
 import { loadTaskHomePrograms } from '../tasking/task-home-programs';
 import { canAccessReportScope } from '../report-os/project-access';
+import { threadOwnerMatches } from '../chat-thread-helpers';
 
 export class NotificationTargetRefusal extends Error {
   constructor(readonly status: 404 | 422 | 503) {
@@ -102,6 +103,17 @@ async function qualityTarget(ctx: TargetContext, ref: RecordReference): Promise<
   }
   return {surface:'quality',label:'Open controlled document',params:{qmsDocumentId:ref.id},programId};
 }
+/**
+ * An AnA conversation (a detached turn's notice, AnA detach §5.5): opened only
+ * when it is in the recipient's organisation and is the recipient's own, by
+ * the rule every thread read uses (chat-thread-helpers.ts threadOwnerMatches).
+ * A colleague's conversation, or one in another organisation, is unavailable.
+ */
+async function conversationTarget(ctx: TargetContext, ref: RecordReference): Promise<NotificationRecordTarget> {
+  const thread = await rowFor(ctx,'SELECT user_id, program_id::text AS program_id FROM chat_threads WHERE id=$1 AND organization_id=$2',[ref.id,ctx.organizationId]);
+  if (!threadOwnerMatches(thread.user_id,ctx.userId)) throw new NotificationTargetRefusal(404);
+  return {surface:'conversation-thread',label:'Open conversation',params:{threadId:ref.id},programId:await ownedProgram(ctx,thread.program_id ?? null)};
+}
 async function resolveRecord(ctx: TargetContext, ref: RecordReference): Promise<NotificationRecordTarget> {
   switch (ref.kind) {
     case 'authoring_document': return authoringTarget(ctx,ref);
@@ -123,6 +135,7 @@ async function resolveRecord(ctx: TargetContext, ref: RecordReference): Promise<
       return {surface:'protocol-dev',label:'Open protocol',params:{protocol:ref.id,...(programId ? {} : {protocolScope:'unfiled'})},programId};
     }
     case 'qms_document': return qualityTarget(ctx,ref);
+    case 'chat_thread': return conversationTarget(ctx,ref);
   }
 }
 

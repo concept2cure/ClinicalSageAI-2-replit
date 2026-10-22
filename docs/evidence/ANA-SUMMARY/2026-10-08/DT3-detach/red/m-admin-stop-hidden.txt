@@ -1,0 +1,20 @@
+# m-admin-stop-hidden: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer 522ms
+   → Unable to find an accessible element with the role "button" and name "Stop"
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel 279ms
+   → Unable to find an accessible element with the role "button" and name "Stop"
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > a refused stop is said in the dialog, which stays open: nothing changed 223ms
+   → Unable to find an accessible element with the role "button" and name "Stop"
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker following their own turn keeps every control, and the composer steers 90ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker's Stop is their own: no dialog, straight to stop 76ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a conversation whose live runs could not be read > says so, and Check again reads them again 77ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Stop"
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Stop"
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > a refused stop is said in the dialog, which stays open: nothing changed
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Stop"

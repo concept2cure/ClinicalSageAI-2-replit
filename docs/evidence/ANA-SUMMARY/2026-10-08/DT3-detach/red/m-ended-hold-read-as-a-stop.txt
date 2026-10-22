@@ -1,0 +1,9 @@
+# m-ended-hold-read-as-a-stop: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/turn-run-policy.test.ts  -t row failed while AnA held
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a run whose row failed while AnA held, with no abort reaching the turn (AnA detach DT3, §2.4) > fails closed — the step never runs — and is not filed as a person's Stop 8ms
+   → expected [ { type: 'cancelled', round: 2 } ] to deep equally contain ObjectContaining{…}
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a run whose row failed while AnA held, with no abort reaching the turn (AnA detach DT3, §2.4) > fails closed — the step never runs — and is not filed as a person's Stop
+AssertionError: expected [ { type: 'cancelled', round: 2 } ] to deep equally contain ObjectContaining{…}

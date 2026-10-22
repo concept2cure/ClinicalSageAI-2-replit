@@ -1,0 +1,13 @@
+# m-hold-names-refused-steps: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/turn-run-policy.test.ts  -t read-only turn's Manual hold
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > a step the read-only answer will refuse is not offered as "Run this step" 9ms
+   → expected [ [ 'Label draft_document', …(1) ] ] to deeply equal [ [ 'Label search_literature' ] ]
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > when every step would be refused, there is nothing to hold for 2ms
+   → expected [ [ 'Label draft_document' ] ] to deeply equal []
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 skipped (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > a step the read-only answer will refuse is not offered as "Run this step"
+AssertionError: expected [ [ 'Label draft_document', …(1) ] ] to deeply equal [ [ 'Label search_literature' ] ]
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > when every step would be refused, there is nothing to hold for
+AssertionError: expected [ [ 'Label draft_document' ] ] to deeply equal []

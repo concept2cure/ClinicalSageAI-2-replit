@@ -23,6 +23,7 @@
  * @module server/services/account-standing
  */
 
+import type { SessionEndDetail } from '@shared/ana/stop-lines';
 import { runAsAccount } from '../db/tenantStore';
 import { sessionStartSecondsOf } from './session-inactivity';
 import type { RequestSqlClient } from '../db/requestDb';
@@ -204,7 +205,11 @@ export async function untilStampHasBegun(stamp: Date): Promise<void> {
  * whether the account was there to stamp. A caller answering a person waits
  * for the stamp first (untilStampHasBegun).
  */
-export async function endEverySessionOf(userId: number, at: Date = new Date()): Promise<boolean> {
+export async function endEverySessionOf(
+  userId: number,
+  at: Date = new Date(),
+  cause: SessionEndDetail = { cause: 'sign_out_everywhere', byUserId: userId },
+): Promise<boolean> {
   const { pool } = await import('../db.js');
   // tenant-isolation-safe: the account's own row, by the id its live session established.
   const result = await pool.query(
@@ -213,7 +218,40 @@ export async function endEverySessionOf(userId: number, at: Date = new Date()): 
       WHERE id = $1`,
     [userId, endingStampOf(at.getTime()).toISOString()],
   );
-  return (result.rowCount ?? 0) === 1;
+  const stamped = (result.rowCount ?? 0) === 1;
+  // Every session ended, so every AnA turn those sessions started stops too,
+  // on every device (AnA detach §2.9, session_ended). Never throws.
+  if (stamped) await stopPersonsRuns(userId, cause);
+  return stamped;
+}
+
+/**
+ * Stop a person's live AnA runs, because the session that started them ended
+ * (AnA detach §2.9): sign-out everywhere, a password change or reset, a
+ * deprovisioning, a member's removal (with `organizationId`, that
+ * organisation's only) or one session's sign-out (with `sessionId`, that
+ * session's only — a sign-out on the desktop does not stop the phone's turn).
+ * `detail` says what ended it and who, for the run row, the record and the
+ * audit row (run-control.ts stopRunsFor). Lazy, so the standing module does
+ * not load run control until it needs it; never throws — the run's
+ * round-boundary re-check is the backstop. Returns the runs it stopped.
+ */
+export async function stopPersonsRuns(
+  userId: number,
+  detail: SessionEndDetail,
+  scope: { organizationId?: number; sessionId?: string } = {},
+): Promise<string[]> {
+  try {
+    const [{ stopRunsFor }, { pool }] = await Promise.all([import('./ana/run-control.js'), import('../db.js')]);
+    return await stopRunsFor(
+      pool,
+      { userId, organizationId: scope.organizationId ?? null, sessionId: scope.sessionId ?? null },
+      detail,
+    );
+  } catch {
+    /* stopRunsFor logs its own failure; a module that cannot load leaves the round check */
+    return [];
+  }
 }
 
 /**

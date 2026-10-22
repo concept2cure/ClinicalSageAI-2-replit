@@ -415,11 +415,14 @@ export function dossierToRenderedReport(
       id: 'human-controls',
       title: `Human control actions (${dossier.humanControls.length})`,
       blocks: [
+        // Who took each (DT3 review): an administrator's cancel of a
+        // colleague's turn is theirs, with their reason, never the author's.
         table(
-          ['Action', 'Message', 'Turn', 'When'],
+          ['Action', 'By', 'Message', 'Turn', 'When'],
           dossier.humanControls.map((c) => [
             c.action,
-            c.message ? truncate(c.message, 120) : '',
+            c.by ? (c.byRole === 'administrator' ? `${c.by} (administrator)` : c.by) : '',
+            c.reason ? truncate(`Reason: ${c.reason}`, 120) : c.message ? truncate(c.message, 120) : '',
             c.turn,
             c.at ?? '',
           ]),

@@ -236,3 +236,52 @@ describe('isSystemScopedPath', () => {
     }
   });
 });
+
+/*
+ * Work that outlives its response (AnA detach DT3: a turn whose page closed and
+ * that goes on) keeps the request's pinned, tenant-scoped connection rather
+ * than losing it on the response's 'close' — the release the middleware arms
+ * waits for every holder. docs/design/ANA_DETACH_2026-10-08.md §12.2.
+ */
+describe('a request DB client retained past the response (retainRequestDbClient)', () => {
+  it('survives the response closing, still answers queries, and is released by its holder', async () => {
+    const { retainRequestDbClient } = await import('../../db/requestDbLease');
+    const req = makeReq();
+    const res = makeRes();
+    establishRequestTenantScope(req, res as any, () => {});
+    const client = req.dbClient;
+    const release = retainRequestDbClient(req);
+    expect(release).toBeTypeOf('function');
+
+    res.close();
+    expect(req.dbClient, 'the response closing took the turn\'s connection').toBe(client);
+    await expect(client.query('SELECT 1')).resolves.toEqual({ rows: [] });
+
+    await release!();
+    expect(req.dbClient).toBeNull();
+    await expect(client.query('SELECT 1')).rejects.toThrow(/released request DB client/);
+  });
+
+  it('a release that comes before the response ends leaves the response to release it', async () => {
+    const { retainRequestDbClient } = await import('../../db/requestDbLease');
+    const req = makeReq();
+    const res = makeRes();
+    establishRequestTenantScope(req, res as any, () => {});
+    const release = retainRequestDbClient(req)!;
+    await release();
+    await release();
+    expect(req.dbClient, 'the holder let go, but the response is still open').toBeTruthy();
+    res.finish();
+    expect(req.dbClient).toBeNull();
+  });
+
+  it('nothing to retain once the response already released it, or on a request with no bound client', async () => {
+    const { retainRequestDbClient } = await import('../../db/requestDbLease');
+    const req = makeReq();
+    const res = makeRes();
+    establishRequestTenantScope(req, res as any, () => {});
+    res.close();
+    expect(retainRequestDbClient(req)).toBeNull();
+    expect(retainRequestDbClient(makeReq())).toBeNull();
+  });
+});

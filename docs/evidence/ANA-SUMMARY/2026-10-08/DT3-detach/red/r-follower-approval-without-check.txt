@@ -1,0 +1,12 @@
+# r-follower-approval-without-check: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/runs-read.pglite.test.ts server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t attached approval frame|the follower.s approval is the attached frame
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check present 50ms
+   → expected undefined to deeply equal { verdict: 'unsupported', …(1) }
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check absent 16ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check malformed (not an object) 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the follower's approval is the attached frame (DT3 review) > the approval_required frame, less its transport fields, is the envelope of the row it held 68ms
+ Test Files  1 failed | 1 passed | 1 skipped (3)
+      Tests  1 failed | 3 passed | 64 skipped (68)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check present
+AssertionError: expected undefined to deeply equal { verdict: 'unsupported', …(1) }

@@ -91,7 +91,8 @@ export class ThreadAccessError extends Error {
   }
 }
 
-function threadOwnerMatches(rowUserId: unknown, userId: number | string | null | undefined): boolean {
+/** The one rule for whose conversation a thread is (also notification-record-target.ts). */
+export function threadOwnerMatches(rowUserId: unknown, userId: number | string | null | undefined): boolean {
   // A thread with no recorded owner (legacy / system-created rows) is scoped by
   // organization alone. A thread WITH an owner is that user's: an unidentified
   // caller does not get it either.

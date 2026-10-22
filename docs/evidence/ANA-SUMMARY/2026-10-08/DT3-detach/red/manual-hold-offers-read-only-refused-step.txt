@@ -1,0 +1,66 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/turn-run-policy.test.ts > a client that disconnects while AnA holds > a turn that cannot detach: the held step does not run, is filed not-run with why, and the hold is kept as disconnected 7ms
+ ✓ server/services/ana/__tests__/turn-run-policy.test.ts > a detached turn whose run is stopped while AnA holds (AnA detach DT3) > is filed as stopped, never as a page that closed: the page closing did not end it 1ms
+ ✓ server/services/ana/__tests__/turn-run-policy.test.ts > a detached turn whose run is stopped while AnA holds (AnA detach DT3) > the row reason wins over what the loop saw (§2.4) 1ms
+ ✓ server/services/ana/__tests__/turn-run-policy.test.ts > a run whose row failed while AnA held, with no abort reaching the turn (AnA detach DT3, §2.4) > fails closed — the step never runs — and is not filed as a person's Stop 1ms
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > a step the read-only answer will refuse is not offered as "Run this step" 9ms
+   → expected [ [ 'Label draft_document', …(1) ] ] to deeply equal [ [ 'Label search_literature' ] ]
+ × server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > when every step would be refused, there is nothing to hold for 2ms
+   → expected [ [ 'Label draft_document' ] ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > a step the read-only answer will refuse is not offered as "Run this step"
+AssertionError: expected [ [ 'Label draft_document', …(1) ] ] to deeply equal [ [ 'Label search_literature' ] ]
+
+- Expected
++ Received
+
+  [
+    [
++     "Label draft_document",
+      "Label search_literature",
+    ],
+  ]
+
+ ❯ server/services/ana/__tests__/turn-run-policy.test.ts:131:21
+    129|     const t = manualRound([draft, pubmed], c => c.name === 'draft_docu…
+    130|     await t.checkpoint(2, [draft, pubmed]);
+    131|     expect(t.holds).toEqual([['Label search_literature']]);
+       |                     ^
+    132|   });
+    133|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana/__tests__/turn-run-policy.test.ts > a read-only turn's Manual hold names only the steps that would run (AnA detach DT3 review, 2aa766a76) > when every step would be refused, there is nothing to hold for
+AssertionError: expected [ [ 'Label draft_document' ] ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   [
++     "Label draft_document",
++   ],
++ ]
+
+ ❯ server/services/ana/__tests__/turn-run-policy.test.ts:137:21
+    135|     const t = manualRound([draft], () => true);
+    136|     expect(await t.checkpoint(2, [draft])).toBe('continue');
+    137|     expect(t.holds).toEqual([]);
+       |                     ^
+    138|   });
+    139| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  05:28:03
+   Duration  649ms (transform 171ms, setup 105ms, import 107ms, tests 29ms, environment 0ms)
+

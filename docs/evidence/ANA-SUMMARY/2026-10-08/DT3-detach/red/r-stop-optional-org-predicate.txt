@@ -1,0 +1,12 @@
+# r-stop-optional-org-predicate: exit 1 (non-zero = red)
+# tests: server/services/__tests__/account-standing-stops-runs.test.ts
+ × server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > stops the account's live runs in every organisation, with session_ended 137ms
+   → expected 'UPDATE ana_runs\n                  SE…' to match /WHERE user_id = \$1/
+ ✓ server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > an account that was not there stops nothing 1ms
+ ✓ server/services/__tests__/account-standing-stops-runs.test.ts > stopPersonsRuns > in one organisation, for a deprovisioning there: keyed on that organisation 1ms
+ ✓ server/services/__tests__/account-standing-stops-runs.test.ts > stopPersonsRuns > one session's sign-out: that session's runs only 1ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > stops the account's live runs in every organisation, with session_ended
+AssertionError: expected 'UPDATE ana_runs\n                  SE…' to match /WHERE user_id = \$1/

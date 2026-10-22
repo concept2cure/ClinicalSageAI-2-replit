@@ -1,0 +1,93 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-detach.test.ts
+{
+  "timestamp": "2026-10-22T08:55:09.964Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T08:55:09.966Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-detach.test.ts
+{
+  "timestamp": "2026-10-22T08:55:09.967Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-detach.test.ts
+Loaded 0 academic documents
+
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn keeps its request's tenant connection (blocking review finding, 14362ef00) > the round after the page closed reads on the request's client, and the client is released once, after the turn
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (server_shutdown) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (session_ended) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (admin_cancelled) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (unattended_limit) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a person's own Stop still says they stopped it
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > the person's own Stop, then the close: no detach stamp, no detach warning, no armed limit
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > an administrator, then the close: no detach stamp, no detach warning, no armed limit
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > a shutdown, then the close: no detach stamp, no detach warning, no armed limit
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > admin_cancelled: done with the reason and post_done with the record, never an error frame
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > server_shutdown: done with the reason and post_done with the record, never an error frame
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > session_ended: done with the reason and post_done with the record, never an error frame
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn that fails mid-loop still ends, and is recorded (7780de83f) > the strict round-body limit refuses the round: the run ends failed, the record is filed failed, and the person is told
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > 15 minutes with nobody watching: the next model call is the closing answer, and the run ends unattended_limit
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > a watch moves the clock: watched at 10 minutes, the turn is still going at 16
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > 40 minutes from the start ends it as budget_exhausted, whatever the watching
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the session ended: stopped as session_ended, and the record says so
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the standing could not be read (fails closed): stopped as session_ended, and the record says so
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > a standing session goes on
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 14: the row reason wins > a shutdown mid-call: stopped/server_shutdown, never answered, with the reason on the record
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 14: the row reason wins > a shutdown that lands as the last call returns: post-processing files it stopped/server_shutdown
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 13: holds and approvals while nobody watches, as attached > Manual: a hold nobody answers ends hold_expired, never "lost its connection"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 13: holds and approvals while nobody watches, as attached > no policy: an approval nobody answers is denied and the turn goes on
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 13: holds and approvals while nobody watches, as attached > Auto: an approval nobody answers ends the turn approval_timeout
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > ends: one notice to the asker, naming the conversation by its question, linking to it
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a step not authorised is said in the finished notice
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > an approval while nobody watches: one warning, with no parameters and no ids in its words
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a stop says why: "AnA stopped: the server restarted for an update"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watched turn sends none
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watch stamped after the clock's last read, before the end, sends none (DT3 review, product) 92ms
+   → expected [ 'AnA finished your request' ] to deeply equal []
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a turn whose page stayed open sends none
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watch stamped after the clock's last read, before the end, sends none (DT3 review, product)
+AssertionError: expected [ 'AnA finished your request' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "AnA finished your request",
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-detach.test.ts:496:42
+    494|     });
+    495|     expect(h.state.detachStamps).toHaveLength(1);
+    496|     expect(io.notices.map(n => n.title)).toEqual([]);
+       |                                          ^
+    497|   });
+    498|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+   Start at  08:55:00
+   Duration  18.37s (transform 12.49s, setup 128ms, import 17.91s, tests 99ms, environment 0ms)
+
+exit=1

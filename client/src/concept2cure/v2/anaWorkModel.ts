@@ -14,6 +14,9 @@ import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../component
 import type { AnaContextUsed, AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
 import { AUTO_TIME_WORDS, MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS, stepLabels } from '@shared/ana/run-policy';
 import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
+import { STOP_LINE_TEXT, stopLineText as sharedStopLineText } from '@shared/ana/stop-lines';
+import { DETACHED_WALL_WORDS, stoppedByMs, utcClock } from '@shared/ana/run-detach';
+import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import {
   formatElapsed,
   formatStepDuration,
@@ -35,37 +38,12 @@ export interface AnaWorkContext {
 }
 
 /**
- * The stops a turn's loop or its run policy made, in the panel's words. Each
- * says the stop and then its cause, so none can be read as good news; none is
- * "Finished". `cancelled` (a Stop) is said by its own branch.
+ * The stops a turn's loop, its run policy or its run row made, in the panel's
+ * words: one table, shared with the server's notification copy
+ * (shared/ana/stop-lines.ts; it moved there in AnA detach DT3). `cancelled`
+ * (a Stop) is said by its own branch.
  */
-const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string>([
-  ['max_rounds', 'Stopped at the round limit'],
-  ['duplicate_thrash', 'Stopped: repeating a step'],
-  // The answer she was writing was cut off (the length limit, or a stream that
-  // stalled mid-answer; D2, a6d82f624).
-  ['answer_cut_off', 'Stopped: answer cut off'],
-  // The run policy's (row 74, S4).
-  ['budget_exhausted', 'Stopped at the time limit'],
-  ['approval_timeout', 'Stopped: an approval was not answered'],
-  ['hold_expired', 'Stopped waiting for you'],
-  ['hold_unavailable', 'Stopped: Manual was unavailable'],
-  // A locked phone or a closed tab ended the run (ANA-SUMMARY S4).
-  ['client_disconnected', 'Stopped: this page lost its connection'],
-  // The run row's reasons (AnA detach §2.10, §5.3). A follower reads them off
-  // the run when a turn ended without a record; the server writes the first
-  // four from DT3.
-  ['unattended_limit', 'Stopped: nobody was watching for 15 minutes'],
-  ['session_ended', 'Stopped: the session that started this turn ended'],
-  ['server_shutdown', 'Stopped: the server restarted for an update'],
-  ['orphaned', 'Stopped: the server handling this turn stopped responding'],
-  ['error', 'Stopped: the turn ended with an error'],
-  // The admin-cancel variant of `cancelled` (§2.5). The run read carries no
-  // one's identity (controlsOf drops who took a control), so nothing produces
-  // this reason yet: DT3, which accepts an admin's cancel, must say on the
-  // run which kind of cancel it was. The line is here so it has one home.
-  ['admin_cancelled', 'Stopped by an administrator'],
-]);
+const STOP_LINES: ReadonlyMap<string, string> = new Map(Object.entries(STOP_LINE_TEXT));
 
 /**
  * The stop line for a reason, as a sentence: the Summary's closing row
@@ -73,8 +51,7 @@ const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string
  * she finished, or the person's own Stop, which its own branch says.
  */
 export function stopLineText(reason: AnaStoppedReason | string | null | undefined): string | null {
-  const line = reason ? STOP_LINES.get(reason) : undefined;
-  return line ? `${line}.` : null;
+  return sharedStopLineText(reason);
 }
 
 /** A live turn's state line: working, paused, waiting for you, or stopping. */
@@ -175,6 +152,32 @@ const FIXED_STOP_NOTES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, 
   ['client_disconnected', 'This page lost its connection, so the run was stopped before AnA finished. Continue picks it up.'],
 ]);
 
+/** The stops the server writes on the run row from DT3; each note is its shared stop line. */
+const ROW_STOP_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
+  'unattended_limit',
+  'session_ended',
+  'server_shutdown',
+  'orphaned',
+  'admin_cancelled',
+  'error',
+]);
+
+/**
+ * The note for a stop that is one sentence whatever the turn's numbers or
+ * steps: a fixed note, or a run-row reason's (AnA detach §2.10, §5.3) shared
+ * stop line — the one the closing row and the turn's notification say — with
+ * "Continue picks it up." where picking up can help. Without the row's lines a
+ * turn a restart stopped reopened as its answer with no note and no Continue
+ * (DT3 acceptance, scenario D).
+ */
+function fixedStopNote(reason: AnaStoppedReason | undefined): string | null {
+  if (!reason) return null;
+  const fixed = FIXED_STOP_NOTES.get(reason);
+  if (fixed || !ROW_STOP_REASONS.has(reason)) return fixed ?? null;
+  const rowLine = sharedStopLineText(reason);
+  return rowLine && isContinuable(reason) ? `${rowLine} Continue picks it up.` : rowLine;
+}
+
 /**
  * What the transcript says under a turn the loop or the run policy stopped
  * before she was done, or null when there is nothing to say: she finished
@@ -187,9 +190,11 @@ export function stoppedNoteText(
   rounds?: number,
   pendingSteps?: readonly string[],
   interruptedWithPartialResponse?: boolean,
+  /** The policy the turn ran under: the time limit is Auto's only under Auto (DT3 review, 4.6). */
+  runPolicy?: AnaRunPolicy | null,
 ): string | null {
   const steps = stepList(pendingSteps);
-  const fixed = reason ? FIXED_STOP_NOTES.get(reason) : undefined;
+  const fixed = fixedStopNote(reason);
   if (fixed) return fixed;
   // A limit, the session, a restart or a dead server ended work that was
   // going somewhere; none was a person's decision (§5.3). A `cancelled`,
@@ -200,7 +205,11 @@ export function stoppedNoteText(
         ? `AnA reached this turn's round limit (${rounds} ${rounds === 1 ? 'round' : 'rounds'}) before she said she was done.`
         : "AnA reached this turn's round limit before she said she was done.";
     case 'budget_exhausted':
-      return `AnA reached this turn's time limit (${AUTO_TIME_WORDS}) before she said she was done.`;
+      // Under Auto, Auto's budget; otherwise only the cap of a turn that went
+      // on after its page closed can have stopped it (DT3 review, 4.6).
+      return runPolicy === 'auto'
+        ? `AnA reached this turn's time limit (${AUTO_TIME_WORDS}) before she said she was done.`
+        : `AnA reached the ${DETACHED_WALL_WORDS} limit for a turn that goes on after its page closes, before she said she was done.`;
     case 'approval_timeout':
       return `Nobody answered AnA's request within ${PAUSE_WORDS}, so that change was not made and she stopped.`;
     case 'hold_expired':
@@ -586,6 +595,12 @@ function contextRow(messages: AnaChatMessage[], context: AnaWorkContext | undefi
 export const FOLLOW_LINES = {
   /** This reader's own network is failing. The last known state stays on screen. */
   unreachable: "Can't reach the server. Retrying.",
+  /** The run's record exists but the answer could not be read at hand-over (DT3 review). */
+  answerUnreadable: "The answer couldn't be loaded. Reopen the conversation.",
+  /** The follower's poll was answered 401 with no words of the server's own (DT3 review). */
+  signedOut: 'Your sign-in has ended, so this page cannot follow the turn. Sign in again to see how it went.',
+  /** A reloaded conversation whose runs could not be read (DT3 review). */
+  liveRunsUnchecked: "Couldn't check whether AnA is still working here.",
   /** Stop was pressed and the server has not confirmed it (§5.2). */
   stopUnconfirmed: 'Stop not confirmed. Retrying.',
   /** An admin watching a run held for the person who asked. */
@@ -595,6 +610,26 @@ export const FOLLOW_LINES = {
   /** An admin's composer. */
   adminCannotSteer: 'Only the person who asked can steer AnA.',
 } as const;
+
+/**
+ * The conversation list's marker for a conversation AnA is working in (AnA
+ * detach DT3, §5.1): "Working" — or "Waiting for you" for a run held for its
+ * person (a Manual hold, a pause, an approval; DT3 review) — and once its page
+ * has closed and nobody is watching, by when it has stopped: "Working · stops
+ * by 14:33 UTC if nobody opens it". The bound is the limit plus the closing
+ * grace (stoppedByMs), in UTC like the notice and the record (utcClock).
+ */
+export function workingMarkerLine(run: { status?: string; unattendedStopsAt: string | null; watched: boolean }): string {
+  const lead = run.status === 'paused' || run.status === 'awaiting_approval' ? 'Waiting for you' : 'Working';
+  const at = run.unattendedStopsAt ? Date.parse(run.unattendedStopsAt) : Number.NaN;
+  return !run.watched && Number.isFinite(at) ? `${lead} · stops by ${utcClock(stoppedByMs(at))} if nobody opens it` : lead;
+}
+
+/** Said, quietly, where the Working marker would be when the list could not be read (DT3 review). */
+export const WORKING_UNREADABLE_LINE = "Couldn't check which conversations AnA is working in.";
+
+/** What RUN_LIMIT's link list is headed with (§2.8, §5.1). */
+export const RUN_LIMIT_WORKING_LEAD = 'Working now:';
 
 /** The owner is stale after this long without a heartbeat: four missed 15 s beats (§5.1). */
 export const OWNER_STALE_MS = 60_000;
@@ -642,6 +677,9 @@ export function followPhaseLine(m: Pick<AnaChatMessage, 'follow' | 'timeline'>, 
 export function liveAlertLine(m: Pick<AnaChatMessage, 'follow' | 'stopUnconfirmed'>, now: number): string | null {
   const f = m.follow;
   if (f?.forbidden) return f.forbidden;
+  // A 401: no retry can succeed, so this is said instead of "Retrying" (DT3 review).
+  if (f?.signedOut) return f.signedOut;
+  if (f?.answerUnreadable) return FOLLOW_LINES.answerUnreadable;
   if (m.stopUnconfirmed) return FOLLOW_LINES.stopUnconfirmed;
   if (!f) return null;
   if (f.unreachable) return FOLLOW_LINES.unreachable;
