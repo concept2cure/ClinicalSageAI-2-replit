@@ -83,14 +83,16 @@ describe('loadPriorSequenceManifest', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('tolerates a NULL/garbage stored manifest without throwing', async () => {
-    const pool = stubPool([{ sequence_number: '0000', leaf_manifest: null }]);
-    const prior = await loadPriorSequenceManifest(pool, {
+  // 2026-10-15: this pinned the defect ("tolerates a NULL/garbage stored
+  // manifest", returning [] — no prior leaves, so held leaves re-file as new).
+  // A stored manifest that cannot be read is an error naming its sequence.
+  it('refuses a garbage stored manifest, naming the sequence', async () => {
+    const pool = stubPool([{ sequence_number: '0000', leaf_manifest: 'garbage' }]);
+    await expect(loadPriorSequenceManifest(pool, {
       organizationId: 7,
       applicationNumber: 'IND-123',
       priorSequenceNumber: '0000',
-    });
-    expect(prior).toEqual([]);
+    })).rejects.toThrow(/sequence 0000/);
   });
 });
 

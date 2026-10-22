@@ -13,9 +13,17 @@
  * the tool gate, the Part 11 gate, the shared governed transmit and its
  * descriptor-trust gates, the gateway registry's human-authorization guard, the
  * pre-transmit package-fitness checks, the bundle integrity re-hash, the AS2
- * envelope construction and the RSA-SHA256 body signature all execute. Only
+ * envelope construction and the CMS signing and encryption all execute. Only
  * `node:https` (the wire) and the database are stubbed — the transport
  * boundary, not the decision logic.
+ *
+ * 2026-10-22 (MR-02 Stage 1): the AS2 body is a CMS SignedData inside
+ * EnvelopedData built with OpenSSL (as2-cms.ts, e1f3fd425), the credentials
+ * must be real X.509 certificates, and an accepting MDN counts only when it is
+ * signed by the pinned FDA certificate and carries the MIC of what was sent.
+ * The credentials are throwaway X.509 certificates (support/as2-cms-fixture.ts);
+ * the stubbed wire decrypts each request with the FDA key, verifies it against
+ * the sponsor certificate, and answers with an FDA-signed MDN over that MIC.
  *
  * NODE_ENV is 'production' throughout: the trust gates are only meaningful in
  * their enforced state, and that is the state a real 510(k) filing runs in.
@@ -28,9 +36,10 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } 
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { createHash, generateKeyPairSync, createSign } from 'crypto';
+import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../../ectd/package-content-fingerprint';
+import { as2CmsFixture, receiptReport } from '../../submission-gateways/__tests__/support/as2-cms-fixture';
 
 /* ─── DB stub ────────────────────────────────────────────────────── */
 
@@ -49,8 +58,12 @@ const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGove
     storedBundle:  { value: null as unknown },
     httpsRequests: [] as Array<{ options: any; body: Buffer }>,
     // `sent` is the body as delivered, with {{MESSAGE_ID}} echoing the request's
-    // Message-ID the way a real MDN's Original-Message-ID does.
-    mdnResponse:   { statusCode: 200, body: '', sent: '' },
+    // Message-ID the way a real MDN's Original-Message-ID does. When `responder`
+    // is set it builds the answer from the request instead (the FDA-signed MDN).
+    mdnResponse:   {
+      statusCode: 200, body: '', sent: '',
+      responder: null as null | ((wire: Buffer, messageId: string) => { contentType: string; body: string }),
+    },
     audit:         { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
     recordGovernedAction: vi.fn(async (_client: unknown, _params: Record<string, any>) => ({
       actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'deadbeef',
@@ -91,8 +104,14 @@ function queryImpl(sql: string, args: unknown[] = []) {
   if (sql.includes('INSERT INTO submission_transmittals')) {
     return Promise.resolve({ rows: [{ id: 4242 }], rowCount: 1 });
   }
+  // The tenant-bound AS2 binding (message id + MIC) and receipt written onto
+  // that transmittal's metadata: only the row inserted above, in its own org.
+  if (sql.includes('UPDATE submission_transmittals SET metadata = jsonb_set')) {
+    const ours = args[0] === 4242 && args[1] === SIGNED_CTX.organizationId;
+    return Promise.resolve(ours ? { rows: [{ id: 4242 }], rowCount: 1 } : { rows: [], rowCount: 0 });
+  }
   // findActiveTransmittal: no active row.
-  if (sql.includes('SELECT id, status FROM submission_transmittals')) {
+  if (/SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/.test(sql)) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
   return Promise.resolve({ rows: [], rowCount: 0 });
@@ -127,17 +146,23 @@ vi.mock('node:https', () => {
       on: (_e: string, _h: unknown) => req,
       write: (b: Buffer) => { chunks.push(Buffer.from(b)); return true; },
       end: () => {
-        httpsRequests.push({ options, body: Buffer.concat(chunks) });
+        const body = Buffer.concat(chunks);
+        httpsRequests.push({ options, body });
+        const messageId = String(options?.headers?.['Message-ID'] ?? '');
+        const answer = mdnResponse.responder?.(body, messageId) ?? null;
         const handlers: Record<string, (arg?: unknown) => void> = {};
         const res = {
           statusCode: mdnResponse.statusCode,
-          headers: { 'message-id': '<mdn-from-fda@esg.fda.gov>' },
+          headers: {
+            'message-id': '<mdn-from-fda@esg.fda.gov>',
+            ...(answer ? { 'content-type': answer.contentType } : {}),
+          },
           on: (event: string, h: (arg?: unknown) => void) => { handlers[event] = h; return res; },
         };
         // Deliver asynchronously, like the real socket does.
         setImmediate(() => {
           cb(res);
-          mdnResponse.sent = mdnResponse.body.replace('{{MESSAGE_ID}}', String(options?.headers?.['Message-ID'] ?? ''));
+          mdnResponse.sent = answer ? answer.body : mdnResponse.body.replace('{{MESSAGE_ID}}', messageId);
           handlers.data?.(Buffer.from(mdnResponse.sent, 'utf8'));
           handlers.end?.();
         });
@@ -167,6 +192,19 @@ let certPath: string;
 let keyPath: string;
 let fdaCertPath: string;
 let privateKeyPem: string;
+let sponsorCertPem: string;
+let bundleBytes: Buffer;
+let cmsFixture: ReturnType<typeof as2CmsFixture>;
+
+/** What FDA reads: decrypt with the FDA key, verify against the sponsor certificate (throws otherwise). */
+const verifiedEntity = (wire: Buffer, signer = sponsorCertPem): Buffer => cmsFixture.roundtrip(wire, 'agency', signer);
+
+/** An accepting MDN signed by the pinned FDA key, carrying the MIC of the entity FDA verified. */
+const acceptingMdn = (wire: Buffer, messageId: string): { contentType: string; body: string } => {
+  const mic = createHash('sha256').update(verifiedEntity(wire)).digest('base64');
+  const receipt = cmsFixture.signedReceipt(receiptReport(messageId, mic));
+  return { contentType: receipt.contentType, body: receipt.body.toString('utf8') };
+};
 
 const VERIFIED_AT = new Date('2026-08-14T10:00:00.000Z');
 const SIGNED_CTX = {
@@ -209,23 +247,24 @@ beforeAll(async () => {
   const bytes = await zip.generateAsync({ type: 'nodebuffer', compression: 'STORE' });
   bundlePath = path.join(bundleRoot, 'pkg-42-estar.zip');
   await fs.writeFile(bundlePath, bytes);
+  bundleBytes = bytes;
   bundleSha = createHash('sha256').update(bytes).digest('hex');
   bundleSize = bytes.length;
 
-  // A real RSA key pair: fda-esg.ts signs the AS2 body with
-  // createSign('RSA-SHA256'), which a placeholder string cannot satisfy.
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-  privateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
-  keyPath = path.join(base, 'client-key.pem');
-  certPath = path.join(base, 'client-cert.pem');
-  fdaCertPath = path.join(base, 'fda-cert.pem');
-  await fs.writeFile(keyPath, privateKeyPem);
-  await fs.writeFile(certPath, publicKey.export({ type: 'spki', format: 'pem' }) as string);
-  await fs.writeFile(fdaCertPath, publicKey.export({ type: 'spki', format: 'pem' }) as string);
-});
+  // Real X.509 credentials: as2-cms.ts refuses anything that is not a valid
+  // certificate whose key matches, so a bare public key cannot stand in.
+  // sponsor = our signing/mTLS identity; agency = FDA's AS2 certificate.
+  cmsFixture = as2CmsFixture();
+  keyPath = path.join(cmsFixture.directory, 'sponsor.key');
+  certPath = path.join(cmsFixture.directory, 'sponsor.pem');
+  fdaCertPath = path.join(cmsFixture.directory, 'agency.pem');
+  privateKeyPem = cmsFixture.key('sponsor');
+  sponsorCertPem = cmsFixture.pem('sponsor');
+}, 60_000);
 
 afterAll(async () => {
   await fs.rm(path.dirname(bundleRoot), { recursive: true, force: true });
+  cmsFixture.cleanup();
 });
 
 beforeEach(() => {
@@ -236,10 +275,8 @@ beforeEach(() => {
   packageCreator.value = 8;
   httpsRequests.length = 0;
   mdnResponse.statusCode = 200;
-  mdnResponse.body =
-    'Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256\r\n' +
-    '\r\nOriginal-Message-ID: {{MESSAGE_ID}}\r\n' +
-    'Disposition: automatic-action/MDN-sent-automatically; processed\r\n';
+  mdnResponse.body = '';
+  mdnResponse.responder = acceptingMdn;
 
   savedEnv = {
     NODE_ENV: process.env.NODE_ENV,
@@ -308,7 +345,11 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
     expect(httpsRequests).toHaveLength(1);
     const sent = httpsRequests[0];
     expect(sent.options.hostname).toBe('esg.fda.gov');
-    expect(sent.body.toString('utf8')).toContain('assembled eSTAR package bytes');
+    // Encrypted on the wire: the package text is not readable in transit…
+    expect(sent.body.includes(Buffer.from('assembled eSTAR package bytes'))).toBe(false);
+    // …and FDA, decrypting with its key, reads exactly the assembled bundle.
+    const entity = verifiedEntity(sent.body);
+    expect(entity.subarray(entity.indexOf('\r\n\r\n') + 4).equals(bundleBytes)).toBe(true);
 
     // 2. It is a genuine AS2 (RFC 4130) message, not a POST of a blob: the
     //    envelope headers the FDA ESG specification requires are present.
@@ -319,9 +360,10 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
     expect(h['Message-ID']).toMatch(/^<.+@SPONSOR-AS2>$/);
     expect(h['Disposition-Notification-Options']).toMatch(/pkcs7-signature/);
     expect(h['Disposition-Notification-Options']).toMatch(/sha-256/);
+    expect(h['Content-Type']).toMatch(/^application\/pkcs7-mime; smime-type=enveloped-data/);
 
     // 3. mTLS material was presented from the configured credentials.
-    expect(sent.options.cert).toContain('BEGIN PUBLIC KEY');
+    expect(sent.options.cert).toBe(sponsorCertPem);
     expect(sent.options.key).toBe(privateKeyPem);
     expect(sent.options.rejectUnauthorized).toBe(true);
 
@@ -349,14 +391,15 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
 
   it('signs the AS2 body with the sponsor key rather than a placeholder', async () => {
     configureEsgCredentials();
-    await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    expect(r.success, `handler refused: ${r.message}`).toBe(true);
+    expect(httpsRequests).toHaveLength(1);
 
-    // signAs2Body runs during envelope construction; a non-PEM key throws.
-    // Prove the same key genuinely produces an RSA-SHA256 signature over the
-    // exact bytes that went out.
-    const signer = createSign('RSA-SHA256');
-    signer.update(httpsRequests[0].body);
-    expect(signer.sign(privateKeyPem, 'base64').length).toBeGreaterThan(64);
+    // The CMS signature inside the envelope verifies against the sponsor
+    // certificate, with embedded certificates ignored (-nointern)…
+    expect(() => verifiedEntity(httpsRequests[0].body)).not.toThrow();
+    // …and against no other: a different certificate does not verify it.
+    expect(() => verifiedEntity(httpsRequests[0].body, cmsFixture.pem('rogue'))).toThrow();
   });
 
   it('records a rejected transmittal — never an acknowledgement — on an agency HTTP error', async () => {
@@ -365,6 +408,7 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
     // This sent HTTP 500, which the delivery classifier (as2-transport.ts)
     // records in transit: a 5xx after the whole bundle may be held upstream.
     mdnResponse.statusCode = 403;
+    mdnResponse.responder = null;
     mdnResponse.body = 'forbidden: unknown AS2-From';
 
     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
@@ -388,6 +432,7 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
   it('records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle', async () => {
     configureEsgCredentials();
     mdnResponse.statusCode = 500;
+    mdnResponse.responder = null;
     mdnResponse.body = 'gateway unavailable';
 
     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);

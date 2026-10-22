@@ -3,11 +3,20 @@
 # (ECS_CLUSTER c2c-production, ECS_API_TASK_FAMILY c2c-production-api, …), so
 # they are kept exactly; tests/names.tftest.hcl reads the workflow and checks.
 
+#
+# S3 bucket names are global, so every bucket carries the account id
+# (MR-03 OPS-03, 2026-10-21, before anything was created): a fixed name such as
+# c2c-prod-frontend can already belong to someone else, as the state bucket's
+# did, and the first apply fails. The pipeline reads the frontend bucket's name
+# from the repository variable FRONTEND_BUCKET, set from the frontend_bucket
+# output.
+
 locals {
   short           = var.environment == "production" ? "c2c-prod" : "c2c-stg"
   long            = "c2c-${var.environment}"
-  evidence_bucket = "${local.short}-part11-evidence"
-  frontend_bucket = "${local.short}-frontend"
+  account_suffix  = data.aws_caller_identity.current.account_id
+  evidence_bucket = "${local.short}-part11-evidence-${local.account_suffix}"
+  frontend_bucket = "${local.short}-frontend-${local.account_suffix}"
 }
 
 # ── Networking ───────────────────────────────────────────────────────────────
@@ -28,7 +37,7 @@ module "vpc" {
 module "ecr" {
   source           = "../modules/ecr"
   prefix           = local.short
-  repository_names = ["api", "worker"]
+  repository_names = ["api"]
   tags             = var.tags
 }
 
@@ -40,18 +49,19 @@ module "ecr" {
 # verbatim, and the app reads DATABASE_URL as a connection string, so no task
 # could connect.
 #
-#   DATABASE_URL      the owner role (c2c_admin). Migrations run as it, and so
-#                     does the API at boot: ensureCoreTables / ensureAuthTables
-#                     run DDL on it, and server/routes/tenants-simple.ts serves
-#                     routes through a client on it, outside RLS. A known
-#                     exposure (docs/evidence/W2/2026-09-23b/README.md).
-#   APP_DATABASE_URL  app_service, LOGIN NOSUPERUSER NOBYPASSRLS. The runtime
-#                     connects as it; under RLS_ENFORCE=on the boot posture probe
-#                     refuses a superuser or BYPASSRLS role.
+#   DATABASE_URL      the owner role (c2c_admin). Migrations run as it, in the
+#                     one-off database task (local.owner_secrets below), and
+#                     nothing else does. Until MR-03 Stage 3 (OPS-16) the API
+#                     carried it too: the boot ran DDL on it and /api/tenants
+#                     served through a client on it, outside RLS. The boot now
+#                     only verifies the schema, as app_service, and the API
+#                     task and its execution role hold neither owner secret.
+#   APP_DATABASE_URL  app_service, LOGIN NOSUPERUSER NOBYPASSRLS. The API
+#                     connects as it and as nothing else; under RLS_ENFORCE=on
+#                     the boot posture probe refuses a superuser or BYPASSRLS role.
 #
 # deploy-migrate mints app_service from APP_SERVICE_DB_PASSWORD
-# (scripts/db/provision-app-role.mjs), and the migrate task is derived from the
-# API task definition, so that password rides in the API task's secrets too.
+# (scripts/db/provision-app-role.mjs), so that password is an owner secret too.
 # The mint works as the RDS master (not a superuser) and sends the server only
 # the password's SCRAM verifier: RDS logs DDL to CloudWatch.
 #
@@ -117,6 +127,10 @@ module "secrets" {
   source     = "../modules/secrets"
   prefix     = "c2c/${var.environment}"
   kms_key_id = aws_kms_key.secrets.arn
+  # Production keeps a deleted secret recoverable for 30 days. Staging deletes
+  # at once: otherwise re-applying it after a teardown is refused for a month,
+  # its names still scheduled for deletion (MR-03 OPS-26).
+  recovery_window_in_days = var.environment == "production" ? 30 : 0
   secrets = merge(local.openai_secret, {
     jwt_secret = {
       description = "JWT signing secret"
@@ -222,6 +236,13 @@ resource "terraform_data" "boot_contract" {
     # The API task carries the virus scanner (modules/ecs-fargate), whose hard
     # memory limit comes out of the task's. What is left is the application's,
     # which ran in 2048 MiB before the scanner was added.
+    # OPS-13 (MR-03 Stage 2): one vCPU carried Node, clamd and every converter,
+    # so one large package could fail the health check and get the task
+    # replaced mid-job. Staging may run smaller.
+    precondition {
+      condition     = var.environment != "production" || var.api_cpu >= 2048
+      error_message = "api_cpu must be at least 2048 (two vCPUs) in production: the API task also runs the virus scanner and the document converters."
+    }
     precondition {
       condition     = var.api_memory - module.ecs.scanner_memory >= 2048
       error_message = "api_memory must leave the application 2048 MiB beside the virus scanner's ${module.ecs.scanner_memory} MiB: at least ${module.ecs.scanner_memory + 2048}."
@@ -310,10 +331,10 @@ locals {
   # APP_URL and ALLOWED_ORIGINS cannot disagree with the domain browsers use.
   app_origin = "https://${var.domain_aliases[0]}"
 
-  # What every container of this image needs to boot. The API and the worker
-  # run the same image and the same import-time refusals, so they share it.
+  # What every container of this image needs to boot: the API, and the one-off
+  # database task (no worker: P-10, amended 2026-10-22). The API adds its setup
+  # token below; the database task adds the owner's secrets.
   boot_secrets = concat([
-    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
     { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
     { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
     { name = "REFRESH_TOKEN_SECRET", value_from = module.secrets.secret_arns["refresh_token_secret"] },
@@ -330,6 +351,14 @@ locals {
     # Present exactly when the secret is: only when a tenant elected OpenAI.
     for k in keys(local.openai_secret) : { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns[k] }
   ])
+
+  # The database owner's credential and the password deploy-migrate mints
+  # app_service with. Only the one-off database task carries them, and only its
+  # execution role can read them (modules/ecs-fargate; MR-03 OPS-16).
+  owner_secrets = [
+    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
+    { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
+  ]
 }
 
 # Optional error reporting (server/utils/sentry.ts): absent rather than empty
@@ -398,18 +427,18 @@ module "ecs" {
   # deploy a mutable `:latest` tag — that breaks rollback and reproducibility.
   # TODO(GA-blocker): pin to image digest (e.g. "...@sha256:<digest>") rather
   # than a tag once the deploy pipeline resolves the pushed image digest.
-  api_image    = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
-  worker_image = "${module.ecr.repository_urls["worker"]}:${var.image_tag}"
+  api_image = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
   # The virus scanner the API task carries (variables.tf says how it is pinned).
   scanner_image = var.scanner_image
 
-  api_cpu              = var.api_cpu
-  api_memory           = var.api_memory
-  api_desired_count    = var.api_desired_count
-  worker_desired_count = var.worker_desired_count
+  api_cpu           = var.api_cpu
+  api_memory        = var.api_memory
+  api_desired_count = var.api_desired_count
+  api_max_count     = var.api_max_count
+  # The request-count scaling policy's metric: this ALB, this target group.
+  api_request_count_resource_label = "${module.alb.alb_arn_suffix}/${module.alb.api_target_group_arn_suffix}"
 
-  secret_arns = module.secrets.secret_arns_list
-  # database_keys.tf: the execution role decrypts the secrets through this key.
+  # database_keys.tf: the execution roles decrypt the secrets through this key.
   secrets_kms_key_arn = aws_kms_key.secrets.arn
   # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
   # role publishes it. A task that could write it could rewrite the site every
@@ -424,30 +453,24 @@ module "ecs" {
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this
   # renders is the one it accepts (tests/boot_contract.tftest.hcl reads the
-  # preflight's list and checks it against both containers). The API adds
-  # APP_SERVICE_DB_PASSWORD: the migrate task is cloned from its definition and
-  # re-aligns app_service from it (provision-app-role.mjs sends only its SCRAM
-  # verifier). The API never mints; APP_DATABASE_URL already holds the password.
+  # preflight's list and checks it against the container). The preflight
+  # refuses an API container carrying an owner secret.
   api_secrets = concat(local.boot_secrets, [
-    { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
     # First-run setup (setup_token above). Only the API serves the route.
     { name = "SETUP_TOKEN", value_from = module.secrets.secret_arns["setup_token"] },
   ])
+  # deploy-migrate and the first provision: the API's boot secrets, so they
+  # verify the readiness contract as the API would boot, and the owner's.
+  migrate_secrets = concat(local.boot_secrets, local.owner_secrets)
 
-  # The worker runs the same image, so the same import-time refusals: with less
-  # than the full contract it exits at boot. Whether a worker exists at all is
-  # a founder decision (B6+B7). As defined here it CANNOT boot: since MR-08
-  # stage 1 a production process with no CLAMAV_HOST fails the boot security
-  # self-test (clamav_connectivity, server/services/securityHealth.ts) and
-  # exits, and the worker task has no scanner and no CLAMAV_HOST, by design
-  # (tests/boot_contract.tftest.hcl). There is no worker image to run either
-  # (.github/workflows/deploy-aws.yml, "No worker image"). Giving it a scanner
-  # or retiring it is left to MR-14; nothing here changes the worker's behaviour.
-  worker_secrets = local.boot_secrets
+  # No worker service (P-10, amended 2026-10-22 under NEW-1 of MR-03). It had
+  # no command, so it booted a third API server outside the load balancer, and
+  # with no scanner beside it the boot self-test refused it (clamav_connectivity,
+  # server/services/securityHealth.ts). Background work runs in the API's own
+  # schedulers, once per window across tasks (server/db/scheduledOnce.ts).
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
-  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment, local.embedding_environment)
-  worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.embedding_environment)
+  api_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment, local.embedding_environment)
 
   tags = var.tags
 }
@@ -492,7 +515,7 @@ locals {
   # Unconditional: no variable moves it (INF-36, resolved by the decision above).
   embedding_provider = "local"
 
-  # The API and the worker both run the embedding runtime. With local and no
+  # The API runs the embedding runtime. With local and no
   # address, resolveEmbeddingProvider refuses rather than falling back to OpenAI.
   # EMBEDDING_LOCAL_MODEL is the model the server loads, so the ledger names
   # what served each call; the readiness probe refuses a server that answers as

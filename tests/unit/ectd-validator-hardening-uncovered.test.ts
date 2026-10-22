@@ -341,7 +341,8 @@ describe('detectSequenceGaps (DB-backed)', () => {
     const [secondarySql, secondaryParams] = hoisted.poolQuery.mock.calls[1];
     expect(secondarySql).toMatch(/ectd_submissions/i);
     expect(secondarySql).toMatch(/application_number\s*=\s*\$1/i);
-    expect(secondarySql).toMatch(/organization_id\s*=\s*\$2/i);
+    // 2026-10-15: ectd_submissions' tenant column is org_id (migration 082).
+    expect(secondarySql).toMatch(/org_id\s*=\s*\$2/i);
     expect(secondaryParams).toEqual(['IND123456', ORG]);
   });
 });

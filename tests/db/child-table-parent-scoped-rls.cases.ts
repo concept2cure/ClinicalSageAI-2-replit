@@ -178,8 +178,9 @@ export const CASES: Case[] = [
       const programId = await seedProgram(q, org, `program ${tag}`, tag.slice(-40));
       await q(
         `INSERT INTO public.complaints
-           (program_id, complaint_code, source, channel, received_at, event_narrative)
-         VALUES ($1, $2, 'customer', 'email', now(), $3)`,
+           (program_id, complaint_code, source, channel, received_at, event_narrative,
+            patient_harm, severity_assessment)
+         VALUES ($1, $2, 'customer', 'email', now(), $3, 'none', 'minor')`,
         [programId, tag.slice(-40), `complaint narrative for org ${org}`],
       );
       return programId; // complaints.program_id

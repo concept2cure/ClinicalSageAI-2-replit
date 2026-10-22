@@ -4,9 +4,11 @@
  * --------------------------------------------------------------------
  * This module finalizes a rendered leaf PDF to "submission grade"
  * (PDF/A-1b conversion + classification). It is intentionally a pure
- * library: it NEVER throws and degrades gracefully when the external
- * binaries are absent, so callers can wire it in without changing their
- * error contract.
+ * library: it degrades gracefully when the external binaries are absent,
+ * so callers can wire it in without changing their error contract. It
+ * throws in exactly one case: ConversionCapacityError, when no conversion
+ * slot freed within CONVERTER_QUEUE_TIMEOUT_MS (OPS-13, MR-03 Stage 2; see
+ * `finalizePdfA`).
  *
  * A human should call `finalizePdfA(pdfBytes)` from:
  *   - server/services/ectd/package-from-core.ts
@@ -51,6 +53,7 @@ import path from 'path';
 import { randomBytes } from 'crypto';
 
 import { classifyPdfA } from './pdfa-detect';
+import { isConversionCapacityError, withConversionSlot } from '../conversion-slots';
 
 const execFileAsync = promisify(execFile);
 
@@ -73,7 +76,14 @@ function resolveVeraPdfBinary(): string {
   return process.env.VERAPDF_BINARY || 'verapdf';
 }
 
-/** Feature-detect a binary by running its version probe; never throws. */
+/**
+ * Feature-detect a binary by running its version probe; never throws.
+ *
+ * The probe takes no conversion slot. It converts nothing and is capped at 5 s;
+ * and a probe that queued for a slot could be refused for capacity, which this
+ * catch would read as "binary absent" and finalizePdfA would then report as a
+ * no-binary no-op: a busy converter disguised as a missing one.
+ */
 async function isBinaryAvailable(bin: string, versionArgs: string[]): Promise<boolean> {
   try {
     await execFileAsync(bin, versionArgs, { timeout: 5000 });
@@ -96,8 +106,13 @@ function toUint8Array(input: Uint8Array | ArrayBuffer | Buffer): Uint8Array {
  *  3. Else, if veraPDF is present, validate-only (no byte change).
  *  4. Else return the input unchanged with `{ converted:false, reason:'no-binary' }`.
  *
- * This function NEVER throws — every failure path is captured as a warning
- * and returns the original bytes so the caller's pipeline keeps flowing.
+ * Every conversion or validation failure is captured as a warning and
+ * returns the original bytes so the caller's pipeline keeps flowing. The one
+ * exception is ConversionCapacityError (OPS-13, MR-03 Stage 2): every
+ * conversion slot stayed busy past CONVERTER_QUEUE_TIMEOUT_MS. It is thrown,
+ * not turned into `converted: false`, because the packager would otherwise
+ * ship the leaf as not-PDF/A on the strength of a queue rather than of its
+ * bytes; the request is refused 503 with Retry-After and can be retried.
  */
 export async function finalizePdfA(
   input: Uint8Array | ArrayBuffer | Buffer
@@ -162,6 +177,7 @@ export async function finalizePdfA(
         warnings,
       };
     } catch (err: any) {
+      if (isConversionCapacityError(err)) throw err;
       warnings.push(`Ghostscript PDF/A conversion failed (${err?.message ?? err}); returning input unchanged.`);
       return { pdfBytes, converted: false, pdfaPart: before.pdfAPart, warnings };
     }
@@ -232,7 +248,8 @@ async function convertToPdfA1bWithGhostscript(pdfBytes: Uint8Array): Promise<Uin
   await fs.writeFile(inputPath, Buffer.from(pdfBytes));
   await fs.writeFile(preludePath, prelude, 'utf8');
   try {
-    await execFileAsync(
+    // One of the process's conversion slots (OPS-13); its 120 s timeout starts once gs runs.
+    await withConversionSlot('ghostscript', () => execFileAsync(
       resolveGsBinary(),
       [
         '-dPDFA=1',
@@ -251,7 +268,7 @@ async function convertToPdfA1bWithGhostscript(pdfBytes: Uint8Array): Promise<Uin
         inputPath,
       ],
       { timeout: 120000, maxBuffer: 64 * 1024 * 1024 }
-    );
+    ));
     const out = await fs.readFile(outputPath);
     return new Uint8Array(out);
   } finally {
@@ -291,21 +308,24 @@ function escapePostScriptString(s: string): string {
 
 /**
  * Validation-only pass with veraPDF. Returns a human-readable note (or null).
- * Never throws — veraPDF exits non-zero on validation failures, which we treat
- * as a diagnostic, not an error.
+ * veraPDF exits non-zero on validation failures, which we treat as a
+ * diagnostic, not an error. It throws only ConversionCapacityError: a run that
+ * never started is not a validation finding.
  */
 async function validateWithVeraPdf(pdfBytes: Uint8Array): Promise<string | null> {
   const token = randomBytes(8).toString('hex');
   const inputPath = path.join(os.tmpdir(), `pdfa-vera-${token}.pdf`);
   await fs.writeFile(inputPath, Buffer.from(pdfBytes)).catch(() => {});
   try {
-    const { stdout } = await execFileAsync(
+    // A JVM per run: one of the process's conversion slots (OPS-13).
+    const { stdout } = await withConversionSlot('verapdf', () => execFileAsync(
       resolveVeraPdfBinary(),
       ['--flavour', '1b', '--format', 'text', inputPath],
       { timeout: 60000, maxBuffer: 16 * 1024 * 1024 }
-    );
+    ));
     return `veraPDF (PDF/A-1b) report: ${String(stdout).trim().slice(0, 500)}`;
   } catch (err: any) {
+    if (isConversionCapacityError(err)) throw err;
     // Non-zero exit = non-compliant or error; surface the captured output.
     const detail = err?.stdout || err?.stderr || err?.message || 'unknown';
     return `veraPDF (PDF/A-1b) validation reported issues: ${String(detail).trim().slice(0, 500)}`;

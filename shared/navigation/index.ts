@@ -229,7 +229,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   },
   { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
   { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
-  { id: 'dispatch-readiness', label: 'Dispatch readiness', description: 'The deterministic dispatch gate for the open program’s newest sequence: validation errors, unacknowledged shadow-review criticals and the release signature, each a named blocker until it is cleared.', scope: 'project', group: 'module' },
+  { id: 'dispatch-readiness', label: 'Dispatch readiness', description: 'The deterministic dispatch gate for each market of the open program: its newest sequence’s validation errors, unacknowledged shadow-review criticals and release signature, each a named blocker until it is cleared, and a way to where each is fixed.', scope: 'project', group: 'module' },
   { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },
   { id: 'inconsistency', label: 'Inconsistency board', description: 'The cross-document inconsistency submission gate for the project in context (fails closed).', scope: 'project', group: 'module' },
   { id: 'intelligence-catalog', label: 'Capability catalog', description: 'The catalog of AnA’s deterministic tools, filterable by name.', scope: 'global', group: 'module' },

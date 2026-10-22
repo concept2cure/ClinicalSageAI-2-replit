@@ -5,6 +5,14 @@
  * notification for substantial equivalence. Rules reference 21 CFR 807,
  * 21 CFR 820, ISO 10993, IEC 62304, and applicable FDA guidance documents.
  *
+ * 2026-10-22 (D2): converged onto the 510(k) interview (flows/device-510k.ts).
+ * Rules read that interview's field ids with their real value semantics
+ * (yes_no is a boolean, a select its option value, a multi_select an array).
+ * A field the interview shows only under some answer (a `visibleWhen`, or a
+ * node reached only by a branch) is checked only when it was shown: hidden is
+ * blank by design, not missing. A rule whose question the interview never
+ * asks still reads its original key and is reported NOT ASSESSED.
+ *
  * @module server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor
  */
 
@@ -25,7 +33,12 @@ const rid = (suffix: string) => 'device510k_' + suffix;
 /* ------------------------------------------------------------------ */
 
 const isBlank = (v: unknown): boolean =>
-  v === undefined || v === null || (typeof v === 'string' && v.trim().length === 0);
+  v === undefined || v === null || (typeof v === 'string' && v.trim().length === 0) ||
+  (Array.isArray(v) && v.length === 0);
+
+/** predicate_info's fields are shown unless the strategy has no predicate (flows/device-510k.ts). */
+const predicateAsked = (a: Record<string, unknown>): boolean =>
+  a.predicate_strategy !== 'no_predicate' && a.predicate_strategy !== 'nse_received';
 
 const isTooShort = (v: unknown, min: number): boolean =>
   typeof v === 'string' && v.trim().length > 0 && v.trim().length < min;
@@ -43,7 +56,7 @@ const rules: AuditRule[] = [
     question:
       'Per 21 CFR 807.87(a), the 510(k) submission must identify the device by its trade or proprietary name. Has the submitter provided the device name?',
     check: (a) => {
-      if (isBlank(a.device_name)) {
+      if (isBlank(a.device_trade_name)) {
         return {
           id: rid('device_name_missing'),
           dimension: 'completeness',
@@ -57,7 +70,7 @@ const rules: AuditRule[] = [
           reference: '21 CFR 807.87(a); FDA Refuse to Accept Checklist for 510(k) Submissions',
           recommendation:
             'Provide the exact trade/proprietary name under which the device will be marketed. This is a mandatory field and its absence will trigger an RTA (Refuse to Accept) determination.',
-          relatedFields: ['device_name'],
+          relatedFields: ['device_trade_name'],
         };
       }
       return null;
@@ -70,7 +83,7 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'Device Classification Not Specified',
     question:
-      'Under 21 CFR 807.87(b), the submitter must state the classification of the device (Class I, II, or III). Has the device class been declared?',
+      'Under 21 CFR 807.87(c), the submitter must state the class in which the device has been put under section 513 of the FD&C Act (Class I, II, or III) and, if known, its classification panel, or, if the device has not been classified, a statement of that fact. Has the device class been declared?',
     check: (a) => {
       if (isBlank(a.device_class)) {
         return {
@@ -79,11 +92,11 @@ const rules: AuditRule[] = [
           severity: 'critical',
           title: 'Device Classification Not Specified',
           question:
-            'Under 21 CFR 807.87(b), the submitter must state the classification of the device (Class I, II, or III). Has the device class been declared?',
+            'Under 21 CFR 807.87(c), the submitter must state the class in which the device has been put under section 513 of the FD&C Act (Class I, II, or III) and, if known, its classification panel, or, if the device has not been classified, a statement of that fact. Has the device class been declared?',
           observation: 'The device classification (Class I, II, or III) was not specified.',
           requirement:
-            'The 510(k) must identify the device classification per 21 CFR 807.87(b). Most 510(k)-eligible devices are Class II.',
-          reference: '21 CFR 807.87(b); 21 CFR Part 860 — Medical Device Classification Procedures',
+            'The 510(k) must identify the device classification per 21 CFR 807.87(c). Most 510(k)-eligible devices are Class II.',
+          reference: '21 CFR 807.87(c); 21 CFR Part 860 — Medical Device Classification Procedures',
           recommendation:
             'State the device class explicitly and confirm it is consistent with the product code and regulation number cited.',
           relatedFields: ['device_class', 'product_code', 'regulation_number'],
@@ -112,7 +125,7 @@ const rules: AuditRule[] = [
           observation: 'No product code was supplied for the device.',
           requirement:
             'The product code must be provided and must match the classification regulation cited. FDA relies on this code to route the submission to the correct review division.',
-          reference: '21 CFR 807.87(b); FDA Product Classification Database',
+          reference: '21 CFR 807.87(c); FDA Product Classification Database',
           recommendation:
             'Look up the appropriate product code in the FDA Product Classification Database and include it. Verify the product code corresponds to the regulation number and device class stated.',
           relatedFields: ['product_code', 'regulation_number', 'device_class'],
@@ -142,7 +155,7 @@ const rules: AuditRule[] = [
             'The 21 CFR classification regulation number was not provided.',
           requirement:
             'The 510(k) must cite the specific classification regulation number (e.g., 21 CFR 878.4200) that governs the device. This determines the regulatory requirements and any special controls that apply.',
-          reference: '21 CFR 807.87(b); 21 CFR Parts 862-892',
+          reference: '21 CFR 807.87(c); 21 CFR Parts 862-892',
           recommendation:
             'Identify the correct 21 CFR classification regulation number. Cross-reference with the product code to ensure consistency. If special controls apply, confirm they have been addressed.',
           relatedFields: ['regulation_number', 'product_code', 'device_class'],
@@ -160,7 +173,7 @@ const rules: AuditRule[] = [
     question:
       'Per 21 CFR 807.87(f), the submitter must identify the predicate device to which substantial equivalence is claimed. Without a named predicate, the 510(k) pathway cannot proceed. Has a predicate device been specified?',
     check: (a) => {
-      if (isBlank(a.predicate_device)) {
+      if (predicateAsked(a) && isBlank(a.predicate_device_name)) {
         return {
           id: rid('predicate_device_missing'),
           dimension: 'regulatory_alignment',
@@ -174,7 +187,7 @@ const rules: AuditRule[] = [
           reference: '21 CFR 807.87(f); FDA Guidance: The 510(k) Program — Evaluating Substantial Equivalence (2014)',
           recommendation:
             'Identify the predicate device by trade name, manufacturer, and 510(k) clearance number. Select a predicate with the same intended use and similar technological characteristics.',
-          relatedFields: ['predicate_device', 'predicate_510k_number'],
+          relatedFields: ['predicate_device_name', 'predicate_510k_number', 'predicate_strategy'],
         };
       }
       return null;
@@ -189,7 +202,7 @@ const rules: AuditRule[] = [
     question:
       'CDRH requires the 510(k) clearance number (e.g., K######) for the predicate device to verify its legal marketing status in the FDA database. Has this been provided?',
     check: (a) => {
-      if (!isBlank(a.predicate_device) && isBlank(a.predicate_510k_number)) {
+      if (!isBlank(a.predicate_device_name) && isBlank(a.predicate_510k_number)) {
         return {
           id: rid('predicate_510k_number_missing'),
           dimension: 'completeness',
@@ -204,7 +217,7 @@ const rules: AuditRule[] = [
           reference: '21 CFR 807.87(f); FDA 510(k) Refuse to Accept Checklist',
           recommendation:
             'Provide the predicate device 510(k) number (K-number). Verify it in the FDA 510(k) Premarket Notification Database to confirm current legal marketing status.',
-          relatedFields: ['predicate_510k_number', 'predicate_device'],
+          relatedFields: ['predicate_510k_number', 'predicate_device_name'],
         };
       }
       return null;
@@ -219,7 +232,7 @@ const rules: AuditRule[] = [
     question:
       'Per 21 CFR 807.87(e), the submitter must provide a statement of the intended use of the device. The intended use is the cornerstone of the SE determination. Has it been clearly articulated?',
     check: (a) => {
-      if (isBlank(a.intended_use)) {
+      if (isBlank(a.device_intended_use)) {
         return {
           id: rid('intended_use_missing'),
           dimension: 'regulatory_alignment',
@@ -234,7 +247,7 @@ const rules: AuditRule[] = [
             '21 CFR 807.87(e); FDA Guidance: The 510(k) Program — Evaluating Substantial Equivalence (2014)',
           recommendation:
             'Draft a clear intended use statement. If the intended use differs from the predicate, explain how the differences do not constitute a new intended use per FDA guidance.',
-          relatedFields: ['intended_use', 'indications_for_use', 'predicate_device'],
+          relatedFields: ['device_intended_use', 'same_intended_use', 'predicate_device_name'],
         };
       }
       return null;
@@ -249,7 +262,8 @@ const rules: AuditRule[] = [
     question:
       'FDA Form 3881 requires a clear statement of indications for use specifying the target patient population, medical condition, and clinical context. Does the current statement meet this standard?',
     check: (a) => {
-      if (isBlank(a.indications_for_use) || isTooShort(a.indications_for_use, 50)) {
+      // The interview asks intended use and indications for use as one Form 3881 statement.
+      if (isBlank(a.device_intended_use) || isTooShort(a.device_intended_use, 50)) {
         return {
           id: rid('indications_for_use_inadequate'),
           dimension: 'completeness',
@@ -265,7 +279,7 @@ const rules: AuditRule[] = [
             'FDA Form 3881; FDA Guidance: Device Labeling Guidance — Indications for Use Section',
           recommendation:
             'Expand the indications for use to include: (1) target patient population; (2) specific disease or condition; (3) anatomical site if applicable; (4) clinical setting (prescription use vs. OTC); (5) whether the device is intended for diagnosis, treatment, monitoring, or other.',
-          relatedFields: ['indications_for_use', 'intended_use'],
+          relatedFields: ['device_intended_use', 'prescription_otc'],
         };
       }
       return null;
@@ -280,7 +294,7 @@ const rules: AuditRule[] = [
     question:
       'The substantial equivalence determination under FD&C Act Section 513(i) is the central question of every 510(k). Has the submitter articulated a rationale comparing intended use and technological characteristics to the predicate?',
     check: (a) => {
-      if (isBlank(a.substantial_equivalence_rationale)) {
+      if (isBlank(a.se_summary)) {
         return {
           id: rid('se_rationale_missing'),
           dimension: 'scientific_rigor',
@@ -297,10 +311,10 @@ const rules: AuditRule[] = [
           recommendation:
             'Develop a structured SE comparison covering: (1) intended use comparison; (2) technological characteristics comparison; (3) performance data demonstrating equivalent safety and effectiveness if technological differences exist.',
           relatedFields: [
-            'substantial_equivalence_rationale',
-            'intended_use',
-            'technological_characteristics',
-            'predicate_device',
+            'se_summary',
+            'device_intended_use',
+            'tech_characteristics_comparison',
+            'predicate_device_name',
           ],
         };
       }
@@ -316,7 +330,7 @@ const rules: AuditRule[] = [
     question:
       'CDRH reviewers expect a detailed side-by-side comparison table of the subject and predicate devices covering intended use, design, materials, energy source, and performance. Is the rationale sufficiently detailed to support an SE determination?',
     check: (a) => {
-      if (!isBlank(a.substantial_equivalence_rationale) && isTooShort(a.substantial_equivalence_rationale, 200)) {
+      if (!isBlank(a.se_summary) && isTooShort(a.se_summary, 200)) {
         return {
           id: rid('se_rationale_shallow'),
           dimension: 'scientific_rigor',
@@ -332,7 +346,7 @@ const rules: AuditRule[] = [
             'FDA Guidance: The 510(k) Program — Evaluating Substantial Equivalence (2014); FDA Guidance: Format for Traditional and Abbreviated 510(k)s',
           recommendation:
             'Include a side-by-side comparison table. For each technological difference identified, describe the testing performed to demonstrate that the difference does not raise new questions of safety and effectiveness.',
-          relatedFields: ['substantial_equivalence_rationale', 'technological_characteristics', 'performance_data_type'],
+          relatedFields: ['se_summary', 'tech_characteristics_comparison', 'performance_data_comparison'],
         };
       }
       return null;
@@ -347,7 +361,7 @@ const rules: AuditRule[] = [
     question:
       'Per 21 CFR 807.87(f), a 510(k) must include a description of the device\'s technological characteristics — materials, design features, energy source, and principles of operation. Have these been documented?',
     check: (a) => {
-      if (isBlank(a.technological_characteristics)) {
+      if (isBlank(a.tech_characteristics_comparison)) {
         return {
           id: rid('tech_characteristics_missing'),
           dimension: 'completeness',
@@ -362,7 +376,7 @@ const rules: AuditRule[] = [
           reference: '21 CFR 807.87(f); FDA Guidance: Deciding When to Submit a 510(k) for a Change to an Existing Device',
           recommendation:
             'Provide a comprehensive description of the device technological characteristics including: design architecture, materials of construction, dimensions, energy type/source, and principles of operation.',
-          relatedFields: ['technological_characteristics', 'device_description', 'materials_of_construction'],
+          relatedFields: ['tech_characteristics_comparison', 'device_description', 'patient_contacting_materials'],
         };
       }
       return null;
@@ -392,7 +406,7 @@ const rules: AuditRule[] = [
           reference: '21 CFR 807.87(e); FDA Guidance: Format for Traditional and Abbreviated 510(k)s',
           recommendation:
             'Include a detailed device description covering: physical description, component list, accessories, operational overview, and diagrams or photographs.',
-          relatedFields: ['device_description', 'technological_characteristics'],
+          relatedFields: ['device_description', 'tech_characteristics_comparison'],
         };
       }
       return null;
@@ -438,7 +452,7 @@ const rules: AuditRule[] = [
     question:
       'Per FDA guidance on the use of ISO 10993-1, any device with direct or indirect patient contact requires a biological evaluation. The evaluation must consider the nature, degree, frequency, and duration of body contact. Has biocompatibility been addressed?',
     check: (a) => {
-      if (isBlank(a.biocompatibility_testing)) {
+      if (readYesNoAnswer(a.biocompat_required) === true && readYesNoAnswer(a.iso_10993_evaluation_completed) === false) {
         return {
           id: rid('biocompatibility_missing'),
           dimension: 'scientific_rigor',
@@ -447,14 +461,14 @@ const rules: AuditRule[] = [
           question:
             'Per FDA guidance on the use of ISO 10993-1, any device with direct or indirect patient contact requires a biological evaluation. The evaluation must consider the nature, degree, frequency, and duration of body contact. Has biocompatibility been addressed?',
           observation:
-            'No biocompatibility testing information was provided. For patient-contacting devices, this is a significant gap.',
+            'Biocompatibility testing is required, but the ISO 10993-1 biological evaluation has not been completed. For patient-contacting devices, this is a significant gap.',
           requirement:
             'Biocompatibility must be evaluated per ISO 10993-1 based on the nature and duration of body contact. Endpoints may include cytotoxicity, sensitization, irritation, systemic toxicity, and others depending on contact category.',
           reference:
-            'ISO 10993-1:2018; FDA Guidance: Use of International Standard ISO 10993-1 — Biological Evaluation of Medical Devices (2020)',
+            'ISO 10993-1:2018; FDA Guidance: Use of International Standard ISO 10993-1 — Biological Evaluation of Medical Devices (September 2023)',
           recommendation:
             'Perform a biocompatibility risk assessment per ISO 10993-1. Identify the body contact type (surface, external communicating, or implant) and duration (limited, prolonged, or permanent). Conduct required biological evaluations or justify use of existing data.',
-          relatedFields: ['biocompatibility_testing', 'materials_of_construction'],
+          relatedFields: ['iso_10993_evaluation_completed', 'biocompat_required', 'patient_contacting_materials'],
         };
       }
       return null;
@@ -469,7 +483,8 @@ const rules: AuditRule[] = [
     question:
       'For devices provided sterile or requiring sterilization prior to use, the 510(k) must describe the sterilization method and include validation data demonstrating a sterility assurance level (SAL) of 10^-6. Has the sterilization method been specified?',
     check: (a) => {
-      if (isBlank(a.sterilization_method)) {
+      // The sterilization node is reached only when is_sterile is true.
+      if (readYesNoAnswer(a.is_sterile) === true && isBlank(a.sterilization_method)) {
         return {
           id: rid('sterilization_missing'),
           dimension: 'scientific_rigor',
@@ -485,7 +500,7 @@ const rules: AuditRule[] = [
             'FDA Guidance: Submission and Review of Sterility Information in Premarket Notification (510(k)) Submissions; ISO 11135; ISO 11137; ISO 17665',
           recommendation:
             'Specify whether the device is provided sterile. If so, describe the sterilization method, validation approach, and SAL achieved. If not sterile, state whether it requires sterilization/disinfection by the user and provide reprocessing instructions.',
-          relatedFields: ['sterilization_method', 'shelf_life'],
+          relatedFields: ['sterilization_method', 'is_sterile', 'claimed_shelf_life'],
         };
       }
       return null;
@@ -531,25 +546,27 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Cybersecurity Considerations Not Addressed',
     question:
-      'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (2023), devices with software or network connectivity must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management. Has cybersecurity applicability been determined?',
+      'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (June 2025), a cyber device must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management, and connected devices with software should be assessed against that definition. Has cybersecurity applicability been determined?',
     check: (a) => {
-      if (isBlank(a.cybersecurity_applicable)) {
+      // The interview determines applicability as software (contains_software) that
+      // is network-connected; network_connected is asked only for a software device.
+      if (readYesNoAnswer(a.contains_software) === true && isBlank(a.network_connected)) {
         return {
           id: rid('cybersecurity_not_addressed'),
           dimension: 'risk_identification',
           severity: 'warning',
           title: 'Cybersecurity Considerations Not Addressed',
           question:
-            'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (2023), devices with software or network connectivity must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management. Has cybersecurity applicability been determined?',
+            'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (June 2025), a cyber device must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management, and connected devices with software should be assessed against that definition. Has cybersecurity applicability been determined?',
           observation:
             'No determination was made regarding the applicability of cybersecurity requirements. Since Section 524B of the FD&C Act, cybersecurity documentation is required for cyber devices.',
           requirement:
-            'If the device is a "cyber device" (contains software, connects to the internet, or has cybersecurity vulnerabilities), the submitter must include a cybersecurity management plan, SBOM (Software Bill of Materials), and vulnerability assessment.',
+            'If the device is a "cyber device" under FD&C Act section 524B(c) (it includes software validated, installed or authorized by the sponsor as a device or in a device, AND has the ability to connect to the internet, AND contains technological characteristics that could be vulnerable to cybersecurity threats), the submitter must include a cybersecurity management plan, SBOM (Software Bill of Materials), and vulnerability assessment.',
           reference:
-            'FD&C Act Section 524B; FDA Guidance: Cybersecurity in Medical Devices — Quality System Considerations and Content of Premarket Submissions (2023)',
+            'FD&C Act Section 524B; FDA Guidance: Cybersecurity in Medical Devices — Quality System Considerations and Content of Premarket Submissions (June 2025)',
           recommendation:
             'Determine whether the device meets the definition of a "cyber device." If so, provide: (1) cybersecurity risk assessment; (2) SBOM; (3) vulnerability management plan; (4) patch/update mechanisms; (5) evidence of secure design principles.',
-          relatedFields: ['cybersecurity_applicable', FDA_DOCUMENTATION_LEVEL_FACT, 'emr_compatibility'],
+          relatedFields: ['network_connected', 'contains_software', 'cybersecurity_risk_assessment'],
         };
       }
       return null;
@@ -564,7 +581,9 @@ const rules: AuditRule[] = [
     question:
       'For electrically powered devices, compliance with IEC 60601-1 and applicable collateral and particular standards is expected per FDA recognized consensus standards. Has electrical safety testing been addressed?',
     check: (a) => {
-      if (isBlank(a.electrical_safety_testing)) {
+      // electrical_safety_testing is shown only when IEC 60601-1 is declared, so for an
+      // electrically powered device a blank means the standard was not even listed.
+      if (readYesNoAnswer(a.is_electronic) === true && readYesNoAnswer(a.electrical_safety_testing) !== true) {
         return {
           id: rid('electrical_safety_missing'),
           dimension: 'scientific_rigor',
@@ -580,7 +599,7 @@ const rules: AuditRule[] = [
             'IEC 60601-1:2005+A1+A2; FDA Recognized Consensus Standards Database; 21 CFR 807.87(f)',
           recommendation:
             'If the device is electrically powered, provide IEC 60601-1 test reports covering: dielectric strength, leakage current, earth/ground continuity, temperature limits, and mechanical hazards. List all applicable collateral and particular standards.',
-          relatedFields: ['electrical_safety_testing', 'standards_referenced'],
+          relatedFields: ['electrical_safety_testing', 'is_electronic', 'applicable_standards'],
         };
       }
       return null;
@@ -611,7 +630,7 @@ const rules: AuditRule[] = [
             'FDA Guidance: Design Considerations and Pre-market Submission Recommendations for Interoperable Medical Devices (2017)',
           recommendation:
             'If applicable, describe the data output format, communication standards used, and any interoperability testing performed. If not applicable, state so explicitly.',
-          relatedFields: ['emr_compatibility', 'cybersecurity_applicable'],
+          relatedFields: ['emr_compatibility', 'network_connected'],
         };
       }
       return null;
@@ -626,7 +645,8 @@ const rules: AuditRule[] = [
     question:
       'For devices with limited shelf life or provided in sterile packaging, accelerated or real-time aging studies per ASTM F1980 and package integrity validation per ISO 11607 are required. Has shelf life been addressed?',
     check: (a) => {
-      if (isBlank(a.shelf_life)) {
+      // The shelf-life node is reached only after sterilization, i.e. for a sterile device.
+      if (readYesNoAnswer(a.is_sterile) === true && isBlank(a.claimed_shelf_life)) {
         return {
           id: rid('shelf_life_missing'),
           dimension: 'scientific_rigor',
@@ -642,7 +662,7 @@ const rules: AuditRule[] = [
             'ASTM F1980 — Standard Guide for Accelerated Aging of Sterile Barrier Systems; ISO 11607 — Packaging for Terminally Sterilized Medical Devices; FDA Guidance: Shelf Life of Medical Devices',
           recommendation:
             'Determine whether the device has shelf life limitations. If so, provide accelerated and/or real-time aging data. If the device is provided sterile, include package integrity testing per ISO 11607.',
-          relatedFields: ['shelf_life', 'sterilization_method'],
+          relatedFields: ['claimed_shelf_life', 'accelerated_aging_completed', 'packaging_validation_completed'],
         };
       }
       return null;
@@ -657,7 +677,7 @@ const rules: AuditRule[] = [
     question:
       'Per 21 CFR 807.87(e) and 21 CFR Part 801, complete labeling — including the device label, instructions for use, package labeling, and any promotional materials — must be submitted and comply with general and device-specific requirements. Has labeling been reviewed?',
     check: (a) => {
-      if (isBlank(a.labeling_reviewed) || a.labeling_reviewed === false || a.labeling_reviewed === 'no') {
+      if (isBlank(a.labeling_21cfr801_compliant) || readYesNoAnswer(a.labeling_21cfr801_compliant) === false) {
         return {
           id: rid('labeling_not_reviewed'),
           dimension: 'documentation',
@@ -673,7 +693,7 @@ const rules: AuditRule[] = [
             '21 CFR 807.87(e); 21 CFR Part 801; FDA Guidance: Guidelines for the Content of Premarket 510(k) Notifications',
           recommendation:
             'Review all proposed labeling for compliance with: (1) 21 CFR 801 general requirements (manufacturer name/address, intended use, directions for use, warnings/precautions); (2) Rx-only legend if applicable; (3) UDI requirements (21 CFR Part 830); (4) consistency of the indications for use across labeling and the 510(k).',
-          relatedFields: ['labeling_reviewed', 'indications_for_use', 'intended_use'],
+          relatedFields: ['labeling_21cfr801_compliant', 'labeling_content_includes', 'device_intended_use'],
         };
       }
       return null;
@@ -688,7 +708,7 @@ const rules: AuditRule[] = [
     question:
       'CDRH expects a detailed description of all patient-contacting and structural materials, identified by chemical name, grade, and supplier specification. Material differences from the predicate may trigger additional biocompatibility testing under ISO 10993-1. Are the materials adequately documented?',
     check: (a) => {
-      if (isBlank(a.materials_of_construction)) {
+      if (isBlank(a.patient_contacting_materials)) {
         return {
           id: rid('materials_not_described'),
           dimension: 'completeness',
@@ -704,7 +724,7 @@ const rules: AuditRule[] = [
             'ISO 10993-1:2018; FDA Guidance: Use of International Standard ISO 10993-1; 21 CFR 807.87(f)',
           recommendation:
             'List all materials of construction, distinguishing patient-contacting from non-patient-contacting components. For patient-contacting materials, identify the specific grade and any biocompatibility data available.',
-          relatedFields: ['materials_of_construction', 'biocompatibility_testing', 'technological_characteristics'],
+          relatedFields: ['patient_contacting_materials', 'non_contacting_materials', 'biocompat_required'],
         };
       }
       return null;
@@ -719,7 +739,9 @@ const rules: AuditRule[] = [
     question:
       'Under 21 CFR 807.87(f), if technological differences from the predicate cannot be resolved by bench testing alone, clinical evidence may be required. Has the submitter made a determination regarding the need for clinical data?',
     check: (a) => {
-      if (isBlank(a.clinical_data_required)) {
+      // clinical_data_required is asked in performance_testing, reached only when the
+      // technological characteristics differ from the predicate.
+      if (readYesNoAnswer(a.same_tech_characteristics) === false && isBlank(a.clinical_data_required)) {
         return {
           id: rid('clinical_data_undetermined'),
           dimension: 'risk_identification',
@@ -735,7 +757,7 @@ const rules: AuditRule[] = [
             '21 CFR 807.87(f); FDA Guidance: The 510(k) Program — Evaluating Substantial Equivalence',
           recommendation:
             'Assess whether the technological differences from the predicate raise safety/effectiveness questions that cannot be resolved through bench testing. Document the rationale for including or excluding clinical data.',
-          relatedFields: ['clinical_data_required', 'clinical_data_summary', 'substantial_equivalence_rationale'],
+          relatedFields: ['clinical_data_required', 'same_tech_characteristics', 'se_summary'],
         };
       }
       return null;
@@ -750,8 +772,7 @@ const rules: AuditRule[] = [
     question:
       'Clinical data was identified as necessary to support the SE determination. Per 21 CFR 807.87(f), has a clinical data summary been included with adequate detail on study design, enrollment, endpoints, statistical methodology, and outcomes?',
     check: (a) => {
-      const needed = a.clinical_data_required === true || a.clinical_data_required === 'yes';
-      if (needed && isBlank(a.clinical_data_summary)) {
+      if (readYesNoAnswer(a.clinical_data_required) === true && isBlank(a.clinical_results_summary)) {
         return {
           id: rid('clinical_data_summary_missing'),
           dimension: 'scientific_rigor',
@@ -767,7 +788,7 @@ const rules: AuditRule[] = [
             '21 CFR 807.87(f); FDA Guidance: The 510(k) Program — Evaluating Substantial Equivalence; FDA Guidance: Investigational Device Exemptions (IDEs) for Early Feasibility Medical Device Clinical Studies',
           recommendation:
             'Provide a clinical data summary covering: (1) study design and objectives; (2) enrollment criteria and demographics; (3) primary and secondary endpoints; (4) statistical methodology; (5) results with confidence intervals; (6) adverse events; (7) conclusions supporting SE.',
-          relatedFields: ['clinical_data_summary', 'clinical_data_required'],
+          relatedFields: ['clinical_results_summary', 'clinical_data_required', 'study_endpoints'],
         };
       }
       return null;
@@ -782,7 +803,8 @@ const rules: AuditRule[] = [
     question:
       'Bench testing, software verification and validation, and other nonclinical studies form the foundation of most 510(k) SE determinations. Per FDA guidance on the format for traditional 510(k)s, has a nonclinical testing summary been provided?',
     check: (a) => {
-      if (isBlank(a.nonclinical_testing_summary)) {
+      // performance_testing_summary is asked only when the technological characteristics differ.
+      if (readYesNoAnswer(a.same_tech_characteristics) === false && isBlank(a.performance_testing_summary)) {
         return {
           id: rid('nonclinical_testing_missing'),
           dimension: 'scientific_rigor',
@@ -798,7 +820,7 @@ const rules: AuditRule[] = [
             'FDA Guidance: Format for Traditional and Abbreviated 510(k)s; 21 CFR 807.87(f)',
           recommendation:
             'Provide a nonclinical testing summary organized by test type (e.g., mechanical, electrical, software V&V, biocompatibility, sterilization, packaging). For each test, include the test standard, protocol, acceptance criteria, and pass/fail results.',
-          relatedFields: ['nonclinical_testing_summary', 'performance_data_type', 'standards_referenced'],
+          relatedFields: ['performance_testing_summary', 'bench_testing_completed', 'applicable_standards'],
         };
       }
       return null;
@@ -813,7 +835,7 @@ const rules: AuditRule[] = [
     question:
       'Per Section 514(c) of the FD&C Act, FDA maintains a list of recognized consensus standards. Declaring conformity via FDA Form 3654 can streamline review and may substitute for detailed test reports. Has the submitter identified applicable consensus standards?',
     check: (a) => {
-      if (isBlank(a.standards_referenced)) {
+      if (isBlank(a.applicable_standards)) {
         return {
           id: rid('standards_not_referenced'),
           dimension: 'documentation',
@@ -829,7 +851,7 @@ const rules: AuditRule[] = [
             'FD&C Act Section 514(c); FDA Guidance: Appropriate Use of Voluntary Consensus Standards in Premarket Submissions; FDA Recognized Consensus Standards Database',
           recommendation:
             'Review the FDA Recognized Consensus Standards Database for standards applicable to the device type. Consider declaring conformity to relevant standards (e.g., IEC 60601-1 for electrical devices, ISO 10993 series for biocompatibility, IEC 62304 for software).',
-          relatedFields: ['standards_referenced', 'electrical_safety_testing', 'biocompatibility_testing'],
+          relatedFields: ['applicable_standards', 'sdoc_declarations', 'standards_testing_completed'],
         };
       }
       return null;
@@ -844,8 +866,8 @@ const rules: AuditRule[] = [
     question:
       'Per 21 CFR 807.87(e), the indications for use statement in the 510(k) must be consistent with the proposed labeling. Has the submitter ensured that the intended use, indications for use, and labeling all align?',
     check: (a) => {
-      if (!isBlank(a.intended_use) && !isBlank(a.labeling_intended_use)) {
-        const submitted = String(a.intended_use).toLowerCase().trim();
+      if (!isBlank(a.device_intended_use) && !isBlank(a.labeling_intended_use)) {
+        const submitted = String(a.device_intended_use).toLowerCase().trim();
         const labeling = String(a.labeling_intended_use).toLowerCase().trim();
         if (submitted !== labeling && !submitted.includes(labeling) && !labeling.includes(submitted)) {
           return {
@@ -863,7 +885,7 @@ const rules: AuditRule[] = [
               '21 CFR 807.87(e); FDA Guidance: The 510(k) Program — Evaluating Substantial Equivalence (2014); FDA Form 3881',
             recommendation:
               'Review and harmonize the intended use statement across: (1) FDA Form 3881 (Indications for Use), (2) the device labeling, (3) the instructions for use (IFU), and (4) the predicate comparison section of the 510(k). Ensure verbatim consistency wherever possible.',
-            relatedFields: ['intended_use', 'labeling_intended_use', 'predicate_device'],
+            relatedFields: ['device_intended_use', 'labeling_intended_use', 'predicate_device_name'],
           };
         }
       }

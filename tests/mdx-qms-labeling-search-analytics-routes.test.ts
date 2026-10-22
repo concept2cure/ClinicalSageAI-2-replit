@@ -127,6 +127,10 @@ function scriptApprovalTx(current: Record<string, unknown> | null) {
   S.txQuery.mockImplementation(async (sql: unknown) => {
     const text = String(sql).trim();
     if (/^(BEGIN|COMMIT|ROLLBACK)/.test(text)) return { rows: [] };
+    // The filing-divergence check (filingAgreesWithEditing): the governed store
+    // is provisioned; the authoring_documents read below carries no
+    // c2c_document_id, so the document is unbound and there is nothing to compare.
+    if (text.includes("to_regclass('public.c2c_document_sections')")) return { rows: [{ ok: true }] };
     if (text.includes('FROM authoring_documents')) return { rows: [{ id: '00000000-0000-4000-8000-000000000011', title: 'CAPA', client_program_id: '00000000-0000-4000-8000-000000000012' }] };
     if (text.includes('FROM authoring_sections')) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Correct nonconforming activities.', order_index: 1 }] };
     if (text.startsWith('INSERT INTO qms_document_versions') || text.startsWith('UPDATE authoring_documents')) return { rows: [] };
@@ -152,7 +156,8 @@ function scriptQmsCreate(duplicate = false) {
       return { rows: [{ ...QMS_DOC, status: 'draft', authoring_document_id: args[7] }] };
     }
     if (/INSERT INTO authoring_documents/.test(sql)) return { rows: [{ id: args[0] }] };
-    if (/INSERT INTO authoring_sections/.test(sql)) return { rows: [{ id: 'section', code: args[1], content: args[3] }] };
+    // The seed requires the insert to echo the exact id it generated ($1).
+    if (/INSERT INTO authoring_sections/.test(sql)) return { rows: [{ id: args[0], code: args[2], content: args[4] }] };
     return { rows: [] };
   });
 }
@@ -218,6 +223,7 @@ describe('QMS routes', () => {
       .send(SIGNED_APPROVAL);
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('effective');
+    expect(S.txQuery.mock.calls.some(([sql]) => String(sql).includes("to_regclass('public.c2c_document_sections')"))).toBe(true);
     expect(S.txQuery.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0])).toContain('COMMIT');
   });
 

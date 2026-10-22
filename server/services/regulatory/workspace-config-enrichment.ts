@@ -20,7 +20,7 @@ import {
   resolveWorkspaceConfig,
   type WorkspaceConfig,
 } from '../../../shared/regulatory/workspace-config';
-import { getGatewaySizeLimit, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
+import { getGatewaySizeLimitOnFile, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
 import { REGIONAL_MODULE1_REQUIREMENTS } from '../global-ri/regional-module1-requirements';
 import { getLicenseInfo } from '../license-manager';
 import { appModuleId } from '../../../shared/regulatory/app-registry';
@@ -68,12 +68,12 @@ export async function enrichWorkspaceConfig(
     const lower = code.toLowerCase();
     config.region.m1BackbonePath = `m1/${lower}/${lower}-regional.xml`;
 
+    // 2026-10-15: this set getGatewaySizeLimit's figure, which every region got
+    // (FDA's 4 GB for CA, an unpublished 1 GB for CN, KR and the rest); the
+    // catch meant for "no published limit" never ran. Unset where none is on file.
     if (isCanonicalRegion(code)) {
-      try {
-        config.region.gatewaySizeLimitBytes = getGatewaySizeLimit(code as RegulatoryRegion);
-      } catch {
-        /* leave unset for regions without a published limit */
-      }
+      const l = getGatewaySizeLimitOnFile(code as RegulatoryRegion);
+      if (l) config.region.gatewaySizeLimitBytes = l.bytes;
     }
 
     const market = toMarket(code);

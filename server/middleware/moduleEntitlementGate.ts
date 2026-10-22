@@ -24,14 +24,18 @@
  * prefix is allowed when the organization is entitled to ANY module that
  * declares it. Denying requires being unentitled to all of them.
  *
- * SECOND, canAccessModule FAILS CLOSED. When `getLicenseInfo` cannot read the
- * organizations row it returns null and canAccessModule answers
- * `{ allowed: false, reason: 'Organization not found' }`. That is the right
- * default for a security boundary. This is not one — it is commercial packaging
- * — and a transient database error 403-ing every paying customer at once is a
- * far worse outcome than briefly serving a module somebody has not bought. So
- * an entitlement resolution that THROWS is allowed through and logged at error
- * level; only a clean, confident "not entitled" denies.
+ * SECOND, canAccessModule FAILS CLOSED ON THE LICENCE. It reads it with
+ * readLicenseInfo: a read that fails DENIES, `{ allowed: false, reason: 'The
+ * license for this organization could not be read' }`, and an organization
+ * with no row denies 'Organization not found'. Both resolve rather than throw,
+ * so this gate treats them as any other "not entitled": refused in 'enforce',
+ * recorded and served in 'report'. (Until 2026-10-15 the failed read arrived as
+ * getLicenseInfo's null and was reported as 'Organization not found'.) What can
+ * still THROW is the module and grant read inside canAccessModule. This gate is
+ * commercial packaging, not a security boundary, and one transient error
+ * 403-ing every paying customer at once is a far worse outcome than briefly
+ * serving a module somebody has not bought, so a resolution that throws is
+ * allowed through and logged at error level.
  *
  * ── Ships in report-only mode ────────────────────────────────────────────────
  *
@@ -170,7 +174,10 @@ export function moduleEntitlementGate(
   const launchScopeOn = (opts.launchScope ?? readLaunchScopeMode()) === 'on';
   const unattributed = opts.unattributed ?? readUnattributedApiMode();
   return async function gate(req: Request, res: Response, next: NextFunction) {
-    const pathname = (req.path || req.originalUrl || '').split('?')[0];
+    /* Lower-cased as Express routes it: a mount at /api/… serves /API/… too, and
+       a gate that only judged paths starting '/api/' served those unjudged
+       (2026-10-22, launch-scope-api.ts). */
+    const pathname = (req.path || req.originalUrl || '').split('?')[0].toLowerCase();
     if (launchScopeOn && refusedByLaunchScope(req, pathname, prefixMap, unattributed, res)) return;
 
     const { mode } = await currentEnforcementMode();

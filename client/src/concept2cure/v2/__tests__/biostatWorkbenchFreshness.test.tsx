@@ -247,7 +247,11 @@ describe('D4 — Biostat result freshness, calculator lifecycle', () => {
     expect(section).toBeTruthy();
     expect(section![2].content).toContain('0.72');
     expect(section![2].content).toContain(hash);
-    expect(screen.getByText(/Saved to the authoring store/)).toBeTruthy();
+    // Announced once, by the recovery notice as a status, never also as a toast.
+    const saved = screen.getByText(/Saved to the authoring store/);
+    expect(saved.classList.contains('scaf-note')).toBe(true);
+    expect(saved.getAttribute('role')).toBe('status');
+    expect(document.querySelector('.de-toast')).toBeNull();
     expect(screen.queryByRole('button', { name: /Insert into document/ })).toBeNull();
   });
 });

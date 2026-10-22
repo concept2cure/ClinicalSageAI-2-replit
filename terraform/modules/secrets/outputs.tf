@@ -12,3 +12,8 @@ output "kms_key_ids" {
   description = "Secret name => the KMS key encrypting it (null: the AWS-managed aws/secretsmanager key)."
   value       = { for k, s in aws_secretsmanager_secret.this : k => s.kms_key_id }
 }
+
+output "recovery_windows" {
+  description = "Secret name => days a deleted secret is kept before it is gone (0: immediately)."
+  value       = { for k, s in aws_secretsmanager_secret.this : k => s.recovery_window_in_days }
+}

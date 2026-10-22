@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 with no organization context 90ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 for non-admin users 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > accepts admin role via roles array too 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 404 when org missing 4ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > emits tenant.export audit on success 7ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > passes the caller orgId through to the service (no override) 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > returns 503 when attestation key not configured 4ms
+ × server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > records EXPORT_GENERATED with the SHA-256 of the report it delivers 10ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > delivers nothing when the export record does not persist, and says so 7ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > emits tenant.attestation.generate audit on success 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > records EXPORT_GENERATED with the SHA-256 of the report it delivers
+AssertionError: no EXPORT_GENERATED row: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/__tests__/routes/tenant-export.test.ts:130:44
+    128|     const digest = createHash('sha256').update(res.body as Buffer).dig…
+    129|     const row = audit.logAction.mock.calls.map(([e]: any[]) => e).find…
+    130|     expect(row, 'no EXPORT_GENERATED row').toBeTruthy();
+       |                                            ^
+    131|     expect(row.organizationId).toBe(7);
+    132|     expect(row.userId).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > delivers nothing when the export record does not persist, and says so
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/__tests__/routes/tenant-export.test.ts:145:24
+    143|     );
+    144|     const res = await request(app).get('/api/tenant-export/attestation…
+    145|     expect(res.status).toBe(503);
+       |                        ^
+    146|     expect(res.headers['content-disposition']).toBeUndefined();
+    147|     expect(res.body.detail).toMatch(/record could not be written/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  05:13:59
+   Duration  737ms (transform 176ms, setup 101ms, import 145ms, tests 145ms, environment 0ms)
+

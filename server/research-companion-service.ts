@@ -18,7 +18,8 @@ interface ResearchCompanionMemory {
     timestamp: string;
   }[];
   userPreferences: {
-    expertiseLevel: 'beginner' | 'intermediate' | 'expert';
+    /** null: not recorded — the researcher has not stated it. */
+    expertiseLevel: 'beginner' | 'intermediate' | 'expert' | null;
     preferredStyle: 'conversational' | 'academic' | 'concise';
     showCitations: boolean;
   };
@@ -49,10 +50,12 @@ interface ResearchConversation {
 // In-memory store for conversations (would be DB-backed in production)
 const conversations: Record<string, ResearchConversation> = {};
 
-// Default user preferences
-const defaultUserPreferences = {
-  expertiseLevel: 'intermediate' as const,
-  preferredStyle: 'conversational' as const,
+// Default user preferences. Expertise is a fact about the researcher, so it is
+// null (not recorded) until stated. 2026-10-15: it defaulted to 'intermediate',
+// and every prompt pitched its answer to that invented level.
+const defaultUserPreferences: ResearchCompanionMemory['userPreferences'] = {
+  expertiseLevel: null,
+  preferredStyle: 'conversational',
   showCitations: true,
 };
 
@@ -289,6 +292,8 @@ class ResearchCompanionService {
         ? `Recently viewed trials: ${memory.recentCSRs.map(csr => csr.title).join(', ')}.`
         : '';
 
+    const expertise = memory.userPreferences.expertiseLevel;
+
     // Build conversation history context (last 3 messages)
     const recentMessages = conversation.messages.slice(-6);
     const conversationContext = recentMessages
@@ -304,7 +309,7 @@ class ResearchCompanionService {
       ${favoriteIndicationsContext}
       ${favoriteEndpointsContext}
       ${recentCSRsContext}
-      Expertise level: ${memory.userPreferences.expertiseLevel}
+      Expertise level: ${expertise ?? 'not recorded'}
       
       KNOWLEDGE CONTEXT:
       ${relevantCSRsContext}
@@ -317,7 +322,7 @@ class ResearchCompanionService {
       USER QUESTION: ${userMessage.content}
       
       Respond thoughtfully as ${persona.name}, providing specific insights based on the relevant trials and academic sources. 
-      Answer in a ${memory.userPreferences.preferredStyle} style appropriate for a ${memory.userPreferences.expertiseLevel} expertise level.
+      Answer in a ${memory.userPreferences.preferredStyle} style${expertise ? ` appropriate for a ${expertise} expertise level` : '; the expertise level is not recorded, so do not assume one'}.
       ${memory.userPreferences.showCitations ? 'Include specific citations to support your points.' : 'Focus on the information without formal citations.'}
     `;
 
@@ -530,57 +535,11 @@ class ResearchCompanionService {
 
       return results;
     } catch (error) {
+      // 2026-10-22: a failed read returned up to three invented "fallback"
+      // trials (ids 9001-9003) that the prompt then gave the model as relevant
+      // trials. A failed read is an error.
       console.error('Error finding relevant CSRs:', error);
-
-      // Provide basic fallback reports that might be relevant to common queries
-      // These fallbacks help ensure the UI has data to display even when DB queries fail
-      const keywords = query.toLowerCase().split(/\s+/);
-
-      const fallbackReports = [
-        {
-          id: 9001,
-          title: 'Phase 3 Trial of Novel Treatment for Advanced Cancer',
-          indication: 'Oncology',
-          phase: 'Phase 3',
-          sponsor: 'Medical Research Institute',
-          status: 'Completed',
-          date: '2024-03-15',
-          summary:
-            'A randomized controlled trial evaluating efficacy and safety of a novel treatment.',
-        },
-        {
-          id: 9002,
-          title: 'Evaluation of Cardiovascular Outcomes with New Antihypertensive',
-          indication: 'Hypertension',
-          phase: 'Phase 3',
-          sponsor: 'Cardiovascular Research Group',
-          status: 'Completed',
-          date: '2024-02-10',
-          summary: 'Multi-center study examining long-term cardiovascular outcomes.',
-        },
-        {
-          id: 9003,
-          title: 'Safety and Efficacy Study of New Anti-Inflammatory for Rheumatoid Arthritis',
-          indication: 'Rheumatoid Arthritis',
-          phase: 'Phase 2',
-          sponsor: 'Immunology Research Consortium',
-          status: 'Completed',
-          date: '2024-01-20',
-          summary: 'Double-blind placebo-controlled study of a novel anti-inflammatory agent.',
-        },
-      ];
-
-      // Filter by keywords in the query to make results more relevant
-      return fallbackReports
-        .filter(report =>
-          keywords.some(
-            keyword =>
-              report.title.toLowerCase().includes(keyword) ||
-              report.indication.toLowerCase().includes(keyword) ||
-              report.summary.toLowerCase().includes(keyword)
-          )
-        )
-        .slice(0, limit);
+      throw new Error('The clinical study report corpus could not be read; no trials were searched.', { cause: error });
     }
   }
 
@@ -596,53 +555,10 @@ class ResearchCompanionService {
       });
       return evidence.slice(0, limit);
     } catch (error) {
+      // 2026-10-22: returned three invented "Concept2Cure Knowledge Base"
+      // sources with relevance 0.9 / 0.85 / 0.8. A failed read is an error.
       console.error('Error finding relevant academic sources:', error);
-
-      // Return fallback academic sources that might be relevant to common clinical trial queries
-      const keywords = query.toLowerCase().split(/\s+/);
-      const fallbackSources = [
-        {
-          id: 'clinical-trials-general',
-          title: 'Basic Principles of Clinical Trial Design',
-          author: 'Concept2Cure Knowledge Base',
-          date: '2025',
-          type: 'reference',
-          excerpt:
-            'Clinical trials are prospective biomedical or behavioral research studies designed to answer specific questions about interventions such as new treatments, vaccines, dietary choices, or medical devices.',
-          relevance: 0.9,
-        },
-        {
-          id: 'oncology-endpoints',
-          title: 'Primary Endpoints in Oncology Trials',
-          author: 'Concept2Cure Knowledge Base',
-          date: '2025',
-          type: 'reference',
-          excerpt:
-            'Common primary endpoints in oncology trials include overall survival (OS), progression-free survival (PFS), objective response rate (ORR), and disease-free survival (DFS).',
-          relevance: 0.85,
-        },
-        {
-          id: 'regulatory-guidance',
-          title: 'Regulatory Guidance for Clinical Study Design',
-          author: 'Concept2Cure Knowledge Base',
-          date: '2025',
-          type: 'reference',
-          excerpt:
-            'Regulatory agencies like FDA and EMA provide guidelines for clinical study designs, including endpoint selection, sample size calculation, and statistical analysis plans.',
-          relevance: 0.8,
-        },
-      ];
-
-      // Filter sources based on query keywords
-      return fallbackSources
-        .filter(source =>
-          keywords.some(
-            keyword =>
-              source.title.toLowerCase().includes(keyword) ||
-              source.excerpt.toLowerCase().includes(keyword)
-          )
-        )
-        .slice(0, limit);
+      throw new Error('The academic knowledge base could not be read; no sources were searched.', { cause: error });
     }
   }
 }

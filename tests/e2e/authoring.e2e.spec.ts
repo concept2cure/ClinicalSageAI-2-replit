@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 /**
  * E2E Smoke: Document Authoring
@@ -18,7 +19,7 @@ test('Document Authoring smoke: toolbar, insert token, drawers', async ({ page }
   });
   expect(loginPage?.status()).toBe(200);
 
-  await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
+  await page.fill('input[type="email"]', devLoginEmail());
   await page.click('button:has-text("Continue")');
   await page.fill('input[type="password"]', 'Seahawks12s!');
   await page.click('button:has-text("Sign in")');

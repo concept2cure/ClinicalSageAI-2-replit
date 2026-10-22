@@ -141,8 +141,9 @@ describe('an EMA filing outside the centralised procedure is not sent to the eSu
        EU_PRIME carry submissionFormat 'eCTD' in the registry, and the round-1
        rule (EU + EMA + eCTD → eSubmission Gateway) told a client applying for
        orphan designation "Centralised procedure — the eSubmission Gateway/Web
-       Client is mandatory". EMA receives these through IRIS (regulator text,
-       ema.europa.eu — g-submission-channel-function-facts.md rows 4-5). */
+       Client is mandatory". EMA receives these through IRIS (recall: a search
+       extract of an ema.europa.eu page — g-submission-channel-function-facts.md
+       rows 4-5). */
     for (const id of ['EU_ORPHAN', 'EU_SCIENTIFIC_ADVICE', 'EU_PIP', 'EU_PRIME']) {
       const entry = getApplicationType(id);
       expect(entry, `${id} missing from the registry`).toBeTruthy();
@@ -185,7 +186,8 @@ describe('the registry declares IRIS for the EMA filings that go through IRIS', 
   /* 2026-10-05 (step g-eu-medicines-dated-facts; finding 45). EU_ORPHAN,
      EU_PIP, EU_SCIENTIFIC_ADVICE and EU_PRIME declared submissionFormat 'eCTD'
      (and EU_PIP ctdModule 'M1 (EU regional)'), while EMA receives them through
-     IRIS (regulator text, ema.europa.eu — g-eu-medicines-dated-facts-facts.md).
+     IRIS (recall: a search extract of an ema.europa.eu page —
+     g-eu-medicines-dated-facts-facts.md).
      The channel function knew it only from a list of ids beside the registry;
      now the registry entry says it, and the channel is read from the entry. */
   const IRIS_IDS = ['EU_ORPHAN', 'EU_PIP', 'EU_SCIENTIFIC_ADVICE', 'EU_PRIME'];

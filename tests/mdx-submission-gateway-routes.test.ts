@@ -129,6 +129,9 @@ vi.mock('../server/services/submission-gateways', () => {
     GatewayError:    MockGatewayError,
     TransportError:  MockTransportError,
     ValidationError: MockValidationError,
+    // The route maps these too; their response shapes are pinned against the real
+    // classes in server/services/submission-gateways/__tests__/gateway-route-response-shapes.test.ts.
+    PreTransmitBlockedError: class extends MockValidationError { readonly code = 'PRE_TRANSMIT_BLOCKED' as const; }, UnverifiedTransportError: class extends Error { name = 'UnverifiedTransportError'; },
   };
 });
 
@@ -256,7 +259,8 @@ describe('GET /api/mdx/gateways/transmittals', () => {
   it('resolves submitted_by to the person, so the log names who transmitted', async () => {
     let captured = '';
     queryFn.mockImplementation((sql: string) => {
-      if (typeof sql === 'string' && sql.includes('FROM submission_transmittals')) {
+      // The page query, not the totals beside it (transmittal-log-totals.pglite.test.ts).
+      if (typeof sql === 'string' && sql.includes('FROM submission_transmittals') && !sql.includes('GROUP BY')) {
         captured = sql;
         return Promise.resolve({ rows: [{ id: 3, region: 'fda', gateway: 'esg', status: 'received', submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace' }], rowCount: 1 });
       }

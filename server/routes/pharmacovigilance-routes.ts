@@ -620,14 +620,20 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       const { eventType, seriousnessCriteria, region, reportDate } = parsed.data;
 
-      const deadline = calculateReportingDeadline(
+      // No report date is no clock start: the deadline is not counted from today
+      // (2026-10-15). What the stated facts do not determine is answered 422.
+      const { deadline, reason } = calculateReportingDeadline(
         eventType as EventType,
         seriousnessCriteria as SeriousnessCriteria,
         region as RegulatoryRegion,
-        reportDate ? new Date(reportDate) : new Date(),
+        reportDate ? new Date(reportDate) : null,
       );
+      if (!deadline) {
+        return res.status(422).json({ success: false, error: 'DEADLINE_UNDETERMINED', detail: reason });
+      }
 
-      const isExpedited = eventType !== 'AE';
+      // Only a SUSAR takes the expedited clock (calculateReportingDeadline).
+      const isExpedited = eventType === 'SUSAR';
 
       return res.json({
         success: true,

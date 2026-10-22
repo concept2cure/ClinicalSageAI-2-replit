@@ -89,8 +89,10 @@ describe('GET /:projectIdent/status — ident resolution', () => {
     await getHandler('/:projectIdent/status', 'get')(req, res);
 
     const payload = res.json.mock.calls[0][0];
-    expect(payload).toMatchObject({ projectId: null, projectIdent: UUID, programId: UUID, overallReadiness: 0, submissionReady: false });
-    // The blocker names WHY readiness is 0% — no silent empty, no fabrication.
+    // F23 (6/9): a program with no sequence has no figure, and says why. It
+    // read 0%, which looked measured.
+    expect(payload).toMatchObject({ projectId: null, projectIdent: UUID, programId: UUID, overallReadiness: null, readinessBasis: 'no-sequence', submissionReady: false });
+    // The blocker names WHY nothing is counted — no silent empty, no fabrication.
     expect(payload.submissionBlockers.join(' ')).toContain('no linked section-tracking store');
     // The lookup was UUID-keyed and org-scoped.
     const programCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('FROM regulatory_programs'));

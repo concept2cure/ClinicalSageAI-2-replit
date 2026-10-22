@@ -75,8 +75,11 @@ describe('the claims evidence chain is built only from recorded confidences', ()
     await seed('Unscored claim', 'claim_evidence_map', null);
     const block = await recall('claims');
     // The same figures one 0.9 entry gives on its own: the unscored entry adds no invented 0.5.
+    // (2026-10-15: the heuristic is labelled as one — context-enrichment-claims-coverage-is-labelled-a-heuristic.)
     expect(block, 'the unscored entry entered the chain at an invented relevance').toContain(
-      '**Evidence Chain Strength:** moderate | **Confidence:** 66/100\n**Factors:** evidenceCount: 1, averageRelevance: 0.9,');
+      '**Evidence coverage (heuristic, not a confidence):** 66/100, from the number of entries, their mean recorded ' +
+      'confidence, source types and recency | **Chain strength (from that heuristic):** moderate\n' +
+      '**Factors:** evidenceCount: 1, averageRelevance: 0.9,');
     expect(block).toContain('**Not counted above:** 1 of 2 entries (unscored)');
     expect(block).toContain('- **Unscored claim** [unscored]: Unscored claim body');
   });

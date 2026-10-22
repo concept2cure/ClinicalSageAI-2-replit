@@ -56,7 +56,7 @@ Classification: **CANONICAL** (build here) · **TRANSITIONAL** (live but flawed;
 | `server/services/study-design/*` (18 files) | CANONICAL / DO-NOT-TOUCH-except-extend | Simulator (`trial-simulator.ts`), `sample-size.ts` (power+assurance), `evidence-prior.ts` (DerSimonian–Laird; **throws rather than invent**), `csr-evidence-source.ts` (`EvidenceObservation`), `design-gates.ts`, `design-validation.ts`, `study-twin-service.ts`. No fabrication. Mounted `/api/study-design`, `/api/c2c/study-twin`; used by AnA (`AnaToolExecutor.ts:295`). |
 | `server/services/study-design-agent-service.ts` | LEGACY (retire — §7) | Orphaned (only in `SERVICE_REGISTRY`). Unbounded `csrReports` scan (`:140`), JS filter (`:143`), fixed relevance `0.9` (`:201`), fixed confidence `0.85`/`0.1`, templated per-indication fallbacks (`:235-706`), FS init (`:79`). |
 | `server/protocol-knowledge-service.ts` | LEGACY (retire) | Orphaned (imported, never invoked). HF; fixed `relevanceScore 0.9`. |
-| `server/services/endpoint-recommender-service.ts` | TRANSITIONAL (harden) | **Live** (`public-api.ts`, `ana-ri` command). Fabricates success rates (75/80), confidences (0.7/0.8/0.9), score boosts (+10/+15); broken success signal (no outcome column). |
+| `server/services/endpoint-recommender-service.ts` | TRANSITIONAL (harden) | **Live** (`public-api.ts`, the `/api/endpoint/recommend` facade, `ana-ri` commands). Since 2026-10-15 it produces no success rate (`success_rate` null — `csr_reports` has no outcome column) and no confidence (every evidence item's `confidence` is null; a literature item carries the search's `retrieval_score` as returned). It ranks by `evidence_strength`, a fixed-weight heuristic labelled as not a success probability: a base per evidence basis (regulatory 80, corpus outcomes 65, corpus frequency 45, literature 30, model-proposed 10), +3 per occurrence beyond the first (max 15), +2 per evidence item beyond the first (max 10). A model-proposed endpoint is labelled `language_model`; `sources` says what each source returned; an unreadable CSR corpus is refused (503); the corpus read binds the caller's organization. `evaluateEndpoint` gives no score — the model's commentary only. |
 | `server/services/sap-generator-service.ts` | TRANSITIONAL | Live (`biostatPlatform.ts`). Templated; sample-size already de-fabricated (refuses power w/o inputs). |
 | `server/services/biostat-knowledge-graph-service.ts` | CANONICAL-adjacent | Live; success rates computed from real outcomes; LLM parse + heuristic confidence. |
 
@@ -111,7 +111,7 @@ Classification: **CANONICAL** (build here) · **TRANSITIONAL** (live but flawed;
 1. `intelligence/outcome-precedent-ingestor.ts:196` — hardcoded `confidence_score 0.9` on every minted precedent → derive or leave null.
 2. `regulatory-precedent-intelligence/crl-trigger-service.ts:394,424,428,451` — count-based/cold-start confidence; seeded `frequencyRate` surfaced as "historical success rate."
 3. `csr-knowledge-extractor.ts:375,424,747,752` — fabricated PK, `confidence=|r|`, DLT 0.33, base-0.5.
-4. `endpoint-recommender-service.ts` — fixed 75/80 success, 0.7/0.8/0.9 confidence, +10/+15 boosts.
+4. `endpoint-recommender-service.ts` — cleared 2026-10-15: it produces no success rate and no confidence (both null) and no model score; ranking uses the labelled fixed-weight `evidence_strength` heuristic (§1.2).
 5. **Deprecated foresight path** (`foresight-ai-engine.ts`, `csr-foresight-orchestrator.ts`, `foresight-csr-integration.ts`, `foresight-knowledge-graph.ts`) — ±0.15 CIs, hardcoded phase success tables, silent recalibration, auto dose from ≤3 MTD. Already Sunset 2026-04-01 → **retire under §8** rather than harden.
 
 The **honest** path (`intelligence/risk-model.ts` + `calibration.ts` + `confidence_calibration_log`) is the home for CRL-influenced prediction.
@@ -131,7 +131,7 @@ The **honest** path (`intelligence/risk-model.ts` + `calibration.ts` + `confiden
 - **Phase 5 — Atoms + AnA.** 9 atom types into `lumen_data_atoms`; 5 AnA tools wired to `ragRouter` + `precedentEngine`; register `fda_crl` provenance source.
 - **Governance (cross-cutting) — §13/§14/§16.** Tenant-isolation tests on the NULL-org boundary; a statistical-evidentiary guard (every metric carries numerator/denominator/missing/filters/method/verification/date) + unsupported-claim linter; eval harnesses.
 - **Phase 7 — Prediction governance.** Route CRL influence only through the honest logistic path, gated on holdout eval.
-- **Phase 8 — Legacy retirement.** Deprecate/quarantine `study-design-agent-service.ts`, `protocol-knowledge-service.ts`, the foresight path, and the score-fabricating parts of `endpoint-recommender-service.ts`, with a documented plan.
+- **Phase 8 — Legacy retirement.** Deprecate/quarantine `study-design-agent-service.ts`, `protocol-knowledge-service.ts` and the foresight path, with a documented plan (the score-fabricating parts of `endpoint-recommender-service.ts` were removed 2026-10-15).
 - **Phase 6 — UX (Claude Design owns).** CSR Intelligence regulatory-outcome dimension, Study Design evidence panel, FDA CRL Library as a view over the spine, traceability view. A design data sheet accompanies the backend.
 
 ---

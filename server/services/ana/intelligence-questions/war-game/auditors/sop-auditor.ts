@@ -4,7 +4,7 @@
  * Simulates an FDA GCP/GMP inspector scrutinizing a Standard Operating
  * Procedure during a facility inspection. Each rule represents a question
  * a seasoned FDA field investigator would ask when reviewing SOPs against
- * 21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R3) (GCP), and
+ * 21 CFR 211 (cGMP), 21 CFR 820 (QMSR, incorporating ISO 13485:2016 by reference), ICH E6(R3) (GCP), and
  * 21 CFR Part 11 (electronic records).
  *
  * @module server/services/ana/intelligence-questions/war-game/auditors/sop-auditor
@@ -37,13 +37,6 @@ function str(val: unknown): string {
   return String(val).trim();
 }
 
-/** Coerce a value to a number (NaN-safe). */
-function num(val: unknown): number {
-  if (val == null) return 0;
-  const n = Number(val);
-  return Number.isNaN(n) ? 0 : n;
-}
-
 /** Prefixed rule ID for SOP auditor. */
 const rid = (suffix: string) => 'sop_' + suffix;
 
@@ -61,7 +54,7 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'completeness',
       title: 'SOP title is missing or inadequate',
       question:
-        'This SOP has no descriptive title. Per 21 CFR 211.186, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
+        'This SOP has no descriptive title. Per 21 CFR 211.188, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
       check(answers): WarGameFinding | null {
         const title = str(answers.sop_title);
         if (title.length >= 10) return null;
@@ -71,7 +64,7 @@ export function createSopAuditor(): WarGameAuditor {
           severity: 'critical',
           title: 'SOP title is missing or inadequate',
           question:
-            'This SOP has no descriptive title. Per 21 CFR 211.186, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
+            'This SOP has no descriptive title. Per 21 CFR 211.188, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
           observation:
             `The SOP title is ${title.length === 0 ? 'blank' : `only ${title.length} characters ("${title}")`}. ` +
             'A clear, descriptive title is essential for document control, cross-referencing, and training records.',
@@ -95,7 +88,7 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'documentation',
       title: 'No SOP document number assigned',
       question:
-        'I do not see a document control number on this SOP. Under 21 CFR 820.40, how does your document control system track this procedure without a unique identifier?',
+        'I do not see a document control number on this SOP. Under ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), how does your document control system track this procedure without a unique identifier?',
       check(answers): WarGameFinding | null {
         if (!isEmpty(answers.sop_number)) return null;
         return {
@@ -104,14 +97,14 @@ export function createSopAuditor(): WarGameAuditor {
           severity: 'critical',
           title: 'No SOP document number assigned',
           question:
-            'I do not see a document control number on this SOP. Under 21 CFR 820.40, how does your document control system track this procedure without a unique identifier?',
+            'I do not see a document control number on this SOP. Under ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), how does your document control system track this procedure without a unique identifier?',
           observation:
             'The SOP lacks a unique document number. Without a document control number, there is no way to ensure that ' +
             'personnel are using the current approved version, and the document cannot be properly tracked in the quality system.',
           requirement:
-            '21 CFR 820.40(a) requires that each manufacturer establish and maintain procedures to control all documents. ' +
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that each manufacturer establish and maintain procedures to control all documents. ' +
             'Documents must be identified with a unique identifier. 21 CFR 211.186 also requires record identification.',
-          reference: '21 CFR 820.40(a); 21 CFR 211.186',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); 21 CFR 211.186',
           recommendation:
             'Assign a unique document number following your site document numbering convention (e.g., SOP-QA-001). ' +
             'Ensure the number is displayed in the header or footer of every page.',
@@ -142,9 +135,9 @@ export function createSopAuditor(): WarGameAuditor {
             'The applicable regulations field is empty. SOPs must be traceable to the regulatory requirements they fulfill. ' +
             'Without this traceability, it is impossible to verify that the procedure adequately addresses all applicable regulatory obligations.',
           requirement:
-            '21 CFR 211.22(d) requires written procedures for production and process controls. 21 CFR 820.20(a) requires a quality policy ' +
-            'that includes compliance with applicable regulatory requirements. Each SOP should reference the specific regulations it implements.',
-          reference: '21 CFR 211.22(d); 21 CFR 820.20(a); ICH E6(R3) Annex 1 §3.10',
+            '21 CFR 211.22(d) requires that the responsibilities and procedures of the quality control unit be in writing and followed, and 21 CFR 211.100(a) requires written procedures for production and process controls. ' +
+            'ISO 13485:2016 clause 5.3, incorporated by reference at 21 CFR 820.10 (QMSR), requires a quality policy that includes a commitment to comply with applicable regulatory requirements. Each SOP should reference the specific regulations it implements.',
+          reference: '21 CFR 211.22(d); 21 CFR 211.100(a); 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 5.3; ICH E6(R3) Annex 1 §3.10',
           recommendation:
             'Add a "Regulatory References" section listing all applicable regulations (e.g., 21 CFR 211, 21 CFR 820, ICH E6(R3), ' +
             '21 CFR Part 11) and the specific sections this SOP addresses.',
@@ -161,9 +154,9 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'completeness',
       title: 'Purpose statement missing or insufficient',
       question:
-        'The purpose of this SOP is not clearly stated. Per 21 CFR 820.40, procedures must be adequate for their intended use. How do you demonstrate adequacy without a defined purpose?',
+        'The purpose of this SOP is not clearly stated. Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), procedures must be adequate for their intended use. How do you demonstrate adequacy without a defined purpose?',
       check(answers): WarGameFinding | null {
-        const purpose = str(answers.purpose_statement);
+        const purpose = str(answers.sop_purpose);
         if (purpose.length >= 30) return null;
         return {
           id: rid('004'),
@@ -171,18 +164,18 @@ export function createSopAuditor(): WarGameAuditor {
           severity: 'warning',
           title: 'Purpose statement missing or insufficient',
           question:
-            'The purpose of this SOP is not clearly stated. Per 21 CFR 820.40, procedures must be adequate for their intended use. How do you demonstrate adequacy without a defined purpose?',
+            'The purpose of this SOP is not clearly stated. Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), procedures must be adequate for their intended use. How do you demonstrate adequacy without a defined purpose?',
           observation:
             `The purpose statement is ${purpose.length === 0 ? 'missing entirely' : `only ${purpose.length} characters`}. ` +
             'A well-defined purpose statement establishes the intent, applicability, and expected outcome of the procedure.',
           requirement:
-            '21 CFR 820.40 requires procedures to be adequate for their intended purpose. ' +
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires procedures to be adequate for their intended purpose. ' +
             'ICH E6(R3) Annex 1 §3.10 (Quality Management) requires the sponsor to implement a system to manage quality, including documented procedures with clear objectives.',
-          reference: '21 CFR 820.40; ICH E6(R3) Annex 1 §3.10',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); ICH E6(R3) Annex 1 §3.10',
           recommendation:
             'Write a purpose statement that clearly defines: (1) the objective of the procedure, ' +
             '(2) the regulatory requirement it satisfies, and (3) the expected outcome when the procedure is correctly followed.',
-          relatedFields: ['purpose_statement'],
+          relatedFields: ['sop_purpose'],
         };
       },
     },
@@ -210,8 +203,8 @@ export function createSopAuditor(): WarGameAuditor {
             'training may not be assigned to appropriate personnel, and accountability for content accuracy is unclear.',
           requirement:
             '21 CFR 211.22 assigns the quality control unit responsibility for approving or rejecting procedures. ' +
-            '21 CFR 820.40(a) requires designated individuals to review and approve documents. A document owner ensures ongoing maintenance.',
-          reference: '21 CFR 211.22; 21 CFR 820.40(a)',
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires designated individuals to review and approve documents. A document owner ensures ongoing maintenance.',
+          reference: '21 CFR 211.22; ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR)',
           recommendation:
             'Assign a document owner (typically a subject matter expert or department manager) who is responsible for ' +
             'content accuracy, periodic review, and coordinating revisions through the change control process.',
@@ -230,7 +223,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'This SOP does not define who is responsible for performing each step. Per ICH E6(R3) Principle 10, responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.roles_responsibilities)) return null;
+        if (!isEmpty(answers.responsible_roles)) return null;
         return {
           id: rid('006'),
           dimension: 'completeness',
@@ -245,11 +238,11 @@ export function createSopAuditor(): WarGameAuditor {
             'ICH E6(R3) Principle 10 requires that roles, tasks and responsibilities be clear and documented. ' +
             '21 CFR 211.25 requires that each person engaged in activities shall have the education, training, and experience to perform assigned functions. ' +
             'Responsibility assignment is the prerequisite for verifying qualified personnel execute each step.',
-          reference: 'ICH E6(R3) Principle 10; 21 CFR 211.25; 21 CFR 820.20(b)(1)',
+          reference: 'ICH E6(R3) Principle 10; 21 CFR 211.25; 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 5.5.1',
           recommendation:
             'Add a Roles and Responsibilities section that specifies: the performing role, the reviewing/verifying role, ' +
             'the approving role, and the Quality Assurance oversight role for this procedure.',
-          relatedFields: ['roles_responsibilities'],
+          relatedFields: ['responsible_roles'],
         };
       },
     },
@@ -278,8 +271,8 @@ export function createSopAuditor(): WarGameAuditor {
             'An SOP without detailed, sequential steps cannot serve its fundamental purpose as a controlled document.',
           requirement:
             '21 CFR 211.100(a) requires written procedures for production and process control designed to assure that drug products have the identity, strength, quality, and purity they purport to possess. ' +
-            '21 CFR 820.75 requires documented procedures for process validation.',
-          reference: '21 CFR 211.100(a); 21 CFR 820.75; ICH E6(R3) Annex 1 §3.16',
+            '21 CFR 820.10 (QMSR), through ISO 13485:2016 clause 7.5.6, requires documented procedures for process validation.',
+          reference: '21 CFR 211.100(a); 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 7.5.6; ICH E6(R3) Annex 1 §3.16',
           recommendation:
             'Document every step of the procedure in sequential order. Each step should be actionable, include acceptance criteria where applicable, ' +
             'and specify the responsible role. Use numbered steps with sufficient detail that a trained operator can execute the procedure consistently.',
@@ -298,7 +291,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'What happens when personnel deviate from this SOP? I see no deviation handling instructions. Per 21 CFR 211.192, any unexplained discrepancy must be investigated. Show me your deviation process.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.deviation_handling)) return null;
+        if (!isEmpty(answers.deviation_classification)) return null;
         return {
           id: rid('008'),
           dimension: 'risk_identification',
@@ -311,12 +304,12 @@ export function createSopAuditor(): WarGameAuditor {
             'When personnel cannot follow a procedure as written, there must be a defined path for documenting, investigating, and resolving the deviation.',
           requirement:
             '21 CFR 211.192 requires investigation of any unexplained discrepancy or the failure of a batch or any of its components to meet specifications. ' +
-            '21 CFR 820.90(a) requires procedures for controlling nonconforming product. Deviation handling is a foundational element of both cGMP and QSR compliance.',
-          reference: '21 CFR 211.192; 21 CFR 820.90(a); ICH E6(R3) Annex 1 §3.12',
+            'ISO 13485:2016 clause 8.3, incorporated by reference into 21 CFR Part 820 by the QMSR (21 CFR 820.10), requires procedures for controlling nonconforming product. Deviation handling is a foundational element of both cGMP and QMSR compliance.',
+          reference: '21 CFR 211.192; 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 8.3; ICH E6(R3) Annex 1 §3.12',
           recommendation:
             'Add a Deviation Handling section that either describes the deviation process or references the site deviation SOP. ' +
             'Include instructions for immediate actions, documentation requirements, notification thresholds, and timelines for investigation.',
-          relatedFields: ['deviation_handling'],
+          relatedFields: ['deviation_classification'],
         };
       },
     },
@@ -329,27 +322,27 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'regulatory_alignment',
       title: 'No CAPA reference in SOP',
       question:
-        'This SOP makes no reference to your CAPA system. Per 21 CFR 820.90, you are required to establish procedures for corrective and preventive action. How are systemic failures from this process captured and remediated?',
+        'This SOP makes no reference to your CAPA system. Per 21 CFR 820.10 (QMSR), which incorporates ISO 13485:2016 clauses 8.5.2 and 8.5.3 by reference, you are required to establish procedures for corrective and preventive action. How are systemic failures from this process captured and remediated?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.capa_reference)) return null;
+        if (!isEmpty(answers.corrective_action_triggers)) return null;
         return {
           id: rid('009'),
           dimension: 'regulatory_alignment',
           severity: 'warning',
           title: 'No CAPA reference in SOP',
           question:
-            'This SOP makes no reference to your CAPA system. Per 21 CFR 820.90, you are required to establish procedures for corrective and preventive action. How are systemic failures from this process captured and remediated?',
+            'This SOP makes no reference to your CAPA system. Per 21 CFR 820.10 (QMSR), which incorporates ISO 13485:2016 clauses 8.5.2 and 8.5.3 by reference, you are required to establish procedures for corrective and preventive action. How are systemic failures from this process captured and remediated?',
           observation:
             'The SOP does not reference the site CAPA system. Deviations, out-of-specification results, and recurring issues identified during execution of this procedure ' +
             'may require corrective and preventive action, and personnel need clear direction on when and how to escalate to CAPA.',
           requirement:
-            '21 CFR 820.90 requires procedures for corrective and preventive action, including analyzing processes and investigating the cause of nonconformities. ' +
+            'ISO 13485:2016 clauses 8.5.2 and 8.5.3, incorporated by reference at 21 CFR 820.10 (QMSR), require procedures for corrective and preventive action, including reviewing nonconformities and determining their causes. ' +
             '21 CFR 211.192 requires investigation of discrepancies. The CAPA system must be linked to operational SOPs.',
-          reference: '21 CFR 820.90; 21 CFR 211.192',
+          reference: '21 CFR 820.10 (QMSR) / ISO 13485:2016 clauses 8.5.2-8.5.3; 21 CFR 211.192',
           recommendation:
             'Add a cross-reference to the site CAPA SOP. Define the criteria for escalating a deviation to a CAPA ' +
             '(e.g., repeat deviations, product impact, patient safety implications) and the responsible roles for initiation.',
-          relatedFields: ['capa_reference'],
+          relatedFields: ['corrective_action_triggers'],
         };
       },
     },
@@ -364,7 +357,8 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'This SOP does not specify training requirements. Under 21 CFR 211.25, personnel must be trained before performing GMP activities. What training is required before an operator can execute this procedure?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.training_requirements)) return null;
+        // training_required is yes_no: only an explicit "yes" defines training requirements.
+        if (answers.training_required === true) return null;
         return {
           id: rid('010'),
           dimension: 'completeness',
@@ -377,12 +371,12 @@ export function createSopAuditor(): WarGameAuditor {
             'have the necessary knowledge and skills, creating risk to product quality and patient safety.',
           requirement:
             '21 CFR 211.25(a) requires that each person engaged in manufacture, processing, packing, or holding of a drug product shall have education, training, and experience. ' +
-            '21 CFR 820.25(b) requires that training be documented. ICH E6(R3) Principle 5 and Annex 1 §3.4 require that qualified individuals perform trial-related duties.',
-          reference: '21 CFR 211.25(a); 21 CFR 820.25(b); ICH E6(R3) Principle 5; ICH E6(R3) Annex 1 §3.4',
+            'ISO 13485:2016 clause 6.2, incorporated by reference at 21 CFR 820.10 (QMSR), requires that training records be maintained. ICH E6(R3) Principle 5 and Annex 1 §3.4 require that qualified individuals perform trial-related duties.',
+          reference: '21 CFR 211.25(a); 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 6.2; ICH E6(R3) Principle 5; ICH E6(R3) Annex 1 §3.4',
           recommendation:
             'Define training prerequisites including: required read-and-understand of this SOP, any prerequisite SOPs, ' +
             'hands-on demonstration requirements, initial qualification criteria, and retraining frequency.',
-          relatedFields: ['training_requirements'],
+          relatedFields: ['training_required'],
         };
       },
     },
@@ -395,27 +389,27 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'scientific_rigor',
       title: 'No competency assessment defined',
       question:
-        'How do you verify that personnel are competent to perform this procedure? 21 CFR 820.25 requires that training effectiveness be assessed. Show me your competency evaluation records.',
+        'How do you verify that personnel are competent to perform this procedure? ISO 13485:2016 clause 6.2, incorporated by reference into 21 CFR Part 820 by the QMSR (21 CFR 820.10), requires that training effectiveness be evaluated. Show me your competency evaluation records.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.competency_assessment)) return null;
+        if (!isEmpty(answers.competency_assessment_method)) return null;
         return {
           id: rid('011'),
           dimension: 'scientific_rigor',
           severity: 'warning',
           title: 'No competency assessment defined',
           question:
-            'How do you verify that personnel are competent to perform this procedure? 21 CFR 820.25 requires that training effectiveness be assessed. Show me your competency evaluation records.',
+            'How do you verify that personnel are competent to perform this procedure? ISO 13485:2016 clause 6.2, incorporated by reference into 21 CFR Part 820 by the QMSR (21 CFR 820.10), requires that training effectiveness be evaluated. Show me your competency evaluation records.',
           observation:
             'The SOP does not define a competency assessment method. Reading an SOP alone does not demonstrate competency. ' +
             'Without a practical assessment, there is no evidence that trained personnel can correctly execute the procedure.',
           requirement:
-            '21 CFR 820.25(b) requires that training be documented and shall include verification of training effectiveness. ' +
+            'ISO 13485:2016 clause 6.2, incorporated by reference at 21 CFR 820.10 (QMSR), requires that training be provided, its effectiveness evaluated, and records of training maintained. ' +
             'ICH E6(R3) Principle 5 and Annex 1 §3.4 require that individuals be qualified by education, training, and experience.',
-          reference: '21 CFR 820.25(b); ICH E6(R3) Principle 5; ICH E6(R3) Annex 1 §3.4',
+          reference: '21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 6.2; ICH E6(R3) Principle 5; ICH E6(R3) Annex 1 §3.4',
           recommendation:
             'Define a competency assessment method appropriate to the procedure complexity: written exam, practical demonstration, ' +
             'observed performance, or a combination. Include pass/fail criteria, documentation requirements, and reassessment frequency.',
-          relatedFields: ['competency_assessment'],
+          relatedFields: ['competency_assessment_method'],
         };
       },
     },
@@ -430,8 +424,8 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'What training method is used for this SOP — read-and-understand, classroom, on-the-job, or practical demonstration? Per 21 CFR 211.25 training must be appropriate to the function performed.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.training_method)) return null;
-        if (isEmpty(answers.training_requirements)) return null;
+        if (!isEmpty(answers.training_methods)) return null;
+        if (answers.training_required !== true) return null;
         return {
           id: rid('012'),
           dimension: 'consistency',
@@ -446,11 +440,11 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.25(a) requires training in the particular operations performed and in cGMP as applicable. ' +
             'The training method must be commensurate with the complexity and risk of the procedure.',
-          reference: '21 CFR 211.25(a); 21 CFR 820.25(a)',
+          reference: '21 CFR 211.25(a); 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 6.2',
           recommendation:
             'Specify the training delivery method: read-and-understand, instructor-led classroom, on-the-job training with qualified trainer, ' +
             'practical demonstration, or simulation. Match the modality to the procedure complexity and GMP criticality.',
-          relatedFields: ['training_method', 'training_requirements'],
+          relatedFields: ['training_methods', 'training_required'],
         };
       },
     },
@@ -463,27 +457,27 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'documentation',
       title: 'No version history maintained',
       question:
-        'Where is the revision history for this SOP? Per 21 CFR 820.40, document changes must be reviewed and approved. I need to see what was changed, when, and by whom for every revision.',
+        'Where is the revision history for this SOP? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), document changes must be reviewed and approved. I need to see what was changed, when, and by whom for every revision.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.version_history)) return null;
+        if (!isEmpty(answers.change_history_tracking)) return null;
         return {
           id: rid('013'),
           dimension: 'documentation',
           severity: 'critical',
           title: 'No version history maintained',
           question:
-            'Where is the revision history for this SOP? Per 21 CFR 820.40, document changes must be reviewed and approved. I need to see what was changed, when, and by whom for every revision.',
+            'Where is the revision history for this SOP? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), document changes must be reviewed and approved. I need to see what was changed, when, and by whom for every revision.',
           observation:
             'The SOP has no version history. Without a revision log, it is impossible to trace what was changed between versions, ' +
             'the reason for the change, who authored and approved each revision, and whether affected personnel were retrained.',
           requirement:
-            '21 CFR 820.40(b) requires that changes to documents be reviewed and approved by the same function/organization that performed the original review. ' +
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that changes to documents be reviewed and approved by the same function/organization that performed the original review. ' +
             'The approved changes must be communicated to appropriate personnel in a timely manner. A revision history is the primary evidence of compliance.',
-          reference: '21 CFR 820.40(b); 21 CFR 211.186',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); 21 CFR 211.186',
           recommendation:
             'Add a revision history table documenting: version number, effective date, description of changes, author, and approver for each revision. ' +
             'Reference the change control record number that authorized each revision.',
-          relatedFields: ['version_history'],
+          relatedFields: ['change_history_tracking'],
         };
       },
     },
@@ -496,28 +490,28 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'regulatory_alignment',
       title: 'No change control process referenced',
       question:
-        'How are changes to this SOP controlled? 21 CFR 820.40 requires procedures for document changes. I see no reference to a change control process. Is this a controlled document?',
+        'How are changes to this SOP controlled? ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires procedures for document changes. I see no reference to a change control process. Is this a controlled document?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.change_control_process)) return null;
+        if (!isEmpty(answers.change_request_process)) return null;
         return {
           id: rid('014'),
           dimension: 'regulatory_alignment',
           severity: 'critical',
           title: 'No change control process referenced',
           question:
-            'How are changes to this SOP controlled? 21 CFR 820.40 requires procedures for document changes. I see no reference to a change control process. Is this a controlled document?',
+            'How are changes to this SOP controlled? ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires procedures for document changes. I see no reference to a change control process. Is this a controlled document?',
           observation:
             'The SOP does not reference or describe a change control process. Without formal change control, ' +
             'modifications to the procedure could be made without proper review, approval, impact assessment, or retraining.',
           requirement:
-            '21 CFR 820.40 requires document change controls including review and approval by appropriate personnel. ' +
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires document change controls including review and approval by appropriate personnel. ' +
             '21 CFR 211.100 requires that written procedures shall be followed and that any changes be drafted, reviewed, and approved. ' +
             '21 CFR Part 11.10(e) requires audit trails for electronic records to document changes.',
-          reference: '21 CFR 820.40; 21 CFR 211.100; 21 CFR Part 11.10(e)',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); 21 CFR 211.100; 21 CFR Part 11.10(e)',
           recommendation:
             'Reference the site change control SOP and describe the process for initiating, reviewing, approving, and implementing changes to this document. ' +
             'Include requirements for impact assessment, affected document updates, and retraining.',
-          relatedFields: ['change_control_process'],
+          relatedFields: ['change_request_process'],
         };
       },
     },
@@ -530,27 +524,27 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'documentation',
       title: 'No approval workflow defined',
       question:
-        'Who approved this SOP and through what workflow? Per 21 CFR 820.40(a), documents must be reviewed and approved by designated individuals. Show me your approval chain.',
+        'Who approved this SOP and through what workflow? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), documents must be reviewed and approved by designated individuals. Show me your approval chain.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.approval_workflow)) return null;
+        if (!isEmpty(answers.approval_chain)) return null;
         return {
           id: rid('015'),
           dimension: 'documentation',
           severity: 'critical',
           title: 'No approval workflow defined',
           question:
-            'Who approved this SOP and through what workflow? Per 21 CFR 820.40(a), documents must be reviewed and approved by designated individuals. Show me your approval chain.',
+            'Who approved this SOP and through what workflow? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), documents must be reviewed and approved by designated individuals. Show me your approval chain.',
           observation:
             'No approval workflow is defined. SOPs must go through formal review and approval before they become effective. ' +
             'Without a defined workflow, there is no evidence that qualified individuals have reviewed the procedure for accuracy, completeness, and regulatory compliance.',
           requirement:
-            '21 CFR 820.40(a) requires that each manufacturer designate individuals to review and approve all documents before issuance. ' +
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that each manufacturer designate individuals to review and approve all documents before issuance. ' +
             '21 CFR 211.22(c) requires the quality control unit to approve procedures impacting drug product quality.',
-          reference: '21 CFR 820.40(a); 21 CFR 211.22(c)',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); 21 CFR 211.22(c)',
           recommendation:
             'Define the approval workflow specifying: the author/drafter, subject matter expert reviewer(s), QA reviewer, and final approver. ' +
             'For electronic systems, ensure the workflow complies with 21 CFR Part 11 requirements for electronic signatures.',
-          relatedFields: ['approval_workflow'],
+          relatedFields: ['approval_chain'],
         };
       },
     },
@@ -565,7 +559,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'When did this SOP become effective? I see no effective date. How do you know that the version in use at the time of a specific batch was the current approved version?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.effective_date)) return null;
+        if (!isEmpty(answers.sop_effective_date)) return null;
         return {
           id: rid('016'),
           dimension: 'consistency',
@@ -577,13 +571,13 @@ export function createSopAuditor(): WarGameAuditor {
             'The SOP has no effective date. Without an effective date, it is impossible to determine whether this version was in effect ' +
             'during a particular manufacturing event, making retrospective investigations and batch record reviews unreliable.',
           requirement:
-            '21 CFR 820.40 requires that documents be available at locations of use and that obsolete documents be promptly removed. ' +
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that documents be available at locations of use and that obsolete documents be promptly removed. ' +
             'An effective date is essential for document control and compliance verification during inspections.',
-          reference: '21 CFR 820.40; 21 CFR 211.186',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); 21 CFR 211.186',
           recommendation:
             'Add an effective date that indicates when this version of the SOP was approved and became the current controlled version. ' +
             'The effective date should be set after all approvals and training have been completed.',
-          relatedFields: ['effective_date'],
+          relatedFields: ['sop_effective_date'],
         };
       },
     },
@@ -596,28 +590,30 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'regulatory_alignment',
       title: 'No periodic review cycle established',
       question:
-        'How often is this SOP reviewed for continued adequacy? 21 CFR 820.40 requires periodic review. What is your review cycle, and can you show me evidence that the last review was conducted on schedule?',
+        'How often is this SOP reviewed for continued adequacy? No FDA regulation sets a fixed SOP review interval, but ISO 13485:2016 clause 4.2.4 (incorporated by reference in 21 CFR Part 820) requires documents to be reviewed and updated as necessary. What is your review cycle, and can you show me evidence that the last review was conducted on schedule?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.review_cycle)) return null;
+        // review_frequency is a select; 'as_needed' is no periodic cycle at all.
+        const frequency = str(answers.review_frequency);
+        if (frequency !== '' && frequency !== 'as_needed') return null;
         return {
           id: rid('017'),
           dimension: 'regulatory_alignment',
           severity: 'warning',
           title: 'No periodic review cycle established',
           question:
-            'How often is this SOP reviewed for continued adequacy? 21 CFR 820.40 requires periodic review. What is your review cycle, and can you show me evidence that the last review was conducted on schedule?',
+            'How often is this SOP reviewed for continued adequacy? No FDA regulation sets a fixed SOP review interval, but ISO 13485:2016 clause 4.2.4 (incorporated by reference in 21 CFR Part 820) requires documents to be reviewed and updated as necessary. What is your review cycle, and can you show me evidence that the last review was conducted on schedule?',
           observation:
             'No periodic review cycle is defined. SOPs can become outdated as regulations change, processes evolve, or equipment is replaced. ' +
             'Without a review cycle, there is no mechanism to ensure the SOP remains current and accurate.',
           requirement:
-            '21 CFR 820.40 implicitly requires periodic review through its requirement for document adequacy. ' +
+            'No FDA regulation sets a fixed SOP review interval; ISO 13485:2016 clause 4.2.4, incorporated by reference at 21 CFR 820.10 (QMSR), requires documents to be reviewed and updated as necessary. ' +
             'ICH E6(R3) Annex 1 §3.10 requires that the sponsor implement systems to ensure the quality of every aspect of the trial, ' +
             'which includes keeping procedures current. Industry standard is a review cycle of no more than 2-3 years.',
-          reference: '21 CFR 820.40; ICH E6(R3) Annex 1 §3.10',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); ICH E6(R3) Annex 1 §3.10',
           recommendation:
             'Establish a periodic review cycle (typically every 2 years for GMP SOPs, annually for high-risk procedures). ' +
             'Document the review date, reviewer, and outcome (no change needed, revision initiated, or SOP retired).',
-          relatedFields: ['review_cycle'],
+          relatedFields: ['review_frequency'],
         };
       },
     },
@@ -680,9 +676,9 @@ export function createSopAuditor(): WarGameAuditor {
             'Records destroyed prematurely cannot support regulatory inspections, investigations, or product complaints.',
           requirement:
             '21 CFR 211.180(a) requires that records for drug products be retained for at least one year after the expiry date of the batch. ' +
-            '21 CFR 820.184 requires that device records be retained for the design and expected life of the device, but no less than two years from product release. ' +
+            'Under the QMSR (21 CFR 820.10, incorporating ISO 13485:2016 clause 4.2.5), device records must be retained for at least the lifetime of the device as defined by the manufacturer, but no less than two years from product release (formerly 21 CFR 820.180(b)); 21 CFR 820.35 sets additional records requirements. ' +
             'ICH E6(R3) Annex 1 §2.12 and Appendix C require essential records to be retained for the period set by applicable regulatory requirements (e.g. 21 CFR 312.62(c): 2 years after a marketing application is approved for the drug for the indication investigated or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified).',
-          reference: '21 CFR 211.180(a); 21 CFR 820.184; ICH E6(R3) Annex 1 §2.12; ICH E6(R3) Appendix C',
+          reference: '21 CFR 211.180(a); 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 4.2.5; 21 CFR 820.35; ICH E6(R3) Annex 1 §2.12; ICH E6(R3) Appendix C',
           recommendation:
             'Define the retention period for all records generated by this SOP. Reference the site record retention schedule and ensure the period meets the longest applicable regulatory requirement.',
           relatedFields: ['record_retention_period'],
@@ -713,8 +709,8 @@ export function createSopAuditor(): WarGameAuditor {
             'Without a documented risk assessment, critical process parameters and risk mitigation measures may not be adequately identified.',
           requirement:
             'ICH Q9 establishes the framework for quality risk management in pharmaceutical manufacturing. ' +
-            '21 CFR 820.30(g) requires risk analysis for device design. ICH E6(R3) Annex 1 §3.10.1 (Risk Management) requires risk-based approaches to clinical trial quality.',
-          reference: 'ICH Q9; 21 CFR 820.30(g); ICH E6(R3) Annex 1 §3.10.1',
+            '21 CFR 820.10 (QMSR, incorporating ISO 13485:2016) requires risk management in device design and development (ISO 13485:2016 clauses 7.1 and 7.3; ISO 14971). ICH E6(R3) Annex 1 §3.10.1 (Risk Management) requires risk-based approaches to clinical trial quality.',
+          reference: 'ICH Q9; 21 CFR 820.10 (QMSR) / ISO 13485:2016 clauses 7.1, 7.3; ISO 14971; ICH E6(R3) Annex 1 §3.10.1',
           recommendation:
             'Perform and document a process risk assessment using an appropriate methodology (FMEA, HACCP, fishbone diagram). ' +
             'Reference the risk assessment document number in the SOP and ensure control measures identified in the risk assessment are reflected in the procedure steps.',
@@ -731,7 +727,7 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'consistency',
       title: 'No distribution list defined',
       question:
-        'Who receives controlled copies of this SOP? Per 21 CFR 820.40, documents must be available at all locations of use. Without a distribution list, how do you ensure obsolete copies are retrieved?',
+        'Who receives controlled copies of this SOP? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), documents must be available at all locations of use. Without a distribution list, how do you ensure obsolete copies are retrieved?',
       check(answers): WarGameFinding | null {
         if (!isEmpty(answers.distribution_list)) return null;
         return {
@@ -740,14 +736,14 @@ export function createSopAuditor(): WarGameAuditor {
           severity: 'info',
           title: 'No distribution list defined',
           question:
-            'Who receives controlled copies of this SOP? Per 21 CFR 820.40, documents must be available at all locations of use. Without a distribution list, how do you ensure obsolete copies are retrieved?',
+            'Who receives controlled copies of this SOP? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), documents must be available at all locations of use. Without a distribution list, how do you ensure obsolete copies are retrieved?',
           observation:
             'No distribution list is defined. Without knowing which departments and roles receive this SOP, ' +
             'there is no mechanism to ensure all affected personnel have access to the current version and that obsolete copies are removed.',
           requirement:
-            '21 CFR 820.40(a) requires that approved documents are available at all locations where operations essential to the effective functioning of the quality system are performed. ' +
+            'ISO 13485:2016 clause 4.2.4, incorporated by reference at 21 CFR 820.10 (QMSR), requires that relevant versions of applicable documents are available at points of use. ' +
             'Obsolete documents must be promptly removed from all points of use.',
-          reference: '21 CFR 820.40(a)',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR)',
           recommendation:
             'Define a distribution list specifying all departments, roles, or work stations that must have access to this SOP. ' +
             'For electronic document management systems, define the access permissions that serve as the distribution control.',
@@ -766,7 +762,10 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Does this SOP operate in isolation? I see no cross-references to related SOPs, forms, or work instructions. How do your operators know which forms to complete or which upstream and downstream procedures apply?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.related_documents)) return null;
+        // The interview asks for related SOPs and, twice, for associated forms/templates;
+        // the SOP references no related document only when all three are blank.
+        if (!isEmpty(answers.cross_reference_sops) || !isEmpty(answers.forms_and_templates) ||
+            !isEmpty(answers.associated_forms_templates)) return null;
         return {
           id: rid('022'),
           dimension: 'completeness',
@@ -780,11 +779,11 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.186 requires complete records that trace all steps. ' +
             'A quality system must maintain traceability between procedures, and cross-references are essential for holistic process understanding.',
-          reference: '21 CFR 211.186; 21 CFR 820.40; ICH E6(R3) Annex 1 §3.16',
+          reference: '21 CFR 211.186; ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); ICH E6(R3) Annex 1 §3.16',
           recommendation:
             'Add a Related Documents section listing all associated SOPs, work instructions, forms, templates, specifications, ' +
             'and regulatory guidance that personnel need to reference when executing this procedure.',
-          relatedFields: ['related_documents'],
+          relatedFields: ['cross_reference_sops', 'forms_and_templates', 'associated_forms_templates'],
         };
       },
     },
@@ -799,7 +798,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'What is the scope of this SOP? I cannot determine what processes are included and, more importantly, what is excluded. An SOP with unclear boundaries leads to gaps and overlaps with other procedures.',
       check(answers): WarGameFinding | null {
-        const scope = str(answers.process_scope);
+        const scope = str(answers.sop_scope_description);
         if (scope.length >= 30) return null;
         return {
           id: rid('023'),
@@ -815,11 +814,11 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.100 requires written procedures for production and process control. ' +
             'The scope defines the boundaries of each procedure and prevents gaps or overlaps in the quality system.',
-          reference: '21 CFR 211.100; 21 CFR 820.40',
+          reference: '21 CFR 211.100; ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR)',
           recommendation:
             'Define the scope clearly, including: what processes, equipment, and products are covered, ' +
             'what is explicitly excluded, the start and end points of the procedure, and any limitations or preconditions.',
-          relatedFields: ['process_scope'],
+          relatedFields: ['sop_scope_description'],
         };
       },
     },
@@ -834,11 +833,11 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Does this SOP involve electronic records or electronic signatures? If so, where are your 21 CFR Part 11 controls — audit trails, access controls, and electronic signature requirements?',
       check(answers): WarGameFinding | null {
-        const regs = str(answers.applicable_regulations).toLowerCase();
-        if (regs.includes('part 11') || regs.includes('part11') || regs.includes('11.10')) return null;
+        const regs = Array.isArray(answers.applicable_regulations) ? answers.applicable_regulations.map(String) : [];
+        if (regs.includes('21_cfr_11')) return null;
         // Only flag if the SOP involves electronic systems
         const steps = str(answers.procedure_steps).toLowerCase();
-        const scope = str(answers.process_scope).toLowerCase();
+        const scope = str(answers.sop_scope_description).toLowerCase();
         const hasElectronic =
           steps.includes('electronic') || steps.includes('system') || steps.includes('software') ||
           steps.includes('database') || steps.includes('lims') || steps.includes('edms') ||
@@ -862,7 +861,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add 21 CFR Part 11 to the applicable regulations. Address audit trail requirements, user access controls, ' +
             'electronic signature manifest, system validation status, and backup/recovery procedures for electronic records generated by this SOP.',
-          relatedFields: ['applicable_regulations', 'procedure_steps', 'process_scope'],
+          relatedFields: ['applicable_regulations', 'procedure_steps', 'sop_scope_description'],
         };
       },
     },
@@ -877,7 +876,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Which department owns and operates under this SOP? Without departmental attribution, training assignments and management review cannot be properly directed.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.department)) return null;
+        if (!isEmpty(answers.sop_department)) return null;
         return {
           id: rid('025'),
           dimension: 'consistency',
@@ -890,12 +889,12 @@ export function createSopAuditor(): WarGameAuditor {
             'training assignment, periodic review responsibility, and organizational accountability.',
           requirement:
             '21 CFR 211.22 requires the quality control unit to have responsibility and authority. ' +
-            '21 CFR 820.20(b)(1) requires that management establish the organizational structure. Departmental ownership of SOPs supports both requirements.',
-          reference: '21 CFR 211.22; 21 CFR 820.20(b)(1)',
+            'ISO 13485:2016 clause 5.5.1, incorporated by reference at 21 CFR 820.10 (QMSR), requires top management to define, document and communicate responsibilities and authorities. Departmental ownership of SOPs supports both requirements.',
+          reference: '21 CFR 211.22; 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 5.5.1',
           recommendation:
             'Identify the owning department and any supporting departments. This enables proper routing for review cycles, ' +
             'training assignments, and management responsibility for procedure compliance.',
-          relatedFields: ['department'],
+          relatedFields: ['sop_department'],
         };
       },
     },
@@ -927,8 +926,8 @@ export function createSopAuditor(): WarGameAuditor {
             'and inconsistent execution between operators, shifts, and sites.',
           requirement:
             '21 CFR 211.100(a) requires written procedures designed to assure quality. ' +
-            '21 CFR 820.70(a) requires that process parameters be documented. Steps must be specific enough that trained personnel can reproducibly execute the procedure.',
-          reference: '21 CFR 211.100(a); 21 CFR 820.70(a)',
+            '21 CFR 820.10 (QMSR), incorporating ISO 13485:2016 clause 7.5.1, requires that production be controlled, including documented procedures and monitoring of process parameters. Steps must be specific enough that trained personnel can reproducibly execute the procedure.',
+          reference: '21 CFR 211.100(a); 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 7.5.1',
           recommendation:
             'Expand each step with: specific actions (who does what), measurable parameters (temperatures, times, quantities), ' +
             'acceptance criteria, equipment to be used, and decision points. A procedure step like "mix the solution" should become ' +
@@ -948,14 +947,12 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Your review cycle exceeds 3 years. In my inspection experience, SOPs that are not reviewed regularly become outdated and lead to deviations. What justifies such a long review interval?',
       check(answers): WarGameFinding | null {
-        const cycle = str(answers.review_cycle).toLowerCase();
-        if (isEmpty(cycle)) return null;
-        const years = num(answers.review_cycle);
-        const hasLong =
-          cycle.includes('5 year') || cycle.includes('4 year') ||
-          cycle.includes('5-year') || cycle.includes('4-year') ||
-          (years > 3 && years <= 100);
-        if (!hasLong) return null;
+        // review_frequency is a select; map each fixed cycle to years. 'as_needed'
+        // has no interval (sop_017 owns that case).
+        const cycleYears: Record<string, number> = { annual: 1, biennial: 2, triennial: 3 };
+        const cycle = str(answers.review_frequency);
+        const years = cycleYears[cycle];
+        if (years === undefined || years <= 3) return null;
         return {
           id: rid('027'),
           dimension: 'practical_feasibility',
@@ -964,17 +961,17 @@ export function createSopAuditor(): WarGameAuditor {
           question:
             'Your review cycle exceeds 3 years. In my inspection experience, SOPs that are not reviewed regularly become outdated and lead to deviations. What justifies such a long review interval?',
           observation:
-            `The review cycle is specified as "${str(answers.review_cycle)}". ` +
+            `The review cycle is specified as "${cycle}". ` +
             'Industry best practice and regulatory expectations generally call for SOP review every 2-3 years at most. ' +
             'Longer intervals increase the risk of process drift, outdated regulatory references, and non-compliance.',
           requirement:
-            'While no regulation specifies an exact review interval, 21 CFR 820.40 requires procedures to be adequate for their intended use. ' +
+            'While no regulation specifies an exact review interval, ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires procedures to be adequate for their intended use. ' +
             'FDA investigators routinely cite outdated SOPs as evidence of inadequate document control systems.',
-          reference: '21 CFR 820.40; FDA Compliance Program 7356.002',
+          reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); FDA Compliance Program 7356.002',
           recommendation:
             'Reduce the review cycle to no more than 2-3 years. High-risk procedures (aseptic processing, sterility testing) ' +
             'should be reviewed annually. Document the rationale for the chosen review interval in the document control SOP.',
-          relatedFields: ['review_cycle'],
+          relatedFields: ['review_frequency'],
         };
       },
     },
@@ -989,10 +986,10 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that deviations be investigated commensurate with their significance.',
       check(answers): WarGameFinding | null {
-        const deviation = str(answers.deviation_handling).toLowerCase();
-        if (isEmpty(deviation)) return null;
-        if (deviation.includes('critical') || deviation.includes('major') || deviation.includes('minor') ||
-            deviation.includes('severity') || deviation.includes('classification') || deviation.includes('tier')) return null;
+        // deviation_classification is a multi_select of severity levels; empty is sop_008's case.
+        const levels = Array.isArray(answers.deviation_classification) ? answers.deviation_classification.map(String) : [];
+        if (levels.length === 0) return null;
+        if (levels.some((l) => l === 'critical' || l === 'major' || l === 'minor')) return null;
         return {
           id: rid('028'),
           dimension: 'risk_identification',
@@ -1012,7 +1009,7 @@ export function createSopAuditor(): WarGameAuditor {
             'Implement a severity classification system: Critical (direct product quality/patient safety impact), ' +
             'Major (potential impact requiring further assessment), Minor (no product impact, procedural in nature). ' +
             'Define investigation timelines and escalation requirements for each category.',
-          relatedFields: ['deviation_handling'],
+          relatedFields: ['deviation_classification'],
         };
       },
     },
@@ -1027,16 +1024,16 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R3). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
       check(answers): WarGameFinding | null {
-        const dept = str(answers.department).toLowerCase();
-        const scope = str(answers.process_scope).toLowerCase();
+        const dept = str(answers.sop_department).toLowerCase();
+        const scope = str(answers.sop_scope_description).toLowerCase();
         const title = str(answers.sop_title).toLowerCase();
         const isClinical =
           dept.includes('clinical') || scope.includes('clinical') || scope.includes('trial') ||
           scope.includes('investigator') || title.includes('clinical') || title.includes('gcp') ||
           dept.includes('cro') || scope.includes('subject') || scope.includes('patient');
         if (!isClinical) return null;
-        const regs = str(answers.applicable_regulations).toLowerCase();
-        if (regs.includes('ich e6') || regs.includes('e6(r2)') || regs.includes('gcp')) return null;
+        const regs = Array.isArray(answers.applicable_regulations) ? answers.applicable_regulations.map(String) : [];
+        if (regs.includes('ich_gcp')) return null;
         return {
           id: rid('029'),
           dimension: 'regulatory_alignment',
@@ -1054,7 +1051,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add ICH E6(R3) to the applicable regulations. Map specific GCP requirements to the relevant procedure steps ' +
             'to demonstrate that the SOP fulfills its intended GCP obligations.',
-          relatedFields: ['applicable_regulations', 'department', 'process_scope', 'sop_title'],
+          relatedFields: ['applicable_regulations', 'sop_department', 'sop_scope_description', 'sop_title'],
         };
       },
     },
@@ -1069,11 +1066,10 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'When this SOP is revised, how do you ensure all affected personnel are retrained on the new version? I need to see the linkage between SOP revisions and retraining records. Per 21 CFR 211.25, training must be current.',
       check(answers): WarGameFinding | null {
-        if (isEmpty(answers.training_requirements)) return null;
-        const changeControl = str(answers.change_control_process).toLowerCase();
-        if (changeControl.includes('retrain') || changeControl.includes('re-train') ||
-            changeControl.includes('training impact') || changeControl.includes('training assessment')) return null;
-        if (isEmpty(changeControl)) return null;
+        if (answers.training_required !== true) return null;
+        const triggers = Array.isArray(answers.retraining_triggers) ? answers.retraining_triggers.map(String) : [];
+        if (triggers.length === 0) return null;
+        if (triggers.includes('revision_update')) return null;
         return {
           id: rid('030'),
           dimension: 'documentation',
@@ -1082,16 +1078,16 @@ export function createSopAuditor(): WarGameAuditor {
           question:
             'When this SOP is revised, how do you ensure all affected personnel are retrained on the new version? I need to see the linkage between SOP revisions and retraining records. Per 21 CFR 211.25, training must be current.',
           observation:
-            'The SOP defines training requirements and references a change control process, but the change control description ' +
-            'does not mention retraining or training impact assessment. This gap means that revised SOPs may be issued without ensuring personnel are trained on the changes.',
+            'The SOP requires training and defines retraining triggers, but an SOP revision is not one of them. ' +
+            'This gap means that revised SOPs may be issued without ensuring personnel are trained on the changes.',
           requirement:
             '21 CFR 211.25(a) requires that training be conducted in particular operations the employee performs and in cGMP as it relates to the function. ' +
-            '21 CFR 820.25(b) requires documented training. When an SOP is revised, all personnel who execute the procedure must be retrained before the new version becomes effective.',
-          reference: '21 CFR 211.25(a); 21 CFR 820.25(b)',
+            'ISO 13485:2016 clause 6.2, incorporated by reference at 21 CFR 820.10 (QMSR), requires documented training. When an SOP is revised, all personnel who execute the procedure must be retrained before the new version becomes effective.',
+          reference: '21 CFR 211.25(a); 21 CFR 820.10 (QMSR) / ISO 13485:2016 clause 6.2',
           recommendation:
             'Include retraining requirements in the change control process. The change control record should include a training impact assessment, ' +
             'identify affected personnel, and track retraining completion before the revised SOP becomes effective.',
-          relatedFields: ['training_requirements', 'change_control_process'],
+          relatedFields: ['training_required', 'retraining_triggers'],
         };
       },
     },
@@ -1103,7 +1099,7 @@ export function createSopAuditor(): WarGameAuditor {
     description:
       'Simulates an FDA GCP/GMP inspector scrutinizing a Standard Operating Procedure during a facility inspection, ' +
       'examining document control, training adequacy, deviation handling, regulatory traceability, and compliance with ' +
-      '21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R3) (GCP), and 21 CFR Part 11 (electronic records).',
+      '21 CFR 211 (cGMP), 21 CFR 820 (QMSR, incorporating ISO 13485:2016 by reference), ICH E6(R3) (GCP), and 21 CFR Part 11 (electronic records).',
     rules,
   };
 }

@@ -1,0 +1,13 @@
+# F23 (5/9): /status module readiness and the shared leaf helpers move to server/services/ectd/compile-placement.ts, unchanged
+
+Moved, with their comments, the five leaf declarations exported unchanged: SpineLeafRow, loadSpineLeaves, namesLeafDocument, isWithdrawal, leafSatisfies (the one read compile, validate and status share).
+The /status module roll-up moved too, its lines unchanged and only dedented: placementModuleReadiness(required, sections, placedLeaves).
+The route imports them. No test file changed: git diff --stat -- tests 'server/**/__tests__/**' is empty.
+
+server/routes/ectd-compile.ts: 99,954 -> 96,408 bytes (the 100 kB ceiling, which MR-03 aed2dd5579 trimmed for this morning).
+
+## Green, the suites unchanged
+tests/routes/ectd-*.test.ts, conversion-capacity-compile-http, the marketing-application golden journey, pdev command handlers:
+ Test Files  15 passed (15)
+      Tests  178 passed (178)
+ESLint: ectd-compile.ts 9 -> 9 warnings; compile-placement.ts 0. Typecheck 0 errors. ci:sql-interpolation OK.

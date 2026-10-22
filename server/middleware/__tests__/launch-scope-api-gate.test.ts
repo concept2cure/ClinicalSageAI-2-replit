@@ -170,14 +170,37 @@ describe('the real registry, launch scope on', () => {
      answered as launch: risk items, clinical studies, IVD, labeling. Found by
      the AnA tool measurement (2026-09-26); the device kit is outside the launch
      catalog. */
+  /* Express routes ignore letter case: app.use('/api/chat', …) serves
+     /API/Chat/… too. The gate compared case-sensitively, so an upper-case
+     /API/ skipped launch scope entirely (the gate judged only paths starting
+     '/api/'), and a changed case under a launch root skipped the exclusion
+     list and every longer hidden-app claim (found by the narrowing's review,
+     2026-10-22). The gate judges the path as Express routes it. */
+  it('judges a path as Express routes it, whatever its letter case', async () => {
+    for (const p of [
+      '/API/mdx/risk-items/1', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
+      '/api/mdx/qms/Suppliers', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
+      '/api/concept2cure/projects/ALL', '/api/mdx/Risk-Items/1',
+    ]) {
+      expect(await refused(p), p).toBe(true);
+    }
+    // And a launch path is still served in any case.
+    expect(await refused('/API/mdx/qms/Documents'), '/API/mdx/qms/Documents').toBe(false);
+  });
+
   it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
-    for (const p of ['/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris']) {
+    /* /api/mdx/vault is the device kit's vault aggregator. It was passed here
+       from 2026-09-26 on a walker misattribution (fixed in f9eee2670) and
+       left the launch scope on 2026-10-22: the launch Vault reads
+       /api/c2c/project-vault (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/). */
+    for (const p of [
+      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris',
+      '/api/mdx/vault', '/api/mdx/vault/7/versions',
+    ]) {
       expect(await refused(p), p).toBe(true);
     }
     for (const p of [
       '/api/mdx/gateways/transmittals',
-      '/api/mdx/vault',
-      '/api/mdx/vault/7/versions',
       '/api/mdx/qms/documents',
       '/api/mdx/admin/users',
       '/api/mdx/industry-profile',

@@ -219,6 +219,16 @@ export const BINDING_BASIS = {
    */
   AUTHORING_RENDITION: 'authoring-rendition-sha256',
   /**
+   * sha256 over a QMS controlled document version's controlled content
+   * (services/qms/document-approval-signature.ts computeQmsDocumentContentDigest).
+   * The approval and retirement have written it since P1-28/P1-29 under the
+   * QMS module's own constant; it is named here since 2026-10-22, when a
+   * periodic review of the version in force (services/qms/periodic-review.ts)
+   * became a second writer through the `qms-document` content binder, so the
+   * vocabulary names every basis a row can carry.
+   */
+  QMS_DOCUMENT_VERSION_CONTENT: 'qms-document-version-content-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target

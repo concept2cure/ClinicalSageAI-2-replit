@@ -1,0 +1,21 @@
+# RED at 28637579e: scheduleOfEventsSweep.ts as on trunk, the lifecycle tests kept (2026-10-21T23:44:42Z)
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > lists the estate only inside the existing audited system lease 6ms
+ × server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > claims and reviews each plan with the same least-privilege tenant client 13ms
+   → expected { schedules: 2, reviewed: 2, …(4) } to deeply equal { schedules: 2, reviewed: 2, …(5) }
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > binds schedule, organization, project and the unchanged claim window 2ms
+ × server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > does no listing or tenant work when another process holds the lease 4ms
+   → expected { schedules: +0, reviewed: +0, …(5) } to deeply equal { schedules: +0, reviewed: +0, …(6) }
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > skips the review when the guarded claim loses inside the review window 1ms
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > a stale listing with the wrong 'organization' cannot claim the real schedule 1ms
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > a stale listing with the wrong 'project' cannot claim the real schedule 1ms
+ × server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant lifecycle > does not claim or review a schedule whose tenant may not run background work 3ms
+   → expected { schedules: 2, reviewed: 2, …(4) } to match object { schedules: 2, reviewed: 1, …(2) }
+ × server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant lifecycle > does no tenant work when no tenant is entitled 4ms
+   → expected { schedules: 2, reviewed: 2, …(4) } to match object { schedules: 2, reviewed: +0, …(1) }
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > reports a listing failure as an error and never logs its private payload 1ms
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > does not stamp or review an inactive project parent 1ms
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > does not stamp or review an inactive organization parent 1ms
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > lets an unknown-commit failure reach the tenant wrapper for eviction and continues other plans 1ms
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > counts a refused review as an error instead of implying a successful review 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 10 passed (14)

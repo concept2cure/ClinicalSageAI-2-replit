@@ -380,9 +380,9 @@ function classifyByName(input: FilingInput): FilingClassification {
       }
     }
 
-    // 3) Service (CRO/CDMO): the existing DIA TMF zone classifier. Its
-    //    default-to-Zone-2 is a placeholder, not a finding — only a keyword
-    //    MATCH files; the default falls through to unfiled.
+    // 3) Service (CRO/CDMO): the existing DIA TMF zone classifier. Only a
+    //    keyword MATCH files; a name it returns as 'unclassified' (no zone)
+    //    falls through to unfiled. (Before 2026-10-15 it defaulted to Zone 2.)
     if (view === 'service') {
       const tmf = classifyTmfArtifact(normalized);
       if (tmf.confidence === 'matched') {

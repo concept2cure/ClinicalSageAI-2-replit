@@ -1,0 +1,16 @@
+# Slice A, before: tests/db/tenants-directory-rls.dbtest.ts against the pre-change route (only the route reverted), on Postgres 16.15 + TLS,
+# deploy-provisioned (install-fresh + deploy-migrate), RLS_ENFORCE=on, a fresh NOSUPERUSER NOBYPASSRLS runtime role, DATABASE_URL pointing at a closed port.
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > is a non-superuser role without BYPASSRLS, and RLS is enforcing
+ × tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a member lists only their own organisation
+   → expected 500 to be 200 // Object.is equality
+ × tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a member reads their own organisation's directory
+   → expected 500 to be 200 // Object.is equality
+ ✓ tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a member is refused another organisation's directory
+ × tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a platform admin lists every organisation, and reads any directory
+   → expected 500 to be 200 // Object.is equality
+ × tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a platform admin renames an organisation, and a taken slug is a 409
+   → expected 500 to be 200 // Object.is equality
+ × tests/db/tenants-directory-rls.dbtest.ts > the runtime role serves the directory > a platform admin creates an organisation
+   → expected 500 to be 201 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)

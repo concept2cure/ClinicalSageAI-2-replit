@@ -3,7 +3,6 @@ import {
   getPool,
   getDb,
   runMigrations,
-  ensureAuthTables,
   transaction,
   healthCheck,
   db,
@@ -196,8 +195,9 @@ async function testConnection() {
 }
 
 // Test connection on startup with better error handling
-// Only test if DATABASE_URL is provided
-if (process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL) {
+// Only test if a database URL is provided: the runtime role's (APP_DATABASE_URL)
+// is the only one an API process without the owner credential has (OPS-16).
+if (process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || process.env.APP_DATABASE_URL) {
   testConnection().catch(err => {
     console.error('[database] Initial connection test failed:', err.message);
 
@@ -288,7 +288,6 @@ export {
   getPool,
   getDb,
   runMigrations,
-  ensureAuthTables,
   transaction,
   healthCheck,
 };

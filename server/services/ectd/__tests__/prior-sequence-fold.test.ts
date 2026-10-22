@@ -180,3 +180,47 @@ describe('lifecycle diff over the folded prior state', () => {
     expect(summary.new).toBe(1);
   });
 });
+
+/* P-42 (2026-10-22, W5/D7): an act takes off file the leaf its modified-file
+   names, whatever that leaf's file name. A later Vault version replaces its
+   predecessor under its own name, and the fold matched by name alone, so the
+   replaced version stayed on file for every later sequence. */
+describe('the fold follows each act to the leaf it names', () => {
+  const SEQ_A = [
+    { ctdSection: 'm3.2.s.4.2', fileName: 'ap-v1.pdf', href: 'm3/3-2-s-4-2/ap-v1.pdf', md5: '1'.repeat(32), operation: 'new', leafId: 'leaf-ap-v1', backbone: 'index.xml' },
+    { ctdSection: 'm1.13', fileName: 'ib.pdf', href: 'm1/us/13/ib.pdf', md5: '2'.repeat(32), operation: 'new', leafId: 'leaf-m1-13-ib', backbone: 'm1/us/us-regional.xml' },
+    { ctdSection: 'm3.2.s.1', fileName: 'general.pdf', href: 'm3/3-2-s-1/general.pdf', md5: '3'.repeat(32), operation: 'new', leafId: 'leaf-general', backbone: 'index.xml' },
+  ];
+  const SEQ_B = [
+    { ctdSection: 'm3.2.s.4.2', fileName: 'ap-v2.pdf', href: 'm3/3-2-s-4-2/ap-v2.pdf', md5: '4'.repeat(32), operation: 'replace',
+      modifiedFile: '../0000/index.xml#leaf-ap-v1', leafId: 'leaf-ap-v2', backbone: 'index.xml' },
+    { ctdSection: 'm1.13', fileName: 'ib-addendum.pdf', href: 'm1/us/13/ib-addendum.pdf', md5: '5'.repeat(32), operation: 'append',
+      modifiedFile: '../../../0000/m1/us/us-regional.xml#leaf-m1-13-ib', leafId: 'leaf-ib-addendum', backbone: 'm1/us/us-regional.xml' },
+    // A pointer that names a file rather than a leaf names nothing to take off file.
+    { ctdSection: 'm3.2.s.1', fileName: 'general-v2.pdf', href: 'm3/3-2-s-1/general-v2.pdf', md5: '6'.repeat(32), operation: 'replace',
+      modifiedFile: '../0000/m3/3-2-s-1/general.pdf', leafId: 'leaf-general-v2', backbone: 'index.xml' },
+  ];
+  const pool: PoolLike = {
+    async query() {
+      return { rows: [{ sequence_number: '0000', leaf_manifest: SEQ_A }, { sequence_number: '0001', leaf_manifest: SEQ_B }] };
+    },
+  };
+  const load = () => loadLatestPriorManifestBySubmission(pool, { organizationId: ORG, submissionId: SUBMISSION, currentSequence: '0002' });
+
+  it('a replace under a new name takes the leaf it names off file', async () => {
+    const names = (await load()).leaves.map((l) => l.fileName);
+    expect(names).toContain('ap-v2.pdf');
+    expect(names).not.toContain('ap-v1.pdf');
+  });
+
+  it('an append leaves the leaf it adds to on file', async () => {
+    const names = (await load()).leaves.map((l) => l.fileName);
+    expect(names).toEqual(expect.arrayContaining(['ib.pdf', 'ib-addendum.pdf']));
+  });
+
+  it('a pointer naming no leaf takes nothing off file, and no surviving leaf carries its own act', async () => {
+    const { leaves } = await load();
+    expect(leaves.map((l) => l.fileName)).toEqual(expect.arrayContaining(['general.pdf', 'general-v2.pdf']));
+    expect(leaves.every((l) => l.modifiedFile === undefined)).toBe(true);
+  });
+});

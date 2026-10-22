@@ -28,6 +28,7 @@ import { renderedLeafFiles } from '../../../shared/schema/submissions';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
 import { readLocalUploadBuffer } from '../anthropic-files';
+import { isConversionCapacityError } from '../conversion-slots';
 import { sectionPlainText } from '../c2c/section-content';
 import {
   externalDocumentTableReason,
@@ -93,7 +94,7 @@ import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/re
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
-  packageIdentityRefusal, readRecordedPackageIdentity, lockRecordedPackageIdentity,
+  packageIdentityRefusal, readSubmissionPackageIdentity, lockRecordedPackageIdentity,
   recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity,
   type RecordedPackageIdentitySnapshot,
 } from '../ectd/package-identity';
@@ -1532,6 +1533,10 @@ async function assertSequencePackageable(
       } : { dryRun: true as const }),
     });
   } catch (err) {
+    // A busy converter (OPS-13) is not a sequence that fails to assemble, and
+    // there is nothing in the leaves to fix: it passes through to the route's
+    // fail(), which answers 503 with Retry-After.
+    if (isConversionCapacityError(err)) throw err;
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
       `Refusing to ${step}: the sequence does not assemble into a package (${err instanceof Error ? err.message : String(err)}). ` +
@@ -2540,7 +2545,7 @@ export async function sequenceTransmitReadiness(
 
   // The applicant and the application the package would name, from the record
   // (package-identity.ts); with either missing transmit refuses, and says so here.
-  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
+  const identity = await readSubmissionPackageIdentity(pool, ctx.organizationId, submission.id);
   const recordedApplicationNumber = identity.applicationNumber;
   const identityRefusal = packageIdentityRefusal(identity, 'Nothing can be sent until it is recorded.', { fda: canonicalRegionOf(seq.region) === 'US' })?.message ?? null;
   const typedNumberRefusal = identityRefusal ?? typedApplicationNumberRefusal(applicationId, recordedApplicationNumber);
@@ -2647,7 +2652,7 @@ async function transmitDispatchedSequence(
   const submission = await getSubmission(seq.submissionId, ctx);
   // The package names its applicant and its application from the record, or it
   // is not sent (package-identity.ts, QA 2026-10-08 j6).
-  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
+  const identity = await readSubmissionPackageIdentity(pool, ctx.organizationId, submission.id);
   const fda = canonicalRegionOf(seq.region) === 'US';
   const missingIdentity = packageIdentityRefusal(identity, 'Nothing was sent.', { fda });
   if (missingIdentity) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missingIdentity.message);

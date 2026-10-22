@@ -130,6 +130,8 @@ export async function listStudies(orgId: number, submissionId?: number): Promise
   // send_datasets row so no column duplicates that state.
   // 2026-10-15: 'passed' read 'conforms'. It is the status the user declared via
   // PUT /studies/:id/send — no validator runs on the platform — so it says so.
+  // No dataset read 'n/a' and every other status (errors included) 'in
+  // progress'; each now reads as recorded.
   const params: unknown[] = [orgId];
   let sql = `
     SELECT s.study_number                         AS id,
@@ -150,9 +152,12 @@ export async function listStudies(orgId: number, submissionId?: number): Promise
            s.key_finding                          AS finding,
            s.finding_class                        AS cls,
            CASE
-             WHEN sd.validation_status IS NULL     THEN 'n/a'
-             WHEN sd.validation_status = 'passed'  THEN 'declared passed (not validated by the platform)'
-             ELSE 'in progress'
+             WHEN sd.validation_status IS NULL            THEN 'no SEND dataset recorded'
+             WHEN sd.validation_status = 'passed'         THEN 'declared passed (not validated by the platform)'
+             WHEN sd.validation_status = 'warnings'       THEN 'declared warnings (not validated by the platform)'
+             WHEN sd.validation_status = 'errors'         THEN 'declared errors (not validated by the platform)'
+             WHEN sd.validation_status = 'not_validated'  THEN 'not validated'
+             ELSE sd.validation_status
            END                                    AS send
       FROM nonclinical_studies s
       LEFT JOIN LATERAL (

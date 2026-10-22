@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 test.describe('Stability First-Run Guide', () => {
   test('stability entry points remain accessible through current CMC experience', async ({
@@ -8,7 +9,7 @@ test.describe('Stability First-Run Guide', () => {
     page.on('pageerror', error => runtimeErrors.push(error.message));
 
     await page.goto('/concept2cure/login');
-    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
+    await page.fill('input[type="email"]', devLoginEmail());
     await page.click('button:has-text("Continue")');
     await page.fill('input[type="password"]', 'Seahawks12s!');
     await page.click('button:has-text("Sign in")');

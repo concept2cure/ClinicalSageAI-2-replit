@@ -54,7 +54,7 @@ export type RuleCategory =
 
 export type RuleEnforcement =
   | 'dispatch-readiness' // checked deterministically by computeDispatchReadiness (carries findingCode)
-  | 'ectd-validator'     // checked by the eCTD package validator (ectd4-validator)
+  | 'ectd-validator'     // checked by the eCTD structural validator (submission-gateways/ectd-structural-validator.ts) on assembly and export
   | 'packager'           // guaranteed by construction when the packager builds the bytes
   | 'external';          // requires the full package / the agency validator — documented, not enforced here
 
@@ -150,7 +150,11 @@ export const RULE_CORPUS: ValidationRule[] = [
     severity: 'high',
     rationale: 'The backbone must validate against the published DTD (v3.2.2) or XML schema (v4.0); structural validity is a reject criterion.',
     source: ICH_SPEC,
-    enforcement: 'ectd-validator',
+    // 2026-10-08 (sweep VP-5): was 'ectd-validator' ("Enforced here"). No DTD is
+    // vendored to validate against: validateDtdConformance is a regex subset of
+    // the DTD, and it runs on the compile/export path only, not on the package
+    // spine's assemble and transmit.
+    enforcement: 'external',
   },
   {
     id: 'REGIONAL_XML_PRESENT',
@@ -170,7 +174,9 @@ export const RULE_CORPUS: ValidationRule[] = [
     severity: 'medium',
     rationale: 'A leaf with no title is unreviewable in the agency’s navigator; titles are required backbone attributes.',
     source: ICH_SPEC,
-    enforcement: 'ectd-validator',
+    // 2026-10-08 (sweep VP-5): was 'ectd-validator'. No in-repo check reads a
+    // leaf's title: emptied titles produced no finding from any validator.
+    enforcement: 'external',
   },
 
   // ── Lifecycle ───────────────────────────────────────────────────────────────
@@ -325,9 +331,13 @@ export const RULE_CORPUS: ValidationRule[] = [
     category: 'integrity',
     regions: ['ich'],
     severity: 'medium',
-    rationale: 'Files present in the sequence folder but not referenced by index.xml are orphans the agency will flag.',
+    rationale:
+      'Content files under m1–m5 that no backbone (index.xml or the regional Module 1 XML) references are orphans an agency validator may flag. ' +
+      'The sequence-root index-md5.txt and the util/ folder are not leaves and are outside this rule.',
     source: ICH_SPEC,
-    enforcement: 'ectd-validator',
+    // 2026-10-08 (sweep VP-5): was 'ectd-validator'. No in-repo check looks for
+    // orphans: a planted unreferenced PDF passed validateEctdPackage clean.
+    enforcement: 'external',
   },
 
   // ── Format ──────────────────────────────────────────────────────────────────
@@ -337,9 +347,13 @@ export const RULE_CORPUS: ValidationRule[] = [
     category: 'format',
     regions: ['fda', 'eu', 'jp', 'ca', 'au', 'ch'],
     severity: 'high',
-    rationale: 'Each region constrains the accepted PDF version range; out-of-range PDFs are rejected at intake.',
+    rationale:
+      'Each region constrains the accepted PDF version range; out-of-range PDFs are rejected at intake. ' +
+      'LEAF-PDF-VERSION in ectd-structural-validator.ts reads each leaf’s header against the region’s market spec ' +
+      'when an eCTD package is assembled (Submission Ops) and exported; the transmit guard does not read it ' +
+      '(2026-10-08, sweep VP-3).',
     source: FDA_CRIT,
-    enforcement: 'external',
+    enforcement: 'ectd-validator',
   },
   {
     id: 'PDF_NO_SECURITY',
@@ -496,7 +510,10 @@ export const RULE_CORPUS: ValidationRule[] = [
     severity: 'medium',
     rationale: 'Clinical and nonclinical study reports must be accompanied by an STF so the agency can index the study; missing STFs are flagged.',
     source: ICH_SPEC,
-    enforcement: 'ectd-validator',
+    // 2026-10-08 (sweep VP-5): was 'ectd-validator'. In-repo checks look only for
+    // a study id on a study leaf (FDA-ESG-005, STF_MISSING_STUDY_ID); none checks
+    // that a Study Tagging File is present.
+    enforcement: 'external',
   },
 
   // ── Regional format acceptance — Japan/PMDA (jp) ────────────────────────────
@@ -662,7 +679,10 @@ export const DISPATCH_GATE_RULE_IDS = {
 
 const ENFORCEMENT_STATEMENT: Record<RuleEnforcement, string> = {
   'dispatch-readiness': 'Enforced here — this assessment checks it every time it runs.',
-  'ectd-validator': 'Enforced here — the eCTD validator checks it when the package is compiled and exported.',
+  // 2026-10-08 (W5/D7, sweep VP-3 review): this said "when the package is
+  // compiled and exported"; the Compile action (POST /api/ectd-compile/…/compile)
+  // runs no such check, so the statement named only the paths that do.
+  'ectd-validator': 'Enforced here — the eCTD validator checks it when Submission Ops assembles an eCTD package and when an eCTD export is validated (the default).',
   packager: 'Guaranteed by packager construction — the package cannot be built without it.',
   external: 'Requires the agency validator — its report decides this; the product records the verdict, it does not reproduce the check.',
 };

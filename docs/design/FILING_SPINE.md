@@ -407,7 +407,7 @@ The "no channel" labels (worded "no transmit channel" on screen since 2026-10-15
 | 23 | The cross-region model answer renders as a verdict ("No Module 1 deltas reported"), with targets hard-coded (Rule 2) | `SubmissionSeqWorkspaces.tsx:1083-1195`, `:1092`, `:1175`; `submissions.ts:1055` | F21 |
 | 24 | The Planner engine substitutes a proxy region's sections | `submission-structure.ts:196-215` | F21 |
 | 25 | A second market gets no Module 1 outline; `target_agencies` is never edited | `useFilingOutline.ts:175`; `scaffold-project-documents.ts:121`, `:161`; `projects.ts:763` | F22 |
-| 26 | Three readiness figures disagree | `c2c_documents.readiness` trigger; `/workstreams` weighting (`projects.ts:1053-1055`); `ectd-compile` `/status`. `GET /:id/vault-structure` (`projects.ts:1613`) has no client caller | F23 |
+| 26 | Three readiness figures disagree | `c2c_documents.readiness` trigger; `/workstreams` weighting (`projects.ts:1053-1055`); `ectd-compile` `/status`. `GET /:id/vault-structure` (`projects.ts:1613`) has no client caller | F23 (landed 2026-10-22: one dossier read; `/workstreams` and `/vault-structure` deleted; `/status` measures placement; the trigger does not count empty headings) |
 | 27 | The decision record says compile and transmit are reached from the sequence; they are not | `docs/SURFACE_DECISIONS_2026-10-08.md:106-107` | F24 |
 
 Two corrections to the readers:
@@ -420,6 +420,8 @@ Two corrections to the readers:
 
 ### 7.1 Landed and in flight
 
+The rows for F1 and F3 to F13 were added on 2026-10-22, from a read of the code at `59105431a9` checked by a skeptic per slice group. Those slices had landed without rows here.
+
 | Work | Commit | State | Fits the spine? | What it must change |
 |---|---|---|---|---|
 | Wave 2A: nav lists the places | `9a94754c6` | Landed | Yes | Nothing. The top-bar switcher it left goes in F8 |
@@ -429,7 +431,7 @@ Two corrections to the readers:
 | ana-12: start box | `d210bbe36` | Landed | Yes | It moves above the tabs (F2) |
 | Slice 24: project readiness and submissions | `b1d7d85ec` | Landed | Yes | One verdict per project becomes one row per market (F9). Its components are generalised, not rebuilt, and its tests are re-pointed, not deleted. The "Open readiness" link (`ProjectHome.tsx:416`) is retargeted in F10 |
 | ana-14: AnA reads its project | `427775e54` | Landed | Yes | Nothing |
-| 2D: review loop | Working tree | In flight | Yes | Nothing. F1 and F7 wait for its commit (it edits `authoring.router.ts` and the review-board tests) |
+| 2D: review loop | `d498577218` | Landed 2026-10-08 | Yes | Nothing. F1 and F7 landed after it |
 | F0: filing-path reachability gate | The commit that adds `tests/ui/filing-path-reachability.test.ts` | Landed 2026-10-08 | Yes | Each of F3, F4, F7, F10, F12 and F15 removes its hop from `tests/ui/filing-path-reachability.baseline.json` in the same change; the test fails until it does. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f0-filing-path-reachability/` |
 | F2: five tabs; start box above them | The commit that adds `__tests__/projectHomeStages.test.tsx` | Landed 2026-10-08 | Yes | Nothing. F15 replaces Respond's tool list; F21 and F22 put the Planner and Add a market on Submit. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f2-five-tabs/` |
 | F16: no dead ends on the filing path | The commit that adds `__tests__/filingPathNoDeadEnds.test.tsx` | Landed 2026-10-08 | Yes | Nothing. Doors on launch screens ask `surfaceAvailable.ts`. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f16-no-dead-ends/` |
@@ -440,10 +442,23 @@ Two corrections to the readers:
 | Design review of F2, F16, F17, F19, F20 and F21 (seven lenses) | The commit that adds `.design/filing-spine/DESIGN_REVIEW.md` | Landed 2026-10-08 | Yes | 26 findings fixed, each red first. Among them, five untrue claims on these screens: a 510(k) told it gets an eCTD build; "Refused at creation"; "carries its approval signature" before filing; IND preselected as Biotech; the Vault header naming IND on an NDA project. Open items, with reasons, are in the review; two go to the founder (the coauthor copy write takes no reason or role; the Validation tab's model "Blocking."). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/filing-spine-design-review/` |
 | Review follow-ups: the Validation explain narrates, and the filing-copy write takes a role and a reason | The commit that adds `docs/evidence/D2-ONE-ANA/2026-10-08/filing-spine-review-followups/` | Landed 2026-10-08 | Yes | The review's two founder items. The Validation tab no longer prints a model's "Blocking."; its explanation is bound to the validator's findings under a model label. Taking or re-taking a filing copy requires `regulatory-author` and a stated reason, as the leaf write does. |
 | F14: compile carries the sequence | `305fd6bf` (merged with trunk as `9430b617`) | Landed 2026-10-08 | Yes | Compile, status, validate and the eValidator import take a `sequenceId` the project owns (404 otherwise; 409 for an empty named sequence); the Dispatch tab opens compile on its own sequence. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f14-compile-carries-sequence/` |
+| F1: section status follows the governed work | `f35798bf49` (board `36b32a17fd`) | Landed 2026-10-08 | Yes | A save with text moves `todo` to `drafted`; the approval signatures approve the bound sections whose filed text is the signed text; the old-store PATCH refuses `approved` and `locked` (409 `APPROVAL_REQUIRES_SIGNATURE`). Still owed: the OQ case (`OQ-003-AUTHORING.md` ends at OQ-AUTH-20) that `WORKFLOW_DECISION_2026-10-08.md` names as F1's D5 evidence. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f1-section-status/` |
+| F3: Author holds the project's documents; Evidence holds intake | `58876cf3a6` (kept by merge `64c4bcadc4`), `f10e35a1ee` | Landed 2026-10-08, one item partly | Yes | The grid is gone, the document list opens each document, the data room is on Evidence. Partly: a module row opens the newest document tagged with that module, not the editing copy at the section. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f2-f3-project-tabs-documents/` |
+| F4: an unstarted section can be started | `ceb3d7dfc2`, `d48e25c709` | Landed 2026-10-08 | Yes | In the filing's editing copy. Elsewhere a toast names the copy, with no button to it. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f4-start-section/` |
+| F5: one AnA while editing | `0bf71a61ed`, `18df9a0b8d` | Landed 2026-10-13, under another name | Yes | The editor mounts no AnA of its own. `editorOneAna.test.tsx` was not written. Evidence: `docs/evidence/D2-EDITOR-INTEGRATION/2026-10-13/ANA_UI_CONSISTENCY.md` |
+| F6: Reporting, "Find a report" | `a90c14db62` | Landed 2026-10-08 | Yes | Nothing on screen. Dead chat CSS remains in `insights-v2.css`. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f0-f6-f8/` |
+| F7: the Review tab shows this filing's reviews | `53809bada8`, `404e94efc2` | Landed 2026-10-08 | Yes | A document approved with nothing pending drops off the tab; the list stops at 100. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f7-review-tab/` |
+| F8: the open project is named in the top bar | `25d79c99c0` | Landed 2026-10-08 | Yes | Nothing on screen. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f0-f6-f8/` |
+| F9: Submit, one row per market | `ef022ef95a` | Landed 2026-10-08 | Yes | The header has no IND dates. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f9-markets/` |
+| F10 (with F11): Submission Center opens on the sequence; the assemble dry run | `8bbb310146`, `5f98ad9b54` (the Vault door) | Landed 2026-10-08; the Vault door 2026-10-22 | Yes | The Authoring door carries the market and sequence, and since `5f98ad9b54` the Vault's "Open in Submission Center" does too (break 13; F0 reads both doors). Not yet: "Open readiness" on Submit's market rows still opens `dispatch-readiness`. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f10-opens-on-sequence/`, `2026-10-22/f10-vault-door/` |
+| F12: transmit from the dispatched sequence | `0e50993c5b`, `d5176f2416`, `8b75e6b5ba`, `3b61956373` (the hop left F0's baseline in `27528b7a54`) | Landed in part, under other names | Yes | The client transmits the sequence. LX-13 (the package-transmit lane) has no founder decision, and its server and AnA paths remain. Evidence: `docs/evidence/QA-2026-10-08/submission-center/`, `submission-center-2/` |
+| F13: transmissions and acknowledgements in the Dispatch tab | `d5176f2416`, `e849abe897` | Landed 2026-10-08 | Yes | The list shows only when the gateway route resolved and stops at 100; Ack1 is tinted as success. Evidence: `docs/evidence/QA-2026-10-08/submission-center-2/README.md` §4 |
 | F24: write the decision down | This commit | Landed 2026-10-15 | n/a (a record) | `SURFACE_DECISIONS_2026-10-08.md` "What the filing spine changed": compile, transmit and readiness are reached from the sequence (F12, F14, P-33); Cross-region scrapped; five tabs. `ONE_ANA_ONE_CANVAS.md`'s stage strip is marked superseded. The CLAUDE.md pointer to `ANA_DOCUMENT_CANVAS.md` is left: the working agreement names that file for its gate, which still pins the canvas path. |
 | F15: Respond answers the agency | This commit | Landed 2026-10-15 | Yes | Add the letter, draft from it with AnA (pinned), start the response sequence (`followUp: 'response'`). F0's red-hop list is empty. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f15-respond/` |
 | F22 (part a): add a market | This commit | Landed 2026-10-15 | Yes | `POST /api/c2c/projects/:id/markets`: the market's Module 1 and 3.2.R (`filing_scope = 'market'`), its anchored submission, the reason; refusals by name. The outline and the binding take the home filing. Not yet: the market's Module 1 in the editor's outline and the gap rows (F22b). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22-add-a-market/` |
 | F22 (part b): each market's Module 1 in the editor | `77ac97d85`, `bf366c650` (server) and this commit (editor) | Landed 2026-10-15 | Yes | The editor's outline is the filing the open document is the editing copy of: an added market's Module 1 and 3.2.R, with its gaps named and never inserted. The pane lists the project's filings, and a market's editing copy is created there, bound by the server. Commits, section creates and binds are refused outside the market's part (`shared/regulatory/filing-scope.ts`). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22b-market-outline/` |
+| F18: readiness is one list, and its buttons do the job | `3eb8e0eab0`, `0d39b20cb6` and this commit | Landed 2026-10-22 | Yes | Submission Readiness lists every market from the scoped list (`useProgramMarkets`, ProjectMarkets' rows), each with its gates and findings; a finding opens the Builder at the section, the placed leaf, or Validation (`readinessFindingActs.ts`, through the F10 door, which now carries a section); a cleared gate opens the sequence's Dispatch tab. The single-sequence walk (`useProgramSequence`) is deleted. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-22/f18-readiness-acts/` |
+| F23: one source for readiness and module counts | `b660daf1ef`, `e6058e4126`, `13337e02af`, `3df9a2f722`, `de55d8bdaa`, `1a9a7d2291`, `f466866fbd` and this commit | Landed 2026-10-22 | Yes | One dossier read (`server/services/c2c/dossier-read.ts`, `GET /api/c2c/projects/:id/dossier`) serves Project home's card and module rows, the Projects list, the detail and the create, on one definition of complete; the home filing is measured on its own and each added market on its own line. `readinessByProject`, `/workstreams` and the uncalled `/vault-structure` are deleted. eCTD Compile's `/status` measures placement for the sequence's own market (`services/ectd/compile-placement.ts`). The Vault shows a market document's own part. The readiness trigger does not count an empty heading (one still `todo` that holds other sections), so 100% is reachable, and a heading someone has written in still counts. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-22/f23-one-dossier-read/` |
 
 ### 7.2 New slices
 
@@ -645,11 +660,11 @@ Every slice files its red run, then its green run, under `docs/evidence/D2-ONE-A
 - **Fails first:** `__tests__/placeIntoFilingApprovalState.test.tsx`. Red.
 - **Depends on:** none. Unverified: which field the dialog reads for the source's state.
 
-**F18. Readiness is one list, and its buttons do the job. S.**
+**F18. Readiness is one list, and its buttons do the job. S.** *Landed 2026-10-22 (§7.1). The line references below were stale by then; the evidence README names the code as built.*
 - **Files:** `DispatchReadiness.tsx`.
   - It renders `ProjectMarkets`.
-  - "Fix" (`:363`) opens the Builder at that code through F10.
-  - "Prepare governed transmit" (`:389-398`) opens the Dispatch tab.
+  - "Fix" opens the Builder at that code through F10.
+  - "Prepare governed transmit" opens the Dispatch tab.
 - **Fails first:** `__tests__/dispatchReadinessActs.test.tsx`: no call to `ask()`. Red.
 - **Depends on:** F9, F10. Opening the source document straight from a finding needs the leaf's link back to its source, which is unverified, so that is not promised.
 
@@ -716,7 +731,7 @@ Every slice files its red run, then its green run, under `docs/evidence/D2-ONE-A
   Red: the route is absent, and the scaffold refuses a second document.
 - **Depends on:** F19, F20.
 
-**F23. One source for readiness and module counts. M.**
+**F23. One source for readiness and module counts. M.** *Landed 2026-10-22 (§7.1). The line references below were stale by then, and `dossier-read.ts` was written new rather than extracted from `/vault-structure`, which is deleted; the evidence README names the code as built.*
 - **Files:**
   - New `server/services/c2c/dossier-read.ts`, extracted from `GET /:id/vault-structure` (`projects.ts:1613-1715`, no client caller). It adds per-market placement by `normalizeCtdCode` (`shared/regulatory/section-code.ts`).
   - Module completion and the header read it. The `/workstreams` weighting is retired.

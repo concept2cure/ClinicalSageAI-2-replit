@@ -484,8 +484,8 @@ export function refusalHttpStatus(refusal: SignedExportRefusal): number {
       // can be alerted on separately from ordinary workflow-state refusals.
       return 422;
     case 'signature-unverifiable':
-      // The check did not run. Same status innovation-routes gives an
-      // ownership check that could not run: not a precondition (409), not an
+      // The check did not run. Same status VerificationUnavailableError
+      // (server/lib/verification-outcome.ts) maps to: not a precondition (409), not an
       // integrity finding (422), not a crash (500).
       return 503;
   }

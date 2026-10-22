@@ -12,6 +12,8 @@
  * drug-substance name produced "Quality Overall Summary: 100% complete, no
  * gaps", and the AnA tool handed exactly that to the model.
  */
+// 2026-10-15: these cases now name the drug substance; an unrecorded name is
+// its own gap (m2-narrative-reports-unrecorded-drug-substance-name.test.ts).
 import { describe, expect, it } from 'vitest';
 
 import { buildM23QualityOverallSummary } from '../m2-summary-builders';
@@ -65,7 +67,7 @@ describe('QOS completeness and gaps come from each Module 3 section’s own stat
 
   it('a section with no source lineage is a gap even when it reports 100%', () => {
     const sections = QOS_KEYS.map((key) => (key === '3.2.S.5' ? recorded(key, { lineage: [] }) : recorded(key)));
-    const qos = buildM23QualityOverallSummary({ module3Sections: sections });
+    const qos = buildM23QualityOverallSummary({ module3Sections: sections, drugSubstanceName: 'ABC-123' });
     expect(qos.gaps).toEqual(['3.2.S.5 — no source data']);
     expect(qos.completeness).toBe(93); // 14 of 15
     expect(qos.inputSectionKeys).not.toContain('3.2.S.5');
@@ -75,13 +77,13 @@ describe('QOS completeness and gaps come from each Module 3 section’s own stat
     const sections = QOS_KEYS.map((key) =>
       key === '3.2.P.4' ? recorded(key, { missingInputs: ['excipientControlComplete'] }) : recorded(key),
     );
-    const qos = buildM23QualityOverallSummary({ module3Sections: sections });
+    const qos = buildM23QualityOverallSummary({ module3Sections: sections, drugSubstanceName: 'ABC-123' });
     expect(qos.gaps).toEqual(['3.2.P.4 — missing: excipientControlComplete']);
     expect(qos.completeness).toBe(93);
   });
 
   it('takes completeness over the 15 ICH M4Q sections it summarizes, not a constant', () => {
-    const qos = buildM23QualityOverallSummary({ module3Sections: [recorded('3.2.S.7'), recorded('3.2.P.8')] });
+    const qos = buildM23QualityOverallSummary({ module3Sections: [recorded('3.2.S.7'), recorded('3.2.P.8')], drugSubstanceName: 'ABC-123' });
     expect(qos.completeness).toBe(13); // 2 of 15
     expect(qos.gaps).toHaveLength(13);
     expect(qos.gaps).toContain('3.2.P.7 — not composed');
@@ -97,7 +99,7 @@ describe('QOS completeness and gaps come from each Module 3 section’s own stat
   });
 
   it('states 100% and no gaps only when every summarized section is recorded in full', () => {
-    const qos = buildM23QualityOverallSummary({ module3Sections: QOS_KEYS.map((key) => recorded(key)) });
+    const qos = buildM23QualityOverallSummary({ module3Sections: QOS_KEYS.map((key) => recorded(key)), drugSubstanceName: 'ABC-123' });
     expect(qos.completeness).toBe(100);
     expect(qos.gaps).toEqual([]);
     expect(qos.inputSectionKeys).toEqual(QOS_KEYS);

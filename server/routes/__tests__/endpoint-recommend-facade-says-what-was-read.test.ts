@@ -51,10 +51,17 @@ function unreadableCorpus() {
   };
 }
 
-function mountApp() {
+/** `withOrg`: the session the /api auth boundary attaches; the corpus read is its organization's. */
+function mountApp(withOrg = true) {
   const service = new EndpointRecommenderService(hf as never);
   const app = express();
   app.use(express.json());
+  if (withOrg) {
+    app.use((req, _res, next) => {
+      (req as unknown as { user: { id: number; organizationId: number } }).user = { id: 41, organizationId: 7 };
+      next();
+    });
+  }
   app.use(
     '/api',
     createAnaRiInlineRoutes({} as Pool, { csrSearchService: {}, getEndpointRecommenderService: () => service }),
@@ -97,5 +104,14 @@ describe('POST /api/endpoint/recommend', () => {
 
     expect(res.status).toBe(503);
     expect(res.body).toMatchObject({ error: 'ENDPOINT_CORPUS_UNAVAILABLE', unavailable: ['csr_corpus'] });
+  });
+
+  // 2026-10-15: the corpus read has an organization predicate; with no organization
+  // it is refused rather than read across organizations.
+  it('refuses a request with no authenticated organization, rather than read every organization', async () => {
+    const res = await request(mountApp(false)).post('/api/endpoint/recommend').send({ indication: 'Fabry disease' });
+
+    expect(res.status).toBe(401);
+    expect(hf.queryHuggingFace).not.toHaveBeenCalled();
   });
 });

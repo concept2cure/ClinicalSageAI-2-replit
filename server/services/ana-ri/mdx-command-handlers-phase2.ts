@@ -263,15 +263,6 @@ export async function postMarketDocumentCreate(
   const notOwned = await refuseUnownedProgram(action, programId, ctx);
   if (notOwned) return notOwned;
 
-  // Dates are optional: the engine stores an undeclared date as null and the
-  // type's reporting-period finding keeps the gate closed, so an unparseable value
-  // must not silently become "now" — leave it undefined and let the engine flag it.
-  const parseDate = (v: unknown): Date | undefined => {
-    if (typeof v !== 'string' || !v.trim()) return undefined;
-    const d = new Date(v);
-    return Number.isNaN(d.getTime()) ? undefined : d;
-  };
-
   try {
     const { document, validation } = await authorPostMarketDocument({
       organizationId: ctx.organizationId,
@@ -283,8 +274,12 @@ export async function postMarketDocumentCreate(
       regulation: params.regulation === 'MDR' || params.regulation === 'IVDR' ? params.regulation : undefined,
       relatedCerReportId,
       title: typeof params.title === 'string' ? params.title : undefined,
-      reportingPeriodStart: parseDate(params.reportingPeriodStart),
-      reportingPeriodEnd: parseDate(params.reportingPeriodEnd),
+      // As declared. The engine stores an omitted date as null (the gate reports
+      // it not declared) and refuses one that is not a real ISO day, or a start
+      // not before the end (PM_BAD_INPUT). 2026-10-15: an unparseable date was
+      // turned into undefined here — "not declared" — and the draft succeeded.
+      reportingPeriodStart: params.reportingPeriodStart,
+      reportingPeriodEnd: params.reportingPeriodEnd,
     });
 
     // WO-16C #133: the document row is already INSERTed by the engine above,
@@ -330,7 +325,7 @@ export async function postMarketDocumentCreate(
     };
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
-    if (code === 'PM_NO_DEVICE' || code === 'PM_BAD_TYPE') {
+    if (code === 'PM_NO_DEVICE' || code === 'PM_BAD_TYPE' || code === 'PM_BAD_INPUT') {
       return { success: false, action, message: (err as Error).message, error: 'INVALID_INPUT' };
     }
     return mapServiceError(action, err);
@@ -447,6 +442,11 @@ export async function evidenceSufficiencyAssess(
     };
   }
 
+  // 2026-10-15: unlike its siblings, this persisted an assessment for any
+  // program id shaped like a UUID, another organization's included.
+  const notOwned = await refuseUnownedProgram(action, programId, ctx);
+  if (notOwned) return notOwned;
+
   try {
     const result = await assessSufficiency({
       organizationId: ctx.organizationId,
@@ -508,12 +508,13 @@ function notUsedClause(params: Record<string, unknown>): string {
 }
 
 /**
- * The simulator's refusal of the request (a packet not on record, or no packet
- * store on the database), as a refusal. 2026-10-15: it reached the model as
+ * The simulator's refusal of the request (a packet not on record, no packet
+ * store on the database, or a ctdProgramId not on record for the organization —
+ * CtdProgramNotFoundError), as a refusal. 2026-10-15: it reached the model as
  * EXECUTION_FAILED "Action failed: …".
  */
 function simulatorRefusal(action: string, err: unknown): CommandResult | null {
-  if (!(err instanceof Error) || err.name !== 'ReviewerSimulationInputError') return null;
+  if (!(err instanceof Error) || !['ReviewerSimulationInputError', 'CtdProgramNotFoundError'].includes(err.name)) return null;
   const code = (err as { code?: unknown }).code;
   return { success: false, action, message: err.message, error: typeof code === 'string' ? code : 'INVALID_INPUT' };
 }
@@ -547,6 +548,11 @@ export async function reviewerSimulationRun(
   // reports were passed on, so the model supplied the figures the questions
   // printed. The simulator reads those facts from the records; they are not
   // passed, and the message says they were not used.
+
+  // 2026-10-15: unlike its siblings, this ran (and persisted) a simulation for
+  // any program id shaped like a UUID, another organization's included.
+  const notOwned = await refuseUnownedProgram(action, programId, ctx);
+  if (notOwned) return notOwned;
 
   try {
     const result = await runReviewerSimulation({
@@ -781,6 +787,8 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
       'SSCP (Art. 32). Code and version are assigned per program; returns the ' +
       'compliance-gate validation — relay its findings. Report-style types take a ' +
       'reporting period; omitted, none is set and the gate reports it not declared. ' +
+      'A date that is not a real ISO 8601 day (YYYY-MM-DD), or a start not before ' +
+      'the end, is refused with INVALID_INPUT naming the field — nothing is written. ' +
       'Does not invent clinical conclusions. Requires confirm + reason.',
     parameters:
       'programId (UUID), documentType (pms_plan|pms_report|pmcf_plan|pmcf_evaluation|psur|sscp), ' +

@@ -1,0 +1,87 @@
+# Slice C: every test related to a changed module (vitest related <changed files> --run), and the baseline comparison.
+# api-response.ts and observability.ts are imported almost everywhere, so "related" is most of the suite: 1521 files.
+
+## The run, with the change
+ Test Files  37 failed | 1481 passed | 3 skipped (1521)
+      Tests  86 failed | 19564 passed | 13 skipped | 1 todo (19664)
+   Duration  4082.48s (transform 34.22s, setup 23.86s, import 2156.51s, tests 1636.17s, environment 1.12s)
+
+## The 37 failing files
+server/routes/__tests__/qms-document-approval-signature.test.ts
+server/routes/__tests__/qms-effective-only-by-signature.test.ts
+server/routes/__tests__/qms-governed-writes-audited.test.ts
+server/routes/__tests__/report-os-audit-recording.test.ts
+server/routes/__tests__/report-os-report-pack-export.test.ts
+server/routes/__tests__/report-os-saved-read-access.test.ts
+server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts
+server/routes/biopharma/__tests__/bla-workbench-read.test.ts
+server/routes/c2c/__tests__/export-pptx-renders-the-submitted-content.test.ts
+server/routes/c2c/__tests__/exports-record-the-review-assertion.test.ts
+server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+server/services/ana-ri/__tests__/context-enrichment-claims-coverage-is-labelled-a-heuristic.pglite.test.ts
+server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts
+server/services/ana/__tests__/ana-launch-scope-execution.test.ts
+server/services/ana/__tests__/ana-launch-scope.test.ts
+server/services/ana/__tests__/billing-credits-not-metered.test.ts
+server/services/ana/__tests__/capa-governed-service-handoff.test.ts
+server/services/ana/__tests__/document-catalog-program-binding.test.ts
+server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts
+server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts
+server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts
+server/services/submission-gateways/__tests__/gateway-accounts.test.ts
+server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts
+server/services/truth-engine/__tests__/consistency-deterministic.test.ts
+tests/authoring-market-document-binding.pglite.test.ts
+tests/golden-journeys/cer-eu-mdr.journey.test.ts
+tests/golden-journeys/device-510k-estar.journey.test.ts
+tests/golden-journeys/drug-nda-ectd.journey.test.ts
+tests/golden-journeys/submission-export-package.journey.test.ts
+tests/golden-journeys/submission-release-signature.journey.test.ts
+tests/lineage/founder-path-lineage.pglite.test.ts
+tests/mdx-qms-labeling-search-analytics-routes.test.ts
+tests/regulatory/submittabilityCoverage.test.ts
+tests/routes/chat-governed-upload.test.ts
+tests/routes/chat-upload-to-memory.test.ts
+
+## The same 37 files, unloaded, WITH the change
+ Test Files  37 failed (37)
+      Tests  86 failed | 249 passed (335)
+
+## The same 37 files WITHOUT the change (git stash push -u -- server/, run, git stash pop)
+ Test Files  37 failed (37)
+      Tests  86 failed | 249 passed (335)
+
+## The 86 failing test names are identical with and without the change:
+diff: no difference
+
+## Most common failure messages (without the change): pre-existing, environment and schema causes
+      9 AssertionError: expected 503 to be 200 // Object.is equality
+      7 AssertionError: expected 500 to be 200 // Object.is equality
+      4 Error: This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+      3 [bla/assessments] GET MissingRequestDbContextError: Request-scoped database context is required
+      3 AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+      3 AssertionError: handler refused: Transmission failed at the gateway: AS2 signing/encryption preparation failed. Nothing was transmitted. Check the transmittal record before retrying — the package may already be at FDA.: expected false to be true // Object.is equality
+      3 AssertionError: expected 500 to be 201 // Object.is equality
+      3 AssertionError: expected 403 to be 200 // Object.is equality
+      2 walk-back/vault-leaf-to-seal is baselined, but it did not fail its assertion — it threw TypeError: Cannot read properties of undefined (reading 'document_uuid'). A baseline entry excuses a recorded gap, never a walk that could not run.
+      2 Serialized Error: { status: 503, code: 'REPORT_PDF_FONTS_UNAVAILABLE' }
+      2 Error: Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+      2 AssertionError: expected { success: false, error: { …(2) } } to match object { success: false, …(1) }
+
+## eslint on the 17 changed and new server files
+exit 0
+
+
+## The four new test files
+First run on this machine, before the fix: one failure. "rejects with ConversionCapacityError" asserted
+WHICH of three conversions was refused, but each writes its input file before it queues, so the order
+the three reach the queue depends on the filesystem. The test now asserts what holds in any order (two
+ran, one refused; FIFO has its own test), and the fixed 20 ms waits for the slot holders became a wait
+until both are running.
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 19 passed (20)
+After the fix (conversion-slots.test.ts alone, six consecutive runs: 12/12 each), all four files:
+ Test Files  4 passed (4)
+      Tests  20 passed (20)

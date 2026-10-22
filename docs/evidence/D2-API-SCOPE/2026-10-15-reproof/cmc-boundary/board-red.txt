@@ -1,0 +1,1297 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > opens a drawer and POSTs the mapped body to the register endpoint
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > shows the SERVER’s row, not the values that were typed
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > a rejected write adds nothing and names the rejected field
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > closes Edit on a validated method and retires it with a reason instead
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > an edit PUTs against the row and keeps the validation record it was seeded with
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > records the signed-in user as the analyst on a new result
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > refuses to let the analyst review their own result, and says why
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > a review PUTs the disposition and the reviewer, never the analyst
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > renders the per-section build state the endpoint returns
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > refuses to build a section that no source data feeds, and says why
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > compiles the whole module against the operating-system endpoint
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > a compile that is refused reports the server’s reason and changes nothing
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > resolves a contradiction through the governed endpoint with its note
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the export gate’s refusal as the verdict it is, with the reason
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the pass verdict when the gate allows the export
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > asks for a project rather than guessing one
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > reports a failed board read as a failure, never as "nothing here yet"
+ × client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the composition boundary’s refusal as an answer about the program, not as a failed read 5061ms
+   → Unable to find an element with the text: Module 3 is not composed here for this program. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Module 3 build
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-alert"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="M12 8v4"
+              />
+              <path
+                d="M12 16h.01"
+              />
+            </svg>
+             
+            Run contradiction sweep
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-zap"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+              />
+            </svg>
+             
+            Compile Module 3
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Which §3.2 sections are blocking my export and why?
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Draft the narrative for the section with the lowest completeness
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            What still stands between this Module 3 and its IND sequence?
+          </span>
+        </button>
+      </div>
+      <div
+        aria-live="assertive"
+        class="c2c-error-state variant-panel"
+        data-testid="m3-build-error"
+        role="alert"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-error-ic"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-triangle-alert"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+            />
+            <path
+              d="M12 9v4"
+            />
+            <path
+              d="M12 17h.01"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-error-body"
+        >
+          <div
+            class="c2c-error-t"
+          >
+            Couldn’t load the Module 3 build state
+          </div>
+          <div
+            class="c2c-error-h"
+          >
+            The Module 3 build state didn’t respond. It aggregates canonical source objects, compiled sections, contradictions and governed artifacts for this project — sign in and retry.
+          </div>
+        </div>
+        <div
+          class="c2c-error-actions"
+        >
+          <button
+            class="c2c-error-retry"
+            type="button"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Module 3 build
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-alert"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="M12 8v4"
+              />
+              <path
+                d="M12 16h.01"
+              />
+            </svg>
+             
+            Run contradiction sweep
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-zap"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+              />
+            </svg>
+             
+            Compile Module 3
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Which §3.2 sections are blocking my export and why?
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Draft the narrative for the section with the lowest completeness
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            What still stands between this Module 3 and its IND sequence?
+          </span>
+        </button>
+      </div>
+      <div
+        aria-live="assertive"
+        class="c2c-error-state variant-panel"
+        data-testid="m3-build-error"
+        role="alert"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-error-ic"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-triangle-alert"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+            />
+            <path
+              d="M12 9v4"
+            />
+            <path
+              d="M12 17h.01"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-error-body"
+        >
+          <div
+            class="c2c-error-t"
+          >
+            Couldn’t load the Module 3 build state
+          </div>
+          <div
+            class="c2c-error-h"
+          >
+            The Module 3 build state didn’t respond. It aggregates canonical source objects, compiled sections, contradictions and governed artifacts for this project — sign in and retry.
+          </div>
+        </div>
+        <div
+          class="c2c-error-actions"
+        >
+          <button
+            class="c2c-error-retry"
+            type="button"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > says the artifact registry is unlinked instead of rendering its absence as "no artifacts"
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > places approved sections into a chosen sequence through the placement endpoint
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > does not place without a stated reason, and offers only this program’s submissions
+ ↓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows a placement refusal as the gate verdict it is, verbatim
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the composition boundary’s refusal as an answer about the program, not as a failed read
+TestingLibraryElementError: Unable to find an element with the text: Module 3 is not composed here for this program. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Module 3 build
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-alert"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="M12 8v4"
+              />
+              <path
+                d="M12 16h.01"
+              />
+            </svg>
+             
+            Run contradiction sweep
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-zap"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+              />
+            </svg>
+             
+            Compile Module 3
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Which §3.2 sections are blocking my export and why?
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Draft the narrative for the section with the lowest completeness
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            What still stands between this Module 3 and its IND sequence?
+          </span>
+        </button>
+      </div>
+      <div
+        aria-live="assertive"
+        class="c2c-error-state variant-panel"
+        data-testid="m3-build-error"
+        role="alert"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-error-ic"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-triangle-alert"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+            />
+            <path
+              d="M12 9v4"
+            />
+            <path
+              d="M12 17h.01"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-error-body"
+        >
+          <div
+            class="c2c-error-t"
+          >
+            Couldn’t load the Module 3 build state
+          </div>
+          <div
+            class="c2c-error-h"
+          >
+            The Module 3 build state didn’t respond. It aggregates canonical source objects, compiled sections, contradictions and governed artifacts for this project — sign in and retry.
+          </div>
+        </div>
+        <div
+          class="c2c-error-actions"
+        >
+          <button
+            class="c2c-error-retry"
+            type="button"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="cm-head"
+      >
+        <div>
+          <div
+            class="cm-kicker"
+          >
+            CMC — Module 3 operating system
+          </div>
+          <h1
+            class="cm-title"
+          >
+            Module 3 build
+          </h1>
+          <div
+            class="cm-meta"
+          >
+            Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+          </div>
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-shrink: 0;"
+        >
+          <button
+            class="nda-open"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-alert"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="M12 8v4"
+              />
+              <path
+                d="M12 16h.01"
+              />
+            </svg>
+             
+            Run contradiction sweep
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-zap"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+              />
+            </svg>
+             
+            Compile Module 3
+          </button>
+          <button
+            class="reg-cta"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             Ask AnA
+          </button>
+        </div>
+      </div>
+      <div
+        class="sp-starters"
+        style="grid-template-columns: 1fr 1fr 1fr;"
+      >
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Which §3.2 sections are blocking my export and why?
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            Draft the narrative for the section with the lowest completeness
+          </span>
+        </button>
+        <button
+          class="sp-starter"
+        >
+          <span
+            class="sk"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+          </span>
+          <span>
+            What still stands between this Module 3 and its IND sequence?
+          </span>
+        </button>
+      </div>
+      <div
+        aria-live="assertive"
+        class="c2c-error-state variant-panel"
+        data-testid="m3-build-error"
+        role="alert"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-error-ic"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-triangle-alert"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+            />
+            <path
+              d="M12 9v4"
+            />
+            <path
+              d="M12 17h.01"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-error-body"
+        >
+          <div
+            class="c2c-error-t"
+          >
+            Couldn’t load the Module 3 build state
+          </div>
+          <div
+            class="c2c-error-h"
+          >
+            The Module 3 build state didn’t respond. It aggregates canonical source objects, compiled sections, contradictions and governed artifacts for this project — sign in and retry.
+          </div>
+        </div>
+        <div
+          class="c2c-error-actions"
+        >
+          <button
+            class="c2c-error-retry"
+            type="button"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx:529:25
+    527|     });
+    528|     render(<CmModule3Build ask={() => {}} />);
+    529|     expect(await screen.findByText('Module 3 is not composed here for …
+       |                         ^
+    530|     expect(screen.getByText(refusal)).toBeTruthy();
+    531|     expect(screen.queryByText('Couldn’t load the Module 3 build state'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 skipped (22)
+   Start at  01:55:24
+   Duration  6.68s (transform 574ms, setup 154ms, import 738ms, tests 5.07s, environment 552ms)
+

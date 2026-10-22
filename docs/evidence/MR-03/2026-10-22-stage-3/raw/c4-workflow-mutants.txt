@@ -1,0 +1,18 @@
+# Slice C: the proof against workflow mutants, one at a time (each copy, then the proof). Each must fail the proof.
+
+## W1: the API owner-credential refusal reports but does not fail the step
+[terraform-preflight-proof] FAIL — NOT refused as it must be: an API task definition carrying DATABASE_URL (exit 0)
+[terraform-preflight-proof] FAIL — NOT refused as it must be: an API task definition carrying APP_SERVICE_DB_PASSWORD (exit 0)
+[terraform-preflight-proof] FAIL — NOT refused as it must be: an API task definition carrying DATABASE_URL_PROD as a plain value (exit 0)
+[terraform-preflight-proof] 3 check(s) failed.
+exit 1
+
+## W2: the environment comparison reports but does not fail the step
+[terraform-preflight-proof] FAIL — NOT refused as it must be: a database task whose environment differs (DB_AUDIT_REQUIRED=none) (exit 0)
+[terraform-preflight-proof] 1 check(s) failed.
+exit 1
+
+## W3: the migration derived from the checked API revision again
+[terraform-preflight-proof] FAIL — revision pinning: the migration is not derived from the checked database-task ARN (step id migrate-task, via scripts/ops/ecs-one-off-task.sh)
+[terraform-preflight-proof] 1 check(s) failed.
+exit 1

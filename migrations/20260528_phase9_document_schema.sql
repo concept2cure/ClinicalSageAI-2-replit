@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure governed authoring (the c2c_documents family)
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: The governed document model. c2c_documents.readiness is the share
+--          of a document's sections approved or locked; an empty heading that
+--          holds other sections is not counted (amended 2026-10-22, F23 8/9).
+--
+-- eCTD/CTD Context:
+--   - Module(s): every CTD module a rule pack outlines (c2c_rule_packs).
+--   - Integrity Risk Addressed: a readiness figure no document could complete.
+--
+-- Determinism Contract:
+--   - Readiness is derived from section statuses alone, by one SQL function.
+--
+-- Notes:
+--   - Tenant scope: c2c_documents.org_id; the tenant sweeps cover both tables.
+--   - Idempotent: CREATE ... IF NOT EXISTS, CREATE OR REPLACE, ON CONFLICT.
+-- =============================================================================
 -- ============================================================================
 -- Phase 9 — Document schema unification (c2c_documents family) · Day 1
 --
@@ -28,6 +47,24 @@
 --                           application layer.
 --
 -- Idempotent (CREATE TABLE IF NOT EXISTS / ON CONFLICT DO NOTHING). One txn.
+--
+-- AMENDED IN PLACE 2026-10-22 (FILING_SPINE F23 8/9, CLAUDE.md Rule 1): the
+-- readiness trigger does not count a heading that holds other sections and has
+-- not been worked (status 'todo'). It divided by every row of the document,
+-- and an empty heading ('M1', 'M2', '3.2.S') is never approved, so no CTD
+-- document could reach 100% (an IND with every content section approved read
+-- 79). A heading that has been written in is counted like any section, so
+-- unsigned text at a heading still holds the figure under 100%. The count now lives in one function,
+-- c2c_document_counted_readiness(), which the trigger and an idempotent
+-- backfill at the end of section 6a share. The backfill writes only rows whose
+-- stored value differs and leaves updated_at alone: a recount is not an edit.
+-- Also 2026-10-22 (F23 hand-on): section 6a files a section the old PATCH
+-- inserted without parent_key under the parent its own pack gives it, before
+-- the trigger is re-created and the backfill recounts. See the note there.
+-- Pinned by tests/schema-contract/c2c-section-completion.contract.test.ts
+-- (the rule is countedSectionSql() in server/services/c2c/section-content.ts)
+-- and server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts.
+-- This file's journal hash changes with it (drift), which this note records.
 -- ============================================================================
 
 BEGIN;
@@ -117,6 +154,9 @@ CREATE TABLE IF NOT EXISTS c2c_document_sections (
 );
 
 CREATE INDEX IF NOT EXISTS c2c_doc_sections_doc_idx    ON c2c_document_sections (document_id);
+-- The readiness rule's heading probe (2026-10-22, F23 8/9): without it each
+-- recount scans the document's rows once per row.
+CREATE INDEX IF NOT EXISTS c2c_doc_sections_parent_idx ON c2c_document_sections (document_id, parent_key);
 CREATE INDEX IF NOT EXISTS c2c_doc_sections_owner_idx  ON c2c_document_sections (owner_id) WHERE owner_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS c2c_doc_sections_status_idx ON c2c_document_sections (status) WHERE status IN ('todo','drafted','review');
 
@@ -162,25 +202,111 @@ CREATE INDEX IF NOT EXISTS c2c_doc_evidence_section_idx ON c2c_document_section_
 --
 -- 6a. Readiness is computed, not stored. Recompute on section insert / status
 --     change. Fires during Day-2 backfill INSERTs too (desirable).
+--
+--     A section is counted unless it is an empty heading: status 'todo' and
+--     named as the parent of another section of the same document. An empty
+--     heading is never approved, and counting it kept every CTD document under
+--     100%; a heading that has been worked is counted (amended 2026-10-22, see
+--     the header).
+
+CREATE OR REPLACE FUNCTION c2c_document_counted_readiness(p_document_id text) RETURNS integer AS $$
+  SELECT COALESCE(ROUND(100.0 * COUNT(*) FILTER (WHERE s.status IN ('approved','locked'))
+                        / NULLIF(COUNT(*), 0))::integer, 0)
+    FROM c2c_document_sections s
+   WHERE s.document_id = p_document_id
+     AND (s.status <> 'todo' OR NOT EXISTS (SELECT 1 FROM c2c_document_sections held WHERE held.document_id = s.document_id AND held.parent_key = s.section_key))
+$$ LANGUAGE sql STABLE;
 
 CREATE OR REPLACE FUNCTION c2c_recompute_document_readiness() RETURNS trigger AS $$
 BEGIN
   UPDATE c2c_documents d
-  SET readiness = COALESCE((
-        SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE s.status IN ('approved','locked'))
-                     / NULLIF(COUNT(*), 0))::integer
-        FROM c2c_document_sections s
-        WHERE s.document_id = d.id
-      ), 0),
+  SET readiness = c2c_document_counted_readiness(d.id),
       updated_at = now()
   WHERE d.id = NEW.document_id;
   RETURN NEW;
 END $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS c2c_doc_readiness_after_section ON c2c_document_sections;
+
+-- Repair (2026-10-22, F23 hand-on): a section the old PATCH
+-- (server/routes/c2c/documents.ts, until F23 8/9) inserted without its parent
+-- is filed under the parent its document's own rule pack gives it. Without it
+-- the section reads as a root, so the heading above it reads as holding
+-- nothing and is counted. Only a NULL parent is filled; a parent already set is
+-- not this repair's to change. A key the pack lists twice, a key that is its
+-- own parent, and a pack whose sections are not an array are left alone. It
+-- runs here, with the readiness trigger dropped, so the backfill below
+-- recounts the documents without stamping them. parent_key is structure taken
+-- from the pack, not text, status or a signature, so a locked or approved row
+-- is filed like any other. Idempotent: a filled row no longer matches.
+DO $$
+DECLARE
+  stamps boolean := EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgname = 'set_updated_at' AND tgrelid = 'c2c_document_sections'::regclass AND NOT tgisinternal);
+  filed integer;
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+      FROM c2c_document_sections s
+      JOIN c2c_documents d ON d.id = s.document_id
+      JOIN c2c_rule_packs rp ON rp.doc_type = d.doc_type AND rp.agency = d.agency AND rp.version = d.rule_pack_version
+      CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(rp.required_sections) = 'array' THEN rp.required_sections ELSE '[]'::jsonb END) AS elem
+     WHERE s.parent_key IS NULL AND elem ->> 'key' = s.section_key
+     GROUP BY s.id, s.section_key
+    HAVING count(*) = 1 AND min(elem ->> 'parent_key') <> '' AND min(elem ->> 'parent_key') <> s.section_key) THEN
+    RETURN;
+  END IF;
+  IF stamps THEN EXECUTE 'ALTER TABLE c2c_document_sections DISABLE TRIGGER set_updated_at'; END IF;
+  UPDATE c2c_document_sections t
+     SET parent_key = want.parent_key
+    FROM (SELECT s.id, min(elem ->> 'parent_key') AS parent_key
+            FROM c2c_document_sections s
+            JOIN c2c_documents d ON d.id = s.document_id
+            JOIN c2c_rule_packs rp ON rp.doc_type = d.doc_type AND rp.agency = d.agency AND rp.version = d.rule_pack_version
+            CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(rp.required_sections) = 'array' THEN rp.required_sections ELSE '[]'::jsonb END) AS elem
+           WHERE s.parent_key IS NULL AND elem ->> 'key' = s.section_key
+           GROUP BY s.id, s.section_key
+          HAVING count(*) = 1 AND min(elem ->> 'parent_key') <> '' AND min(elem ->> 'parent_key') <> s.section_key) want
+   WHERE t.id = want.id AND t.parent_key IS NULL;
+  GET DIAGNOSTICS filed = ROW_COUNT;
+  IF stamps THEN EXECUTE 'ALTER TABLE c2c_document_sections ENABLE TRIGGER set_updated_at'; END IF;
+  RAISE NOTICE 'c2c_document_sections: % section(s) filed under the parent their rule pack gives them', filed;
+END $$;
+
+-- parent_key too (2026-10-22): which sections are counted depends on it.
 CREATE TRIGGER c2c_doc_readiness_after_section
-AFTER INSERT OR UPDATE OF status ON c2c_document_sections
+AFTER INSERT OR UPDATE OF status, parent_key ON c2c_document_sections
 FOR EACH ROW EXECUTE FUNCTION c2c_recompute_document_readiness();
+
+-- Backfill (2026-10-22): every document that has sections, on the counted
+-- rule. Idempotent on replay: only a row whose stored value differs is
+-- written, and updated_at is left as it was: a recount is not an edit. A
+-- database that carries db/migrations/20260526_updated_at_triggers'
+-- set_updated_at on this table would stamp now() on every row recounted, so
+-- that trigger is disabled for this one statement, in this transaction. A
+-- document with no sections (a legacy row of 20260529_phase9_backfill) keeps
+-- the figure it was inserted with: there is nothing to recount, and 0 would
+-- read as measured.
+DO $$
+DECLARE
+  stamps boolean := EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgname = 'set_updated_at' AND tgrelid = 'c2c_documents'::regclass AND NOT tgisinternal);
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM c2c_documents d
+     WHERE EXISTS (SELECT 1 FROM c2c_document_sections s WHERE s.document_id = d.id)
+       AND d.readiness IS DISTINCT FROM c2c_document_counted_readiness(d.id)) THEN
+    RETURN;
+  END IF;
+  IF stamps THEN EXECUTE 'ALTER TABLE c2c_documents DISABLE TRIGGER set_updated_at'; END IF;
+  UPDATE c2c_documents d
+     SET readiness = c2c_document_counted_readiness(d.id)
+   WHERE EXISTS (SELECT 1 FROM c2c_document_sections s WHERE s.document_id = d.id)
+     AND d.readiness IS DISTINCT FROM c2c_document_counted_readiness(d.id);
+  IF stamps THEN EXECUTE 'ALTER TABLE c2c_documents ENABLE TRIGGER set_updated_at'; END IF;
+END $$;
 
 -- 6b. Version snapshot on content change. BEFORE UPDATE only — backfill uses
 --     INSERT so this never fires during backfill. The author_id + reason come

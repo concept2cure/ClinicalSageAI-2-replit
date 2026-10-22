@@ -240,6 +240,7 @@ describe('assessSufficiency — persistence', () => {
       pathway: 'PMA',
       profile: { hasPatientContact: false, isSoftware: false, isElectrical: false },
       evidenceOverride: [ev('risk_assessment'), ev('clinical_trial'), ev('statistical_analysis')],
+      trigger: 'manual', // 2026-10-15: unstated is now refused, not recorded as 'manual'
     });
     expect(insertCalls).toHaveLength(1);
     const v = insertCalls[0].values;

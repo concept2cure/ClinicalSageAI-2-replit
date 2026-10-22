@@ -51,7 +51,9 @@ beforeEach(() => {
       // The request-client source identity preflight is metadata only. Count
       // actual document body loads separately so the movement barrier stays
       // between the interactive preflight and completion's source load.
-      if (!sql.includes('d.document_code')) return { rows: [{ id, organization_id: 42, program_id: h.moveOnSecondLoad ? B : A }] };
+      // The move happens after the first body load, so the metadata identity
+      // a loader reads before that load still names A; every later read sees B.
+      if (!sql.includes('d.document_code')) return { rows: [{ id, organization_id: 42, program_id: h.moveOnSecondLoad && h.loads >= 1 ? B : A }] };
       h.loads++;
       if (h.loads === 1 && h.missingPreflight) return { rows: [] };
       return { rows: [{ id, organization_id: 42, program_id: h.loads > 1 && h.moveOnSecondLoad ? B : A,
@@ -93,11 +95,15 @@ describe('serving programme binding across catalog source loads', () => {
     expect(h.write).toHaveBeenCalledWith(expect.objectContaining({ programId: A }));
   });
   it('the completion service independently refuses a different expected programme', async () => {
-    expect(await completeCatalog({ documentId: id, organizationId: 42, documentKind: 'cert', purpose: 'Source assay', summary: 'Assay measured.', keyData: { value: '99.2' }, userId: 7, expectedProgramId: B })).toMatchObject({ ok: false, code: 'SOURCE_PROGRAM_CHANGED' });
+    expect(await completeCatalog({ documentId: id, organizationId: 42, documentKind: 'cert', purpose: 'Source assay', summary: 'Assay measured.', keyData: { value: '99.2' }, userId: 7, expectedProgramId: B, executor })).toMatchObject({ ok: false, code: 'SOURCE_PROGRAM_CHANGED' });
     expect(h.embed).not.toHaveBeenCalled(); expect(h.write).not.toHaveBeenCalled();
   });
+  it('the completion service refuses without a request-scoped executor before any read', async () => {
+    expect(await completeCatalog({ documentId: id, organizationId: 42, documentKind: 'cert', purpose: 'Source assay', summary: 'Assay measured.', keyData: { value: '99.2' }, userId: 7, expectedProgramId: A })).toMatchObject({ ok: false, code: 'REQUEST_DB_CONTEXT_REQUIRED' });
+    expect(h.query).not.toHaveBeenCalled(); expect(h.embed).not.toHaveBeenCalled(); expect(h.write).not.toHaveBeenCalled();
+  });
   it('matching expected programme is retained in the final writer handoff', async () => {
-    expect(await completeCatalog({ documentId: id, organizationId: 42, documentKind: 'cert', purpose: 'Source assay', summary: 'Assay measured.', keyData: { value: '99.2' }, userId: 7, expectedProgramId: A })).toMatchObject({ ok: true });
+    expect(await completeCatalog({ documentId: id, organizationId: 42, documentKind: 'cert', purpose: 'Source assay', summary: 'Assay measured.', keyData: { value: '99.2' }, userId: 7, expectedProgramId: A, executor })).toMatchObject({ ok: true });
     expect(h.write).toHaveBeenCalledWith(expect.objectContaining({ programId: A }));
   });
 });

@@ -105,6 +105,10 @@ const getDatabaseUrl = (): string => {
       console.warn(`${envVar} not found, using DATABASE_URL as fallback`);
       return process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || '';
     }
+    // The API process may hold only the runtime role's URL: the owner
+    // credential is the deploy's (MR-03 Stage 3, OPS-16). It threw here at
+    // import, so a process without DATABASE_URL could not start at all.
+    if (process.env.APP_DATABASE_URL) return process.env.APP_DATABASE_URL;
     throw new Error(`Missing required environment variable: ${envVar}`);
   }
 

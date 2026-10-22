@@ -1,72 +1,50 @@
 import React, { useMemo } from 'react';
 import { I } from '../icons';
 import { PedigreeBadge } from '../intelligence/Intelligence';
-import { EmptyState } from '../dataConnect';
+import { EmptyState, hasKeys, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceAvailable } from '../surfaceAvailable';
+import { readShellProject, shellProgramId } from '../shellProject';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
-  noSubmissionWords,
-  otherSubmissionsLine,
-  programTypeLabel,
-  useProgramSequence,
-  useSequenceDispatchReadiness,
-  type Discovery,
-  type GateState,
-  type GateView,
+  awaitingOwnReleaseSignature,
+  useProgramMarkets,
   type ExternalValidation,
+  type GateView,
+  type ProgramMarket,
+  type ProgramMarkets,
   type ReadinessFinding,
   type RuleView,
 } from './programSequence';
+import { MarketsBody, NotSequencedState, VerdictDetail, marketAccessibleName, marketName, marketTarget, marketVerdict, marketsForbidden, openSubmissionCenter } from './ProjectMarkets';
+import { findingAct, type FindingAct } from './readinessFindingActs';
 import { filingDocumentClassOf, filingTypeInSentence } from '@shared/regulatory/filing-document-classes';
 import '../styles/project-home-v2.css';
 
-/* The wire types, the open program's sequence discovery and the server's
-   verdict are read in programSequence.ts, the one module this screen and the
-   project page share (ONE_ANA_ONE_CANVAS.md slice 24). This screen renders
-   them; it computes none of them. */
+/* ════ Submission Readiness — the open project's markets, each with its own
+   deterministic dispatch gate (F18, docs/design/FILING_SPINE.md §7.2) ════
+   One list: every market of the project (one submission, one application to
+   one agency), its latest sequence and that sequence's verdict, read once in
+   programSequence.ts (useProgramMarkets, the scoped list the Submit tab
+   reads) and drawn by ProjectMarkets' rows. Under each row, the server's
+   composed gates and its structural findings. Each finding's act opens the
+   Submission Center where the finding is fixed (readinessFindingActs.ts); a
+   cleared gate opens that sequence's Dispatch tab. Nothing here computes a
+   verdict, signs or transmits.
+   Pedigree: deterministic_registry (the gate is proven, not generated).
+   full: true — owns the canvas. */
 
-/* What AnA is told when there is no verdict to give — one line per not-ready
-   state, each naming the program it is about. */
-function notReadySummary(state: GateState, programLabel: string | null, discovery: Discovery): string {
-  const p = programLabel ?? 'the open program';
-  if (state === 'no-submission' && discovery.state === 'no-submission') {
-    /* "No submission" is said only when none is recorded to the program: one
-       of another type (an EU MAA beside the IND) is named, not denied. */
-    const documentClass = filingDocumentClassOf(discovery.programType);
-    if (documentClass) {
-      return `Dispatch readiness: the open program (${p}) is ${filingTypeInSentence(documentClass.docType, true)}, authored here and not built as a sequence, so there is no sequence to gate.`;
-    }
-    const type = programTypeLabel(discovery.programType);
-    const others = otherSubmissionsLine(discovery.otherSubmissions);
-    return (
-      `Dispatch readiness: the open program (${p}) has no ${type ? `${type} ` : ''}submission recorded` +
-      (type ? '' : ' (it has no program type recorded)') +
-      (others ? `; its submissions of other types are not gated (${others})` : '') +
-      ', so there is no sequence to gate.'
-    );
-  }
-  switch (state) {
-    case 'evaluating':
-      return 'Dispatch readiness, still evaluating the gate.';
-    case 'error':
-      return 'Dispatch readiness could not be evaluated — the gate is unanswered, which is not the same as cleared.';
-    case 'no-program':
-      return 'Dispatch readiness: no program is open, so no sequence is being gated.';
-    case 'no-submission':
-      return `Dispatch readiness: the open program (${p}) has no submission recorded, so there is no sequence to gate.`;
-    default:
-      return `Dispatch readiness: the open program (${p}) has no eCTD sequence yet, so there is nothing to clear.`;
-  }
+/** The open project's record: its name and type, read for the label and
+ *  whether it is an application at all. */
+interface ProgramRecord {
+  id: string;
+  name: string | null;
+  code: string | null;
+  program_type: string | null;
 }
 
 /* ── severity → tone map ── */
 const SEV_TONE: Record<string, string> = { error: 'error', warning: 'warning', info: 'idle' };
-
-/* ════ Dispatch Readiness — deterministic last gate before agency transmit ════
-   Answer-first; not a dashboard. Consumes Shadow Review criticals + structural
-   validation + external (eValidator) findings, composed.
-   Pedigree: deterministic_registry (the gate is proven, not generated).
-   full: true — owns the canvas. */
 
 /** A finding's rule: its title and id, regions, corpus severity and where it is enforced. */
 function RuleLine({ rule, code }: { rule: RuleView | null; code: string }) {
@@ -97,20 +75,8 @@ function GateOutcome({ gate }: { gate: GateView }) {
   return <>{gate.cleared && gate.notAssessed ? <>Not assessed. {gate.notAssessed}</> : gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}</>;
 }
 
-function externalValidationSummary(ev: ExternalValidation): string {
-  switch (ev.assessmentStatus) {
-    case 'passed': return 'external validation passed';
-    case 'failed': return 'external validation failed (advisory)';
-    case 'invalid': return 'external validation report invalid (advisory)';
-    case 'not_assessed': return 'external validation not assessed';
-    default:
-      if (ev.qualifyingRun === false || ev.errorCountKnown === false) return 'external validation not assessed';
-      if (ev.ran && ev.errorCount > 0) return 'external validation failed (advisory)';
-      return ev.ran ? 'external validator clean' : 'external validator not run';
-  }
-}
-
-function externalValidationFacts(ev: ExternalValidation): Record<string, unknown> {
+function externalValidationFacts(ev: ExternalValidation | undefined): Record<string, unknown> {
+  if (!ev) return {};
   return {
     externalValidationCleared: ev.cleared,
     externalValidationStatus: ev.assessmentStatus ?? null,
@@ -139,9 +105,9 @@ function GateCard({ gate: suppliedGate, externalValidation }: { gate: GateView; 
      errors — Satisfied." over a package no validator had seen. */
   const unassessed = gate.cleared && (Boolean(gate.notAssessed) || (gate.key === 'external' && gate.assessmentStatus != null && gate.assessmentStatus !== 'passed'));
   return (
-    <div data-gate={gate.key} className={'dr2-gate ' + (unassessed ? 'warn' : gate.cleared ? 'ok' : 'block')}>
+    <li data-gate={gate.key} className={'dr2-gate ' + (unassessed ? 'warn' : gate.cleared ? 'ok' : 'block')}>
       <div className="dr2-gate-top">
-        <span className="dr2-gate-dot">{unassessed ? I.alertTriangle : gate.cleared ? I.check : I.lock}</span>
+        <span className="dr2-gate-dot" aria-hidden="true">{unassessed ? I.alertTriangle : gate.cleared ? I.check : I.lock}</span>
         <span className="dr2-gate-label">{gate.rule?.title ?? `The ${gate.key} gate — not in the rule corpus`}</span>
       </div>
       <div className="dr2-gate-detail">
@@ -157,78 +123,242 @@ function GateCard({ gate: suppliedGate, externalValidation }: { gate: GateView; 
           <span className="mono">{gate.rule.id}</span> · {gate.rule.enforcementStatement}
         </div>
       )}
+    </li>
+  );
+}
+
+/** Open the Submission Center on this market's sequence, where `act` is done. */
+function openAct(onNav: (id: string) => void, m: ProgramMarket, sequenceId: number, act: FindingAct): void {
+  openSubmissionCenter(onNav, act.kind === 'validation'
+    ? { submissionId: m.submission.id, sequenceId, ws: 'validation' }
+    : { submissionId: m.submission.id, sequenceId, ws: 'builder', section: { act: act.kind, code: act.code } });
+}
+
+/** One structural finding, its rule, and the act that opens where it is fixed. */
+function FindingRow({ f, a, act, market }: { f: ReadinessFinding; a: FindingAct | null; act: (() => void) | null; market: string }) {
+  return (
+    <li data-finding={f.code} className={'dr2-find tone-' + (SEV_TONE[f.severity] || 'idle')}>
+      <span className={'dr2-find-sev tone-' + (SEV_TONE[f.severity] || 'idle')}>{f.severity}</span>
+      {f.sectionCode && <span className="mono dr2-find-code">{f.sectionCode}</span>}
+      <span className="dr2-find-msg">
+        <RuleLine rule={f.rule ?? null} code={f.code} />
+        {f.message}
+      </span>
+      {a && act && (
+        <button type="button" className="dr2-find-fix" onClick={act} aria-label={`${a.label} for ${market}`}>
+          {a.label} {I.right}
+        </button>
+      )}
+    </li>
+  );
+}
+
+/** The next governed step is on the sequence's Dispatch tab: freeze, the
+ *  dispatch e-signature (which records the release signature where the
+ *  submission type requires one), or transmit once dispatched. Each step is
+ *  signed there, by a person permitted to sign it; this screen signs nothing. */
+const SIGNED_STEPS = 'Freeze, dispatch and transmit are each signed on the Dispatch tab by a person permitted to sign them.';
+
+function DispatchDoor({ m, sequenceId, sequenceNumber, transmit, awaiting, reauthorizing, onNav, market }: {
+  m: ProgramMarket; sequenceId: number; sequenceNumber: string;
+  /** Dispatched, cleared and not awaiting a new release signature. */
+  transmit: boolean;
+  awaiting: boolean; reauthorizing: boolean;
+  onNav: (id: string) => void; market: string;
+}) {
+  const open = () => openSubmissionCenter(onNav, { submissionId: m.submission.id, sequenceId, ws: 'dispatch' });
+  if (transmit) {
+    return (
+      <div className="dr2-door">
+        <button type="button" className="dr2-transmit" onClick={open} aria-label={`Open governed transmit for ${market}`}>
+          {I.send} Open governed transmit
+        </button>
+      </div>
+    );
+  }
+  const why = reauthorizing
+    ? 'The earlier release signature does not cover the current recorded facts. It is signed again on the Dispatch tab before anything is transmitted.'
+    : awaiting
+      ? 'This submission type requires a release signature: the dispatch e-signature on the Dispatch tab records it.'
+      : `Transmit opens once sequence ${sequenceNumber} is dispatched.`;
+  return (
+    <div className="dr2-door">
+      <button type="button" className="dr2-transmit" onClick={open} aria-label={`Open Dispatch for sequence ${sequenceNumber} of ${market}`}>
+        {I.send} Open Dispatch for sequence {sequenceNumber}
+      </button>
+      <p className="pj-mkt-note">{why} {SIGNED_STEPS}</p>
     </div>
   );
 }
 
-export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
-  const ask = onAsk;
-  // Real deterministic gate for the OPEN PROGRAM's latest sequence, computed
-  // server-side by assessSequenceDispatchReadiness. Fixture-free: real
-  // assessment, honest empty (no program / no submission / no sequence), or
-  // honest error — never a sample assessment, never another program's.
-  const discovery = useProgramSequence();
-  /* The verdict is the server's, read once in programSequence.ts for this
-     screen and the project page alike: when the server states none, the gate
-     is UNANSWERED, which is not cleared. */
-  const { assessment: a, gate, loading, gateState, live } = useSequenceDispatchReadiness(discovery);
-  const sequenceNumber = discovery.state === 'sequence' ? discovery.sequenceNumber : null;
-  const programLabel = 'programLabel' in discovery ? discovery.programLabel : null;
+/** Under a market's row: the server's composed gates, its structural findings
+ *  with their acts, and the door to Dispatch on a cleared gate. Where the
+ *  server gave no gate breakdown, the row's own verdict detail is shown. */
+function MarketGateDetail({ m, onNav, center }: { m: ProgramMarket; onNav: (id: string) => void; center: boolean }) {
+  const r = m.read;
+  if (r.state !== 'verdict' || !r.assessment) return <VerdictDetail read={r} />;
+  const a = r.assessment;
+  const market = marketAccessibleName(m.submission);
+  const gates: GateView[] = Array.isArray(a.gates) ? a.gates : [];
+  const sequenceNumber = r.sequence.sequenceNumber ?? `id ${r.sequence.id}`;
+  const status = a.sequenceStatus ?? r.sequence.status;
+  const findings = Array.isArray(a.readiness?.findings) ? a.readiness.findings : [];
+  const locked = status === 'frozen' || status === 'dispatched';
+  /* The door follows the server's verdict for the next step, read as it is
+     (the Dispatch tab reads the same fields): dispatch cleared; clear except
+     for the release signature the dispatch e-signature records; or a
+     validated sequence whose freeze is clear. Missing fields are not cleared. */
+  const awaiting = awaitingOwnReleaseSignature(a);
+  const reauthorizing = status === 'dispatched' && a.dispatchAuthorization?.reauthorizing === true;
+  const doorOpen = r.gate?.cleared === true || awaiting || (status === 'validated' && a.freezeGate?.cleared === true);
+  return (
+    <div className="dr2-market" data-testid="dr2-market-detail">
+      {a.validatedStage?.holds === false && (
+        <p role="status" className="pj-mkt-note" data-validated-stage="stale">{a.validatedStage.reason}</p>
+      )}
+      {gates.length > 0 ? (
+        <ul className="dr2-gates" role="list" aria-label={`Dispatch gates for ${market}`}>
+          {gates.map((g) => <GateCard key={g.key} gate={g} externalValidation={a.externalValidation} />)}
+        </ul>
+      ) : (
+        <VerdictDetail read={r} />
+      )}
+      {a.readiness && (
+        <div className="dr2-readiness">
+          <div className="dr2-readiness-hd">
+            <span className="dr2-readiness-t">Structural validation</span>
+            <span className="dr2-readiness-s">
+              <span className="dr2-count err">{a.readiness.errors} error{a.readiness.errors === 1 ? '' : 's'}</span>
+              <span className="dr2-count warn">{a.readiness.warnings} warning{a.readiness.warnings === 1 ? '' : 's'}</span>
+              <span className="dr2-count idle">{a.readiness.infos} info</span>
+            </span>
+          </div>
+          {findings.length > 0 && (
+            <ul className="dr2-finds" role="list" aria-label={`Structural findings for ${market}`}>
+              {findings.map((f, i) => {
+                const act = findingAct(f, { locked });
+                return <FindingRow key={i} f={f} a={act} market={market} act={act && center ? () => openAct(onNav, m, r.sequence.id, act) : null} />;
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+      {doorOpen && center && (
+        <DispatchDoor m={m} sequenceId={r.sequence.id} sequenceNumber={sequenceNumber} market={market} onNav={onNav}
+          transmit={status === 'dispatched' && r.gate?.cleared === true && !reauthorizing} awaiting={awaiting} reauthorizing={reauthorizing} />
+      )}
+    </div>
+  );
+}
 
-  /* WHAT ANA SEES HERE. This surface answers one question — may this sequence
-     be transmitted — and the answer is a hard gate, so the payload carries the
-     BLOCKERS and not just the verdict. "Not cleared" without the reasons is the
-     shape of answer that sends someone hunting; the gate already computes the
-     strings, so they travel.
+/** Where the list stands, in one word, for AnA. */
+type ListState = 'no-project' | 'reading' | 'project-failed' | 'not-sequenced' | 'forbidden' | 'list-failed' | 'no-market' | 'listed';
 
-     `cleared` is never published as true from a missing assessment: with no
-     sequence discovered, `gate` is {cleared:false, blockers:[]}, which would
-     read as "blocked for no reason". The state field distinguishes that from a
-     real refusal, because a gate that cannot be evaluated has not passed — and
-     it says WHICH not-ready state this is (no program open, no submission for
-     the program, no sequence on it, a failed read), never "no sequence in the
-     organisation". `gateState` (programSequence.ts) is that field. */
+function listStateOf(programId: string | null, program: { loading: boolean; error?: string; data: ProgramRecord | null }, notSequenced: boolean, markets: ProgramMarkets): ListState {
+  if (!programId) return 'no-project';
+  if (program.error) return 'project-failed';
+  if (program.loading || !program.data) return 'reading';
+  if (notSequenced) return 'not-sequenced';
+  if (markets.list.loading) return 'reading';
+  if (marketsForbidden(markets)) return 'forbidden';
+  if (markets.list.error) return 'list-failed';
+  return markets.markets.length === 0 ? 'no-market' : 'listed';
+}
+
+/** One market as AnA is told it: `cleared` and `blockers` only when the server
+ *  stated a gate, so a missing verdict is never published as cleared. */
+function marketFacts(m: ProgramMarket): Record<string, unknown> {
+  const r = m.read;
+  const out: Record<string, unknown> = {
+    submissionId: m.submission.id,
+    market: marketName(m.submission),
+    applicationType: m.submission.applicationType,
+    region: m.submission.primaryRegion,
+    readState: r.state,
+    verdict: marketVerdict(r).text,
+    answered: r.state === 'verdict' && r.gate != null,
+  };
+  if (r.state === 'verdict' || r.state === 'verdict-failed') {
+    Object.assign(out, { sequenceId: r.sequence.id, sequenceNumber: r.sequence.sequenceNumber, sequenceStatus: r.sequence.status });
+  }
+  if (r.state === 'verdict' && r.gate) Object.assign(out, { cleared: r.gate.cleared, blockers: r.gate.blockers });
+  if (r.state === 'verdict' && awaitingOwnReleaseSignature(r.assessment)) out.awaitingOwnReleaseSignature = true;
+  const a = r.state === 'verdict' ? r.assessment : null;
+  if (a) {
+    Object.assign(out, {
+      validationErrors: a.validationErrors,
+      unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
+      shadowReviewRunCount: a.shadowReviewRunCount,
+      shadowReviewMissing: a.shadowReviewMissing,
+      leafCount: a.leafCount,
+      // A gate that cleared without assessing what it guards (an advisory
+      // validator, a clinical hold, a Shadow Review waived by signature), in
+      // the server's words, so AnA never narrates it as passed.
+      notAssessed: (Array.isArray(a.gates) ? a.gates : [])
+        .filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim())
+        .map((g) => ({ gate: g.key, note: g.notAssessed })),
+      validatedStageHolds: a.validatedStage?.holds ?? null,
+      ...externalValidationFacts(a.externalValidation),
+    });
+  }
+  return out;
+}
+
+function anaSummary(state: ListState, label: string, markets: ProgramMarket[], programType: string | null): string {
+  const p = label;
+  switch (state) {
+    case 'no-project': return 'Submission readiness: no project is open, so no sequence is being gated.';
+    case 'reading': return 'Submission readiness, still reading the project and its markets.';
+    case 'project-failed': return 'Submission readiness could not read the open project, so whether it has markets is not stated.';
+    case 'not-sequenced': {
+      const documentClass = filingDocumentClassOf(programType);
+      return `Submission readiness: the open project (${p}) is ${documentClass ? filingTypeInSentence(documentClass.docType, true) : 'a filing document class'}, authored here and not built as a sequence, so there is no sequence to gate.`;
+    }
+    case 'forbidden': return `Submission readiness: the person's role does not include reading submissions, so the markets of ${p} are not shown.`;
+    case 'list-failed': return `Submission readiness: the markets of ${p} could not be read. Nothing is being gated, which is not the same as cleared.`;
+    case 'no-market': return `Submission readiness: ${p} has no market yet, so there is no sequence to gate.`;
+    default:
+      return `Submission readiness for ${p}: ` + markets.map((m) => `${marketName(m.submission)}: ${marketVerdict(m.read).text}`).join('; ') + '.';
+  }
+}
+
+export function DispatchReadiness({ onNav }: SurfaceViewProps) {
+  const shell = readShellProject();
+  const programId = shellProgramId(shell);
+  const [programBump, setProgramBump] = React.useState(0);
+  const program = useLiveData<ProgramRecord>(
+    programId ? `/api/c2c/projects/${encodeURIComponent(programId)}` : null,
+    [programId, programBump],
+    hasKeys<ProgramRecord>('id'),
+  );
+  const programType = program.data?.program_type ?? null;
+  const documentClass = filingDocumentClassOf(programType);
+  /* The markets are read beside the project, from the first render, so the
+     list is "loading" until it has answered. Started only once the project
+     was read, it rendered one commit of "No market for this project yet"
+     before any read began. A filing document class is shown its own state and
+     never its (empty) list. */
+  const markets = useProgramMarkets(programId);
+  const label = program.data?.name || program.data?.code || shell?.title || programId || 'the open project';
+  const available = useSurfaceAvailable();
+  const center = available('submission-center');
+  const state = listStateOf(programId, program, Boolean(documentClass), markets);
+
   const anaContext = useMemo(
     () => ({
-      summary:
-        gateState === 'evaluated' && a
-          ? `Dispatch readiness for sequence ${sequenceNumber ?? `id ${a.sequenceId}`} (${a.region}, ${a.sequenceStatus}) of program ${programLabel}: ` +
-            (gate.cleared ? 'cleared to dispatch.' : `NOT cleared — ${gate.blockers.length} blocker(s).`)
-          : notReadySummary(gateState, programLabel, discovery),
+      summary: anaSummary(state, label, markets.markets, programType),
       facts: {
-        gateState,
-        ...('programId' in discovery ? { programId: discovery.programId, program: discovery.programLabel } : {}),
-        ...('submissionId' in discovery ? { submissionId: discovery.submissionId } : {}),
-        ...(sequenceNumber ? { sequenceNumber } : {}),
-        ...(a
-          ? {
-              sequenceId: a.sequenceId,
-              region: a.region,
-              sequenceStatus: a.sequenceStatus,
-              cleared: gate.cleared,
-              blockers: gate.blockers,
-              validationErrors: a.validationErrors,
-              unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
-              shadowReviewRunCount: a.shadowReviewRunCount,
-              shadowReviewMissing: a.shadowReviewMissing,
-              // A gate that cleared without assessing what it guards (an advisory
-              // validator, a clinical hold, a Shadow Review waived by signature),
-              // in the server's words, so AnA never narrates it as passed.
-              notAssessed: (Array.isArray(a.gates) ? a.gates : [])
-                .filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim())
-                .map((g) => ({ gate: g.key, note: g.notAssessed })),
-              ...externalValidationFacts(a.externalValidation),
-              leafCount: a.leafCount,
-            }
-          : {}),
+        listState: state,
+        ...(programId ? { programId, program: label } : {}),
+        markets: state === 'listed' ? markets.markets.map(marketFacts) : [],
       },
       availableActions: [
-        'Explain why this sequence is not cleared to dispatch',
+        'Explain why a market is not cleared to dispatch',
         'Explain what each blocker requires before it clears',
         'Explain what the external validator adds to this gate',
       ],
     }),
-    [gateState, discovery, programLabel, sequenceNumber, a, gate],
+    [state, label, markets.markets, programId, programType],
   );
   usePublishSurfaceContext('dispatch-readiness', anaContext);
 
@@ -239,233 +369,45 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
         <span className="dr2-kicker">AnA · dispatch gate · proven, not generated</span>
       </div>
       <h1 className="dr2-title">Cleared to dispatch?</h1>
+      {programId && <div className="dr2-sub">{label} · each market&apos;s latest sequence, as the server gates it</div>}
     </div>
   );
 
-  /* ── honest loading / error / empty (never a fixture) ── */
-  if (loading) {
-    return (
-      <div className="dr2">
-        {head}
-        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Assessing dispatch readiness…</div>
-      </div>
+  let body: React.ReactNode;
+  if (!programId) {
+    body = (
+      <EmptyState icon={I.rocket} title="Open a project to see its markets"
+        hint="The dispatch gate reads the open project's markets and nothing else; it never gates whichever submission is newest in the organisation." />
+    );
+  } else if (program.error) {
+    body = (
+      <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't read this project"
+        hint="The project could not be read, so whether it has markets is not stated. Nothing is being gated, which is not the same as cleared."
+        retry={() => setProgramBump((b) => b + 1)} />
+    );
+  } else if (!program.data) {
+    body = <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Reading this project…</div>;
+  } else if (documentClass) {
+    body = <NotSequencedState documentClass={documentClass} />;
+  } else {
+    body = (
+      <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
+        startHint=" Add one from the project's Submit tab, or record an existing submission to this project in the Submission Center."
+        detail={(m) => <MarketGateDetail m={m} onNav={onNav} center={center} />} />
     );
   }
-  if (live.error || discovery.state === 'error') {
-    return (
-      <div className="dr2">
-        {head}
-        <EmptyState
-          tone="error"
-          icon={I.alertTriangle}
-          title="Couldn't compute the dispatch gate"
-          hint={
-            discovery.state === 'error'
-              ? `The open program's submission and sequence could not be read (${discovery.detail}). Nothing is being gated — sign in and retry, or check the service is reachable.`
-              : "The deterministic readiness assessment didn't respond. It's computed server-side from your sequence's canonical leaves and open Shadow Review criticals — sign in and retry, or check the service is reachable."
-          }
-        />
-      </div>
-    );
-  }
-  if (discovery.state === 'no-program') {
-    return (
-      <div className="dr2">
-        {head}
-        <EmptyState
-          icon={I.rocket}
-          title="Open a program to gate its sequence"
-          hint="The dispatch gate runs against the open program's eCTD sequence and nothing else — it never gates whichever submission happens to be newest in the organisation. Open a program first; its sequence's verdict appears here."
-        />
-      </div>
-    );
-  }
-  if (discovery.state === 'no-submission') {
-    /* The gate reads only the program's submission of its own type. A program
-       whose submissions are all of other types has submissions, so this says
-       which type is missing and names the others (programSequence.ts). */
-    const words = noSubmissionWords(discovery, discovery.programLabel);
-    const type = programTypeLabel(discovery.programType);
-    /* A filing document class is not told to create a submission the
-       platform refuses for it (noSubmissionWords says why there is none). */
-    const documentClass = filingDocumentClassOf(discovery.programType);
-    return (
-      <div className="dr2">
-        {head}
-        <EmptyState
-          icon={I.rocket}
-          title={words.title}
-          hint={
-            documentClass ? words.hint :
-            `${words.hint} ` +
-            (type ? `Create its ${type} submission in the Submission Center and build a sequence; this` : 'This') +
-            " screen does not stand in another program's filing for it."
-          }
-        />
-      </div>
-    );
-  }
-  if (discovery.state === 'no-sequence' || !a) {
-    const label = discovery.state === 'no-sequence' ? discovery.programLabel : programLabel ?? 'the open program';
-    const sub = discovery.state === 'no-sequence' ? discovery.submissionTitle : null;
-    return (
-      <div className="dr2">
-        {head}
-        <EmptyState
-          icon={I.rocket}
-          title={`No sequence to gate for ${label} yet`}
-          hint={
-            (sub ? `Its submission "${sub}" has no eCTD sequence yet. ` : '') +
-            'Build a sequence and place documents into it, then AnA can prove whether it is cleared to transmit.'
-          }
-        />
-      </div>
-    );
-  }
-
-  /* ── real assessment (a is non-null from here) ── */
-  const ev = a.externalValidation;
-  const rd = a.readiness;
-
-  /* The composed gates, as the SERVER itemized them: each is the corpus rule
-     it enforces, with its own blockers. They used to be recomputed here from
-     raw counts and drawn as a tick or a cross — three of the server's four
-     gates, with the Shadow Review card reading "dispatch permitted" on the very
-     state the server blocks. A response that carries no breakdown shows none,
-     rather than a local reconstruction. */
-  const gateViews: GateView[] = Array.isArray(a.gates) ? a.gates : [];
-
-  /* AnA answer-first verdict. A gate that cleared without assessing what it
-     guards is not "proven clear": the lead says how many, and a Shadow Review
-     waived by signature (P-34) is never counted as zero criticals found. */
-  const unassessed = gateViews.filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim());
-  const shadowWaived = unassessed.some((g) => g.key === 'shadowPresence');
-  const lead = gate.cleared
-    ? {
-          tone: 'good',
-          h: unassessed.length
-            ? <>Your sequence is <b>cleared to dispatch</b>. {unassessed.length === 1 ? 'One gate' : `${unassessed.length} gates`} cleared without being assessed; each says why below.</>
-            : <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
-          b: <>0 open validation errors, {shadowWaived ? 'no Shadow Review run (waived by signature)' : '0 unacknowledged Shadow Review criticals'}, {externalValidationSummary(ev)}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
-      }
-    : {
-        tone: 'urgent',
-        h: <>{gate.blockers.length} blocker{gate.blockers.length === 1 ? '' : 's'} stand{gate.blockers.length === 1 ? 's' : ''} between you and dispatch.</>,
-        b: <>This is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.</>,
-      };
 
   return (
     <div className="dr2">
-      <div className="dr2-head">
-        <div className="dr2-eyebrow">
-          <span className="dr2-kicker">AnA · dispatch gate · proven, not generated</span>
-        </div>
-        <h1 className="dr2-title">Cleared to dispatch?</h1>
-        <div className="dr2-sub">
-          {/* The sequence NUMBER is what a filing is known by (0000, 0001 …);
-              the row id is kept beside it because every API path here is keyed
-              by it. When the row carries no number, only the id is stated. */}
-          {programLabel ? <>{programLabel} · </> : null}
-          {sequenceNumber ? <>Sequence {sequenceNumber} (id {a.sequenceId})</> : <>Sequence id {a.sequenceId}</>} · region{' '}
-          {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}{a.validatedStage?.holds === false ? <span role="status" data-validated-stage="stale"> — {a.validatedStage.reason}</span> : null}
-        </div>
-      </div>
-
-      {/* the verdict */}
-      <div className={'dr2-verdict ' + (gate.cleared ? 'ok' : 'blocked')}>
-        <span className="dr2-verdict-ic">{gate.cleared ? I.shieldCheck : I.lock}</span>
-        <span className="dr2-verdict-t">{gate.cleared ? 'Cleared to dispatch' : 'Dispatch blocked'}</span>
-      </div>
-
-      <div className={'dr2-lead tone-' + lead.tone}>
-        <div className="dr2-lead-ic">{I.rocket}</div>
-        <div>
-          <p className="dr2-lead-h">{lead.h}</p>
-          <p className="dr2-lead-b">{lead.b}</p>
-        </div>
-      </div>
-
-      {/* the composed gates — each the rule it enforces, its outcome in words */}
-      {gateViews.length > 0 && (
-        <div className="dr2-gates">
-          {gateViews.map((g) => <GateCard key={g.key} gate={g} externalValidation={ev} />)}
-        </div>
-      )}
-
-      {/* blockers — shown here only when the server did not itemize its
-          gates; otherwise each blocker is shown inside the gate it belongs to */}
-      {!gate.cleared && gateViews.length === 0 && (
-        <div className="dr2-blockers">
-          <div className="dr2-blockers-hd">{I.lock} What must close before dispatch</div>
-          {gate.blockers.map((b, i) => (
-            <div key={i} className="dr2-blocker">
-              <span className="dr2-blocker-n">{i + 1}</span>
-              <span className="dr2-blocker-t">{b}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* structural findings breakdown */}
-      <div className="dr2-readiness">
-        <div className="dr2-readiness-hd">
-          <span className="dr2-readiness-t">Structural validation</span>
-          <span className="dr2-readiness-s">
-            <span className="dr2-count err">{rd.errors} error{rd.errors === 1 ? '' : 's'}</span>
-            <span className="dr2-count warn">{rd.warnings} warning{rd.warnings === 1 ? '' : 's'}</span>
-            <span className="dr2-count idle">{rd.infos} info</span>
-          </span>
-        </div>
-        {(rd.findings || []).map((f: ReadinessFinding, i: number) => (
-          <div key={i} data-finding={f.code} className={'dr2-find tone-' + (SEV_TONE[f.severity] || 'idle')}>
-            <span className={'dr2-find-sev tone-' + (SEV_TONE[f.severity] || 'idle')}>{f.severity}</span>
-            {f.sectionCode && <span className="mono dr2-find-code">{f.sectionCode}</span>}
-            <span className="dr2-find-msg">
-              <RuleLine rule={f.rule ?? null} code={f.code} />
-              {f.message}
-            </span>
-            {f.severity === 'error' && (
-              <button
-                className="dr2-find-fix"
-                onClick={() =>
-                  ask(
-                    f.sectionCode
-                      ? 'Resolve the dispatch-blocking validation error in §' + f.sectionCode + ': ' + f.message
-                      : 'Resolve the dispatch-blocking validation error: ' + f.message,
-                  )
-                }
-              >
-                {I.sparkles} Fix
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-
+      {head}
+      {body}
       <div className="dr2-foot">
         <PedigreeBadge level="deterministic_registry" />
         <span className="dr2-foot-note">
           Every gate input is computed from server state — a client cannot pass{' '}
           <span className="mono">validationErrors:0</span> to talk the gate down. The AI dispatch-QC task advises; this gate{' '}
-          <b>enforces</b>. Bound to the governed dispatch-readiness gate;
-          the wire transmit stays behind a Part-11 e-signature.
+          <b>enforces</b>. Freeze, dispatch and transmit each stay behind a Part 11 e-signature, on the sequence&apos;s Dispatch tab.
         </span>
-        {gate.cleared && (
-          <button
-            className="dr2-transmit"
-            onClick={() =>
-              ask(
-                'Prepare the governed transmit of sequence ' +
-                  a.sequenceId +
-                  ' (region ' +
-                  String(a.region || 'fda').toUpperCase() +
-                  ') to the agency gateway — require the Part-11 e-signature.',
-              )
-            }
-          >
-            {I.send} Prepare governed transmit
-          </button>
-        )}
       </div>
     </div>
   );

@@ -21,6 +21,11 @@
  *
  * These tests pin the surface to the server's verdict. They fail against the
  * recomputation.
+ *
+ * F18 (2026-10-22): the screen lists the open project's markets from the
+ * scoped list (GET /api/submissions?programId=), so the verdict read is each
+ * market row's verdict line (ProjectMarkets' marketVerdict) rather than a
+ * lead paragraph about one sequence.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -59,8 +64,8 @@ const SHADOW_BLOCKED = {
   },
 };
 
-/* The surface gates the OPEN program's submission (F-8), so the shell program
-   is seeded and its record served; the one submission here is its spine. */
+/* The surface gates the OPEN program's markets (F-8, F18), so the shell
+   program is seeded and its record served; the one market here is its spine. */
 const PROGRAM_UUID = '5b1c2d3e-0000-4000-8000-000000000001';
 
 function serve(assessment: unknown) {
@@ -69,7 +74,9 @@ function serve(assessment: unknown) {
     if (url === `/api/c2c/projects/${PROGRAM_UUID}`) {
       return { ok: true, status: 200, json: async () => ({ id: PROGRAM_UUID, name: 'NDA 2026', code: 'NDA-26', product_name: null, program_type: 'nda' }) } as Response;
     }
-    if (url === '/api/submissions') return ok([{ id: 3, title: 'NDA 2026', productName: 'NDA 2026', applicationType: 'NDA', programId: PROGRAM_UUID }]);
+    if (url === `/api/submissions?programId=${PROGRAM_UUID}`) {
+      return ok([{ id: 3, title: 'NDA 2026', productName: 'NDA 2026', applicationType: 'nda', primaryRegion: 'fda', status: 'active', lifecycleStage: 'original', programId: PROGRAM_UUID }]);
+    }
     if (url === '/api/submissions/3/sequences') return ok([{ id: 7, sequenceNumber: '0001' }]);
     if (url.endsWith('/dispatch-readiness')) return ok(assessment);
     return ok([]);
@@ -79,6 +86,8 @@ function serve(assessment: unknown) {
 const props = () =>
   ({ surface: { id: 'dispatch-readiness', label: 'Dispatch' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'regulatory' });
 const text = () => document.body.textContent ?? '';
+/** The market row's verdict line: the page title is always "Cleared to dispatch?". */
+const verdict = () => document.querySelector('[data-testid="pj-market-verdict"]')?.textContent ?? '';
 
 beforeEach(() => {
   apiRequest.mockReset();
@@ -90,19 +99,18 @@ afterEach(() => {
 });
 
 describe('DispatchReadiness — renders the server gate, not a local recomputation', () => {
-  /* The surface's own verdict strings. The page title is always
-     "Cleared to dispatch?", so the verdict must be matched on these. */
-  const CLEARED = /Your sequence is\s*cleared to dispatch/i;
-  const BLOCKED = /blocker[s]? stand[s]? between you and dispatch/i;
+  /* The market row's verdict strings (ProjectMarkets marketVerdict). */
+  const CLEARED = /Cleared to dispatch/;
+  const BLOCKED = /Dispatch blocked · 1 blocker/;
 
   it('does NOT clear an unreviewed sequence the server blocks', async () => {
     serve(SHADOW_BLOCKED);
     render(<DispatchReadiness {...props()} />);
-    await waitFor(() => expect(text()).toMatch(BLOCKED));
+    await waitFor(() => expect(verdict()).toMatch(BLOCKED));
     // Pre-fix this rendered "Your sequence is cleared to dispatch — but nothing
     // has adversarially reviewed it yet", because both LOCAL gates passed on
     // these inputs while the server's shadowPresence gate blocked.
-    expect(text()).not.toMatch(CLEARED);
+    expect(verdict()).not.toMatch(CLEARED);
     // …and the server's reason is shown.
     expect(text()).toMatch(/Shadow Review/i);
   });
@@ -115,15 +123,17 @@ describe('DispatchReadiness — renders the server gate, not a local recomputati
       gate: { cleared: true, blockers: [] },
     });
     render(<DispatchReadiness {...props()} />);
-    await waitFor(() => expect(text()).toMatch(CLEARED));
-    expect(text()).not.toMatch(BLOCKED);
+    await waitFor(() => expect(verdict()).toMatch(CLEARED));
+    expect(verdict()).not.toMatch(BLOCKED);
   });
 
   it('treats a response carrying no gate as UNANSWERED, never as cleared', async () => {
     const { gate: _omitted, ...noGate } = SHADOW_BLOCKED;
     serve(noGate);
     render(<DispatchReadiness {...props()} />);
-    await waitFor(() => expect(text()).toMatch(/Sequence 0001 \(id 7\)/));
-    expect(text()).not.toMatch(CLEARED);
+    await waitFor(() => expect(text()).toMatch(/Sequence 0001/));
+    await waitFor(() => expect(verdict()).toContain('No verdict from the server'));
+    expect(verdict()).not.toMatch(CLEARED);
+    expect(text()).toContain('The gate is unanswered, which is not the same as cleared.');
   });
 });

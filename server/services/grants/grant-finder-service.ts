@@ -15,13 +15,17 @@ import { pool } from '../../db';
 import { GrantsGovConnector } from '../connectors/grants-gov';
 import { rankOpportunities, isStrongMatch, type FundingProfile, type MatchableOpportunity, type OpportunityMatch, type FundingAgencyCode, type FundingMechanismCode } from './opportunity-matching';
 import { createOpportunityTx } from './grants-service';
+import { createScopedLogger } from '../../utils/logger';
+
+const logger = createScopedLogger('grant-finder-service');
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
 export class GrantFinderError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'BAD_INPUT', message: string) {
+  /** BAD_INPUT is the caller's to correct; UPSTREAM_UNAVAILABLE is Grants.gov failing. */
+  constructor(public code: 'NOT_FOUND' | 'BAD_INPUT' | 'UPSTREAM_UNAVAILABLE', message: string) {
     super(message);
     this.name = 'GrantFinderError';
   }
@@ -116,7 +120,13 @@ export async function discoverOpportunities(orgId: number, opts: DiscoverOptions
       eligibilities: null,
     }));
   } catch (err) {
-    throw new GrantFinderError('BAD_INPUT', `Grants.gov search failed: ${err instanceof Error ? err.message : String(err)}`);
+    // 2026-10-15: this was BAD_INPUT (a 400) carrying the upstream text — an
+    // outage reported as the caller's mistake. The upstream text goes to the log.
+    logger.error('Grants.gov search failed', { error: err instanceof Error ? err.message : String(err) });
+    throw new GrantFinderError(
+      'UPSTREAM_UNAVAILABLE',
+      'Grants.gov could not be searched, so no opportunities were discovered. Try again later.',
+    );
   }
 
   // Hydrate the top N candidates for richer scoring (synopsis/eligibility/award).

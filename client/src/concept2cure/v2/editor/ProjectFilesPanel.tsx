@@ -43,8 +43,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState, ErrorState } from '../dataConnect';
-import { downloadBlob, safeFileName } from '../download';
-import { pdfViewerBlob } from './pdfBytes';
+import { downloadVaultFile, PdfFrame, presentOpenedFile, useVaultPdfViewer, type ViewerState as SharedViewerState } from './vaultPdfViewer';
+import type { PdfViewerBlob } from './pdfBytes';
 import type { FireToast } from '../toast';
 import { isVaultDoc, vaultStatus, vaultFileIconKey, type VaultDoc, type VaultFolder } from '../fixtures/vault-data';
 import type { ProjectSource } from './DocumentWorkbench';
@@ -91,7 +91,7 @@ const NO_SOURCES: ProjectSource[] = [];
 type ReadState = 'idle' | 'loading' | 'ready' | 'error';
 
 /** The open PDF: the row it came from, its object URL, and the served hash. */
-interface ViewerState { doc: VaultDoc; url: string; hash: string | null }
+type ViewerState = SharedViewerState<VaultDoc>;
 
 /* ── Pure helpers ─────────────────────────────────────────────────────────── */
 
@@ -115,32 +115,10 @@ export function referenceTextFor(doc: VaultDoc): string {
   return `[Ref: ${parts.join(' · ')}]`;
 }
 
-/** One response header, tolerant of a response that carries no `headers` at
- *  all, so every caller reads them the same way. */
-function responseHeader(res: Response, name: string): string | null {
-  return res.headers?.get?.(name) ?? null;
-}
-
 /** The stored file behind a row, or null for an authored section — which has
  *  no bytes in the vault, so there is nothing for Open to fetch. */
 function storedFileIdFor(doc: VaultDoc): string | null {
   return doc.docId ?? (doc.src === 'upload' ? doc.id : null);
-}
-
-/** Whether the row says it is a PDF. What is framed is decided by the bytes
- *  (pdfBytes.ts, SEC-A-3); this only words why a claimed PDF was downloaded. */
-function claimsToBePdf(mime: string, title: string): boolean {
-  return /pdf/i.test(mime) || /\.pdf$/i.test(title);
-}
-
-/** The toast's reason when a file says it is a PDF and its bytes are not. */
-const CLAIMED_PDF_NOT_SHOWN = 'it is named or typed as a PDF, but its contents are not a PDF, so it is not shown here';
-
-/** The vault's own filename for a download, falling back to a safe name made
- *  from the title when the route sends no Content-Disposition. */
-function downloadNameFor(res: Response, doc: VaultDoc): string {
-  const fromHeader = responseHeader(res, 'Content-Disposition')?.match(/filename="?([^";]+)"?/)?.[1];
-  return fromHeader ?? safeFileName(doc.title, 'document');
 }
 
 /** Every document in the tree, flattened — a selected row is resolved by id
@@ -187,46 +165,8 @@ async function readProjectVault(programId: string): Promise<VaultReadResult> {
   }
 }
 
-/** What one audited download turned out to be: a PDF for the viewer, bytes
- *  for the browser with the reason they were not shown, or the vault's refusal. */
-type OpenedFile =
-  | { kind: 'pdf'; blob: Blob; hash: string | null }
-  | { kind: 'download'; blob: Blob; name: string; why: string }
-  | { kind: 'refused'; message: string };
-
-/** One download through the vault's audited route, classified — so the caller
- *  decides what to do with a file without re-reading headers and MIME types. */
-async function downloadVaultFile(programId: string, docId: string, doc: VaultDoc): Promise<OpenedFile> {
-  const path = `/api/c2c/project-vault/${encodeURIComponent(programId)}/documents/${encodeURIComponent(docId)}/download`;
-  const res = await apiRequest('GET', path);
-  if (!res.ok) {
-    const j = await res.json().catch(() => null);
-    return { kind: 'refused', message: serverMessage(j) ?? `the vault refused it (HTTP ${res.status})` };
-  }
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  const pdf = pdfViewerBlob(bytes);
-  if (pdf) return { kind: 'pdf', blob: pdf, hash: responseHeader(res, 'X-Content-SHA256') ?? doc.hash ?? null };
-  const mime = responseHeader(res, 'Content-Type') ?? '';
-  const why = claimsToBePdf(mime, doc.title) ? CLAIMED_PDF_NOT_SHOWN : 'the viewer here shows PDFs only';
-  return { kind: 'download', blob: new Blob([bytes], { type: mime }), name: downloadNameFor(res, doc), why };
-}
-
-/** The other half of Open — show it, hand it over, or say why it did not
- *  open. Apart from the fetch so each outcome's toast is decided in one place. */
-function presentOpenedFile(opts: {
-  file: OpenedFile; doc: VaultDoc; fireToast: FireToast;
-  showPdf: (doc: VaultDoc, blob: Blob, hash: string | null) => void;
-}): void {
-  const { file, doc, fireToast, showPdf } = opts;
-  if (file.kind === 'refused') return fireToast(`${doc.title} was not opened — ` + file.message + '.', 'error');
-  if (file.kind === 'pdf') return showPdf(doc, file.blob, file.hash);
-  const ok = downloadBlob(file.name, file.blob);
-  fireToast(
-    ok ? `Downloaded ${doc.title} — ${file.why}.`
-      : `${doc.title} was fetched but the browser refused the download.`,
-    ok ? 'ok' : 'error',
-  );
-}
+/* The audited download, its classification and the toast for each outcome are
+   vaultPdfViewer.tsx's, shared with the Vault surface's Versions. */
 
 /* ── The state the rail keeps ─────────────────────────────────────────────── */
 
@@ -255,41 +195,13 @@ function useProjectVaultRead(programId: string | null) {
   return { state, vault, readError, load };
 }
 
-/** The viewer's object URL, owned in one place: released when the file
- *  changes, when the pane closes and when the rail unmounts, so a long
- *  session does not accumulate PDFs in memory. */
-function useVaultPdfViewer() {
-  const [viewer, setViewer] = useState<ViewerState | null>(null);
-  const viewerUrlRef = useRef<string | null>(null);
-
-  useEffect(() => () => {
-    if (viewerUrlRef.current) URL.revokeObjectURL(viewerUrlRef.current);
-  }, []);
-
-  /* `blob` is pdfViewerBlob's: bytes that begin %PDF, typed application/pdf. */
-  const showPdf = useCallback((doc: VaultDoc, blob: Blob, hash: string | null) => {
-    if (viewerUrlRef.current) URL.revokeObjectURL(viewerUrlRef.current);
-    const url = URL.createObjectURL(blob);
-    viewerUrlRef.current = url;
-    setViewer({ doc, url, hash });
-  }, []);
-
-  const closeViewer = useCallback(() => {
-    if (viewerUrlRef.current) URL.revokeObjectURL(viewerUrlRef.current);
-    viewerUrlRef.current = null;
-    setViewer(null);
-  }, []);
-
-  return { viewer, showPdf, closeViewer };
-}
-
 /** The three things the rail does with a file, together because each one ends
  *  in a toast that states exactly what happened — and Open needs the busy row. */
 function useVaultFileActions(opts: {
   programId: string | null; sectionCode: string | null; fireToast: FireToast;
   sourceFor: (doc: VaultDoc) => ProjectSource | null;
   onCite: (sourceId: string) => boolean | Promise<boolean>; onInsertReference: (text: string) => boolean;
-  showPdf: (doc: VaultDoc, blob: Blob, hash: string | null) => void;
+  showPdf: (doc: VaultDoc, blob: PdfViewerBlob, hash: string | null) => void;
 }) {
   const { programId, sectionCode, fireToast, sourceFor, onCite, onInsertReference, showPdf } = opts;
   const [opening, setOpening] = useState<string | null>(null);
@@ -305,7 +217,7 @@ function useVaultFileActions(opts: {
     setOpening(doc.id);
     try {
       const file = await downloadVaultFile(programId, docId, doc);
-      if (alive.current) presentOpenedFile({ file, doc, fireToast, showPdf });
+      if (alive.current) presentOpenedFile({ file, doc, report: fireToast, showPdf });
     } catch (e) {
       if (alive.current) fireToast(redactInternals(e instanceof Error ? e.message : '', `${doc.title} was not opened.`), 'error');
     } finally {
@@ -535,12 +447,7 @@ function PdfViewerPane(props: {
         <button type="button" className="nda-open" onClick={onBack}>{I.left} Back to files</button>
         <span className="pf-viewer-t" title={viewer.doc.title}>{viewer.doc.title}</span>
       </div>
-      {viewer.hash && (
-        <div className="pf-viewer-hash" title={`SHA-256 ${viewer.hash}`}>
-          SHA-256 {viewer.hash.slice(0, 16)}… — verified against the vault record before it was served
-        </div>
-      )}
-      <iframe className="pf-viewer-frame" src={viewer.url} title={`${viewer.doc.title} — PDF viewer`} />
+      <PdfFrame title={viewer.doc.title} url={viewer.url} hash={viewer.hash} />
       <div className="pf-actions"><SectionActions {...actions} /></div>
     </div>
   );
@@ -559,7 +466,7 @@ function ProjectFilesForProgram({
   const { state, vault, readError, load } = useProjectVaultRead(programId);
   const [query, setQuery] = useState('');
   const search = useProjectVaultSearch(programId, query);
-  const { viewer, showPdf, closeViewer } = useVaultPdfViewer();
+  const { viewer, showPdf, closeViewer } = useVaultPdfViewer<VaultDoc>();
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lane, setLane] = useState<'vault' | 'data-room' | 'ind'>('vault');

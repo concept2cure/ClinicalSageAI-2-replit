@@ -166,15 +166,16 @@ describe('CmcModule — open-tab drives the real pane swap', () => {
 
     const out = apply('cmc.open-tab', { tab: 'change' });
     expect(out.status).toBe('applied');
-    // The change-control pane is genuinely on screen — its simulator textarea
-    // is the marker the behavioral suite uses.
-    expect(await screen.findByPlaceholderText(/switch the drug-substance supplier/)).toBeTruthy();
+    // The change-control pane is genuinely on screen. Its header is the marker:
+    // the variation simulator this used to look for is shown only with launch
+    // scope off since e1f3fd425 (2026-10-17, decision P-28), while the header
+    // is there in either state (cmcAuditRemediation.test.tsx pins the gate).
+    const CHANGE_PANE = 'Record the change, its basis and its Module 3 impact';
+    expect(await screen.findByText(CHANGE_PANE)).toBeTruthy();
 
     const specs = apply('cmc.open-tab', { tab: 'specs' });
     expect(specs.status).toBe('applied');
-    await waitFor(() =>
-      expect(screen.queryByPlaceholderText(/switch the drug-substance supplier/)).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByText(CHANGE_PANE)).toBeNull());
   });
 });
 

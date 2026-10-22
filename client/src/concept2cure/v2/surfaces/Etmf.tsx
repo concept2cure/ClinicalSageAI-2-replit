@@ -55,6 +55,28 @@ import { getAuthHeaders } from '@/utils/authToken';
 
 type MissingDoc = { zone: number; zoneName: string; code: string; name: string };
 
+/** The one verdict the surface states (lead, cover badge, report, AnA). */
+type TmfVerdict = 'ready' | 'not-ready' | 'undetermined';
+const VERDICT_LABEL: Record<TmfVerdict, string> = {
+  ready: 'INSPECTION-READY',
+  'not-ready': 'NOT INSPECTION-READY',
+  undetermined: 'READINESS NOT DETERMINED',
+};
+
+/** What "filed" rests on, as the completeness service reports it. */
+function basisSentence(basis: TmfCompletenessResult['basis'] | undefined): string {
+  if (basis === 'verified_documents') {
+    return 'An artifact counts as filed only when its filing references a vault document that resolved when this was read; ' +
+      'a filing with no document, a reference that no longer resolves, or an off-platform reference this service cannot check counts as open.';
+  }
+  if (basis === 'asserted_codes') return 'Counted from the artifact codes as listed; no document was checked.';
+  return 'The completeness service did not say what "filed" rests on.';
+}
+
+/** "N filed, no verified document" — the part of the open gaps that HAS a filing. */
+const unverifiedLabel = (n: number | undefined) =>
+  typeof n === 'number' ? n + ' filed, no verified document' : 'filed-without-a-verified-document count not reported';
+
 /* The local copy of this helper is gone — see client/src/concept2cure/v2/download.ts. */
 
 /* ---- Helper: offline readiness report as markdown, from the REAL assessment ---- */
@@ -67,12 +89,13 @@ function readinessReportMd(
      `R.ready`. The offline report is the same claim in a file the reader keeps,
      so it must not be able to say INSPECTION-READY over an assessment the
      screen declined to call clear. */
-  ready: boolean,
+  verdict: TmfVerdict,
 ): string {
   let s = '# Trial Master File — Inspection-Readiness Package\n\n';
   s += '**Trial:** ' + trialId + '\n\n';
   s += '**Reference model:** DIA TMF Reference Model (ICH E6(R3) Appendix C)  —  **Scope:** ' + (scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R3) Appendix C)') + '\n\n';
-  s += '**Verdict (completeness):** ' + (ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY') + '  —  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  —  Open gaps ' + R.summary.totalMissing + '\n\n';
+  s += '**Verdict (completeness):** ' + VERDICT_LABEL[verdict] + '  —  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  —  Open gaps ' + R.summary.totalMissing + '  —  Filed, no verified document ' + (R.summary.totalUnverified ?? 'not reported') + '\n\n';
+  s += '**Basis:** ' + basisSentence(R.basis) + '\n\n';
   s += '## Zone index\n\n| Zone | Name | Filed | Status |\n|---|---|---|---|\n';
   (R.zones || []).forEach((z) => { s += '| ' + z.number + ' | ' + z.name + ' | ' + z.present.length + '/' + z.required.length + ' | ' + (z.complete ? 'complete' : (z.required.length - z.present.length) + ' open') + ' |\n'; });
   s += '\n## Open essential documents\n\n';
@@ -176,11 +199,12 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
      that inference is the defect. */
   const assessmentRan = Boolean(R && R.summary.zoneCount > 0 && R.summary.totalRequired > 0);
 
-  /* Open gaps. A payload the backend did not call `ready` counts as carrying at
-     least one finding even where the zone arrays enumerated none, so a gap in
-     the enumeration can never be read as a clear verdict. */
+  /* Open gaps. A payload the backend did not call `ready` (false, or null: not
+     determined) counts as carrying at least one finding even where the zone
+     arrays enumerated none, so a gap in the enumeration can never be read as a
+     clear verdict. */
   const enumeratedGaps = R ? Math.max(missing.length, R.summary.totalMissing || 0) : 0;
-  const openGaps = R && !R.ready ? Math.max(1, enumeratedGaps) : enumeratedGaps;
+  const openGaps = R && R.ready !== true ? Math.max(1, enumeratedGaps) : enumeratedGaps;
 
   // loading / unreadable / not-assessed / assessed-with-findings / assessed-clear.
   const tmfState = assessmentStateFor({ loading: readLoading, error: readError }, {
@@ -190,6 +214,10 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   });
   /** The completeness verdict. Only an assessment that ran may read clear. */
   const clear = tmfState === 'assessed-clear';
+  /* The server's `ready: null` — every open artifact is filed against a
+     reference it cannot check — is NOT DETERMINED. 2026-10-15: it rendered as
+     NOT INSPECTION-READY, a "no" the server had declined to give. */
+  const verdict: TmfVerdict = clear ? 'ready' : R?.ready === null ? 'undetermined' : 'not-ready';
 
   const reload = () => setReloadKey((k) => k + 1);
 
@@ -218,16 +246,30 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
         availableActions: ['Retry the completeness read'],
       };
     }
+    if (!assessmentRan) {
+      return {
+        summary:
+          `The completeness read for trial ${tid} evaluated no reference-model zones or required artifacts, ` +
+          'so no inspection-readiness verdict is stated.',
+      };
+    }
+    // The surface's verdict, not `R.ready` read as a boolean (null is not "NOT ready").
+    const verdictText =
+      verdict === 'ready' ? 'ready'
+      : verdict === 'undetermined' ? 'readiness not determined (every open artifact is filed against a reference this service cannot check)'
+      : 'NOT ready';
     return {
       summary:
         `eTMF inspection readiness for trial ${tid} (${scope} scope): ` +
-        `${R.ready ? 'ready' : 'NOT ready'} — ${R.summary.zonesComplete} of ${R.summary.zoneCount} zone(s) ` +
-        `complete, ${R.summary.totalMissing} of ${R.summary.totalRequired} required artifact(s) missing, ` +
-        `${incompleteZones} zone(s) still incomplete.`,
+        `${verdictText} — ${R.summary.zonesComplete} of ${R.summary.zoneCount} zone(s) ` +
+        `complete, ${R.summary.totalMissing} of ${R.summary.totalRequired} required artifact(s) missing ` +
+        `(${unverifiedLabel(R.summary.totalUnverified)}), ${incompleteZones} zone(s) still incomplete.`,
       facts: {
         trialId: tid,
         scope,
+        // null: not determined (the server could not check the remaining references).
         inspectionReady: R.ready,
+        basis: R.basis ?? null,
         summary: R.summary ?? null,
         zones: (R.zones ?? []).map((z) => ({
           number: z.number, name: z.name, complete: z.complete,
@@ -245,7 +287,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
         'Generate and download the inspection-readiness package',
       ],
     };
-  }, [tid, scope, completeness.loading, completeness.error, R, missing, incompleteZones]);
+  }, [tid, scope, completeness.loading, completeness.error, R, missing, incompleteZones, assessmentRan, verdict]);
   usePublishSurfaceContext('etmf', anaContext);
 
   /* ── Filing an essential document now requires an actual document ──────────
@@ -375,7 +417,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     setDl(null);
     const finish = (kind: string) => { setBusy(false); setDl(kind); setTimeout(() => setDl(null), 3200); };
     const downloadReport = () => {
-      const md = readinessReportMd(tid, scope, R, missing, clear);
+      const md = readinessReportMd(tid, scope, R, missing, verdict);
       downloadBlob(tid + '_inspection-readiness.md', new Blob([md], { type: 'text/markdown' }));
     };
     try {
@@ -385,7 +427,9 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       downloadBlob(tid + '_inspection-package.zip', blob);
       const sha = res.headers.get('X-TMF-SHA256');
       const rdy = res.headers.get('X-TMF-Ready');
-      fireToast('Inspection index generated' + (rdy != null ? ' — ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' — SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' — index + readiness, not the document bytes');
+      // 'undetermined' is the server's ready: null; it was toasted as "gaps remain" until 2026-10-15.
+      const rdyText = rdy == null ? null : rdy === 'undetermined' ? 'readiness not determined' : (rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain';
+      fireToast('Inspection index generated' + (rdyText ? ' — ' + rdyText : '') + (sha ? ' — SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' — index + readiness, not the document bytes');
       finish('zip');
     } catch {
       downloadReport();
@@ -464,8 +508,10 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
             eyebrow={"Whether " + tid + "'s TMF is complete for inspection"}
             headline={clear
               ? <>{tid}'s TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones — <b>complete</b> on a completeness basis.</>
-              : <>{tid}'s TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}.</>}
-            body={<>This assessment is <b>completeness only</b> — which DIA TMF Reference Model {scope === 'all' ? 'artifacts are' : 'essential documents are'} filed vs missing for this trial, computed from its filed artifacts. Timeliness and QC signals aren't persisted yet, so they are not part of this verdict.</>}
+              : verdict === 'undetermined'
+                ? <>Readiness not determined for {tid}'s TMF: <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? ' is' : 's are'}</b> filed against references this service cannot check.</>
+                : <>{tid}'s TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}.</>}
+            body={<>This assessment is <b>completeness only</b> — which DIA TMF Reference Model {scope === 'all' ? 'artifacts are' : 'essential documents are'} filed vs missing for this trial, computed from its filed artifacts. {basisSentence(R.basis)} Timeliness and QC signals aren't persisted yet, so they are not part of this verdict.</>}
             /* The single most reassuring sentence on the surface. It may be
                spoken from one state only — an assessment that ran and came back
                with nothing open — which is what mayReassure gates on. */
@@ -488,7 +534,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
             <div className={'etmf-lens' + (clear ? ' ok' : ' warn')}>
               <div className="etmf-lens-k">{I.checkSquare} Completeness</div>
               <div className="etmf-lens-v">{R.summary.zonesComplete}/{R.summary.zoneCount} zones</div>
-              <div className="etmf-lens-s">{clear ? 'All essentials filed' : R.summary.totalMissing + ' essential' + (R.summary.totalMissing === 1 ? '' : 's') + ' open'}</div>
+              <div className="etmf-lens-s">{clear ? 'All essentials filed' : R.summary.totalMissing + ' essential' + (R.summary.totalMissing === 1 ? '' : 's') + ' open — ' + unverifiedLabel(R.summary.totalUnverified)}</div>
             </div>
             {/* Timeliness + Quality have NO backend on the trials/:trialId path:
                 tmf_artifact_filings stores only artifact CODE + filedAt (no
@@ -522,7 +568,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                 }}
               />
               <div className="etmf-panel">
-                <div className="etmf-panel-h">{I.checkSquare} AnA punch-list <span className="x">-- {missing.length} to file before inspection</span>
+                <div className="etmf-panel-h">{I.checkSquare} AnA punch-list <span className="x">-- {missing.length} to file before inspection{R.summary.totalUnverified ? ' (' + unverifiedLabel(R.summary.totalUnverified) + ')' : ''}</span>
                   {/* "File all N" is gone. It filed every outstanding essential
                       document against a manufactured vault path in one click,
                       flipping the trial to INSPECTION-READY with nothing
@@ -581,7 +627,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
                 <div className="cm-doc-body etmf-doc-body">
                   <div className="etmf-cover">
-                    <div className="etmf-cover-badge" data-ready={clear || undefined}>{clear ? 'INSPECTION-READY' : 'NOT INSPECTION-READY'}</div>
+                    <div className="etmf-cover-badge" data-ready={clear || undefined}>{VERDICT_LABEL[verdict]}</div>
                     <h2>Trial Master File — Inspection-Readiness Package</h2>
                     <div className="etmf-cover-meta">
                       <span>Trial {tid}</span><span>DIA TMF Reference Model (ICH E6(R3) Appendix C)</span>
@@ -593,12 +639,14 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                   <div className="etmf-doc-kpis">
                     <div className="etmf-kpi"><div className="v">{R.summary.zonesComplete}/{R.summary.zoneCount}</div><div className="k">Zones complete</div></div>
                     <div className="etmf-kpi"><div className="v">{R.summary.totalRequired - R.summary.totalMissing}/{R.summary.totalRequired}</div><div className="k">{scope === 'all' ? 'Artifacts' : 'Essential docs'} filed</div></div>
-                    <div className={'etmf-kpi' + (R.summary.totalMissing ? ' warn' : '')}><div className="v">{R.summary.totalMissing}</div><div className="k">Open gaps</div></div>
+                    <div className={'etmf-kpi' + (R.summary.totalMissing ? ' warn' : '')}><div className="v">{R.summary.totalMissing}</div><div className="k">Open gaps — {unverifiedLabel(R.summary.totalUnverified)}</div></div>
                   </div>
 
                   <h3>1 — Readiness verdict (completeness)</h3>
                   <p>{clear
                     ? <>This trial's TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones. On a completeness basis it is <b>inspection-ready</b>.</>
+                    : verdict === 'undetermined'
+                    ? <>Every open {scope === 'all' ? 'artifact' : 'essential document'} in this trial's TMF ({R.summary.totalMissing}) is filed against a reference this service cannot check, so its inspection readiness is <b>not determined</b> — neither ready nor not ready. Filing each against a vault document settles it; the items are listed in §3.</>
                     : <>This trial's TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}. It is <b>not yet inspection-ready</b>; the open items are listed in §3.</>}</p>
 
                   <h3>2 — Zone index (DIA TMF Reference Model)</h3>

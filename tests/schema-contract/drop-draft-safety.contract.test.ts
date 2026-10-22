@@ -3,7 +3,7 @@
  *
  * docs/drop-dead-tables.draft.sql lists 163 `DROP TABLE` statements derived from
  * docs/DEAD_TABLES_INVENTORY.md, which is static-reference analysis. Re-measured
- * against the live 710-table schema, EIGHT of those tables are referenced by
+ * against the live 710-table schema, SEVEN of those tables are referenced by
  * shipped code. The worst is `client_access`: server/routes/client-portal.ts
  * reads it to decide which workspace an EXTERNAL CLIENT may see, so dropping it
  * is an authorization failure, not just data loss.
@@ -14,7 +14,7 @@
  *
  *   1. An unconditional RAISE EXCEPTION at the top, so the transaction dies
  *      before the first DROP.
- *   2. The eight live tables stay documented in the header, so removing the
+ *   2. The seven live tables stay documented in the header, so removing the
  *      guard means reading why it is there.
  *
  * The reference evidence is pinned too. If someone genuinely deletes
@@ -45,11 +45,13 @@ const LIVE_TABLES_IN_DRAFT: ReadonlyArray<[table: string, file: string, needle: 
   ['timeline_phases', 'server/routes/charters.ts', 'timeline_phases'],
   ['project_commitments', 'server/routes/charters.ts', 'project_commitments'],
   ['charter_audit_events', 'server/routes/charters.ts', 'charter_audit_events'],
-  [
-    'doe_studies',
-    'server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts',
-    'doe_studies',
-  ],
+  /* 2026-10-22: doe_studies left this list. Its one reader, the war-game
+     cmc-auditor, stopped reading it in cf07e244c (its rules now read the
+     interview's own fields). What still names it is the schema definition in
+     shared/schema.ts and the parent-scoped RLS sweep
+     (db/migrations/20260813_child_table_parent_scoped_rls.sql), which skips a
+     missing table through to_regclass. That makes it a lead to review, the same
+     as every other entry in the draft. It does not make it safe to drop. */
 ];
 
 describe('the draft is disarmed', () => {

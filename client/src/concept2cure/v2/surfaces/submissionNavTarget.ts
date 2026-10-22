@@ -21,6 +21,14 @@ import React from 'react';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import type { Notice } from './SubmissionSeqWorkspaces';
 
+/** Where in the Builder a readiness finding's act sends the person (F18):
+ *  `place` opens the placement form at `code` (empty when the finding names no
+ *  section), `leaf` marks the placed leaf at `code`. */
+export interface BuilderSection {
+  act: 'place' | 'leaf';
+  code: string | null;
+}
+
 export interface SubmissionNavTarget {
   /** The submission's id as the sender wrote it, or null when none was named. */
   submissionId: string | null;
@@ -28,9 +36,26 @@ export interface SubmissionNavTarget {
   sequenceId: string | null;
   /** A workspace id from SUBMISSION_WORKSPACES, or null. */
   ws: string | null;
+  /** The Builder section to open on the named sequence, or null. */
+  section: BuilderSection | null;
 }
 
 const named = (v: string | undefined): string | null => (v && v.trim() ? v.trim() : null);
+
+/** A section code longer than this is not a CTD code (3.2.P.5.1 is 9). */
+const SECTION_CODE_MAX = 64;
+
+/** The Builder section the params name, or null. It is kept only for the
+ *  Builder on a named sequence, with an act this screen knows; a `leaf` act
+ *  must name its section. */
+function builderSection(p: { builderAct?: string; sectionCode?: string }, ws: string | null, sequenceId: string | null): BuilderSection | null {
+  const act = named(p.builderAct);
+  const code = named(p.sectionCode);
+  if (ws !== 'builder' || !sequenceId || (act !== 'place' && act !== 'leaf')) return null;
+  if (code && code.length > SECTION_CODE_MAX) return null;
+  if (act === 'leaf' && !code) return null;
+  return { act, code };
+}
 
 /** The target, or null when the params name nothing this screen can open. An
  *  unknown workspace id is dropped, not trusted. */
@@ -38,12 +63,17 @@ export function readSubmissionNavTarget(p: {
   submissionId?: string;
   sequenceId?: string;
   ws?: string;
+  builderAct?: string;
+  sectionCode?: string;
 }): SubmissionNavTarget | null {
-  const ws = named(p.ws);
+  const wsParam = named(p.ws);
+  const ws = wsParam && SUBMISSION_WORKSPACES.some((w) => w.id === wsParam) ? wsParam : null;
+  const sequenceId = named(p.sequenceId);
   const t: SubmissionNavTarget = {
     submissionId: named(p.submissionId),
-    sequenceId: named(p.sequenceId),
-    ws: ws && SUBMISSION_WORKSPACES.some((w) => w.id === ws) ? ws : null,
+    sequenceId,
+    ws,
+    section: builderSection(p, ws, sequenceId),
   };
   return t.submissionId || t.sequenceId || t.ws ? t : null;
 }

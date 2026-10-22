@@ -80,7 +80,9 @@ describe('assessRecordedImpurity — a mutagenic impurity is assessed under ICH 
       'drug_substance',
     );
     if (!r.ok || r.basis !== 'ICH M7(R2)') throw new Error('expected an M7 assessment');
-    expect(r.impurityClass).toBe(4);
+    // 2026-10-15: was 4. The CMC record classes an alert with a negative Ames 5;
+    // Class 4 is an alert shared with the API, which the register does not record.
+    expect(r.impurityClass).toBe(5);
     expect(r.disposition).toBe('non-mutagenic-control');
     expect(r.acceptableIntakeUgPerDay).toBeNull();
     expect(r.withinLimit).toBeNull();
@@ -110,10 +112,11 @@ describe('assessRecordedImpurity — a mutagenic impurity is assessed under ICH 
     }
   });
 
-  it('does not need duration, route or cohort to classify a Class 5 impurity', () => {
-    /* Class 5 carries no TTC limit, so the fields the limit needs are not owed. */
+  it('does not need duration or route to classify a Class 5 impurity', () => {
+    /* Class 5 carries no TTC limit, so the fields the limit needs are not owed.
+       2026-10-15: the cohort is owed — unrecorded, it was reported as "not CoC". */
     const r = assessRecordedImpurity(
-      { impurityName: 'X', impurityType: 'mutagenic', amesResult: 'negative', structuralAlert: 'no' },
+      { impurityName: 'X', impurityType: 'mutagenic', amesResult: 'negative', structuralAlert: 'no', cohortOfConcern: 'not_coc' },
       'drug_substance',
     );
     if (!r.ok || r.basis !== 'ICH M7(R2)') throw new Error('expected an M7 assessment, got ' + JSON.stringify(r));

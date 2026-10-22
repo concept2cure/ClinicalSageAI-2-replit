@@ -36,6 +36,12 @@ describe('STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1)', () => {
     expect(stfFileName('ABC-301')).toBe('stf-abc-301.xml');
   });
 
+  // 2026-10-08 (W5/D7, sweep VP-7): a '.' in a study id is refused too (one '.'
+  // before the extension), and the refusal states the rule it applied.
+  it('refuses a dotted study id and states the one-dot rule it applied', () => {
+    expect(() => stfFileName('CL-001.02')).toThrow(/then one '\.' and the extension/);
+  });
+
   it.each(['S&1', 'abc 301', 'abc_301', 'abc/301', 'x'.repeat(64)])(
     'refuses a study id that cannot form an eCTD file name (%s) instead of escaping it',
     (studyId) => {

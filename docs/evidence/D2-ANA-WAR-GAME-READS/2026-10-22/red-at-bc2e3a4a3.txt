@@ -1,0 +1,19 @@
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > protocol: no finding on a fully answered interview rests on a field the interview never asks 10ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > ind: no finding on a fully answered interview rests on a field the interview never asks 3ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > csr: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > 510k: no finding on a fully answered interview rests on a field the interview never asks 3ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > cer: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > sop: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > nda: no finding on a fully answered interview rests on a field the interview never asks 3ms
+ ✓ tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > bla: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > pma: no finding on a fully answered interview rests on a field the interview never asks 5ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > cmc: no finding on a fully answered interview rests on a field the interview never asks 4ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > risk_management: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > safety_narrative: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > labeling: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > briefing_book: no finding on a fully answered interview rests on a field the interview never asks 1ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > stability: no finding on a fully answered interview rests on a field the interview never asks 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > the NDA war game says which checks it could not assess, and why 2ms
+ × tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts > a war game finds only what its interview could have told it > an unknown source flow is said, not assumed 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  16 failed | 1 passed (17)

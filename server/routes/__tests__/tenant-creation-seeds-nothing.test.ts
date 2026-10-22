@@ -20,9 +20,13 @@ import request from 'supertest';
 
 const h = vi.hoisted(() => ({ seedAll: vi.fn(async () => ({})), provision: vi.fn(async () => undefined) }));
 
-vi.mock('postgres', () => ({
-  default: () => (strings: TemplateStringsArray) =>
-    Promise.resolve(/INSERT INTO organizations/.test(strings.join('?')) ? [{ id: 99, name: 'Acme Bio', slug: 'acme-bio' }] : []),
+// The route writes through the runtime pool (server/db), not an owner client.
+vi.mock('../../db', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../db')>()),
+  pool: {
+    query: async (text: string) =>
+      ({ rows: /INSERT INTO organizations/.test(text) ? [{ id: 99, name: 'Acme Bio', slug: 'acme-bio' }] : [] }),
+  },
 }));
 vi.mock('../../auth', () => ({
   authMiddleware: (req: Request, _res: Response, next: NextFunction) => {

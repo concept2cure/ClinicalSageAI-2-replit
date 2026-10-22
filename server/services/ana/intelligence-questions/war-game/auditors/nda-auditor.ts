@@ -29,6 +29,18 @@ function numericVal(val: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/* A yes_no answer is a boolean from the UI and 'yes'/'no' from the AnA tool
+   surface (shared/ana/question-predicate.ts coerces the same way). */
+function isYes(val: unknown): boolean {
+  return val === true || (typeof val === 'string' && /^(yes|true)$/i.test(val.trim()));
+}
+
+/* 2026-10-22: rules converged onto the fields flows/nda-submission.ts asks
+   (`nda_type`, `cover_letter_prepared`, `integrated_safety_summary`, ...).
+   A rule still reading a key the interview never asks is reported NOT
+   ASSESSED by the war-game engine; it was left as is because the interview
+   has no question asking the same thing. */
+
 function finding(
   id: string,
   dimension: AuditDimension,
@@ -56,7 +68,7 @@ const rules: AuditRule[] = [
     title: 'Cover Letter Absent',
     question: 'The submitted NDA dossier does not include a cover letter identifying the application type, proposed indication, and applicant contact information. Can the applicant explain why this foundational regulatory correspondence was omitted from Module 1?',
     check(answers) {
-      if (isBlank(answers.cover_letter)) {
+      if (!isYes(answers.cover_letter_prepared)) {
         return finding(
           this.id,
           this.dimension,
@@ -64,10 +76,10 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No cover letter was included in the NDA submission.',
-          'A cover letter is required under 21 CFR 314.50(a) as part of the application form and must identify the drug, proposed indication, and application type.',
+          '21 CFR 314.50(a) requires a completed and signed application form (Form FDA 356h); it does not require a cover letter. FDA guidance recommends a cover letter (eCTD Module 1.2) that identifies the drug, proposed indication, and application type.',
           '21 CFR 314.50(a); FDA Guidance: Formatting, Assembling, and Submitting NDA/BLA Applications (2022)',
-          'Include a cover letter in Module 1.0 that clearly identifies the applicant, drug product, proposed indication(s), application type (505(b)(1) or 505(b)(2)), and references any pre-submission meetings with the Agency.',
-          ['cover_letter', 'application_type'],
+          'Include a cover letter in Module 1.2 (Cover letters) that clearly identifies the applicant, drug product, proposed indication(s), application type (505(b)(1) or 505(b)(2)), and references any pre-submission meetings with the Agency.',
+          ['cover_letter_prepared', 'nda_type'],
         );
       }
       return null;
@@ -91,7 +103,7 @@ const rules: AuditRule[] = [
           'A complete NDA must include all five CTD modules per 21 CFR 314.50 and ICH M4: Module 1 (Regional Administrative), Module 2 (Summaries), Module 3 (Quality/CMC), Module 4 (Nonclinical), and Module 5 (Clinical).',
           '21 CFR 314.50; ICH M4 (Organization of the CTD); FDA Guidance: eCTD Technical Specification (2023)',
           'Conduct a completeness check against the eCTD Module Checklist and ensure all five modules are populated with the required documents before submission.',
-          ['ctd_modules', 'ectd_format'],
+          ['ctd_modules', 'ctd_format'],
         );
       }
       return null;
@@ -103,7 +115,7 @@ const rules: AuditRule[] = [
     title: 'Integrated Summary of Safety (ISS) Missing',
     question: 'Can the applicant explain why the submitted dossier lacks a comprehensive Integrated Summary of Safety? The Agency considers this a critical deficiency under 21 CFR 314.50(d)(5)(vi)(a), as the ISS is essential for the benefit-risk assessment.',
     check(answers) {
-      if (isBlank(answers.integrated_summary_safety)) {
+      if (!isYes(answers.integrated_safety_summary)) {
         return finding(
           this.id,
           this.dimension,
@@ -114,7 +126,7 @@ const rules: AuditRule[] = [
           'The ISS is required under 21 CFR 314.50(d)(5)(vi)(a) to present an integrated analysis of safety data across all clinical studies in the development program.',
           '21 CFR 314.50(d)(5)(vi)(a); ICH E1 (Extent of Population Exposure); ICH M4E(R2) Section 2.7.4',
           'Prepare a comprehensive ISS including exposure data, adverse event analyses by system organ class, deaths, serious adverse events, discontinuations due to AEs, laboratory findings, vital signs, ECG data, and special populations analysis.',
-          ['integrated_summary_safety', 'safety_database_size'],
+          ['integrated_safety_summary', 'total_exposed'],
         );
       }
       return null;
@@ -134,8 +146,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No Integrated Summary of Effectiveness (ISE) was found in the submission.',
-          'The ISE is required under 21 CFR 314.50(d)(5)(vi)(b) to integrate efficacy results across studies and demonstrate substantial evidence of effectiveness.',
-          '21 CFR 314.50(d)(5)(vi)(b); 21 CFR 314.126; ICH M4E(R2) Section 2.7.3',
+          'The ISE is required under 21 CFR 314.50(d)(5)(v) to integrate efficacy results across studies and demonstrate substantial evidence of effectiveness.',
+          '21 CFR 314.50(d)(5)(v); 21 CFR 314.126; ICH M4E(R2) Section 2.7.3',
           'Prepare an ISE that integrates efficacy data across all adequate and well-controlled studies, including individual study results, pooled analyses, consistency of effect across subgroups, and dose-response relationships.',
           ['integrated_summary_effectiveness', 'pivotal_study_count'],
         );
@@ -149,7 +161,7 @@ const rules: AuditRule[] = [
     title: 'Proposed Labeling Not Submitted',
     question: 'The NDA does not include proposed prescribing information (labeling). Under 21 CFR 314.50(c)(2)(i), draft labeling is a mandatory component. How does the applicant intend for the Agency to evaluate the proposed indication, dosing, and safety information without it?',
     check(answers) {
-      if (isBlank(answers.proposed_labeling)) {
+      if (!isYes(answers.uspi_draft_complete)) {
         return finding(
           this.id,
           this.dimension,
@@ -160,7 +172,7 @@ const rules: AuditRule[] = [
           'Draft labeling conforming to 21 CFR 201.56-57 (Physician Labeling Rule format) must be submitted as part of the NDA per 21 CFR 314.50(c)(2)(i).',
           '21 CFR 314.50(c)(2)(i); 21 CFR 201.56; 21 CFR 201.57; FDA Guidance: Labeling for Human Prescription Drugs (2013)',
           'Submit proposed labeling in PLR (Physician Labeling Rule) format including Highlights, Full Prescribing Information with all required sections, and patient labeling (Medication Guide and/or Patient Package Insert as applicable).',
-          ['proposed_labeling', 'indication_statement'],
+          ['uspi_draft_complete', 'indications_usage', 'indication_statement'],
         );
       }
       return null;
@@ -174,7 +186,7 @@ const rules: AuditRule[] = [
     title: 'Dosing Inconsistency between CMC and Clinical Data',
     question: 'The dosage strength described in the CMC section (Module 3) does not appear to match the doses studied in the pivotal clinical trials (Module 5). Can the applicant reconcile this discrepancy and confirm that the to-be-marketed formulation is the same as that used in the pivotal studies?',
     check(answers) {
-      const cmcDose = String(answers.cmc_dosage_strength ?? '').toLowerCase().trim();
+      const cmcDose = String(answers.strengths ?? '').toLowerCase().trim();
       const clinicalDose = String(answers.clinical_dose ?? '').toLowerCase().trim();
       if (
         !isBlank(cmcDose) &&
@@ -187,11 +199,11 @@ const rules: AuditRule[] = [
           'critical',
           this.title,
           this.question,
-          `CMC dosage strength "${answers.cmc_dosage_strength}" does not match the clinical dose "${answers.clinical_dose}" used in pivotal trials. This raises questions about bioequivalence of the to-be-marketed formulation.`,
+          `CMC dosage strength "${answers.strengths}" does not match the clinical dose "${answers.clinical_dose}" used in pivotal trials. This raises questions about bioequivalence of the to-be-marketed formulation.`,
           'The marketed drug product must be consistent with the formulation used in pivotal studies, or a bridging bioequivalence study must be provided per 21 CFR 314.50(d)(1) and ICH M4Q.',
           '21 CFR 314.50(d)(1); ICH M4Q(R1) Section 3.2.P; FDA Guidance: SUPAC (Scale-Up and Post-Approval Changes)',
           'Ensure the CMC dosage strength matches clinical trial doses, or provide a bridging bioavailability/bioequivalence study demonstrating comparability of the to-be-marketed formulation to the clinical trial formulation.',
-          ['cmc_dosage_strength', 'clinical_dose', 'bioequivalence_study'],
+          ['strengths', 'clinical_dose', 'bioequivalence_study'],
         );
       }
       return null;
@@ -203,7 +215,7 @@ const rules: AuditRule[] = [
     title: 'Indication Mismatch between Label and Clinical Data',
     question: 'The proposed indication in the draft labeling does not appear consistent with the patient population actually studied in the pivotal trials. Can the applicant clarify whether the claimed indication is supported by the enrolled population and primary endpoint results?',
     check(answers) {
-      const labelIndication = String(answers.label_indication ?? '').toLowerCase().trim();
+      const labelIndication = String(answers.indications_usage ?? '').toLowerCase().trim();
       const studiedIndication = String(answers.studied_indication ?? '').toLowerCase().trim();
       if (
         !isBlank(labelIndication) &&
@@ -216,11 +228,11 @@ const rules: AuditRule[] = [
           'warning',
           this.title,
           this.question,
-          `Label indication "${answers.label_indication}" differs from studied indication "${answers.studied_indication}". The proposed labeling claim may exceed the evidence generated.`,
+          `Label indication "${answers.indications_usage}" differs from studied indication "${answers.studied_indication}". The proposed labeling claim may exceed the evidence generated.`,
           'The proposed indication must be supported by substantial evidence from adequate and well-controlled studies per 21 CFR 314.126.',
           '21 CFR 314.126; 21 CFR 201.57(c)(2); FDA Guidance: Indication-Specific Labeling (2018)',
           'Align the proposed label indication with the clinical evidence, or provide additional analyses demonstrating that the broader claim is supported by the study data, including relevant subgroup analyses.',
-          ['label_indication', 'studied_indication', 'proposed_labeling'],
+          ['indications_usage', 'studied_indication', 'uspi_draft_complete'],
         );
       }
       return null;
@@ -262,7 +274,7 @@ const rules: AuditRule[] = [
     question: 'The applicant claims a specific number of subjects in the safety database, but the total exposure data presented in the ISS does not align with this figure. Can the applicant provide a reconciliation of the safety population across all studies?',
     check(answers) {
       const dbSize = numericVal(answers.safety_database_size);
-      const exposureCount = numericVal(answers.total_exposure_subjects);
+      const exposureCount = numericVal(answers.total_exposed);
       if (
         dbSize !== null &&
         exposureCount !== null &&
@@ -278,7 +290,7 @@ const rules: AuditRule[] = [
           'The safety database must be consistent across all submission components per ICH E1 and 21 CFR 314.50(d)(5)(vi)(a). Discrepancies undermine the reliability of the safety assessment.',
           'ICH E1; 21 CFR 314.50(d)(5)(vi)(a); ICH M4E(R2) Section 2.7.4',
           'Reconcile the safety database across all submission sections. Provide a clear accounting of how subjects were included or excluded from each safety analysis set.',
-          ['safety_database_size', 'total_exposure_subjects', 'integrated_summary_safety'],
+          ['safety_database_size', 'total_exposed', 'integrated_safety_summary'],
         );
       }
       return null;
@@ -290,22 +302,21 @@ const rules: AuditRule[] = [
     id: rid('wrong_application_type'),
     dimension: 'regulatory_alignment',
     title: 'Application Type Not Justified',
-    question: 'The applicant has filed under 505(b)(2) but has not identified a listed drug or provided the required right-of-reference or suitability petition. Can the applicant confirm the regulatory basis for this application type and provide the necessary supporting documentation?',
+    question: 'The applicant has filed under 505(b)(2) but has not identified the listed drug(s) or published literature relied upon. Can the applicant confirm the regulatory basis for this application type and provide the necessary supporting documentation?',
     check(answers) {
-      const appType = String(answers.application_type ?? '').toLowerCase();
-      if (appType.includes('505(b)(2)') || appType.includes('505b2')) {
-        if (isBlank(answers.listed_drug_reference)) {
+      if (answers.nda_type === '505b2') {
+        if (isBlank(answers.listed_drug_info)) {
           return finding(
             this.id,
             this.dimension,
             'critical',
             this.title,
             this.question,
-            `Application type is "${answers.application_type}" but no listed drug or right-of-reference is identified.`,
-            'A 505(b)(2) application must identify the listed drug(s) relied upon and include a right-of-reference letter or suitability petition per 21 CFR 314.54.',
+            'Application type is 505(b)(2) but no listed drug or right-of-reference is identified.',
+            'A 505(b)(2) application must identify the listed drug(s) and/or published literature relied upon for safety and/or effectiveness, and include the patent certifications or statements and exclusivity information required by 21 CFR 314.54 and 314.50(i)-(j); no right-of-reference letter or suitability petition is required, since a 505(b)(2) by definition relies on data the applicant has no right of reference to.',
             '21 CFR 314.54; FDA Guidance: Applications Covered by Section 505(b)(2) (2023); 21 CFR 314.50(i)',
             'Identify the listed drug(s) relied upon for safety and/or efficacy data, submit a right-of-reference letter if relying on proprietary data, or reclassify as a 505(b)(1) full NDA with complete nonclinical and clinical data packages.',
-            ['application_type', 'listed_drug_reference', 'suitability_petition'],
+            ['nda_type', 'listed_drug_info'],
           );
         }
       }
@@ -341,7 +352,10 @@ const rules: AuditRule[] = [
     title: 'Patent Certifications Not Provided',
     question: 'The NDA does not include the required patent certifications under 21 CFR 314.50(i). Without these certifications, the Agency cannot assess potential patent-related review issues. Can the applicant provide the required paragraph I-IV certifications for all listed patents?',
     check(answers) {
-      if (isBlank(answers.patent_certifications)) {
+      /* 21 CFR 314.50(i) certifications are a 505(b)(2) obligation; a
+         505(b)(1) or supplement applicant is not asked for them, and
+         'not_applicable' is an answer, not an omission. */
+      if (answers.nda_type === '505b2' && isBlank(answers.patent_certifications)) {
         return finding(
           this.id,
           this.dimension,
@@ -349,10 +363,10 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Required patent certifications are absent from the submission.',
-          'Patent certifications (Paragraph I-IV) are required under 21 CFR 314.50(i) for any drug product with listed patents in the Orange Book.',
+          'Patent certifications (Paragraph I-IV) are required under 21 CFR 314.50(i) for a 505(b)(2) application, for each patent listed in the Orange Book that claims the listed drug relied upon or an approved use of it. A 505(b)(1) applicant instead submits patent information on its own drug under 21 CFR 314.50(h) and 314.53.',
           '21 CFR 314.50(i); 21 CFR 314.53; FD&C Act Section 505(b)(2)(A) and 505(j)(2)(A)',
           'Submit the required patent certifications (Paragraph I, II, III, or IV) for each patent listed in the Orange Book for the reference listed drug. If Paragraph IV certifications are made, prepare for potential patent litigation and 30-month stay provisions.',
-          ['patent_certifications', 'listed_drug_reference', 'application_type'],
+          ['patent_certifications', 'listed_drug_info', 'nda_type'],
         );
       }
       return null;
@@ -364,7 +378,7 @@ const rules: AuditRule[] = [
     title: 'REMS Not Addressed',
     question: 'The safety profile of this drug suggests the need for a Risk Evaluation and Mitigation Strategy (REMS), yet no REMS proposal or justification for its absence has been provided. How does the applicant intend to ensure that the benefits of the drug outweigh its risks without additional risk mitigation measures?',
     check(answers) {
-      if (isBlank(answers.rems_proposal) && isBlank(answers.rems_justification)) {
+      if (isBlank(answers.rems_elements) && isBlank(answers.rems_justification)) {
         return finding(
           this.id,
           this.dimension,
@@ -375,7 +389,7 @@ const rules: AuditRule[] = [
           'Under FD&C Act Section 505-1, FDA may require a REMS if necessary to ensure the benefits outweigh the risks. The applicant should proactively address whether REMS is warranted.',
           'FD&C Act Section 505-1; 21 CFR 314.50(d)(5)(viii); FDA Guidance: REMS (2020)',
           'Either propose a REMS (which may include a Medication Guide, Communication Plan, and/or Elements to Assure Safe Use) or provide a detailed justification explaining why a REMS is not necessary based on the safety profile.',
-          ['rems_proposal', 'rems_justification', 'safety_concerns'],
+          ['rems_required', 'rems_elements', 'rems_justification'],
         );
       }
       return null;
@@ -387,7 +401,7 @@ const rules: AuditRule[] = [
     title: 'PDUFA User Fee Not Confirmed',
     question: 'The submission does not confirm that the required PDUFA user fee has been submitted. Under PDUFA VII, the application will not be received for review until the user fee is paid. Can the applicant confirm the fee payment status?',
     check(answers) {
-      if (isBlank(answers.pdufa_user_fee_paid)) {
+      if (!isYes(answers.user_fee_paid)) {
         return finding(
           this.id,
           this.dimension,
@@ -397,8 +411,8 @@ const rules: AuditRule[] = [
           'PDUFA user fee payment status is not confirmed in the submission.',
           'Under PDUFA VII (FD&C Act Section 736), a prescription drug user fee must accompany the NDA submission. The application will not be received for filing without confirmed fee payment.',
           'FD&C Act Section 736; PDUFA VII Commitment Letter; 21 CFR 314.50(a)',
-          'Confirm PDUFA user fee payment and include the payment confirmation or fee waiver/reduction request in Module 1.2 of the eCTD submission.',
-          ['pdufa_user_fee_paid', 'fee_waiver_request'],
+          'Confirm PDUFA user fee payment and include the user fee cover sheet (Form FDA 3397), with the payment confirmation or the fee waiver/reduction determination, in Module 1.1 (Forms) of the eCTD submission.',
+          ['user_fee_paid'],
         );
       }
       return null;
@@ -412,22 +426,18 @@ const rules: AuditRule[] = [
     title: 'Inadequate Pivotal Trial Design',
     question: 'The pivotal trial(s) do not appear to meet the standard of adequate and well-controlled studies under 21 CFR 314.126. Can the applicant address specifically how the study design controls for bias, ensures adequate comparator selection, and permits valid inference of treatment effect?',
     check(answers) {
-      const pivotalDesign = String(answers.pivotal_trial_design ?? '').toLowerCase();
-      if (
-        !isBlank(pivotalDesign) &&
-        (pivotalDesign.includes('single-arm') || pivotalDesign.includes('uncontrolled') || pivotalDesign.includes('open-label observational'))
-      ) {
+      if (answers.pivotal_study_design === 'single_arm') {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          `Pivotal trial design "${answers.pivotal_trial_design}" may not meet the regulatory standard for adequate and well-controlled studies.`,
+          'Pivotal trial design "single-arm" may not meet the regulatory standard for adequate and well-controlled studies.',
           'Substantial evidence of effectiveness requires adequate and well-controlled investigations per 21 CFR 314.126. Single-arm or uncontrolled studies are generally insufficient unless the disease is serious, the endpoint is objective, and the natural history is well-characterized.',
           '21 CFR 314.126; FD&C Act Section 505(d); ICH E9(R1); FDA Guidance: Demonstrating Substantial Evidence of Effectiveness (2019)',
           'Consider a randomized, controlled trial design (preferably double-blind) for pivotal evidence. If a single-arm design is proposed, provide robust justification including historical control data and an objective, well-validated endpoint.',
-          ['pivotal_trial_design', 'pivotal_study_count', 'primary_endpoint'],
+          ['pivotal_study_design', 'pivotal_study_count', 'primary_endpoint'],
         );
       }
       return null;
@@ -439,7 +449,7 @@ const rules: AuditRule[] = [
     title: 'No Pre-Specified Primary Analysis',
     question: 'The NDA submission does not document that the primary analysis was pre-specified in the Statistical Analysis Plan (SAP) before database lock. Post-hoc selection of analytical methods represents a critical source of bias. Can the applicant provide the finalized SAP with its date of completion?',
     check(answers) {
-      if (isBlank(answers.prespecified_sap)) {
+      if (isBlank(answers.statistical_analysis_plan)) {
         return finding(
           this.id,
           this.dimension,
@@ -448,9 +458,9 @@ const rules: AuditRule[] = [
           this.question,
           'No pre-specified Statistical Analysis Plan (SAP) was referenced or provided.',
           'The primary analysis must be pre-specified per ICH E9 Section 5.1 and ICH E9(R1) to avoid bias from post-hoc analytical selection.',
-          'ICH E9 Section 5.1; ICH E9(R1) Addendum; 21 CFR 314.126(b)(2)(v); FDA Guidance: Statistical Principles for Clinical Trials (1998)',
+          'ICH E9 Section 5.1; ICH E9(R1) Addendum; 21 CFR 314.126(b)(1) and (b)(7); FDA Guidance: Statistical Principles for Clinical Trials (1998)',
           'Provide the finalized SAP dated before database lock, clearly specifying the primary analysis method, handling of missing data (estimand framework per ICH E9(R1)), sensitivity analyses, and multiplicity adjustments.',
-          ['prespecified_sap', 'statistical_method', 'primary_endpoint'],
+          ['statistical_analysis_plan', 'primary_endpoint'],
         );
       }
       return null;
@@ -474,10 +484,10 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Multiple primary/key secondary endpoints are declared but no multiplicity adjustment strategy is described.',
-          'When multiple primary endpoints or a gatekeeping strategy for key secondary endpoints is used, a pre-specified multiplicity adjustment is required per ICH E9 Section 5.7 and FDA Guidance on Multiple Endpoints.',
-          'ICH E9 Section 5.7; ICH E9(R1); FDA Guidance: Multiple Endpoints in Clinical Trials (2022)',
+          'When multiple primary endpoints or a gatekeeping strategy for key secondary endpoints is used, a pre-specified multiplicity adjustment is required per ICH E9 Section 5.6 and FDA Guidance on Multiple Endpoints.',
+          'ICH E9 Section 5.6; ICH E9(R1); FDA Guidance: Multiple Endpoints in Clinical Trials (2022)',
           'Implement a pre-specified multiplicity adjustment strategy such as hierarchical (fixed-sequence) testing, Hochberg, Holm, or graphical testing procedures. Document the strategy in the SAP.',
-          ['multiple_primary_endpoints', 'multiplicity_adjustment', 'prespecified_sap'],
+          ['multiple_primary_endpoints', 'multiplicity_adjustment', 'statistical_analysis_plan'],
         );
       }
       return null;
@@ -524,7 +534,7 @@ const rules: AuditRule[] = [
           'Substantial evidence of effectiveness generally requires at least two adequate and well-controlled studies per FD&C Act Section 505(d), though FDA has outlined circumstances where a single study may suffice.',
           'FD&C Act Section 505(d); FDA Guidance: Providing Clinical Evidence of Effectiveness (1998); 21 CFR 314.126',
           'If relying on a single pivotal study, ensure it provides a large, multicenter trial with a highly statistically significant result (p < 0.001), internal consistency across subgroups, and clinically meaningful effect size. Alternatively, add a confirmatory study.',
-          ['pivotal_study_count', 'pivotal_trial_design', 'primary_endpoint'],
+          ['pivotal_study_count', 'pivotal_study_design', 'primary_endpoint'],
         );
       }
       return null;
@@ -547,7 +557,7 @@ const rules: AuditRule[] = [
           this.title,
           `The projected approval timeline of ${timeline} months is shorter than even a Priority Review cycle (6 months). Has the applicant accounted for the standard PDUFA review timeline?`,
           `Projected approval timeline of ${timeline} months is unrealistically short.`,
-          'Under PDUFA VII, the standard NDA review clock is 10 months (Standard Review) or 6 months (Priority Review) from the filing date. Accelerated programs may modify the timeline but rarely compress below 6 months.',
+          'Under PDUFA VII, the standard NDA review clock is 10 months (Standard Review) or 6 months (Priority Review); for new molecular entity NDAs reviewed under the PDUFA Program, the clock runs from the 60-day filing date (12 or 8 months from receipt), while for non-NME NDAs it runs from the receipt date. Accelerated programs may modify the timeline but rarely compress below 6 months.',
           'PDUFA VII Commitment Letter; FD&C Act Section 505(c); FDA MAPP 6020.3 (NDA Review Timelines)',
           'Adjust the projected timeline to at least 10 months for Standard Review or 6 months for Priority Review. Factor in potential FDA information requests (Day 74 letter), pre-approval facility inspections, and potential advisory committee meetings.',
           ['projected_approval_months', 'review_designation', 'pdufa_goal_date'],
@@ -573,7 +583,7 @@ const rules: AuditRule[] = [
           'The CMC section must demonstrate that the manufacturing process is validated at commercial scale per 21 CFR 314.50(d)(1) and ICH Q8(R2) pharmaceutical development principles.',
           '21 CFR 314.50(d)(1); ICH Q8(R2); ICH Q10; FDA Guidance: Process Validation (2011)',
           'Provide process validation data at commercial scale, including at least three consecutive production batches demonstrating process consistency, critical quality attributes within specification, and comparability to clinical trial material.',
-          ['manufacturing_scaleup', 'cmc_dosage_strength', 'batch_validation'],
+          ['manufacturing_scaleup', 'strengths', 'batch_analysis'],
         );
       }
       return null;
@@ -593,8 +603,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No commercial supply chain or distribution plan is described in the submission.',
-          'All manufacturing, testing, and packaging sites must be identified in the NDA per 21 CFR 314.50(d)(1) to allow pre-approval inspections under 21 CFR 314.110.',
-          '21 CFR 314.50(d)(1); 21 CFR 314.110; FDA Guidance: Pre-Approval Inspections (2020)',
+          'All manufacturing, testing, and packaging sites must be identified in the NDA per 21 CFR 314.50(d)(1) to allow pre-approval inspections under FD&C Act section 704 (see 21 CFR 314.125(b) for refusal to approve when facilities or controls are inadequate or inspection is not permitted).',
+          '21 CFR 314.50(d)(1); FD&C Act section 704; 21 CFR 314.125(b); FDA Guidance: Pre-Approval Inspections (2020)',
           'Identify all manufacturing, testing, and packaging facilities in Module 3, including API suppliers, and confirm readiness for pre-approval inspections. Include site registration numbers and current cGMP compliance status.',
           ['supply_chain_plan', 'manufacturing_sites'],
         );
@@ -616,8 +626,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No launch quantity projections or manufacturing capacity assessment is provided.',
-          'While not a strict filing requirement, FDA has expressed concern about drug shortages and expects applicants to have sufficient manufacturing capacity per FD&C Act Title X.',
-          'FD&C Act Title X (Drug Shortage Prevention); FDA Guidance: Drug Shortage Management (2020); 21 CFR 314.81(b)(3)(iii)',
+          'While not a strict filing requirement, FDA has expressed concern about drug shortages and expects applicants to have sufficient manufacturing capacity, consistent with the drug shortage provisions added by FDASIA Title X (FD&C Act section 506C; 21 CFR 314.81(b)(3)(iii)).',
+          'FDASIA Title X; FD&C Act section 506C (Drug Shortage Prevention); FDA Guidance: Drug Shortage Management (2020); 21 CFR 314.81(b)(3)(iii)',
           'Include launch supply projections and demonstrate manufacturing capacity to meet projected demand for the first 12-24 months post-approval. Address contingency plans for supply disruptions.',
           ['launch_quantity_projection', 'manufacturing_scaleup', 'supply_chain_plan'],
         );
@@ -633,8 +643,7 @@ const rules: AuditRule[] = [
     title: 'Submission Not in eCTD Format',
     question: 'The NDA does not appear to be in electronic Common Technical Document (eCTD) format. Since May 2017, eCTD is the mandatory submission format for all NDAs. Can the applicant confirm the submission format and provide an eCTD-compliant submission?',
     check(answers) {
-      const format = String(answers.ectd_format ?? '').toLowerCase();
-      if (isBlank(answers.ectd_format) || format === 'no' || format === 'false' || format.includes('paper') || format.includes('nees')) {
+      if (isBlank(answers.ctd_format) || answers.ctd_format === 'paper') {
         return finding(
           this.id,
           this.dimension,
@@ -645,7 +654,7 @@ const rules: AuditRule[] = [
           'eCTD format is mandatory for all NDA submissions as of May 5, 2017 per FDA Guidance and 21 CFR 314.50(l). Paper or non-eCTD electronic submissions will not be accepted.',
           '21 CFR 314.50(l); FDA Guidance: Providing Regulatory Submissions in eCTD Format (2023); ICH M8 (eCTD v4.0)',
           'Reformat the entire submission in eCTD v4.0 format using an eCTD publishing tool that generates valid XML backbone files, proper granule structure, and compliant PDF documents.',
-          ['ectd_format', 'ctd_modules'],
+          ['ctd_format'],
         );
       }
       return null;
@@ -657,7 +666,7 @@ const rules: AuditRule[] = [
     title: 'Module 2 Summaries Missing',
     question: 'Module 2 of the CTD is incomplete or missing. The Quality Overall Summary, Nonclinical Overview, and Clinical Overview are critical reviewer aids. Without them, how does the applicant expect the review team to efficiently navigate the application?',
     check(answers) {
-      if (isBlank(answers.module2_summaries)) {
+      if (isBlank(answers.module_2_summaries)) {
         return finding(
           this.id,
           this.dimension,
@@ -668,7 +677,7 @@ const rules: AuditRule[] = [
           'Module 2 summaries are mandatory components of the CTD per ICH M4 and include: 2.2 (CTD Introduction), 2.3 (Quality Overall Summary), 2.4 (Nonclinical Overview), 2.5 (Clinical Overview), 2.6 (Nonclinical Written and Tabulated Summaries), and 2.7 (Clinical Summary).',
           'ICH M4; ICH M4Q(R1) Section 2.3; ICH M4S(R2) Section 2.6; ICH M4E(R2) Sections 2.5 and 2.7; 21 CFR 314.50',
           'Complete all Module 2 documents including the Quality Overall Summary (2.3), Nonclinical Overview (2.4), Clinical Overview (2.5), and all nonclinical and clinical written/tabulated summaries (2.6 and 2.7).',
-          ['module2_summaries', 'ctd_modules'],
+          ['module_2_summaries', 'module_2_completed'],
         );
       }
       return null;
@@ -691,7 +700,7 @@ const rules: AuditRule[] = [
           'A comprehensive ToC is required per 21 CFR 314.50(b) and is essential for eCTD navigation. The eCTD backbone itself provides structural navigation, but a reader-friendly ToC document is also expected.',
           '21 CFR 314.50(b); FDA Guidance: Providing Regulatory Submissions in eCTD Format (2023)',
           'Generate a comprehensive, hyperlinked Table of Contents document that maps every submission document to its CTD module location. Ensure all hyperlinks in eCTD PDFs are functional.',
-          ['table_of_contents', 'ectd_format'],
+          ['table_of_contents', 'ctd_format'],
         );
       }
       return null;
@@ -704,7 +713,7 @@ const rules: AuditRule[] = [
     question: 'The eCTD submission lacks proper intra- and inter-document hyperlinks, making cross-referencing between related sections extremely difficult. FDA reviewers rely on these hyperlinks for efficient navigation. Can the applicant update the submission with functional links?',
     check(answers) {
       const hyperlinks = String(answers.hyperlinks_present ?? '').toLowerCase();
-      if (hyperlinks === 'no' || hyperlinks === 'false' || (isBlank(answers.hyperlinks_present) && !isBlank(answers.ectd_format))) {
+      if (hyperlinks === 'no' || hyperlinks === 'false' || (isBlank(answers.hyperlinks_present) && !isBlank(answers.ctd_format))) {
         return finding(
           this.id,
           this.dimension,
@@ -715,7 +724,7 @@ const rules: AuditRule[] = [
           'FDA expects functional hyperlinks within and between eCTD documents per FDA Guidance on eCTD submissions. Hyperlinks should connect cross-references, tables, figures, and bibliographic citations.',
           'FDA Guidance: Providing Regulatory Submissions in eCTD Format (2023); FDA eCTD Validation Criteria v4.0',
           'Add functional hyperlinks for all cross-references, including links from Module 2 summaries to underlying Module 3-5 data, from text references to tables/figures, and from bibliographic citations to listed references.',
-          ['hyperlinks_present', 'ectd_format', 'table_of_contents'],
+          ['hyperlinks_present', 'ctd_format', 'table_of_contents'],
         );
       }
       return null;
@@ -733,7 +742,7 @@ const rules: AuditRule[] = [
       if (
         !isBlank(seriousRisks) &&
         (seriousRisks.includes('death') || seriousRisks.includes('fatal') || seriousRisks.includes('life-threatening') || seriousRisks.includes('organ damage') || seriousRisks.includes('black box')) &&
-        isBlank(answers.proposed_boxed_warning)
+        (!isYes(answers.boxed_warning_anticipated) || isBlank(answers.boxed_warning_text))
       ) {
         return finding(
           this.id,
@@ -742,10 +751,11 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           `Serious safety risks identified ("${answers.serious_safety_risks}") but no Boxed Warning is proposed. FDA may require one under 21 CFR 201.57(c)(1).`,
-          'A Boxed Warning is required for adverse reactions so serious relative to the drug\'s benefit that they are essential to consider in deciding whether to prescribe the drug, per 21 CFR 201.57(c)(1).',
-          '21 CFR 201.57(c)(1); 21 CFR 201.56(d)(1); FDA Guidance: Warnings and Precautions in Labeling (2011)',
+          // 2026-10-15: attributed this criterion to 21 CFR 201.57(c)(1) and cited the guidance by a wrong title.
+          'A Boxed Warning is required for adverse reactions so serious relative to the drug\'s benefit that they are essential to consider in deciding whether to prescribe the drug, per FDA guidance (2011) on the Warnings and Precautions, Contraindications and Boxed Warning sections.',
+          '21 CFR 201.57(c)(1); 21 CFR 201.56(d)(1); FDA guidance (2011), Warnings and Precautions, Contraindications, and Boxed Warning Sections of Labeling for Human Prescription Drug and Biological Products — Content and Format (title only)',
           'Evaluate whether a Boxed Warning is warranted based on the safety data. If serious risks are identified, propose Boxed Warning language and corresponding Medication Guide. If a Boxed Warning is not warranted, provide detailed justification with supportive data.',
-          ['serious_safety_risks', 'proposed_boxed_warning', 'proposed_labeling', 'rems_proposal'],
+          ['serious_safety_risks', 'boxed_warning_anticipated', 'boxed_warning_text', 'uspi_draft_complete', 'rems_required'],
         );
       }
       return null;
@@ -755,9 +765,13 @@ const rules: AuditRule[] = [
     id: rid('no_pediatric_study_plan'),
     dimension: 'risk_identification',
     title: 'Pediatric Study Plan (PSP) Not Addressed',
-    question: 'The NDA does not address pediatric development obligations. Under the Pediatric Research Equity Act (PREA), all NDAs must include pediatric study plans unless a waiver or deferral has been granted. Can the applicant provide the agreed PSP or the granted waiver/deferral?',
+    question: 'The NDA does not address pediatric development obligations. Under the Pediatric Research Equity Act (PREA), an NDA for a new active ingredient, indication, dosage form, dosing regimen or route of administration must address pediatric assessment unless a waiver or deferral has been granted. Can the applicant provide the agreed PSP or the granted waiver/deferral?',
     check(answers) {
-      if (isBlank(answers.pediatric_study_plan) && isBlank(answers.pediatric_waiver)) {
+      /* `prea_applicable` 'waiver' / 'deferral' / 'orphan_exempt' is the
+         waiver, deferral or exemption; 'yes' needs the iPSP, which the
+         interview asks only then. */
+      const prea = answers.prea_applicable;
+      if (isBlank(prea) || (prea === 'yes' && !isYes(answers.ipsp_submitted))) {
         return finding(
           this.id,
           this.dimension,
@@ -765,10 +779,10 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No Pediatric Study Plan (PSP) or pediatric waiver/deferral documentation is included.',
-          'Under PREA (FD&C Act Section 505B), all NDAs must contain a pediatric assessment or an approved pediatric study deferral or waiver. A PSP must be submitted and agreed upon before the NDA is filed.',
+          'Under PREA (FD&C Act Section 505B), an NDA for a new active ingredient, new indication, new dosage form, new dosing regimen or new route of administration must contain a pediatric assessment or an FDA-granted pediatric study deferral or waiver. Indications with orphan designation are exempt, except molecularly targeted oncology drugs under Section 505B(a)(3). For these applications, an initial PSP must be submitted (generally within 60 days of the End-of-Phase 2 meeting) and agreed with FDA before the NDA is filed.',
           'FD&C Act Section 505B (PREA); FDA Guidance: Pediatric Study Plans (2020); 21 CFR 314.55',
           'Submit the agreed Pediatric Study Plan (PSP) or documentation of an FDA-granted full or partial pediatric waiver or deferral. Include the FDA correspondence confirming the PSP agreement.',
-          ['pediatric_study_plan', 'pediatric_waiver', 'target_population_age'],
+          ['prea_applicable', 'ipsp_submitted', 'pediatric_studies_planned'],
         );
       }
       return null;
@@ -780,7 +794,7 @@ const rules: AuditRule[] = [
     title: 'Pharmacovigilance Plan Not Included',
     question: 'The NDA does not include a post-marketing pharmacovigilance plan. Given the limitations of pre-approval safety databases, how does the applicant intend to monitor for rare or delayed adverse events in the broader population after approval?',
     check(answers) {
-      if (isBlank(answers.pharmacovigilance_plan)) {
+      if (isBlank(answers.signal_detection_plan)) {
         return finding(
           this.id,
           this.dimension,
@@ -791,7 +805,7 @@ const rules: AuditRule[] = [
           'A pharmacovigilance plan addressing post-marketing safety surveillance is expected per ICH E2E and may be required as a post-marketing commitment or requirement under 21 CFR 314.81.',
           'ICH E2E; 21 CFR 314.81; FD&C Act Section 505(o)(3); FDA Guidance: Post-Marketing Safety Reporting (2001)',
           'Develop a comprehensive pharmacovigilance plan including routine pharmacovigilance activities, additional surveillance for identified and potential risks, periodic safety update reporting (PSUR/PBRER per ICH E2C(R2)), and signal detection methodology.',
-          ['pharmacovigilance_plan', 'safety_concerns', 'rems_proposal'],
+          ['signal_detection_plan', 'periodic_safety_reports', 'rems_required'],
         );
       }
       return null;
@@ -811,10 +825,10 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No drug-drug interaction assessment is provided in the NDA.',
-          'A comprehensive DDI assessment including in vitro metabolism studies (CYP enzymes, transporters) and clinical DDI studies is required per 21 CFR 314.50(d)(5) and FDA DDI Guidance.',
-          '21 CFR 314.50(d)(5); FDA Guidance: In Vitro Drug Interaction Studies (2020); FDA Guidance: Clinical Drug Interaction Studies (2020); ICH M4E(R2) Section 2.7.2',
+          'A comprehensive DDI assessment including in vitro metabolism studies (CYP enzymes, transporters) and clinical DDI studies is required per 21 CFR 314.50(d)(5) and ICH M12.',
+          '21 CFR 314.50(d)(5); ICH M12 Drug Interaction Studies (FDA final guidance, 2024); ICH M4E(R2) Section 2.7.2',
           'Provide a complete DDI evaluation including in vitro CYP inhibition/induction studies (CYP3A4, 2D6, 2C9, etc.), transporter studies (P-gp, OATP, BCRP), and clinical DDI studies with sensitive substrates and strong inhibitors/inducers. Include DDI recommendations in the proposed labeling.',
-          ['ddi_assessment', 'cyp_metabolism', 'proposed_labeling'],
+          ['ddi_assessment', 'clinical_ddi_completed', 'uspi_draft_complete'],
         );
       }
       return null;

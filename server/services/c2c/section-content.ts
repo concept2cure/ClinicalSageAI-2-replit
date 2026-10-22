@@ -156,11 +156,10 @@ export function sectionPlainText(content: unknown): string {
 /**
  * The section statuses that count as COMPLETE.
  *
- * Not a fresh opinion — this mirrors `c2c_recompute_document_readiness()`
- * (migrations/20260528_phase9_document_schema.sql), the trigger that maintains
- * `c2c_documents.readiness`:
- *
- *     COUNT(*) FILTER (WHERE s.status IN ('approved','locked')) / COUNT(*)
+ * Not a fresh opinion — this mirrors `c2c_document_counted_readiness()`
+ * (migrations/20260528_phase9_document_schema.sql), which the trigger that
+ * maintains `c2c_documents.readiness` calls: approved or locked over the
+ * sections that hold no other section (countedSectionSql, below).
  *
  * The database is the authority; this is the TypeScript reading of it, and
  * tests/schema-contract/c2c-section-completion.contract.test.ts parses that
@@ -214,4 +213,37 @@ export function completeStatusSqlList(): string {
     }
   }
   return values.map((v) => `'${v}'`).join(', ');
+}
+
+/**
+ * The sections readiness counts, as a SQL predicate over the section alias:
+ * every section except an empty heading, one still 'todo' that another section
+ * of the same document names as its parent.
+ *
+ * An empty heading ('M1', 'M2', '3.2.S') is never approved, so counting it kept
+ * every CTD document under 100% (an IND with every content section approved
+ * read 79). A heading someone has written in is counted like any section, so
+ * unsigned text there still holds the figure under 100% (review of F23 8/9). The readiness trigger
+ * (c2c_document_counted_readiness in migrations/20260528_phase9_document_schema.sql)
+ * carries this exact text, and tests/schema-contract/c2c-section-completion
+ * reads it back out of the migration (FILING_SPINE F23 8/9).
+ */
+export function countedSectionSql(alias = 's'): string {
+  if (!/^[a-z_][a-z0-9_]*$/.test(alias) || alias === 'held') {
+    throw new Error(`countedSectionSql: unsafe alias ${JSON.stringify(alias)}`);
+  }
+  return `(${alias}.status <> 'todo' OR NOT EXISTS (SELECT 1 FROM c2c_document_sections held WHERE held.document_id = ${alias}.document_id AND held.parent_key = ${alias}.section_key))`;
+}
+
+/**
+ * countedSectionSql's rule over rows already read: each row marked `counted`
+ * unless it is still 'todo' and another row of the same document names it as
+ * its parent. The rows must be every section of their documents, as a
+ * document's own read returns them.
+ */
+export function markCountedSections<T extends { document_id: string; section_key: string; parent_key: string | null; status: string }>(
+  rows: readonly T[],
+): Array<T & { counted: boolean }> {
+  const parents = new Set(rows.filter((r) => r.parent_key).map((r) => `${r.document_id}\u0000${r.parent_key}`));
+  return rows.map((r) => ({ ...r, counted: r.status !== 'todo' || !parents.has(`${r.document_id}\u0000${r.section_key}`) }));
 }

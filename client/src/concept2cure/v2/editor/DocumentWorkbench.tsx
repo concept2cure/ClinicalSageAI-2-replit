@@ -2177,7 +2177,10 @@ export function DocumentWorkbench({
     activeSectionId, docPane: () => docScrollRef.current,
   });
   /* F22b: a market's editing copy, created bound to its document and opened. */
-  const marketCopy = useCreateMarketCopy({ programId, fireToast, openDocument: openPulledDocument });
+  const treeTitleRef = useRef<HTMLDivElement>(null);
+  const marketCopy = useCreateMarketCopy({
+    programId, fireToast, openDocument: openPulledDocument, focusOpened: () => treeTitleRef.current?.focus(),
+  });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -3884,7 +3887,10 @@ export function DocumentWorkbench({
       {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
-          <div className="ed-tree-t">
+          {/* Focusable by script only: after a market's editing copy is created
+              and opened, focus lands here, on the opened document's name
+              (accessibility review, 2026-10-15; FilingMarkets.tsx). */}
+          <div className="ed-tree-t" tabIndex={-1} ref={treeTitleRef}>
             {unboundDraft ? activeDoc?.title : filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
           </div>
           <div className="ed-tree-m">

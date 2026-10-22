@@ -1,0 +1,5 @@
+# RED at 5efa1de6f: the create dialog as on trunk, the new case kept (2026-10-22T04:37:42Z)
+ × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > sends the periodic review date chosen at create, which review-due reads
+   → Unable to find a label with the text of: Next periodic review (optional)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)

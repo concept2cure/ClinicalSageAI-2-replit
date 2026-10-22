@@ -19,8 +19,10 @@ module "github_deploy" {
   ecs_api_service_arn = module.ecs.api_service_arn
   # The one-off families the pipeline registers: deploy-aws.yml's migrate job
   # and provision-database.yml (both checked against these names in tests/).
-  one_off_task_families       = [local.migrate_family, local.provision_family]
-  pass_role_arns              = [module.ecs.execution_role_arn, module.ecs.task_role_arn]
+  one_off_task_families = [local.migrate_family, local.provision_family]
+  # The one-off families run with the migrate execution role, the only one that
+  # can read the owner's secrets (modules/ecs-fargate; MR-03 OPS-16).
+  pass_role_arns              = [module.ecs.execution_role_arn, module.ecs.migrate_execution_role_arn, module.ecs.task_role_arn]
   api_log_group_arn           = module.ecs.api_log_group_arn
   frontend_bucket_arn         = module.cdn.frontend_bucket_arn
   cloudfront_distribution_arn = module.cdn.distribution_arn
@@ -29,6 +31,7 @@ module "github_deploy" {
 }
 
 locals {
-  migrate_family   = "${local.long}-migrate"
+  # Terraform registers it (aws_ecs_task_definition.migrate, ${cluster}-migrate).
+  migrate_family   = module.ecs.migrate_task_family
   provision_family = "${local.long}-provision"
 }

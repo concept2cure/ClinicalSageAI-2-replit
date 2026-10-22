@@ -13,6 +13,12 @@ on:
         description: 'Deploy frontend to S3/CloudFront'
         type: boolean
         default: true
+      # Roll the API back to a named revision, and do nothing else (MR-03 OPS-23;
+      # the `rollback` job). Empty: deploy as usual.
+      rollback_taskdef:
+        description: 'Roll back only: the API task-definition revision ARN to return to (leave empty to deploy)'
+        type: string
+        default: ''
 
   push:
     tags:
@@ -50,7 +56,7 @@ env:
   #     scheduleOfEvents, taskDue (server/jobs/*) — is started IN-PROCESS by
   #     server/index.ts. There is no queue consumer to run separately.
   #   • The ECS worker task definition (terraform/modules/ecs-fargate/main.tf)
-  #     sets no `command`, so a container built from the app image would run the
+  #     set no `command`, so a container built from the app image would run the
   #     app's CMD (`npm run start`) — a SECOND copy of the API, with a SECOND
   #     copy of every scheduler. Duplicated retention deletes and audit sweeps
   #     are worse than no worker, so pointing the "worker" build at
@@ -61,10 +67,8 @@ env:
   # never the NODE_ENV=production image this ECS service expects. It was deleted
   # (D9, 2026-08-13) along with docker-compose.e2e.yml and its workflows.
   #
-  # TODO(infra): the `c2c-production-worker` ECS service + `worker` ECR repo are
-  # still declared in terraform/ with nothing to deploy into them. Remove them
-  # there (out of scope for this workflow) or land a real worker entrypoint and
-  # restore this path alongside it.
+  # The worker service, task definition, log group and ECR repository were
+  # removed from terraform/ on 2026-10-22 (MR-03 OPS-08, P-10 as amended).
   #
   # Task definition family and container name for the digest-pinned
   # register-then-deploy path in deploy-api. The container name must match the
@@ -73,13 +77,18 @@ env:
   # datadog sidecar).
   ECS_API_TASK_FAMILY: c2c-production-api
   ECS_API_CONTAINER_NAME: api
-  # Family for the one-off schema-migration task (see the `migrate` job). It is
-  # registered fresh on every deploy by deriving it from the API task def, so it
-  # inherits the same DATABASE_URL secret, execution role and log config without
-  # a second place to configure them. ECS creates the family on first register,
-  # so this needs no pre-existing infrastructure.
+  # Family and container of the one-off database task (see the `migrate` job).
+  # Terraform registers it (terraform/modules/ecs-fargate,
+  # aws_ecs_task_definition.migrate), and it alone carries the database owner's
+  # credential and an execution role that can read it (MR-03 Stage 3, OPS-16).
+  # Each deploy derives the migration from the revision its preflight checked,
+  # with the image pinned to the deploy's digest.
   ECS_MIGRATE_TASK_FAMILY: c2c-production-migrate
-  FRONTEND_BUCKET: c2c-prod-frontend
+  ECS_MIGRATE_CONTAINER_NAME: migrate
+  # The bucket name carries the AWS account id (terraform/stack/main.tf,
+  # MR-03 OPS-03), so it is the repository variable set from
+  # `terraform output -raw frontend_bucket`, not a literal here.
+  FRONTEND_BUCKET: ${{ vars.FRONTEND_BUCKET }}
   CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
 jobs:
@@ -96,6 +105,9 @@ jobs:
   ci-verdict:
     name: CI passed for this commit
     runs-on: ubuntu-latest
+    # A rollback dispatch (rollback_taskdef) runs the rollback job alone, and
+    # so nothing that hangs off this one.
+    if: ${{ !github.event.inputs.rollback_taskdef }}
     timeout-minutes: 100
     permissions:
       actions: read
@@ -150,6 +162,9 @@ jobs:
   test:
     name: Pre-deploy Tests
     runs-on: ubuntu-latest
+    # A rollback dispatch (rollback_taskdef) runs the rollback job alone, and
+    # so nothing that hangs off this one.
+    if: ${{ !github.event.inputs.rollback_taskdef }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -177,6 +192,9 @@ jobs:
   security-gate:
     name: Pre-deploy Security Gate (SAST + Trivy + governance)
     runs-on: ubuntu-latest
+    # A rollback dispatch (rollback_taskdef) runs the rollback job alone, and
+    # so nothing that hangs off this one.
+    if: ${{ !github.event.inputs.rollback_taskdef }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -247,14 +265,15 @@ jobs:
           exit-code: '1'
           format: table
           skip-dirs: node_modules
-          # DS002 (image runs as root) is excepted for this one file alone: a
-          # vendored skill's own CI image, never built, published or deployed
-          # here (Dockerfile.optimized runs as appuser). Every other Dockerfile
-          # is checked. .trivyignore could only drop DS002 for the whole tree.
-          # Also the D1 document-runtime evidence record (2eda0ed0f): a verbatim
-          # copy of a build that ran, never built, published or deployed, and not
-          # to be edited (it is evidence). CI run 12734: DS-0002 on it.
-          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci,docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
+          # DS002 (image runs as root) is excepted for this one file alone: the
+          # D1 document-runtime evidence record (2eda0ed0f), a verbatim copy of
+          # a build that ran, never built, published or deployed, and not to be
+          # edited (it is evidence). CI run 12734: DS-0002 on it. Every other
+          # Dockerfile is checked. .trivyignore could only drop DS002 for the
+          # whole tree. The gstack skill's Dockerfile.ci exception was dropped
+          # when 7df89f4f7 made .claude/skills/gstack a submodule no workflow
+          # checks out: the file is not in the scanned tree.
+          skip-files: docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
 
   # ── Build & Push container images ─────────────────────────────────────────
   build-push:
@@ -324,7 +343,10 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
         run: |
+          # BUILD_COMMIT: .dockerignore keeps .git out of the context, so the
+          # image is told which commit it is (/api/version; MR-03 OPS-19).
           docker build -f Dockerfile.optimized --target production \
+            --build-arg BUILD_COMMIT="${{ github.sha }}" \
             -t "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" \
             .
 
@@ -442,13 +464,15 @@ jobs:
         # smoke in ci.yml ("Boot in production mode and require /readyz=200"):
         #   RLS_ENFORCE              server/db/rlsEnforcement.ts — production
         #                            accepts ONLY the literal `on`.
-        #   DATABASE_URL             server/startup/env.ts — owner role; migrations.
-        #   APP_DATABASE_URL         server/db/getDatabaseUrl.ts — the non-superuser
-        #                            runtime role. Under RLS_ENFORCE=on the boot
-        #                            posture probe (server/index.ts →
-        #                            assertRlsCatalogPosture) refuses a superuser
-        #                            or BYPASSRLS runtime role, so falling back to
-        #                            DATABASE_URL is not a viable production shape.
+        #   APP_DATABASE_URL         server/startup/env.ts, server/db/getDatabaseUrl.ts —
+        #                            the non-superuser runtime role, and the only
+        #                            database credential the API holds. Under
+        #                            RLS_ENFORCE=on the boot posture probe
+        #                            (server/index.ts → assertRlsCatalogPosture)
+        #                            refuses a superuser or BYPASSRLS runtime role.
+        #                            The owner's (DATABASE_URL, APP_SERVICE_DB_PASSWORD)
+        #                            is REFUSED on the API below: it belongs to the
+        #                            database task alone (MR-03 Stage 3, OPS-16).
         #   JWT_SECRET               server/config/environment.ts (>=32 chars).
         #   REFRESH_TOKEN_SECRET     server/config/environment.ts — required in
         #                            staging/prod, >=32, must differ from JWT_SECRET.
@@ -469,8 +493,8 @@ jobs:
         #                            probe or a disabled sweep into a boot refusal.
         #                            Both exactly `true` (security plan P0-9).
         #   DB_AUDIT_REQUIRED        scripts/db/database-audit.mjs — exactly
-        #                            `pgaudit`: deploy-migrate (derived from this
-        #                            definition) then refuses to roll services onto
+        #                            `pgaudit`: deploy-migrate (whose environment
+        #                            must equal this one) then refuses to roll services onto
         #                            a database whose pgaudit is not recording
         #                            (security audit INF-13, plan P1-11).
         #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
@@ -513,7 +537,7 @@ jobs:
           ' /tmp/api-td-preflight.json | sort -u)
 
           MISSING=""
-          for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
+          for VAR in RLS_ENFORCE APP_DATABASE_URL JWT_SECRET \
                      REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
                      AUDIT_HMAC_SECRET AUDIT_EXPORT_SIGNING_KEY AUDIT_ATTESTATION_KEY \
                      CONNECTOR_ENCRYPTION_KEY ANTHROPIC_API_KEY \
@@ -540,7 +564,7 @@ jobs:
           FAIL=0
           if [[ -n "$MISSING" ]]; then
             echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
-            echo "::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Without MCP_* the connector for Claude is not mounted, or admits no client. Without AUDIT_ANCHOR_BUCKET nothing outside the database records the audit chain's head, so removal of the newest audit rows cannot be detected. Add them to the task definition (terraform/stack) before deploying."
+            echo "::error::The app refuses to boot without each of these, with one exception it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor). Without AUDIT_TRAIL_ENABLED the tamper-proof audit trail is off and enforcement, the production default, refuses the boot; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Without MCP_* the connector for Claude is not mounted, or admits no client. Without AUDIT_ANCHOR_BUCKET nothing outside the database records the audit chain's head, so removal of the newest audit rows cannot be detected. Add them to the task definition (terraform/stack) before deploying."
             FAIL=1
           fi
           if [[ "$NODE_ENV_VALUE" != "production" ]]; then
@@ -584,10 +608,11 @@ jobs:
           fi
           # The Part 11 audit posture (security plan P0-9, DP-06). The tamper-proof
           # trail and the chain-integrity monitor run only with
-          # AUDIT_TRAIL_ENABLED=true, and production merely WARNS without it
-          # unless AUDIT_REQUIRE_ENFORCE=true makes the missing trail, a failed
-          # immutability probe or a disabled daily sweep refuse to boot
-          # (server/startup/audit-enforcement.ts). Both exactly `true`.
+          # AUDIT_TRAIL_ENABLED=true. Enforcement (a missing trail, a failed
+          # immutability probe or a disabled daily sweep refuses the boot) is the
+          # production default since MR-03 Stage 2; only AUDIT_REQUIRE_ENFORCE=false
+          # turns it into a warning, and on ECS the server refuses that value
+          # (server/startup/audit-enforcement.ts, env.ts). Both exactly `true`.
           for AUDIT_FLAG in AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE; do
             AUDIT_FLAG_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" --arg n "$AUDIT_FLAG" '
               .containerDefinitions[] | select(.name == $c)
@@ -629,6 +654,35 @@ jobs:
           ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
           if [[ -n "${DETERMINISTIC_FLAGS// /}" ]]; then
             echo "::error::The task definition carries ${DETERMINISTIC_FLAGS% }: AnA would serve fixed responses in place of model output. Remove it from terraform/stack."
+            FAIL=1
+          fi
+          # ENABLE_TEST_ROUTES mounted the test-assembly and integration-test
+          # routes in production. The server now refuses to boot on it
+          # (server/startup/env.ts, MR-03 OPS-28); named here so a revision
+          # carrying it is refused before it rolls, not after it crash-loops.
+          TEST_ROUTE_FLAG=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name)
+            | map(select(. == "ENABLE_TEST_ROUTES")) | .[]
+          ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
+          if [[ -n "${TEST_ROUTE_FLAG// /}" ]]; then
+            echo "::error::The task definition carries ENABLE_TEST_ROUTES: test routes have no production use, and the server refuses to boot with it. Remove it from terraform/stack."
+            FAIL=1
+          fi
+          # The database owner's credential belongs to the one-off database task
+          # alone (MR-03 Stage 3, OPS-16; checked in the next step). That role
+          # owns every table and bypasses RLS; the API boots as app_service and
+          # creates no schema. Every name a production process reads an owner
+          # URL from, and the password app_service is minted with, refused as a
+          # value or a secret. The server refuses the same names on ECS
+          # (HOSTED_OWNER_CREDENTIAL_NAMES, server/startup/env.ts).
+          OWNER_CREDENTIALS=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name)
+            | map(select(IN("DATABASE_URL", "DATABASE_URL_PROD", "DATABASE_NEON_NEW_SECRET", "NEON_DATABASE_URL", "DATABASE_OWNER_URL", "APP_SERVICE_DB_PASSWORD"))) | .[]
+          ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
+          if [[ -n "${OWNER_CREDENTIALS// /}" ]]; then
+            echo "::error::The API task definition carries the database owner's credential: ${OWNER_CREDENTIALS% }. That role owns every table and bypasses RLS; only $ECS_MIGRATE_TASK_FAMILY may hold it. Remove it from the API in terraform/stack."
             FAIL=1
           fi
           # Launch scope is the release boundary (CLAUDE.md RULE 2): with
@@ -713,8 +767,9 @@ jobs:
           # ready, and refuses every Vault upload. On loopback, clamd must run
           # in this task: an essential, health-checked container the API
           # container waits on (dependsOn HEALTHY), which
-          # terraform/modules/ecs-fargate renders. Not in the name list above:
-          # the worker carries that list and has no scanner beside it.
+          # terraform/modules/ecs-fargate renders. Checked here rather than in
+          # the name list above, because its value and the scanner beside it
+          # matter, not only its name.
           CLAMAV_HOST_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
             .containerDefinitions[] | select(.name == $c)
             | (.environment // []) | map(select(.name == "CLAMAV_HOST")) | .[0].value // ""
@@ -738,9 +793,9 @@ jobs:
           fi
           [[ "$FAIL" -eq 0 ]] || exit 1
 
-          # Hand the EXACT revision checked here to everything that derives a
-          # task definition from it — the migration below and deploy-api —
-          # rather than let each re-read "the family's latest". deploy-api runs
+          # Hand the EXACT revision checked here to what derives from it — the
+          # next step's comparison and deploy-api — rather than let each re-read
+          # "the family's latest". deploy-api runs
           # after the migration and a production approval, and a `terraform
           # apply` in between registers a new latest revision (the services
           # ignore task_definition changes, so nothing else rolls it). Without
@@ -754,15 +809,88 @@ jobs:
           echo "api_td_arn=$CHECKED_ARN" >> "$GITHUB_OUTPUT"
           echo "Production boot contract satisfied by $CHECKED_ARN."
 
-      - name: Migrate — one-off task derived from the checked API revision
+      # The database task (MR-03 Stage 3, OPS-16). The owner's credential is in
+      # the Terraform-registered migrate family and nowhere else; the migration
+      # derives from the revision checked here, pinned by ARN as the API's is.
+      # Checked, by name and source, never by value:
+      #   - one container, carrying DATABASE_URL and APP_SERVICE_DB_PASSWORD;
+      #   - every secret of the checked API revision but SETUP_TOKEN, from the
+      #     same source, and the same environment, value for value: deploy-migrate
+      #     verifies the readiness contract as the runtime role, under the
+      #     posture the services boot with (DB_AUDIT_REQUIRED, RLS_ENFORCE);
+      #   - an execution role that is not the API's, which cannot read the
+      #     owner's secrets (terraform/modules/ecs-fargate).
+      - name: Preflight — the database task alone carries the owner credential
+        id: migrate-preflight
+        env:
+          CHECKED_API_TD_ARN: ${{ steps.preflight.outputs.api_td_arn }}
+        run: |
+          set -euo pipefail
+
+          aws ecs describe-task-definition --task-definition "$ECS_MIGRATE_TASK_FAMILY" \
+            --no-cli-pager --query 'taskDefinition' > /tmp/migrate-td-preflight.json
+          aws ecs describe-task-definition --task-definition "$CHECKED_API_TD_ARN" \
+            --no-cli-pager --query 'taskDefinition' > /tmp/api-td-checked.json
+
+          FAIL=0
+          SHAPE=$(jq -r '[.containerDefinitions[].name] | join(",")' /tmp/migrate-td-preflight.json)
+          if [[ "$SHAPE" != "$ECS_MIGRATE_CONTAINER_NAME" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY must be one container named $ECS_MIGRATE_CONTAINER_NAME (terraform/modules/ecs-fargate, aws_ecs_task_definition.migrate); it has: ${SHAPE:-none}."
+            FAIL=1
+          fi
+          OWNER_MISSING=$(jq -r '
+            ((.containerDefinitions[0].secrets // []) | map(.name)) as $have
+            | ["DATABASE_URL", "APP_SERVICE_DB_PASSWORD"] - $have | join(" ")
+          ' /tmp/migrate-td-preflight.json)
+          if [[ -n "$OWNER_MISSING" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY lacks the owner secret(s) the migration runs as: $OWNER_MISSING. Apply terraform/stack before deploying."
+            FAIL=1
+          fi
+          SOURCE_DIFFERS=$(jq -rn --arg c "$ECS_API_CONTAINER_NAME" \
+            --slurpfile m /tmp/migrate-td-preflight.json --slurpfile a /tmp/api-td-checked.json '
+            ($m[0].containerDefinitions[0].secrets // [] | map({(.name): .valueFrom}) | add // {}) as $ms
+            | $a[0].containerDefinitions[] | select(.name == $c) | (.secrets // [])[]
+            | select(.name != "SETUP_TOKEN" and $ms[.name] != .valueFrom) | .name
+          ' | tr '\n' ' ')
+          if [[ -n "${SOURCE_DIFFERS// /}" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY does not carry these API secrets from the same source: ${SOURCE_DIFFERS% }. The migration would verify the readiness contract against something other than what the services boot with."
+            FAIL=1
+          fi
+          ENV_DIFFERS=$(jq -rn --arg c "$ECS_API_CONTAINER_NAME" \
+            --slurpfile m /tmp/migrate-td-preflight.json --slurpfile a /tmp/api-td-checked.json '
+            ($m[0].containerDefinitions[0].environment // [] | map({(.name): .value}) | add // {}) as $me
+            | ($a[0].containerDefinitions[] | select(.name == $c) | .environment // [] | map({(.name): .value}) | add // {}) as $ae
+            | (($me | keys) + ($ae | keys) | unique)[] | select($me[.] != $ae[.])
+          ' | tr '\n' ' ')
+          if [[ -n "${ENV_DIFFERS// /}" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY's environment differs from the checked API revision's in: ${ENV_DIFFERS% }. Both come from one list in terraform/modules/ecs-fargate; apply terraform/stack."
+            FAIL=1
+          fi
+          MIGRATE_ROLE=$(jq -r '.executionRoleArn // ""' /tmp/migrate-td-preflight.json)
+          API_ROLE=$(jq -r '.executionRoleArn // ""' /tmp/api-td-checked.json)
+          if [[ -z "$MIGRATE_ROLE" || "$MIGRATE_ROLE" == "$API_ROLE" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY must run with its own execution role, not the API's ('${MIGRATE_ROLE:-<unset>}'): the API's must not be able to read the owner's secrets."
+            FAIL=1
+          fi
+          [[ "$FAIL" -eq 0 ]] || exit 1
+
+          CHECKED_ARN=$(jq -r '.taskDefinitionArn // empty' /tmp/migrate-td-preflight.json)
+          if [[ ! "$CHECKED_ARN" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_MIGRATE_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::describe-task-definition returned no usable revision ARN ('$CHECKED_ARN') for $ECS_MIGRATE_TASK_FAMILY; cannot pin the revision that was checked."
+            exit 1
+          fi
+          echo "migrate_td_arn=$CHECKED_ARN" >> "$GITHUB_OUTPUT"
+          echo "The database task's contract is satisfied by $CHECKED_ARN."
+
+      - name: Migrate — one-off task derived from the checked database-task revision
         id: migrate-task
         env:
           IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          CHECKED_API_TD_ARN: ${{ steps.preflight.outputs.api_td_arn }}
+          CHECKED_MIGRATE_TD_ARN: ${{ steps.migrate-preflight.outputs.migrate_td_arn }}
         # scripts/ops/ecs-one-off-task.sh derives the task from the revision the
-        # preflight above CHECKED (same execution role, secrets, logs; sidecars,
-        # ports and the health check dropped), runs it on the API service's own
+        # step above CHECKED (its execution role, secrets and logs; the image
+        # pinned to this deploy's digest), runs it on the API service's own
         # subnets and security groups (the only ones RDS admits), waits against
         # a deadline that stops the task when it passes, prints its log, and
         # exits with its exit code. The same runner starts the first provision
@@ -772,18 +900,33 @@ jobs:
         run: |
           set -uo pipefail
 
+          # How long the migration took, per release, in the job summary (OPS-23),
+          # on every way out of this step, a refusal included.
+          MIGRATION_START=$(date -u +%s)
+          record_migration() {
+            local status=$? end
+            end=$(date -u +%s)
+            {
+              echo "### Schema migration"
+              echo "| Started (UTC) | Ended (UTC) | Duration | Exit |"
+              echo "|---|---|---|---|"
+              echo "| $(date -u -d "@$MIGRATION_START" +%FT%TZ) | $(date -u -d "@$end" +%FT%TZ) | $((end - MIGRATION_START)) s | $status |"
+            } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          }
+          trap record_migration EXIT
+
           if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
             echo "::error::No API image digest available, so there is no image to migrate from."
             echo "::error::A deploy that skips the API image cannot migrate the schema. Re-run with deploy_api enabled."
             exit 1
           fi
-          if [[ -z "$CHECKED_API_TD_ARN" ]]; then
-            echo "::error::The preflight published no checked revision ARN; refusing to derive the migration from an unchecked one."
+          if [[ -z "$CHECKED_MIGRATE_TD_ARN" ]]; then
+            echo "::error::The preflight published no checked database-task revision ARN; refusing to derive the migration from an unchecked one."
             exit 1
           fi
 
-          SOURCE_TD_ARN="$CHECKED_API_TD_ARN" \
-          CONTAINER_NAME="$ECS_API_CONTAINER_NAME" \
+          SOURCE_TD_ARN="$CHECKED_MIGRATE_TD_ARN" \
+          CONTAINER_NAME="$ECS_MIGRATE_CONTAINER_NAME" \
           FAMILY="$ECS_MIGRATE_TASK_FAMILY" \
           IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST" \
           COMMAND_JSON='["npm", "run", "db:migrate:deploy"]' \
@@ -821,6 +964,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.deploy_api != 'false' }}
     environment: production
+    outputs:
+      # For the rollback job: the revision serving before this deploy, and the
+      # one this deploy rolled.
+      previous_td_arn: ${{ steps.previous.outputs.previous_td_arn }}
+      task_def_arn: ${{ steps.register-api-td.outputs.task_def_arn }}
 
     steps:
       - name: Configure AWS credentials
@@ -911,6 +1059,21 @@ jobs:
           echo "Registered API task def: $NEW_TD_ARN"
           echo "task_def_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
 
+      # The revision to return to if this release fails its smoke test (OPS-10,
+      # OPS-23): whatever the service runs now, read before it moves.
+      - name: Record the revision now serving (the rollback target)
+        id: previous
+        run: |
+          set -euo pipefail
+          PREVIOUS=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_API_SERVICE" \
+            --no-cli-pager --query 'services[0].taskDefinition' --output text)
+          if [[ ! "$PREVIOUS" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_API_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::Could not read the revision $ECS_API_SERVICE runs now ('$PREVIOUS'); refusing to roll a release that could not be rolled back."
+            exit 1
+          fi
+          echo "previous_td_arn=$PREVIOUS" >> "$GITHUB_OUTPUT"
+          echo "Serving before this deploy: $PREVIOUS"
+
       - name: Deploy pinned task def revision (API)
         env:
           NEW_TD_ARN: ${{ steps.register-api-td.outputs.task_def_arn }}
@@ -995,6 +1158,7 @@ jobs:
       #   index.html  revalidated on every load.
       - name: Sync to S3
         run: |
+          : "${FRONTEND_BUCKET:?Set the repository variable FRONTEND_BUCKET to \`terraform output -raw frontend_bucket\` (terraform/environments/production)}"
           aws s3 sync dist/public/assets/ "s3://$FRONTEND_BUCKET/assets/" \
             --cache-control "public,max-age=31536000,immutable"
 
@@ -1072,3 +1236,82 @@ jobs:
           done
           echo "::error::https://$HOST/readyz did not report ready."
           exit 1
+
+  # ── Roll back the API (MR-03 Stage 4, OPS-10 / OPS-23) ────────────────────
+  # Automatically when the smoke test fails after a successful roll: the service
+  # returns to the revision deploy-api recorded as serving before it moved. On
+  # request with the workflow_dispatch input rollback_taskdef, naming a revision
+  # of the API family; then this job runs alone (ci-verdict, test and
+  # security-gate skip, and everything after them with them).
+  #
+  # Automatic is safe because the schema only grows: every file in
+  # C2C_MIGRATION_FILES is additive and re-runnable (CLAUDE.md RULE 1), so the
+  # previous revision's code runs against the migrated schema as it did before.
+  # A non-additive migration needs a person's decision, and
+  # ci:migration-drop-safety refuses one before it ships. The frontend is not
+  # rolled back here: its bucket versions (terraform/modules/cloudfront), and it
+  # was published only after the API it pairs with rolled.
+  rollback:
+    name: Roll back the API → previous revision
+    needs: [deploy-api, smoke-test]
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ !cancelled()
+      && ((needs.deploy-api.result == 'success' && needs.smoke-test.result == 'failure')
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_taskdef != '')) }}
+    environment: production
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Return the API service to the revision
+        id: rollback
+        env:
+          REQUESTED_TD_ARN: ${{ github.event.inputs.rollback_taskdef }}
+          PREVIOUS_TD_ARN: ${{ needs.deploy-api.outputs.previous_td_arn }}
+          FAILED_TD_ARN: ${{ needs.deploy-api.outputs.task_def_arn }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$REQUESTED_TD_ARN" ]]; then
+            TARGET="$REQUESTED_TD_ARN"; WHY="requested (rollback_taskdef)"
+          else
+            TARGET="$PREVIOUS_TD_ARN"; WHY="the smoke test failed on $FAILED_TD_ARN"
+          fi
+          if [[ ! "$TARGET" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_API_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::'$TARGET' is not a revision of $ECS_API_TASK_FAMILY; nothing was changed."
+            exit 1
+          fi
+          if [[ -n "$FAILED_TD_ARN" && "$TARGET" == "$FAILED_TD_ARN" ]]; then
+            echo "::error::The revision to return to is the one that failed ($TARGET); nothing was changed."
+            exit 1
+          fi
+          # It must exist, and say what it runs. A revision by tag rather than
+          # digest (Terraform's own, before the first deploy) is returned to with
+          # a warning: its image is whatever the tag names now.
+          IMAGE=$(aws ecs describe-task-definition --task-definition "$TARGET" --no-cli-pager \
+            --query "taskDefinition.containerDefinitions[?name=='$ECS_API_CONTAINER_NAME'].image | [0]" --output text)
+          if [[ -z "$IMAGE" || "$IMAGE" == "None" ]]; then
+            echo "::error::$TARGET has no $ECS_API_CONTAINER_NAME container; nothing was changed."
+            exit 1
+          fi
+          [[ "$IMAGE" == *@sha256:* ]] || echo "::warning::$TARGET runs $IMAGE, by tag rather than digest."
+
+          echo "Rolling $ECS_API_SERVICE back to $TARGET ($WHY)."
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_API_SERVICE" \
+            --task-definition "$TARGET" --no-cli-pager > /dev/null
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_API_SERVICE"
+          NOW=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_API_SERVICE" \
+            --no-cli-pager --query 'services[0].taskDefinition' --output text)
+          if [[ "$NOW" != "$TARGET" ]]; then
+            echo "::error::After the rollback $ECS_API_SERVICE runs $NOW, not $TARGET."
+            exit 1
+          fi
+          {
+            echo "### Rolled back"
+            echo "$ECS_API_SERVICE runs \`$TARGET\` ($IMAGE): $WHY."
+          } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          echo "rolled_back_to=$TARGET" >> "${GITHUB_OUTPUT:-/dev/null}"

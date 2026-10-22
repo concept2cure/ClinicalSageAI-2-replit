@@ -1,0 +1,43 @@
+# Slice C: the boot refuses the owner's credential on an ECS task (server/startup/env.ts, HOSTED_OWNER_CREDENTIAL_NAMES).
+
+## Before: the new test against HEAD's env.ts
+ × server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_URL, naming it
+ × server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_URL_PROD, naming it
+ × server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_NEON_NEW_SECRET, naming it
+ × server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses NEON_DATABASE_URL, naming it
+ × server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_OWNER_URL, naming it
+ × server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses APP_SERVICE_DB_PASSWORD, naming it
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, boots with APP_DATABASE_URL alone
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, an empty variable holds nothing and is not refused
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > a self-hosted install (no ECS task metadata) keeps its owner URL
+ × server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > refuses exactly the names the deploy preflight refuses on the API task definition
+ Test Files  1 failed (1)
+      Tests  7 failed | 3 passed (10)
+
+## After
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_URL, naming it
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_URL_PROD, naming it
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_NEON_NEW_SECRET, naming it
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses NEON_DATABASE_URL, naming it
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses DATABASE_OWNER_URL, naming it
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, refuses APP_SERVICE_DB_PASSWORD, naming it
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, boots with APP_DATABASE_URL alone
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > on an ECS task, an empty variable holds nothing and is not refused
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > a self-hosted install (no ECS task metadata) keeps its owner URL
+ ✓ server/startup/__tests__/env-hosted-owner-credential.test.ts > the hosted API holds no database owner credential > refuses exactly the names the deploy preflight refuses on the API task definition
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+
+## Every test and gate that reads a file slice C changed
+ Test Files  34 passed (34)
+      Tests  780 passed | 1 skipped (781)
+## node --test scripts/ci/__tests__/ecs-one-off-task.test.mjs
+# tests 7
+# pass 7
+# fail 0
+ci:compose-boot-contract          rc=0 [ci:compose-boot-contract] OK — 2 production Compose stack(s) carry the boot contract (27 preflight names, 4
+ci:image-hardening                rc=0 [ci:image-hardening] OK — Dockerfile.optimized is pinned by digest, owned without a recursive chown, stamped
+ci:trivyignore-hygiene            rc=0 [ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with
+ci:no-dev-auth-in-prod            rc=0 [ci:no-dev-auth-in-prod] OK — no leaky dev-auth gates found
+ci:frontend-sync-coverage         rc=0 [ci:frontend-sync-coverage] OK — every published file is uploaded; only assets/ is cached as immutable.
+eslint: 0 errors; warnings per changed file equal to HEAD's (env.ts 1, terraform-preflight-proof.mjs 1, the rest 0); tsc: 0 errors

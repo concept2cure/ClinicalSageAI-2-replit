@@ -205,7 +205,8 @@ export const UI_SURFACES: UiSurface[] = [
     // vault document, version or audit row). No screen calls it, and PV and
     // clinical operations are outside the release. A regulated document is
     // produced only through a path that records it (Authoring → Vault).
-    apiPrefixes: ['/api/atoms', '/api/corpus', '/api/artifacts-center'],
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/atoms', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -245,17 +246,23 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'authoring',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): authoring reads data origins, holds collaborative locks, and assigns review tasks.
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     apiPrefixes: [
       '/api/document-authoring',
       '/api/authoring',
-      '/api/authoring-actions',
-      '/api/coauthor',
-      '/api/workflow',
+      '/api/authoring-actions/decision-context',
+      '/api/authoring-actions/decisions',
+      '/api/authoring-actions/module-preflight',
+      '/api/coauthor/documents',
       '/api/esignature',
       '/api/c2c/documents',
       '/api/data-origins',
-      '/api/realtime-collab',
-      '/api/tasks',
+      '/api/realtime-collab/locks',
+      '/api/realtime-collab/rooms',
+      '/api/tasks/messages',
+      '/api/tasks/my-work',
+      '/api/tasks/tasks',
+      '/api/tasks/templates',
     ],
     anaToolFamilies: ['get_csr_template', 'get_nonclinical_template', 'draft_clinical_overview_m2_5'],
     sharedContract: '@shared/types/document-contract',
@@ -292,14 +299,18 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'evidence',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
-    // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
+    // '/api/mdx/vault' was claimed here on 2026-09-26 for mdx/hooks/useVault.ts. That attribution
+    // was a walker bug (fixed in f9eee2670): useVault renders only in the device kit's device-vault
+    // surface, outside the catalog. The launch Vault reads the same stores through
+    // /api/c2c/project-vault. Unclaimed 2026-10-22.
     // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
     // (server/routes/vault-legal-holds.ts). Setup's LegalHoldsCard now calls them;
     // Vault retains the preservation API family for its records. Its /retention
     // sub-path is Setup's, below.
     // /api/regulatory/documents: a Vault version's review and approval, on the
     // one document lifecycle (VR-13).
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault', '/api/vault/legal-holds', '/api/regulatory/documents'],
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages', '/api/vault/legal-holds', '/api/regulatory/documents'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -316,7 +327,8 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'review',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): Review reads its board, queue, threads and tasks.
-    apiPrefixes: ['/api/workflow', '/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews'],
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews/my-queue'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -444,7 +456,8 @@ export const UI_SURFACES: UiSurface[] = [
     // The package screen reads source readiness, selects Vault supporting JSON
     // and previews deterministic tables. Attribute only these exact endpoints;
     // standalone CSR/Module 2 content builders retain their launch fences.
-    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/ectd-compile', '/api/ectd/export', '/api/ectd/validate', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
       '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
@@ -596,7 +609,11 @@ export const UI_SURFACES: UiSurface[] = [
     // transmit among them. Those are claimed by `pharmacovigilance`, outside
     // the release; the sequence, portfolio and /submission/:id register routes
     // stay unclaimed (a prefix cannot admit the registers without the safety
-    // registers beside them). /api/ind-master-data has no screen caller.
+    // registers beside them). Of /api/ind-master-data only /sponsors is
+    // claimed (2026-10-22): IndApplicantIdentity.tsx lists, creates and edits
+    // the sponsor record the forms print, and it shipped calling an unclaimed
+    // path, so production refused it 403. Agents and investigators have no
+    // screen caller and stay unclaimed.
     // /api/ind-lifecycle/clock is the server's evaluateRegulatoryClock, which
     // the screen calls in place of the client copy it carried until 2026-10-15;
     // /readiness is not claimed — the screen's readiness verdict comes with the
@@ -605,6 +622,7 @@ export const UI_SURFACES: UiSurface[] = [
     apiPrefixes: [
       '/api/ind-checklist',
       '/api/ind-forms',
+      '/api/ind-master-data/sponsors',
       '/api/ind-lifecycle/clock',
       '/api/ind-lifecycle/cover-letter',
       '/api/ind-lifecycle/briefing-book',
@@ -678,7 +696,8 @@ export const UI_SURFACES: UiSurface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
     // /api/project-rules: the task board reads the rule definitions it shows
     // (TaskBoard.tsx); claimed by no surface until the gate saw it (2026-10-01).
-    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks', '/api/project-rules'],
+    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+    apiPrefixes: ['/api/task-management/assignees', '/api/task-management/board', '/api/task-management/filings', '/api/task-management/messages', '/api/task-management/my-work', '/api/task-management/tasks', '/api/task-management/templates', '/api/regulatory/tasks', '/api/regulatory-programs', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages', '/api/approval-workflows/pending', '/api/tasks/messages', '/api/tasks/my-work', '/api/tasks/tasks', '/api/tasks/templates', '/api/project-rules'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,

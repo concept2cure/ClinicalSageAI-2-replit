@@ -6,6 +6,12 @@
  * a Notified Body assessor would ask during a technical documentation
  * review under EU MDR 2017/745.
  *
+ * 2026-10-22: rules converged onto the fields flows/cer-report.ts (and the
+ * flows/cer-report/ nodes it composes) asks. A rule still reading a key the
+ * interview never asks is reported NOT ASSESSED by the war-game engine; it
+ * was left as is because the interview has no equivalent question
+ * (articles appraised, a vigilance data summary, a level of clinical evidence).
+ *
  * @module server/services/ana/intelligence-questions/war-game/auditors/cer-auditor
  */
 
@@ -25,6 +31,21 @@ function isBlank(v: unknown): boolean {
   return false;
 }
 
+/**
+ * A yes_no answer: a boolean from the UI, or 'yes'/'no' (or 'true'/'false')
+ * from the AnA tool surface. Anything else, including no answer, is neither.
+ */
+function yesNo(val: unknown): boolean | null {
+  if (typeof val === 'boolean') return val;
+  if (typeof val !== 'string') return null;
+  const w = val.trim().toLowerCase();
+  if (w === 'yes' || w === 'true') return true;
+  if (w === 'no' || w === 'false') return false;
+  return null;
+}
+const isYes = (val: unknown): boolean => yesNo(val) === true;
+const isNo = (val: unknown): boolean => yesNo(val) === false;
+
 /** Safe string coercion. */
 function str(v: unknown): string {
   return typeof v === 'string' ? v.trim() : '';
@@ -36,6 +57,35 @@ function num(v: unknown): number {
   if (typeof v === 'string') return Number(v);
   return NaN;
 }
+
+/*
+ * The CER interview (flows/cer-report.ts and flows/cer-report/*) asks the
+ * questions these rules read under its own field ids. Each reading below
+ * follows that field's type: a select stores its option value, a
+ * multi_select an array of option values, a yes_no a boolean.
+ */
+
+/** `eu_mdr_class` option values, reduced to the Annex VIII class. */
+const MDR_CLASS: Readonly<Record<string, 'i' | 'iia' | 'iib' | 'iii'>> = {
+  class_i: 'i', class_is: 'i', class_im: 'i', class_ir: 'i',
+  class_iia: 'iia', class_iib: 'iib', class_iii: 'iii',
+};
+
+/** The Annex VIII class the interview recorded, or null when none was chosen. */
+function mdrClass(answers: Record<string, unknown>): 'i' | 'iia' | 'iib' | 'iii' | null {
+  return MDR_CLASS[str(answers.eu_mdr_class)] ?? null;
+}
+
+/**
+ * The three equivalence pillars, each its own question in the
+ * `equivalence_demonstration` node. That node is reached only when
+ * `equiv_device_identified` is true.
+ */
+const EQUIVALENCE_PILLARS = [
+  { field: 'technical_equivalence', label: 'technical' },
+  { field: 'biological_equivalence', label: 'biological' },
+  { field: 'clinical_equivalence', label: 'clinical' },
+] as const;
 
 /* ------------------------------------------------------------------ */
 /*  Rules                                                             */
@@ -50,7 +100,7 @@ const rules: AuditRule[] = [
     question:
       'Per Annex XIV Part A Section 1 of EU MDR 2017/745, the CER shall include a description of the device and its intended purpose. Can the manufacturer confirm that the device name, description, and intended purpose are fully specified?',
     check(answers) {
-      if (isBlank(answers.device_name) || isBlank(answers.device_description) || isBlank(answers.intended_purpose)) {
+      if (isBlank(answers.cer_device_name) || isBlank(answers.device_description_summary) || isBlank(answers.cer_intended_purpose)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -61,10 +111,10 @@ const rules: AuditRule[] = [
             'One or more of the following are missing or incomplete: device name, device description, intended purpose.',
           requirement:
             'EU MDR Annex XIV Part A Section 1 requires clear identification of the device, including trade name, model/size variants, and a precise statement of intended purpose.',
-          reference: 'EU MDR 2017/745 Annex XIV Part A, Section 1; MEDDEV 2.7/1 Rev 4 Section 7',
+          reference: 'EU MDR 2017/745 Annex XIV Part A, Section 1; MEDDEV 2.7/1 Rev 4 Section 6 and Appendix A3',
           recommendation:
             'Provide the full device description covering design, materials, and functional principles, and state the intended purpose verbatim as declared in the technical documentation.',
-          relatedFields: ['device_name', 'device_description', 'intended_purpose'],
+          relatedFields: ['cer_device_name', 'device_description_summary', 'cer_intended_purpose'],
         };
       }
       return null;
@@ -79,8 +129,7 @@ const rules: AuditRule[] = [
     question:
       'Under Annex VIII of EU MDR 2017/745, has the manufacturer declared the device risk class and confirmed the applicable classification rule(s)?',
     check(answers) {
-      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
-      if (isBlank(cls) || !['i', 'iia', 'iib', 'iii'].includes(cls)) {
+      if (mdrClass(answers) === null) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -88,13 +137,13 @@ const rules: AuditRule[] = [
           title: this.title,
           question: this.question,
           observation:
-            `Device class "${str(answers.device_class_mdr) || '(not provided)'}" does not correspond to a valid EU MDR Annex VIII classification (I, IIa, IIb, III).`,
+            `Device class "${str(answers.eu_mdr_class) || '(not provided)'}" does not correspond to a valid EU MDR Annex VIII classification (I, IIa, IIb, III).`,
           requirement:
-            'The CER must state the device classification under MDR Annex VIII and identify the applicable classification rule(s). MEDDEV 2.7/1 Rev 4 Section 7 requires this.',
-          reference: 'EU MDR 2017/745 Annex VIII; MEDDEV 2.7/1 Rev 4 Section 7',
+            'The CER must state the device classification under MDR Annex VIII and identify the applicable classification rule(s). MEDDEV 2.7/1 Rev 4 Section 6 (scope of the clinical evaluation, Stage 0) requires this.',
+          reference: 'EU MDR 2017/745 Annex VIII; MEDDEV 2.7/1 Rev 4 Section 6',
           recommendation:
             'State the classification rule number (e.g., Rule 11) and resulting class. For up-classified devices, justify the classification rationale.',
-          relatedFields: ['device_class_mdr'],
+          relatedFields: ['eu_mdr_class'],
         };
       }
       return null;
@@ -109,7 +158,8 @@ const rules: AuditRule[] = [
     question:
       'MEDDEV 2.7/1 Rev 4 Section 9 requires that all clinical claims be identified and evaluated. Has the manufacturer listed every clinical claim made for the device and indicated the corresponding clinical evidence?',
     check(answers) {
-      if (isBlank(answers.clinical_claims)) {
+      // `claimed_clinical_benefits`: "List all clinical benefits claimed for the device".
+      if (isBlank(answers.claimed_clinical_benefits)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -122,7 +172,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Article 61(1)',
           recommendation:
             'Tabulate every clinical claim together with the type and strength of evidence supporting it. Include any claims implied in the IFU or promotional material.',
-          relatedFields: ['clinical_claims'],
+          relatedFields: ['claimed_clinical_benefits'],
         };
       }
       return null;
@@ -137,9 +187,13 @@ const rules: AuditRule[] = [
     question:
       'If claiming equivalence under EU MDR Article 61(5) and Annex XIV Part A Section 3, has the manufacturer identified the equivalent device and provided sufficient detail for assessment?',
     check(answers) {
-      const eqDevice = str(answers.equivalent_device);
-      // Trigger if they name an equivalent device but provide no demonstration
-      if (!isBlank(answers.equivalent_device) && isBlank(answers.equivalence_demonstration)) {
+      // Trigger if they claim an equivalent device but answer none of the
+      // three equivalence-pillar questions.
+      if (
+        isYes(answers.equiv_device_identified) &&
+        EQUIVALENCE_PILLARS.every((p) => isBlank(answers[p.field]))
+      ) {
+        const eqDevice = str(answers.equiv_device_name) || '(name not provided)';
         return {
           id: this.id,
           dimension: this.dimension,
@@ -153,12 +207,16 @@ const rules: AuditRule[] = [
           reference: 'EU MDR 2017/745 Article 61(5); Annex XIV Part A Section 3; MDCG 2020-5',
           recommendation:
             'Provide a detailed three-column equivalence comparison (technical, biological, clinical) per MDCG 2020-5 guidance. If the equivalent device is from another manufacturer, include evidence of a contractual agreement or justify why direct clinical data is sufficient.',
-          relatedFields: ['equivalent_device', 'equivalence_demonstration'],
+          relatedFields: ['equiv_device_identified', 'equiv_device_name', ...EQUIVALENCE_PILLARS.map((p) => p.field)],
         };
       }
       // If higher-risk device but no equivalence and no clinical investigations
-      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
-      if ((cls === 'iii' || cls === 'iib') && isBlank(eqDevice) && isBlank(answers.clinical_investigations)) {
+      const cls = mdrClass(answers);
+      if (
+        (cls === 'iii' || cls === 'iib') &&
+        isNo(answers.equiv_device_identified) &&
+        isNo(answers.clinical_investigation_available)
+      ) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -168,11 +226,11 @@ const rules: AuditRule[] = [
           observation:
             'No equivalent device is identified and no clinical investigation data is referenced for a higher-risk device.',
           requirement:
-            'For Class III and implantable devices, EU MDR Article 61(4) requires clinical investigations unless reliance on equivalence or other clinical data can be duly justified per Article 61(10).',
-          reference: 'EU MDR 2017/745 Article 61(4)(10); MDCG 2020-6',
+            'For Class III and implantable devices, EU MDR Article 61(4) requires clinical investigations unless one of the exemptions in Article 61(4) second subparagraph (modification of the manufacturer\'s own marketed device with notified-body-endorsed equivalence), Article 61(5) (equivalence to another manufacturer\'s device under a contract granting full access to its technical documentation) or Article 61(6) (certain legacy devices and listed device types) applies; an Article 61(10) justification is applied without prejudice to Article 61(4) and cannot replace the required clinical investigations.',
+          reference: 'EU MDR 2017/745 Article 61(4)-(6); MDCG 2020-6',
           recommendation:
-            'Either identify an equivalent device with full three-pillar demonstration, provide clinical investigation data, or document a robust justification under Article 61(10) referencing MDCG 2020-6.',
-          relatedFields: ['equivalent_device', 'clinical_investigations', 'device_class_mdr'],
+            'Provide clinical investigation data, or document that an Article 61(4)-(6) exemption applies (for equivalence to another manufacturer\'s device, a full three-pillar demonstration and a contract granting full access to its technical documentation), referencing MDCG 2020-6.',
+          relatedFields: ['equiv_device_identified', 'clinical_investigation_available', 'eu_mdr_class'],
         };
       }
       return null;
@@ -187,16 +245,11 @@ const rules: AuditRule[] = [
     question:
       'Per MDCG 2020-5 and Annex XIV Part A Section 3, has the manufacturer demonstrated equivalence across technical, biological, and clinical characteristics with sufficient granularity?',
     check(answers) {
-      const demo = str(answers.equivalence_demonstration).toLowerCase();
-      if (isBlank(answers.equivalent_device) || isBlank(demo)) return null;
-      const hasTechnical = /technical/i.test(demo);
-      const hasBiological = /biolog/i.test(demo);
-      const hasClinical = /clinical/i.test(demo);
-      if (!hasTechnical || !hasBiological || !hasClinical) {
-        const missing: string[] = [];
-        if (!hasTechnical) missing.push('technical');
-        if (!hasBiological) missing.push('biological');
-        if (!hasClinical) missing.push('clinical');
+      // Each pillar is its own question; a wholly absent demonstration is
+      // rule 4's finding, so this one fires only on a partial demonstration.
+      if (!isYes(answers.equiv_device_identified)) return null;
+      const missing = EQUIVALENCE_PILLARS.filter((p) => isBlank(answers[p.field])).map((p) => p.label);
+      if (missing.length > 0 && missing.length < EQUIVALENCE_PILLARS.length) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -210,7 +263,7 @@ const rules: AuditRule[] = [
           reference: 'EU MDR 2017/745 Annex XIV Part A Section 3; MDCG 2020-5',
           recommendation:
             'Complete the equivalence table addressing each pillar. For each difference identified, justify why it does not affect safety and clinical performance.',
-          relatedFields: ['equivalence_demonstration', 'equivalent_device'],
+          relatedFields: [...EQUIVALENCE_PILLARS.map((p) => p.field), 'equiv_device_identified'],
         };
       }
       return null;
@@ -223,9 +276,11 @@ const rules: AuditRule[] = [
     dimension: 'scientific_rigor',
     title: 'Systematic literature search protocol',
     question:
-      'MEDDEV 2.7/1 Rev 4 Section 8 requires a defined literature search protocol. Has the manufacturer documented the search strategy, including databases, search terms, and inclusion/exclusion criteria?',
+      'MEDDEV 2.7/1 Rev 4 Section 7 (identification of pertinent data) and Appendix A5 require a defined literature search protocol. Has the manufacturer documented the search strategy, including databases, search terms, and inclusion/exclusion criteria?',
     check(answers) {
-      if (isBlank(answers.literature_search_protocol)) {
+      // `literature_search_protocol` is a required yes_no ("Literature Search
+      // Protocol Documented"): `false` is an answer, and it is the finding.
+      if (!isYes(answers.literature_search_protocol)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -234,8 +289,8 @@ const rules: AuditRule[] = [
           question: this.question,
           observation: 'No literature search protocol has been provided or referenced.',
           requirement:
-            'A systematic, reproducible literature search protocol is mandated by MEDDEV 2.7/1 Rev 4 Section 8. It must define databases searched, search strings, date ranges, and inclusion/exclusion criteria.',
-          reference: 'MEDDEV 2.7/1 Rev 4 Sections 8 & Appendix A9',
+            'A systematic, reproducible literature search protocol is mandated by MEDDEV 2.7/1 Rev 4 Section 7 and Appendix A5. It must define databases searched, search strings, date ranges, and inclusion/exclusion criteria.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 7 & Appendices A4, A5',
           recommendation:
             'Provide a standalone literature search protocol or reference one within the CER. Include a PRISMA-style flow diagram showing the screening and selection process.',
           relatedFields: ['literature_search_protocol'],
@@ -253,8 +308,10 @@ const rules: AuditRule[] = [
     question:
       'Per MEDDEV 2.7/1 Rev 4, the literature search shall cover relevant databases such as PubMed/MEDLINE, Embase, and the Cochrane Library. Which databases were searched?',
     check(answers) {
-      const dbs = str(answers.literature_databases).toLowerCase();
-      if (isBlank(dbs)) {
+      // `databases_searched` is a multi_select of option values.
+      const raw = answers.databases_searched;
+      const dbs = Array.isArray(raw) ? raw.filter((d): d is string => typeof d === 'string') : [];
+      if (dbs.length === 0) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -263,15 +320,14 @@ const rules: AuditRule[] = [
           question: this.question,
           observation: 'No databases have been specified for the literature search.',
           requirement:
-            'MEDDEV 2.7/1 Rev 4 Section 8 expects multiple databases to be searched to ensure comprehensive coverage. At minimum PubMed/MEDLINE is expected; Embase and Cochrane are strongly recommended.',
-          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.3',
+            'MEDDEV 2.7/1 Rev 4 Section 7 and Appendix A4 expect multiple databases to be searched to ensure comprehensive coverage. At minimum PubMed/MEDLINE is expected; Embase and Cochrane are strongly recommended.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 7; Appendix A4',
           recommendation:
             'Specify all databases searched. If fewer than two major databases were used, justify why the search is still considered comprehensive.',
-          relatedFields: ['literature_databases'],
+          relatedFields: ['databases_searched'],
         };
       }
-      const hasPubmed = /pubmed|medline/i.test(dbs);
-      if (!hasPubmed) {
+      if (!dbs.includes('pubmed')) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -281,10 +337,10 @@ const rules: AuditRule[] = [
           observation: 'PubMed/MEDLINE does not appear among the databases searched.',
           requirement:
             'PubMed/MEDLINE is the primary biomedical literature database and its omission would be questioned by a Notified Body reviewer.',
-          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.3',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 7; Appendix A4',
           recommendation:
             'Include PubMed/MEDLINE in the literature search. If intentionally excluded, provide a documented justification.',
-          relatedFields: ['literature_databases'],
+          relatedFields: ['databases_searched'],
         };
       }
       return null;
@@ -308,8 +364,8 @@ const rules: AuditRule[] = [
           question: this.question,
           observation: 'The date range for the literature search has not been specified.',
           requirement:
-            'MEDDEV 2.7/1 Rev 4 Section 8 requires the date range to be stated. The search should be current -- typically within the last 12 months of CER finalisation.',
-          reference: 'MEDDEV 2.7/1 Rev 4 Section 8',
+            'MEDDEV 2.7/1 Rev 4 Section 7 and Appendix A5 require the date range to be stated. The search should be current -- typically within the last 12 months of CER finalisation.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 7; Appendix A5',
           recommendation:
             'State the start and end dates of the literature search. If the search is older than 12 months, perform an update search or justify currency.',
           relatedFields: ['search_date_range'],
@@ -327,9 +383,12 @@ const rules: AuditRule[] = [
     question:
       'Per MEDDEV 2.7/1 Rev 4 Section 8.4, have all identified articles been appraised for methodological quality and relevance? Can the manufacturer account for the screening funnel (found -> appraised -> included)?',
     check(answers) {
-      const found = num(answers.total_articles_found);
+      // Found and included are asked (`total_articles_identified`,
+      // `articles_included_after_screening`). The interview has no count of
+      // articles appraised for quality, so this rule stays not assessed.
+      const found = num(answers.total_articles_identified);
       const appraised = num(answers.articles_appraised);
-      const included = num(answers.articles_included);
+      const included = num(answers.articles_included_after_screening);
 
       if (isNaN(found) || isNaN(appraised) || isNaN(included)) {
         return {
@@ -342,10 +401,10 @@ const rules: AuditRule[] = [
             'The article counts (found / appraised / included) are incomplete or not provided, preventing verification of the screening funnel.',
           requirement:
             'A transparent appraisal process with article counts at each stage is required per MEDDEV 2.7/1 Rev 4 Section 8.4. A PRISMA-style diagram is recommended.',
-          reference: 'MEDDEV 2.7/1 Rev 4 Sections 8.4 and Appendix A9',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8; Appendix A5',
           recommendation:
             'Provide total counts at each stage: articles identified, screened, appraised for quality, and included in the evaluation. Include reasons for exclusion.',
-          relatedFields: ['total_articles_found', 'articles_appraised', 'articles_included'],
+          relatedFields: ['total_articles_identified', 'articles_appraised', 'articles_included_after_screening'],
         };
       }
 
@@ -363,7 +422,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 8.4',
           recommendation:
             'Review and correct the article counts. Ensure the PRISMA flow diagram is consistent with the numbers reported in the CER.',
-          relatedFields: ['total_articles_found', 'articles_appraised', 'articles_included'],
+          relatedFields: ['total_articles_identified', 'articles_appraised', 'articles_included_after_screening'],
         };
       }
 
@@ -381,7 +440,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 8.4',
           recommendation:
             'Verify that exclusion criteria are not overly restrictive. Provide a rationale for articles excluded at each stage.',
-          relatedFields: ['total_articles_found', 'articles_included'],
+          relatedFields: ['total_articles_identified', 'articles_included_after_screening'],
         };
       }
 
@@ -397,8 +456,12 @@ const rules: AuditRule[] = [
     question:
       'EU MDR Article 61(3) requires that clinical investigations are considered as a source of clinical data. Has the manufacturer included data from clinical investigations conducted with the device under evaluation?',
     check(answers) {
-      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
-      if ((cls === 'iii' || cls === 'iib') && isBlank(answers.clinical_investigations) && isBlank(answers.equivalent_device)) {
+      const cls = mdrClass(answers);
+      if (
+        (cls === 'iii' || cls === 'iib') &&
+        isNo(answers.clinical_investigation_available) &&
+        isNo(answers.equiv_device_identified)
+      ) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -408,11 +471,11 @@ const rules: AuditRule[] = [
           observation:
             'No clinical investigation data is provided for a higher-risk device (Class IIb/III), and no equivalence route is pursued.',
           requirement:
-            'For Class III and implantable devices, EU MDR Article 61(4) requires clinical investigations unless equivalence per Article 61(5) is demonstrated or a justified exception under Article 61(10) applies.',
-          reference: 'EU MDR 2017/745 Article 61(3)(4)(10); MDCG 2020-6',
+            'For Class III and implantable devices, EU MDR Article 61(4) requires clinical investigations unless one of the exemptions in Article 61(4) second subparagraph (modification of the manufacturer\'s own marketed device with notified-body-endorsed equivalence), Article 61(5) (equivalence to another manufacturer\'s device under a contract granting full access to its technical documentation) or Article 61(6) (certain legacy devices and listed device types) applies; an Article 61(10) justification is applied without prejudice to Article 61(4) and cannot replace the required clinical investigations.',
+          reference: 'EU MDR 2017/745 Article 61(3)-(6); MDCG 2020-6',
           recommendation:
-            'Include clinical investigation data, pursue a fully documented equivalence route, or provide a detailed justification under Article 61(10) with reference to MDCG 2020-6.',
-          relatedFields: ['clinical_investigations', 'device_class_mdr', 'equivalent_device'],
+            'Include clinical investigation data, or document that an Article 61(4)-(6) exemption applies (for example, a fully documented equivalence route with the contract Article 61(5) requires), with reference to MDCG 2020-6.',
+          relatedFields: ['clinical_investigation_available', 'eu_mdr_class', 'equiv_device_identified'],
         };
       }
       return null;
@@ -427,7 +490,12 @@ const rules: AuditRule[] = [
     question:
       'MEDDEV 2.7/1 Rev 4 Section 8.5 requires integration of post-market surveillance (PMS) data into the CER. Has the manufacturer identified and incorporated relevant PMS data sources?',
     check(answers) {
-      if (isBlank(answers.post_market_data_sources)) {
+      // `data_sources_available` is a multi_select; these are its
+      // post-market options.
+      const raw = answers.data_sources_available;
+      const sources = Array.isArray(raw) ? raw : [];
+      const PMS_SOURCES = ['post_market_surveillance', 'complaints_data', 'vigilance_data', 'pmcf_data'];
+      if (!sources.some((s) => PMS_SOURCES.includes(String(s)))) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -440,7 +508,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 8.5; EU MDR Article 83-86',
           recommendation:
             'List all PMS data sources consulted (e.g., complaint database, vigilance database, PMCF study results, customer feedback). Summarise the key findings and their impact on the benefit-risk assessment.',
-          relatedFields: ['post_market_data_sources'],
+          relatedFields: ['data_sources_available'],
         };
       }
       return null;
@@ -455,7 +523,8 @@ const rules: AuditRule[] = [
     question:
       'EU MDR Annex XIV Part B mandates a Post-Market Clinical Follow-up (PMCF) plan. Does the CER reference a PMCF plan, and does it adequately address residual risks and long-term safety?',
     check(answers) {
-      if (isBlank(answers.pmcf_plan_reference)) {
+      // `pmcf_plan_established` is a required yes_no.
+      if (!isYes(answers.pmcf_plan_established)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -468,7 +537,7 @@ const rules: AuditRule[] = [
           reference: 'EU MDR 2017/745 Annex XIV Part B; MDCG 2020-7; MDCG 2020-8',
           recommendation:
             'Reference or include a PMCF plan that addresses: objectives, study design/methodology, sample size rationale, milestones, analysis plan, and how PMCF data will feed back into the CER update cycle.',
-          relatedFields: ['pmcf_plan_reference'],
+          relatedFields: ['pmcf_plan_established'],
         };
       }
       return null;
@@ -511,7 +580,9 @@ const rules: AuditRule[] = [
     question:
       'MEDDEV 2.7/1 Rev 4 Section 10 requires that the CER be consistent with the risk management file (ISO 14971). Is the risk analysis referenced, and are residual risks addressed in the clinical evaluation?',
     check(answers) {
-      if (isBlank(answers.risk_analysis_reference)) {
+      // `risk_management_file_available` is a required yes_no
+      // ("Risk Management File Available (ISO 14971)").
+      if (!isYes(answers.risk_management_file_available)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -524,7 +595,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 10; ISO 14971:2019; EU MDR Annex I',
           recommendation:
             'Reference the risk management file (document ID and version). Discuss how clinical evidence supports the acceptability of residual risks identified therein.',
-          relatedFields: ['risk_analysis_reference'],
+          relatedFields: ['risk_management_file_available'],
         };
       }
       return null;
@@ -539,7 +610,8 @@ const rules: AuditRule[] = [
     question:
       'EU MDR Annex I defines the General Safety and Performance Requirements. Has the CER mapped clinical evidence to the applicable GSPRs, demonstrating that each is fulfilled?',
     check(answers) {
-      if (isBlank(answers.gspr_mapping)) {
+      // `gspr_mapping_completed` is a required yes_no.
+      if (!isYes(answers.gspr_mapping_completed)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -549,10 +621,10 @@ const rules: AuditRule[] = [
           observation: 'No GSPR mapping or checklist has been provided.',
           requirement:
             'EU MDR Annex II Section 4(a) requires that the technical documentation include a GSPR checklist mapping each requirement to the relevant evidence. The CER should reference this mapping and provide the clinical evidence component.',
-          reference: 'EU MDR 2017/745 Annex I, Annex II Section 4(a); MDCG 2021-24',
+          reference: 'EU MDR 2017/745 Annex I, Annex II Section 4',
           recommendation:
-            'Provide a GSPR checklist mapping relevant requirements (especially GSPRs 1, 2, 3, 5, 6, 7, 8, 14, 22, 23) to the clinical evidence presented in the CER. Follow MDCG 2021-24 format.',
-          relatedFields: ['gspr_mapping'],
+            'Provide a GSPR checklist mapping relevant requirements (especially GSPRs 1, 2, 3, 5, 6, 7, 8, 14, 22, 23) to the clinical evidence presented in the CER. Structure the checklist as required by EU MDR Annex II Section 4 (applicable GSPRs, justification for any not applicable, methods used to demonstrate conformity, harmonised standards or common specifications applied, and references to the controlled documents containing the evidence).',
+          relatedFields: ['gspr_mapping_completed'],
         };
       }
       return null;
@@ -567,7 +639,8 @@ const rules: AuditRule[] = [
     question:
       'EU MDR Article 61(1) requires that the clinical evaluation demonstrate conformity with the relevant GSPRs, confirming that the benefits outweigh the residual risks. Has the manufacturer provided a clear benefit-risk conclusion?',
     check(answers) {
-      if (isBlank(answers.benefit_risk_conclusion)) {
+      // `benefit_risk`: the required select "Overall Benefit-Risk Determination".
+      if (isBlank(answers.benefit_risk)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -580,7 +653,7 @@ const rules: AuditRule[] = [
           reference: 'EU MDR 2017/745 Article 61(1); MEDDEV 2.7/1 Rev 4 Section 10',
           recommendation:
             'Provide a structured benefit-risk analysis that explicitly lists benefits, residual risks, risk mitigation measures, and concludes whether the benefit-risk profile is acceptable in the context of the state of the art.',
-          relatedFields: ['benefit_risk_conclusion'],
+          relatedFields: ['benefit_risk'],
         };
       }
       return null;
@@ -593,9 +666,9 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Residual risk disclosure',
     question:
-      'Per EU MDR Annex I GSPR 2, residual risks must be acceptable and communicated in the IFU. Has the manufacturer listed residual risks and confirmed they are acceptable in light of clinical evidence?',
+      'Per EU MDR Annex I Section 4, residual risks must be judged acceptable and users must be informed of them (e.g. in the IFU). Has the manufacturer listed residual risks and confirmed they are acceptable in light of clinical evidence?',
     check(answers) {
-      if (isBlank(answers.residual_risks)) {
+      if (isBlank(answers.residual_risks_identified)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -604,11 +677,11 @@ const rules: AuditRule[] = [
           question: this.question,
           observation: 'Residual risks have not been listed or discussed in the CER.',
           requirement:
-            'EU MDR Annex I GSPR 2 requires that residual risks be deemed acceptable when weighed against clinical benefits and that they are communicated to users. MEDDEV 2.7/1 Rev 4 Section 10 requires the CER to address residual risks.',
-          reference: 'EU MDR Annex I GSPR 2; MEDDEV 2.7/1 Rev 4 Section 10; ISO 14971:2019',
+            'EU MDR Annex I Section 4 requires that the residual risk associated with each hazard, and the overall residual risk, be judged acceptable (with Section 1 requiring risks to be acceptable when weighed against the benefits to the patient), and that users be informed of any residual risks. MEDDEV 2.7/1 Rev 4 Section 10 requires the CER to address residual risks.',
+          reference: 'EU MDR Annex I Sections 1 and 4; MEDDEV 2.7/1 Rev 4 Section 10; ISO 14971:2019',
           recommendation:
             'List all identified residual risks, their clinical significance, and confirm their acceptability with reference to clinical evidence. Ensure alignment with the risk management file.',
-          relatedFields: ['residual_risks', 'risk_analysis_reference'],
+          relatedFields: ['residual_risks_identified', 'risk_management_file_available'],
         };
       }
       return null;
@@ -623,7 +696,9 @@ const rules: AuditRule[] = [
     question:
       'MEDDEV 2.7/1 Rev 4 Section 9 requires a summary of the current knowledge and state of the art for the medical condition and available treatments. Has this been provided?',
     check(answers) {
-      if (isBlank(answers.state_of_art_summary)) {
+      // `current_treatment_landscape` is the interview's state-of-the-art
+      // question; the flow's own no_state_of_art_check reads it the same way.
+      if (isBlank(answers.current_treatment_landscape)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -636,7 +711,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Article 61(1)',
           recommendation:
             'Provide a state-of-the-art review covering: the medical condition or purpose, existing treatment options, accepted clinical benchmarks, and relevant clinical guidelines. Position the device within this landscape.',
-          relatedFields: ['state_of_art_summary'],
+          relatedFields: ['current_treatment_landscape'],
         };
       }
       return null;
@@ -651,7 +726,7 @@ const rules: AuditRule[] = [
     question:
       'EU MDR Article 61(11) requires that the clinical evaluation and its documentation be updated throughout the device lifecycle. Has the manufacturer defined an update frequency for the CER?',
     check(answers) {
-      if (isBlank(answers.cer_update_frequency)) {
+      if (isBlank(answers.cer_update_schedule)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -660,11 +735,11 @@ const rules: AuditRule[] = [
           question: this.question,
           observation: 'No CER update frequency has been specified.',
           requirement:
-            'EU MDR Article 61(11) mandates that the clinical evaluation and CER be updated throughout the device lifecycle. For Class III and implantable devices, MDCG 2020-13 recommends at least annual updates; for lower classes, the interval should be justified.',
-          reference: 'EU MDR 2017/745 Article 61(11); MDCG 2020-13',
+            'EU MDR Article 61(11) mandates that the clinical evaluation and CER be updated throughout the device lifecycle. For Class III and implantable devices, MDR Article 61(11) requires the PMCF evaluation report and, if indicated, the summary of safety and clinical performance (Article 32) to be updated at least annually with PMCF data; for lower classes, the update interval should be justified.',
+          reference: 'EU MDR 2017/745 Article 61(11); EU MDR Article 32',
           recommendation:
             'State the planned CER update frequency. For Class III/implantable devices, commit to annual updates. For Class I/IIa/IIb, justify the chosen interval (typically not exceeding 2-5 years depending on risk class and novelty).',
-          relatedFields: ['cer_update_frequency', 'device_class_mdr'],
+          relatedFields: ['cer_update_schedule', 'eu_mdr_class'],
         };
       }
       return null;
@@ -677,7 +752,7 @@ const rules: AuditRule[] = [
     dimension: 'scientific_rigor',
     title: 'Level of clinical evidence',
     question:
-      'Has the manufacturer characterised the level of clinical evidence (e.g., per the evidence hierarchy in MEDDEV 2.7/1 Rev 4 Appendix A3) and assessed whether it is sufficient for the device risk class?',
+      'Has the manufacturer characterised the level of clinical evidence (e.g., per the suggested hierarchy of clinical evidence in MDCG 2020-6 Appendix III) and assessed whether it is sufficient for the device risk class?',
     check(answers) {
       if (isBlank(answers.clinical_evidence_level)) {
         return {
@@ -688,11 +763,11 @@ const rules: AuditRule[] = [
           question: this.question,
           observation: 'The level of clinical evidence has not been characterised.',
           requirement:
-            'MEDDEV 2.7/1 Rev 4 Appendix A3 provides a hierarchy of evidence. The CER should grade the available evidence and assess sufficiency relative to the device risk class and intended claims.',
-          reference: 'MEDDEV 2.7/1 Rev 4 Appendix A3; EU MDR Article 61',
+            'MEDDEV 2.7/1 Rev 4 Section 8 (appraisal of clinical data, with Appendix A6 on studies lacking scientific validity) and MDCG 2020-6 Appendix III (suggested hierarchy of clinical evidence) provide the basis for grading evidence. The CER should grade the available evidence and assess sufficiency relative to the device risk class and intended claims.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8 and Appendix A6; MDCG 2020-6 Appendix III; EU MDR Article 61',
           recommendation:
             'Classify the available clinical evidence using a recognised hierarchy (e.g., RCTs, cohort studies, case series). For higher-risk devices, higher-quality evidence is expected. If only lower-level evidence is available, justify its sufficiency.',
-          relatedFields: ['clinical_evidence_level', 'device_class_mdr'],
+          relatedFields: ['clinical_evidence_level', 'eu_mdr_class'],
         };
       }
       return null;
@@ -707,7 +782,7 @@ const rules: AuditRule[] = [
     question:
       'Has the manufacturer described any unmet clinical needs that the device addresses, and how these relate to the benefit-risk profile?',
     check(answers) {
-      if (isBlank(answers.unmet_clinical_needs)) {
+      if (isBlank(answers.unmet_clinical_need)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -720,7 +795,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Recital 1',
           recommendation:
             'Describe the unmet clinical need or gap in current treatment that the device is intended to address. This contextualises the benefit-risk assessment and strengthens the clinical rationale.',
-          relatedFields: ['unmet_clinical_needs'],
+          relatedFields: ['unmet_clinical_need'],
         };
       }
       return null;
@@ -735,7 +810,7 @@ const rules: AuditRule[] = [
     question:
       'Does the benefit-risk conclusion explicitly address the residual risks identified in the risk management file? A Notified Body reviewer would expect cross-referencing between these sections.',
     check(answers) {
-      if (!isBlank(answers.benefit_risk_conclusion) && isBlank(answers.residual_risks)) {
+      if (!isBlank(answers.benefit_risk) && isBlank(answers.residual_risks_identified)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -749,7 +824,7 @@ const rules: AuditRule[] = [
           reference: 'MEDDEV 2.7/1 Rev 4 Section 10; ISO 14971:2019 Section 8',
           recommendation:
             'List the residual risks separately and address each within the benefit-risk conclusion. Show that clinical evidence supports the acceptability of each residual risk.',
-          relatedFields: ['benefit_risk_conclusion', 'residual_risks', 'risk_analysis_reference'],
+          relatedFields: ['benefit_risk', 'residual_risks_identified', 'risk_management_file_available'],
         };
       }
       return null;
@@ -762,16 +837,18 @@ const rules: AuditRule[] = [
     dimension: 'documentation',
     title: 'MEDDEV 2.7/1 Rev 4 structural compliance',
     question:
-      'Does the CER follow the structure outlined in MEDDEV 2.7/1 Rev 4 (Sections 7-12)? A Notified Body reviewer will verify that all mandated sections are present and adequately addressed.',
+      'Does the CER follow the structure outlined in MEDDEV 2.7/1 Rev 4 (Sections 6-10)? A Notified Body reviewer will verify that all mandated sections are present and adequately addressed.',
     check(answers) {
-      const requiredFields: Array<{ field: string; label: string }> = [
-        { field: 'device_description', label: 'Device description (Section 7)' },
-        { field: 'clinical_claims', label: 'Clinical claims (Section 9)' },
-        { field: 'literature_search_protocol', label: 'Literature search protocol (Section 8)' },
-        { field: 'state_of_art_summary', label: 'State of the art (Section 9)' },
-        { field: 'benefit_risk_conclusion', label: 'Benefit-risk conclusion (Section 10)' },
+      // `literature_search_protocol` is a yes_no, so it is missing unless true;
+      // the others are text or select answers, missing when blank.
+      const requiredFields: Array<{ field: string; label: string; yesNo?: true }> = [
+        { field: 'device_description_summary', label: 'Device description (Section 6)' },
+        { field: 'claimed_clinical_benefits', label: 'Clinical claims (Section 9)' },
+        { field: 'literature_search_protocol', label: 'Literature search protocol (Section 7)', yesNo: true },
+        { field: 'current_treatment_landscape', label: 'State of the art (Section 9)' },
+        { field: 'benefit_risk', label: 'Benefit-risk conclusion (Section 10)' },
       ];
-      const missing = requiredFields.filter(f => isBlank(answers[f.field]));
+      const missing = requiredFields.filter(f => (f.yesNo ? !isYes(answers[f.field]) : isBlank(answers[f.field])));
       if (missing.length >= 3) {
         return {
           id: this.id,
@@ -782,8 +859,8 @@ const rules: AuditRule[] = [
           observation:
             `The following key CER sections appear to be missing or inadequate: ${missing.map(m => m.label).join('; ')}.`,
           requirement:
-            'MEDDEV 2.7/1 Rev 4 requires the CER to contain: scope (Section 7), clinical background and state of the art (Section 9), literature search methodology (Section 8), clinical data appraisal (Section 8), analysis of clinical data (Section 9), and conclusions including benefit-risk (Section 10).',
-          reference: 'MEDDEV 2.7/1 Rev 4 Sections 7-12',
+            'MEDDEV 2.7/1 Rev 4 requires the clinical evaluation to cover: scope, including device description and the current knowledge/state of the art (Section 6, Stage 0), identification of pertinent data including literature search methodology (Section 7, Stage 1), appraisal of clinical data (Section 8, Stage 2), analysis of clinical data (Section 9, Stage 3), and the clinical evaluation report with conclusions including benefit-risk (Section 10, Stage 4; suggested table of contents in Appendix A9).',
+          reference: 'MEDDEV 2.7/1 Rev 4 Sections 6-10; Appendix A9',
           recommendation:
             'Restructure the CER to follow MEDDEV 2.7/1 Rev 4 explicitly. Address each missing section. Consider using the MEDDEV template as a framework.',
           relatedFields: missing.map(m => m.field),
@@ -801,7 +878,7 @@ const rules: AuditRule[] = [
     question:
       'Per MDCG 2020-7 and EU MDR Annex XIV Part B, the PMCF plan should specify how its results feed back into the CER update. Is this linkage documented?',
     check(answers) {
-      if (!isBlank(answers.pmcf_plan_reference) && isBlank(answers.cer_update_frequency)) {
+      if (isYes(answers.pmcf_plan_established) && isBlank(answers.cer_update_schedule)) {
         return {
           id: this.id,
           dimension: this.dimension,
@@ -815,7 +892,7 @@ const rules: AuditRule[] = [
           reference: 'EU MDR Annex XIV Part B; MDCG 2020-7; MDCG 2020-8',
           recommendation:
             'Define the CER update frequency and specify trigger criteria (e.g., new PMCF data, safety signal, significant literature findings) that would prompt an unscheduled CER update.',
-          relatedFields: ['pmcf_plan_reference', 'cer_update_frequency'],
+          relatedFields: ['pmcf_plan_established', 'cer_update_schedule'],
         };
       }
       return null;
@@ -830,11 +907,13 @@ const rules: AuditRule[] = [
     question:
       'For Class III and implantable devices, EU MDR Article 61(4) sets a higher bar for clinical evidence. Is the quantum of evidence proportionate to the device risk class?',
     check(answers) {
-      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
-      if (cls !== 'iii') return null;
+      if (mdrClass(answers) !== 'iii') return null;
 
-      const hasInvestigations = !isBlank(answers.clinical_investigations);
-      const hasEquivalence = !isBlank(answers.equivalent_device) && !isBlank(answers.equivalence_demonstration);
+      // The interview asks no level-of-evidence question, so for a Class III
+      // device this rule stays not assessed until it does.
+      const hasInvestigations = isYes(answers.clinical_investigation_available);
+      const hasEquivalence =
+        isYes(answers.equiv_device_identified) && EQUIVALENCE_PILLARS.some((p) => !isBlank(answers[p.field]));
       const evidenceLevel = str(answers.clinical_evidence_level).toLowerCase();
       const hasHighEvidence = /rct|randomis|randomiz|controlled trial|cohort/i.test(evidenceLevel);
 
@@ -848,11 +927,11 @@ const rules: AuditRule[] = [
           observation:
             'Class III device with no clinical investigation data, no equivalence demonstration, and no indication of high-level clinical evidence. This is unlikely to satisfy Article 61(4) requirements.',
           requirement:
-            'EU MDR Article 61(4) requires Class III and implantable devices to undergo clinical investigations, except where reliance on existing clinical data from equivalence or other robust sources is duly justified per Article 61(5) or 61(10).',
-          reference: 'EU MDR 2017/745 Article 61(4)(5)(10); MDCG 2020-6',
+            'EU MDR Article 61(4) requires Class III and implantable devices to undergo clinical investigations, except where one of the exemptions in Article 61(4) second subparagraph (modification of the manufacturer\'s own marketed device with notified-body-endorsed equivalence), Article 61(5) (equivalence to another manufacturer\'s device under a contract granting full access to its technical documentation) or Article 61(6) (certain legacy devices and listed device types) applies; an Article 61(10) justification is applied without prejudice to Article 61(4) and cannot replace the required clinical investigations.',
+          reference: 'EU MDR 2017/745 Article 61(4)-(6); MDCG 2020-6',
           recommendation:
-            'Conduct a clinical investigation, establish device equivalence with full three-pillar demonstration, or provide a thorough justification under Article 61(10) supported by high-quality clinical evidence.',
-          relatedFields: ['clinical_investigations', 'equivalent_device', 'equivalence_demonstration', 'clinical_evidence_level', 'device_class_mdr'],
+            'Conduct a clinical investigation, establish device equivalence with full three-pillar demonstration, or document that another Article 61(4)-(6) exemption applies; an Article 61(10) justification cannot replace the clinical investigations Article 61(4) requires.',
+          relatedFields: ['clinical_investigation_available', 'equiv_device_identified', ...EQUIVALENCE_PILLARS.map((p) => p.field), 'clinical_evidence_level', 'eu_mdr_class'],
         };
       }
       return null;

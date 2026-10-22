@@ -152,7 +152,8 @@ export interface ProgramScopeOptions {
  * governed records starts at a project, so every writer that anchors a record
  * to one, and every read for one, asks this first. LX-20 (2026-09-25) replaced
  * a dozen hand-written copies with it; by 2026-10-01 there were 51 again, and
- * they disagreed: most admitted a deleted project; `innovation-routes.ts` also
+ * they disagreed: most admitted a deleted project; `innovation-routes.ts` (since
+ * deleted, 2026-10-15) also
  * consulted `programs` and `core.programs`, which nothing writes (the second
  * is keyed by uuid organization, which no tenant has); and the RBM site-risk
  * read asked whether the caller had RBM records that mention the program

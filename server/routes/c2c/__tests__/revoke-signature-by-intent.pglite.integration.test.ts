@@ -31,6 +31,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { PROGRAM_SPINE_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({
   query: async (_sql: string, _params?: unknown[]): Promise<{ rows: any[] }> => {
@@ -140,11 +141,25 @@ beforeEach(async () => {
   await pg.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   await pg.exec(PEOPLE_DDL);
   await pg.exec(ECTD_DDL);
+  // A US sequence's binding includes its recorded FDA application and applicant
+  // identity (ectd-sequence-binding.ts, 2026-10-21), read from submissions,
+  // organizations, regulatory_programs and ind_sponsors. The REAL registry and
+  // applicant-binding migrations, as governed-sign-esignature does.
+  await pg.exec(PROGRAM_SPINE_PGLITE_DDL);
+  await pg.exec(SUBMISSION_CORE_PGLITE_DDL);
+  await pg.exec(read('migrations/20260609_ind_master_data.sql'));
+  await pg.exec(read('migrations/20261021_regulatory_programs_applicant_sponsor.sql'));
   await pg.exec(read('migrations/20261012_submission_leaf_stf_study_tagging.sql'));
   await pg.exec(read('migrations/20260813d_esignature_governed_unification.sql'));
   await pg.exec(read('db/migrations/20260730_esign_audit_db_level_immutability.sql'));
   await q(`INSERT INTO users (id, email, name, title) VALUES ($1, 'dana@acme.test', 'Dana Reyes', 'Head of Regulatory')`, [SIGNER]);
   await q(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'approver')`, [ORG, SIGNER]);
+  await q(`INSERT INTO organizations (id, name) VALUES ($1, 'Acme Therapeutics')`, [ORG]);
+  await q(
+    `INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
+     VALUES (5, 'Acme IND', 'ind', 'biotech', 'fda', $1, $2)`,
+    [ORG, SIGNER],
+  );
   await q(
     `INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, status, organization_id)
      VALUES ($1, 5, 'fda', '0000', 'validated', $2)`,

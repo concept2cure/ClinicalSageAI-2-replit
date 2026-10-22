@@ -1,0 +1,6 @@
+# GREEN at d4be3c13f + working tree: every client suite importing AgencyInbox, CommunicationCenter, ProjectRespond or ProjectHome (2026-10-22T05:09:33Z)
+ × client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane
+   → Unable to find an element with the placeholder text of: /switch the drug-substance supplier/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 35 passed (36)
+      Tests  1 failed | 321 passed (322)

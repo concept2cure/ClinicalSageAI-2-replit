@@ -1,0 +1,298 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/authority-map 6ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/body-aware-gaps 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/compare-versions 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-consequence 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-context 3ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-scan 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/correction-draft 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/cross-section-consistency 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/decision 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/dossier-preflight 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/execute-contradiction-resolution 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/explain-contradiction-resolution 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/harmonize-sections 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/mark-submission-ready 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/plan-contradiction-resolution 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/project-resolution-status 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/promote-to-review 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/promotion-blockers 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/resolution-changelog 3ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/resume-last-section 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-context 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-evidence 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-expectations 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-preflight 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/seed-overlay-rules 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/biostat-bridge/computation-runs 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/biostat-bridge/filing-placements 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/actions 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/health 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/send-message 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/stream 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/thread 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/coauthor/sessions 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/coauthor/templates 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/artifacts/export-pptx 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/projects/all 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/reviews/pending 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/conversation-os/artifacts 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/conversation-os/conversations 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/benchmark 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/extract 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/ingest 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/controlled-vocab 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/qualification 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/templates 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/v4 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/internal-audits 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/management-reviews 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/nonconforming 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/readiness 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/suppliers 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/vault 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/dependencies 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/initialize 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/milestones 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/notifications 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/summary 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/timeline 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/realtime-collab/health 1ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/regulatory/tasks/dashboard 2ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/regulatory/tasks/sync 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/approval-bottlenecks 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/automation 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/blockers 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/command-center 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/digests 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/due-soon 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/hotspots 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/policies 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/sections 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/unified-work 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/workload 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/task-management/automation 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/tasks/automation 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/progression 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/proofs 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/status 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/tasks 0ms
+   → expected 'launch' not to be 'launch' // Object.is equality
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/authoring-actions/decision-context 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/authoring-actions/decisions 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/authoring-actions/module-preflight 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/biostat-bridge/designs 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/chat/threads 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/chat/upload 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/coauthor/documents 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/artifacts/export-docx 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/artifacts/export-pdf 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/projects 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/reviews/my-queue 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/ectd/export 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/ectd/validate 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/changes 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/documents 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/training 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/realtime-collab/locks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/realtime-collab/rooms 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks/all 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks/by-module 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks/unified 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/submission-ops/artifact-section-map 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/submission-ops/packages 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/assignees 2ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/board 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/filings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/messages 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/my-work 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/messages 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/my-work 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > excludes no path a launch screen calls 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 79 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/authority-map
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/body-aware-gaps
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/compare-versions
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-consequence
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-context
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-scan
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/correction-draft
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/cross-section-consistency
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/decision
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/dossier-preflight
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/execute-contradiction-resolution
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/explain-contradiction-resolution
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/harmonize-sections
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/mark-submission-ready
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/plan-contradiction-resolution
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/project-resolution-status
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/promote-to-review
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/promotion-blockers
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/resolution-changelog
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/resume-last-section
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-context
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-evidence
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-expectations
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-preflight
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/seed-overlay-rules
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/biostat-bridge/computation-runs
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/biostat-bridge/filing-placements
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/actions
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/health
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/send-message
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/stream
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/thread
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/coauthor/sessions
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/coauthor/templates
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/artifacts/export-pptx
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/projects/all
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/reviews/pending
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/conversation-os/artifacts
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/conversation-os/conversations
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/benchmark
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/extract
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/ingest
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/controlled-vocab
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/qualification
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/templates
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/v4
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/internal-audits
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/management-reviews
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/nonconforming
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/readiness
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/suppliers
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/vault
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/dependencies
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/initialize
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/milestones
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/notifications
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/summary
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/timeline
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/realtime-collab/health
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/regulatory/tasks/dashboard
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/regulatory/tasks/sync
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/approval-bottlenecks
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/automation
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/blockers
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/command-center
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/digests
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/due-soon
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/hotspots
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/policies
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/sections
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/unified-work
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/workload
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/task-management/automation
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/tasks/automation
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/progression
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/proofs
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/status
+ FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/tasks
+AssertionError: expected 'launch' not to be 'launch' // Object.is equality
+ ❯ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts:148:31
+    146| describe('the 79 sub-namespaces the re-proof upheld are not served at …
+    147|   it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
+    148|     expect(verdict(path)).not.toBe('launch');
+       |                               ^
+    149|     // Their children too: a claim covers what is under it.
+    150|     expect(verdict(`${path}/x`)).not.toBe('launch');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/79]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  79 failed | 38 passed (117)
+   Start at  07:13:41
+   Duration  842ms (transform 218ms, setup 83ms, import 180ms, tests 58ms, environment 0ms)
+

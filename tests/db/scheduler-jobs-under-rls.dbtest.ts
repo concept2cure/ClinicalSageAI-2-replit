@@ -94,7 +94,7 @@ type Runtime = typeof import('../../server/db/runtime');
 type Store = typeof import('../../server/db/tenantStore');
 
 const DDL = `
-CREATE TABLE organizations (id serial PRIMARY KEY, name text, status text DEFAULT 'active');
+CREATE TABLE organizations (id serial PRIMARY KEY, name text, status text DEFAULT 'active', payment_status text DEFAULT 'active');
 CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, status text NOT NULL DEFAULT 'active');
 CREATE TABLE concept2cure_conversations (id serial PRIMARY KEY, project_id integer, thread_id text);
 CREATE TABLE project_intelligence_profiles (
@@ -404,6 +404,10 @@ describe('schedule-of-events sweep', () => {
     await env.owner.query(`TRUNCATE ${env.t('project_schedule_of_events')}, ${env.t('projects')} RESTART IDENTITY`);
     await env.owner.query(`INSERT INTO ${env.t('organizations')} (id,name,status) VALUES (51,'schedule A','active'),(52,'schedule B','active')
       ON CONFLICT (id) DO UPDATE SET status='active'`);
+    // The sweep filters tenants through getTenantAccessPosture, which caches
+    // per org; a previous test's archived org must not be served from cache.
+    const { invalidateTenantPosture } = await import('../../server/services/tenant/tenant-lifecycle');
+    invalidateTenantPosture(51); invalidateTenantPosture(52);
     await env.owner.query(`INSERT INTO ${env.t('projects')} (id,organization_id,status) VALUES (510,51,'active'),(520,52,'active')`);
     await env.owner.query(
       `INSERT INTO ${env.t('project_schedule_of_events')} (organization_id, project_id) VALUES (51, 510), (52, 520)`,
@@ -448,7 +452,12 @@ describe('schedule-of-events sweep', () => {
       WHERE organization_id=51 AND project_id=510`)).rows[0].last_reviewed_by_ana_at;
     expect(await stamp()).toBeNull();
     const summary = await sweep.runScheduleOfEventsSweep();
-    expect(summary).toMatchObject({ schedules: 2, reviewed: 1, recentlyReviewed: 1, errors: 0 });
+    // An archived project is refused by the claim (recentlyReviewed). An
+    // archived organization is refused earlier, by the tenant-lifecycle filter
+    // (sweepAll -> filterTenantsForBackgroundWork), so it never reaches the claim.
+    expect(summary).toMatchObject(parent === 'project'
+      ? { schedules: 2, reviewed: 1, recentlyReviewed: 1, skippedNotEntitled: 0, errors: 0 }
+      : { schedules: 2, reviewed: 1, recentlyReviewed: 0, skippedNotEntitled: 1, errors: 0 });
     expect(reviewed).toEqual([{ orgId: 52, projectId: 520 }]);
     expect(await stamp()).toBeNull();
   });

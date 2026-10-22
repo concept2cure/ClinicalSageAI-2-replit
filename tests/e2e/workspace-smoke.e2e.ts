@@ -19,6 +19,7 @@
  * @stabilization Hard stabilization sprint — no new features until these pass.
  */
 import { test, expect, Page } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 const BASE_URL = process.env.BASE_URL || process.env.APP_BASE || 'http://localhost:5000';
 const SCREENSHOT_DIR = 'test-results/workspace-smoke-screenshots';
@@ -61,7 +62,7 @@ async function loginToApp(page: Page): Promise<void> {
     }
   } else {
     // Fallback: manual email + password flow
-    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
+    await page.fill('input[type="email"]', devLoginEmail());
     await page.click('button:has-text("Continue")');
 
     const passwordInput = page.locator('input[type="password"]');
@@ -89,7 +90,7 @@ async function loginToApp(page: Page): Promise<void> {
   // bootstrap an authenticated session with dev-login and continue.
   if (!redirected) {
     const devLogin = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jonmichaelpsmith@gmail.com' },
+      data: { email: devLoginEmail() },
     });
     const payload = await devLogin.json();
     if (!devLogin.ok() || !payload?.success || !payload?.accessToken || !payload?.user) {

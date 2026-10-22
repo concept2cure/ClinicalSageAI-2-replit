@@ -1,150 +1,68 @@
 /**
- * Idempotent schema repair for the auth tables.
+ * The auth schema the API needs, checked at boot. No DDL.
  *
- * Extracted from the original `ensureAuthTables()` in server/db.ts. This
- * module handles schema-level operations only — column adds, constraint
- * adds, table creates. Data seeding (default org, demo user) lives in
- * `seed-default-org.ts`.
+ * Until 2026-10-22 this module ran the auth-schema statements at every boot:
+ * organizations and users columns, the membership junction and the module
+ * catalog tables. They ran on the OWNER connection, because ALTER TABLE needs
+ * ownership even when every column already exists, and that is why the API
+ * task carried the RDS master credential (MR-03 Stage 3, OPS-16). The
+ * statements are now migrations/20261022_auth_schema_and_seeded_organizations.sql,
+ * which deploy-migrate applies as the owner. The API boots as app_service and
+ * asks only whether the result is there (server/startup/services.ts sets
+ * readiness from the answer).
  *
- * All statements are `IF NOT EXISTS` / `ON CONFLICT` / guarded `DO $$`
- * blocks, so the function is safe to re-run on every boot.
- *
- * Designed to be called inside a single client transaction; the caller
- * (`ensureAuthTables`) owns BEGIN / COMMIT / ROLLBACK.
+ * AUTH_SCHEMA_COLUMNS is every column that migration creates or adds, and
+ * server/db/bootstrap/__tests__/auth-schema-migration.test.ts holds the two
+ * to each other.
  */
 
-import type { PoolClient } from 'pg';
-
-export async function applyAuthSchemaMigrations(client: PoolClient): Promise<void> {
-  // ── organizations: add columns the schema expects ──────────────────
-  await client.query(`
-    ALTER TABLE organizations
-      ADD COLUMN IF NOT EXISTS uuid          UUID DEFAULT gen_random_uuid() NOT NULL,
-      ADD COLUMN IF NOT EXISTS slug          TEXT,
-      ADD COLUMN IF NOT EXISTS domain        TEXT,
-      ADD COLUMN IF NOT EXISTS logo          TEXT,
-      ADD COLUMN IF NOT EXISTS industry_mode TEXT,
-      ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
-      ADD COLUMN IF NOT EXISTS settings      JSONB,
-      ADD COLUMN IF NOT EXISTS api_key       TEXT,
-      ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT,
-      ADD COLUMN IF NOT EXISTS billing_cycle TEXT DEFAULT 'monthly',
-      ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'incomplete',
-      ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS next_billing_date TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS seats_purchased INTEGER DEFAULT 5,
-      ADD COLUMN IF NOT EXISTS tier          TEXT DEFAULT 'standard' NOT NULL,
-      ADD COLUMN IF NOT EXISTS status        TEXT DEFAULT 'active'   NOT NULL,
-      ADD COLUMN IF NOT EXISTS max_users     INTEGER DEFAULT 5,
-      ADD COLUMN IF NOT EXISTS max_projects  INTEGER DEFAULT 10,
-      ADD COLUMN IF NOT EXISTS max_storage   INTEGER DEFAULT 5,
-      ADD COLUMN IF NOT EXISTS updated_at    TIMESTAMP DEFAULT NOW() NOT NULL
-  `);
-
-  // back-fill slug for any rows that lack one, then upgrade to NOT NULL
-  await client.query(`
-    UPDATE organizations SET slug = lower(replace(name, ' ', '-'))
-    WHERE slug IS NULL
-  `);
-  await client.query(`
-    DO $$ BEGIN
-      IF NOT EXISTS (SELECT 1 FROM organizations WHERE slug IS NULL) THEN
-        EXECUTE 'ALTER TABLE organizations ALTER COLUMN slug SET NOT NULL';
-      END IF;
-    END $$
-  `);
-
-  // ── users: add columns the auth routes expect ──────────────────────
-  await client.query(`
-    ALTER TABLE users
-      ADD COLUMN IF NOT EXISTS password_hash            TEXT,
-      ADD COLUMN IF NOT EXISTS title                    TEXT,
-      ADD COLUMN IF NOT EXISTS department               TEXT,
-      ADD COLUMN IF NOT EXISTS avatar                   TEXT,
-      ADD COLUMN IF NOT EXISTS bio                      TEXT,
-      ADD COLUMN IF NOT EXISTS status                   TEXT DEFAULT 'active' NOT NULL,
-      ADD COLUMN IF NOT EXISTS last_login               TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS default_organization_id  INTEGER REFERENCES organizations(id),
-      ADD COLUMN IF NOT EXISTS preferences              JSONB,
-      ADD COLUMN IF NOT EXISTS updated_at               TIMESTAMP DEFAULT NOW() NOT NULL,
-      ADD COLUMN IF NOT EXISTS mfa_enabled              BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS mfa_secret               TEXT,
-      ADD COLUMN IF NOT EXISTS mfa_backup_codes         JSONB,
-      ADD COLUMN IF NOT EXISTS mfa_method               TEXT DEFAULT 'totp',
-      ADD COLUMN IF NOT EXISTS mfa_verified_at          TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS mfa_totp_last_step       BIGINT,
-      ADD COLUMN IF NOT EXISTS email_otp_resends        INTEGER DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS failed_login_attempts    INTEGER DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS locked_until             TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS last_failed_login        TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS password_changed_at      TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS password_history         JSONB,
-      ADD COLUMN IF NOT EXISTS must_change_password     BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS reset_token              TEXT,
-      ADD COLUMN IF NOT EXISTS reset_token_expires_at   TIMESTAMP
-  `);
-
-  // unique constraint on email (needed for ON CONFLICT during seeding)
-  await client.query(`
-    DO $$ BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'users_email_unique'
-      ) THEN
-        ALTER TABLE users ADD CONSTRAINT users_email_unique UNIQUE (email);
-      END IF;
-    END $$
-  `);
-
-  // ── organization_users junction table ───────────────────────────────
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS organization_users (
-      id              SERIAL PRIMARY KEY,
-      organization_id INTEGER NOT NULL REFERENCES organizations(id),
-      user_id         INTEGER NOT NULL REFERENCES users(id),
-      role            TEXT DEFAULT 'member' NOT NULL,
-      permissions     JSONB,
-      created_at      TIMESTAMP DEFAULT NOW() NOT NULL,
-      updated_at      TIMESTAMP DEFAULT NOW() NOT NULL,
-      UNIQUE(organization_id, user_id)
-    )
-  `);
-  // Back-fill columns on junction tables created before they were added.
-  await client.query(`
-    ALTER TABLE organization_users
-      ADD COLUMN IF NOT EXISTS permissions JSONB,
-      ADD COLUMN IF NOT EXISTS persona     TEXT
-  `);
+/** Something that can run a parameterized query: a pg Pool or PoolClient. */
+export interface AuthSchemaQueryable {
+  query(text: string, values?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
 }
 
-/**
- * Module-subscription schema creation. Previously bundled into
- * `ensureAuthTables` but logically it's the module-catalog surface, not
- * auth. Kept here (called alongside auth-schema) to preserve the original
- * single-transaction bootstrap contract.
- */
-export async function applyModuleCatalogSchema(client: PoolClient): Promise<void> {
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS available_modules (
-      id          SERIAL PRIMARY KEY,
-      module_id   TEXT NOT NULL UNIQUE,
-      name        TEXT NOT NULL,
-      description TEXT,
-      category    TEXT,
-      icon        TEXT,
-      path        TEXT,
-      sort_order  INTEGER DEFAULT 0,
-      metadata    JSONB DEFAULT '{}'
-    )
-  `);
+/** Table → the columns the auth routes and the module catalog read. */
+export const AUTH_SCHEMA_COLUMNS: Readonly<Record<string, readonly string[]>> = {
+  organizations: [
+    'uuid', 'slug', 'domain', 'logo', 'industry_mode', 'stripe_customer_id', 'settings', 'api_key',
+    'stripe_subscription_id', 'billing_cycle', 'payment_status', 'trial_ends_at', 'next_billing_date',
+    'seats_purchased', 'tier', 'status', 'max_users', 'max_projects', 'max_storage', 'updated_at',
+  ],
+  users: [
+    'password_hash', 'title', 'department', 'avatar', 'bio', 'status', 'last_login',
+    'default_organization_id', 'preferences', 'updated_at', 'mfa_enabled', 'mfa_secret',
+    'mfa_backup_codes', 'mfa_method', 'mfa_verified_at', 'mfa_totp_last_step', 'email_otp_resends',
+    'failed_login_attempts', 'locked_until', 'last_failed_login', 'password_changed_at',
+    'password_history', 'must_change_password', 'reset_token', 'reset_token_expires_at',
+  ],
+  organization_users: [
+    'id', 'organization_id', 'user_id', 'role', 'permissions', 'created_at', 'updated_at', 'persona',
+  ],
+  available_modules: [
+    'id', 'module_id', 'name', 'description', 'category', 'icon', 'path', 'sort_order', 'metadata',
+  ],
+  module_subscriptions: ['id', 'organization_id', 'module_id', 'enabled', 'created_at'],
+};
 
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS module_subscriptions (
-      id              SERIAL PRIMARY KEY,
-      organization_id INTEGER NOT NULL REFERENCES organizations(id),
-      module_id       TEXT NOT NULL,
-      enabled         BOOLEAN DEFAULT true,
-      created_at      TIMESTAMP DEFAULT NOW(),
-      UNIQUE(organization_id, module_id)
-    )
-  `);
+/**
+ * The `table.column` pairs of AUTH_SCHEMA_COLUMNS the database lacks, sorted.
+ * Empty when the schema is complete. Reads information_schema only, which
+ * shows the runtime role the columns of every table it has a privilege on.
+ */
+export async function missingAuthSchema(db: AuthSchemaQueryable): Promise<string[]> {
+  const tables = Object.keys(AUTH_SCHEMA_COLUMNS);
+  const { rows } = await db.query(
+    `SELECT table_name, column_name
+       FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [tables],
+  );
+  const present = new Set(rows.map((r) => `${String(r.table_name)}.${String(r.column_name)}`));
+  const missing: string[] = [];
+  for (const [table, columns] of Object.entries(AUTH_SCHEMA_COLUMNS)) {
+    for (const column of columns) {
+      if (!present.has(`${table}.${column}`)) missing.push(`${table}.${column}`);
+    }
+  }
+  return missing.sort();
 }

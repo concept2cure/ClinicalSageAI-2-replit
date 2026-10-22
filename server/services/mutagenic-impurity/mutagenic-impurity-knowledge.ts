@@ -390,6 +390,17 @@ const NITROSAMINE_SPECIFIC_AI: Record<string, { name: string; ai_ng_per_day: num
   },
 };
 
+/**
+ * The table entry for a named nitrosamine, or null when the name is not in it.
+ * 2026-10-15: a name not in the table fell back to the default 18 ng/day while
+ * the text called it "Compound-specific AI for <name>".
+ */
+function compoundSpecificNitrosamineAI(identity: string | undefined): (typeof NITROSAMINE_SPECIFIC_AI)[string] | null {
+  const key = identity?.trim().toUpperCase();
+  if (!key || key === 'DEFAULT' || !Object.hasOwn(NITROSAMINE_SPECIFIC_AI, key)) return null;
+  return NITROSAMINE_SPECIFIC_AI[key];
+}
+
 /** Purge mechanism scoring per Teasdale (2019) */
 const PURGE_SCORING_GUIDE: Record<string, { parameter: string; score_1: string; score_3: string; score_10: string; score_100?: string }> = {
   reactivity: {
@@ -580,6 +591,12 @@ export interface ClassifyInput {
   /** Required: an unstated cohort-of-concern status is refused, not read as false. */
   cohortOfConcernStructure: boolean;
   specificStructuralAlerts?: string[];
+  /**
+   * True when the impurity's alert is the same alert as in the drug substance
+   * (or a related compound) shown non-mutagenic — ICH M7 Class 4 per the CMC
+   * regulatory record. Unstated is not true.
+   */
+  alertSharedWithApi?: boolean;
 }
 
 export interface ClassificationResult {
@@ -607,8 +624,14 @@ export interface ClassificationResult {
  *   1. Is there carcinogenicity data showing positive result? → Class 1
  *   2. Is the compound Ames-positive (known mutagen) with no carcinogenicity data? → Class 2
  *   3. Does the compound have structural alerts but no Ames data? → Class 3
- *   4. Does the compound have structural alerts AND negative Ames? → Class 4
- *   5. No structural alerts, no Ames data? → Class 5
+ *   4. Structural alert AND negative Ames? → Class 5 (adequate data showing no
+ *      mutagenicity), or Class 4 when the alert is stated to be shared with the
+ *      API; an N-nitroso compound is not cleared by a negative Ames alone → Class 3
+ *   5. No structural alerts? → Class 5
+ *
+ * Class definitions are the CMC regulatory record's
+ * (cmc-regulatory-record.json, m7-hazard-assessment-classes-qsar); the
+ * nitrosamine caveat is its nitrosamine-ai-cpca-fda-ema entry.
  */
 export function classifyMutagenicImpurity(params: ClassifyInput): ClassificationResult {
   refuseIfAny(
@@ -619,6 +642,7 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
     oneOf('cohortOfConcernStructure', params.cohortOfConcernStructure, [true, false]),
     textList('specificStructuralAlerts', params.specificStructuralAlerts, false),
   );
+  const alertSharedWithApi = statedBoolean('alertSharedWithApi', params.alertSharedWithApi);
   const {
     amesMutagenicity,
     structuralAlertsPresent,
@@ -627,6 +651,7 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
     cohortOfConcernStructure,
     specificStructuralAlerts = [],
   } = params;
+  const nitroso = statesNitrosoAlert(specificStructuralAlerts);
 
   const decisionTree: DecisionStep[] = [];
   let impurityClass: MutagenicImpurityClass;
@@ -706,27 +731,59 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
           outcome: amesMutagenicity === 'not_tested'
             ? 'NOT TESTED — Alerting structure present but no mutagenicity data → Class 3'
             : amesMutagenicity === 'negative'
-              ? 'NEGATIVE — Alerting structure present but Ames negative → Class 4'
+              ? nitroso
+                ? 'NEGATIVE — but an N-nitroso alert is not cleared by a negative Ames result alone → Class 3'
+                : alertSharedWithApi
+                  ? 'NEGATIVE — alert stated to be shared with the API → Class 4'
+                  : 'NEGATIVE — Alerting structure with adequate negative data → Class 5'
               : 'POSITIVE — Alerting structure present and Ames positive → Class 2 (already covered above)',
         });
 
         if (amesMutagenicity === 'not_tested') {
           impurityClass = 3;
           className = 'Class 3: Alerting structure, unconfirmed mutagenicity';
-          classDescription = 'Compound contains structural alerts for bacterial mutagenicity identified by (Q)SAR but has not been tested in an Ames assay. Treated as a potential mutagen with TTC-based limits applied unless and until a negative Ames test reclassifies it to Class 4. Two complementary (Q)SAR systems (one expert rule-based, one statistical-based) must be used per ICH M7(R2) Section 6.';
-          controlApproach = 'TTC-based limit applies (same as Class 2): 1.5 μg/day for lifetime treatment, with LTL adjustments for shorter durations. Alternatively, a negative Ames test will downgrade to Class 4 (non-mutagenic).';
-          acceptableIntakeBasis = 'TTC — 1.5 μg/day lifetime, with LTL adjustments; OR conduct Ames test to potentially reclassify to Class 4';
+          classDescription = 'Compound contains structural alerts for bacterial mutagenicity identified by (Q)SAR but has not been tested in an Ames assay. Treated as a potential mutagen with TTC-based limits applied unless and until a negative Ames test reclassifies it to Class 5 (Class 4 where the alert is shared with the API). Two complementary (Q)SAR systems (one expert rule-based, one statistical-based) must be used per ICH M7(R2) Section 6.';
+          controlApproach = 'TTC-based limit applies (same as Class 2): 1.5 μg/day for lifetime treatment, with LTL adjustments for shorter durations. Alternatively, a negative Ames test will reclassify it to Class 5 (non-mutagenic).';
+          acceptableIntakeBasis = 'TTC — 1.5 μg/day lifetime, with LTL adjustments; OR conduct Ames test to potentially reclassify to Class 5';
           requiredTestingToReclassify.push(
-            'Conduct bacterial reverse mutation test (Ames test, OECD TG 471): negative result → reclassify to Class 4 (non-mutagenic, treat as ordinary impurity)',
+            nitroso
+              ? NITROSAMINE_AMES_CAVEAT
+              : 'Conduct bacterial reverse mutation test (Ames test, OECD TG 471): negative result → reclassify to Class 5 (non-mutagenic, treat as ordinary impurity), or Class 4 where the alert is shared with the API',
             'Positive Ames result → reclassify to Class 2 (known mutagen, TTC applies)',
             '(Q)SAR assessment showing both complementary systems predict "negative" with adequate coverage may be used in lieu of Ames test per ICH M7(R2), subject to expert review and regulatory agreement',
           );
-        } else if (amesMutagenicity === 'negative') {
-          // Stated Ames-negative, alert present or unknown. 2026-10-15: this was a
-          // bare else, so an Ames result nobody stated was classed as negative.
+        } else if (amesMutagenicity === 'negative' && nitroso) {
+          // 2026-10-15: a nitrosamine was cleared to Class 4 on a negative Ames
+          // alone; the record says regulators no longer accept that.
+          impurityClass = 3;
+          className = 'Class 3: N-nitroso alerting structure — a negative Ames result alone does not clear it';
+          classDescription = `${NITROSAMINE_AMES_CAVEAT} The impurity stays a potential mutagen, controlled at its cohort-of-concern acceptable intake (the 1.5 μg/day TTC does not apply to an N-nitroso compound).`;
+          controlApproach = 'Control to the compound-specific or default N-nitrosamine acceptable intake (cohort of concern), not the TTC, until further data establish otherwise.';
+          acceptableIntakeBasis = 'N-nitrosamine cohort-of-concern acceptable intake (compound-specific, or the default)';
+          requiredTestingToReclassify.push(NITROSAMINE_AMES_CAVEAT);
+        } else if (amesMutagenicity === 'negative' && cohortOfConcernStructure && specificStructuralAlerts.length === 0) {
+          // The class turns on whether this cohort is N-nitroso, which was not stated.
+          throw new ComputationRefusal(
+            'missing_input',
+            'specificStructuralAlerts is required for a cohort-of-concern impurity with a negative Ames result: a negative Ames result alone does not clear an N-nitroso compound, so state the alert (N-nitroso, aflatoxin-like, alkyl-azoxy).',
+            'specificStructuralAlerts',
+          );
+        } else if (amesMutagenicity === 'negative' && alertSharedWithApi) {
+          // 2026-10-15: every alert + Ames-negative was Class 4; the record's
+          // Class 4 is an alert shared with the API shown non-mutagenic.
           impurityClass = 4;
-          className = 'Class 4: Alerting structure, but Ames-negative (non-mutagenic)';
-          classDescription = 'Compound has structural alerts for mutagenicity but tested negative in a compliant Ames assay (OECD TG 471). Treated as non-mutagenic. No TTC-based limits apply. Control as an ordinary impurity per ICH Q3A(R2)/Q3B(R2).';
+          className = 'Class 4: Alerting structure shared with the API or a related compound shown non-mutagenic';
+          classDescription = 'The impurity carries the same alert as the drug substance or a related compound that has been shown non-mutagenic, as stated. Treated as non-mutagenic. No TTC-based limits apply. Control as an ordinary impurity per ICH Q3A(R2)/Q3B(R2).';
+          controlApproach = 'No mutagenic impurity controls required. Manage as an ordinary impurity under ICH Q3A(R2) or Q3B(R2).';
+          acceptableIntakeBasis = 'ICH Q3A(R2)/Q3B(R2) thresholds for ordinary impurities — alert shared with a compound shown non-mutagenic';
+          requiredTestingToReclassify.push('No reclassification testing typically required');
+        } else if (amesMutagenicity === 'negative') {
+          // Stated Ames-negative, alert present or unknown: adequate data showing no
+          // mutagenicity, which the record classes 5 (a valid Ames supersedes (Q)SAR).
+          // 2026-10-15: this was Class 4.
+          impurityClass = 5;
+          className = 'Class 5: Alerting structure, Ames-negative (adequate data showing no mutagenicity)';
+          classDescription = 'Compound has a structural alert for mutagenicity but tested negative in a bacterial mutagenicity (Ames) assay (OECD TG 471), which is adequate data showing no mutagenicity. Treated as non-mutagenic. No TTC-based limits apply. Control as an ordinary impurity per ICH Q3A(R2)/Q3B(R2).';
           controlApproach = 'No mutagenic impurity controls required. Manage as an ordinary impurity under ICH Q3A(R2) or Q3B(R2). The negative Ames result overrides the structural alert.';
           acceptableIntakeBasis = 'ICH Q3A(R2)/Q3B(R2) thresholds for ordinary impurities — mutagenicity concern resolved by negative Ames test';
           requiredTestingToReclassify.push(
@@ -779,15 +836,25 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
   };
 }
 
+/** The CMC regulatory record's nitrosamine caveat (nitrosamine-ai-cpca-fda-ema). */
+const NITROSAMINE_AMES_CAVEAT =
+  'Regulators no longer accept a negative standard or enhanced Ames alone as sufficient to classify a nitrosamine as M7 Class 5 without further support; extensive follow-up such as transgenic rodent assays may be required (CMC regulatory record, nitrosamine-ai-cpca-fda-ema, citing Thomas et al. 2025).';
+
+/** Whether the stated alerts name an N-nitroso structure (the same test evaluateCohortOfConcern applies). */
+function statesNitrosoAlert(alerts: string[]): boolean {
+  return alerts.some((a) => {
+    const l = a.toLowerCase();
+    return l.includes('nitroso') || l.includes('nitrosamine') || l.includes('n_nitroso');
+  });
+}
+
 function evaluateCohortOfConcern(
   isCoCStructure: boolean,
   specificAlerts: string[],
   impurityClass: MutagenicImpurityClass,
 ): ClassificationResult['cohortOfConcernAssessment'] {
   const lowerAlerts = specificAlerts.map(a => a.toLowerCase());
-  const isNitroso = lowerAlerts.some(a =>
-    a.includes('nitroso') || a.includes('nitrosamine') || a.includes('n-nitroso') || a.includes('n_nitroso'),
-  );
+  const isNitroso = statesNitrosoAlert(specificAlerts);
   const isAflatoxinLike = lowerAlerts.some(a =>
     a.includes('aflatoxin') || a.includes('polyhalogenated') || a.includes('azacyclopropane'),
   );
@@ -968,15 +1035,20 @@ export function calculateTTC(params: TTCInput): TTCResult {
   // Step 1: Determine base AI based on compound class
   if (compoundClass === 'CoC_nitrosamine') {
     // Nitrosamines: compound-specific or default 18 ng/day
-    const specificAI = nitrosamineIdentity
-      ? NITROSAMINE_SPECIFIC_AI[nitrosamineIdentity.toUpperCase()] || NITROSAMINE_SPECIFIC_AI.DEFAULT
-      : NITROSAMINE_SPECIFIC_AI.DEFAULT;
+    const onFile = compoundSpecificNitrosamineAI(nitrosamineIdentity);
+    const specificAI = onFile ?? NITROSAMINE_SPECIFIC_AI.DEFAULT;
 
     acceptableIntakeUgPerDay = specificAI.ai_ng_per_day / 1000;
-    calculationBasis = `Nitrosamine compound-specific AI: ${specificAI.name} — ${specificAI.ai_ng_per_day} ng/day (${specificAI.basis})`;
+    calculationBasis = onFile
+      ? `Nitrosamine compound-specific AI: ${specificAI.name} — ${specificAI.ai_ng_per_day} ng/day (${specificAI.basis})`
+      : `Nitrosamine default AI — ${specificAI.ai_ng_per_day} ng/day (${specificAI.basis})`;
     cocConsiderations = `N-Nitrosamines are in the Cohort of Concern per ICH M7(R2). ` +
       `The standard TTC of 1.5 μg/day is NOT applicable. ` +
-      `${nitrosamineIdentity ? `Compound-specific AI for ${nitrosamineIdentity}: ${specificAI.ai_ng_per_day} ng/day` : `Default AI of 18 ng/day applies (no compound-specific TD50 data available)`}. ` +
+      `${onFile
+        ? `Compound-specific AI for ${nitrosamineIdentity}: ${specificAI.ai_ng_per_day} ng/day`
+        : nitrosamineIdentity
+          ? `No compound-specific AI is on file for ${nitrosamineIdentity} in this tool's table; the default AI of ${specificAI.ai_ng_per_day} ng/day was applied`
+          : `Default AI of ${specificAI.ai_ng_per_day} ng/day applies (no nitrosamine identity stated)`}. ` +
       `LTL adjustments per ICH M7(R2) Table 2 are generally NOT applied to nitrosamine AIs — the compound-specific AI is a fixed limit regardless of treatment duration per FDA 2021 Guidance. ` +
       `However, the FDA has noted that short-term higher limits may be considered in urgent situations (e.g., interim limits during recall responses).`;
 
@@ -985,7 +1057,7 @@ export function calculateTTC(params: TTCInput): TTCResult {
       description: 'Determine nitrosamine-specific acceptable intake',
       formula: 'AI = compound-specific AI from TD50 data, or default 18 ng/day',
       values: {
-        nitrosamine: nitrosamineIdentity || 'unspecified',
+        nitrosamine: onFile ? String(nitrosamineIdentity) : nitrosamineIdentity ? `${nitrosamineIdentity} (not in table — default applied)` : 'unspecified',
         ai_ng_per_day: specificAI.ai_ng_per_day,
         basis: specificAI.basis,
       },
@@ -1107,7 +1179,9 @@ export function calculateTTC(params: TTCInput): TTCResult {
     multipleImpurityConsideration = 'Number of mutagenic impurities not stated: the acceptable intake above is for this impurity alone, and whether a limit on the combined intake of several Class 2/3 impurities applies was not assessed. State numberOfMutagenicImpurities.';
   } else if (numberOfMutagenicImpurities > 1) {
     multipleImpurityConsideration = `Multiple mutagenic impurities (${numberOfMutagenicImpurities} identified): ` +
-      `ICH M7(R2) Section 7.3 states that "the total daily intake of all Class 2 and Class 3 mutagenic impurities should not exceed the TTC." ` +
+      // 2026-10-15: this was presented as a quotation of M7; the CMC regulatory
+      // record (m7-ltl-limits-clinical-trials) marks the Table 3 totals not re-verified.
+      `Recalled, not verified against the guideline text: ICH M7(R2) limits the combined intake of three or more Class 2/3 impurities (Table 3 totals; the CMC regulatory record marks those values not re-verified) — confirm against the official table. ` +
       `Approach 1 (conservative): Divide the TTC equally among all mutagenic impurities — each impurity limited to ${Math.round((acceptableIntakeUgPerDay / numberOfMutagenicImpurities) * 1000) / 1000} μg/day. ` +
       `Approach 2 (risk-based): Use purge factor data and process understanding to demonstrate that the combined total of all mutagenic impurities does not exceed the TTC. ` +
       `Approach 3 (staged): Assign individual limits to each impurity based on likelihood of co-occurrence, with the sum not exceeding TTC. ` +
@@ -1220,6 +1294,53 @@ export interface StructuralAlertResult {
 }
 
 /**
+ * The names an alert category is matched by, as whole phrases: curated from the
+ * category's own description, plus its listed examples (parenthetical notes
+ * dropped). Matching is by whole words, singular or plural.
+ */
+const ALERT_CATEGORY_NAMES: Record<string, string[]> = {
+  alkyl_halides: ['alkyl halide', 'alkyl chloride', 'alkyl bromide', 'alkyl iodide'],
+  michael_reactive_acceptors: ['michael acceptor', 'michael reactive acceptor', 'alpha beta unsaturated carbonyl', 'α β unsaturated carbonyl'],
+  epoxides: ['epoxide', 'aziridine'],
+  aldehydes: ['aldehyde'],
+  aromatic_amines: ['aromatic amine', 'aminobiphenyl'],
+  aromatic_nitro: ['aromatic nitro', 'aromatic nitro compound'],
+  n_nitroso: ['n nitroso', 'nitrosamine', 'nitrosamide'],
+  azide: ['azide', 'organic azide'],
+  hydrazine: ['hydrazine', 'hydrazide'],
+  acyl_halides: ['acyl halide', 'acyl chloride'],
+  boronic_acids: ['boronic acid'],
+  sulfonates: ['alkyl sulfonate', 'sulfonate ester'],
+  n_oxides: ['n oxide', 'aromatic n oxide'],
+  azo_compounds: ['azo', 'azo compound'],
+  diazo_compounds: ['diazo', 'diazo compound', 'diazonium'],
+  propiolactone_sultone: ['propiolactone', 'propanesultone', 'sultone'],
+  nitrogen_mustards: ['nitrogen mustard'],
+};
+
+/** Lower-case words, punctuation as spaces, a plural 's' dropped from words over three letters. */
+function normalisePhrase(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .split(' ')
+    .map(w => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w))
+    .join(' ');
+}
+
+function alertPhrases(key: string, examples: string[]): string[] {
+  return [...(ALERT_CATEGORY_NAMES[key] ?? []), ...examples.map(e => e.replace(/\([^)]*\)/g, ' '))]
+    .map(normalisePhrase)
+    .filter(p => p !== '');
+}
+
+/** Whether `input` contains `phrase` (already normalised) as whole words. */
+function containsPhrase(input: string, phrase: string): boolean {
+  return ` ${normalisePhrase(input)} `.includes(` ${phrase} `);
+}
+
+/**
  * Assess structural alerts and provide (Q)SAR guidance per ICH M7(R2).
  *
  * ICH M7(R2) Section 6 requires:
@@ -1244,26 +1365,14 @@ export function assessStructuralAlerts(params: StructuralAlertInput): Structural
   const lowerKnown = knownStructuralAlerts.map(a => a.toLowerCase());
   const allInputAlerts = [...lowerFGs, ...lowerKnown];
 
+  // 2026-10-15: keys were split on '_' and each fragment substring-tested, so
+  // 'n', 'aromatic', 'compounds', 'acids', 'azo' and the description's first
+  // word ('organic') matched almost any input — "phenol" was an N-nitroso alert.
+  // Whole phrases only: the curated names below and each category's examples.
   const identifiedAlerts = Object.entries(STRUCTURAL_ALERT_CATEGORIES).map(([key, category]) => {
-    const categoryTerms = key.toLowerCase().split('_');
-    const matched = allInputAlerts.some(input => {
-      const lowerInput = input.toLowerCase();
-      // Match against category key terms
-      if (categoryTerms.some(term => lowerInput.includes(term))) return true;
-      // Match against example compound names
-      if (category.examples.some(ex => lowerInput.includes(ex.toLowerCase()))) return true;
-      // Match against description terms
-      if (lowerInput.includes(category.description.toLowerCase().split(' ')[0])) return true;
-      return false;
-    });
-
-    const matchedGroup = matched
-      ? allInputAlerts.find(input => {
-          const li = input.toLowerCase();
-          return categoryTerms.some(t => li.includes(t)) ||
-            category.examples.some(ex => li.includes(ex.toLowerCase()));
-        })
-      : undefined;
+    const phrases = alertPhrases(key, category.examples);
+    const matchedGroup = allInputAlerts.find(input => phrases.some(p => containsPhrase(input, p)));
+    const matched = matchedGroup !== undefined;
 
     return {
       alertCategory: key,
@@ -1327,7 +1436,7 @@ export function assessStructuralAlerts(params: StructuralAlertInput): Structural
     {
       outcome: 'Both systems predict POSITIVE (mutagenic)',
       description: 'Both complementary systems identify alerting structures and predict bacterial mutagenicity.',
-      nextStep: 'Classify as Class 3 (alerting structure, unconfirmed mutagenicity). Apply TTC-based limits OR conduct Ames test (OECD TG 471) to resolve: negative → Class 4, positive → Class 2.',
+      nextStep: 'Classify as Class 3 (alerting structure, unconfirmed mutagenicity). Apply TTC-based limits OR conduct Ames test (OECD TG 471) to resolve: negative → Class 5 (Class 4 where the alert is shared with the API; an N-nitroso compound is not cleared by a negative Ames alone), positive → Class 2.',
     },
     {
       outcome: 'CONFLICTING predictions (one positive, one negative)',
@@ -2393,10 +2502,7 @@ export function controlMutagenicImpurity(params: ControlStrategyInput): ControlS
   // Calculate specification limit
   let aiUgPerDay: number;
   if (compoundClass === 'CoC_nitrosamine') {
-    const specificAI = nitrosamineIdentity
-      ? NITROSAMINE_SPECIFIC_AI[nitrosamineIdentity.toUpperCase()] || NITROSAMINE_SPECIFIC_AI.DEFAULT
-      : NITROSAMINE_SPECIFIC_AI.DEFAULT;
-    aiUgPerDay = specificAI.ai_ng_per_day / 1000;
+    aiUgPerDay = (compoundSpecificNitrosamineAI(nitrosamineIdentity) ?? NITROSAMINE_SPECIFIC_AI.DEFAULT).ai_ng_per_day / 1000;
   } else if (compoundClass === 'CoC_aflatoxin_like') {
     aiUgPerDay = COC_LIMITS.CoC_aflatoxin_like.ai_ug_per_day;
   } else {
@@ -2410,7 +2516,9 @@ export function controlMutagenicImpurity(params: ControlStrategyInput): ControlS
     ai_ug_per_day: aiUgPerDay,
     concentrationLimitPpm,
     basis: compoundClass === 'CoC_nitrosamine'
-      ? `Nitrosamine-specific AI (${nitrosamineIdentity || 'default'}: ${aiUgPerDay * 1000} ng/day)`
+      ? compoundSpecificNitrosamineAI(nitrosamineIdentity)
+        ? `Nitrosamine-specific AI (${nitrosamineIdentity}: ${aiUgPerDay * 1000} ng/day)`
+        : `Nitrosamine default AI (${aiUgPerDay * 1000} ng/day; no compound-specific AI on file${nitrosamineIdentity ? ` for ${nitrosamineIdentity}` : ''})`
       : compoundClass === 'CoC_aflatoxin_like'
         ? `Aflatoxin-like CoC limit (0.15 μg/day)`
         : `LTL-TTC per ICH M7(R2) Table 2 for ${LTL_TTC_TABLE[treatmentDuration].description}: ${aiUgPerDay} μg/day`,
@@ -2500,15 +2608,15 @@ export function controlMutagenicImpurity(params: ControlStrategyInput): ControlS
     {
       option: 5,
       name: 'Option 5: No controls necessary',
-      description: 'No mutagenic impurity controls are required. The impurity is classified as non-mutagenic (Class 4 — alerting structure but negative Ames test; or Class 5 — no alerting structure). Controlled as an ordinary impurity per ICH Q3A(R2)/Q3B(R2).',
+      description: 'No mutagenic impurity controls are required. The impurity is classified as non-mutagenic (Class 4 — alert shared with the API or a related compound shown non-mutagenic; or Class 5 — no alert, or adequate data such as a negative Ames test showing no mutagenicity). Controlled as an ordinary impurity per ICH Q3A(R2)/Q3B(R2).',
       applicable: impurityClass >= 4,
       applicabilityReason: impurityClass >= 4
         ? `Applicable — Class ${impurityClass} impurity is classified as non-mutagenic. No TTC-based limits apply. Manage under ordinary impurity limits per ICH Q3A(R2)/Q3B(R2).`
         : `Not applicable — Class ${impurityClass} impurity requires mutagenic impurity controls.`,
       requirements: [
         'Manage under ICH Q3A(R2) (drug substance) or ICH Q3B(R2) (drug product) impurity limits',
-        `For Class 4: document the negative Ames test result and (Q)SAR assessment in the ICH M7 risk assessment`,
-        `For Class 5: document the (Q)SAR assessment (two complementary systems, both negative) in the ICH M7 risk assessment`,
+        `For Class 4: document the shared alert and the data showing the API or related compound non-mutagenic in the ICH M7 risk assessment`,
+        `For Class 5: document the (Q)SAR assessment (two complementary systems, both negative) or the negative Ames result in the ICH M7 risk assessment`,
         'Identification threshold per ICH Q3A(R2): 0.10% for MDD ≤2g, 0.05% for MDD >2g',
         'Qualification threshold per ICH Q3A(R2): 0.15% for MDD ≤2g, 0.05% for MDD >2g',
       ],
@@ -2540,7 +2648,9 @@ export function controlMutagenicImpurity(params: ControlStrategyInput): ControlS
         `For the current treatment duration (${LTL_TTC_TABLE[treatmentDuration].description}), the applicable limit is ${aiUgPerDay} μg/day. ` +
         `A higher "Phase 1 limit" may be justified if the Phase 1 trial is truly limited in duration and patient numbers, ` +
         `but this must be documented with a clear risk-benefit assessment. ` +
-        `The ICH M7(R2) staging approach allows: ≤1 month: 120 μg/day, >1-3 months: 60 μg/day (linear interpolation), >3-6 months: 20 μg/day, >6-12 months: 10 μg/day.`,
+        // 2026-10-15: listed 60/20/10 μg/day bands for >1-3/3-6/6-12 months, which are in
+        // neither Table 2 below nor the CMC regulatory record. Restated from the table.
+        `ICH M7(R2) Table 2 (as this module holds it): ${Object.values(LTL_TTC_TABLE).map(d => `${d.description}: ${d.ai_ug_per_day} μg/day`).join('; ')}.`,
       documentation: 'Document staging justification in the IND/CTA application. Include the number of patients, treatment duration, and risk-benefit assessment. Provide a commitment to lower limits as development progresses.',
     },
     clinical_phase2: {

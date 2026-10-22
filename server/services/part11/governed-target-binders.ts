@@ -212,6 +212,35 @@ const commitmentFulfilmentBinding: ContentBinder = async (client, rest, orgId, l
   };
 };
 
+/**
+ * A QMS controlled document's periodic review (services/qms/periodic-review.ts):
+ * the reviewer attests the version in force, so the signature binds the content
+ * its approval signed, by the approval's own recipe and basis
+ * (computeQmsDocumentContentDigest). Approval and retirement bind their own
+ * digests on their own path and never reach this binder. A document that is
+ * not effective has no version in force to bind, and falls back.
+ *
+ * The recipe is loaded when a signature is taken, not with this module: the
+ * QMS approval module imports signature-persistence, which imports this one,
+ * so a static import would close that cycle at startup.
+ */
+const qmsDocumentContentBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed QMS document pointer');
+  const { computeQmsDocumentContentDigest } = await import('../qms/document-approval-signature.js');
+  const { rows } = await client.query(
+    `SELECT * FROM qms_documents WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [rest, orgId],
+  );
+  const row = rows[0];
+  if (!row) return ledgerFallback('QMS document not readable at signing time');
+  if (row.status !== 'effective') return ledgerFallback('the QMS document has no version in force at signing time');
+  return {
+    digest: computeQmsDocumentContentDigest(row),
+    basis: BINDING_BASIS.QMS_DOCUMENT_VERSION_CONTENT,
+    note: `sha256 over QMS document ${rest} v${String(row.version)}'s controlled content (identity, title, type, category, artifact, next review date, and metadata without its approval block): the content its approval signature is bound to.`,
+  };
+};
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-document': (client, rest, orgId, fallback) =>
@@ -222,4 +251,5 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'interim-snapshot': interimSnapshotBinding,
   'agency-question': agencyResponseBinding,
   'regulatory-commitment': commitmentFulfilmentBinding,
+  'qms-document': qmsDocumentContentBinding,
 };

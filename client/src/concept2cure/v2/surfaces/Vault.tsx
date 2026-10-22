@@ -13,6 +13,8 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
+import { FileDropZone, type FileDropZoneControls } from '../FileDropZone';
+import { VaultUploadStaging, fieldsOf, stageFiles, type StagedFile, type Staging } from './VaultUploadStaging';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
   vaultDocKindLabel,
@@ -693,7 +695,6 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      + ClamAV verified, tenant-scoped storage, one vault.documents row per file.
      Nothing is faked here — the row appears in the tree because the server
      wrote it, and a refusal is reported as a refusal. */
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   /* Moved to ../useVaultUpload and shared with the MDX Document vault, which
      had no upload control at all (its button opened a chat prompt). Copying
      these forty lines into that surface would have produced a second copy of a
@@ -714,8 +715,24 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      (VR-09), rather than left at a dead end. The document is the tree's leaf
      with that code, which is its current version. */
   const [checkInOffers, setCheckInOffers] = useState<Array<{ file: File; doc: VaultDoc }>>([]);
-  const uploadFiles = async (files: FileList | null) => {
-    const outcome = await upload(files, { documentType: docType });
+  /* Files chosen or dropped wait here, one row each, until the person sends
+     them (VaultUploadStaging.tsx, gap 7.1): each row's title, type, version,
+     classification and filing go with its own file. */
+  const [staging, setStaging] = useState<Staging | null>(null);
+  /* The header's drop zone, so Coverage's "upload here" opens the same picker. */
+  const uploadControls = React.useRef<FileDropZoneControls | null>(null);
+  /* Closing the upload list returns focus to the button that opened it (a11y review, 2026-10-22). */
+  const addFilesButton = React.useRef<HTMLButtonElement | null>(null);
+  const patchStaged = (key: string, patch: Partial<StagedFile>) =>
+    setStaging((st) => st && { ...st, rows: st.rows.map((r) => (r.key === key ? { ...r, ...patch } : r)) });
+  const uploadStaged = async () => {
+    if (!staging) return;
+    const pending = staging.rows.filter((r) => !r.status || r.status.state === 'refused');
+    const outcome = await upload(pending.map((r) => r.file), {
+      documentType: docType,
+      fields: pending.map(fieldsOf),
+      onFileStatus: (index, status) => patchStaged(pending[index].key, { status }),
+    });
     setCheckInOffers(
       outcome.conflicts.flatMap(({ name, file }) => {
         const doc = allDocs.find((d) => d.src === 'upload' && d.docId && d.documentCode === name);
@@ -724,7 +741,6 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     );
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
   /** Add `file` as the next version of `doc`: the server numbers it and keeps the code and filing. */
   const uploadNewVersion = async (file: File, doc: VaultDoc, currentId?: string) => {
@@ -879,6 +895,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
       .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
   }, [cabinet]);
+  /* An upload may name only a folder of this program's own view: the cabinet's
+     "filed under another view" group is listed for review, and ingest refuses it. */
+  const uploadFolders = useMemo(() => cabinetFolders.filter((f) => f.id !== 'other-view'), [cabinetFolders]);
   const [moveTarget, setMoveTarget] = useState('');
   /* The uploaded documents a person may file at a missing section (VR-15). */
   const coverageDocuments = useMemo<CoverageDocument[]>(() => {
@@ -1302,12 +1321,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             the picker onto a line of its own with the buttons below it. */}
         <select
           className="c2c-input"
-          aria-label="Document type for uploaded files"
+          aria-label="Document type for files added next"
           value={docType}
           onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
           disabled={uploading}
           data-testid="vault-upload-type"
-          title="Document type for uploaded files"
+          title="Document type for files added next; each file's own row can change it"
           style={{ width: 'auto', maxWidth: 260 }}
         >
           {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
@@ -1316,36 +1335,44 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             </option>
           ))}
         </select>
-        {/* The picker itself. Accepts exactly what POST /api/vault/ingest
-            accepts, so the OS dialog does not offer files the server will
-            refuse. */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
+        {/* The one drop zone (FileDropZone.tsx, shared with the Data Room):
+            files or a folder, chosen or dropped here. The pickers accept
+            exactly what POST /api/vault/ingest accepts; what was gathered goes
+            to the staging rows below, which list anything not uploaded. */}
+        <FileDropZone
+          className="vd-upload-zone"
           accept={VAULT_UPLOAD_ACCEPT}
-          style={{ display: 'none' }}
-          onChange={(e) => void uploadFiles(e.target.files)}
-          /* Labelled even though it is visually hidden and driven by the button
-             beside it: WCAG 3.3.2 applies to the control, not to whether it is
-             painted, and assistive technology can still reach a file input that
-             a script focuses. */
-          aria-label="Choose documents to upload to the Vault"
-          data-testid="vault-upload-input"
-        />
-        <button
-          className="sp-primary"
-          disabled={uploading || !projectId}
-          onClick={() => fileInputRef.current?.click()}
-          title={
-            projectId
-              ? 'Choose files to file into this project’s Vault'
-              : 'Open a project first — a Vault document is filed against a program.'
-          }
-          data-testid="vault-upload-button"
+          directory
+          activation="controls"
+          disabled={!projectId}
+          label="Add documents to the Vault"
+          testId="vault-upload-zone"
+          controlsRef={uploadControls}
+          onFiles={(picked) => setStaging((st) => stageFiles(picked, docType, st ?? undefined))}
         >
-          {I.upload} {uploading ? 'Uploading…' : 'Upload'}
-        </button>
+          {({ chooseFiles, chooseFolder }) => (
+            <>
+              <button
+                ref={addFilesButton}
+                className="sp-primary"
+                disabled={!projectId}
+                onClick={chooseFiles}
+                title={
+                  projectId
+                    ? 'Choose files to file into this project’s Vault'
+                    : 'Open a project first — a Vault document is filed against a program.'
+                }
+                data-testid="vault-upload-button"
+              >
+                {I.upload} Add files
+              </button>
+              <button className="sp-ask" disabled={!projectId} onClick={chooseFolder} data-testid="vault-upload-folder-button">
+                {I.folder} Add a folder
+              </button>
+              <span className="vd-upload-zone-t">or drop files or a folder here</span>
+            </>
+          )}
+        </FileDropZone>
         {/* The conversational route is kept, but as what it is: a second way
             in, not the thing the upload icon promises. */}
         <button
@@ -1363,6 +1390,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         ) : null}
       </div>
 
+      {staging && canWrite ? (
+        <VaultUploadStaging
+          staging={staging}
+          folders={uploadFolders}
+          uploading={uploading}
+          onChange={patchStaged}
+          onRemove={(key) => setStaging((st) => st && { ...st, rows: st.rows.filter((r) => r.key !== key) })}
+          onUpload={() => void uploadStaged()}
+          onDone={() => { setStaging(null); setTimeout(() => addFilesButton.current?.focus(), 0); }}
+        />
+      ) : null}
       {(uploadNote || downloadNote) && (
         <div
           className="scaf-note"
@@ -1495,7 +1533,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           <VaultCoverage
             coverage={vault?.coverage}
             documents={coverageDocuments}
-            onUpload={() => fileInputRef.current?.click()}
+            onUpload={() => uploadControls.current?.chooseFiles()}
             onFileHere={(docId, target) =>
               void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
             }
@@ -1532,7 +1570,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 hint={
                   vault?.pendingStore
                     ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
-                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
+                    : "Nothing has been filed into this project's vault yet. Add files — each one is recorded in the folder you choose for it, or classified and filed to a suggested folder for you to confirm — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
                 }
               />
             </div>

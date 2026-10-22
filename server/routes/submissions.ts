@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
-import { ok } from '../lib/api-response';
+import { ok, respondIfConverterBusy } from '../lib/api-response';
 import { requestDb, requestPgClient } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
@@ -64,6 +64,7 @@ import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../s
 import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
+import { readMarketApplicationNumber, recordMarketApplicationNumber } from '../services/submission-service/market-application-number';
 import { stfFileName } from '../services/ectd/stf-generator';
 import {
   listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
@@ -128,6 +129,10 @@ function handleKnownCodeFailure(res: Response, err: unknown): boolean {
 }
 function fail(res: Response, err: unknown): void {
   if (handleReadRefusal(res, err)) return;
+  // Assemble, freeze, dispatch and transmit all assemble the package, which
+  // converts PDF leaves in conversion slots: a slot that never freed is 503
+  // with Retry-After, not a 500 (OPS-13, MR-03 Stage 2).
+  if (respondIfConverterBusy(res, err)) return;
   if (handleKnownCodeFailure(res, err)) return;
   const code = (err as { code?: string } | null)?.code;
 
@@ -1057,6 +1062,44 @@ router.get('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res)
     fail(res, err);
   }
 });
+// ── A market's own application number (decision P-44) ───────────────────────
+// The number another market's agency assigned, recorded on that market's
+// submission; packages for that market read it, never the project's. One
+// governed act: lead or manager, a stated reason, a chained audit row.
+const marketNumberSchema = z.object({ applicationNumber: z.string().min(1).max(200) });
+router.get('/:id/application-number', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    res.json(await readMarketApplicationNumber(id, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.post('/:id/application-number', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = marketNumberSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
+  try {
+    const orgRole = await resolveSignerOrgRole(ctx.userId, ctx.organizationId);
+    res.json(await recordMarketApplicationNumber(
+      { submissionId: id, applicationNumber: parsed.data.applicationNumber, reason: reason.reason },
+      { ...ctx, orgRole },
+    ));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.post('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

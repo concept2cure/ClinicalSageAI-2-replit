@@ -1,0 +1,330 @@
+# MR-03 Stage 3 — the RDS master credential out of the API task
+
+Launch row **D1** (hosted production). Work order
+[`MR-03`](../../../work-orders/MR-03-first-deploy-staging-to-production.md), Stage 3
+(OPS-16). Branch `concept2cure-v2`. Session `…session_01GSjEDJLuZsEzPa9PnVg1yF`
+(lane W2/D1).
+
+The same change delivers two parts of
+[`MR-05`](../../../work-orders/MR-05-tenant-isolation-as-a-hard-boundary.md), so
+the work is done once:
+
+- **Stage 2** (DATA-03, the same finding as OPS-16);
+- **Stage 1, steps 2–5** (`tenants-simple` off the owner connection, ARCH-08).
+
+MR-05 Stage 1's steps 6–7 (removing the extra drivers, and `ci:single-db-pool`)
+are not done here.
+
+| Slice | What | State |
+|---|---|---|
+| A | `/api/tenants` off the owner connection | done |
+| B | The boot without the owner credential: the auth schema and organisation seeds into the migration set, a verify-only production boot, CI's boot smoke without `DATABASE_URL` | done |
+| C | Terraform: a migrate task definition that alone holds the owner secrets; the deploy preflight and one-off tasks | done |
+
+## Re-confirmed at head before starting
+
+At `8e2c7af37`, OPS-16 is open as the work order describes it:
+
+- `terraform/stack/main.tf` puts `DATABASE_URL` in `boot_secrets` and
+  `APP_SERVICE_DB_PASSWORD` in `api_secrets`;
+- `deploy-aws.yml` requires `DATABASE_URL` in the API task definition and
+  derives the migrate task from it;
+- the boot runs DDL and seeds on the owner connection
+  (`server/startup/services.ts:130`, `server/db/bootstrap/index.ts`);
+- `server/routes/tenants-simple.ts:67` opens a `postgres` client on
+  `DATABASE_URL` at import.
+
+**Measured, not only read** (`raw/b0`). This is a local reproduction of
+`ci.yml`'s `production-boot-smoke`: Postgres 16.15 with TLS, provisioned by
+`install-fresh` and `deploy-migrate`, and the production bundle booted from a
+root without `.env`, as the image is.
+
+- With the owner URL, `/readyz` returns 200.
+- With `APP_DATABASE_URL` only, the process exits at import:
+  `server/config/environment.ts` throws "Missing required environment variable:
+  DATABASE_URL_PROD", and `server/db.js` logs "No DATABASE_URL provided,
+  skipping database connection".
+
+## What already exists (Rule 3)
+
+The full inventory of the boot's DDL and seeds, against the migration set, was
+taken before any change. The pieces this stage completes:
+
+| Piece | Path | What it does today | What it does not |
+|---|---|---|---|
+| Runtime pool | `server/db/runtime.ts`, `getRuntimeDatabaseUrl` (`server/db/getDatabaseUrl.ts`) | Serves requests as `app_service` (`APP_DATABASE_URL`), with RLS enforcing | Serve `/api/tenants`'s directory, which used its own owner client |
+| System scope for the directory | `SYSTEM_SCOPE_PREFIXES` (`server/middleware/establishRequestTenantScope.ts`) | Runs `/api/tenants` under the audited system scope; the offboarding handlers there already use `pool` | — |
+| Schema provisioning | `scripts/db/install-fresh.mjs` (drizzle push), `scripts/db/deploy-migrate.mjs` (`C2C_MIGRATION_FILES`, runtime role, readiness contract) | Create every table the boot checks, on the owner connection, at deploy | Seed the two organisations the boot seeds, or carry the auth-schema statements the boot runs every start |
+| Boot schema check | `server/db/ensureCoreTables.ts`, `server/startup/services.ts` | Verifies schemas, the `vector` extension and critical tables, and sets readiness | Run without the owner URL: it opens a standalone pool on `DATABASE_URL`, and creates what is missing |
+| Auth bootstrap | `server/db/bootstrap/{index,auth-schema,seed-default-org}.ts` | Runs `ALTER TABLE … ADD COLUMN IF NOT EXISTS` on organizations and users, creates the membership and module tables, and seeds two organisations, every boot, on an owner connection | Run as `app_service`: ALTER needs ownership, and the seed's upsert is refused (42501 at head, `tests/db/signup-launch-catalog.dbtest.ts`) |
+| Migrate task | `deploy-aws.yml` and `scripts/ops/ecs-one-off-task.sh` | Clone the API task definition, owner secret included, for `deploy-migrate` | Exist apart from the API task |
+
+## Slice A: `/api/tenants` off the owner connection
+
+**What changed.** `server/routes/tenants-simple.ts`:
+
+- The `postgres` import, the URL cleaner and the module-level client on
+  `DATABASE_URL` are deleted.
+- The four directory handlers (list, create, rename, users) send
+  parameterized `pool.query` statements through the runtime pool, under the
+  system scope the mount already applies.
+- Authorization is unchanged: `resolvePlatformAdmin`, the membership join and
+  the `authedOrgId` check.
+- A rename's missing field keeps its value (`COALESCE($n, column)`), as the
+  nested fragments did. The duplicate-slug 409 still reads `pg`'s `code` and
+  `constraint`.
+
+`server/services/ana-cortex-service.ts` reports the runtime connection, not the
+owner URL. Two tests that mocked the `postgres` driver now mock the pool.
+
+**Verified by making it fail.**
+
+- **The contract test** (`raw/a1`, `raw/a2`). Its mock moved to the pool, and
+  it gained three checks: no second driver imported, no owner URL read, and
+  every directory statement parameterized through the pool. On the old route
+  16 of 25 fail; after, 25/25.
+- **On real Postgres** (`raw/a3`, `raw/a4`). The new
+  `tests/db/tenants-directory-rls.dbtest.ts` runs against the deploy-provisioned
+  database, as a fresh NOSUPERUSER NOBYPASSRLS role, with RLS enforcing and
+  `DATABASE_URL` pointing at a closed port.
+  - On the old route, 5 of 7 fail: every directory call answers 500, because
+    the route used the owner URL.
+  - After, 7/7:
+    - a member lists only their own organisation and reads only their own
+      directory;
+    - another organisation's directory is a 403;
+    - a platform admin lists both, renames one, gets a 409 on a taken slug,
+      and creates one.
+- **Related tests** (`raw/a5`): 97/97. eslint reports 0 errors, with warnings
+  per file unchanged.
+
+## Slice B: the boot without the owner credential
+
+**What changed.** The schema is the deploy's; the boot checks it.
+
+- **The auth schema and the two organisation seeds are a migration.**
+  `migrations/20261022_auth_schema_and_seeded_organizations.sql` carries the
+  statements `ensureAuthTables` ran at every boot, unchanged: the organizations
+  and users columns, the guarded email constraint, and the membership and
+  module-catalog tables. It also seeds `default` and `concept2cure`, and asserts
+  both rows exist.
+  - It sits in `C2C_MIGRATION_FILES` immediately before
+    `20260923_organization_default_client_workspace.sql`, so each seeded
+    organisation gets its workspace on the same deploy.
+  - It is replay-safe under Rule 1: every statement is `IF NOT EXISTS`,
+    `ON CONFLICT` or guarded. It drops nothing.
+- **The boot runs no DDL in production.**
+  - `server/db/bootstrap/auth-schema.ts` holds no DDL. `missingAuthSchema`
+    reads `information_schema.columns` as the runtime role.
+    `server/startup/services.ts` sets readiness to `missing`, naming each
+    absent column. A test holds the column list to the migration.
+  - `ensureCoreTables` runs verify-only in production, on the runtime pool. It
+    creates no schema or extension and reports what is absent.
+  - `ensureAuthTables` and `seedOrganizations` are deleted. Their replacement
+    is the migration above, which `scripts/db/deploy-migrate.mjs` applies as
+    the owner on every deploy. No capability is removed.
+- **The demo admin stays a development convenience.** Outside production the
+  boot still seeds it (`seedDemoAdminOutsideProduction`). Production never
+  does: `SEED_DEMO_USER=true` no longer opts a production process in, and is
+  logged as ignored. Two things already held that in practice: the pilot
+  go/no-go gate fails on it (`scripts/ops/pilot-go-no-go.mjs`, gate 3), and the
+  seed needs the owner connection a production process no longer has.
+- **Production needs only `APP_DATABASE_URL`.**
+  - `server/startup/env.ts` requires it in production, and requires the owner
+    URL nowhere.
+  - `server/config/environment.ts` and `server/db.js` accept it where they
+    demanded `DATABASE_URL`.
+  - `ci.yml`'s `production-boot-smoke` and `production-image-boot` no longer
+    give the booting process `DATABASE_URL`. Their provisioning steps still
+    run as the owner, as the deploy does.
+
+**Verified by making it fail.**
+
+- **Unit tests** (`raw/b1`, `raw/b2`). Against head's source:
+  - 7 of the new and changed tests fail;
+  - the auth-schema test file cannot load, because the check it tests does not
+    exist.
+
+  After the change, those tests pass 47/47. The suites around the boot modules
+  pass 1,387 of 1,387 run, across 137 files (25 tests in 3 files skip, as at head). eslint reports 0 errors, with warnings per
+  file unchanged.
+- **The boot on real Postgres** (`raw/b3`). Postgres 16.15 with TLS,
+  provisioned by `install-fresh` and `deploy-migrate`, with the production
+  bundle booted from a root without `.env`:
+  - with `APP_DATABASE_URL` only, `/readyz` answers 200;
+  - the deploy applied the new migration, and each seeded organisation has one
+    workspace;
+  - with connection logging on, the boot connected only as `app_service`. It
+    still does with the owner URL also present, as Terraform supplies it until
+    slice C;
+  - **the negative case:** the owner drops `users.bio`, and the boot answers
+    503 with `schemaDetail: "auth schema incomplete: users.bio"`. The column is
+    still absent after that boot. One `deploy-migrate` run restores it, and the
+    next boot answers 200.
+
+  At head, the same boot without the owner URL exits at import (`raw/b0`).
+- **The seed on the deploy-provisioned database** (`raw/b4`).
+  `tests/db/signup-launch-catalog.dbtest.ts` applies the migration and the
+  workspace sweep twice, as consecutive deploys do, and finds one workspace per
+  seeded organisation. 15 of 16 pass. The one failure is the communication-center
+  tier-lock case, which fails at head too.
+- **Gates** (`raw/b4`): all pass.
+  - `ci:migration-set-order` (422 migrations, sweep last);
+  - `ci:migration-drop-safety`;
+  - `ci:migration-deploy-path`;
+  - `ci:runtime-ddl` and its self-test. The baseline entry for
+    `auth-schema.ts` is removed, because the file has no DDL left.
+
+**Amended the same day, before any deploy applied it** (`raw/b5`). The
+migration copied the boot's `CREATE TABLE IF NOT EXISTS` statements for
+`organization_users`, `available_modules` and `module_subscriptions`.
+`migrations/0000_sweet_joseph.sql` already creates all three, with a superset
+of those columns, and install-fresh applies it to every database before
+deploy-migrate will run. So the statements were no-ops on every database, but
+as text each was a second, narrower definition of its table.
+
+Three gates refuse that:
+- `ci:duplicate-table-ddl`;
+- `ci:model-migration-agreement`;
+- `ci:unkeyed-request-tables`, which attributed `available_modules` to the new
+  file as its creator.
+
+None of them ran in CI on this push. A guard broken by Stage 2 slice D stopped
+the Lint job before them (Stage 2 README, the correction under slice D), and
+they are not in the pre-push hook.
+
+The fix:
+- The statements are removed, with a dated note in the file (Rule 1). For
+  those tables the file adds only `organization_users.persona`.
+- `auth-schema-migration.test.ts` now reads 0000 as the creator. It requires
+  that the boot checks nothing the deploy does not create, that the migration
+  adds nothing the boot does not check, and that it defines no table. Three
+  mutants, one per requirement, are each caught by their own case.
+
+On a fresh database the amended file applies, and again on replay; both boots
+without the owner URL answer 200, and the signup dbtest passes 16/16.
+
+## Slice C: the owner credential is the database task's alone
+
+**What changed.**
+
+- **`terraform/modules/ecs-fargate` owns a one-off database task.**
+  `aws_ecs_task_definition.migrate` (family `${cluster}-migrate`):
+  - one container, `migrate`, of the API image, whose command is
+    `npm run db:migrate:deploy`;
+  - no scanner, ports or health check;
+  - the API container's environment, from the same list;
+  - its secrets are the boot secrets plus the owner's (`DATABASE_URL`,
+    `APP_SERVICE_DB_PASSWORD`).
+
+  It runs with its own execution role. Each execution role is now granted
+  exactly the secret ARNs its own container references. The API's role was
+  granted every secret in the stack (`var.secret_arns`, now deleted), the
+  owner's included.
+- **`terraform/stack`**:
+  - `boot_secrets` lose `DATABASE_URL`, and `api_secrets` lose
+    `APP_SERVICE_DB_PASSWORD`;
+  - `local.owner_secrets` holds both, for the database task only;
+  - the deploy role may pass the database task's execution role;
+  - `deploy_targets` names its container.
+- **The deploy preflight** (`deploy-aws.yml`, job `migrate`):
+  - The API task definition no longer needs `DATABASE_URL`. It is refused if
+    it carries any name a production process reads an owner URL from, or the
+    mint password: `DATABASE_URL`, `DATABASE_URL_PROD`,
+    `DATABASE_NEON_NEW_SECRET`, `NEON_DATABASE_URL`, `DATABASE_OWNER_URL`,
+    `APP_SERVICE_DB_PASSWORD`.
+  - A new step, `migrate-preflight`, checks the database task's latest
+    revision. It requires one container carrying both owner secrets. It
+    requires every API secret except `SETUP_TOKEN`, from the same source, and
+    the same environment, value for value, as the checked API revision. It
+    requires an execution role that is not the API's. It then pins that
+    revision's ARN.
+  - The migration derives from that revision, not the API's. deploy-api still
+    rolls the checked API revision.
+- **`provision-database.yml`** derives the first provision from the same
+  family.
+- **`scripts/ops/ecs-one-off-task.sh`**: its logic is unchanged, and its
+  header now names the source.
+- **The boot, on an ECS task, refuses the same names**
+  (`HOSTED_OWNER_CREDENTIAL_NAMES`, `server/startup/env.ts`). That covers a
+  revision registered or edited outside the pipeline, as P-43 does for the
+  overrides. A self-hosted install keeps its owner URL. A test holds the
+  server's list and the preflight's to each other.
+- **SOP-SEC-001 §10 step 5**: the audit-chain verifier reads `DATABASE_URL`,
+  so it now derives from the database task, not the API's.
+- **The boot names no owner URL.** Outside production, `server/startup/services.ts`
+  passed `DATABASE_URL` to `ensureCoreTables` so a developer's database could
+  be filled in. It now asks with `{ ownerUrlWhenSet: true }`, and
+  `ensureCoreTables` reads the URL itself, with identical behaviour. This
+  meets the work order's acceptance grep.
+
+**Verified by making it fail.**
+
+- **Terraform** (`raw/c1`, `raw/c2`).
+  - Two new runs. At head, `the_api_task_holds_no_owner_credential` fails all
+    three assertions: the API secret names, the ARNs, and the execution
+    role's grant. That role read all 15 secrets, the owner's two among them.
+    `the_one_off_database_task_alone_holds_it` has no database task to
+    reference.
+  - After, the stack passes 74/74.
+  - Mutants, each refused:
+    - the owner URL back in the boot secrets;
+    - the API role granted the database task's secrets;
+    - the database task registered with the API's execution role. A first
+      version of the run let this one pass, because it compared the role
+      resources, not the role each task definition is registered with. The
+      run now reads the registered roles.
+- **The preflight, against what Terraform renders** (`raw/c3`). The proof runs
+  the workflow's own shell for both steps.
+  - It accepts the rendered pair and publishes both ARNs.
+  - It refuses eight definitions, each naming what it refused:
+    - an API carrying `DATABASE_URL`, `APP_SERVICE_DB_PASSWORD`, or
+      `DATABASE_URL_PROD` as a plain value;
+    - a database task without `DATABASE_URL`;
+    - a database task with another `DB_AUDIT_REQUIRED`;
+    - a database task with `APP_DATABASE_URL` from another secret;
+    - a database task on the API's execution role;
+    - a database task with a second container.
+
+  These refusals run on every proof, not once. Workflow mutants
+  (`raw/c4`), each failing the proof:
+  - the owner refusal not failing the step;
+  - the environment comparison not failing it;
+  - the migration derived from the API revision again.
+- **The boot** (`raw/c5`). Against head's `env.ts`, 7 of the 10 new cases
+  fail: the six refusals and the list tie. After, 10/10. The override-posture
+  test no longer inherits an owner URL from the runner (CI's test job sets
+  `DATABASE_URL`).
+- **The production bundle** (`raw/c6`), rebuilt from this tree:
+  - On a fresh database with `APP_DATABASE_URL` only, `/readyz` answers 200.
+  - As an ECS task holding `DATABASE_URL`, it exits 1 with the FATAL naming
+    it.
+  - The same task without it passes that check and serves.
+- **The work order's acceptance grep** (`raw/c6`). `process.env.DATABASE_URL`
+  outside tests appears only in the config and database resolvers. It no
+  longer appears in `startup/services.ts` or `routes/tenants-simple.ts`.
+  Restoring the old boot call fails the readiness test.
+
+## Not shown here
+
+- **Any of this against AWS.** Every Terraform claim here comes from a mocked
+  provider, and every preflight claim from the workflow's own shell with `aws`
+  stubbed. These are not shown:
+  - that the database task's execution role can read the owner's secrets and
+    the API's cannot;
+  - that RDS admits the one-off task;
+  - that a deploy runs the migration from the database task end to end.
+
+  Those are Stage 5, the first apply.
+- **The order of the first apply and deploy.** Terraform must be applied
+  before the next deploy. The preflight refuses an API revision that still
+  carries `DATABASE_URL`, and a database task that does not exist yet. That
+  refusal is the intended failure, and it names what to do.
+- **The Helm chart cannot run a production install, at head or now.**
+  `charts/concept2cure-app` names only `DATABASE_URL`, and its migrate init
+  container runs `dist/scripts/migrate.js`, which does not exist. A production
+  boot already required the non-superuser runtime role under `RLS_ENFORCE=on`,
+  and both `licenses` and the Part 11 audit store already required
+  `deploy-migrate`. The chart is not a launch deployment path (hosted ECS, or
+  self-host compose with `npm run db:provision`). Fixing it is recorded, not
+  done here.

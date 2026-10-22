@@ -107,9 +107,9 @@ interface Route {
 
 /** The seven routes that now run signGovernedAct (body: meaning, password, mfaToken). */
 const CEREMONY: Route[] = [
-  { key: 'irb', mount: '/api/irb', path: (id) => `/submissions/${id}/reviews`, target: (id) => `irb-submission:${id}`, act: { reviewType: 'full_board', outcome: 'approved' }, writeGate: true },
-  { key: 'iacuc', mount: '/api/iacuc', path: (id) => `/protocols/${id}/reviews`, target: (id) => `iacuc-protocol:${id}`, act: { reviewType: 'full_committee_review', outcome: 'approved' }, writeGate: true },
-  { key: 'ibc', mount: '/api/ibc', path: (id) => `/registrations/${id}/reviews`, target: (id) => `ibc-registration:${id}`, act: { outcome: 'approved' }, writeGate: true },
+  { key: 'irb', mount: '/api/irb', path: (id) => `/submissions/${id}/reviews`, target: (id) => `irb-submission:${id}`, act: { reviewType: 'full_board', outcome: 'approved', determinationDate: '2026-10-01' }, writeGate: true },
+  { key: 'iacuc', mount: '/api/iacuc', path: (id) => `/protocols/${id}/reviews`, target: (id) => `iacuc-protocol:${id}`, act: { reviewType: 'full_committee_review', outcome: 'approved', determinationDate: '2026-10-01' }, writeGate: true },
+  { key: 'ibc', mount: '/api/ibc', path: (id) => `/registrations/${id}/reviews`, target: (id) => `ibc-registration:${id}`, act: { outcome: 'approved', determinationDate: '2026-10-01' }, writeGate: true },
   { key: 'rim', mount: '/api/rim', path: (id) => `/products/${id}/labels`, target: (id) => `rim-product:${id}`, act: { labelType: 'uspi', status: 'approved' }, writeGate: true },
   { key: 'consent', mount: '/api/protocol-consent', path: (id) => `/forms/${id}/approve`, target: (id) => `consent-form:${id}`, act: {}, writeGate: true },
   { key: 'deviations', mount: '/api/protocol-deviations', path: (id) => `/deviations/${id}/close`, target: (id) => `protocol-deviation:${id}`, act: {}, writeGate: true },
@@ -387,7 +387,7 @@ describe('a determination that is not an approval is not a signature', () => {
     const res = await request(app)
       .post(`${route.mount}${route.path(id)}`)
       .set('Authorization', `Bearer ${signer.token}`)
-      .send({ reason: REASON, reviewType: 'full_board', outcome: 'deferred' });
+      .send({ reason: REASON, reviewType: 'full_board', outcome: 'deferred', determinationDate: '2026-10-01' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     const rows = await written(route.target(id));
     expect(rows.ledger.map((r) => r.command)).toEqual(['resolve']);

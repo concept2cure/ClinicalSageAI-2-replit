@@ -33,7 +33,7 @@ variables {
   one_off_task_families       = ["c2c-production-migrate", "c2c-production-provision"]
   pass_role_arns              = ["arn:aws:iam::111122223333:role/exec", "arn:aws:iam::111122223333:role/task"]
   api_log_group_arn           = "arn:aws:logs:us-east-1:111122223333:log-group:/ecs/c2c-production/api"
-  frontend_bucket_arn         = "arn:aws:s3:::c2c-prod-frontend"
+  frontend_bucket_arn         = "arn:aws:s3:::c2c-prod-frontend-123456789012"
   cloudfront_distribution_arn = "arn:aws:cloudfront::111122223333:distribution/E123"
 }
 

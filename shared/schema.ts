@@ -15727,7 +15727,10 @@ export const accountCanonItems = pgTable(
     sourceType: text('source_type'), // manual, ai_extracted, document_import, event_derived
     sourceDocumentId: text('source_document_id'), // Reference to originating document
     sourceDescription: text('source_description'),
-    confidenceScore: real('confidence_score').default(0.9),
+    // 2026-10-15: default(0.9) dropped — an unstated confidence is null. Created by
+    // drizzle-kit push only; existing databases keep the column DEFAULT, which
+    // account-canon.ts never reaches (it always writes the value).
+    confidenceScore: real('confidence_score'),
 
     // ── Vector Embedding (for semantic resolution) ────────────────
     embedding: vector('embedding', { dimensions: 1536 }),
@@ -17656,7 +17659,10 @@ export const evidenceClaims = pgTable(
     pageNumber: integer('page_number'),
     sectionReference: varchar('section_reference', { length: 200 }),
     sentenceIndex: integer('sentence_index'),
-    confidence: numeric('confidence', { precision: 3, scale: 2 }).notNull().default('0.50'),
+    // As the extractor scored it; null when nothing did. It was NOT NULL DEFAULT
+    // 0.50, so an unscored claim — and the governed fact established from it —
+    // read back at 0.5 (2026-10-15; migrations/20261015m).
+    confidence: numeric('confidence', { precision: 3, scale: 2 }),
     extractionMethod: varchar('extraction_method', { length: 50 }).notNull().default('pattern'),
     version: integer('version').notNull().default(1),
     previousVersionId: integer('previous_version_id'),
@@ -18257,6 +18263,8 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
   primarySourceId: text('primary_source_id').notNull(),
   primarySourceTitle: text('primary_source_title').notNull(),
   primaryRelevance: real('primary_relevance'),
+  // 'fixed_weight' when primaryRelevance is a hand-set weight, not a measurement (2026-10-15).
+  primaryRelevanceBasis: text('primary_relevance_basis'),
   supportingSources: json('supporting_sources').$type<Array<{
     sourceType: string;
     sourceId: string;
@@ -18267,7 +18275,10 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
 
   // Confidence assessment
   confidenceBasis: text('confidence_basis').notNull(), // 'rules_based', 'validation_based', 'ai_inferred'
-  confidenceScore: real('confidence_score'), // null for rules_based
+  // A confidence the caller measured; null for rules_based and whenever none was measured.
+  confidenceScore: real('confidence_score'),
+  // Heuristic evidence coverage 0-100 — not a confidence (2026-10-15).
+  evidenceCoverageHeuristic: real('evidence_coverage_heuristic'),
   chainStrength: text('chain_strength').notNull(), // 'strong', 'moderate', 'weak'
 
   // Context

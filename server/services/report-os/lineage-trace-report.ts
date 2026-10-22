@@ -173,6 +173,9 @@ function provenanceCompletenessSection(
 
 type GapItem = { title: string; severity?: 'critical' | 'high' | 'medium' | 'low'; message?: string };
 
+/** Why the trace states no signature count (ledger.signaturesUnavailable set). */
+const SIGNATURES_UNREAD = 'the e-signature record could not be read';
+
 /** The trace's gaps: pending decisions, untraced text, absent lineage and signatures. */
 function traceGaps(dossier: DocumentLineageDossier): GapItem[] {
   const gapItems: GapItem[] = [];
@@ -199,7 +202,16 @@ function traceGaps(dossier: DocumentLineageDossier): GapItem[] {
       message: 'This document has no source→content lineage rows yet.',
     });
   }
-  if (dossier.ledger.signatures.length === 0) {
+  // 2026-10-15: a failed signatures read (signaturesUnavailable) was reported
+  // here as "No e-signatures on any version". The database's own text stays in
+  // the ledger XML and the log, as for the decision record.
+  if (dossier.ledger.signaturesUnavailable) {
+    gapItems.push({
+      title: 'E-signatures could not be read',
+      severity: 'medium',
+      message: `${SIGNATURES_UNREAD}, so whether any version of this document is signed is not known.`,
+    });
+  } else if (dossier.ledger.signatures.length === 0) {
     gapItems.push({
       title: 'No e-signatures on any version',
       severity: 'low',
@@ -261,7 +273,13 @@ export function dossierToRenderedReport(
             metric('Rejected', s.rejected),
             metric('Pending', s.pending),
           ]),
-      metric('Signatures', dossier.ledger.signatures.length),
+      // As the decisions above: an unread signature record prints no count.
+      metric(
+        'Signatures',
+        dossier.ledger.signaturesUnavailable
+          ? `not read — ${SIGNATURES_UNREAD}`
+          : dossier.ledger.signatures.length,
+      ),
     ],
   });
 
@@ -434,7 +452,10 @@ export function dossierToRenderedReport(
         validated: dossier.ledger.signatures.length > 0,
         note:
           'Assembled from the artifact version history, decision records, provenance events, ' +
-          'evidence lineage, and AnA reasoning. Every figure links to its source record.',
+          'evidence lineage, and AnA reasoning. Every figure links to its source record.' +
+          (dossier.ledger.signaturesUnavailable
+            ? ` Not validated by a signature: ${SIGNATURES_UNREAD}, so whether any version is signed is not known.`
+            : ''),
       },
     ],
   });

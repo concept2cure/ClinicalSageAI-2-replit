@@ -63,7 +63,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { receiptReport } from '../../server/services/submission-gateways/__tests__/support/as2-cms-fixture';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
-import { T, buildWorld, baselineProblems, type World } from './founder-path-lineage.world';
+import { T, buildWorld, baselineProblems, recordApplicant, type World } from './founder-path-lineage.world';
 import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault, hopAdopt } from './founder-path-lineage.hops-authoring';
 import { hopVaultApproval, hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
 
@@ -218,6 +218,10 @@ const MIGRATIONS = [
   'migrations/20260907_regulatory_programs_application_number.sql',
   // The real project create INSERT now records both EU device classifications.
   'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
+  // The recorded applicant a US package names (ccd509c06): sponsor registry, binding, address.
+  'migrations/20260609_ind_master_data.sql',
+  'migrations/20261021_regulatory_programs_applicant_sponsor.sql',
+  'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
   'migrations/20260528_phase9_document_schema.sql',
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
@@ -320,7 +324,7 @@ afterAll(async () => {
 });
 
 describe('LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency', () => {
-  it('hop 1 · project — a project of org A, created the way the Projects surface creates it', () => hopProject(world), T);
+  it('hop 1 · project — a project of org A, created the way the Projects surface creates it', async () => { await hopProject(world); await recordApplicant(world); }, T);
   it('hop 2 · capture — bytes X into the project’s Data Room through the upload route', () => hopCapture(world), T);
   it('hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx', () => hopAnaDraft(world), T);
   it('hop 4 · edit-save — a person edits the quoted section and saves it through the section save path', () => hopEditSave(world), T);

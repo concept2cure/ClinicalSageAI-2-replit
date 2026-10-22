@@ -711,6 +711,11 @@ router.post('/runs', requireOrchestratorWrite, async (req: Request, res: Respons
     }
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    // 2026-10-15: a ctdProgramId outside the organization (the nonclinical
+    // loader now throws instead of reading it as "no studies") answered 500.
+    if (err instanceof Error && err.name === 'CtdProgramNotFoundError') {
+      return res.status(422).json({ error: err.message, code: 'CTD_PROGRAM_NOT_FOUND' });
+    }
     log.error('Input assembly failed', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,

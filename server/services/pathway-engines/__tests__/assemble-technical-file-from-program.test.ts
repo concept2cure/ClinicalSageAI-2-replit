@@ -116,9 +116,15 @@ describe('assembleTechnicalFileFromProgram', () => {
     // Every authored leaf found a slot.
     expect(result.skipped.filter((s) => s.sectionId === 'unmapped')).toEqual([]);
     expect(result.unresolvedLeaves).toEqual([]);
-    // The drafted CER renders but is reported as unfinalized.
-    expect(result.unfinalized).toBe(1);
-    expect(result.unfinalizedSections).toEqual([{ sectionCode: 'II.6.1.g', status: 'drafted' }]);
+    // The drafted CER renders but is reported as unfinalized. So does the
+    // 'locked' risk file: P-29 (c98ae947f) makes a section transmittable only on
+    // the status a signature produces ('approved'); no production path writes
+    // 'locked', so it is reported, never passed silently.
+    expect(result.unfinalized).toBe(2);
+    expect(result.unfinalizedSections).toEqual([
+      { sectionCode: 'II.5.a', status: 'locked' },
+      { sectionCode: 'II.6.1.g', status: 'drafted' },
+    ]);
 
     // Staging directory is gone.
     const after = await stagingDirs();

@@ -178,6 +178,7 @@ describe('the persisted assessment records what it was given, and nothing else',
     await assessSufficiency({
       organizationId: ORG, programId: PROGRAM, pathway: 'PMA', profile: PROFILE,
       evidenceOverride: pmaEvidence(),
+      trigger: 'manual', // 2026-10-15: a persisted run must state its trigger
     });
     expect(insertCalls).toHaveLength(1);
     const v = insertCalls[0].values;

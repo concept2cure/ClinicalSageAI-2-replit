@@ -107,8 +107,17 @@ async function signedProcedure(tenant: Tenant): Promise<void> {
   await owner.query("UPDATE organizations SET status='pending_deletion' WHERE id=$1", [tenant.id]);
 }
 
+const priorAuditHmacKey = process.env.AUDIT_HMAC_KEY;
+const priorAuditHmacSecret = process.env.AUDIT_HMAC_SECRET;
+function restoreAuditKeys(): void {
+  if (priorAuditHmacKey === undefined) delete process.env.AUDIT_HMAC_KEY; else process.env.AUDIT_HMAC_KEY = priorAuditHmacKey;
+  if (priorAuditHmacSecret === undefined) delete process.env.AUDIT_HMAC_SECRET; else process.env.AUDIT_HMAC_SECRET = priorAuditHmacSecret;
+}
+
 beforeAll(async () => {
   if (!process.env.APP_DATABASE_URL) throw new Error('An independently provisioned runtime role is required.');
+  process.env.AUDIT_HMAC_KEY ??= 'synthetic-read-receipt-retention-audit-hmac-key-no-production-use';
+  process.env.AUDIT_HMAC_SECRET ??= 'synthetic-read-receipt-retention-tamper-proof-key-no-production-use';
   owner = new Pool({ connectionString: databaseUrl, max: 3 });
   const users = (await owner.query(`INSERT INTO users(email,name,password_hash,status) VALUES($1,$2,$3,'active'),($4,$5,$3,'active') RETURNING id`,
     [`${TAG}-actor@example.invalid`, `${TAG} invented operator`, await bcrypt.hash(PASSWORD, 4), `${TAG}-signer@example.invalid`, `${TAG} invented independent signer`])).rows;
@@ -117,7 +126,7 @@ beforeAll(async () => {
   const { authMiddleware } = await import('../../server/auth');
   app = express(); app.use(express.json()); app.use('/api/mdx', authMiddleware, (await import('../../server/routes/mdx-qms')).default);
 }, 120_000);
-afterAll(async () => { await runtime?.end(); await owner?.end(); });
+afterAll(async () => { restoreAuditKeys(); await runtime?.end(); await owner?.end(); });
 
 describe('observational receipts cannot bypass regulated tenant retention', () => {
   it('uses the constrained runtime role, configured transport, and append-only ceilings', async () => {

@@ -81,7 +81,6 @@ describe('Submission Readiness on a filing document class project', () => {
       if (url === `/api/c2c/projects/${PROGRAM_UUID}`) {
         return ok({ id: PROGRAM_UUID, name: 'VX-9 PAS', code: 'VX-9', product_name: 'Velorab', program_type: 'pas' });
       }
-      if (url === '/api/submissions') return ok([]);
       return ok([]);
     });
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
@@ -90,9 +89,10 @@ describe('Submission Readiness on a filing document class project', () => {
       return null;
     }
     render(<><DispatchReadiness surface={{ id: 'dispatch-readiness', label: 'Dispatch' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="regulatory" /><Probe /></>);
-    await waitFor(() => expect(text()).toContain('Nothing to gate for VX-9 PAS'));
-    expect(text()).toContain('It is a Prior Approval Supplement, authored here.');
-    expect(text()).not.toMatch(/Create its/);
+    // F18: the Submit tab's own words (NotSequencedState), on both screens.
+    await waitFor(() => expect(text()).toContain('No market: this project is authored, not sequenced'));
+    expect(text()).toContain('An FDA supplement is not built as a sequence yet, so this platform sends nothing for the Prior Approval Supplement.');
+    expect(text()).not.toMatch(/Create its|Add one from|No market for this project yet/);
     expect(text()).not.toMatch(/\bpas submission\b/);
     await waitFor(() => expect(seen.ctx?.summary).toBeTruthy());
     expect(seen.ctx?.summary).toContain('is a Prior Approval Supplement, authored here and not built as a sequence');

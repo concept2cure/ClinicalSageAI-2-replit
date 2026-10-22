@@ -46,12 +46,12 @@ const COMPLETE: WireJob = {
   status: 'complete',
   progress: 100,
   synthesis: 'Three precedents support an ORR endpoint [SRC-1].',
-  connectorLogs: { pubmed: { status: 'success', resultCount: 1, durationMs: 40 } },
+  connectorLogs: { pubmed: { status: 'success', resultCount: 1 } },
   results: {
     totalResults: 1,
     byConnector: {},
     topResults: [
-      { id: 'pm-1', sourceConnector: 'pubmed', title: 'ORR as a surrogate in 2L NSCLC', summary: 'Meta-analysis', relevanceScore: 0.9, metadata: {}, url: 'https://pubmed.example/1' },
+      { id: 'pm-1', sourceConnector: 'pubmed', title: 'ORR as a surrogate in 2L NSCLC', summary: 'Meta-analysis', sourceRank: 1, metadata: {}, url: 'https://pubmed.example/1' },
     ],
     csrMatches: [], regulatoryIntelligence: [], literatureResults: [],
   },

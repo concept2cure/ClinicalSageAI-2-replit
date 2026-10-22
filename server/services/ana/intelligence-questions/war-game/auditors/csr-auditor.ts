@@ -16,6 +16,13 @@
 
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 
+/* 2026-10-22 (D2): rules converged onto the field ids the CSR interview
+   (flows/csr-report.ts) actually asks. A rule still reading a key the interview
+   does not ask (gcp_compliance_statement, statistical_analysis_plan_deviations,
+   data_monitoring_committee as a DMC charter, efficacy_conclusions,
+   safety_conclusions, secondary_objectives, enrollment durations) is left as
+   is and reported NOT ASSESSED by the engine: no equivalent question exists. */
+
 /* ─── Helpers ──────────────────────────────────────────────────────────── */
 
 const rid = (suffix: string) => 'csr_' + suffix;
@@ -35,6 +42,17 @@ function toNumber(val: unknown): number | null {
     return Number.isNaN(n) ? null : n;
   }
   return null;
+}
+
+/**
+ * Discontinuation rate (%) derived from the interview's disposition counts:
+ * subjects_discontinued / subjects_enrolled. The interview asks counts, not a rate.
+ */
+function discontinuationPct(answers: Record<string, unknown>): number | null {
+  const enrolled = toNumber(answers.subjects_enrolled);
+  const discontinued = toNumber(answers.subjects_discontinued);
+  if (enrolled === null || discontinued === null || enrolled <= 0) return null;
+  return (discontinued / enrolled) * 100;
 }
 
 /** Shorthand factory for a fully-populated WarGameFinding. */
@@ -74,7 +92,7 @@ const rules: AuditRule[] = [
       'number and full title — including phase, design, indication, and investigational ' +
       'product — are present and unambiguous?',
     check(answers) {
-      if (isBlank(answers.study_id) || isBlank(answers.study_title)) {
+      if (isBlank(answers.protocol_number) || isBlank(answers.study_title)) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'The study identifier and/or study title is missing from the CSR. An FDA reviewer ' +
@@ -84,7 +102,7 @@ const rules: AuditRule[] = [
           'ICH E3, Section 1; 21 CFR 314.50(d)(5)(ii)',
           'Provide the sponsor-assigned protocol number and a title following the convention: ' +
           '"A Phase X, [Design], [Blinding], [Control] Study of [Drug] in [Population] with [Indication]."',
-          ['study_id', 'study_title'],
+          ['protocol_number', 'study_title'],
         );
       }
       return null;
@@ -135,7 +153,7 @@ const rules: AuditRule[] = [
       'and treatment period structure. Is the design adequately documented so an FDA ' +
       'reviewer can independently assess the validity of the trial?',
     check(answers) {
-      if (isBlank(answers.study_design)) {
+      if (isBlank(answers.design_description)) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'The study design description is absent. Without this, the FDA cannot evaluate whether ' +
@@ -147,7 +165,7 @@ const rules: AuditRule[] = [
           'Describe the study type, randomization scheme (including stratification factors and ' +
           'block size), blinding procedure, comparator (placebo or active), and treatment period ' +
           'structure with planned duration.',
-          ['study_design'],
+          ['design_description', 'blinding', 'randomization_ratio', 'comparator_type'],
         );
       }
       return null;
@@ -163,21 +181,21 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Primary objective not stated',
     question:
-      'ICH E3 Sections 2 and 6 require a clear statement of the primary study ' +
+      'ICH E3 Sections 2 and 8 require a clear statement of the primary study ' +
       'objective in unambiguous, testable terms that link the intervention to the ' +
       'endpoint and the target population. Is the primary objective present?',
     check(answers) {
-      if (isBlank(answers.primary_objective)) {
+      if (isBlank(answers.study_objective)) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'No primary objective statement is provided. The FDA requires a single, clearly ' +
           'articulated primary objective to anchor the review of efficacy evidence.',
           'The primary objective must be stated in the synopsis and protocol summary, and it ' +
           'must correspond directly to the primary endpoint and the statistical hypothesis.',
-          'ICH E3, Sections 2 & 6; ICH E9, Section 2.1',
+          'ICH E3, Sections 2 & 8; ICH E9, Section 2.1',
           'State the primary objective using language that specifies the intervention, ' +
           'the comparator, the primary endpoint, and the target population.',
-          ['primary_objective'],
+          ['study_objective'],
         );
       }
       return null;
@@ -198,8 +216,8 @@ const rules: AuditRule[] = [
       'the planned sample, the impact on statistical power must be assessed. Does ' +
       'enrollment match the target, and if not, is the shortfall addressed?',
     check(answers) {
-      const planned = toNumber(answers.sample_size_planned);
-      const enrolled = toNumber(answers.sample_size_enrolled);
+      const planned = toNumber(answers.subjects_planned);
+      const enrolled = toNumber(answers.subjects_enrolled);
       if (planned === null || enrolled === null || planned === 0) return null;
       if (enrolled < planned * 0.9) {
         const pctShortfall = ((1 - enrolled / planned) * 100).toFixed(1);
@@ -214,7 +232,7 @@ const rules: AuditRule[] = [
           'Provide a post-hoc power analysis reflecting the actual enrollment. Discuss ' +
           'whether the study remains adequately powered and whether a protocol amendment ' +
           'for sample size re-estimation was considered.',
-          ['sample_size_planned', 'sample_size_enrolled'],
+          ['subjects_planned', 'subjects_enrolled'],
         );
       }
       return null;
@@ -230,19 +248,19 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Discontinuation rate exceeds acceptable threshold',
     question:
-      'Per ICH E9 Section 5.3 and the NRC/FDA report on missing data (2010), a ' +
+      'ICH E9 Section 5.3 and the 2010 NRC report on missing data (commissioned by FDA) set no numeric cutoff, but as an internal screening heuristic, a ' +
       'discontinuation rate above 20% raises concerns about informative censoring ' +
       'and potential bias in the ITT analysis. What is the observed rate, and how ' +
       'was differential dropout handled analytically?',
     check(answers) {
-      const rate = toNumber(answers.discontinuation_rate);
-      if (rate === null) return null;
-      const pct = rate > 1 ? rate : rate * 100; // accept both 0.25 and 25
+      // The interview asks counts; the rate is subjects_discontinued / subjects_enrolled.
+      const pct = discontinuationPct(answers);
+      if (pct === null) return null;
       if (pct > 20) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
-          `Discontinuation rate of ${pct.toFixed(1)}% exceeds the 20% threshold commonly ` +
-          'flagged by FDA reviewers. High attrition may introduce bias, particularly if ' +
+          `Discontinuation rate of ${pct.toFixed(1)}% exceeds this review's internal 20% screening ` +
+          'threshold (no regulatory or ICH cutoff exists). High attrition may introduce bias, particularly if ' +
           'dropout is differential between treatment arms.',
           'High dropout biases ITT analyses and may invalidate efficacy conclusions. The ' +
           'estimand framework (ICH E9(R1)) requires explicit handling of intercurrent events ' +
@@ -251,7 +269,7 @@ const rules: AuditRule[] = [
           'Conduct sensitivity analyses (tipping-point, pattern-mixture, delta-adjustment) ' +
           'to assess robustness of the primary result under varying dropout assumptions. ' +
           'Present discontinuation reasons by treatment arm in a CONSORT diagram.',
-          ['discontinuation_rate', 'missing_data_handling', 'sample_size_enrolled', 'sample_size_completed'],
+          ['subjects_discontinued', 'subjects_enrolled', 'discontinuation_reasons', 'handling_of_missing_data'],
         );
       }
       return null;
@@ -271,9 +289,9 @@ const rules: AuditRule[] = [
       'and appendices must be internally consistent. Do the enrolled, completed, and ' +
       'discontinued numbers reconcile?',
     check(answers) {
-      const enrolled = toNumber(answers.sample_size_enrolled);
-      const completed = toNumber(answers.sample_size_completed);
-      const discRate = toNumber(answers.discontinuation_rate);
+      const enrolled = toNumber(answers.subjects_enrolled);
+      const completed = toNumber(answers.subjects_completed);
+      const discRate = discontinuationPct(answers);
       if (enrolled === null || completed === null) return null;
       if (completed > enrolled) {
         return makeFinding(
@@ -286,17 +304,17 @@ const rules: AuditRule[] = [
           'Reconcile enrollment, randomization, treatment, completion, and discontinuation ' +
           'numbers. Verify consistency between the synopsis table, CONSORT diagram, and ' +
           'Section 10 narrative.',
-          ['sample_size_enrolled', 'sample_size_completed', 'discontinuation_rate'],
+          ['subjects_enrolled', 'subjects_completed', 'subjects_discontinued'],
         );
       }
       // Cross-check discontinuation rate vs. enrolled/completed gap
       if (discRate !== null && enrolled > 0 && completed > 0) {
         const impliedRate = ((enrolled - completed) / enrolled) * 100;
-        const reportedRate = discRate > 1 ? discRate : discRate * 100;
+        const reportedRate = discRate;
         if (Math.abs(impliedRate - reportedRate) > 5) {
           return makeFinding(
             this.id, this.dimension, 'warning', this.title, this.question,
-            `The reported discontinuation rate (${reportedRate.toFixed(1)}%) does not match ` +
+            `The reported discontinuations (${reportedRate.toFixed(1)}% of enrolled) do not match ` +
             `the rate implied by enrolled (${enrolled}) minus completed (${completed}) = ` +
             `${impliedRate.toFixed(1)}%. This inconsistency will be identified during FDA review.`,
             'All disposition figures must reconcile across the CSR. Discrepancies suggest ' +
@@ -304,7 +322,7 @@ const rules: AuditRule[] = [
             'ICH E3, Section 10; ICH E3, Section 2 (Synopsis)',
             'Audit all disposition figures for internal consistency. Clarify the population ' +
             'denominator used for discontinuation rate calculation.',
-            ['sample_size_enrolled', 'sample_size_completed', 'discontinuation_rate'],
+            ['subjects_enrolled', 'subjects_completed', 'subjects_discontinued'],
           );
         }
       }
@@ -326,7 +344,7 @@ const rules: AuditRule[] = [
       'primary objective. Is the primary endpoint specified with its measurement ' +
       'instrument, time point, and responder definition (if applicable)?',
     check(answers) {
-      if (isBlank(answers.primary_endpoint)) {
+      if (isBlank(answers.primary_endpoint_description)) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'No primary efficacy endpoint is specified. Without a defined primary endpoint, ' +
@@ -337,7 +355,7 @@ const rules: AuditRule[] = [
           'Define the primary endpoint including: (1) the clinical variable measured, ' +
           '(2) the assessment time point, (3) the measurement instrument/method, and ' +
           '(4) the clinically meaningful difference used for sample size calculation.',
-          ['primary_endpoint', 'primary_objective'],
+          ['primary_endpoint_description', 'study_objective'],
         );
       }
       return null;
@@ -394,7 +412,8 @@ const rules: AuditRule[] = [
     check(answers) {
       const pVal = toNumber(answers.p_value);
       if (pVal === null) return null;
-      if (isBlank(answers.confidence_interval)) {
+      // The interview records the CI with the effect size: 'Effect Size (with CI)'.
+      if (isBlank(answers.effect_size)) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
           `A p-value of ${pVal} is reported but no corresponding confidence interval is ` +
@@ -406,7 +425,7 @@ const rules: AuditRule[] = [
           'ICH E9, Section 5.5; FDA Guidance on Statistical Principles for Clinical Trials',
           'Report the 95% confidence interval for the primary treatment difference. Discuss ' +
           'whether the lower bound of the CI exceeds the clinically meaningful threshold.',
-          ['p_value', 'confidence_interval', 'primary_result_value'],
+          ['p_value', 'effect_size', 'primary_endpoint_result_summary'],
         );
       }
       return null;
@@ -438,7 +457,7 @@ const rules: AuditRule[] = [
           'State the number of subjects in the safety population and reconcile with the ' +
           'total enrolled population. Note any subjects excluded from the safety population ' +
           'with reasons.',
-          ['safety_population_size', 'sample_size_enrolled'],
+          ['safety_population_size', 'subjects_enrolled'],
         );
       }
       return null;
@@ -454,23 +473,23 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Adverse events summary missing',
     question:
-      'Per ICH E3 Section 12.2 and 21 CFR 312.32, the CSR must include a ' +
+      'Per ICH E3 Section 12.2, the CSR must include a ' +
       'comprehensive summary of adverse events tabulated by system organ class, ' +
       'preferred term, severity grade, and relationship to study treatment. Is this ' +
       'summary present for all treatment arms?',
     check(answers) {
-      if (isBlank(answers.adverse_events_summary)) {
+      if (isBlank(answers.most_common_aes)) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'No adverse events summary is provided. This is a fundamental deficiency that ' +
           'would halt FDA review of the safety profile.',
           'ICH E3 Section 12.2 requires tabulation of all AEs by SOC, preferred term, ' +
           'severity grade, and investigator-assessed causality, presented by treatment arm.',
-          'ICH E3, Section 12.2; 21 CFR 312.32; ICH E2A',
+          'ICH E3, Section 12.2; ICH E2A',
           'Provide a tabular AE summary including incidence by treatment arm, SOC, ' +
           'preferred term (MedDRA), severity (CTCAE grade or mild/moderate/severe), ' +
           'and causality assessment. Include AEs occurring in >= 5% of any treatment group.',
-          ['adverse_events_summary'],
+          ['most_common_aes', 'total_aes_reported', 'meddra_version'],
         );
       }
       return null;
@@ -491,19 +510,19 @@ const rules: AuditRule[] = [
       'Are SAEs and deaths fully documented with narratives, causality adjudication, ' +
       'and sponsor assessment?',
     check(answers) {
-      if (isBlank(answers.serious_adverse_events) && isBlank(answers.deaths_reported)) {
+      if (isBlank(answers.total_saes) && isBlank(answers.deaths)) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'Neither serious adverse events nor deaths have been documented. An FDA medical ' +
           'officer cannot assess the safety profile without this information.',
-          'Every SAE and death must have an individual narrative per ICH E3 Section 12.3.3, ' +
+          'Every SAE and death must have an individual narrative per ICH E3 Section 12.3.2, ' +
           'including subject demographics, event timeline, diagnostic workup, interventions, ' +
           'outcome, and causality assessment.',
-          'ICH E3, Sections 12.3.1 & 12.3.3; ICH E6(R3) Annex 1 §2.7; 21 CFR 312.32(c)',
+          'ICH E3, Section 12.3.2; ICH E6(R3) Annex 1 §2.7; 21 CFR 312.32(c)',
           'Provide individual SAE/death narratives. For each, include: subject ID, demographics, ' +
           'medical history, treatment details, event timeline, interventions, outcome, ' +
           'investigator causality, and sponsor adjudication.',
-          ['serious_adverse_events', 'deaths_reported'],
+          ['total_saes', 'deaths'],
         );
       }
       return null;
@@ -524,7 +543,14 @@ const rules: AuditRule[] = [
       'the primary endpoint, sample size, or analysis plan — and if so, were these ' +
       'changes made before or after unblinding?',
     check(answers) {
-      if (isBlank(answers.protocol_amendments)) {
+      // Not described: the amendment count is unanswered, or major amendments are
+      // counted but the summary the interview shows for them (visibleWhen
+      // major_amendments_count > 0) is blank.
+      const majorAmendments = toNumber(answers.major_amendments_count);
+      if (
+        isBlank(answers.number_of_amendments) ||
+        (majorAmendments !== null && majorAmendments > 0 && isBlank(answers.amendment_summary))
+      ) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Protocol amendments are not described. FDA reviewers will question whether ' +
@@ -537,7 +563,7 @@ const rules: AuditRule[] = [
           'List each amendment chronologically, noting: (1) date, (2) description of change, ' +
           '(3) rationale, (4) whether implemented before or after unblinding, and ' +
           '(5) impact on primary analysis.',
-          ['protocol_amendments'],
+          ['number_of_amendments', 'major_amendments_count', 'amendment_summary'],
         );
       }
       return null;
@@ -558,7 +584,7 @@ const rules: AuditRule[] = [
       'Are deviations listed, and were subjects with important deviations handled as the ' +
       'per-protocol population definition requires?',
     check(answers) {
-      if (isBlank(answers.protocol_deviations)) {
+      if (isBlank(answers.total_deviations)) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Protocol deviations are not catalogued. This omission may lead the FDA to ' +
@@ -572,7 +598,7 @@ const rules: AuditRule[] = [
           'medications, visit window breaches, dosing errors). Classify each as important or ' +
           'not against the trial\'s predefined criteria and assess the impact on the ' +
           'per-protocol population definition.',
-          ['protocol_deviations'],
+          ['total_deviations', 'major_deviations_count', 'most_common_deviation_types'],
         );
       }
       return null;
@@ -588,7 +614,7 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'GCP compliance statement absent',
     question:
-      'ICH E6(R3) and 21 CFR 312.120 require an explicit statement confirming the ' +
+      'ICH E6(R3) and ICH E3 Section 5 (and, for foreign studies not conducted under an IND, 21 CFR 312.120) call for an explicit statement confirming the ' +
       'study was conducted in accordance with GCP, applicable regulations, and the ' +
       'ethical principles of the Declaration of Helsinki. Is this statement present?',
     check(answers) {
@@ -600,7 +626,7 @@ const rules: AuditRule[] = [
           'The CSR must include an explicit statement attesting GCP compliance, IRB/IEC ' +
           'approval at each investigational site, and confirmation that informed consent ' +
           'was obtained per 21 CFR 50.',
-          'ICH E6(R3) principles; 21 CFR 312.120; ICH E3, Section 9.6; 21 CFR 50',
+          'ICH E6(R3) principles; 21 CFR 312.120 (foreign clinical studies not conducted under an IND); ICH E3, Sections 1 and 5 (5.1 IEC/IRB, 5.2 Ethical Conduct of the Study, 5.3 Patient Information and Consent); 21 CFR 50',
           'Add a statement attesting GCP compliance. Reference the specific ICH E6 version ' +
           'followed, confirm IRB/IEC approval at each site, and confirm written informed ' +
           'consent was obtained from all subjects.',
@@ -620,8 +646,8 @@ const rules: AuditRule[] = [
     dimension: 'scientific_rigor',
     title: 'DMC charter or independence not documented',
     question:
-      'FDA Guidance on Data Monitoring Committees (2006) and ICH E9 Section 4.5 ' +
-      'require that the DMC operate under a written charter with documented statistical ' +
+      'FDA Guidance on Data Monitoring Committees (2006) and ICH E9 Section 4.6 ' +
+      'recommend that the DMC operate under a written charter with documented statistical ' +
       'and clinical independence from the sponsor. Is the DMC described, and is ' +
       'independence from the sponsor assured?',
     check(answers) {
@@ -633,7 +659,7 @@ const rules: AuditRule[] = [
           'FDA guidance recommends DMC use for controlled trials with mortality/morbidity ' +
           'endpoints. The charter must specify member qualifications, voting procedures, ' +
           'and separation of unblinded and blinded analyses.',
-          'FDA Guidance on Establishment and Operation of Clinical Trial DMCs (2006); ICH E9, Section 4.5',
+          'FDA Guidance on Establishment and Operation of Clinical Trial DMCs (2006); ICH E9, Section 4.6',
           'Describe the DMC composition (names and qualifications), charter provisions, ' +
           'meeting schedule, and confirm statistical independence. Reference the DMC ' +
           'charter as a CSR appendix.',
@@ -659,7 +685,9 @@ const rules: AuditRule[] = [
     check(answers) {
       const performed = answers.interim_analyses_performed;
       if (performed === true || performed === 'yes' || performed === 'Yes') {
-        if (isBlank(answers.data_monitoring_committee)) {
+        // idmc_oversight (yes_no) is asked in the interim-analysis node, which the
+        // interview reaches exactly when interim_analyses_performed is true.
+        if (answers.idmc_oversight !== true) {
           return makeFinding(
             this.id, this.dimension, 'critical', this.title, this.question,
             'Interim analyses were performed but no DMC oversight is documented. This ' +
@@ -668,11 +696,11 @@ const rules: AuditRule[] = [
             'Interim analyses must be overseen by an independent DMC operating under a ' +
             'pre-specified alpha-spending function (e.g., O\'Brien-Fleming, Lan-DeMets). ' +
             'Unmonitored interim analyses create bias risk.',
-            'ICH E9, Section 4.5; FDA Guidance on DMCs (2006); ICH E3, Section 11.4.6',
+            'ICH E9, Section 4.5; FDA Guidance on DMCs (2006); ICH E3, Section 11.4.2.3',
             'Document: (1) the alpha-spending function used, (2) number and timing of ' +
             'interim looks, (3) stopping boundaries, (4) DMC composition and charter, ' +
             'and (5) all DMC recommendations and sponsor actions.',
-            ['interim_analyses_performed', 'data_monitoring_committee'],
+            ['interim_analyses_performed', 'idmc_oversight', 'alpha_spending_function'],
           );
         }
       }
@@ -689,7 +717,7 @@ const rules: AuditRule[] = [
     dimension: 'consistency',
     title: 'Deviations from the Statistical Analysis Plan not addressed',
     question:
-      'ICH E9 Section 2.3 requires that any deviation from the pre-specified SAP be ' +
+      'ICH E9 Section 5.1 requires that any deviation from the pre-specified SAP be ' +
       'documented, justified, and characterized as pre- or post-unblinding. Is there ' +
       'a statement on SAP adherence, and are all deviations enumerated?',
     check(answers) {
@@ -703,7 +731,7 @@ const rules: AuditRule[] = [
           'All post-hoc changes to the SAP must be described with rationale. The timing ' +
           'relative to unblinding is critical: post-unblinding changes are presumed to ' +
           'be outcome-driven and are viewed with extreme skepticism.',
-          'ICH E9, Section 2.3; ICH E3, Section 11.4.1',
+          'ICH E9, Section 5.1; ICH E3, Section 9.8',
           'Include an explicit statement confirming full SAP adherence, or document each ' +
           'deviation with: (1) the original SAP specification, (2) the actual analysis ' +
           'performed, (3) the rationale, and (4) the timing relative to unblinding.',
@@ -728,7 +756,7 @@ const rules: AuditRule[] = [
       'describe the estimand framework, the primary imputation method, the assumed ' +
       'missing data mechanism, and sensitivity analyses. Is this strategy described?',
     check(answers) {
-      if (isBlank(answers.missing_data_handling)) {
+      if (isBlank(answers.handling_of_missing_data)) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'No missing data handling strategy is described. FDA considers this a significant ' +
@@ -741,7 +769,7 @@ const rules: AuditRule[] = [
           'principal stratum), (2) the primary imputation/modeling approach, (3) the missing ' +
           'data rate by treatment arm, (4) whether missingness was differential, and ' +
           '(5) sensitivity analyses under MNAR assumptions (tipping-point, delta-adjustment).',
-          ['missing_data_handling', 'discontinuation_rate'],
+          ['handling_of_missing_data', 'missing_data_primary_endpoint', 'subjects_discontinued'],
         );
       }
       return null;
@@ -762,7 +790,11 @@ const rules: AuditRule[] = [
       'analyses pre-specified in the SAP, and were treatment-by-subgroup interaction ' +
       'tests performed?',
     check(answers) {
-      if (isBlank(answers.subgroup_analyses)) {
+      // subgroup_analysis_summary is shown only when subgroup_analyses_performed is true.
+      if (
+        isBlank(answers.subgroup_analyses_performed) ||
+        (answers.subgroup_analyses_performed === true && isBlank(answers.subgroup_analysis_summary))
+      ) {
         return makeFinding(
           this.id, this.dimension, 'info', this.title, this.question,
           'No subgroup analysis information is provided. If subgroup analyses were performed ' +
@@ -770,12 +802,12 @@ const rules: AuditRule[] = [
           'were not performed, the FDA may request them during review.',
           'All subgroup analyses should be identified in the SAP. Post-hoc subgroup analyses ' +
           'must be clearly labeled as exploratory with appropriate caveats.',
-          'ICH E9, Section 5.7; FDA Guidance on Subgroup Analyses (2019)',
+          'ICH E9, Section 5.7; EMA Guideline on the Investigation of Subgroups in Confirmatory Clinical Trials (EMA/CHMP/539146/2013)',
           'List all subgroup analyses performed. For each, state: (1) whether it was ' +
           'pre-specified or post-hoc, (2) the treatment-by-subgroup interaction p-value, ' +
           '(3) the subgroup-specific treatment effect with CI, and (4) present results in ' +
           'a forest plot. Label all post-hoc analyses as exploratory.',
-          ['subgroup_analyses'],
+          ['subgroup_analyses_performed', 'subgroup_analysis_summary'],
         );
       }
       return null;
@@ -796,7 +828,12 @@ const rules: AuditRule[] = [
       'efficacy result under alternative assumptions. Were sensitivity analyses ' +
       'conducted, and do their conclusions align with the primary analysis?',
     check(answers) {
-      if (isBlank(answers.sensitivity_analyses)) {
+      // The interview asks about sensitivity analyses only on its primary-endpoint-
+      // not-met branch (primary_endpoint_met === false); elsewhere it is not asked.
+      if (
+        answers.primary_endpoint_met === false &&
+        (answers.sensitivity_analyses_performed !== true || isBlank(answers.sensitivity_analysis_summary))
+      ) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'No sensitivity analyses are documented. The primary efficacy result cannot be ' +
@@ -804,12 +841,12 @@ const rules: AuditRule[] = [
           'At least one sensitivity analysis must be pre-specified in the SAP. Common ' +
           'approaches include per-protocol analysis, alternative imputation methods, and ' +
           'covariate-adjusted analyses.',
-          'ICH E9, Section 5.2.3; ICH E9(R1) Addendum; ICH E3, Section 11.4.3',
+          'ICH E9, Section 5.2.3; ICH E9(R1) Addendum; ICH E3, Section 11.4.2',
           'Report at minimum: (1) per-protocol population analysis, (2) tipping-point or ' +
           'pattern-mixture analysis for missing data, (3) covariate-adjusted analysis, and ' +
           '(4) results excluding subjects with major protocol deviations. Present a ' +
           'concordance summary showing alignment with the primary analysis.',
-          ['sensitivity_analyses', 'primary_result_value'],
+          ['sensitivity_analyses_performed', 'sensitivity_analysis_summary', 'primary_endpoint_met'],
         );
       }
       return null;
@@ -859,7 +896,7 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Safety conclusions missing',
     question:
-      'ICH E3 Section 12.5 requires an integrated safety summary with conclusions ' +
+      'ICH E3 Section 12.6 (Safety Conclusions) requires an overall summary and assessment of safety with conclusions ' +
       'addressing the overall tolerability profile, dose-response for AEs, and any ' +
       'safety signals warranting label language. Are safety conclusions present?',
     check(answers) {
@@ -871,7 +908,7 @@ const rules: AuditRule[] = [
           'Safety conclusions must address overall tolerability, the AE profile relative to ' +
           'comparator, identified safety signals, and any risks requiring mitigation strategies ' +
           'or label warnings.',
-          'ICH E3, Section 12.5; ICH E2E; 21 CFR 314.50(d)(5)(vi)',
+          'ICH E3, Section 12.6; ICH E2E; 21 CFR 314.50(d)(5)(vi)',
           'Provide integrated safety conclusions covering: (1) overall AE profile and ' +
           'tolerability, (2) SAE patterns, (3) laboratory and vital sign abnormalities, ' +
           '(4) identified safety signals with proposed label language, and (5) an overall ' +
@@ -896,21 +933,21 @@ const rules: AuditRule[] = [
       'efficacy benefits against safety signals. When deaths have occurred on study, ' +
       'the CSR must include a structured benefit-risk assessment. Is this provided?',
     check(answers) {
-      const deaths = toNumber(answers.deaths_reported);
-      if (deaths !== null && deaths > 0 && isBlank(answers.safety_conclusions)) {
+      const deaths = toNumber(answers.deaths);
+      if (deaths !== null && deaths > 0 && isBlank(answers.benefit_risk_assessment)) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
-          `${deaths} death(s) reported on study but no safety conclusions are provided. ` +
+          `${deaths} death(s) reported on study but no integrated benefit-risk statement is provided. ` +
           'The FDA medical officer will demand an explicit benefit-risk justification ' +
           'when deaths occur in a clinical trial.',
           'When deaths occur, the CSR must include a detailed benefit-risk assessment ' +
           'addressing whether the drug\'s benefits outweigh the observed mortality signal, ' +
           'with comparison to background rates and the comparator arm.',
-          'FDA Benefit-Risk Framework (PDUFA VI); ICH E3, Section 12.5; 21 CFR 314.50(d)(5)(vi)',
-          'Provide: (1) a structured benefit-risk analysis using the FDA five-dimension ' +
+          'FDA Benefit-Risk Framework (PDUFA VI); ICH E3, Section 12.6; 21 CFR 314.50(d)(5)(vi)',
+          'Provide: (1) a structured benefit-risk analysis using the four dimensions of FDA\'s Benefit-Risk ' +
           'framework, (2) an individual narrative for each death, (3) causality adjudication ' +
           'by the sponsor, and (4) comparison with expected background mortality rates.',
-          ['deaths_reported', 'safety_conclusions', 'efficacy_conclusions'],
+          ['deaths', 'benefit_risk_assessment', 'death_causes_summary'],
         );
       }
       return null;
@@ -962,7 +999,14 @@ const rules: AuditRule[] = [
       'the study population including demographics, baseline characteristics, and ' +
       'eligibility criteria. Is the target population adequately described?',
     check(answers) {
-      if (isBlank(answers.study_population)) {
+      // The interview asks the population description in parts; it is not
+      // described only when none of them is answered.
+      if (
+        isBlank(answers.mean_age) &&
+        isBlank(answers.percent_male) &&
+        isBlank(answers.race_ethnicity_summary) &&
+        isBlank(answers.baseline_disease_characteristics)
+      ) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'The study population is not described. Without baseline demographics and ' +
@@ -974,7 +1018,7 @@ const rules: AuditRule[] = [
           'Provide a demographics and baseline characteristics table by treatment arm. ' +
           'Include age, sex, race/ethnicity, geographic region, baseline disease severity, ' +
           'and relevant medical history.',
-          ['study_population'],
+          ['mean_age', 'percent_male', 'race_ethnicity_summary', 'baseline_disease_characteristics'],
         );
       }
       return null;

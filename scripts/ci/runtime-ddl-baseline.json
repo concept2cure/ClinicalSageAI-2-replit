@@ -1,13 +1,9 @@
 {
   "$comment": "Runtime server files that issue DDL, pinned to their exact statement count, each with the reason it is tolerated today. Read by scripts/ci/check-runtime-ddl.mjs. Production's runtime role (app_service) cannot CREATE in public and owns no table, and PostgreSQL checks that BEFORE IF NOT EXISTS, so a runtime DDL statement is refused in production even when the object exists, and succeeds on every developer machine. This file may only SHRINK: move the object into a migration in C2C_MIGRATION_FILES (CLAUDE.md RULE 1), or delete the dead code, then lower or remove the entry. A new entry without a reason fails. Dispositions measured 2026-09-24 against a database provisioned by scripts/db/provision.mjs, as app_service: docs/evidence/W1/2026-09-24-launch-reach/.",
   "files": {
-    "server/db/bootstrap/auth-schema.ts": {
-      "count": 8,
-      "reason": "Boot, on the OWNER connection, not the runtime role: ensureAuthTables (server/db/bootstrap/index.ts) opens a separate pool on DATABASE_URL — the owner URL — whenever APP_DATABASE_URL splits the runtime role. Safe as long as that holds; a caller passing the runtime pool would break production boot."
-    },
     "server/db/ensureCoreTables.ts": {
       "count": 9,
-      "reason": "Boot, on the OWNER connection: server/startup/services.ts calls ensureCoreTables(process.env.DATABASE_URL), the owner URL in the split-role production posture. Not the runtime role. Safe while the call site passes the owner URL."
+      "reason": "Never in production: since 2026-10-22 (MR-03 Stage 3, OPS-16) server/startup/services.ts calls ensureCoreTables(undefined, { verifyOnly: true }) there, which runs on the runtime role and issues none of these statements. Outside production the call passes the owner URL (DATABASE_URL) when one is set, so a developer's database is filled in; the CLI mode (`npx tsx server/db/ensureCoreTables.ts`) does the same."
     },
     "server/db/pglite-harness.ts": {
       "count": 29,

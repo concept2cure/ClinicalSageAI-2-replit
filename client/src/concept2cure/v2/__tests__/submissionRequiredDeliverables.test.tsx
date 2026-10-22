@@ -208,7 +208,7 @@ describe('Builder source evidence — current admitted pointer outcomes', () => 
     ['missing', 'not found in this organization'],
     ['content_changed', 'content changed since filing'],
   ] as const)('displays the actual %s result without converting it into another source verdict', async (status, label) => {
-    apiRequest.mockImplementation(async (_method: string, url: string) => url === '/api/submissions/sequences/21/leaves'
+    apiRequest.mockImplementation(async (_method: string, url: string) => url.split('?')[0] === '/api/submissions/sequences/21/leaves'
       ? response([{ id: 301, sectionCode: 'FILING-A', title: 'Exact admitted source outcome', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 88, sourceDocument: { status, keyKind: 'integer', pinnedSha256: null, storedSha256: null, pin: 'unverifiable', reason: 'Recorded source outcome from the current reader.' } }]) : fixtureRoute(url));
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
     await screen.findByRole('combobox', { name: 'Submission to work on' });

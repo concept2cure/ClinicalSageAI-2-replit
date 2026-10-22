@@ -1233,7 +1233,13 @@ function finalizeRefusalNote(status: unknown, payload: unknown): string | null {
  *  requiredTier; the write gate's does not. Every 403 read as "needs a higher
  *  plan" before the write gate existed, and would have told a viewer to upgrade. */
 function runRefusalNote(label: string, status: unknown, payload: unknown): string {
-  const tier = (payload as { requiredTier?: unknown } | null)?.requiredTier;
+  const p = payload as { requiredTier?: unknown; tier?: unknown } | null;
+  const tier = p?.requiredTier;
+  /* 2026-10-15: a plan the server could not read (tier: null, requiredTier still
+     the gate's 'standard') read as "needs a higher plan (standard)". */
+  if (status === 403 && p != null && 'tier' in p && p.tier === null) {
+    return `"${label}" wasn't run — your plan could not be read.`;
+  }
   if (status === 403 && tier) {
     return `"${label}" needs a higher plan (${String(tier)}). No estimated result is shown on a plan that has not unlocked the governed model.`;
   }
