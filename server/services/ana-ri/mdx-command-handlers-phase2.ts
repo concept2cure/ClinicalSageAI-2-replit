@@ -263,15 +263,6 @@ export async function postMarketDocumentCreate(
   const notOwned = await refuseUnownedProgram(action, programId, ctx);
   if (notOwned) return notOwned;
 
-  // Dates are optional: the engine stores an undeclared date as null and the
-  // type's reporting-period finding keeps the gate closed, so an unparseable value
-  // must not silently become "now" — leave it undefined and let the engine flag it.
-  const parseDate = (v: unknown): Date | undefined => {
-    if (typeof v !== 'string' || !v.trim()) return undefined;
-    const d = new Date(v);
-    return Number.isNaN(d.getTime()) ? undefined : d;
-  };
-
   try {
     const { document, validation } = await authorPostMarketDocument({
       organizationId: ctx.organizationId,
@@ -283,8 +274,12 @@ export async function postMarketDocumentCreate(
       regulation: params.regulation === 'MDR' || params.regulation === 'IVDR' ? params.regulation : undefined,
       relatedCerReportId,
       title: typeof params.title === 'string' ? params.title : undefined,
-      reportingPeriodStart: parseDate(params.reportingPeriodStart),
-      reportingPeriodEnd: parseDate(params.reportingPeriodEnd),
+      // As declared. The engine stores an omitted date as null (the gate reports
+      // it not declared) and refuses one that is not a real ISO day, or a start
+      // not before the end (PM_BAD_INPUT). 2026-10-15: an unparseable date was
+      // turned into undefined here — "not declared" — and the draft succeeded.
+      reportingPeriodStart: params.reportingPeriodStart,
+      reportingPeriodEnd: params.reportingPeriodEnd,
     });
 
     // WO-16C #133: the document row is already INSERTed by the engine above,
@@ -330,7 +325,7 @@ export async function postMarketDocumentCreate(
     };
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
-    if (code === 'PM_NO_DEVICE' || code === 'PM_BAD_TYPE') {
+    if (code === 'PM_NO_DEVICE' || code === 'PM_BAD_TYPE' || code === 'PM_BAD_INPUT') {
       return { success: false, action, message: (err as Error).message, error: 'INVALID_INPUT' };
     }
     return mapServiceError(action, err);
@@ -792,6 +787,8 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
       'SSCP (Art. 32). Code and version are assigned per program; returns the ' +
       'compliance-gate validation — relay its findings. Report-style types take a ' +
       'reporting period; omitted, none is set and the gate reports it not declared. ' +
+      'A date that is not a real ISO 8601 day (YYYY-MM-DD), or a start not before ' +
+      'the end, is refused with INVALID_INPUT naming the field — nothing is written. ' +
       'Does not invent clinical conclusions. Requires confirm + reason.',
     parameters:
       'programId (UUID), documentType (pms_plan|pms_report|pmcf_plan|pmcf_evaluation|psur|sscp), ' +
