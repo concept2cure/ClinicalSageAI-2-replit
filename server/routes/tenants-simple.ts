@@ -3,7 +3,6 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import postgres from 'postgres';
 import { authMiddleware } from '../auth';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
 import { requirePlatformAdmin, resolvePlatformAdmin } from '../middleware/requirePlatformAdmin';
@@ -18,7 +17,6 @@ import {
   purgeTenant,
   requestDeletion,
 } from '../services/tenant/tenant-offboarding';
-import { getSslConfig } from '../db/ssl';
 
 const log = createScopedLogger('tenants-simple');
 
@@ -38,41 +36,13 @@ router.use(authMiddleware);
 // 2026-10-05, read the request role, which is the tenant membership role (D6,
 // docs/evidence/D6/2026-10-05-cross-tenant-staff/).
 
-/**
- * Clean a database URL by removing common wrapper artifacts
- * like `psql '...'` that can be accidentally copied from terminal commands
- */
-function cleanDatabaseUrl(url: string | undefined): string {
-  if (!url) return '';
-  let cleaned = url;
-
-  // Remove psql command wrapper if present: psql 'postgresql://...' or psql "postgresql://..."
-  if (cleaned.startsWith('psql ')) {
-    cleaned = cleaned.substring(5); // Remove 'psql '
-  }
-
-  // Remove surrounding quotes (single or double)
-  if (
-    (cleaned.startsWith("'") && cleaned.endsWith("'")) ||
-    (cleaned.startsWith('"') && cleaned.endsWith('"'))
-  ) {
-    cleaned = cleaned.slice(1, -1);
-  }
-
-  // Remove any leading/trailing whitespace
-  return cleaned.trim();
-}
-
-// Use the same connection method as the main db
-const rawConnectionString = process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET || '';
-const connectionString = cleanDatabaseUrl(rawConnectionString);
-const sql = postgres(connectionString, {
-  // TLS posture mirrors the rest of the app (server/db/runtime.ts + server/db/ssl.ts):
-  // a managed/non-local host VERIFIES the server certificate, and TLS is only
-  // relaxed for an explicit local / sslmode=disable DSN. Never disable
-  // certificate verification — this connection carries the whole tenant directory.
-  ssl: getSslConfig(connectionString),
-});
+// The directory reads and writes below go through the runtime pool (`pool`,
+// server/db), the non-superuser role RLS governs, under the system scope this
+// mount applies (SYSTEM_SCOPE_PREFIXES, establishRequestTenantScope.ts). They
+// used a module-level `postgres` client on DATABASE_URL, which put the RDS
+// master credential on the request path (MR-03 OPS-16, MR-05 ARCH-08).
+// Authorization is unchanged: resolvePlatformAdmin, the membership join and
+// the authedOrgId check below decide who sees what.
 
 // Schema for tenant creation
 const createTenantSchema = z.object({
@@ -125,24 +95,26 @@ router.get('/', async (req, res) => {
     // slugs, domains, tiers) to any authenticated user. Platform admins still
     // get the full list for tenant management.
     const userId = Number((req as any).user?.id ?? (req as any).user?.userId ?? 0);
-    const result = (await resolvePlatformAdmin(req))
-      ? await sql`
-          SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers",
-                 max_projects as "maxProjects", max_storage as "maxStorage",
-                 status, created_at as "createdAt", updated_at as "updatedAt"
-          FROM organizations
-          ORDER BY created_at DESC
-        `
-      : await sql`
-          SELECT o.id, o.name, o.slug, o.domain, o.logo, o.tier,
-                 o.max_users as "maxUsers", o.max_projects as "maxProjects",
-                 o.max_storage as "maxStorage", o.status,
-                 o.created_at as "createdAt", o.updated_at as "updatedAt"
-          FROM organizations o
-          INNER JOIN organization_users ou ON ou.organization_id = o.id
-          WHERE ou.user_id = ${userId}
-          ORDER BY o.created_at DESC
-        `;
+    const { rows: result } = (await resolvePlatformAdmin(req))
+      ? await pool.query(
+          `SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers",
+                  max_projects as "maxProjects", max_storage as "maxStorage",
+                  status, created_at as "createdAt", updated_at as "updatedAt"
+           FROM organizations
+           ORDER BY created_at DESC`,
+          [],
+        )
+      : await pool.query(
+          `SELECT o.id, o.name, o.slug, o.domain, o.logo, o.tier,
+                  o.max_users as "maxUsers", o.max_projects as "maxProjects",
+                  o.max_storage as "maxStorage", o.status,
+                  o.created_at as "createdAt", o.updated_at as "updatedAt"
+           FROM organizations o
+           INNER JOIN organization_users ou ON ou.organization_id = o.id
+           WHERE ou.user_id = $1
+           ORDER BY o.created_at DESC`,
+          [userId],
+        );
 
     log.debug('Retrieved tenants from database:', result.length);
 
@@ -173,24 +145,23 @@ router.post('/', requirePlatformAdmin, async (req, res) => {
     // organization. See server/db/tenantAdmission.ts.
     await assertCanAdmitNewTenant();
 
-    // Use postgres to create tenant
-    const result = await sql`
-      INSERT INTO organizations (name, slug, domain, tier, max_users, max_projects, max_storage, status, api_key)
-      VALUES (
-        ${validatedData.name},
-        ${validatedData.slug},
-        ${validatedData.domain || null},
-        ${validatedData.tier || 'standard'},
-        ${validatedData.maxUsers || 5},
-        ${validatedData.maxProjects || 10},
-        ${validatedData.maxStorage || 5},
-        'active',
-        ${apiKey}
-      )
-      RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers",
-               max_projects as "maxProjects", max_storage as "maxStorage",
-               status, created_at as "createdAt", updated_at as "updatedAt"
-    `;
+    const { rows: result } = await pool.query(
+      `INSERT INTO organizations (name, slug, domain, tier, max_users, max_projects, max_storage, status, api_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8)
+       RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers",
+                 max_projects as "maxProjects", max_storage as "maxStorage",
+                 status, created_at as "createdAt", updated_at as "updatedAt"`,
+      [
+        validatedData.name,
+        validatedData.slug,
+        validatedData.domain || null,
+        validatedData.tier || 'standard',
+        validatedData.maxUsers || 5,
+        validatedData.maxProjects || 10,
+        validatedData.maxStorage || 5,
+        apiKey,
+      ],
+    );
 
     const newTenant = result[0];
     log.debug('Created tenant in database:', newTenant);
@@ -234,23 +205,33 @@ router.patch('/:id', requirePlatformAdmin, async (req, res) => {
 
     const validatedData = updateTenantSchema.parse(req.body);
 
-    // Use postgres for update
-    const result = await sql`
-      UPDATE organizations
-      SET
-        name = ${validatedData.name || sql`name`},
-        slug = ${validatedData.slug || sql`slug`},
-        domain = ${validatedData.domain || sql`domain`},
-        tier = ${validatedData.tier || sql`tier`},
-        max_users = ${validatedData.maxUsers || sql`max_users`},
-        max_projects = ${validatedData.maxProjects || sql`max_projects`},
-        max_storage = ${validatedData.maxStorage || sql`max_storage`},
-        updated_at = NOW()
-      WHERE id = ${tenantId}
-      RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers",
-               max_projects as "maxProjects", max_storage as "maxStorage",
-               status, created_at as "createdAt", updated_at as "updatedAt"
-    `;
+    // A field left out (or empty) keeps its current value, as before.
+    const { rows: result } = await pool.query(
+      `UPDATE organizations
+       SET
+         name = COALESCE($1, name),
+         slug = COALESCE($2, slug),
+         domain = COALESCE($3, domain),
+         tier = COALESCE($4, tier),
+         max_users = COALESCE($5, max_users),
+         max_projects = COALESCE($6, max_projects),
+         max_storage = COALESCE($7, max_storage),
+         updated_at = NOW()
+       WHERE id = $8
+       RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers",
+                 max_projects as "maxProjects", max_storage as "maxStorage",
+                 status, created_at as "createdAt", updated_at as "updatedAt"`,
+      [
+        validatedData.name || null,
+        validatedData.slug || null,
+        validatedData.domain || null,
+        validatedData.tier || null,
+        validatedData.maxUsers || null,
+        validatedData.maxProjects || null,
+        validatedData.maxStorage || null,
+        tenantId,
+      ],
+    );
 
     if (result.length === 0) {
       return res.status(404).json({ error: 'Organization not found' });
@@ -297,24 +278,25 @@ router.get('/:tenantId/users', async (req, res) => {
     }
 
     // Get users for this organization with their roles
-    const result = await sql`
-      SELECT
-        u.id,
-        u.email,
-        u.name,
-        u.title,
-        u.department,
-        u.avatar,
-        u.status,
-        u.last_login as "lastLogin",
-        u.created_at as "createdAt",
-        ou.role,
-        ou.created_at as "joinedAt"
-      FROM users u
-      INNER JOIN organization_users ou ON u.id = ou.user_id
-      WHERE ou.organization_id = ${tenantId}
-      ORDER BY u.name ASC
-    `;
+    const { rows: result } = await pool.query(
+      `SELECT
+         u.id,
+         u.email,
+         u.name,
+         u.title,
+         u.department,
+         u.avatar,
+         u.status,
+         u.last_login as "lastLogin",
+         u.created_at as "createdAt",
+         ou.role,
+         ou.created_at as "joinedAt"
+       FROM users u
+       INNER JOIN organization_users ou ON u.id = ou.user_id
+       WHERE ou.organization_id = $1
+       ORDER BY u.name ASC`,
+      [tenantId],
+    );
 
     res.json(result);
   } catch (error) {
