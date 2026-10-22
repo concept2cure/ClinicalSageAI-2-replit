@@ -20,7 +20,9 @@ import type { RetrievedSource } from '../clinical-regulatory-evidence/source-att
 import {
   consentElementTemplates,
   evaluateConsentCompleteness,
+  missingTemplateElements,
   type ConsentCompletenessResult,
+  type ConsentElementTemplate,
 } from './protocol-consent-logic';
 
 interface Queryable {
@@ -42,9 +44,32 @@ export interface ConsentFormInput {
   version?: string | null;
   language?: string | null;
   readingLevel?: string | null;
+  /** Applicable clinical trial (42 U.S.C. 282(j)); unknown holds the form to 21 CFR 50.25(c). */
+  applicableClinicalTrial?: boolean | null;
 }
 
-/** Create a consent form and seed it with the required elements of consent. */
+/**
+ * Add the template elements a form's rows do not cover, after its last row.
+ * Structure only — every added row is empty and not present.
+ */
+async function insertMissingElementsTx(client: Queryable, ids: { orgId: number; formId: number; userId: number }, templates: ConsentElementTemplate[]): Promise<number> {
+  const { rows } = await client.query(
+    `SELECT element_key, order_index FROM consent_form_elements WHERE consent_form_id = $1 AND organization_id = $2`,
+    [ids.formId, ids.orgId],
+  );
+  const missing = missingTemplateElements(rows.map((r) => ({ elementKey: r.element_key })), templates);
+  let order = rows.reduce((m, r) => Math.max(m, Number(r.order_index) + 1), 0);
+  for (const e of missing) {
+    await client.query(
+      `INSERT INTO consent_form_elements (organization_id, consent_form_id, element_key, title, content, required, present, order_index, created_by)
+       VALUES ($1,$2,$3,$4,NULL,$5,false,$6,$7)`,
+      [ids.orgId, ids.formId, e.elementKey, e.title, e.required, order++, ids.userId],
+    );
+  }
+  return missing.length;
+}
+
+/** Create a consent form and seed it with the elements of informed consent. */
 export async function createConsentFormTx(client: Queryable, orgId: number, userId: number, input: ConsentFormInput): Promise<{ id: number; elementsSeeded: number }> {
   if (!input.title || !input.title.trim()) throw new ConsentFormError('BAD_INPUT', 'A consent form title is required.');
   const { rows } = await client.query(
@@ -53,16 +78,38 @@ export async function createConsentFormTx(client: Queryable, orgId: number, user
     [orgId, input.protocolDocumentId ?? null, input.title.trim(), input.version ?? '0.1', input.language ?? 'en', input.readingLevel ?? null, userId],
   );
   const id = Number(rows[0].id);
-  const templates = consentElementTemplates();
-  let order = 0;
-  for (const e of templates) {
-    await client.query(
-      `INSERT INTO consent_form_elements (organization_id, consent_form_id, element_key, title, content, required, present, order_index, created_by)
-       VALUES ($1,$2,$3,$4,NULL,$5,false,$6,$7)`,
-      [orgId, id, e.elementKey, e.title, e.required, order++, userId],
-    );
-  }
-  return { id, elementsSeeded: templates.length };
+  const templates = consentElementTemplates({ applicableClinicalTrial: input.applicableClinicalTrial });
+  const elementsSeeded = await insertMissingElementsTx(client, { orgId, formId: id, userId }, templates);
+  return { id, elementsSeeded };
+}
+
+/**
+ * A draft or in-review form gains the elements it is now held to (decision of
+ * 2026-10-21: the shared record's FDA elements, the ClinicalTrials.gov
+ * statement required while applicable-clinical-trial status is unknown). The
+ * form row is locked first, so two edits cannot add the same element twice.
+ * An approved or superseded form is the signed record and is never changed.
+ */
+async function syncFormElementsTx(client: Queryable, orgId: number, formId: number, userId: number): Promise<number> {
+  const f = await client.query(`SELECT status FROM consent_forms WHERE id = $1 AND organization_id = $2 FOR UPDATE`, [formId, orgId]);
+  const status = f.rows[0]?.status;
+  if (status !== 'draft' && status !== 'in_review') return 0;
+  return insertMissingElementsTx(client, { orgId, formId, userId }, consentElementTemplates());
+}
+
+/**
+ * Record whether the study is an applicable clinical trial: the 21 CFR
+ * 50.25(c) statement is then required (true) or optional (false).
+ */
+export async function setApplicableClinicalTrialTx(client: Queryable, orgId: number, userId: number, input: { formId: number; applicableClinicalTrial: boolean }): Promise<{ formId: number; applicableClinicalTrial: boolean }> {
+  const form = await loadForm(client, orgId, input.formId);
+  assertEditable(form.status);
+  await syncFormElementsTx(client, orgId, input.formId, userId);
+  await client.query(
+    `UPDATE consent_form_elements SET required = $3, updated_at = now() WHERE consent_form_id = $1 AND organization_id = $2 AND element_key = 'clinicaltrials_gov'`,
+    [input.formId, orgId, input.applicableClinicalTrial],
+  );
+  return { formId: input.formId, applicableClinicalTrial: input.applicableClinicalTrial };
 }
 
 async function loadForm(client: Queryable, orgId: number, formId: number): Promise<{ status: string }> {
@@ -85,6 +132,7 @@ export async function updateElementTx(client: Queryable, orgId: number, elementI
   );
   if (el.rows.length === 0) throw new ConsentFormError('NOT_FOUND', 'Consent element not found for this organization.');
   assertEditable(el.rows[0].form_status);
+  await syncFormElementsTx(client, orgId, Number(el.rows[0].form_id), actorUserId);
   await client.query(
     `UPDATE consent_form_elements SET content = COALESCE($3, content), present = COALESCE($4, present), updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [elementId, orgId, input.content ?? null, input.present ?? null],
@@ -115,10 +163,27 @@ async function completenessInputFor(orgId: number, formId: number) {
   return rows.map((r) => ({ elementKey: r.element_key, required: r.required, present: r.present, content: r.content }));
 }
 
-/** Read-only completeness assessment (uses the pure evaluateConsentCompleteness). */
-export async function getCompleteness(orgId: number, formId: number): Promise<ConsentCompletenessResult> {
-  await loadForm(pool, orgId, formId);
-  return evaluateConsentCompleteness(await completenessInputFor(orgId, formId));
+export interface ConsentFormCompleteness extends ConsentCompletenessResult {
+  /**
+   * For an approved or superseded form: required elements it was approved
+   * without, because they were added to the platform's requirements after.
+   * The signed record is unchanged; a new version is held to them.
+   */
+  predatesCurrentElements: string[];
+}
+
+/** Read-only completeness assessment, against the elements a form is held to now. */
+export async function getCompleteness(orgId: number, formId: number): Promise<ConsentFormCompleteness> {
+  const form = await loadForm(pool, orgId, formId);
+  const rows = await completenessInputFor(orgId, formId);
+  const result = evaluateConsentCompleteness(rows, { expected: consentElementTemplates() });
+  if (form.status !== 'approved' && form.status !== 'superseded') return { ...result, predatesCurrentElements: [] };
+  const predates = missingTemplateElements(rows, consentElementTemplates()).filter((t) => t.required).map((t) => t.elementKey);
+  const findings = predates.length === 0 ? result.findings : [...result.findings, {
+    severity: 'info' as const,
+    message: `This form was ${form.status} before the platform held consent forms to ${predates.join(', ')}. The ${form.status} record is unchanged; a new version must include them.`,
+  }];
+  return { ...result, findings, predatesCurrentElements: predates };
 }
 
 /** Approve — gated on the deterministic completeness check. */
@@ -127,7 +192,10 @@ export async function approveConsentFormTx(client: Queryable, orgId: number, use
   if (form.status === 'approved') throw new ConsentFormError('INVALID_STATE', 'Consent form is already approved.');
   if (form.status === 'superseded') throw new ConsentFormError('INVALID_STATE', 'Consent form is superseded.');
   const elements = await client.query(`SELECT element_key, required, present, content FROM consent_form_elements WHERE consent_form_id = $1 AND organization_id = $2`, [formId, orgId]);
-  const completeness = evaluateConsentCompleteness(elements.rows.map((r) => ({ elementKey: r.element_key, required: r.required, present: r.present, content: r.content })));
+  const completeness = evaluateConsentCompleteness(
+    elements.rows.map((r) => ({ elementKey: r.element_key, required: r.required, present: r.present, content: r.content })),
+    { expected: consentElementTemplates() },
+  );
   if (!completeness.readyToApprove) {
     throw new ConsentFormError('INVALID_STATE', `Cannot approve — ${completeness.findings.filter((f) => f.severity === 'critical').map((f) => f.message).join(' ')}`);
   }
