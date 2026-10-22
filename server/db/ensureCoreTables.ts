@@ -14,6 +14,13 @@
  * POOL MANAGEMENT:
  * - When called from main app: uses the canonical pool from getPool()
  * - When run as CLI tool: creates a standalone pool (auto-detected via process.argv)
+ *
+ * VERIFY-ONLY (2026-10-22, MR-03 Stage 3, OPS-16): the production boot calls
+ * this with `{ verifyOnly: true }` and no connection string. It then runs on
+ * the runtime pool (app_service) and creates nothing: a missing schema,
+ * extension or table is reported for readiness to fail on, never created.
+ * Schema is the deploy's (install-fresh, deploy-migrate); the API no longer
+ * holds the owner credential that creating it needed.
  */
 
 import { Pool } from 'pg';
@@ -294,7 +301,16 @@ export function allowUnverifiedDbTls(): boolean {
   return process.env.DB_SSL_ALLOW_UNVERIFIED === '1';
 }
 
-export async function ensureCoreTables(connectionString?: string): Promise<EnsureTablesResult> {
+export interface EnsureCoreTablesOptions {
+  /** Report what is missing and create nothing (the production boot). */
+  verifyOnly?: boolean;
+}
+
+export async function ensureCoreTables(
+  connectionString?: string,
+  options: EnsureCoreTablesOptions = {},
+): Promise<EnsureTablesResult> {
+  const verifyOnly = options.verifyOnly === true;
   // Import cleanDatabaseUrl inline to avoid circular dependencies
   const cleanDatabaseUrl = (url: string | undefined): string | undefined => {
     if (!url) return url;
@@ -311,8 +327,13 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     return cleaned.trim();
   };
 
+  // The verify-only boot has only the runtime role's URL (APP_DATABASE_URL);
+  // the owner URL is not in that process.
   const rawUrl =
-    connectionString || process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET;
+    connectionString ||
+    process.env.DATABASE_URL ||
+    process.env.DATABASE_NEON_NEW_SECRET ||
+    process.env.APP_DATABASE_URL;
   const dbUrl = cleanDatabaseUrl(rawUrl);
   const startTime = Date.now();
   const result: EnsureTablesResult = {
@@ -390,7 +411,7 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
       }
     }
 
-    for (const missingSchema of result.missingSchemas) {
+    for (const missingSchema of verifyOnly ? [] : result.missingSchemas) {
       try {
         await pool.query(`CREATE SCHEMA IF NOT EXISTS "${missingSchema}"`);
       } catch (schemaErr: any) {
@@ -410,7 +431,9 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     `, [['vector']]);
     const installedExtensions = new Set(extensionResult.rows.map(r => r.extname));
     if (!installedExtensions.has('vector')) {
-      if (canAttemptExtensionDDL) {
+      if (verifyOnly) {
+        result.missingExtensions.push('vector');
+      } else if (canAttemptExtensionDDL) {
         try {
           await pool.query('CREATE EXTENSION IF NOT EXISTS vector');
         } catch (extensionErr: any) {
@@ -570,7 +593,7 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     };
 
     const createdTables: string[] = [];
-    for (const [tableName, createSql] of Object.entries(autoCreateTables)) {
+    for (const [tableName, createSql] of verifyOnly ? [] : Object.entries(autoCreateTables)) {
       if (!existingTables.has(tableName)) {
         try {
           await pool.query(createSql);

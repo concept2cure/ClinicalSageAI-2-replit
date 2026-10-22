@@ -1,0 +1,11 @@
+# Slice B, after: the same unit tests, then every suite around the boot modules (server/startup, server/db, server/db/bootstrap,
+# server/__tests__/security, server/config, and every test naming ensureCoreTables, the bootstrap, getDatabaseUrl, config/environment,
+# startup/services, startup/env, load-env-files or organization-default-workspace).
+ Test Files  4 passed (4)
+      Tests  47 passed (47)
+
+## the suites
+ Test Files  137 passed | 3 skipped (140)
+      Tests  1387 passed | 25 skipped (1412)
+
+## eslint on the changed files: 0 errors; warnings per file unchanged (the readiness test's new cases were moved into their own block to stay under max-lines-per-function)

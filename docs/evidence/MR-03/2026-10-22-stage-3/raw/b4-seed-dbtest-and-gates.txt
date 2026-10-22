@@ -1,0 +1,28 @@
+# Slice B: the seed, ported from the boot to the migration, on the deploy-provisioned database (tests/db/signup-launch-catalog.dbtest.ts).
+# The new case applies the migration and the workspace sweep twice, as consecutive deploys do. The one failure is the
+# communication-center tier-lock assertion, which fails at head too (raw/a5 notes the same pre-existing state).
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > server/db talks to Postgres as the non-superuser runtime role with RLS enforcing
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > client_workspaces, module_subscriptions and organization_industry_profiles are RLS-enabled and FORCED
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > the signup handler's external calls are known-off: no Stripe key, no SMTP host
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > answers 201 and creates a free-tier organisation whose signing-up user is its admin
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > grants every launch module to the new organisation — enabled, perpetual, and nothing else
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > writes the grants as the platform, not a person (enabled_by NULL; the reason lives in the audit trail)
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > seeds the organization_industry_profiles row from the signup signals
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > gives the new organisation exactly one client workspace — its own, created by the signing-up user
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > logs no launch-provisioning error for the new organisation
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: granted launch apps open and professional CMC remains tier-locked
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via /api/setup — the first-run path, under the scope its mount applies > the system scope setup runs in grants every launch module, with no failure logged
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > first-run setup: the system scope its mount applies
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the pre-auth scope (tenant 0, no role): the writer stands on the organisation's own tenant, and it does not outlive the transaction
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the seeded organisations: the migration and the workspace sweep, applied twice, leave one workspace each
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a failed provisioning is never silent > a scope RLS refuses yields every failure, and exactly one error-level summary with the remediation
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+
+## migration-set and runtime-DDL gates
+[ci:migration-set-order] OK — 422 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+[ci:migration-drop-safety] OK — 422 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+[ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new.
+[ci:runtime-ddl] ✅ no new runtime DDL.
+[ci:runtime-ddl:selftest] 17/17 cases held

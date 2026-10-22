@@ -206,13 +206,18 @@ describe('every organisation creator writes the workspace', () => {
   /**
    * The defect being fixed is precisely "an organisation creator that forgets
    * to write the workspace". Gating only the decision function leaves the next
-   * creator added — or a refactor that drops one of these three lines — free to
+   * creator added — or a refactor that drops one of these lines — free to
    * reintroduce it with the deploy green. This reads the call sites.
    */
+  // The boot seed was the third creator until 2026-10-22. The two seeded
+  // organisations are now migrations/20261022_auth_schema_and_seeded_organizations.sql
+  // (MR-03 Stage 3, OPS-16), placed immediately before the workspace sweep so
+  // they get their workspace in the same deploy: held by
+  // server/db/bootstrap/__tests__/auth-schema-migration.test.ts (the order) and
+  // tests/db/signup-launch-catalog.dbtest.ts (the rows, applied twice).
   const CREATORS = [
     { name: 'self-serve signup', file: 'server/routes/auth.ts' },
     { name: 'first-run setup', file: 'server/routes/setup.ts' },
-    { name: 'boot seed', file: 'server/db/bootstrap/seed-default-org.ts' },
   ] as const;
 
   /**
