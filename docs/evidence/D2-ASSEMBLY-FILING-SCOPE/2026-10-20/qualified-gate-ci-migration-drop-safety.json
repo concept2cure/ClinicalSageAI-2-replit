@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:05:37.294210+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-drop-safety"
+  ],
+  "elapsedSeconds": 0.33,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-qualified.json",
+  "rawOutput": "qualified-gate-ci-migration-drop-safety-output.txt.gz",
+  "outputSha256": "d834f9a5391dfa773a60f9c163d8634e60ac5f34d3831ef1c26b09c930785cb2",
+  "stdout": "[ci:migration-drop-safety] OK \u2014 417 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable \u2014 data-bearing kinds gated, 2 reviewed).\n"
+}

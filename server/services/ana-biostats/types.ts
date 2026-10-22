@@ -329,13 +329,13 @@ export interface GovernedStatisticalDocument {
   createdBy: number;
   version: number;
   status: 'draft' | 'review' | 'approved' | 'locked';
-  provenance: DocumentProvenance;
+  provenance: BiostatDocumentProvenance;
   metadata: DocumentMetadata;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface DocumentProvenance {
+export interface BiostatDocumentProvenance {
   computationInputs: StatisticalInput;
   computationResults: ComputationResult;
   judgmentResults: JudgmentResult;

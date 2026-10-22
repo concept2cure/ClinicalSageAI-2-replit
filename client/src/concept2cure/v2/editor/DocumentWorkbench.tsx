@@ -75,6 +75,10 @@ import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } f
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
 import { readSavedTemplateContext, savedTemplateFacts, type SavedTemplateContext } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
+import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
+import { captureAssemblySourceIntent, type AssemblySourceIntent } from './assemblySourceIntent';
+import { assemblySelectionKey } from './assemblySourceSelection';
+import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
@@ -107,9 +111,12 @@ import {
   matchEditorTargetSection,
   peekEditorTarget,
   setEditorTarget,
+  EDITOR_TARGET_EVENT,
+  editorTargetFromSearch,
   type EditorTarget,
 } from '../editorTarget';
-import { consumeNavParams } from '../navParams';
+import { consumeNavParams, registerSurfaceLeaveGuard } from '../navParams';
+import { ceremonyOpen } from '../ceremony';
 import {
   advertisedScreenActions,
   listedChoices,
@@ -771,10 +778,10 @@ function sourceStateLabel(s: SectionSource): {
 
 /** GET via apiRequest without throwing — honest {ok,status,body}. */
 async function readJson<T = any>(
-  path: string
+  path: string, headers?: Record<string, string>
 ): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
-    const res = await apiRequest('GET', path);
+    const res = headers ? await apiRequest('GET', path, undefined, headers) : await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
   } catch (err) {
@@ -782,6 +789,25 @@ async function readJson<T = any>(
     // what the answer was (a 403 is a refusal, not a failed read).
     return { ok: false, status: err instanceof ApiRequestError ? err.status : 0, body: null };
   }
+}
+
+function verifiedRecoveryStructure(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'object') return false;
+  const structure = value as Record<string, unknown>;
+  const strings = (items: unknown) => Array.isArray(items) && items.every(item => typeof item === 'string');
+  return strings(structure.duplicateCodes) && typeof structure.outOfOrder === 'boolean' && strings(structure.suggestedOrder);
+}
+
+function verifiedRecoverySections(body: { success?: boolean; sections?: AuthSection[]; structure?: unknown } | null, docId: string): boolean {
+  return body?.success === true && verifiedRecoveryStructure(body.structure) && Array.isArray(body.sections) && body.sections.every(row =>
+    row && typeof row.id === 'string' && row.id.trim() && row.doc_id === docId && typeof row.code === 'string'
+    && typeof row.title === 'string' && (row.content === null || typeof row.content === 'string'));
+}
+
+function usableSectionRead<T extends { success?: boolean; sections?: AuthSection[] }>(ok: boolean, body: T | null, docId: string, recovery: boolean): body is T {
+  if (!ok || !body) return false;
+  return !recovery || verifiedRecoverySections(body, docId);
 }
 
 /* ── What the caller may do to this document (GE-P-3, 2026-09-28) ──
@@ -797,6 +823,7 @@ export interface DocumentActGate {
   reason: string | null;
 }
 export interface DocumentAccess {
+  edit?: DocumentActGate | null;
   freeze: DocumentActGate | null;
   esign: DocumentActGate | null;
   /** The review signature alone (E-sign, meaning Review): a Reviewer grant
@@ -808,6 +835,7 @@ export interface DocumentAccess {
   placeIntoFiling: DocumentActGate | null;
 }
 export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
+  edit: null,
   freeze: null,
   esign: null,
   esignReview: null,
@@ -828,6 +856,7 @@ export function readDocumentAccess(raw: unknown): DocumentAccess {
   if (!raw || typeof raw !== 'object') return UNKNOWN_DOCUMENT_ACCESS;
   const a = raw as Record<string, unknown>;
   return {
+    edit: readActGate(a.edit),
     freeze: readActGate(a.freeze),
     esign: readActGate(a.esign),
     esignReview: readActGate(a.esignReview),
@@ -1120,6 +1149,8 @@ export interface DocumentWorkbenchProps {
   onStatusChange?: (status: string) => void;
   /** Re-read the list — after a create, a freeze, a filing change. */
   reloadDocs: () => Promise<void>;
+  /** Confirm that the current native host applied its verified recovery read. */
+  refreshCreationContext?: () => Promise<boolean>;
   /** The designated project (regulatory_programs UUID) or null. */
   programId: string | null;
   /** Pin the workbench to one document (the canvas). The tree lists only it
@@ -1196,6 +1227,7 @@ export function DocumentWorkbench({
   status,
   onStatusChange,
   reloadDocs,
+  refreshCreationContext,
   programId,
   pinnedDocId = null,
   embedded = null,
@@ -1450,9 +1482,10 @@ export function DocumentWorkbench({
      Peeked in the initializer (pure — safe under StrictMode double-render),
      CLEARED on mount: the channel is one-shot, so a target that isn't honoured
      now can never ambush a later, unrelated visit to the editor. */
-  const [editorTarget] = useState<EditorTarget | null>(() =>
-    consumeDeepLinks ? peekEditorTarget() : null,
-  );
+  const [editorTarget, setIncomingEditorTarget] = useState<EditorTarget | null>(() => {
+    const target = peekEditorTarget();
+    return consumeDeepLinks ? target ?? editorTargetFromSearch(window.location.search) : target?.assemblySources ? target : null;
+  });
   /** Where "Back to conversation" goes in the surface host: only what the
    *  sender named. Null means no such control is drawn. */
   const returnTo = editorTarget?.returnTo ?? null;
@@ -1475,7 +1508,7 @@ export function DocumentWorkbench({
   const navSectionCode = navHandOff.sectionCode;
   /** Unified open-on-mount target: a workbench editor-target wins (it carries
    *  the stronger claim); otherwise the navigation directive's section. */
-  const sectionOpenTarget = useMemo(
+  const sectionOpenTarget = useMemo<EditorTarget | null>(
     () =>
       editorTarget ??
       (navSectionCode
@@ -1486,6 +1519,8 @@ export function DocumentWorkbench({
             sectionLabel: null,
             programId: null,
             programTitle: null,
+            returnTo: null,
+            setAt: 0,
           }
         : null),
     [editorTarget, navSectionCode],
@@ -1500,7 +1535,7 @@ export function DocumentWorkbench({
    *  DIFFERENT document must neither consume it nor act on it. */
   const targetSectionRef = useRef<{ docId: string; sectionId: string } | null>(null);
   useEffect(() => {
-    if (consumeDeepLinks) clearEditorTarget();
+    if (consumeDeepLinks || peekEditorTarget()?.assemblySources) clearEditorTarget();
   }, [consumeDeepLinks]);
 
   const activeDoc = docs.find(d => d.id === activeDocId) ?? null;
@@ -1515,6 +1550,8 @@ export function DocumentWorkbench({
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
+  const editRefusal = actRefusal(docAccess.edit ?? null);
+  const contentReadOnly = docSealed || !!editRefusal;
   const dirty = activeSection != null && editorDirty && !docSealed;
   const docScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -1537,27 +1574,52 @@ export function DocumentWorkbench({
      same defect as losing the text, pointed the other way. So the navigation is
      HELD and the author decides: save (deliberate, attributable), leave it on
      this device, or stay. */
-  type LeaveTarget =
-    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string }
-    | { kind: 'document'; id: string; sectionId?: string; module?: string }
-    | { kind: 'external-document'; id: string; module?: string }
-    | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
-    | { kind: 'view'; mode: 'section' | 'document'; module?: never }
-    | { kind: 'conversation'; prompt: string; module?: never };
+  type LeaveTarget = WorkbenchLeaveTarget;
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
   const pendingLeaveRef = useRef(pendingLeave);
   pendingLeaveRef.current = pendingLeave;
   const [leaving, setLeaving] = useState(false);
   const navigationSequence = useRef(0);
+  const authoringBusyGuardRef = useRef<() => { ok: false; reason: string } | null>(() => null);
+  const assemblyLeaveRefusalRef = useRef<() => string | null>(() => null);
+  const linkedTargetRefusal = useCallback(() => ceremonyOpen()
+    ? 'Finish or cancel the open governed form, then retry the linked document.'
+    : authoringBusyGuardRef.current()?.reason ?? null, []);
+  const refuseStructuralLeave = useCallback((target: LeaveTarget): boolean => {
+    const reason = assemblyLeaveRefusalRef.current();
+    if (!reason) return false;
+    if (target.kind === 'program') target.onCancel();
+    fireToast(reason, 'error');
+    return true;
+  }, [fireToast]);
+  const assemblyReceiver = useRef<{ token: object; target: EditorTarget; intent: AssemblySourceIntent | null } | null>(null);
+  const receiverInitialized = useRef(false);
+  const receiverAlive = useRef(true);
+  const outgoingAssembly = useRef(false);
+  useEffect(() => { receiverAlive.current = true; return () => { receiverAlive.current = false; }; }, []);
+  const captureSourceTarget = useCallback((target: EditorTarget) => {
+    const token = {}; const intent = captureAssemblySourceIntent(target,
+      () => receiverAlive.current && assemblyReceiver.current?.token === token);
+    assemblyReceiver.current = { token, target, intent };
+  }, []);
+  if (!receiverInitialized.current) {
+    receiverInitialized.current = true;
+    if (editorTarget?.assemblySources) captureSourceTarget(editorTarget);
+  }
+  const [acceptedAssemblyIntent, setAcceptedAssemblyIntent] = useState<AssemblySourceIntent | null>(null);
+  const admitAssemblyNavigation = useCallback((intent: AssemblySourceIntent, adopt = true): boolean => {
+    if (!intent.current() || intent.programId !== programId || programSwitchHeld || ceremonyOpen()) {
+      setTargetNotice('The source handoff context changed or a governed form is open. Finish that work, then select these sources again.'); return false;
+    }
+    if (adopt) setAcceptedAssemblyIntent(intent); return true;
+  }, [programId, programSwitchHeld]);
   const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
   const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
   const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
 
   const applyNav = useCallback((target: LeaveTarget, savedVersion?: SavedSectionVersion | null) => {
-    if (target.kind === 'conversation' && programSwitchHeld) {
-      fireToast('Finish the project switch before opening a conversation.', 'error');
-      return;
-    }
+    if (!admitWorkbenchNavigation(target, programSwitchHeld,
+      () => fireToast('Finish the project switch before opening a conversation.', 'error'), admitAssemblyNavigation)) return;
     // The editor's dirty flag belongs to the mount that is going away; clear
     // it first so the guard cannot re-fire against the section just left.
     setEditorDirty(false);
@@ -1569,37 +1631,44 @@ export function DocumentWorkbench({
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
     if (target.kind === 'view') setViewMode(target.mode);
-    else if (target.kind === 'program') target.onContinue();
+    else if (target.kind === 'program' || target.kind === 'host-back') target.onContinue();
     else if (target.kind === 'conversation') {
       prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
     }
     else if (target.kind === 'external-document') {
-      setEditorTarget({ docType: null, docId: target.id, programId });
+      outgoingAssembly.current = true;
+      try { setEditorTarget({ docType: null, docId: target.id, programId,
+        ...(target.assemblyIntent ? { assemblySources: { version: 1 as const, sources: target.assemblyIntent.sources } } : {}) }); }
+      finally { outgoingAssembly.current = false; }
       onNav('document-authoring');
     } else if (target.kind === 'section') {
       if (target.mode) setViewMode(target.mode);
       setActiveSectionId(target.id);
+      setAiDraftOpen(open => target.draftReview === true || open);
     }
     else {
       if (target.sectionId) targetSectionRef.current = { docId: target.id, sectionId: target.sectionId };
       if (target.id === activeDocId && target.sectionId) void sectionLoaderRef.current?.(target.id);
       else setActiveDocId(target.id);
     }
-  }, [programId, onNav, activeDocId, programSwitchHeld, fireToast]);
+  }, [programId, onNav, activeDocId, programSwitchHeld, fireToast, admitAssemblyNavigation]);
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
     (target: LeaveTarget): boolean => {
+      if (refuseStructuralLeave(target)) return false;
+      if (!workbenchAssemblyIntent(target)) assemblyReceiver.current = null;
       if (target.kind === 'conversation' && programSwitchHeld) {
         fireToast('Finish the project switch before opening a conversation.', 'error');
         return false;
       }
       navigationSequence.current += 1;
-      const alreadyThere =
-        target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
-          ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
-          && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
-      if (alreadyThere) return true;
+      const alreadyThere = workbenchAlreadyThere(target, { viewMode, sectionId: activeSectionId, docId: activeDocId, dirty });
+      if (alreadyThere) {
+        if (target.kind === 'section' && target.draftReview) setAiDraftOpen(true);
+        if (target.kind === 'document' && target.assemblyIntent) return admitAssemblyNavigation(target.assemblyIntent);
+        return true;
+      }
       if (!dirty) {
         applyNav(target);
         return true;
@@ -1609,7 +1678,7 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode, refuseStructuralLeave, admitAssemblyNavigation]
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
@@ -1717,13 +1786,13 @@ export function DocumentWorkbench({
   );
   const insertAnaText = useCallback(
     (text: string, author: SuggestionAuthor, record: AnaTurnRecordStatus | undefined, unfinished = false): boolean => {
-      if (editorInsertRefusal(docSealed, viewMode, activeSection?.code ?? 'the section')) return false;
+      if (editRefusal || editorInsertRefusal(docSealed, viewMode, activeSection?.code ?? 'the section')) return false;
       if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record, unfinished)) return false;
       const ok = editorRef.current?.insertSuggestion(text, author) ?? false;
       if (ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
       return ok;
     },
-    [docSealed, viewMode, activeSection?.code],
+    [docSealed, editRefusal, viewMode, activeSection?.code],
   );
   const admitsAnaSource = useCallback((id: string | null) => id !== null && admittedAnaSources.current.has(id), []);
   // Evidence/context reads can settle while a version hash is computing.
@@ -1764,8 +1833,8 @@ export function DocumentWorkbench({
       sectionCode: activeSection.code,
       sectionTitle: activeSection.title,
       viewMode,
-      editable: !editorInsertRefusal(docSealed, viewMode, activeSection.code),
-      insertRefusal: editorInsertRefusal(docSealed, viewMode, activeSection.code),
+      editable: !editRefusal && !editorInsertRefusal(docSealed, viewMode, activeSection.code),
+      insertRefusal: editRefusal || editorInsertRefusal(docSealed, viewMode, activeSection.code),
       get authoringContext() { return authoringContextRef.current; },
       get moduleContext() { return editorModuleContextRef.current; },
       insert: (text, author, record, unfinished) => insertAnaText(text, author, record, unfinished),
@@ -1783,7 +1852,7 @@ export function DocumentWorkbench({
         if (refusedModel) return refusedModel;
         if (!live) return { ok: false, reason: 'stale' };
         if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
-        if (docSealed || viewMode !== 'section') return { ok: false, reason: 'not-editable' };
+        if (contentReadOnly || viewMode !== 'section') return { ok: false, reason: 'not-editable' };
         const refused = await baseRefusal(proposal, loaded);
         if (refused) return { ok: false, reason: refused };
         if (!live) return { ok: false, reason: 'stale' };
@@ -1801,7 +1870,7 @@ export function DocumentWorkbench({
       live = false;
       onEditorBridge?.(null);
     };
-  }, [onEditorBridge, activeDocId, activeSection, docSealed, viewMode, insertAnaText, anaProposeRefusal]);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, contentReadOnly, editRefusal, viewMode, insertAnaText, anaProposeRefusal]);
 
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
@@ -1961,19 +2030,27 @@ export function DocumentWorkbench({
   const [structure, setStructure] = useState<SectionStructure | null>(null);
   const sectionsDocRef = useRef<string | null>(null);
   const sectionsReadSequence = useRef(0);
-  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void) => {
+  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false,
+    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {
+    if (recoveryOwner?.current() === false) throw new Error('The section recovery owner changed.');
     const scope = creationScopeRef.current;
     const sequence = ++sectionsReadSequence.current;
     sectionsDocRef.current = docId;
+    const currentRead = () => recoveryOwner?.current() !== false && aliveRef.current
+      && creationScopeRef.current === scope && sectionsDocRef.current === docId && sectionsReadSequence.current === sequence;
     setSectionsState('loading');
-    const { ok, body } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure }>(
-      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
+    const { ok, body } = await readJson<{ success?: boolean; sections?: AuthSection[]; structure?: SectionStructure }>(
+      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`, recoveryOwner?.headers
     );
-    if (!aliveRef.current || creationScopeRef.current !== scope || sectionsDocRef.current !== docId || sectionsReadSequence.current !== sequence) return;
-    if (!ok || !body) {
+    if (!currentRead()) {
+      if (recovery) throw new Error('The section recovery context changed.');
+      return;
+    }
+    if (!usableSectionRead(ok, body, docId, recovery)) {
       setSectionsState('error');
       setSections([]);
       setStructure(null);
+      if (recovery) throw new Error('The section recovery read could not be verified.');
       return;
     }
     const list = Array.isArray(body.sections) ? body.sections : [];
@@ -1990,9 +2067,10 @@ export function DocumentWorkbench({
     // by a load of the document it names: a stale in-flight load of another
     // document must not swallow the target.
     const target = targetSectionRef.current;
+    const targetForDocument = target?.docId === docId;
     const landTarget =
-      target != null && target.docId === docId && list.some(s => s.id === target.sectionId);
-    if (target != null && target.docId === docId) targetSectionRef.current = null;
+      targetForDocument && list.some(s => s.id === target.sectionId);
+    if (targetForDocument) targetSectionRef.current = null;
     setActiveSectionId(cur => {
       if (landTarget) return target!.sectionId;
       return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
@@ -2012,16 +2090,74 @@ export function DocumentWorkbench({
   }, [activeDocId, programSwitchHeld, loadSections]);
 
   const checkCreation = useCallback(async (kind: 'document' | 'section') => {
-    if (programSwitchHeld || openProgramRef.current !== programId) return;
-    if (kind === 'section') {
-      if (activeDocId) await loadSections(activeDocId);
-    } else if (pinnedDocId) {
-      requestLeaveRef.current({ kind: 'external-document', id: pinnedDocId });
-    } else {
-      onStatusChange?.('all');
-      await reloadDocs();
-    }
-  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, reloadDocs]);
+    if (programSwitchHeld || openProgramRef.current !== programId) return false;
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
+    try {
+      if (kind === 'section') {
+        if (!activeDocId) return false;
+        await loadSections(activeDocId, undefined, true);
+      } else if (await refreshCreationContext?.() !== true) return false;
+      if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return false;
+      if (kind === 'document' && !pinnedDocId) onStatusChange?.('all');
+      return true;
+    } catch { return false; }
+  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, refreshCreationContext]);
+
+  const assemblyHostScope = creationScopeRef.current;
+  const assembly = useAuthoringAssemblyBuild({
+    docId: activeDocId,
+    programId,
+    docSealed,
+    editRefusal,
+    savedSourceReuseRefusal: aiDraftOpen ? 'Close the draft review before reusing saved sources.' : null,
+    editorDirty: dirty,
+    isCurrent: () => aliveRef.current && creationScopeRef.current === assemblyHostScope && !programSwitchHeld,
+    onStructureBuilt: async data => {
+      if (data.docId !== activeDocId || data.programId !== programId
+        || creationScopeRef.current !== assemblyHostScope || !aliveRef.current) return;
+      setExportsEpoch(epoch => epoch + 1);
+      await loadSections(data.docId);
+      if (creationScopeRef.current === assemblyHostScope && aliveRef.current) void reloadDocs();
+    },
+    onRecoveryChecked: async (ownerCurrent, headers) => {
+      const scope = creationScopeRef.current;
+      const sequence = navigationSequence.current;
+      const current = () => ownerCurrent() && aliveRef.current && creationScopeRef.current === scope
+        && creationScopeRef.current === assemblyHostScope && navigationSequence.current === sequence
+        && !programSwitchHeld && openProgramRef.current === programId;
+      if (!activeDocId || !current()) return false;
+      try {
+        await loadSections(activeDocId, undefined, true, { current, headers });
+        return current();
+      } catch { return false; }
+    },
+    onReviewSection: sectionId => {
+      const refusal = linkedTargetRefusal();
+      if (refusal) { fireToast(refusal, 'error'); return; }
+      requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true });
+    },
+  });
+  assemblyLeaveRefusalRef.current = assembly.leaveRefusal;
+
+  const markAssemblyAccepted = assembly.markAccepted;
+  const assemblySourceScope = assemblySelectionKey(assembly.sourceSelection);
+  const previousAssemblySourceScope = useRef(assemblySourceScope);
+  useEffect(() => {
+    if (previousAssemblySourceScope.current === assemblySourceScope) return;
+    previousAssemblySourceScope.current = assemblySourceScope;
+    setAiDraftOpen(false);
+  }, [assemblySourceScope]);
+  const selectedSourceReviewMissing = !!assembly.sourceSelection && (!activeSectionId || !assembly.reviewSessions[activeSectionId]?.sources);
+  const adoptAssemblySources = assembly.adoptSources;
+  useEffect(() => {
+    const intent = acceptedAssemblyIntent;
+    if (!intent || activeDocId !== intent.docId || programId !== intent.programId) return;
+    if (intent.current() && !programSwitchHeld && !ceremonyOpen()) adoptAssemblySources(intent.sources);
+    setAcceptedAssemblyIntent(null);
+  }, [acceptedAssemblyIntent, activeDocId, programId, programSwitchHeld, adoptAssemblySources]);
+  const draftEditorScope = useRef({ docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty });
+  draftEditorScope.current = { docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty };
 
   useEffect(() => {
     if (!activeDocId) {
@@ -2041,7 +2177,10 @@ export function DocumentWorkbench({
     activeSectionId, docPane: () => docScrollRef.current,
   });
   /* F22b: a market's editing copy, created bound to its document and opened. */
-  const marketCopy = useCreateMarketCopy({ programId, fireToast, openDocument: openPulledDocument });
+  const treeTitleRef = useRef<HTMLDivElement>(null);
+  const marketCopy = useCreateMarketCopy({
+    programId, fireToast, openDocument: openPulledDocument, focusOpened: () => treeTitleRef.current?.focus(),
+  });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -2066,11 +2205,39 @@ export function DocumentWorkbench({
      a dep-change cleanup would cancel the in-flight search the moment the
      state write re-ran the effect. `aliveRef` guards only real unmount. */
   const targetAttemptedRef = useRef(false);
+  useEffect(() => {
+    const handoff = () => {
+      if (outgoingAssembly.current) return;
+      const target = peekEditorTarget();
+      if (!consumeDeepLinks && !target?.assemblySources) return;
+      clearEditorTarget();
+      if (!target) return;
+      const refusal = linkedTargetRefusal();
+      if (refusal) {
+        setTargetNotice(refusal);
+        return;
+      }
+      if (target.assemblySources) captureSourceTarget(target);
+      else assemblyReceiver.current = null;
+      targetAttemptedRef.current = false;
+      navigationSequence.current += 1;
+      setIncomingEditorTarget(target);
+    };
+    window.addEventListener(EDITOR_TARGET_EVENT, handoff);
+    return () => window.removeEventListener(EDITOR_TARGET_EVENT, handoff);
+  }, [consumeDeepLinks, linkedTargetRefusal, captureSourceTarget]);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
+  const linkedReadStillCurrent = useCallback((scope: { key: string }, sequence: number): boolean => {
+    if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return false;
+    const refusal = linkedTargetRefusal();
+    if (refusal) setTargetNotice(refusal);
+    return !refusal;
+  }, [linkedTargetRefusal]);
   const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
+    const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     const reply = await readJson<{ sections?: AuthSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
-    if (!aliveRef.current || openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
+    if (openProgramRef.current !== programId || !linkedReadStillCurrent(scope, sequence)) return;
     const matches = (reply.body?.sections ?? []).filter(s => s.code.toLowerCase() === code.toLowerCase());
     if (!reply.ok || matches.length !== 1) {
       setTargetNotice(`The linked document's section ${code} could not be resolved uniquely. Nothing else was opened.`);
@@ -2079,16 +2246,26 @@ export function DocumentWorkbench({
     setTargetNotice(null);
     requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
-  }, [programId]);
+  }, [programId, linkedReadStillCurrent]);
+  const rejectLinkedTarget = useCallback((target: EditorTarget): boolean => {
+    const refusal = linkedTargetRefusal();
+    if (refusal) {
+      targetAttemptedRef.current = true;
+      setTargetNotice(refusal);
+      return true;
+    }
+    if (target.programId && target.programId !== projectIdForOutline) {
+      targetAttemptedRef.current = true;
+      setTargetNotice(`Couldn’t open the linked document — it belongs to ${target.programTitle ?? 'a different program'}. Open that program and retry.`);
+      return true;
+    }
+    return false;
+  }, [linkedTargetRefusal, projectIdForOutline]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
-    if (!sectionOpenTarget || docsState === 'loading') return;
+    if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
     const t = sectionOpenTarget;
-    if (t.programId && t.programId !== projectIdForOutline) {
-      targetAttemptedRef.current = true;
-      setTargetNotice(`Couldn’t open the linked document — it belongs to ${t.programTitle ?? 'a different program'}. Open that program and retry.`);
-      return;
-    }
+    if (rejectLinkedTarget(t)) return;
     if (docsState === 'error') {
       /* A failed docs read must NOT spend the one attempt: the ref stays
          unlatched, so when the list does load (a retry, a status-filter
@@ -2112,6 +2289,13 @@ export function DocumentWorkbench({
        default document before the switch landed). */
     if (t.docId) {
       targetAttemptedRef.current = true;
+      const intent = t.assemblySources ? assemblyReceiver.current?.target === t ? assemblyReceiver.current.intent : null : null;
+      if (t.assemblySources && (!intent || !intent.current())) {
+        setTargetNotice('The selected-source handoff is no longer current. Select those sources again; no document inherited them.'); return;
+      }
+      if (intent && pinnedDocId && t.docId !== pinnedDocId) {
+        requestLeave({ kind: 'external-document', id: t.docId, assemblyIntent: intent }); return;
+      }
       const linked = docs.find((d) => d.id === t.docId);
       if (linked) {
         if (t.sectionCode) {
@@ -2124,7 +2308,7 @@ export function DocumentWorkbench({
            switch unmounts the section-keyed canvas, and if the author typed
            anything while this resolution was pending, the guard dialog gets
            to hold the navigation (see requestLeave above). */
-        const opened = requestLeave({ kind: 'document', id: linked.id });
+        const opened = requestLeave({ kind: 'document', id: linked.id, ...(intent ? { assemblyIntent: intent } : {}) });
         setTreeScrollNonce(n => n + 1);
         /* "Opened …" used to fire regardless — including when the guard held
            the navigation and the author then cancelled it. */
@@ -2166,6 +2350,8 @@ export function DocumentWorkbench({
       );
       return;
     }
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
     void (async () => {
       // The docs list is program-scoped (or the org's current filter); a
       // program's dossier is one or a few documents, so the search is bounded
@@ -2174,7 +2360,7 @@ export function DocumentWorkbench({
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
           `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`
         );
-        if (!aliveRef.current) return;
+        if (!linkedReadStillCurrent(scope, sequence)) return;
         if (!ok || !body) continue;
         const match = matchEditorTargetSection(
           Array.isArray(body.sections) ? body.sections : [],
@@ -2185,21 +2371,20 @@ export function DocumentWorkbench({
           // the section is selected only once its list — and therefore its
           // content — is in state. Selecting directly here could sync an empty
           // buffer over a section that has text.
-          targetSectionRef.current = { docId: d.id, sectionId: match.id };
-          if (d.id === activeDocId) void loadSections(d.id);
-          else setActiveDocId(d.id);
+          const opened = requestLeaveRef.current({ kind: 'document', id: d.id, sectionId: match.id });
           // A docs-error notice from before the list loaded must not outlive
           // the successful open.
           setTargetNotice(null);
           setTreeScrollNonce(n => n + 1);
-          fireToast(
+          fireToast(opened ?
             `Opened ${match.code} · ${match.title}` +
               (family ? ` — from the ${family} workspace.` : ' — as requested in chat.')
+              : `${match.code} · ${match.title} will open once you decide about the unsaved work here.`
           );
           return;
         }
       }
-      if (!aliveRef.current) return;
+      if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return;
       setTargetNotice(
         `Couldn’t find ${wanted} in the ${family ? `${family} ` : ''}documents in scope ` +
           `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
@@ -2220,6 +2405,10 @@ export function DocumentWorkbench({
     fireToast,
     programId,
     openExactDocumentSection,
+    programSwitchHeld,
+    rejectLinkedTarget,
+    linkedReadStillCurrent,
+    pinnedDocId,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -2279,6 +2468,8 @@ export function DocumentWorkbench({
      AnA-driven switch would discard or race the person's work. Specific per
      flag, because "busy" tells the subscriber nothing they can act on. */
   const authoringGuard = (): { ok: false; reason: string } | null => {
+    const structuralRefusal = assemblyLeaveRefusalRef.current();
+    if (structuralRefusal) return { ok: false, reason: structuralRefusal };
     if (pendingLeave)
       return { ok: false, reason: 'An unsaved-changes dialog is open — resolve it first.' };
     if (leaving)
@@ -2290,6 +2481,7 @@ export function DocumentWorkbench({
       return { ok: false, reason: 'A comment is being anchored — post or cancel it first.' };
     return null;
   };
+  authoringBusyGuardRef.current = authoringGuard;
   /* Separate from the busy flags because it needs the honest specifics: AnA
      never discards typing, and the refusal names the section holding it. */
   const dirtyGuard = (): { ok: false; reason: string } | null => {
@@ -2297,6 +2489,11 @@ export function DocumentWorkbench({
     const where = activeSection?.code ? `§${activeSection.code}` : 'the open section';
     return { ok: false, reason: `There are unsaved edits in ${where} — save or leave them first.` };
   };
+  // The persistent task drawer shares these same refusal reasons. Keep the
+  // current render's guard in a ref so a click cannot observe an older draft.
+  const surfaceLeaveGuardRef = useRef<() => string | null>(() => null);
+  surfaceLeaveGuardRef.current = () => (authoringGuard() ?? dirtyGuard())?.reason ?? null;
+  useEffect(() => registerSurfaceLeaveGuard(() => surfaceLeaveGuardRef.current()), []);
   useSurfaceActionHandlers(surfaceActionId, {
     'authoring.open-document': params => {
       const guarded = authoringGuard() ?? dirtyGuard();
@@ -3019,7 +3216,7 @@ export function DocumentWorkbench({
   const imageContextRef = useRef('');
   imageContextRef.current = programSwitchHeld ? 'scope-switch-held' : `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
   const uploadSectionImage = useCallback(async (file: File) => {
-    if (!activeDocId || !activeSectionId || docSealed || programSwitchHeld) throw new Error('Open an editable document in the current project before uploading an image.');
+    if (!activeDocId || !activeSectionId || contentReadOnly || programSwitchHeld) throw new Error(editRefusal || 'Open an editable document in the current project before uploading an image.');
     const context = `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
     const sequence = navigationSequence.current;
     const form = new FormData();
@@ -3046,7 +3243,7 @@ export function DocumentWorkbench({
       throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
-  }, [activeDocId, activeSectionId, docSealed, programSwitchHeld, contentEpoch, programId]);
+  }, [activeDocId, activeSectionId, contentReadOnly, editRefusal, programSwitchHeld, contentEpoch, programId]);
 
   /* ── Track changes: the store's own column drives the suggestion engine ──
      The server column is flipped FIRST; the editor enables suggestion capture
@@ -3551,11 +3748,18 @@ export function DocumentWorkbench({
      that are the whole point of accepting this way rather than saving. */
   const onAiDraftAccepted = useCallback(
     (section: Record<string, unknown>, attribution: AcceptedAttribution | null) => {
-      if (!activeSectionId) return;
-      const content = typeof section.content === 'string' ? section.content : '';
+      const current = draftEditorScope.current;
+      if (!activeSectionId || !aliveRef.current || current.scope !== assemblyHostScope
+        || current.docId !== activeDocId || current.sectionId !== activeSectionId || current.dirty) return;
+      if (section.id !== activeSectionId || section.doc_id !== activeDocId || typeof section.content !== 'string') {
+        fireToast('The saved draft did not confirm this exact document and section. Check the saved record before continuing.', 'error');
+        return;
+      }
+      const content = section.content;
       setSections(ss =>
-        ss.map(x => (x.id === activeSectionId ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
+        ss.map(x => (x.id === section.id ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
       );
+      markAssemblyAccepted(activeSectionId);
       setContentEpoch(e => e + 1);
       setEditorDirty(false);
       setExportsEpoch(e => e + 1);
@@ -3574,7 +3778,7 @@ export function DocumentWorkbench({
       void loadSources(activeSectionId);
       if (activeDocId) void loadAudit(activeDocId);
     },
-    [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast],
   );
 
   /** Post one reviewer action — one decision, or a whole accept/reject-all.
@@ -3683,7 +3887,10 @@ export function DocumentWorkbench({
       {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
-          <div className="ed-tree-t">
+          {/* Focusable by script only: after a market's editing copy is created
+              and opened, focus lands here, on the opened document's name
+              (accessibility review, 2026-10-15; FilingMarkets.tsx). */}
+          <div className="ed-tree-t" tabIndex={-1} ref={treeTitleRef}>
             {unboundDraft ? activeDoc?.title : filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
           </div>
           <div className="ed-tree-m">
@@ -4013,8 +4220,10 @@ export function DocumentWorkbench({
                 type="button"
                 className="ed-back"
                 onClick={() => {
-                  if (embedded) embedded.onBack();
-                  else if (returnTo && !programSwitchHeld) openConversationWithPrompt(null, onNav, returnTo.conversationId);
+                  const refusal = linkedTargetRefusal();
+                  if (refusal) { fireToast(refusal, 'error'); return; }
+                  if (embedded) requestLeave({ kind: 'host-back', label: embedded.backLabel ?? 'the previous workspace', onContinue: embedded.onBack });
+                  else if (returnTo && !programSwitchHeld) requestLeave({ kind: 'host-back', label: 'the AnA conversation', onContinue: () => openConversationWithPrompt(null, onNav, returnTo.conversationId) });
                 }}
                 data-testid="workbench-back"
               >
@@ -4089,9 +4298,9 @@ export function DocumentWorkbench({
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
               aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
-              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
+              disabled={!dirty || saving || contentReadOnly || changeReason.trim().length < 8}
               title={
-                docSealed
+                editRefusal ? editRefusal : docSealed
                   ? 'This document is frozen — its content cannot be edited.'
                   : !activeSection
                     ? 'Open a section to edit and save it.'
@@ -4104,7 +4313,7 @@ export function DocumentWorkbench({
               {/* "Saved" is a claim about a section's save state. It fell through
                   to that word whenever nothing was dirty — including with no
                   document or section open ("eCTD › No document" … "Saved"). */}
-              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
+              {I.check} {saving ? 'Saving…' : editRefusal ? 'Read only' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
             </button>
             {activeDoc && (
               <AuthoringFilingBar
@@ -4366,9 +4575,9 @@ export function DocumentWorkbench({
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => askAna(draftPrompt)}
-              disabled={docSealed}
+              disabled={contentReadOnly}
               title={
-                docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined
+                editRefusal || (docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined)
               }
             >
               {I.sparkles} Draft with AnA
@@ -4396,11 +4605,13 @@ export function DocumentWorkbench({
                 setAiDraftOpen(o => !o);
               }}
               data-active={(aiDraftOpen && viewMode === 'section') || undefined}
-              disabled={!activeSection || docSealed}
+              disabled={!activeSection || contentReadOnly || selectedSourceReviewMissing}
               data-testid="ai-draft-open"
               title={
-                docSealed
+                editRefusal ? editRefusal : docSealed
                   ? 'This document is frozen — its content cannot be edited.'
+                  : selectedSourceReviewMissing
+                    ? 'Build a candidate from these selected sources first, then review it in this editor.'
                   : 'Draft this section from Data Room evidence and accept it with recorded citations.'
               }
             >
@@ -4444,6 +4655,7 @@ export function DocumentWorkbench({
 
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
+            <AuthoringAssemblyBuild controller={assembly} />
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a
@@ -4470,7 +4682,7 @@ export function DocumentWorkbench({
                       : sectionsState === 'error'
                         ? 'sections not read'
                         : 'reading sections…'}
-                    {docSealed ? ' · frozen' : ''}
+                    {editRefusal ? ' · read only' : docSealed ? ' · frozen' : ''}
                   </div>
                 </div>
                 {sectionsState === 'error' ? (
@@ -4613,7 +4825,7 @@ export function DocumentWorkbench({
                       <h1 className="ed-mast-t" style={{ display: 'inline' }}>
                         {activeSection.title}
                       </h1>
-                      {!docSealed && (
+                      {!contentReadOnly && (
                         <button
                           className="nda-open"
                           style={{ marginLeft: 8, verticalAlign: 'middle' }}
@@ -4624,7 +4836,7 @@ export function DocumentWorkbench({
                           {I.penLine} Rename
                         </button>
                       )}
-                      {!docSealed &&
+                      {!contentReadOnly &&
                         sections.length > 1 &&
                         (() => {
                           const idx = sections.findIndex(s => s.id === activeSection.id);
@@ -4914,6 +5126,7 @@ export function DocumentWorkbench({
                     )}
                   </div>
                 )}
+                {editRefusal && <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>{I.lock} {editRefusal}</div>}
                 {docSealed && (
                   <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>
                     {I.lock}{' '}
@@ -4932,14 +5145,17 @@ export function DocumentWorkbench({
                     section so switching sections rebuilds it empty — the
                     panel's own effect discards the draft, and the key makes
                     that structural rather than dependent on effect ordering. */}
-                {aiDraftOpen && !docSealed && (
+                {aiDraftOpen && !contentReadOnly && (
                   <AuthoringAiDraft
                     key={activeSection.id}
                     sectionId={activeSection.id}
+                    docId={activeDocId ?? undefined}
+                    programId={programId}
                     sectionCode={activeSection.code}
                     sectionTitle={activeSection.title}
                     docSealed={docSealed}
                     editorDirty={dirty}
+                    reviewSession={assembly.reviewSessions[activeSection.id]}
                     onAccepted={onAiDraftAccepted}
                     onClose={() => setAiDraftOpen(false)}
                     fireToast={fireToast}
@@ -5004,7 +5220,7 @@ export function DocumentWorkbench({
                     autosaveMs={null}
                     showSaveButton={false}
                     onDirtyChange={setEditorDirty}
-                    readOnly={docSealed}
+                    readOnly={contentReadOnly}
                     placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
                     storageKey={activeSection.id}
                     ariaLabel={`Section ${activeSection.code} — ${activeSection.title}`}
@@ -5213,8 +5429,8 @@ export function DocumentWorkbench({
                     className="nda-open"
                     style={{ marginLeft: 'auto' }}
                     onClick={() => revert(r.id)}
-                    disabled={docSealed}
-                    title={docSealed ? 'This document is frozen — its content cannot be reverted.' : undefined}
+                    disabled={contentReadOnly}
+                    title={editRefusal || (docSealed ? 'This document is frozen — its content cannot be reverted.' : undefined)}
                   >
                     {I.rotateCcw} Revert
                   </button>
@@ -5684,7 +5900,7 @@ export function DocumentWorkbench({
           <ProjectFilesPanel
             programId={programId}
             programName={programName(program)}
-            sectionOpen={activeSection != null && !docSealed}
+            sectionOpen={activeSection != null && !contentReadOnly}
             sectionCode={activeSection?.code ?? null}
             projectSources={projectSources.filter(sourceCitationEligible)}
             onCite={(sourceId) => editorRef.current?.insertCitation(sourceId) ?? false}
@@ -6040,8 +6256,9 @@ export function DocumentWorkbench({
         </aside>
       )}
 
-      {fileToVaultOpen && activeDoc && (
+      {activeDoc && (
         <FileToVaultDialog
+          open={fileToVaultOpen}
           docId={activeDoc.id}
           docTitle={activeDoc.title}
           docStatus={activeDoc.status}
@@ -6088,7 +6305,7 @@ export function DocumentWorkbench({
           sectionTitle={activeSection.title}
           destination={
             pendingLeave.kind === 'view' ? `${pendingLeave.mode === 'document' ? 'Document' : 'Section'} view`
-              : pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
+              : pendingLeave.kind === 'program' || pendingLeave.kind === 'host-back' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }

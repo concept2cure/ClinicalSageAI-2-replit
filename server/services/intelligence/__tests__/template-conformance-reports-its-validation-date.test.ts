@@ -35,7 +35,9 @@ function stores(validatedAt: Date | null) {
   });
 }
 
-const DRAFT = { organizationId: 42, submissionType: 'NDA', targetAgency: 'FDA', presentSections: ['1.1', '1.2'] };
+// The draft names its artifact: a validation is tied to a draft only through a
+// project or an artifact (2026-10-15; with neither, another draft's was read).
+const DRAFT = { organizationId: 42, artifactId: 'artifact-7', submissionType: 'NDA', targetAgency: 'FDA', presentSections: ['1.1', '1.2'] };
 
 beforeEach(() => {
   _invalidateModelCacheForTests();

@@ -17,6 +17,10 @@ import { readOnlyToolRefusal } from './read-only-turn.js';
 
 import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
+import { ProgramReadAccessError } from '../c2c/current-program-access';
+import { SchedulePreservationConflict } from '../projects/schedule-of-events/preservation';
+import type { ScheduleExecutionContext } from '../projects/schedule-of-events';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { critiqueSavedDocument } from './saved-document-critique';
 import { frameToolOutput } from './tool-output-frame.js';
@@ -187,7 +191,7 @@ import {
   runAgenticToolLoop,
   resolveMaxRounds,
   resolveRoundExtension,
-  capToolResultForModel,
+  assertToolResultBodyBudget,
   budgetToolResultsForModel,
   buildAdaptationNote,
   mapWithConcurrency,
@@ -241,6 +245,7 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
+import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
 import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -859,6 +864,9 @@ registerToolHandler('project_knowledge_search', async (input, rawCtx) => {
         },
         query,
         confidence: confidenceFromScore(d.finalScore),
+        // 2026-10-15: only the bucket was passed, so persisted provenance
+        // recorded retrievalScore null for every scored passage.
+        retrievalScore: typeof d.finalScore === 'number' ? d.finalScore : null,
       });
     });
     return JSON.stringify({
@@ -2658,13 +2666,42 @@ registerToolHandler('scan_project_risks', async (input, ctx) => {
 // kept current with amendments/health reviews, and re-baselined via goals.
 // Milestones reuse project_workflow_stages; proactive tasks reuse project_tasks;
 // alerts reuse the notification service. All operations are org+project scoped.
-function scheduleToolContext(ctx?: ToolContext): { organizationId: number; projectId: number } | null {
-  const organizationId = ctx?.organizationId ? Number(ctx.organizationId) : null;
-  const projectId = ctx?.projectId ? Number(ctx.projectId) : null;
-  if (!organizationId || Number.isNaN(organizationId) || !projectId || Number.isNaN(projectId)) {
-    return null;
+function scheduleIdentity(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+}
+
+async function scheduleToolContext(ctx?: ToolContext): Promise<{
+  organizationId: number; projectId: number; execution: ScheduleExecutionContext;
+} | null> {
+  // Capture server-authored primitives before asynchronous admission. A prompt
+  // field or mutable conversation context must not replace the admitted actor.
+  const organizationId = ctx?.organizationId;
+  const actorUserId = ctx?.userId;
+  const executor = ctx?.sqlClient;
+  const projectId = ctx?.projectId;
+  const projectRef = ctx?.projectRef;
+  if (!scheduleIdentity(organizationId) || !scheduleIdentity(actorUserId) ||
+      !executor || typeof executor.query !== 'function') return null;
+  const admitted = await admitAnaProjectScope(executor, {
+    organizationId, userId: actorUserId, projectId, projectRef,
+  });
+  if (!scheduleIdentity(admitted.projectId)) return null;
+  return { organizationId, projectId: admitted.projectId, execution: { actorUserId, executor } };
+}
+
+function scheduleToolFailure(error: unknown, operation: string): string {
+  if (error instanceof AnaProjectScopeError || error instanceof ProgramReadAccessError) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: error.message, code: error.code, status: error.status });
   }
-  return { organizationId, projectId };
+  if (error instanceof SchedulePreservationConflict) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: error.message, code: error.code, status: 409 });
+  }
+  // A failed COMMIT may have been applied. Do not assert rollback or expose SQL.
+  return JSON.stringify({ source: 'AnA Schedule of Events', error: `${operation} could not be confirmed. Refresh the schedule before making another change.` });
+}
+
+function missingScheduleContext(): string {
+  return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required, with a current actor and request database context.' });
 }
 
 function parseScheduleDate(value: unknown): Date | null {
@@ -2674,14 +2711,10 @@ function parseScheduleDate(value: unknown): Date | null {
 }
 
 registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: 'An active organization and project are required to generate a schedule.',
-    });
-  }
+  const reason = gatedReason(input);
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { generateProjectSchedule } = await import('../projects/schedule-of-events');
     const projectType =
       (typeof input.project_type === 'string' && input.project_type.trim()) || ctx?.projectType || null;
@@ -2701,83 +2734,47 @@ registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
       baselineDate: parseScheduleDate(input.baseline_date),
       targetDate: parseScheduleDate(input.target_date),
       goals,
+      reason,
       triggeredBy: 'ana_user',
       createdByAna: true,
-    });
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      plan: view.plan,
-      milestones: view.milestones,
-      goals: view.goals,
-      health: view.health,
-    });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Schedule generation failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+    }, scope.execution);
+    return JSON.stringify({ source: 'AnA Schedule of Events', plan: view.plan, milestones: view.milestones, goals: view.goals, health: view.health });
+  } catch (error) { return scheduleToolFailure(error, 'Schedule generation'); }
 });
 
 registerToolHandler('amend_schedule_of_events', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   const milestoneKey = typeof input.milestone_key === 'string' ? input.milestone_key.trim() : '';
-  if (!milestoneKey) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'milestone_key is required.' });
-  }
+  if (!milestoneKey) return JSON.stringify({ source: 'AnA Schedule of Events', error: 'milestone_key is required.' });
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { amendMilestone } = await import('../projects/schedule-of-events');
     const result = await amendMilestone({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      milestoneKey,
+      orgId: scope.organizationId, projectId: scope.projectId, milestoneKey,
       newTargetDate: parseScheduleDate(input.new_target_date),
       status: typeof input.status === 'string' ? (input.status as any) : undefined,
       progress: typeof input.progress === 'number' ? input.progress : undefined,
       note: typeof input.note === 'string' ? input.note : undefined,
-      triggeredBy: 'ana_user',
-      createdByAna: true,
-    });
+      triggeredBy: 'ana_user', createdByAna: true,
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Amendment failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Schedule amendment'); }
 });
 
 registerToolHandler('review_schedule_of_events_health', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { reviewScheduleHealth } = await import('../projects/schedule-of-events');
     const apply = input.apply === undefined ? true : !!input.apply;
     const result = await reviewScheduleHealth({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      apply,
-      triggeredBy: 'ana_user',
-    });
+      orgId: scope.organizationId, projectId: scope.projectId, apply, triggeredBy: 'ana_user',
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Health review failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Schedule review'); }
 });
 
 registerToolHandler('reset_project_goals', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   const rationale = typeof input.rationale === 'string' ? input.rationale.trim() : '';
   const goals = Array.isArray(input.goals)
     ? (input.goals as Array<Record<string, unknown>>).map((g) => ({
@@ -2788,26 +2785,17 @@ registerToolHandler('reset_project_goals', async (input, ctx) => {
         metric: typeof g.metric === 'string' ? g.metric : null,
       })).filter((g) => g.title)
     : [];
-  if (goals.length === 0 || !rationale) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'At least one goal and a rationale are required.' });
-  }
+  if (goals.length === 0 || !rationale) return JSON.stringify({ source: 'AnA Schedule of Events', error: 'goals and rationale are required.' });
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { resetProjectGoals } = await import('../projects/schedule-of-events');
     const result = await resetProjectGoals({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      goals,
-      rationale,
-      triggeredBy: 'ana_user',
-      createdByAna: true,
-    });
+      orgId: scope.organizationId, projectId: scope.projectId, goals, rationale,
+      triggeredBy: 'ana_user', createdByAna: true,
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Goal reset failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Goal reset'); }
 });
 
 // Session briefing — tenant-scoped reconciliation of overdue/due-soon deadlines
@@ -5155,6 +5143,8 @@ registerToolHandler('ocr_document_pages', async (input, ctx) => {
       pages: r.pageDetails.map((p) => ({
         page: p.page,
         confidence: Math.round(p.confidence),
+        // Rendered dpi: lower than requested where a page exceeds the pixel cap.
+        dpi: Math.round(p.dpi),
         text: p.text,
       })),
       note:
@@ -5683,6 +5673,10 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
         'Pass studies into draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, presentStudies into assess_nonclinical_program, and speciesNoaels into compute_fih_dose. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
     });
   } catch (err: any) {
+    // 2026-10-22: a program outside the organization read as a failed load.
+    if (err instanceof Error && err.name === 'CtdProgramNotFoundError') {
+      return JSON.stringify({ status: 'not_found', message: err.message });
+    }
     return JSON.stringify({ error: `Loading nonclinical program failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -6091,8 +6085,21 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
   }
 });
 
+// Governed persistence is explicit in the native NDA/BLA controls; these tools
+// are pure deterministic computations and must not silently ignore a save request.
+function blaComputationSaveRefusal(input: Record<string, unknown>): string | null {
+  if (!['programId', 'program_id', 'persist', 'save'].some(key => Object.hasOwn(input, key))) return null;
+  return JSON.stringify({
+    error: 'BLA_PERSIST_REQUIRES_GOVERNED_UI', persisted: false,
+    message: 'Use the NDA/BLA assessment controls to save and sign an assessment when that capability is available to your organization. This computation tool cannot save it.',
+  });
+}
+const BLA_UNSAVED_DISCLOSURE = ' This is an unsaved computation. Saving and signing require the governed NDA/BLA assessment controls; do not describe this result as stored or signed.';
+
 // Assess Analytical Similarity — deterministic FDA Tier 1/2/3 engine (BLA)
 registerToolHandler('assess_analytical_similarity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
 
@@ -6101,8 +6108,9 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.',
+        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Analytical similarity assessment failed: ${err?.message || 'unknown error'}` });
@@ -6111,6 +6119,8 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
 
 // Assess Comparability — deterministic ICH Q5E engine (BLA)
 registerToolHandler('assess_comparability', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessComparability } = await import('../biologics/comparability.js');
 
@@ -6119,8 +6129,9 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.',
+        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Comparability assessment failed: ${err?.message || 'unknown error'}` });
@@ -6129,6 +6140,8 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
 
 // Assess Immunogenicity — deterministic ADA/NAb + risk engine (BLA)
 registerToolHandler('assess_immunogenicity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
 
@@ -6137,8 +6150,9 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.',
+        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Immunogenicity assessment failed: ${err?.message || 'unknown error'}` });
@@ -6147,6 +6161,8 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
 
 // Assess BLA Filing Risk — deterministic biologics RTF/CRL engine
 registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
 
@@ -6155,13 +6171,15 @@ registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unkno
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.',
+        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `BLA filing-risk assessment failed: ${err?.message || 'unknown error'}` });
   }
 });
+
 
 // Generate SOP — deterministic GxP SOP generator (region-aware)
 registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
@@ -6532,6 +6550,7 @@ registerToolHandler('scan_document_citations', async (input: Record<string, unkn
       summary: result.summary,
       citations: result.citations,
       unmatchedLabels: result.unmatchedLabels,
+      ...(result.auditTrail ? { auditTrail: result.auditTrail } : {}),
       instruction:
         'Report which governed values this document cites and, critically, any citation flagged divergent (its value no longer matches the governed value). If persisted, those citations are now tracked for future changes.',
     });
@@ -6601,6 +6620,7 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
       driftCreated: result.driftCreated,
       claimsMarkedDrifted: result.claimsMarkedDrifted,
       cascadedClaims: result.cascadedClaims,
+      cascadePacketAuditReceipts: result.cascadePacketAuditReceipts,
       resolutionPlanId: result.resolutionPlanId,
       resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
       auditTrail: result.auditTrail,
@@ -6916,6 +6936,16 @@ registerToolHandler('get_predicate_defense_preview', async (input: Record<string
 // CAPA / complaint / MDR / vigilance (device post-market safety workstream)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** A lost CAPA commit acknowledgement keeps its real recovery receipt on every tool door. */
+function capaToolFailure(tool: string, error: unknown): string {
+  const failure = error as { code?: unknown; message?: unknown; recovery?: unknown } | null;
+  if (failure?.code === 'CAPA_COMMIT_UNCONFIRMED') {
+    return JSON.stringify({ status: 'unconfirmed', error: 'CAPA_COMMIT_UNCONFIRMED', code: failure.code,
+      message: failure.message, recovery: failure.recovery });
+  }
+  return JSON.stringify({ error: `${tool} failed: ${failure?.message ?? 'unknown error'}` });
+}
+
 registerToolHandler('assess_mdr_reportability', async (input: Record<string, unknown>) => {
   try {
     const { classify } = await import('../capa-mdr/triageEngine.js');
@@ -6950,10 +6980,10 @@ registerToolHandler('triage_capa_mdr_queue', async (input: Record<string, unknow
       programId,
       openOnly: input.openOnly !== false,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: items.length, items });
-  } catch (err: any) {
-    return JSON.stringify({ error: `triage_capa_mdr_queue failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('triage_capa_mdr_queue', err);
   }
 });
 
@@ -6970,10 +7000,10 @@ registerToolHandler('read_vigilance_timeline', async (input: Record<string, unkn
       entityId: typeof input.entityId === 'string' ? input.entityId : undefined,
       kind: typeof input.kind === 'string' ? (input.kind as any) : undefined,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: events.length, events });
-  } catch (err: any) {
-    return JSON.stringify({ error: `read_vigilance_timeline failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('read_vigilance_timeline', err);
   }
 });
 
@@ -7019,17 +7049,18 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
       deviceUdiDi: typeof input.deviceUdiDi === 'string' ? input.deviceUdiDi : null,
       deviceLot: typeof input.deviceLot === 'string' ? input.deviceLot : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: complaint.auditTrail },
       engine: 'capa_mdr',
       complaintId: complaint.id,
       complaintCode: (complaint as any).complaintCode,
       preliminaryClassification: (complaint as any).preliminaryClassification,
       instruction: 'Report the complaint code and the auto-computed preliminary reportability classification.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `create_complaint failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('create_complaint', err);
   }
 });
 
@@ -7055,17 +7086,18 @@ registerToolHandler('open_device_capa', async (input: Record<string, unknown>, c
       assignedTo: typeof input.assignedTo === 'string' ? input.assignedTo : null,
       targetCloseDate: targetCloseDate && !Number.isNaN(targetCloseDate.getTime()) ? targetCloseDate : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: capa.auditTrail },
       engine: 'capa_mdr',
       capaId: capa.id,
       capaCode: (capa as any).capaCode,
       state: (capa as any).state,
       instruction: 'Report the CAPA code and that it was opened. Offer to add actions or transition it.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `open_device_capa failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('open_device_capa', err);
   }
 });
 
@@ -9211,7 +9243,8 @@ function confinePackagerPaths(
 async function recordedPackageIdentityOrRefusal(
   programIdInput: unknown,
   organizationId: number,
-): Promise<{ ok: true; applicationNumber: string; applicantName: string } | { ok: false; refusal: string }> {
+  fda: boolean,
+): Promise<{ ok: true; identity: import('../ectd/package-identity').RecordedPackageIdentity } | { ok: false; refusal: string }> {
   const programId = typeof programIdInput === 'string' ? programIdInput.trim() : '';
   if (!programId) {
     return {
@@ -9230,14 +9263,14 @@ async function recordedPackageIdentityOrRefusal(
     import('../../db.js'),
   ]);
   const identity = await readRecordedPackageIdentity(getPool(), organizationId, programId);
-  const missing = packageIdentityRefusal(identity, 'Nothing was built.');
+  const missing = packageIdentityRefusal(identity, 'Nothing was built.', { fda });
   if (missing) {
     return {
       ok: false,
       refusal: JSON.stringify({ error: missing.message, code: missing.code, missing: missing.missing, retry: false }),
     };
   }
-  return { ok: true, applicationNumber: identity.applicationNumber as string, applicantName: identity.applicantName as string };
+  return { ok: true, identity };
 }
 
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
@@ -9269,9 +9302,12 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!paths.ok) return paths.refusal;
   const { sourcePaths, outputDir } = paths;
   try {
-    const identity = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId);
-    if (!identity.ok) return identity.refusal;
-    const { applicationNumber, applicantName } = identity;
+    const recorded = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId, region === 'fda');
+    if (!recorded.ok) return recorded.refusal;
+    const identity = recorded.identity;
+    const applicationNumber = identity.applicationNumber as string;
+    const applicantName = identity.applicantName as string;
+    const { fdaContactsForPackageIdentity } = await import('../ectd/package-identity.js');
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const bundle = await packageEctdSubmission({
       region: region as any,
@@ -9283,11 +9319,9 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
          packager used to default to `fdaat1` — NDA — for every package this
          tool built. It now refuses, so the tool asks for it. */
       ...(typeof input.application_type === 'string' && input.application_type.trim()
-        ? { fda: { applicationType: input.application_type.trim() } }
+        ? { fda: { applicationType: input.application_type.trim(), ...(region === 'fda' ? { contacts: fdaContactsForPackageIdentity(identity) } : {}) } }
         : {}),
-      // The applicant's <id> (D-U-N-S) has no recorded home yet; it says so,
-      // as the compile's does (package-identity.ts header, P-27 known gap).
-      sponsorId:     `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorId:     region === 'fda' ? identity.applicantId as string : '',
       sponsorName:   applicantName,
       productName:   String(input.product_name),
       // A delete's source_path is passed through as given, never dropped: the
@@ -9454,6 +9488,7 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       provenance:      ack.provenance,
       // null when the transmittal recorded no acknowledgement time.
       receivedAt:      ack.receivedAt,
+      generatedAt:     ack.generatedAt ?? null,
     });
   } catch (err) {
     return JSON.stringify({
@@ -10495,16 +10530,25 @@ registerToolHandler('validate_udi', async (input) => {
 });
 
 registerToolHandler('get_electrical_standards', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: each fact was
+  // read `=== true`, so one left out answered "IEC 60601 does not apply" or dropped its
+  // collateral. Unstated stays unstated (the engine names it); a fact that is not true
+  // or false is refused, naming it.
+  const FACTS = ['electricallyPowered', 'hasAlarms', 'closedLoopControl', 'homeUse', 'emsUse', 'hasParticularStandard'] as const;
+  const unreadable = FACTS.filter((k) => input[k] !== undefined && input[k] !== null && typeof input[k] !== 'boolean');
+  if (unreadable.length > 0) {
+    return JSON.stringify({ error: `${unreadable.join(', ')} must be true or false; leave out a fact that is not known.` });
+  }
+  const fact = (k: (typeof FACTS)[number]): boolean | undefined => (typeof input[k] === 'boolean' ? (input[k] as boolean) : undefined);
   try {
     const { applicableElectricalStandards } = await import('../market-specs/electrical-safety.js');
     return JSON.stringify({ ok: true, ...applicableElectricalStandards({
-      electricallyPowered: input.electricallyPowered === true,
-      hasAlarms: input.hasAlarms === true,
-      closedLoopControl: input.closedLoopControl === true,
-      homeUse: input.homeUse === true,
-      emsUse: input.emsUse === true,
-      hasParticularStandard: input.hasParticularStandard === true,
+      electricallyPowered: fact('electricallyPowered'),
+      hasAlarms: fact('hasAlarms'),
+      closedLoopControl: fact('closedLoopControl'),
+      homeUse: fact('homeUse'),
+      emsUse: fact('emsUse'),
+      hasParticularStandard: fact('hasParticularStandard'),
     }) });
   } catch (err) {
     return JSON.stringify({ error: `get_electrical_standards failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -10512,11 +10556,21 @@ registerToolHandler('get_electrical_standards', async (input) => {
 });
 
 registerToolHandler('get_sterilization_requirements', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: `sterile` was
+  // read `=== true`, so one left out answered "not supplied sterile — does not apply",
+  // and an unknown method read as unspecified. Unstated stays unstated; a value that
+  // cannot be read is refused, naming it.
   try {
-    const { sterilizationRequirements } = await import('../market-specs/sterilization.js');
+    const { sterilizationRequirements, STERILIZATION_METHODS } = await import('../market-specs/sterilization.js');
+    const methods: string[] = [...STERILIZATION_METHODS.map((m) => m.id), 'unknown'];
+    const unreadable: string[] = [];
+    if (input.sterile !== undefined && input.sterile !== null && typeof input.sterile !== 'boolean') unreadable.push('sterile must be true or false');
+    if (input.method !== undefined && input.method !== null && !methods.includes(String(input.method))) {
+      unreadable.push(`method '${String(input.method)}' is not one of: ${methods.join(', ')}`);
+    }
+    if (unreadable.length > 0) return JSON.stringify({ error: `${unreadable.join('; ')}.` });
     return JSON.stringify({ ok: true, ...sterilizationRequirements({
-      sterile: input.sterile === true,
+      sterile: typeof input.sterile === 'boolean' ? input.sterile : undefined,
       method: typeof input.method === 'string' ? (input.method as never) : undefined,
     }) });
   } catch (err) {
@@ -10630,12 +10684,7 @@ registerToolHandler('fire_notification', async (input, ctx) => {
   const category = typeof input.category === 'string' ? input.category : '';
   const severity = typeof input.severity === 'string' ? input.severity : '';
   const title    = typeof input.title === 'string' ? input.title.trim() : '';
-  const allowedCat = new Set([
-    'submission_status', 'validation_finding', 'q_sub_response', 'cdx_pairing',
-    'ldt_milestone_due', 'gateway_credential_expiring', 'ana_draft_pending',
-    'risk_residual_high', 'capa_due', 'study_deviation', 'enrollment_milestone',
-    'admin', 'system',
-  ]);
+  const allowedCat = new Set<string>(NOTIFICATION_CATEGORIES);
   if (!allowedCat.has(category)) {
     return JSON.stringify({ error: `category must be one of: ${Array.from(allowedCat).join(', ')}.` });
   }
@@ -10894,12 +10943,12 @@ function expiryText(e: { expirationDate: string; expirationSource: 'recorded' | 
 
 type IacucReviewStatusShape =
   | { undetermined: true; reason: string }
-  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null };
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null; annualReviewUndeterminedReason?: string | null };
 
 function iacucReviewStatusText(rs: IacucReviewStatusShape): string {
   if (rs.undetermined) return ` Review status: ${rs.reason}`;
   const annual = rs.annualReviewDue === null
-    ? '; whether annual review is due is not determined: no approval date is recorded'
+    ? '; whether annual review is due is not determined: ' + (rs.annualReviewUndeterminedReason ?? 'no approval date is recorded')
     : rs.annualReviewDue ? '; annual review due' : '';
   return ` Expiry: ${expiryText(rs, 'approval + 3 years')}${annual}.`;
 }
@@ -12290,13 +12339,15 @@ registerToolHandler('create_protocol_document', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const { resolveOpenProgram } = await import('../c2c/program-access.js');
   const reason = gatedReason(input);
+  const programId = typeof input.program_id === 'string' ? input.program_id : await resolveOpenProgram(getPool(), ctx);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id, sectionsSeeded } = await createProtocolDocumentTx(client, ctx.organizationId, ctx.userId, {
-      protocolKind: protocolKind as any, title,
+      protocolKind: protocolKind as any, title, programId,
       protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null,
       designType: typeof input.design_type === 'string' ? input.design_type : null,
       phase: typeof input.phase === 'string' ? input.phase : null,
@@ -13466,21 +13517,35 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { fulfillCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const { fulfillCommitmentTx, readCommitmentForFulfilment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
+  const { fulfilmentRule } = await import('../ha-interactions/ha-logic.js');
   const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    /* P-41 (2026-10-19): a PMR, PMC or REMS is recorded fulfilled only by a
+       Part 11 signature naming what met it, and AnA cannot sign. The type is
+       read from the record, never taken from the model; for those three the
+       tool writes nothing and hands the act to the screen. */
+    const commitment = await readCommitmentForFulfilment(client, ctx.organizationId, commitmentId, ORG_LEVEL, { lock: true });
+    if (commitment && fulfilmentRule(commitment.commitmentType).signatureRequired) {
+      await client.query('ROLLBACK');
+      return refuseSignatureInChat(
+        'fulfill_regulatory_commitment',
+        `Recording a ${commitment.commitmentType.toUpperCase()} as fulfilled`,
+        'Communication, Meetings & commitments, where you name the sequence or document that met it and sign',
+      );
+    }
     const fulfilledDate = typeof input.fulfilled_date === 'string' ? input.fulfilled_date : null;
-    await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
+    const done = await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, { fulfilledDate, evidence: null, userId: ctx.userId });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'resolve',
       target: `regulatory-commitment:${commitmentId}`, reason,
-      payload: { fulfilledDate }, domain: 'ha', surface: 'ana',
+      payload: { status: 'fulfilled', fulfilledDate: done.fulfilledDate }, domain: 'ha', surface: 'ana',
     });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled.` });
+    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled on ${done.fulfilledDate}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `fulfill_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13742,16 +13807,22 @@ registerToolHandler('log_inspection_finding', async (input, ctx) => {
 registerToolHandler('review_inspection_readiness', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_inspection_readiness requires tenant context.' });
   const inspectionId = typeof input.inspection_id === 'number' ? input.inspection_id : undefined;
-  const { listReadinessAreas } = await import('../inspection/inspection-service.js');
-  const { scoreReadiness } = await import('../inspection/inspection-logic.js');
+  // GET /api/inspections/readiness/score's own read. 2026-10-22: this scored
+  // listReadinessAreas() with no inspection type, holding every inspection to
+  // all 8 domains, and did not say which domains nobody recorded.
+  const { getReadinessScore } = await import('../inspection/inspection-service.js');
   try {
-    const areas = await listReadinessAreas(ctx.organizationId, inspectionId);
-    const score = scoreReadiness(areas);
+    const score = await getReadinessScore(ctx.organizationId, inspectionId);
     return JSON.stringify({
       ok: true, score: score.score, verdict: score.verdict, blockers: score.blockers,
-      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}.`,
+      requiredDomains: score.requiredDomains, notRecorded: score.notRecorded,
+      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}` +
+        `${score.notRecorded.length ? `; not recorded: ${score.notRecorded.join(', ')}` : ''}.`,
     });
   } catch (err) {
+    if (err instanceof Error && (err as Error & { code?: string }).code === 'NOT_FOUND') {
+      return JSON.stringify({ status: 'not_found', message: err.message });
+    }
     return JSON.stringify({ error: `review_inspection_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
@@ -14529,9 +14600,16 @@ function hasControlledTextAuthorship(input: Record<string, unknown>): boolean {
     Object.prototype.hasOwnProperty.call(input.metadata, 'controlledTextAuthorship'));
 }
 
+/** Canonical Authoring context for the verified tool principal. No model/input identity is accepted. */
+async function qmsAuthoringContext(ctx: ToolContext) {
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  return { pool, tenantId: Number(ctx.organizationId), actor: { id: String(ctx.userId), email: null },
+    audit: { pool, tenantId: Number(ctx.organizationId), actorId: String(ctx.userId), actorEmail: 'unknown', actorRole: 'unknown', ipAddress: 'ana-tool', userAgent: 'ana-tool' } };
+}
+
 registerToolHandler('create_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'create_qms_document requires user context — a controlled document cannot be created without an identified actor (21 CFR Part 11).' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'create_qms_document requires an identified organization member.' });
   if (hasControlledTextAuthorship(input)) {
     return JSON.stringify({ error: 'Controlled-text authorship is recorded by the server when the identified editor saves text; it cannot be supplied on creation.' });
   }
@@ -14540,47 +14618,19 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'].includes(docType)) {
     return JSON.stringify({ error: 'doc_type invalid.' });
   }
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const reason = gatedReason(input);
-  const client = await getPool().connect();
+  const refusal = await editorRoleRefusal('create_qms_document', 'creating a controlled document', ctx);
+  if (refusal) return refusal;
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `INSERT INTO qms_documents (
-         organization_id, doc_number, title, doc_type, category, version, status,
-         author_id
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),'draft',$7)
-       RETURNING id, doc_number, title, status`,
-      [
-        ctx.organizationId, docNumber, title, docType,
-        typeof input.category === 'string' ? input.category : null,
-        typeof input.version === 'string' ? input.version : null,
-        ctx.userId,
-      ],
-    );
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${rows[0].id}`,
-      reason,
-      payload: { kind: 'create', docNumber, title, docType, to: 'draft' },
-      domain: 'mdx', surface: 'ana',
+    const { createControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const row = await createControlledQmsDocument(await qmsAuthoringContext(ctx), {
+      title, docType, docNumber,
+      programId: input.program_id, templateKey: input.template_key, category: input.category, reason,
+      ...(input.next_review_date ? { nextReviewDate: input.next_review_date } : {}),
     });
-    await client.query('COMMIT');
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Created QMS document ${docNumber} (${docType}, draft).`,
-    });
-  } catch (err: unknown) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    const code = (err as { code?: string }).code;
-    if (code === '23505') return JSON.stringify({ error: 'A document with that number already exists.' });
-    return JSON.stringify({
-      error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  } finally {
-    client.release();
+    return JSON.stringify({ ok: true, ...row, message: `Created ${row.doc_number} with a canonical draft. Open it in Quality to author the procedure; review and a person's signature are still required.` });
+  } catch (err) {
+    return JSON.stringify({ error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -14611,57 +14661,21 @@ registerToolHandler('approve_qms_document', async () =>
    through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
    set requireEditorAccess uses — before anything is opened. Never from input. */
 registerToolHandler('revise_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires an identified organization member.' });
   const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
   if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  if (!Number.isSafeInteger(id) || id <= 0) return JSON.stringify({ error: 'document_id (positive integer) is required.' });
   const reason = gatedReason(input);
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const cur = await client.query<{ version: string }>(
-      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, ctx.organizationId],
-    );
-    if (cur.rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: `Document ${id} not found in this organization.` });
-    }
-    const m = /^(\d+)/.exec(String(cur.rows[0].version ?? '').trim());
-    const newVersion = `${(m ? parseInt(m[1], 10) : 1) + 1}.0`;
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'draft', version = $3, approver_id = NULL, approved_at = NULL,
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'lastRevision', jsonb_build_object('reason', $4::text, 'from', $5::text, 'at', NOW(), 'by', $6::int)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          AND status IN ('effective','superseded','retired','in_review')
-        RETURNING id, doc_number, version, status`,
-      [id, ctx.organizationId, newVersion, reason, cur.rows[0].version, ctx.userId],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document cannot be revised from its current state.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`, reason,
-      payload: { kind: 'revise', from: cur.rows[0].version, to: newVersion, status: 'draft' },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, ...rows[0], message: `Opened revision of ${rows[0].doc_number} → v${newVersion} (draft).` });
+    const { reviseControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const legacyBinding = typeof input.program_id === 'string'
+      ? { programId: input.program_id, templateKey: typeof input.template_key === 'string' ? input.template_key : undefined }
+      : undefined;
+    const row = await reviseControlledQmsDocument(await qmsAuthoringContext(ctx), id, reason, legacyBinding);
+    return JSON.stringify({ ok: true, ...row, message: `Opened revision of ${row.doc_number} → v${row.version}. The prior approved content remains immutable; this draft needs review and signature.` });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
+    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -15202,9 +15216,12 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
   const source = workspacePathOrRefusal(input.source_path, 'source_path', ctx.organizationId);
   if (!source.ok) return source.refusal;
   const sourcePath = source.path;
+  let createdJobId: number | null = null;
   try {
     const { getPool } = await import('../../db.js');
     const { detectArchive } = await import('../legacy-importer/detector.js');
+    // Loaded before the job row exists, so a failure after it can still mark the job.
+    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
       ? input.program_id : null;
 
@@ -15223,6 +15240,7 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       ],
     );
     const jobId = jobInsert.rows[0].id;
+    createdJobId = jobId;
 
     /* Run detection. */
     const detected = await detectArchive(sourcePath);
@@ -15231,7 +15249,6 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
        derived status from mappingConfidence >= 0.5, so a filename suggestion was
        stored 'pending' at mapping_confidence 0.00 with no rule id; it also never
        set the job's skipped_count. */
-    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     for (const f of detected.files) {
       await getPool().query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, ctx.organizationId, f));
     }
@@ -15280,8 +15297,13 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
         'Review then call approve_import.',
     });
   } catch (err) {
+    /* 2026-10-15: a failure after the job row existed left it at 'detecting', which
+       reads as an import still running; it is marked 'failed' through the REST route's write. */
+    const jobMarkedFailed = createdJobId !== null
+      && await (await import('../../routes/mdx-imports.js')).markImportJobFailed(createdJobId, err);
     return JSON.stringify({
       error: `start_legacy_import failed: ${err instanceof Error ? err.message : String(err)}`,
+      ...(createdJobId !== null ? { jobId: createdJobId, jobMarkedFailed } : {}),
     });
   }
 });
@@ -15305,8 +15327,11 @@ registerToolHandler('override_import_mapping', async (input, ctx) => {
     const col = COL[k]; if (!col || v === undefined) continue;
     args.push(v); setFrags.push(`${col} = $${args.length}`);
   }
-  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = 1.00`);
   if (setFrags.length === 0) return JSON.stringify({ error: 'No fields to update.' });
+  // A placement confirmed through AnA is a decision, not a measurement: no confidence.
+  // 2026-10-15: stored mapping_confidence = 1.00 on every override, 'skipped' too, and
+  // checked for no fields after adding these, so an empty override re-labelled the row 'ana'.
+  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = NULL`);
   args.push(fileId, jobId, ctx.organizationId);
   try {
     const { getPool } = await import('../../db.js');
@@ -15841,6 +15866,65 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   });
 });
 
+/** The model-facing handling note for a batch receipt. */
+function batchDraftInstruction(receipt: { failed: number; cancelled: number }): string {
+  return (
+    'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document only with content from sections whose status is drafted, through its existing confirmation and qualification gates. Exclude cut-off sections marked DRAFT_TRUNCATED; they are failed and carry no usable draft content. Carry each drafted section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. A missing or unknown finish reason does not confirm completeness, and truncated: false is not a completeness certification. State completeness gaps honestly; do not present unknown values as established.' +
+    (receipt.failed > 0
+      ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only failed retryIndices, preserving drafted sections. A cut-off section or one refused for size needs its content shortened or split before retrying.`
+      : '') +
+    (receipt.cancelled > 0
+      ? ` ${receipt.cancelled} section(s) were stopped by the person before drafting completed (cancelledIndices). Do not retry them unless the person asks again.`
+      : '')
+  );
+}
+
+/**
+ * Apply the recorded submission context and load each section's selected
+ * sources, in order, stopping between catalog operations. An already-started
+ * operation may finish; a load that settles after Stop is discarded.
+ */
+async function prepareBatchSections(
+  requests: Array<{ requestIndex: number; sectionType: string; instructions: string; submissionType?: string;
+    sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
+  rawSections: unknown[],
+  submissionType: string | undefined,
+  ctx: ToolContext | undefined,
+  outcomes: Map<number, import('./batch-draft-result.js').BatchDraftFailure>,
+): Promise<void> {
+  const { loadDraftProjectSources } = await import('./draft-project-sources.js');
+  const { batchSectionRecord, cancelledDraft, isDraftCancellation, trustedSignal } = await import('./batch-draft-result.js');
+  const signal = trustedSignal(ctx?.signal);
+  const sourceFailure = (sectionType: string, error: unknown): import('./batch-draft-result.js').BatchDraftFailure =>
+    signal?.aborted && isDraftCancellation(error) ? cancelledDraft(sectionType)
+      : { sectionType, error: 'DRAFT_FAILED',
+        message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' };
+  if (!signal?.aborted) {
+    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
+    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
+  }
+  for (const request of requests) {
+    if (outcomes.has(request.requestIndex)) continue;
+    let failure: import('./batch-draft-result.js').BatchDraftFailure | undefined;
+    try {
+      if (!signal?.aborted) {
+        // The section's own words choose each source's window (S5d).
+        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
+          `${request.sectionType} ${request.instructions}`);
+      }
+    } catch (error) {
+      failure = sourceFailure(request.sectionType, error);
+    }
+    // Genuine source refusals keep their classification, even during Stop.
+    // A late successful load is discarded as stopped.
+    if (signal?.aborted && !failure) {
+      request.sourceContext = undefined;
+      failure = cancelledDraft(request.sectionType);
+    }
+    if (failure) outcomes.set(request.requestIndex, failure);
+  }
+}
+
 registerToolHandler('batch_draft_sections', async (input, ctx) => {
   // S2 — draft many sections in ONE parallel batch instead of one section per
   // agentic turn. Reuses the existing AnaDocumentDraftingService.batchDraft
@@ -15862,7 +15946,11 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string; therapeuticArea?: string; modality?: string }
     | undefined;
 
-  const { batchDraftReceipt, batchSectionRecord } = await import('./batch-draft-result.js');
+  const { batchDraftReceipt, batchSectionRecord, cancelledDraft, trustedSignal } = await import('./batch-draft-result.js');
+  // Stop reaches the nested work, not only the outer race: no source is read
+  // and no section dispatched after it, and a read that settles after it is
+  // discarded (runOneTool documents why the race alone leaves work running).
+  const signal = trustedSignal(ctx?.signal);
   const requests = rawSections
     .map((s, requestIndex) => {
       const sec = batchSectionRecord(s);
@@ -15889,25 +15977,13 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'each section requires section_type and instructions' });
   }
 
+  const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
   try {
-    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
-    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
-    const { loadDraftProjectSources } = await import('./draft-project-sources.js');
-    const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
-    for (const request of requests) {
-      try {
-        // The section's own words choose each source's window (S5d).
-        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
-          `${request.sectionType} ${request.instructions}`);
-      } catch {
-        sourceFailures.set(request.requestIndex, { sectionType: request.sectionType, error: 'DRAFT_FAILED',
-          message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' });
-      }
-    }
+    await prepareBatchSections(requests, rawSections, submissionType, ctx, sourceFailures);
     const service = getAnaDraftingService();
     const ready = requests.filter(r => !sourceFailures.has(r.requestIndex));
-    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5 }) : [];
+    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5, signal }) : [];
     let generatedIndex = 0;
     const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? generated[generatedIndex++]);
     // A section that could not be drafted arrives as a failure result in its
@@ -15917,13 +15993,14 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({
       ...receipt,
       engine: 'framework-grade',
-      instruction:
-        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document with the successful section content through its existing confirmation and qualification gates. Carry each section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. State completeness gaps honestly; do not present unknown values as established.' +
-        (receipt.failed > 0
-          ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only retryIndices, preserving successful drafts. A section refused for size needs its existing content shortened or split before retrying.`
-          : ''),
+      instruction: batchDraftInstruction(receipt),
     });
   } catch {
+    if (signal?.aborted) {
+      // Stopped: a fault after stop is reported as the stop, keeping any source refusal already recorded.
+      const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? cancelledDraft(r.sectionType));
+      return JSON.stringify(batchDraftReceipt(rawSections, requests, results));
+    }
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'Batch drafting failed. No documents were saved; the failed sections can be retried.' });
   }
 });
@@ -16094,6 +16171,17 @@ function drainOperatorTurns(queued: GatewayMessage[] | undefined): GatewayMessag
   return queued && queued.length > 0 ? queued.splice(0, queued.length) : [];
 }
 
+/** Format before notifying detached observers; this reports host staging only. */
+function stageToolResultsForModel(results: ToolResultEntry[], round: number,
+  observer: AgenticOptions['onToolResultsForModel']): string {
+  // Replans bypass executeTools. Check here too, and retain accepted body bytes.
+  assertToolResultBodyBudget(results);
+  const staged = results.map(tr => ({ ...tr }));
+  const content = staged.map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(tr.content)}`).join('\n\n');
+  if (observer) notifyObserver('onToolResultsForModel', () => observer(staged.map(entry => ({ ...entry })), round));
+  return content;
+}
+
 export interface AgenticOptions {
   /** Maximum tool-use rounds before forcing stop */
   maxRounds?: number;
@@ -16106,6 +16194,9 @@ export interface AgenticOptions {
   onStream?: StreamCallback;
   /** Called when a tool is executed */
   onToolExecution?: (toolName: string, input: Record<string, unknown>, result: string) => void;
+  /** Exact bodies staged by this host, after allocation and source guards.
+   * Detached observation only; not proof of provider delivery. */
+  onToolResultsForModel?: (entries: readonly Readonly<ToolResultEntry>[], round: number) => void;
   /** Tenant + thread context forwarded to each tool handler */
   toolContext?: ToolContext;
   /** Abort signal — when aborted, the loop stops before the next round (barge-in). */
@@ -16360,12 +16451,15 @@ export async function executeAgenticLoop(
     // goes whole or not at all, and its receipt is written only if it went
     // whole (read-receipts.ts).
     pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
-    const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+    const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts, strictTotal: true });
     const guarded = await guardReadResultsForHandoff(entries, budgeted, readReceipts, { signal });
     const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
     await settleReadReceipts(entries, guarded, readReceipts, undefined, {
       signal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(guarded, id, { signal })),
     });
+    // Guards/withdrawal can grow bodies. Refuse handoff without rewriting any
+    // receipt outcome; earlier tool work and host admission may already exist.
+    assertToolResultBodyBudget(guarded);
     return guarded;
   };
 
@@ -16383,17 +16477,13 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return { text: '', toolCalls: [] };
 
     loopMessages.push({ role: 'assistant', content: priorText || '' });
-    // Entries arrive pre-budgeted from executeTools (the cap here is a no-op
-    // safety net); the adaptation note rides the same user turn so a failed
+    // Stage accepted bodies exactly; the adaptation note rides the same user turn so a failed
     // round becomes a course correction instead of an identical retry.
     const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
     pendingAdaptationNote = '';
     loopMessages.push({
       role: 'user',
-      content:
-        results
-          .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(capToolResultForModel(tr.content))}`)
-          .join('\n\n') + adaptationSuffix,
+      content: stageToolResultsForModel(results, round, options?.onToolResultsForModel) + adaptationSuffix,
     });
 
     // Steers ride AFTER the tool results. See drainOperatorTurns.
@@ -18797,16 +18887,22 @@ registerToolHandler('compose_e2b_icsr', async (input: Record<string, unknown>, c
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {
   try {
-    const { reconcileDossierNumbers } = await import('./dossierReconciliation.js');
-    const result = reconcileDossierNumbers((input.documents as any) ?? []);
+    const { reconcileMinedFigures } = await import('../reconciliation/mined-figure-reconciler.js');
+    const result = reconcileMinedFigures((input.documents as any) ?? []);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       result,
+      /* The verdict is the engine's, which has distinguished "nothing compared" from "clean"
+         since 2026-09-28 (row 74). The deleted second implementation could not: it listed
+         every label it saw once as consistent, so a figure compared against nothing read as
+         agreeing. */
       instruction:
-        result.discrepancies.length > 0
-          ? 'Surface each discrepancy with its label, the conflicting values, and the snippet from each document so the user can resolve the source of truth. Do not guess which value is correct.'
-          : 'No cross-document numerical conflicts were found among the labeled figures scanned. State which labels were checked and found consistent.',
+        result.verdict === 'not_assessed'
+          ? `NOTHING was compared across documents (reason: ${result.notAssessedReason}). Say that plainly and do not report it as consistency: no conclusion about agreement is available. State how many figures were read (${result.figuresReconciled}) and that no quantity appeared in two places.`
+          : result.conflictCount > 0
+            ? 'Surface each conflict with its quantity, the distinct values and the documents that report each, so the user can resolve the source of truth. Do not guess which value is correct; where a consensus value is given, say it is the most-reported value, not the correct one.'
+            : `No cross-document conflict was found among the ${result.quantitiesCompared} quantity/quantities actually compared across two places. Name them, and do not imply anything about figures stated in only one document.`,
     });
   } catch (err: any) {
     const message = err?.message || 'unknown error';
@@ -21028,7 +21124,7 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
     import('../authoring/authoring-draft-tool.js'),
   ]);
   const reason = gatedReason(input);
-  return saveDocumentToVaultTool(getPool(), input, ctx, { reason });
+  return saveDocumentToVaultTool(getPool(), input, ctx, reason);
 });
 
 /* draft_authoring_document — an AnA-built document IS an authoring document
@@ -21325,7 +21421,7 @@ registerToolHandler('get_plan_usage', async (_input, ctx) => {
 registerToolHandler('get_billing_credits', async (_input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'get_billing_credits requires tenant context.' });
   try {
-    const { getCreditBalance, getCreditLedger, getAutoReload } = await import('../credit-ledger.js');
+    const { getCreditBalance, getCreditLedger, getAutoReload, getCreditCapabilities } = await import('../credit-ledger.js');
     const orgId = Number(ctx.organizationId);
     const [balanceCents, ledger, autoReload] = await Promise.all([
       getCreditBalance(orgId),
@@ -21336,7 +21432,7 @@ registerToolHandler('get_billing_credits', async (_input, ctx) => {
        caller, so it is not a usage meter (app audit 2026-10-17). Say so rather
        than let a client read it as what they have used or have left. */
     return JSON.stringify({
-      ok: true, balanceCents, autoReload, recentLedger: ledger,
+      ok: true, balanceCents, autoReload, recentLedger: ledger, capabilities: getCreditCapabilities(),
       metered: false,
       note: 'Credits are not metered: nothing the platform does spends this balance, so it says nothing about usage. Usage is not limited by credits.',
     });
@@ -21442,10 +21538,12 @@ registerToolHandler('get_portfolio_readiness', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, 'portfolio.board_pack', 'portfolio');
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan (tierResolved false) said "requires the
+      // <requiredTier> plan" and named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the portfolio rollup was not loaded.' }
+        : { tier: gate.tier, message: `Portfolio rollup requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { fetchPortfolioSummary } = await import('../report-os/portfolio/fetch.js');
     const summary = await fetchPortfolioSummary(orgId, programGroupId);
@@ -21482,10 +21580,11 @@ registerToolHandler('generate_report', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the report was not generated.' }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) {
@@ -21520,10 +21619,11 @@ registerToolHandler('explain_report_blockers', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: "Your plan could not be read, so the report's blockers were not computed." }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) return JSON.stringify({ error: `Unknown report type: ${reportTypeId}.` });

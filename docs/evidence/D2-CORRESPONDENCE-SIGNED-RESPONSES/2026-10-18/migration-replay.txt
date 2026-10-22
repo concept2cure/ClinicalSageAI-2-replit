@@ -1,0 +1,9 @@
+# deploy-migrate run 1 (database already carrying the earlier name: the file is idempotent under either)
+  ✓ applied: migrations/20261018b_agency_response_questions.sql
+✅ Schema migration complete — safe to roll services.
+# deploy-migrate run 2 (replay)
+  ✓ applied: migrations/20261018b_agency_response_questions.sql
+✅ Schema migration complete — safe to roll services.
+# policy and RLS on the new table
+agency_communication_questions tenant_isolation_policy
+relrowsecurity=true relforcerowsecurity=true

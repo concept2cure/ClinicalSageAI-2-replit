@@ -62,6 +62,8 @@ interface IndlChecklist {
    which is not "none". */
 interface IndlFormRow extends IndlForm {
   attachment?: { attested: boolean; requiredFieldsMissing: string[] | null } | null;
+  /** The co-authored form at this code, if any; it counts only when signed. */
+  authored?: { status: string; signed: boolean } | null;
 }
 
 /** The attached file at a form's place, in words — what the chip and AnA both say. */
@@ -81,6 +83,12 @@ function formFileState(f: IndlFormRow): string {
 function formChip(f: IndlFormRow): { label: string; note: string | null } {
   if (f.done) return { label: 'Complete', note: null };
   const a = f.attachment;
+  if (!a && f.authored && !f.authored.signed) {
+    return {
+      label: 'Authored — not signed',
+      note: 'The form is authored, but no signed copy is recorded, so it does not count. Attach the signed form in 2a with the attestation.',
+    };
+  }
   if (!a) return { label: 'Open', note: null };
   if (!a.attested) {
     return {
@@ -117,7 +125,7 @@ interface CoverLetterResult {
    The IND safety-report card is withheld from this release (decision P-32,
    2026-10-15): 21 CFR 312.32 reporting and ICSR transmission are refused by
    the API in production, so the card is hidden and its code kept, intact, in
-   ./indSafetyReportCard.ts — which this file must not import (see its header).
+   tests/fixtures/withheld/indSafetyReportCard.ts — which this file must not import (see its header).
    The types and helpers below are exported for that file. */
 export interface DelivView {
   /** The server's model, flattened to readable text — response data only. */
@@ -239,7 +247,7 @@ const FDA_CENTERS = [
   { v: 'CBER', label: 'CBER — Center for Biologics Evaluation and Research' },
 ];
 /* The safety-report option lists (event type, seriousness, causality, outcome,
-   expectedness) moved with the withheld card to ./indSafetyReportCard.ts. */
+   expectedness) moved with the withheld card to tests/fixtures/withheld/indSafetyReportCard.ts. */
 const AMENDMENT_CATEGORIES = OPTS(['protocol', 'protocol_amendment_summary', 'new_investigator', 'cmc', 'pharmacology_toxicology', 'clinical_summary', 'investigators_brochure', 'other']);
 const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 
@@ -1078,7 +1086,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       toView: modelSectionsView,
     },
     /* 'safety-report' is withheld (P-32): its card is hidden and its spec
-       lives in ./indSafetyReportCard.ts, which this file does not import. */
+       lives in tests/fixtures/withheld/indSafetyReportCard.ts, which this file does not import. */
     'annual-report': {
       assemblePath: '/api/ind-lifecycle/annual-report',
       pdf: { path: '/api/ind-lifecycle/annual-report/pdf', filename: 'ind-annual-report.pdf' },
@@ -1137,7 +1145,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           {kicker}
           <h1>{drug} — Initial IND</h1>
           <p className="surface-sub">
-            {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v4.0 (FDA)']
+            {/* The format every FDA package here is built in (market-support.ts:
+                "this platform builds eCTD v3.2.2 only"); it said v4.0 until the
+                WO-9 lane re-walk of 2026-10-22. */}
+            {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v3.2.2 (FDA)']
               .filter(Boolean)
               .join(' — ')}
           </p>
@@ -1316,7 +1327,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="indl-cover-meta">
                   {prog.productName && <span>{prog.productName}</span>}
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
-                  <span>Initial IND — eCTD v4.0 (FDA)</span>
+                  <span>Initial IND — eCTD v3.2.2 (FDA)</span>
                   <span>
                     {R.assessed
                       ? 'Assessed ' +

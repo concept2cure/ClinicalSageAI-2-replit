@@ -18,6 +18,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { RELEASE_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
@@ -25,6 +26,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
 import {
   getGateway, listGateways, gatewayConfigurationStatus,
   CredentialError, GatewayError, TransportError, ValidationError,
@@ -53,9 +55,11 @@ import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services
    than better: the envelope carried a verified human signature, so the audit
    trail read as a deliberate release by a person entitled to make it. */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { acceptAs2Receipt, recordAs2Receipt } from './mdx-as2-receipt';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
+
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -73,8 +77,9 @@ function getUserId(req: Request): number | null {
 const REGION_SET   = ['fda', 'ema', 'pmda', 'ca'] as const;
 const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] as const;
 const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** §11.50: the meanings a signer may declare on this router's governed signs
- *  (transmit, technical rejection) — one list, so the two cannot drift. */
+/** §11.50: the meanings a signer may declare on a technical rejection. A
+ *  transmission takes RELEASE_ACT_MEANINGS only (2026-10-19), refused here
+ *  before the password is asked for. */
 const SIGN_MEANINGS = ['authorship', 'review', 'approval', 'responsibility', 'release'] as const;
 /** The §11 re-authentication envelope every governed write here carries. */
 const reauthEnvelope = z
@@ -139,6 +144,7 @@ router.get('/gateways', async (req: Request, res: Response) => {
       all.map((g) => ({
         ...g,
         configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
+        transportReadiness: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.transportReadiness,
         environment,
       })),
       { signing: { canSign } },
@@ -275,8 +281,8 @@ const transmitBody = z.object({
   }).optional(),
   metadata: z.record(z.unknown()).optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
-  /** §11.50: the meaning the signer declares for this transmission. */
-  meaning: z.enum(SIGN_MEANINGS),
+  /** §11.50: the meaning the signer declares for this transmission: a release act. */
+  meaning: z.enum(RELEASE_ACT_MEANINGS),
   reauth: reauthEnvelope,
 });
 
@@ -433,20 +439,49 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
     );
     if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
     const gw = getGateway(own.rows[0].region as Region, own.rows[0].gateway as GatewayName);
+    const userId = getUserId(req);
+    if (userId === null) return res.status(401).json({ error: 'Authentication required' });
     const ack = await gw.downloadAcknowledgment(id);
-    res.setHeader('Content-Type', ack.contentType);
-    // The filename carries the provenance, because a downloaded file outlives
-    // the page that served it — and the previous name, `ack-<id>.txt`, said
-    // "acknowledgement" for a document this platform wrote about itself.
-    res.setHeader('Content-Disposition', `attachment; filename="${acknowledgementFilename(ack)}"`);
     // Machine-readable for the surface, which decides what to tell the user.
     res.setHeader('X-Ack-Provenance', ack.provenance);
-    return res.send(ack.buffer);
+    if (ack.receivedAt) res.setHeader('X-Ack-Received-At', ack.receivedAt.toISOString());
+    if (ack.generatedAt) res.setHeader('X-Ack-Generated-At', ack.generatedAt.toISOString());
+    /* Recorded before it is delivered (D5): an EXPORT_GENERATED row with the
+       SHA-256 of these exact bytes, and nothing sent when it does not persist.
+       For every gateway but FDA ESG with a stored MDN this is a rendition the
+       platform composes from the transmittal row at request time, and it was
+       handed back with nothing recorded (2026-10-15 launch-boundary re-proof).
+       The filename carries the provenance, because a downloaded file outlives
+       the page that served it — and the previous name, `ack-<id>.txt`, said
+       "acknowledgement" for a document this platform wrote about itself. */
+    await sendAuditedDownload(res, {
+      organizationId: orgId,
+      userId,
+      sourceType: ack.contentType.startsWith('text/') ? 'export_txt' : 'export_stored_file',
+      backendRoute: '/api/mdx/gateways/transmittals/:id/ack',
+      resourceType: 'submission_transmittal_ack',
+      resourceId: String(id),
+      programUuid: null,
+      filename: acknowledgementFilename(ack),
+      mimeType: ack.contentType,
+      buffer: ack.buffer,
+      metadata: { provenance: ack.provenance, transmissionId: ack.transmissionId },
+    });
+    return;
   } catch (err: unknown) {
+    if (isUnauditedExportRefusal(err)) {
+      return res.status(503).json({
+        error: 'Acknowledgement not delivered',
+        detail: 'Its record could not be written, so the file was not sent. Try again.',
+      });
+    }
     if (err instanceof GatewayError) return clientError(res, 502, err.message);
     return serverError(res, log, 'ack', err);
   }
 });
+
+/* Agency receipt ingestion verifies facts already issued; it never transmits a submission. */
+router.post('/gateways/transmittals/:id/as2-receipt', requireEditorAccess, acceptAs2Receipt, recordAs2Receipt);
 
 /* POST /api/mdx/gateways/transmittals/:id/rollback was removed 2026-10-17
    (app audit, round 3). It set a transmittal the agency had received or

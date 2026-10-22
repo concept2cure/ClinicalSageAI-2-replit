@@ -1,0 +1,15 @@
+# BEFORE: the gate with this round's rules, against the compose files as the first implementer left them (scanner on the flat c2c bridge). 2026-10-18T19:55:19Z
+$ npm run ci:compose-boot-contract
+
+> concept2cure-riai@1.0.0 ci:compose-boot-contract
+> node scripts/ci/check-compose-boot-contract.mjs
+
+docker-compose.yml: service "app": scanner "clamav" is on network c2c, where optional service "tika" (profile ingestion) can reach it: give the scanner a network shared only with the app
+docker-compose.yml: service "app": scanner "clamav" is on network c2c, where optional service "grobid" (profile ingestion) can reach it: give the scanner a network shared only with the app
+docker-compose.yml: service "app": scanner "clamav" is on network c2c, where optional service "opensearch" (profile ingestion) can reach it: give the scanner a network shared only with the app
+docker-compose.yml: service "app": scanner "clamav" is on network c2c, where optional service "temporal-postgres" (profile workflow) can reach it: give the scanner a network shared only with the app
+docker-compose.yml: service "app": scanner "clamav" is on network c2c, where optional service "temporal" (profile workflow) can reach it: give the scanner a network shared only with the app
+docker-compose.yml: service "app": scanner "clamav" is on network c2c, where optional service "litellm" (profile llm) can reach it: give the scanner a network shared only with the app
+docker-compose.yml: service "app": scanner "clamav" is on network c2c, where optional service "opa" (profile llm) can reach it: give the scanner a network shared only with the app
+[ci:compose-boot-contract] 7 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (28 names, 4 excused for Compose) plus ALLOWED_ORIGINS.
+exit=1

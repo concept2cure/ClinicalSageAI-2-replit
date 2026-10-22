@@ -1,0 +1,30 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "nodeVersion": "v22.23.3",
+  "argv": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts"
+  ],
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "dateUtc": "2026-10-21",
+  "startTimeReportedByVitest": "01:13:25",
+  "durationSecondsReportedByVitest": 15.78,
+  "finishedAtExitFileTimestamp": "2026-10-21T01:13:41.484Z",
+  "exitCode": 1,
+  "summary": [
+    "Test Files  1 failed (1)",
+    "Tests  2 failed | 11 passed | 2 todo (15)"
+  ],
+  "sourcePinFile": "ambiguity-red-production.sha256",
+  "sourcePinNote": "Same verified production hashes; actual PostgreSQL COMMIT / ROLLBACK then thrown acknowledgement.",
+  "rawLog": "ingest-commit-red.raw.log.gz",
+  "rawSha256": "bb00f1929d369f67de4a793705a6ff744079a742963f393ef6ce6dbd60e90697",
+  "gzipSha256": "2b28ff78494294656a02a56e28032f95844d221624fd94e57134564a2f0a7860"
+}

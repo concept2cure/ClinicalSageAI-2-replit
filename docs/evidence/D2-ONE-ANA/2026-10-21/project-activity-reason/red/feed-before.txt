@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/__tests__/projectActivityReason.test.tsx > the Project home feed names a governed act and its reason > a market added reads as that, with its agency and the reason recorded 5074ms
+ × client/src/concept2cure/v2/__tests__/projectActivityReason.test.tsx > the Project home feed names a governed act and its reason > a row with no governed event reads as recorded 1ms
+   → activityLabel is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: activityLabel is not a function
+      Tests  2 failed (2)

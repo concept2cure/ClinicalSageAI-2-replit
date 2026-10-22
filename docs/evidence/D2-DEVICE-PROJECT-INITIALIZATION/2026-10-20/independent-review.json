@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-20T22:25:21.422532+00:00",
+  "reviewer": "/root/regional_initialization_review",
+  "mode": "Read-only code review; no tests or edits by reviewer",
+  "conclusion": "No remaining behavioral blockers in reviewed diff; final integration qualification pending",
+  "resolvedFindings": [
+    {
+      "finding": "Regional CTD fallback and numeric alias bypass",
+      "resolution": "Explicit not_applicable plus early endpoint refusal, using actual tenant-scoped project/program bridge"
+    },
+    {
+      "finding": "Added-market device type could create medicinal subtree and spine",
+      "resolution": "Requested regional and inconsistent regional home types refuse before writes"
+    },
+    {
+      "finding": "Direct core submission creation accepted preparation classes",
+      "resolution": "Shared insert refuses all8 with DEVICE_PREPARATION_ONLY/422; supported types preserved"
+    }
+  ],
+  "otherReviewed": [
+    "registry/product/agency mappings",
+    "exact binding without ICH/FDA substitution",
+    "immutable pack projection and provenance",
+    "migration reachability and replay",
+    "conservative readiness",
+    "existing UI patterns"
+  ],
+  "pinsRecordedByRootAfterReview": {
+    "server/services/c2c/add-project-market.ts": "542c54f2f8f717f1512d6e7f16dc3972f140d44e4c14784d676b01e6436e587b",
+    "server/services/submission-service/submission-service.ts": "03d097226b6417bd8658cb1842f328deaa4a213e849ade92e134014ab961146b",
+    "server/services/ectd/required-sections.ts": "644909c4526b9b51432588a35c869b2eef9edb69de755dcb71439a9182d926b4",
+    "server/routes/ectd-compile.ts": "14f9f80315954529baab340eb5fd401a2659bb551dc7326375046a48752decf6",
+    "server/services/vault/vault-coverage.ts": "833451eabb5ed6ee833733c63aa7a12a4f09803b9a8e12c68e592ffe39c50eff",
+    "shared/regulatory/filing-catalog.ts": "5f6f35c7b9144f4ba3f62088ca690152c7267d34b840699035192dcc135f26fa",
+    "server/services/c2c/document-class.ts": "10cf42b32de096c28c7154749c9319d68b421563f7239ef65978760cbf0e8bc3"
+  }
+}

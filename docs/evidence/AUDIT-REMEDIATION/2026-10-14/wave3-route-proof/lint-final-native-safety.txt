@@ -1,0 +1,11 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/SafetyNarrative.tsx
+   83:8   warning  Function 'SafetyNarrative' has too many lines (458). Maximum allowed is 100  max-lines-per-function
+   83:8   warning  Function 'SafetyNarrative' has a complexity of 67. Maximum allowed is 15     complexity
+  333:32  warning  Async arrow function has a complexity of 39. Maximum allowed is 15           complexity
+
+/workspace/ClinicalSageAI-2-replit/tests/db/wave3-critical-history.dbtest.ts
+  64:44  warning  Async arrow function has a complexity of 23. Maximum allowed is 15  complexity
+
+✖ 4 problems (0 errors, 4 warnings)
+

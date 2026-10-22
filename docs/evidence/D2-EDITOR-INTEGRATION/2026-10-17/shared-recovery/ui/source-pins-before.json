@@ -1,0 +1,18 @@
+{
+  "client/src/concept2cure/v2/AuthoringRecoveryNotice.tsx": "9408bfdf71910e94217ad47b7ecd1d9187db0c50306c721c2255911cae1f8697",
+  "client/src/concept2cure/v2/AuthoringHandoffNotice.tsx": "b24758ae02131cd2577a1f88952554d77e36ce90d03ea9f5703c29ab2e4879f4",
+  "client/src/concept2cure/v2/authoringHandoff.ts": "18a4a420f8e1c35271ed481a25431fa7fe1fe5a875bdd9db8807107da9282f30",
+  "client/src/concept2cure/v2/authoringHandoffRecovery.ts": "a5c92b1708dd175fad925a80bb6cded2a21c71a5e33074788e2f5106046fde9c",
+  "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "2cf2669791924c897ac631c36ee4266bce057b3d3d939db723b0093d037d0765",
+  "client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx": "2290313914dfeff74e4bcda8fd9cd145e41452731cfa7f16793f4140c150faec",
+  "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx": "46a0c14aa83125f876dffbdae36f44bf3439c1c2ef6c7cf29090db8f37a74f41",
+  "client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx": "13d852782f869eaaf81b2bb5ed12a88089ef3b0c9d5ecbdf307befc486d2abc7",
+  "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "d4545267f55d65f2efe049e00e6bf892a951f494acff38a08246ef2916c59daf",
+  "client/src/concept2cure/v2/surfaces/Biostatistics.tsx": "8edbcbe7623e10e5748df62b9abf43a8b813c98499eaf28b52ce677e128fee2b",
+  "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": "7f87e8e1b7bbdeeafc0c8fc4dd8444cb9ffbab4aa2aa79423f9cce246b2ead98",
+  "client/src/concept2cure/v2/surfaces/CmcQuality.tsx": "c9870e12e96506453e9157691a8155f1091239aee3bd8da61170a3c6a7fb0ea0",
+  "client/src/concept2cure/v2/surfaces/CmcModule.tsx": "93256627fc09105d2f8cb68a6537c106ba9f180ecde12b6fbe70101074686306",
+  "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx": "c86c2a6a932413be12a325344e948d0c67985839c1d38ea4992225964cb3505a",
+  "client/src/concept2cure/v2/surfaces/PvCockpit.tsx": "40361dba9e66e24e40666112ee0d78c03f0d2f33129877ed623271af9d638c0f",
+  "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts": "cd67e34b07e39f69bece55dc2c6d508546072181aa5fa865e450c34f1967a83f"
+}

@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/server/services/tenant/tenant-offboarding.ts
+  788:1  warning  File has too many lines (669). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+

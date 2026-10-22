@@ -1,0 +1,1 @@
+Cumulative patch reverse-apply dry run against the final working tree: exit 0. No files mutated.

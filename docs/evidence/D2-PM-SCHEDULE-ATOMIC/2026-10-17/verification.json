@@ -1,0 +1,43 @@
+{
+  "baseline_commit": "ad372567d29a8ad385a751dde57a397cdc20cb3f",
+  "branch": "concept2cure-v2",
+  "runtime": {
+    "node": "22.23.3",
+    "npm": "11.9.0",
+    "postgresql": "16.15"
+  },
+  "checks": {
+    "baseline_unit": {
+      "failed": 6,
+      "passed": 1
+    },
+    "baseline_native": {
+      "failed": 8,
+      "passed": 3,
+      "fixture_errors": 0
+    },
+    "candidate_unit_route_authorization": {
+      "passed": 90,
+      "files": 6
+    },
+    "candidate_native": {
+      "passed": 11
+    },
+    "production_build": "passed",
+    "cold_typecheck": "passed",
+    "final_typecheck": "passed",
+    "eslint": {
+      "errors": 0,
+      "warnings": 6
+    },
+    "db_test_isolation": "passed",
+    "companion_presence": "passed with filename warning",
+    "diff_check": "passed"
+  },
+  "build_sha256": "6c7b244ac7deb351b294d9dcf4db720a892cfe9a433b7617c79411a6802fceef",
+  "limits": [
+    "Local source implementation, not committed, pushed or deployed.",
+    "Atomic regeneration only; completed actuals and general amendment/reset/sweep serialization remain separate.",
+    "Native tests use actual creating migration and narrow parent/stage/index fixtures; not full deployed-schema or production qualification."
+  ]
+}

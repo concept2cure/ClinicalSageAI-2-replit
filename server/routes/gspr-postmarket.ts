@@ -59,6 +59,12 @@ import {
 } from '../services/gspr-postmarket/post-market-authoring';
 import { getPostMarketDocStatus } from '../services/gspr-postmarket/post-market-readiness';
 import {
+  euDeviceClassFrom,
+  euPostMarketFactsFrom,
+  euRegulationFrom,
+  loadProgrammeEuDeviceRow,
+} from '../services/gspr-postmarket/programme-eu-device-record';
+import {
   isPmcfEnrollmentStoreAbsent,
   listPmcfEnrollmentRecords,
   summariseRecords,
@@ -81,11 +87,27 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { programInOrganization } from '../services/c2c/program-access';
+import { governedActorId } from '../middleware/orgMembership';
 
 function userIdFromReq(req: Request): string | null {
   const raw = (req as any).user?.id;
   if (raw === undefined || raw === null) return null;
   return typeof raw === 'string' ? raw : String(raw);
+}
+
+/**
+ * The signed-in user a governed post-market write is attributed to, as a
+ * string, or null after answering 401. 2026-10-15: generate, PATCH, approve and
+ * supersede recorded 'system' when no user was present, so the write and its
+ * §11.10(e) row went through attributed to nobody.
+ */
+function signedInActor(req: Request, res: Response, verb: string): string | null {
+  const actorId = governedActorId(req);
+  if (actorId === null) {
+    res.status(401).json({ error: `A signed-in user is required to ${verb} a post-market document` });
+    return null;
+  }
+  return String(actorId);
 }
 
 const router = Router();
@@ -382,15 +404,22 @@ postMarketRouter.post(
     if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
     }
-    const createdBy = userIdFromReq(req) ?? 'system';
+    const createdBy = signedInActor(req, res, 'generate');
+    if (createdBy === null) return;
     try {
+      const programId = String(req.params.programId);
+      const euRow = await loadProgrammeEuDeviceRow(orgId, programId);
+      if (!euRow) return res.status(404).json({ error: 'Program not found' });
+      const regulation: 'MDR' | 'IVDR' = body.regulation ?? euRegulationFrom(euRow);
       const result = await generatePmcfPlan({
         organizationId: orgId,
-        programId: String(req.params.programId),
+        programId,
         createdBy,
         deviceName: typeof body.deviceName === 'string' ? body.deviceName : '',
-        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
-        regulation: body.regulation,
+        // The record's class, as on the sibling generate route: a drafted PMCF
+        // plan cites the class, and `body.deviceClass` was the surface's own.
+        deviceClass: euDeviceClassFrom(euRow, regulation),
+        regulation,
         relatedCerReportId,
         title: typeof body.title === 'string' ? body.title : undefined,
       });
@@ -454,25 +483,38 @@ postMarketRouter.post(
     if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
     }
-    const parseDate = (v: unknown): Date | undefined => {
-      if (v == null) return undefined;
-      const d = new Date(v as string);
-      return Number.isNaN(d.getTime()) ? undefined : d;
-    };
-    const createdBy = userIdFromReq(req) ?? 'system';
+    const createdBy = signedInActor(req, res, 'generate');
+    if (createdBy === null) return;
     try {
+      const programId = String(req.params.programId);
+      const euRow = await loadProgrammeEuDeviceRow(orgId, programId);
+      if (!euRow) return res.status(404).json({ error: 'Program not found' });
+      // The caller may say which regulation it is drafting under; otherwise the
+      // record's product type decides. It used to fall to MDR whenever the
+      // class string held no "ivd", so an IVD programme drafted an MDR-shaped
+      // PMS report — and with the class now canonical ('A'..'D') that sniff
+      // could never fire again.
+      const regulation: 'MDR' | 'IVDR' = body.regulation ?? euRegulationFrom(euRow);
       const result = await authorPostMarketDocument({
         organizationId: orgId,
-        programId: String(req.params.programId),
+        programId,
         createdBy,
         documentType,
         deviceName: typeof body.deviceName === 'string' ? body.deviceName : undefined,
-        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
-        regulation: body.regulation,
+        // The class the record states, never the caller's: a drafted PMS plan
+        // or PSUR prints the class into governed content, and `body.deviceClass`
+        // was whatever the surface happened to hold — the US class, for the CER
+        // surface. A programme that states none drafts with no class, which the
+        // builders render as "unspecified class" rather than a guess.
+        deviceClass: euDeviceClassFrom(euRow, regulation),
+        regulation,
         relatedCerReportId,
         title: typeof body.title === 'string' ? body.title : undefined,
-        reportingPeriodStart: parseDate(body.reportingPeriodStart),
-        reportingPeriodEnd: parseDate(body.reportingPeriodEnd),
+        // As declared: the engine refuses a date that is not a real ISO day, or
+        // a start not before the end (PM_BAD_INPUT, 422 below). 2026-10-15: an
+        // unparseable date was turned into "not declared" here.
+        reportingPeriodStart: body.reportingPeriodStart,
+        reportingPeriodEnd: body.reportingPeriodEnd,
       });
 
       // WO-16C #133, same shape as the pmcf-plan route above: the draft is
@@ -498,7 +540,7 @@ postMarketRouter.post(
 
       res.status(201).json({ ...result, auditTrail });
     } catch (err: any) {
-      if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE') {
+      if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE' || err?.code === 'PM_BAD_INPUT') {
         return res.status(422).json({ error: err.message });
       }
       return serverError(res, logger, 'loading coverage', err);
@@ -506,45 +548,43 @@ postMarketRouter.post(
   }
 );
 
-/**
- * An optional boolean query fact: 'true' / 'false', absent = not stated (null).
- * Any other value is refused rather than read as false.
- */
-function booleanFact(value: unknown): boolean | null | 'invalid' {
-  if (value === undefined) return null;
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  return 'invalid';
-}
-
 // Honest post-market documentation status for a program: per-type presence,
 // lifecycle status and validation-gate result, with what the device owes
 // decided by EU_POSTMARKET_OBLIGATIONS from the regulation, the class and the
 // stated implantable / customMade facts. An unstated fact is passed as unknown,
 // never as false. Not a readiness score.
+//
+// 2026-10-19: the class and those facts came in as query parameters, so the
+// obligation set was computed from whatever the caller sent — and the CER
+// surface sent `device_class`, the US 21 CFR 860 class, into an MDR
+// assessment, which answered `"class II" is not an MDR device class` for a
+// European programme whose MDR class sat unread in `eu_mdr_class`. They now
+// come from the programme record (programme-eu-device-record.ts) and from
+// nowhere else; `regulation` stays the caller's, because both reports are
+// meaningful and the record decides which class answers for it.
 postMarketRouter.get(
   '/programs/:programId/documentation-status',
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
-    const deviceClass = typeof req.query.deviceClass === 'string' ? req.query.deviceClass : null;
     const rawRegulation = req.query.regulation;
     if (rawRegulation !== undefined && rawRegulation !== 'MDR' && rawRegulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
     }
     const regulation: 'MDR' | 'IVDR' = rawRegulation === 'IVDR' ? 'IVDR' : 'MDR';
-    const implantable = booleanFact(req.query.implantable);
-    const customMade = booleanFact(req.query.customMade);
-    if (implantable === 'invalid' || customMade === 'invalid') {
-      return res.status(422).json({ error: 'implantable and customMade must be true or false when given' });
-    }
     try {
+      const programId = String(req.params.programId);
+      const row = await loadProgrammeEuDeviceRow(orgId, programId);
+      // requireProgramAccess has already established the programme is in the
+      // organization, so a missing row here is the record having gone between
+      // the two reads. Refused rather than reported as a device with no class.
+      if (!row) return res.status(404).json({ error: 'Program not found' });
       const report = await getPostMarketDocStatus(
         orgId,
-        String(req.params.programId),
-        deviceClass,
+        programId,
+        euDeviceClassFrom(row, regulation),
         regulation,
-        { implantable, customMade }
+        euPostMarketFactsFrom(row)
       );
       res.json(report);
     } catch (err: any) {
@@ -577,12 +617,11 @@ postMarketRouter.get('/documents/:documentId', async (req: Request, res: Respons
 });
 
 postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Response) => {
+  const updatedBy = signedInActor(req, res, 'edit');
+  if (updatedBy === null) return;
   const ctx = await loadDocOrFail(req, res);
   if (!ctx) return;
   try {
-    const userIdRaw = (req as any).user?.id;
-    const updatedBy =
-      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
     const updated = await updateDocument(ctx.orgId, String(req.params.documentId), req.body, updatedBy);
     if (!updated) return res.status(404).json({ error: 'Document not found' });
 
@@ -637,11 +676,10 @@ postMarketRouter.post('/documents/:documentId/validate', async (req: Request, re
 });
 
 postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res: Response) => {
+  const approvedBy = signedInActor(req, res, 'approve');
+  if (approvedBy === null) return;
   const ctx = await loadDocOrFail(req, res);
   if (!ctx) return;
-  const userIdRaw = (req as any).user?.id;
-  const approvedBy =
-    typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
   const signatureId = typeof req.body?.signatureId === 'string' ? req.body.signatureId : undefined;
   try {
     const result = await approveDocument({
@@ -706,11 +744,10 @@ postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res
 postMarketRouter.post(
   '/documents/:documentId/supersede',
   async (req: Request, res: Response) => {
+    const createdBy = signedInActor(req, res, 'supersede');
+    if (createdBy === null) return;
     const ctx = await loadDocOrFail(req, res);
     if (!ctx) return;
-    const userIdRaw = (req as any).user?.id;
-    const createdBy =
-      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
     try {
       const newDoc = await supersedeDocument(ctx.orgId, ctx.doc.id, {
         newTitle: typeof req.body?.newTitle === 'string' ? req.body.newTitle : undefined,

@@ -1,0 +1,11 @@
+{
+  "scope": "Owned frozen baseline evidence, excludes manifest itself",
+  "files": {
+    "README.md": "78b966369e624af095458c7be30939897b3c400eabb96aef4215f7e6111ebff1",
+    "baseline-command.json": "207e4a1cca4bf274ee3b3881fb6c31c76a837c76940246fa927ca4c12ac18a89",
+    "baseline-red.txt": "b01941b6d213e801580b657d238f42864bbd2364d9e1423f2f13f3298804ea66",
+    "frozen-test.json": "9bec247e1186a617dfa2b1125fda14652ce135d4c5b3a46b49d81e9fe50d0d82",
+    "lint-command.json": "2451547d00b2ac89fbc8c979752d95bc914a7ba944420f5e176c6ac56483ee91",
+    "lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

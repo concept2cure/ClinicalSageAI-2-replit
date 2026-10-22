@@ -28,7 +28,7 @@ import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { usableIdentifier } from './regulatory-identifiers';
-import { readRecordedPackageIdentity, packageIdentityRefusal, dryRunPackageIdentity } from './package-identity';
+import { readRecordedPackageIdentity, packageIdentityRefusal, dryRunPackageIdentity, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity, type RecordedPackageIdentity, type RecordedPackageIdentitySnapshot } from './package-identity';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
@@ -47,6 +47,8 @@ import {
   type AuditRowOutcome,
 } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
+import { readCompanyLegalSubmissionContext } from './company-legal-context';
+import type { FdaApplicantContact } from '../submission-gateways/ectd-packager/types';
 
 const logger = createScopedLogger('assemble-from-core');
 
@@ -58,6 +60,8 @@ interface AssembleSequenceBase {
   /** What lifecycle acts bind against; 'filed' unless a caller asks for a
    *  rehearsal (package-from-core PriorState). Transmit never does. */
   priorState?: PriorState;
+  contacts?: FdaApplicantContact[];
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
 }
 
 /**
@@ -236,6 +240,11 @@ async function assertLeafPathsSafe(
 export async function assembleSequence(params: AssembleSequenceParams): Promise<AssembleSequenceResult> {
   const { sequenceId, organizationId, userId } = params;
   const dryRun = params.dryRun === true;
+  if (!dryRun && params.recordedPackageIdentity && !sameRecordedPackageIdentitySnapshot(params.recordedPackageIdentity, params.recordedPackageIdentity)) {
+    throw new Error('The captured package identity is malformed. Nothing was assembled.');
+  }
+  const capturedIdentity = !dryRun && params.recordedPackageIdentity
+    ? recordedPackageIdentitySnapshot(params.recordedPackageIdentity.identity) : undefined;
   const identity = params.dryRun === true
     ? dryRunPackageIdentity(sequenceId, organizationId)
     : { applicationId: params.applicationId, sponsorId: params.sponsorId, sponsorName: params.sponsorName };
@@ -288,6 +297,8 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     })),
     organizationId,
     stageDir,
+    legalTarget: leaves.some(leaf => leaf.documentTable === 'vault_documents' && leaf.lifecycleOp !== 'delete')
+      ? await readCompanyLegalSubmissionContext(queryableFromDrizzle(db), organizationId, sequenceId) : undefined,
   });
 
   // 2b. Path-safety gate (fail-closed): every staged leaf file must be a real,
@@ -319,6 +330,8 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     applicationId: identity.applicationId,
     sponsorId: identity.sponsorId,
     sponsorName: identity.sponsorName,
+    contacts: dryRun ? undefined : params.contacts,
+    recordedPackageIdentity: capturedIdentity,
     resolveFile,
     emitUnzipped: params.emitUnzipped,
     priorState: params.priorState,
@@ -457,19 +470,10 @@ export interface AssembleSubmissionParams {
    */
   applicationNumber?: string;
   /**
-   * Recorded applicant identity (DUNS / EMA org id / PMDA applicant id, and the
-   * applicant's legal name). These are not internal handles: the packager
-   * writes them into the regional Module 1 backbone as <id> / <company-id> and
-   * <name> / <company-name>, and the application number also becomes part of
-   * the package filename.
-   *
-   * They were previously synthesized as `ORG-<orgId>` and `Organization <orgId>`
-   * with no caller-supplied path at all, so a sequence assembled without
-   * explicit identifiers shipped `<name>Organization 7</name>` to the agency —
-   * a string that reads as a real applicant rather than as a gap. Absent
-   * values now follow the repo's stated rule (regulatory-identifiers.ts: "never
-   * fabricate … build with values that SAY they are unassigned") and the wording
-   * already used on the transmit path in submission-ops.
+   * A stated regional applicant ID. FDA uses the bound sponsor's recorded DUNS
+   * and refuses a contradictory supplied value. Other regions may retain their
+   * own usable identifier; missing values stay empty rather than being guessed
+   * from a DUNS or internal handle.
    */
   applicantId?: string;
   /**
@@ -517,13 +521,7 @@ export interface AssembleSubmissionResult {
   // `missingStylesheets` travels with `missing`: selfContained is false when
   // EITHER is non-empty, so a consumer that reads only `missing` cannot say
   // which files are absent (see SubmissionBundle['dtdStatus']).
-  dtdStatus?: {
-    required: string[];
-    present: string[];
-    missing: string[];
-    missingStylesheets?: string[];
-    selfContained: boolean;
-  };
+  dtdStatus?: import('../submission-gateways/types').SubmissionBundle['dtdStatus'];
   stats: {
     totalModules: number;
     totalGranules: number;
@@ -536,7 +534,8 @@ export interface AssembleSubmissionResult {
 /**
  * The application and the applicant a submission's package names, from the
  * record only (package-identity.ts): the project's recorded agency number and
- * the organisation's recorded name. With either missing the package is refused
+ * the explicitly bound applicant's recorded name (the organization for an
+ * unbound legacy non-FDA read). With either missing the package is refused
  * by name (PackageIdentityMissingError) — never built with a placeholder, and
  * never with the program code as the number. A caller-supplied number must be
  * usable and must equal the recorded one.
@@ -551,7 +550,9 @@ async function exportIdentity(
   submission: { programId: string | null },
   organizationId: number,
   supplied: string | undefined,
-): Promise<{ applicationId: string; applicantName: string }> {
+  fda: boolean,
+  suppliedApplicantId?: string,
+): Promise<{ identity: RecordedPackageIdentity; sponsorId: string }> {
   const usable = supplied === undefined ? undefined : usableIdentifier('applicationNumber', supplied);
   if (usable === null) {
     throw new Error(
@@ -560,7 +561,7 @@ async function exportIdentity(
     );
   }
   const identity = await readRecordedPackageIdentity(queryableFromDrizzle(db), organizationId, submission.programId);
-  const refusal = packageIdentityRefusal(identity, 'Nothing was built.');
+  const refusal = packageIdentityRefusal(identity, 'Nothing was built.', { fda });
   if (refusal) throw refusal;
   const recorded = identity.applicationNumber as string;
   if (usable !== undefined && usable !== recorded) {
@@ -569,7 +570,12 @@ async function exportIdentity(
         'The record is authoritative; omit the number to package as recorded.',
     );
   }
-  return { applicationId: recorded, applicantName: identity.applicantName as string };
+  const applicantId = suppliedApplicantId === undefined ? undefined : usableIdentifier('applicantId', suppliedApplicantId);
+  if (applicantId === null) throw new Error('The supplied applicant id is not usable. Nothing was built.');
+  if (fda && applicantId !== undefined && applicantId !== identity.applicantId) {
+    throw new Error('The supplied applicant id does not match the recorded sponsor D-U-N-S number. Nothing was built.');
+  }
+  return { identity, sponsorId: fda ? identity.applicantId as string : applicantId ?? '' };
 }
 
 /**
@@ -642,18 +648,19 @@ export async function assembleSubmissionEctd(
     }
   }
 
-  // The application and the applicant come from the record, or nothing is built.
-  const { applicationId, applicantName } = await exportIdentity(submission, organizationId, params.applicationNumber);
-
+  // The explicit applicant record is authoritative for FDA; a request cannot
+  // silently replace its DUNS or contact. Other regions retain their own ID
+  // contract and never receive the sponsor's DUNS as an EMA/PMDA identifier.
+  const fda = toPackagerRegion(sequence.region) === 'fda';
+  const { identity, sponsorId } = await exportIdentity(submission, organizationId, params.applicationNumber, fda, params.applicantId);
   const assembled = await assembleSequence({
     sequenceId: sequence.id,
     organizationId,
     userId,
-    applicationId,
-    // The applicant's <id> (D-U-N-S) has no recorded home on this path yet; an
-    // absent one still says it is unassigned (package-identity.ts header).
-    sponsorId: params.applicantId ?? `UNASSIGNED-ORG-${organizationId}`,
-    sponsorName: applicantName,
+    applicationId: identity.applicationNumber as string,
+    sponsorId,
+    sponsorName: identity.applicantName as string,
+    ...(fda ? { contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
     priorState: params.priorState,
   });
 

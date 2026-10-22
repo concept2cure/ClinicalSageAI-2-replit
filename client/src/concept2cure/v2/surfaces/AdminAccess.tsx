@@ -1,14 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { ceremonyOpen } from '../ceremony';
+import { isApiRequestError } from '../apiCall';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
+import { CompanyDocumentSettings } from './CompanyDocumentSettings';
 import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
 import { AdminApiKeyCreate } from './AdminApiKeyCreate';
 import { AdminApiKeyUsage } from './AdminApiKeyUsage';
@@ -105,7 +107,7 @@ function formatWhen(iso: string): string {
 // + a trailing Action column for the explicit Revoke control.
 const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px 90px';
 
-export function AdminAccess({ onAsk }: SurfaceViewProps) {
+export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
   /* Fixture-free read: adopt the org's REAL admin estate from GET
      /api/mdx/admin (org-scoped, org-admin gated). A failed fetch (network,
      401/403, 500) is an honest error; a successful load with no members is an
@@ -163,10 +165,12 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       fireToast(`API key "${k.name}" revoked — the revocation is in the audit trail.`);
       setAdminEpoch((n) => n + 1);
     } catch (e) {
-      fireToast(
-        'Key not revoked — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing changed.',
-        'error',
-      );
+      const code = isApiRequestError(e) ? (e.payload as { code?: unknown } | null)?.code : undefined;
+      const unconfirmed = !isApiRequestError(e) || code === 'API_KEY_COMMIT_UNCONFIRMED';
+      fireToast(unconfirmed
+        ? 'The revocation could not be confirmed. Check the key list before trying again.'
+        : e instanceof Error ? e.message : 'The revocation was refused.', 'error');
+      reload();
     }
   };
 
@@ -229,8 +233,9 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
   };
 
   const [tab, setTab] = useState<TabId>('members');
+  useEffect(() => { setCreatingKey(false); }, [tab]);
   const [selected, setSelected] = useState<string>('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState('all');
 
   // Every list comes straight from the live payload (an empty array until it
@@ -684,6 +689,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
               {/* Its own read and its own door, for the owner or an administrator (P1-47), so it is
                   shown whether or not the settings above could be read. */}
               <ClaudeConnectorSetting />
+              <CompanyDocumentSettings onNav={onNav} />
             </section>
           )}
 

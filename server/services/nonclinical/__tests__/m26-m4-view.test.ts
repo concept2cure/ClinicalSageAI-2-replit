@@ -103,7 +103,7 @@ describe('assembleNonclinicalSummary — SEND rollup', () => {
       study({ studyNumber: 'GT-1', studyType: 'genotoxicity' }),
     ]);
     expect(v.send.inScope).toBe(2); // repeat_dose_tox + carcinogenicity, not genotox
-    expect(v.send.validated).toBe(1); // only the passing repeat-dose study
+    expect(v.send.declaredPassed).toBe(1); // only the declared-passing repeat-dose study
     expect(v.send.missingDomains).toContain('EX'); // carcinogenicity is missing several
     expect(['medium', 'high']).toContain(v.send.risk);
   });
@@ -112,7 +112,7 @@ describe('assembleNonclinicalSummary — SEND rollup', () => {
     const v = assembleNonclinicalSummary([study({ studyType: 'genotoxicity' })]);
     expect(v.send.inScope).toBe(0);
     expect(v.send.risk).toBe('none');
-    expect(v.send.validated).toBe(0);
+    expect(v.send.declaredPassed).toBe(0);
   });
 
   it('treats a study with no SEND dataset as not-validated (fail safe)', () => {
@@ -120,7 +120,7 @@ describe('assembleNonclinicalSummary — SEND rollup', () => {
       study({ studyType: 'repeat_dose_tox', send: null }),
     ]);
     expect(v.send.inScope).toBe(1);
-    expect(v.send.validated).toBe(0);
+    expect(v.send.declaredPassed).toBe(0);
     expect(v.send.risk).not.toBe('low');
   });
 });

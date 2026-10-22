@@ -1,0 +1,181 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 1 explicitly omitted matches without declaring a miss 7ms
+   → expected 'empty' to be 'omitted' // Object.is equality
+ × tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 2 explicitly omitted matches without declaring a miss 1ms
+   → expected 'empty' to be 'omitted' // Object.is equality
+ × tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 9007199254740991 explicitly omitted matches without declaring a miss 1ms
+   → expected 'empty' to be 'omitted' // Object.is equality
+ × tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > uses the structured omission count even when the response gives no explanatory prose 3ms
+   → expected { kind: 'empty' } to deeply equal { kind: 'omitted' }
+ × tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > keeps an omitted response detail bounded like existing shortfall details 1ms
+   → expected 'empty' to be 'omitted' // Object.is equality
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages 0 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages -1 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages 1.5 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages "2" 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages true 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages 9007199254740992 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than "true" 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than 1 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than {} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than "not a list" 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > does not apply a passage-specific omission count to an unrelated empty lookup 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a genuine passage miss empty with its existing classification 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not reinterpret an existing refusal as omitted matches: {"error":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not reinterpret an existing refusal as omitted matches: {"refused":true,"reason":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not reinterpret an existing refusal as omitted matches: {"ok":false,"code":"PASSAGE_RESULT_TOO_LARGE","resultOmitted":true} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'unavailable' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'lookup_failed' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'needs_parameters' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'not_found' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves an unavailable flag over omission metadata 0ms
+ × tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not turn an old indexing-failure diagnostic into a whole-search outage after known matches 2ms
+   → expected { kind: 'unavailable', …(1) } to deeply equal { kind: 'omitted', …(1) }
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > keeps the existing detail-only outage heuristic without a valid omission count: undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > keeps the existing detail-only outage heuristic without a valid omission count: 0 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > keeps the existing detail-only outage heuristic without a valid omission count: 1.5 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records an omitted-only shortfall: {"passages":[{"documentId":"source-1","locator":"p.3"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records an omitted-only shortfall: {"records":[{"id":"record-1"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records an omitted-only shortfall: {"molecules":[{"chemblId":"CHEMBL25"}]} 0ms
+ × tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > names omitted matches and guides narrowing/reading without saying nothing matched 1ms
+   → expected '[Adaptation note] 1 of 1 tool call th…' to match /omitted/i
+ × tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > keeps a mixed round truthful about omission, a real miss and returned records 0ms
+   → expected '[Adaptation note] 2 of 3 tool calls t…' to match /omitted/i
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > keeps the previous note byte-identical when no omitted shortfall exists 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > does not add omission guidance for a failed/stopped/held step: {"status":"error"} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > does not add omission guidance for a failed/stopped/held step: {"status":"stopped"} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > does not add omission guidance for a failed/stopped/held step: {"heldBack":true} 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 1 explicitly omitted matches without declaring a miss
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 2 explicitly omitted matches without declaring a miss
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 9007199254740991 explicitly omitted matches without declaring a miss
+AssertionError: expected 'empty' to be 'omitted' // Object.is equality
+
+Expected: "omitted"
+Received: "empty"
+
+ ❯ tests/services/tool-outcome-passage-omission.test.ts:17:26
+     15|   it.each([1, 2, Number.MAX_SAFE_INTEGER])('recognizes %s explicitly o…
+     16|     const result = shortfallOf(omitted({ omittedPassages: count }));
+     17|     expect(result?.kind).toBe('omitted');
+       |                          ^
+     18|     expect(result?.detail).toBe(MESSAGE);
+     19|     expect(result?.kind).not.toBe('empty');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > uses the structured omission count even when the response gives no explanatory prose
+AssertionError: expected { kind: 'empty' } to deeply equal { kind: 'omitted' }
+
+- Expected
++ Received
+
+  {
+-   "kind": "omitted",
++   "kind": "empty",
+  }
+
+ ❯ tests/services/tool-outcome-passage-omission.test.ts:23:79
+     21|
+     22|   it('uses the structured omission count even when the response gives …
+     23|     expect(shortfallOf(json({ ok: true, passages: [], omittedPassages:…
+       |                                                                               ^
+     24|   });
+     25|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > keeps an omitted response detail bounded like existing shortfall details
+AssertionError: expected 'empty' to be 'omitted' // Object.is equality
+
+Expected: "omitted"
+Received: "empty"
+
+ ❯ tests/services/tool-outcome-passage-omission.test.ts:29:26
+     27|     const message = `${MESSAGE} ${'Use the source record. '.repeat(30)…
+     28|     const result = shortfallOf(omitted({ message }));
+     29|     expect(result?.kind).toBe('omitted');
+       |                          ^
+     30|     expect(result?.detail).toBeDefined();
+     31|     expect(result!.detail!.length).toBeLessThanOrEqual(160);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not turn an old indexing-failure diagnostic into a whole-search outage after known matches
+AssertionError: expected { kind: 'unavailable', …(1) } to deeply equal { kind: 'omitted', …(1) }
+
+- Expected
++ Received
+
+  {
+    "detail": "Matching passages existed but were omitted because complete source locators did not fit. One document previously failed to index (API unavailable).",
+-   "kind": "omitted",
++   "kind": "unavailable",
+  }
+
+ ❯ tests/services/tool-outcome-passage-omission.test.ts:85:47
+     83|   it('does not turn an old indexing-failure diagnostic into a whole-se…
+     84|     const message = `${MESSAGE} One document previously failed to inde…
+     85|     expect(shortfallOf(omitted({ message }))).toEqual({
+       |                                               ^
+     86|       kind: 'omitted', detail: message,
+     87|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > names omitted matches and guides narrowing/reading without saying nothing matched
+AssertionError: expected '[Adaptation note] 1 of 1 tool call th…' to match /omitted/i
+
+- Expected:
+/omitted/i
+
++ Received:
+"[Adaptation note] 1 of 1 tool call this round returned nothing usable: Searched Vault passages — returned no results. Do not present what these did not return as found: vary the input or try another source, ask the person for what is missing, or say plainly what could not be found."
+
+ ❯ tests/services/tool-outcome-passage-omission.test.ts:110:18
+    108|     expect(note).toContain('[Adaptation note]');
+    109|     expect(note).toContain('Searched Vault passages');
+    110|     expect(note).toMatch(/omitted/i);
+       |                  ^
+    111|     expect(note).toMatch(/match(?:es|ing)/i);
+    112|     expect(note).toMatch(/narrow/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > keeps a mixed round truthful about omission, a real miss and returned records
+AssertionError: expected '[Adaptation note] 2 of 3 tool calls t…' to match /omitted/i
+
+- Expected:
+/omitted/i
+
++ Received:
+"[Adaptation note] 2 of 3 tool calls this round returned nothing usable: Vault passages — returned no results; Literature lookup — returned no results. Do not present what these did not return as found: vary the input or try another source, ask the person for what is missing, or say plainly what could not be found."
+
+ ❯ tests/services/tool-outcome-passage-omission.test.ts:126:18
+    124|     ], 3);
+    125|     expect(note).toContain('Vault passages');
+    126|     expect(note).toMatch(/omitted/i);
+       |                  ^
+    127|     expect(note).not.toContain('Vault passages — returned no results');
+    128|     expect(note).toContain('Literature lookup — returned no results');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 38 passed (46)
+   Start at  23:40:24
+   Duration  464ms (transform 138ms, setup 80ms, import 93ms, tests 23ms, environment 0ms)
+

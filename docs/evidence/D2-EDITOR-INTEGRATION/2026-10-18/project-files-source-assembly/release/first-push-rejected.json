@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-20T19:44:30.671657+00:00",
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "localCommit": "63374d786f8c2ab3590ec278785c62831b1907e6",
+  "exitCode": 1,
+  "pushCompleted": false,
+  "blockingGate": "audit:repo-health:ceiling",
+  "reason": "One group of byte-identical code fixtures: the new packet probe duplicated the retained saved-source fixture. The gate refused publication before the ref update.",
+  "duplicateFiles": {
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b"
+  },
+  "capturedGateExcerpt": "Repo health strict gate failed: 1 group(s) of byte-identical files (2 files). One copy will get the next fix and the others will not. Delete the redundant copies, or extract the shared module.",
+  "qualification": "This records the observed exit and blocking report, not a reconstructed complete stdout transcript. Earlier contract/migration/security gates passed; later push gates had not yet run.",
+  "remedy": "Reuse the existing retained probe through the new fixture entrypoint, explicitly bind this packet mock API, pin the shared dependency, requalify the browser packet, then retry normal gates without changing a baseline."
+}

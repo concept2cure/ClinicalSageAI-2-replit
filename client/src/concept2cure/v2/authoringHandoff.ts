@@ -1,11 +1,13 @@
 /** The canonical specialist-to-editor writer. Receipts, project visits and
  * signed-in account scope are confirmed before content or navigation proceeds. */
-import { useCallback, useEffect, useRef } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
 import { unboundNotice } from './governanceNotice';
 import { captureShellProjectGuard, shellProgramId } from './shellProject';
 import { setEditorTarget } from './editorTarget';
+import { useAuthoringHandoffController } from './authoringHandoffRecovery';
+import { hasAuthoringCreationOutcome, readAuthoringCreationRecovery, type AuthoringCreationRecoveryIdentity } from './editor/authoringCreationRecovery';
+export type { AuthoringHandoffController, AuthoringHandoffRecoveryState } from './authoringHandoffRecovery';
 
 export interface AuthoringHandoff {
   title: string;
@@ -16,18 +18,18 @@ export interface AuthoringHandoff {
   content: string;
   subject: string;
 }
-interface HandoffContext {
+export interface HandoffContext {
   programId: string | null;
   code: string;
   isCurrent: () => boolean;
 }
 export type AuthoringHandoffResult = HandoffContext & (
-  | { ok: true; docId: string; programId: string; bound: boolean | null; message: string }
-  | { ok: false; phase: 'refused' | 'unknown' | 'partial' | 'stale'; docId?: string; message: string }
+  | { ok: true; docId: string; programId: string; bound: boolean | null; message: string; reused?: boolean }
+  | { ok: false; phase: 'refused' | 'unknown' | 'partial' | 'stale' | 'blocked'; docId?: string; message: string }
 );
 type StageResult =
   | { phase: 'confirmed'; body: Record<string, unknown>; row: Record<string, unknown> }
-  | { phase: 'refused' | 'unknown' | 'stale'; message?: string };
+  | { phase: 'refused' | 'unknown' | 'stale'; message?: string; recovery?: AuthoringCreationRecoveryIdentity };
 const nonempty = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
 const record = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -57,16 +59,26 @@ async function writeHandoffStage(kind: 'document' | 'section', request: Record<s
     if (!current()) return { phase: 'stale' };
     const body: unknown = await response.json().catch(() => null);
     if (!current()) return { phase: 'stale' };
+    if (kind === 'document' && hasAuthoringCreationOutcome(body)) return recoveryStage(body, request);
     if (!response.ok) return { phase: response.status >= 400 && response.status < 500 ? 'refused' : 'unknown', message: response.status === 401 ? 'your session isn’t authenticated' : serverMessage(body) ?? undefined };
     return confirmedStage(kind, body, request);
   } catch (error) {
     if (!current()) return { phase: 'stale' };
+    if (kind === 'document' && error instanceof ApiRequestError && hasAuthoringCreationOutcome(error.payload)) return recoveryStage(error.payload, request);
     return error instanceof ApiRequestError && error.status >= 400 && error.status < 500
       ? { phase: 'refused', message: redactInternals(error.message, 'The server refused this write.') } : { phase: 'unknown' };
   }
 }
 
+function recoveryStage(body: unknown, request: Record<string, unknown>): StageResult {
+  const recovery = readAuthoringCreationRecovery(body, authService.getUser()?.organizationId,
+    typeof request.client_program_id === 'string' ? request.client_program_id : null);
+  return { phase: 'unknown', ...(recovery ? { recovery } : {}) };
+}
+
 function failedHandoff(context: HandoffContext, result: Exclude<StageResult, { phase: 'confirmed' }>, subject: string, docId?: string): AuthoringHandoffResult {
+  if (result.recovery && !docId) return { ...context, ok: false, phase: 'unknown', docId: result.recovery.documentId,
+    message: `Document ${result.recovery.documentId}: ${result.recovery.creationOutcome === 'committed' ? 'creation committed, but its current handoff could not be confirmed' : 'creation outcome is unconfirmed'}. Check this exact document in its original project before continuing. Do not retry creation; ${subject} is still here.` };
   const known = docId ? `Document ${docId} was created, but its text` : 'The document';
   if (result.phase === 'stale') return { ...context, ok: false, phase: 'stale', ...(docId ? { docId } : {}),
     message: 'The project or signed-in account changed while the handoff was running. Check working documents in the original project before creating another copy.' };
@@ -106,11 +118,19 @@ export async function saveToAuthoring(h: AuthoringHandoff, mounted: () => boolea
     message: `Saved to the authoring store as “${h.title}” — open Document authoring to edit it.` + unboundNotice(created.body.governance) };
 }
 
-/** Mount ownership only; the existing writer owns all requests and receipts. */
+/** Explicit continuation into an already confirmed document; callers verify
+ * its current project membership and section inventory before invoking it. */
+async function continueAuthoringText(h: AuthoringHandoff, context: HandoffContext, docId: string): Promise<AuthoringHandoffResult> {
+  if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject, docId);
+  const saved = await writeHandoffStage('section', { doc_id: docId, code: h.code, title: h.title, content: h.content }, context.isCurrent);
+  if (saved.phase !== 'confirmed') return failedHandoff(context, saved, h.subject, docId);
+  return { ...context, ok: true, programId: context.programId!, docId, bound: null,
+    message: `Text saved to the existing working document “${h.title}”. Filing binding was not rechecked.` };
+}
+
+/** All specialist actions in this mounted owner share one attempt lane. */
 export function useAuthoringHandoff() {
-  const alive = useRef(true);
-  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  return useCallback((input: AuthoringHandoff) => saveToAuthoring(input, () => alive.current), []);
+  return useAuthoringHandoffController({ save: saveToAuthoring, capture: captureHandoffContext, continueText: continueAuthoringText });
 }
 
 /** Use the existing exact-target channel; a stale receipt never changes it. */
@@ -127,12 +147,12 @@ import type { AuthoringSourceImportData, AuthoringSourceImportPreviewData, Workf
 export function isWorkflowSource(source: unknown): source is WorkflowImportSource {
   if (!source || typeof source !== 'object') return false;
   const kind = (source as { kind?: unknown }).kind;
-  return kind === 'protocol' || kind === 'csr';
+  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document';
 }
 
 /** Stable selection identity; ordering does not change a CSR selection. */
 export function workflowSourceKey(source: WorkflowImportSource): string {
-  if (source.kind === 'protocol') return `protocol:${source.documentId}`;
+  if (source.kind !== 'csr') return `${source.kind}:${source.documentId}`;
   if (source.sectionNumbers !== undefined && (!Array.isArray(source.sectionNumbers) || !source.sectionNumbers.every(s => typeof s === 'string'))) return 'invalid-selection';
   return `csr:${source.jobId}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
 }
@@ -154,7 +174,7 @@ function matchingWorkflowTarget(origin: WorkflowImportOrigin, programId: string,
 }
 export function workflowOriginMatches(origin: WorkflowImportOrigin | undefined, programId: string, source: WorkflowImportSource | undefined): boolean {
   if (!origin || !isWorkflowSource(source) || !matchingWorkflowTarget(origin, programId, source)) return false;
-  const id = source.kind === 'protocol' ? source.documentId : source.jobId;
+  const id = source.kind === 'csr' ? source.jobId : source.documentId;
   if (String(origin.id) !== String(id) || !isWorkflowSource(origin.selection) || origin.selection.kind !== source.kind) return false;
   if (workflowSourceKey(origin.selection) !== workflowSourceKey(source)) return false;
   return typeof origin.title === 'string' && Array.isArray(origin.sectionOrigins) && origin.sectionOrigins.length > 0

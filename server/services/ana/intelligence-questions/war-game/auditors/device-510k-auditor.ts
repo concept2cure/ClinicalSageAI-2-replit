@@ -70,7 +70,7 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'Device Classification Not Specified',
     question:
-      'Under 21 CFR 807.87(b), the submitter must state the classification of the device (Class I, II, or III). Has the device class been declared?',
+      'Under 21 CFR 807.87(c), the submitter must state the class in which the device has been put under section 513 of the FD&C Act (Class I, II, or III) and, if known, its classification panel, or, if the device has not been classified, a statement of that fact. Has the device class been declared?',
     check: (a) => {
       if (isBlank(a.device_class)) {
         return {
@@ -79,11 +79,11 @@ const rules: AuditRule[] = [
           severity: 'critical',
           title: 'Device Classification Not Specified',
           question:
-            'Under 21 CFR 807.87(b), the submitter must state the classification of the device (Class I, II, or III). Has the device class been declared?',
+            'Under 21 CFR 807.87(c), the submitter must state the class in which the device has been put under section 513 of the FD&C Act (Class I, II, or III) and, if known, its classification panel, or, if the device has not been classified, a statement of that fact. Has the device class been declared?',
           observation: 'The device classification (Class I, II, or III) was not specified.',
           requirement:
-            'The 510(k) must identify the device classification per 21 CFR 807.87(b). Most 510(k)-eligible devices are Class II.',
-          reference: '21 CFR 807.87(b); 21 CFR Part 860 — Medical Device Classification Procedures',
+            'The 510(k) must identify the device classification per 21 CFR 807.87(c). Most 510(k)-eligible devices are Class II.',
+          reference: '21 CFR 807.87(c); 21 CFR Part 860 — Medical Device Classification Procedures',
           recommendation:
             'State the device class explicitly and confirm it is consistent with the product code and regulation number cited.',
           relatedFields: ['device_class', 'product_code', 'regulation_number'],
@@ -112,7 +112,7 @@ const rules: AuditRule[] = [
           observation: 'No product code was supplied for the device.',
           requirement:
             'The product code must be provided and must match the classification regulation cited. FDA relies on this code to route the submission to the correct review division.',
-          reference: '21 CFR 807.87(b); FDA Product Classification Database',
+          reference: '21 CFR 807.87(c); FDA Product Classification Database',
           recommendation:
             'Look up the appropriate product code in the FDA Product Classification Database and include it. Verify the product code corresponds to the regulation number and device class stated.',
           relatedFields: ['product_code', 'regulation_number', 'device_class'],
@@ -142,7 +142,7 @@ const rules: AuditRule[] = [
             'The 21 CFR classification regulation number was not provided.',
           requirement:
             'The 510(k) must cite the specific classification regulation number (e.g., 21 CFR 878.4200) that governs the device. This determines the regulatory requirements and any special controls that apply.',
-          reference: '21 CFR 807.87(b); 21 CFR Parts 862-892',
+          reference: '21 CFR 807.87(c); 21 CFR Parts 862-892',
           recommendation:
             'Identify the correct 21 CFR classification regulation number. Cross-reference with the product code to ensure consistency. If special controls apply, confirm they have been addressed.',
           relatedFields: ['regulation_number', 'product_code', 'device_class'],
@@ -451,7 +451,7 @@ const rules: AuditRule[] = [
           requirement:
             'Biocompatibility must be evaluated per ISO 10993-1 based on the nature and duration of body contact. Endpoints may include cytotoxicity, sensitization, irritation, systemic toxicity, and others depending on contact category.',
           reference:
-            'ISO 10993-1:2018; FDA Guidance: Use of International Standard ISO 10993-1 — Biological Evaluation of Medical Devices (2020)',
+            'ISO 10993-1:2018; FDA Guidance: Use of International Standard ISO 10993-1 — Biological Evaluation of Medical Devices (September 2023)',
           recommendation:
             'Perform a biocompatibility risk assessment per ISO 10993-1. Identify the body contact type (surface, external communicating, or implant) and duration (limited, prolonged, or permanent). Conduct required biological evaluations or justify use of existing data.',
           relatedFields: ['biocompatibility_testing', 'materials_of_construction'],
@@ -531,7 +531,7 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Cybersecurity Considerations Not Addressed',
     question:
-      'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (2023), devices with software or network connectivity must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management. Has cybersecurity applicability been determined?',
+      'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (June 2025), a cyber device must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management, and connected devices with software should be assessed against that definition. Has cybersecurity applicability been determined?',
     check: (a) => {
       if (isBlank(a.cybersecurity_applicable)) {
         return {
@@ -540,13 +540,13 @@ const rules: AuditRule[] = [
           severity: 'warning',
           title: 'Cybersecurity Considerations Not Addressed',
           question:
-            'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (2023), devices with software or network connectivity must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management. Has cybersecurity applicability been determined?',
+            'Per Section 524B of the FD&C Act and FDA Guidance on Cybersecurity in Medical Devices (June 2025), a cyber device must address cybersecurity risks including an SBOM, threat modeling, and vulnerability management, and connected devices with software should be assessed against that definition. Has cybersecurity applicability been determined?',
           observation:
             'No determination was made regarding the applicability of cybersecurity requirements. Since Section 524B of the FD&C Act, cybersecurity documentation is required for cyber devices.',
           requirement:
-            'If the device is a "cyber device" (contains software, connects to the internet, or has cybersecurity vulnerabilities), the submitter must include a cybersecurity management plan, SBOM (Software Bill of Materials), and vulnerability assessment.',
+            'If the device is a "cyber device" under FD&C Act section 524B(c) (it includes software validated, installed or authorized by the sponsor as a device or in a device, AND has the ability to connect to the internet, AND contains technological characteristics that could be vulnerable to cybersecurity threats), the submitter must include a cybersecurity management plan, SBOM (Software Bill of Materials), and vulnerability assessment.',
           reference:
-            'FD&C Act Section 524B; FDA Guidance: Cybersecurity in Medical Devices — Quality System Considerations and Content of Premarket Submissions (2023)',
+            'FD&C Act Section 524B; FDA Guidance: Cybersecurity in Medical Devices — Quality System Considerations and Content of Premarket Submissions (June 2025)',
           recommendation:
             'Determine whether the device meets the definition of a "cyber device." If so, provide: (1) cybersecurity risk assessment; (2) SBOM; (3) vulnerability management plan; (4) patch/update mechanisms; (5) evidence of secure design principles.',
           relatedFields: ['cybersecurity_applicable', FDA_DOCUMENTATION_LEVEL_FACT, 'emr_compatibility'],

@@ -5,6 +5,7 @@ import { SourceImportDialog, sourceImportUnavailableReason } from './SourceImpor
 import { I } from '../icons';
 import { parseProjectSourcePage, projectSourceCatalogUrl, type ProjectSourcePage, type ProjectSourceRecord } from './projectSourceCatalog';
 import { sourceHasGroundingText, sourceReadView } from '@shared/data-room-processing-status';
+import { SourceAssemblyAction, sourceAssemblyUnavailableReason } from './SourceAssemblyDialog';
 
 type SourceRow = ProjectSourceRecord;
 type SourcesPage = ProjectSourcePage;
@@ -14,11 +15,14 @@ function sourceReadLabel(source: SourceRow): string {
   return sourceReadView(source, 'Readable').label;
 }
 
-function SourceRowActions({ source, statusId, onPull, onAsk }: {
-  source: SourceRow; statusId: string; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void;
+function SourceRowActions({ source, statusId, onPull, onAsk, onNav, programId }: {
+  programId: string; source: SourceRow; statusId: string; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
 }) {
   const unavailable = sourceImportUnavailableReason(source);
   return <div className="pf-actions">
+    <SourceAssemblyAction programId={programId} onNav={onNav} titles={[source.title || `Source ${source.id}`]}
+      sources={[{ kind: 'data-room', sourceId: source.id, ...(source.checksum ? { expectedChecksum: source.checksum } : {}) }]}
+      unavailable={sourceAssemblyUnavailableReason(source) ?? (!sourceHasGroundingText(source) ? 'This source has no confirmed readable text for a build.' : null)} />
     <button type="button" className="btn ghost" disabled={Boolean(unavailable)} aria-describedby={statusId}
       title={unavailable ?? undefined} onClick={() => onPull(source)}>{I.penLine} Work on document</button>
     {onAsk && <button type="button" className="btn ghost" disabled={!sourceHasGroundingText(source)}
@@ -28,8 +32,8 @@ function SourceRowActions({ source, statusId, onPull, onAsk }: {
   </div>;
 }
 
-function SourceEntry({ source, term, onPull, onAsk }: {
-  source: SourceRow; term: string; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void;
+function SourceEntry({ source, term, onPull, onAsk, programId, onNav }: {
+  programId: string; source: SourceRow; term: string; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
 }) {
   const statusId = useId();
   return <details className="pf-sel pf-library-entry">
@@ -41,7 +45,7 @@ function SourceEntry({ source, term, onPull, onAsk }: {
       {sourceReadView(source, 'Readable').detail && <p className="pf-sel-m">{sourceReadView(source, 'Readable').detail}</p>}
       <SourceCatalogLine catalog={source.catalog} className="pf-sel-m" />
       <SourceSnippet show={Boolean(term)} text={source.snippet} className="pf-sel-m" />
-      <SourceRowActions source={source} statusId={statusId} onPull={onPull} onAsk={onAsk} />
+      <SourceRowActions source={source} statusId={statusId} onPull={onPull} onAsk={onAsk} programId={programId} onNav={onNav} />
     </div>
   </details>;
 }
@@ -61,7 +65,8 @@ function SourcePagination({ offset, truncated, onPage }: { offset: number; trunc
   </div>;
 }
 
-function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull, onAsk }: {
+function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull, onAsk, programId, onNav }: {
+  programId: string; onNav?: (id: string) => void;
   state: DataState<SourcesPage>; offset: number; term: string; onRetry: () => void; onPage: (offset: number) => void;
   onClear: () => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void;
 }) {
@@ -71,21 +76,21 @@ function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull,
   return <>
     {typeof state.data?.total === 'number' && <p className="pf-count" role="status">{state.data.total} matching sources · showing {sources.length}.</p>}
     {sources.length === 0 && <EmptySources term={term} onClear={onClear} />}
-    {sources.map(source => <SourceEntry key={source.id} source={source} term={term} onPull={onPull} onAsk={onAsk} />)}
+    {sources.map(source => <SourceEntry key={source.id} source={source} term={term} onPull={onPull} onAsk={onAsk} programId={programId} onNav={onNav} />)}
     <SourcePagination offset={offset} truncated={state.data?.window?.truncated === true} onPage={onPage} />
   </>;
 }
 
 /** The same paged data-room read used by Projects, beside the existing editor. */
 export function DataRoomSourcesPanel(props: {
-  programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void;
+  programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
 }) {
   return <DataRoomForProgram key={props.programId} {...props} />;
 }
 
 function DataRoomPage({ programId, offset, term, ...actions }: {
   programId: string; offset: number; term: string; onRetry: () => void; onClear: () => void;
-  onPage: (offset: number) => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void;
+  onPage: (offset: number) => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
 }) {
   const url = projectSourceCatalogUrl(programId, { limit: PAGE_SIZE, offset, query: term });
   const read = useLiveData<unknown>(url, [url]);
@@ -95,12 +100,12 @@ function DataRoomPage({ programId, offset, term, ...actions }: {
     error: read.error ?? (!read.loading && !parsed.ok ? parsed.message : undefined),
   };
   return <div className="pf-list" aria-busy={state.loading}>
-    <SourceListPage state={state} offset={offset} term={term} {...actions} />
+    <SourceListPage state={state} offset={offset} term={term} programId={programId} {...actions} />
   </div>;
 }
 
-function DataRoomForProgram({ programId, onOpenDocument, onAsk }: {
-  programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void;
+function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav }: {
+  programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
 }) {
   const searchId = useId();
   const [query, setQuery] = useState('');
@@ -123,7 +128,7 @@ function DataRoomForProgram({ programId, onOpenDocument, onAsk }: {
     {searchPending ? <div className="pf-list" aria-busy="true"><EmptyState busy icon={I.fileText} title="Loading project sources…" /></div>
       : <DataRoomPage key={`${term}\u0000${offset}\u0000${epoch}`} programId={programId} offset={offset} term={term}
         onRetry={() => { setOffset(0); setEpoch(v => v + 1); }} onClear={() => { setQuery(''); setTerm(''); setOffset(0); }}
-        onPage={setOffset} onPull={setPullSource} onAsk={onAsk} />}
+        onPage={setOffset} onPull={setPullSource} onAsk={onAsk} onNav={onNav} />}
     {pullSource && <SourceImportDialog programId={programId} source={{ kind: 'data-room', sourceId: pullSource.id }}
       title={pullSource.title || `Source ${pullSource.id}`} onClose={() => setPullSource(null)} onOpenDocument={onOpenDocument} />}
   </div>;

@@ -1,0 +1,34 @@
+# Review mutation 25 — an unsigned fulfilment with no answer is not reported as nothing stored (finding 19)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "no answer at all is not")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -306,8 +306,8 @@
+           ...(named ? { evidence: draft.evidence } : {}),
+         });
+       } catch (e) {
+-        if (e instanceof ApiRequestError) {
+-          fire(refusalSentence(said(e)), 'error');
++        if (e instanceof ApiRequestError || e instanceof Error) {
++          fire(refusalSentence(e.message || 'the service could not be reached'), 'error');
+         } else {
+           fire(UNCONFIRMED_RECORD, 'error');
+           onDone();
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > no answer at all is not "nothing was stored": the outcome could not be confirmed, and the register is read again 340ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > no answer at all is not "nothing was stored": the outcome could not be confirmed, and the register is read again 5308ms
+   → Unable to find an element with the text: /Whether the fulfilment was recorded could not be confirmed\. The register was reloaded/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > no answer at all is not "nothing was stored": the outcome could not be confirmed, and the register is read again
+TestingLibraryElementError: Unable to find an element with the text: /Whether the fulfilment was recorded could not be confirmed\. The register was reloaded/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

@@ -173,7 +173,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'market-access', label: 'Market Access / HEOR', description: 'The health-economics & market-access workspace — budget-impact, cost-effectiveness (ICER), Markov, and PSA modeling for payer dossiers.', scope: 'project', group: 'module' },
   { id: 'nda-cockpit', label: 'NDA/BLA cockpit', description: 'The NDA/BLA marketing-application cockpit — CTD readiness, Module 1 admin, the PDUFA clock, Refuse-to-File risk, and biologics.', scope: 'project', group: 'module' },
   { id: 'maa-cockpit', label: 'MAA cockpit', description: 'The EU MAA marketing-application cockpit.', scope: 'project', group: 'module' },
-  { id: 'haq-manager', label: 'Health-authority questions', description: 'The HAQ manager — agency questions grouped by round, with analysis, drafts and commitments.', scope: 'project', group: 'module' },
+  { id: 'haq-manager', label: 'Health-authority questions', description: 'Agency letters that ask for a response: each question, its response and the signature that approved it.', scope: 'project', group: 'module' },
   // The Communication Center is not a rail item (product decision, 2026-07-28);
   // it is reached from the project home, ⌘K and deep link — and, from here,
   // by AnA. It was the one project surface `navigate_to` could not reach.

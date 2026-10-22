@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-10-17T22:37:31.515843+00:00",
+  "fixtureServerStopped": true,
+  "loopbackPort": 5187,
+  "connectionRefusedCode": 111,
+  "browserContextsClosed": true,
+  "browserClosed": true,
+  "databaseUsed": false,
+  "providersCalled": false
+}

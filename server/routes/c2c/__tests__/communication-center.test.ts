@@ -12,9 +12,15 @@ import request from 'supertest';
 
 const poolQuery = vi.fn();
 const dbInsert = vi.fn();
-const anchor = vi.fn();
-vi.mock('../../../services/c2c/program-project-anchor', () => ({
-  resolveProgramProjectAnchor: (...args: unknown[]) => anchor(...args),
+const currentAccess = vi.fn();
+const admission = vi.fn();
+const requestExecutor = { query:vi.fn() };
+vi.mock('../../../db/requestDb', () => ({ requestPgClient:() => requestExecutor }));
+vi.mock('../../../services/c2c/current-program-access', () => ({
+  requireCurrentProgramAccess:(...args:unknown[]) => currentAccess(...args),
+  ProgramReadAccessError:class extends Error {
+    constructor(readonly status:number, readonly code:string, message:string) { super(message); }
+  },
 }));
 vi.mock('../../../db', () => ({
   pool: { query: (...a: unknown[]) => poolQuery(...a) },
@@ -34,6 +40,17 @@ const createNotification = vi.fn(async (..._a: unknown[]) => undefined);
 vi.mock('../notifications', () => ({ createNotification: (...a: unknown[]) => createNotification(...a) }));
 vi.mock('../../../services/governed-ana-execution.js', () => ({
   buildCanonicalGovernedState: async () => ({ decision: 'allow' }),
+}));
+// This suite isolates schema availability and item lifecycle behavior. Real
+// current-membership, project-sharing and stale-role admission are exercised
+// through the mounted routers in c2c-audit-outcomes.pglite.test.ts.
+vi.mock('../project-access', () => ({
+  projectAdmissionMiddleware: () => (req:Request, res:Response, next:NextFunction) => {
+    admission(req.params.projectId);
+    // The existing numeric policy refuses a UUID until it is canonically admitted.
+    if (!/^(?:proj_)?[1-9]\d*$/.test(String(req.params.projectId))) return res.status(404).json({ error:'Project not found' });
+    next();
+  },
 }));
 
 type Mod = typeof import('../communication-center');
@@ -63,7 +80,9 @@ function app() {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    Object.assign(req, { userId: 5, userEmail: 'a@b.c', tenantContext: { organizationId: 7 } });
+    req.userId = 5;
+    req.userEmail = 'a@b.c';
+    req.tenantContext = { organizationId:7 };
     next();
   });
   a.use('/api/concept2cure', mod.default);
@@ -78,6 +97,9 @@ function wire(answers: Array<{ rows: unknown[] }>) {
 const tables = (names: string[]) => ({ rows: names.map((table_name) => ({ table_name })) });
 
 beforeEach(() => {
+  poolQuery.mockReset();
+  currentAccess.mockReset().mockResolvedValue({ projectId:42, actor:{ userId:5, role:"member" } });
+  admission.mockClear();
   createNotification.mockClear();
   dbInsert.mockReset();
   // logAuditEntry awaits db.insert(...).values(...); the task writer chains .returning().
@@ -164,19 +186,49 @@ describe('PATCH /projects/:projectId/submission-center/items/:itemId/status', ()
 });
 
 describe('program UUID communication routing', () => {
+  it('admits the UUID on the actual request executor before applying the numeric policy', async () => {
+    wire([tables(ALL_TABLES), { rows:[ITEM_ROW] }]);
+    const r = await request(app()).get('/api/concept2cure/projects/73404fc6-d7a5-4e16-bc5d-201aca29e09f/submission-center/items');
+    expect(r.status).toBe(200);
+    expect(currentAccess).toHaveBeenCalledWith(requestExecutor, {
+      organizationId:7, userId:5, programId:'73404fc6-d7a5-4e16-bc5d-201aca29e09f',
+    });
+    expect(admission).toHaveBeenCalledWith('42');
+    expect(r.body.data[0].projectId).toBe(42);
+  });
+
+  it('supplies no communication content when the current private program is refused', async () => {
+    currentAccess.mockRejectedValue(new Error('private access unavailable'));
+    const r = await request(app()).get('/api/concept2cure/projects/73404fc6-d7a5-4e16-bc5d-201aca29e09f/submission-center/items');
+    expect(r.status).toBe(503);
+    expect(r.body).not.toHaveProperty('data');
+    expect(poolQuery).not.toHaveBeenCalled();
+    expect(admission).not.toHaveBeenCalled();
+  });
+
+  it('refuses revoked private-program access before any content read', async () => {
+    const { ProgramReadAccessError } = await import('../../../services/c2c/current-program-access');
+    currentAccess.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Current project access does not permit this operation.'));
+    const r = await request(app()).get('/api/concept2cure/projects/73404fc6-d7a5-4e16-bc5d-201aca29e09f/submission-center/items');
+    expect(r.status).toBe(403);
+    expect(r.body).not.toHaveProperty('data');
+    expect(poolQuery).not.toHaveBeenCalled();
+    expect(admission).not.toHaveBeenCalled();
+  });
+
   const uuid = '73404fc6-d7a5-4e16-bc5d-201aca29e09f';
-  const req = () => ({ params: { projectId: uuid }, tenantContext: { organizationId: 7 } }) as unknown as Request;
+  const req = () => ({ params: { projectId: uuid }, userId:5, tenantContext: { organizationId: 7 } }) as unknown as Request;
   it('resolves only through the current organisation anchor', async () => {
-    anchor.mockResolvedValueOnce(42);
     expect(await mod.resolveCommunicationProject(req())).toBe(42);
-    expect(anchor).toHaveBeenLastCalledWith(expect.anything(), {
-      programId: uuid, orgId: 7, context: 'communication-center', strict: true,
+    expect(currentAccess).toHaveBeenLastCalledWith(requestExecutor, {
+      programId:uuid, organizationId:7, userId:5,
     });
   });
   it('rejects a program without an anchor and propagates lookup failures', async () => {
-    anchor.mockResolvedValueOnce(null);
-    await expect(mod.resolveCommunicationProject(req())).rejects.toThrow('Invalid project ID');
-    anchor.mockRejectedValueOnce(new Error('database unavailable'));
+    const { ProgramReadAccessError } = await import('../../../services/c2c/current-program-access');
+    currentAccess.mockRejectedValueOnce(new ProgramReadAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'A unique project anchor is required.'));
+    await expect(mod.resolveCommunicationProject(req())).rejects.toThrow('A unique project anchor is required.');
+    currentAccess.mockRejectedValueOnce(new Error('database unavailable'));
     await expect(mod.resolveCommunicationProject(req())).rejects.toThrow('database unavailable');
   });
 });
@@ -224,5 +276,52 @@ describe('POST /projects/:projectId/agency-communications — a linked data-room
     const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body([]));
     expect(res.status).toBe(200);
     expect(poolQuery.mock.calls.some(([q]) => /cre_evidence_sources/.test(String(q)))).toBe(false);
+  });
+});
+
+describe('POST /projects/:projectId/agency-communications — the submission a letter concerns (gap 6.5)', () => {
+  const body = (linkedSubmissionId?: string) => ({
+    sourceType: 'uploaded_official_correspondence', communicationType: 'Information request', sourceChannel: 'esg',
+    linkedSectionCodes: [], linkedArtifactIds: [], urgency: 'high', responseRequired: true, extractedIssues: [],
+    visibilityTier: 'shared_client_c2c', ...(linkedSubmissionId === undefined ? {} : { linkedSubmissionId }),
+  });
+  const inserted = () => poolQuery.mock.calls.find(([q]) => /INSERT INTO concept2cure_agency_communications/.test(String(q))) as [string, unknown[]] | undefined;
+
+  it('refuses a reference that is not a submission id without looking anything up', async () => {
+    wire([tables(ALL_TABLES)]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body('IND 123456'));
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toMatch(/not a submission id/);
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a submission the organisation-and-program lookup does not find, and writes nothing", async () => {
+    wire([tables(ALL_TABLES), { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body('41'));
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toMatch(/not one of this project's submissions/);
+    expect(inserted()).toBeUndefined();
+    const [sqlText, params] = poolQuery.mock.calls[1] as [string, unknown[]];
+    expect(sqlText).toMatch(/FROM submissions sub/);
+    expect(sqlText).toMatch(/p\.regulatory_program_id = sub\.program_id/);
+    expect(sqlText).toMatch(/sub\.deleted_at IS NULL/);
+    expect(params).toEqual([7, 3, 41]);
+  });
+
+  it('stores the id the lookup found and returns the submission it names', async () => {
+    wire([tables(ALL_TABLES), { rows: [{ id: 41, title: 'IND 123456', application_type: 'ind', primary_region: 'fda' }] }, { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body(' 41 '));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data).toMatchObject({ linkedSubmissionId: '41', linkedSubmission: { id: 41, title: 'IND 123456', applicationType: 'ind', primaryRegion: 'fda' } });
+    expect(inserted()![1][6]).toBe('41');
+  });
+
+  it('treats an empty choice as no submission and looks nothing up', async () => {
+    wire([tables(ALL_TABLES), { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body(''));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.linkedSubmission).toBeNull();
+    expect(poolQuery.mock.calls.some(([q]) => /FROM submissions/.test(String(q)))).toBe(false);
+    expect(inserted()![1][6]).toBeNull();
   });
 });

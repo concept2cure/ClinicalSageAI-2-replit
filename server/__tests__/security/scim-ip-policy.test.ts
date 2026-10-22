@@ -3,7 +3,7 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({
-  grant: true, auditFails: false, orgExists: true,
+  grant: true, auditFails: false, orgExists: true, commitFails: false, revokedAfterGuard: false, release: vi.fn(),
   row: null as null | { id: number; organization_id: number; cidr: string; label: string | null; enabled: boolean },
   log: [] as string[], entries: [] as Array<Record<string, any>>, clients: [] as unknown[],
 }));
@@ -11,23 +11,29 @@ const original = { id: 11, organization_id: 7, cidr: '203.0.113.0/24', label: 'I
 vi.mock('../../auth', () => ({ authMiddleware: (req: Record<string, unknown>, _res: unknown, next: () => void) => {
   req.user = { id: 41, role: 'super_admin', roles: ['super_admin'], organizationId: 1 }; req.userId = 41; next();
 } }));
+function mutatePolicy(sql: string, params: unknown[]) {
+  if (/INSERT INTO scim_ip_allowlist/.test(sql)) h.row = { id: 12, organization_id: Number(params[0]), cidr: String(params[1]), label: params[2] as string | null, enabled: true };
+  if (/UPDATE scim_ip_allowlist/.test(sql) && h.row) h.row = { ...h.row, enabled: Boolean(params[0]) };
+  if (/DELETE FROM scim_ip_allowlist/.test(sql)) {
+    const deleted = h.row; h.row = null;
+    return { rows: deleted ? [{ id: deleted.id }] : [] };
+  }
+  return { rows: h.row ? [{ ...h.row }] : [] };
+}
 vi.mock('../../db', () => ({
   query: async (sql: string) => /FROM platform_role_grants/.test(sql) ? { rows: h.grant ? [{ id: 1 }] : [] } : { rows: [] },
-  transaction: async (callback: (client: unknown) => Promise<unknown>) => {
+  pool: { connect: async () => {
     const previous = h.row ? { ...h.row } : null;
-    const client = { query: async (sql: string, params: unknown[] = []) => {
+    return { release: h.release, query: async (sql: string, params: unknown[] = []) => {
       h.log.push(sql);
+      if (sql === 'ROLLBACK') { h.row = previous; return { rows: [] }; }
+      if (sql === 'COMMIT' && h.commitFails) throw new Error('fixture lost commit reply');
+      if (/FROM platform_role_grants/.test(sql)) return { rows: h.grant && !h.revokedAfterGuard ? [{ id: 1 }] : [] };
       if (/SELECT id FROM organizations/.test(sql)) return { rows: h.orgExists ? [{ id: Number(params[0]) }] : [] };
       if (/SELECT .*FROM scim_ip_allowlist/.test(sql)) return { rows: h.row?.id === params[0] ? [{ ...h.row }] : [] };
-      if (/INSERT INTO scim_ip_allowlist/.test(sql)) h.row = { id: 12, organization_id: Number(params[0]), cidr: String(params[1]), label: params[2] as string | null, enabled: true };
-      if (/UPDATE scim_ip_allowlist/.test(sql) && h.row) h.row = { ...h.row, enabled: Boolean(params[0]) };
-      if (/DELETE FROM scim_ip_allowlist/.test(sql)) { const deleted = h.row; h.row = null; return { rows: deleted ? [{ id: deleted.id }] : [] }; }
-      return { rows: h.row ? [{ ...h.row }] : [] };
+      return mutatePolicy(sql, params);
     } };
-    h.log.push('BEGIN');
-    try { const answer = await callback(client); h.log.push('COMMIT'); return answer; }
-    catch (error) { h.row = previous; h.log.push('ROLLBACK'); throw error; }
-  },
+  } },
 }));
 vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: async (client: unknown, entry: Record<string, any>) => {
   h.log.push('AUDIT'); h.entries.push(entry); h.clients.push(client);
@@ -35,7 +41,7 @@ vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: async (cli
 } }));
 let app: express.Express;
 beforeEach(async () => {
-  h.grant = true; h.auditFails = false; h.orgExists = true; h.row = { ...original }; h.log = []; h.entries = []; h.clients = [];
+  h.grant = true; h.auditFails = false; h.orgExists = true; h.commitFails = false; h.revokedAfterGuard = false; h.release.mockReset(); h.row = { ...original }; h.log = []; h.entries = []; h.clients = [];
   const router = (await import('../../routes/admin/scim-ip-allowlist')).default;
   app = express(); app.use(express.json()); app.use('/api/admin/scim-ip-allowlist', router);
 });
@@ -70,7 +76,7 @@ describe('atomic governed SCIM IP policy mutations', () => {
       : action === 'update'
         ? await request(app).patch('/api/admin/scim-ip-allowlist/11').send({ enabled: false, reason })
         : await request(app).delete('/api/admin/scim-ip-allowlist/11').send({ reason });
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(503);
     expect(response.body.error).toMatch(/nothing was changed/i);
     expect(h.row).toEqual(original);
     expect(h.log.slice(-2)).toEqual(['AUDIT', 'ROLLBACK']);
@@ -93,4 +99,23 @@ describe('atomic governed SCIM IP policy mutations', () => {
     const response = await request(app).post('/api/admin/scim-ip-allowlist').send({ organizationId: 999, cidr: '198.51.100.0/24', reason });
     expect(response.status).toBe(404); expect(h.entries).toEqual([]); expect(h.row).toEqual(original);
   });
+  it('does not roll back or claim no change after a lost COMMIT reply, and discards the actual connection', async () => {
+    h.commitFails = true;
+    const response = await request(app).patch('/api/admin/scim-ip-allowlist/11').send({ enabled: false, reason });
+    expect(response.status).toBe(503);
+    expect(response.body).toMatchObject({ code: 'SCIM_POLICY_COMMIT_UNCONFIRMED', ruleId: 11, recoveryUrl: '/api/admin/scim-ip-allowlist' });
+    expect(response.body.error).not.toMatch(/nothing was changed/i);
+    expect(h.row?.enabled).toBe(false); expect(h.log).not.toContain('ROLLBACK');
+    expect(h.release).toHaveBeenCalledWith(expect.any(Error));
+    const readback = await request(app).get('/api/admin/scim-ip-allowlist');
+    expect(readback.status).toBe(200);
+  });
+
+  it('rechecks platform standing on the mutation connection before any write', async () => {
+    h.revokedAfterGuard = true;
+    const response = await request(app).patch('/api/admin/scim-ip-allowlist/11').send({ enabled: false, reason });
+    expect(response.status).toBe(503); expect(h.row).toEqual(original);
+    expect(h.entries).toEqual([]); expect(h.log).toContain('ROLLBACK');
+  });
+
 });

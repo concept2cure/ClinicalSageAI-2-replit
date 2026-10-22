@@ -10,11 +10,11 @@ export function ok(payload: unknown, status = 200) {
 }
 
 export const STATUS = {
-  overallReadiness: 60, submissionReady: false, totalSections: 5, totalRequired: 2, totalCompleted: 1, lastUpdated: null,
+  projectId: 42, overallReadiness: 60, submissionReady: false, totalSections: 5, totalRequired: 2, totalCompleted: 1, lastUpdated: null,
   modules: [{ moduleCode: 'm3', moduleName: 'Module 3 — Quality', totalSections: 5, requiredSections: 2, completedRequired: 1, completionPct: 50, ready: false }],
 };
 export const COMPILE = {
-  id: 'c1', status: 'completed', modules: [], xmlBackbone: '<ectd:backbone/>',
+  id: 'c1', projectId: 42, status: 'completed', modules: [], xmlBackbone: '<ectd:backbone/>',
   validationResults: [{ rule: 'REQUIRED_SECTION_OK', severity: 'info', message: 'Section 3.2.S ok' }],
   submissionReady: true, errors: [], warnings: ['3.2.P.8 stability is short'],
 };

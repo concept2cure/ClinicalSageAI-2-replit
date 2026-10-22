@@ -1,0 +1,38 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-recovery-dto-tests.json",
+    "sha256": "b393850144b6ab6ba6aa94ad26aa33e2cbd69c0d3df42e14eeeb65a052e5b27e",
+    "bytes": 44225
+  },
+  "success": true,
+  "passedCases": 115,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 2,
+  "rows": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+      "status": "passed",
+      "cases": 84,
+      "counts": {
+        "passed": 84,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx",
+      "status": "passed",
+      "cases": 31,
+      "counts": {
+        "passed": 31,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

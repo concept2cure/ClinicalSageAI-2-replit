@@ -1,0 +1,61 @@
+{
+  "observedAtUtc": "2026-10-17T22:53:48.782600+00:00",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "publishedImplementationAndQualification": "9e774c95a3e339c65a3825a609a0a8f46290fc8b",
+  "implementationCommit": "74cba41d1ad8bfff5d4d2719f8b652ad9a7b11a5",
+  "qualificationCommit": "0ea6c145658464846d57c9f01fe1412a2c7e6843",
+  "remoteHeadObservedMatching": "9e774c95a3e339c65a3825a609a0a8f46290fc8b",
+  "directPush": true,
+  "pullRequest": false,
+  "forcePush": false,
+  "normalHooksPassed": true,
+  "pushedTypeScriptErrors": 0,
+  "pushedLintWarningNetChange": -1,
+  "pushTranscript": "push-implementation.txt",
+  "pushTranscriptSha256": "a576b47dd2d6e35393e6162dce24ef045b78e3967dec7665cebaaf3508f264a7",
+  "sourceCheckpoints": {
+    "typecheck-final-manifest.json": {
+      "exitCode": 0,
+      "sourcesStillCurrent": true
+    },
+    "regression-final-manifest.json": {
+      "exitCode": 0,
+      "sourcesStillCurrent": true
+    }
+  },
+  "productionSources": {
+    "server/routes/ana-intelligence.ts": "21c9a1f4beccbd23e1648283e0122a0055961ea681157de142bd9d1604164119",
+    "server/routes/ana-intelligence-batch-input.ts": "a7c78450d3bb8250595091745a93f7886dc41f841629f39ce370ff14851172f0",
+    "server/services/ai-gateway/gateway-error-map.ts": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2"
+  },
+  "qualification": {
+    "combined": {
+      "files": 65,
+      "passed": 994,
+      "boundInputsUnchanged": true
+    },
+    "independent": {
+      "passed": 20,
+      "baselineIntendedFailures": 17,
+      "baselinePositiveControls": 3
+    },
+    "gateway": {
+      "passed": 45,
+      "files": 6,
+      "guardOmissionExpectedFailures": 5,
+      "guardOmissionSkipped": 11
+    },
+    "countsOverlap": true
+  },
+  "preservedCanonicalUpdates": [
+    "eceb747d3: shared editor recovery, included in final regression/typecheck",
+    "46c224456: documentation-only repository-health refresh, bound source hashes unchanged"
+  ],
+  "recordPurpose": "Records the published implementation and qualification. This record and completed push/commit transcripts belong to the following documentation commit, identified by Git history.",
+  "scopeLimits": "Current source checkpoints within existing Vault/Authoring/AnA; no continuous revocation, native full-application concurrency, production-load, provider-delivery/model-use, scientific-approval or agency-acceptance qualification. Selected-source streaming and model tools refuse pending separate release-boundary qualification."
+}

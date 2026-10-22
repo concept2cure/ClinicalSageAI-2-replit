@@ -1,0 +1,21 @@
+{
+  "version": "8.28.0",
+  "base": "aff01a100029c029b71cd0929cd714527082ab74",
+  "head": "94c2927cf9d98503bc13a354deef377489490ba2",
+  "historyComplete": true,
+  "startedAtUtc": "2026-10-17T22:59:40.772842+00:00",
+  "command": [
+    "/workspace/audit/gitleaks-bin/gitleaks",
+    "git",
+    "--no-banner",
+    "--redact",
+    "--config",
+    ".gitleaks.toml",
+    "--log-opts=--full-history --diff-filter=tuxdb aff01a100029c029b71cd0929cd714527082ab74..94c2927cf9d98503bc13a354deef377489490ba2",
+    ".",
+    "--report-format=json",
+    "--report-path=/workspace/audit/oct17-gitleaks-final-local-delta-private.json"
+  ],
+  "exitCode": 0,
+  "completedAtUtc": "2026-10-17T22:59:42.055853+00:00"
+}

@@ -47,8 +47,17 @@ export const AGENCY_FIELDS: readonly string[] = [
   'zone_regulatory_authorities',
 ];
 
-/** Answers that name a predicate device. A non-empty one means a predicate is named. */
-export const PREDICATE_FIELDS: readonly string[] = ['predicate_device', 'predicate_device_name', 'predicate_510k_number'];
+/**
+ * Answers that name a predicate device. A non-empty one means a predicate is
+ * named.
+ *
+ * `predicate_device` was dropped on 2026-10-19 with the question: project
+ * setup's one box asking for "K123456 — Brand Name by Manufacturer" could fill
+ * neither column of the predicate of record, so it became these two — the
+ * 510(k) flow's own ids. A field no flow asks leaves every rule that reads it
+ * firing on nothing, which is what `cautioned-positions.test.ts` refuses.
+ */
+export const PREDICATE_FIELDS: readonly string[] = ['predicate_device_name', 'predicate_510k_number'];
 
 /** The answer that states the predicate strategy. */
 export const PREDICATE_STRATEGY_FIELDS: readonly string[] = ['predicate_strategy'];
@@ -95,11 +104,12 @@ const US_CLASS: Readonly<Record<string, 'I' | 'II' | 'III'>> = {
   class_i: 'I',
   class_ii: 'II',
   class_iii: 'III',
-  /* device-pma.ts's second option: a reclassified or transitional device of
-     Class II for which FDA has called for premarket approval. It states the
-     class, and the PMA caution then asks for exactly the basis this value
-     asserts. */
-  class_ii_pma: 'II',
+  /* device-pma.ts's second option: a transitional device, which FD&C Act
+     section 520(l) placed in Class III (2026-10-22, D2 knowledge audit). It
+     read as Class II before, on the premise that a Class II device can be
+     "called for" PMA; FDA calls for PMAs under section 515(b) for Class III
+     devices only. A device reclassified into Class II needs no PMA. */
+  class_ii_pma: 'III',
   i: 'I',
   ii: 'II',
   iii: 'III',

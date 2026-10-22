@@ -32,6 +32,21 @@ beforeEach(() => { apiRequest.mockReset(); });
 afterEach(() => { cleanup(); clearEditorTarget(); });
 
 describe('stored workflow intake', () => {
+  it('previews an exact saved IVD document and opens only the confirmed Authoring document id', async () => {
+    const savedSource: WorkflowImportSource={kind:'ivd-document',documentId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'};
+    const origin={...preview.origin,kind:'ivd-document' as const,id:savedSource.documentId,selection:savedSource,conversion:'ivd-document-snapshot' as const,
+      sectionOrigins:[{code:'ivd.document',sourceRowId:`ivd_generated_documents:${savedSource.documentId}`,contentSha256:hash,originalAuthorship:'unknown' as const,model:null,modelEvidence:'unrecorded' as const}]};
+    const sourcePreview={...preview,origin,sections:[{code:'ivd.document',title:'Saved notice payload',contentSha256:hash}]};
+    const copy={...created,origin,sections:[{id:'real-authoring-section',code:'ivd.document',title:'Saved notice payload'}]};
+    apiRequest.mockResolvedValueOnce(ok(sourcePreview)).mockResolvedValueOnce(ok(copy));
+    const onOpenDocument=vi.fn();render(dialog({source:savedSource,title:'Saved notice',onOpenDocument}));
+    await screen.findByTestId('workflow-import-preview');reason();associate();fireEvent.click(screen.getByRole('button',{name:'Create working copy'}));
+    await screen.findByRole('button',{name:'Open working copy'});
+    expect(apiRequest.mock.calls[1][2]).toMatchObject({source:savedSource,expectedFingerprint:hash,programId:PID});
+    fireEvent.click(screen.getByRole('button',{name:'Open working copy'}));
+    expect(onOpenDocument).toHaveBeenCalledWith(created.doc.id,'ivd.document');
+    expect(onOpenDocument).not.toHaveBeenCalledWith(savedSource.documentId,expect.anything());
+  });
   it('previews source identity, gaps and unknown model before atomic create and exact section handoff', async () => {
     apiRequest.mockResolvedValueOnce(ok(preview)).mockResolvedValueOnce(ok(created));
     const onOpenDocument = vi.fn(); render(dialog({ onOpenDocument }));
@@ -79,6 +94,16 @@ describe('stored workflow intake', () => {
 });
 
 describe('workflow response and provenance boundaries', () => {
+  it('retains IVD source identity and honest source limits after reopening the authoring copy', () => {
+    const ivdSource: WorkflowImportSource = {kind:'ivd-assessment',documentId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'};
+    const ivdOrigin = {...preview.origin,kind:'ivd-assessment' as const,id:ivdSource.documentId,selection:ivdSource,conversion:'ivd-assessment-snapshot' as const};
+    const provenance=describeProvenance({source:'import',importSource:{...ivdOrigin,reason:'Review retained device facts',warnings:[]}});
+    expect(provenance?.line).toContain(`IVD assessment source ${ivdSource.documentId}`);
+    render(<ImportSourceNotice source={provenance?.importSource}/>);
+    expect(screen.getByText(/Saved IVD assessment output/)).toBeTruthy();
+    expect(screen.getByText(/source approval and signatures were not copied/)).toBeTruthy();
+    expect(screen.queryByText(/Saved protocol output/)).toBeNull();
+  });
   it.each([
     { ...preview, target: { ...preview.target, programId: 'another-program' } },
     { ...preview, origin: { ...preview.origin, selection: { kind: 'csr', jobId: 14, sectionNumbers: ['12'] } } },

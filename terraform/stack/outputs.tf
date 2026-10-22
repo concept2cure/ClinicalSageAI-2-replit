@@ -14,10 +14,6 @@ output "ecr_api_url" {
   value = module.ecr.repository_urls["api"]
 }
 
-output "ecr_worker_url" {
-  value = module.ecr.repository_urls["worker"]
-}
-
 output "rds_endpoint" {
   value     = module.rds.endpoint
   sensitive = true
@@ -67,6 +63,13 @@ output "deploy_targets" {
     # the bucket's computed id, unknown until apply.
     FRONTEND_BUCKET = local.frontend_bucket
   }
+}
+
+# The repository variable FRONTEND_BUCKET that deploy-aws.yml publishes the
+# frontend to: the bucket name carries the account id, so it is read from here
+# after apply rather than written into the workflow.
+output "frontend_bucket" {
+  value = local.frontend_bucket
 }
 
 # Every name this stack gives a resource, so staging can be checked for never

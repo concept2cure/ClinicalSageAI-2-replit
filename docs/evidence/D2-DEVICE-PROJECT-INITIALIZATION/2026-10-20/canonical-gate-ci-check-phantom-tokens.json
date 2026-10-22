@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:check-phantom-tokens"
+  ],
+  "at": "2026-10-20T22:44:06.326018+00:00",
+  "elapsedSeconds": 0.795,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "stdout": "[ci:phantom-tokens] 9 phantom token(s) across 55 site(s) (baseline 9).\n[ci:phantom-tokens] OK \u2014 no new phantom tokens.\n",
+  "stderr": ""
+}

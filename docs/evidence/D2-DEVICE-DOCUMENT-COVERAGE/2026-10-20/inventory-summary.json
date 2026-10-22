@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-10-20T20:35:55.297653+00:00",
+  "command": [
+    "npx",
+    "tsx",
+    "-e",
+    "import {getBuiltinAuthoringTemplates,builtinTemplateSnapshot} from \"./server/services/authoring/builtin-authoring-templates.ts\"; import {GLOBAL_REGISTRY} from \"./shared/regulatory/global-document-registry.ts\"; (async()=>{const templates=await getBuiltinAuthoringTemplates();const rows=templates.map(t=>({id:t.id,entryId:t.entryId,sha256:builtinTemplateSnapshot(t),name:t.name,kind:t.kind,aiDraftable:t.aiDraftable,sectionCount:t.sections.length,filingContext:t.filingContext,segment:GLOBAL_REGISTRY.find(e=>t.entryId===`registry:${e.id}`)?.segment}));console.log(JSON.stringify(rows));})();"
+  ],
+  "exitCode": 0,
+  "rawOutputSha256": "9cab8b1ad3430dfa62357d4c53af48188cb252449fecf029f41065e4f1cbb2ad",
+  "builtins": 385,
+  "previousTemplatesUnchanged": 305,
+  "newTemplates": 80,
+  "deviceRegistryEntries": 76,
+  "deviceRegistryByRegion": {
+    "US": 33,
+    "EU": 33,
+    "CA": 2,
+    "JP": 5,
+    "GLOBAL": 3
+  },
+  "additionalComponentTemplates": [
+    "component:k510_summary",
+    "component:gspr_checklist",
+    "component:ivdr_gspr_checklist",
+    "component:performance_evaluation_report"
+  ],
+  "scope": "Existing indexed platform authoring scaffolds; not current agency-template completeness, legal applicability or submission qualification.",
+  "newNarrativeEligible": 3,
+  "newManualPreparation": 77
+}

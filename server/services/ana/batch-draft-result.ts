@@ -23,11 +23,13 @@
  */
 
 import type { GatewayErrorCode } from '../ai-gateway/gateway-error-map';
+import { isTruncated } from '../ai-gateway/finish-reason';
 import type { DocumentDraftResponse } from './AnaDocumentDraftingService';
 
 export interface BatchDraftFailure {
-  /** A gateway classification, or DRAFT_FAILED for a fault of ours. */
-  error: GatewayErrorCode | 'DRAFT_FAILED';
+  /** A gateway classification, DRAFT_FAILED for a fault of ours, or
+   * DRAFT_CANCELLED when the person stopped the run before it was drafted. */
+  error: GatewayErrorCode | 'DRAFT_FAILED' | 'DRAFT_CANCELLED';
   /** A sentence the author can act on. Internals are never placed here. */
   message: string;
   /** The section the request named, so the failure can be matched to its card. */
@@ -35,6 +37,38 @@ export interface BatchDraftFailure {
 }
 
 export type BatchDraftResult = DocumentDraftResponse | BatchDraftFailure;
+
+/**
+ * The person stopped the run. Thrown by drafting before work starts and after
+ * an await settles post-stop, so a late result is never offered as a draft.
+ */
+export class DraftCancelledError extends Error {
+  constructor() {
+    super('Drafting was stopped before this section completed.');
+    this.name = 'DraftCancelledError';
+  }
+}
+
+/** Only a real AbortSignal is honoured. JSON cannot produce one, so a
+ * body-supplied `signal` on an HTTP route is ignored rather than trusted. */
+export function trustedSignal(signal: unknown): AbortSignal | undefined {
+  return signal instanceof AbortSignal ? signal : undefined;
+}
+
+export function throwIfDraftCancelled(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw new DraftCancelledError();
+}
+
+/** Matched by name: tests and callers mock the gateway module, and the SDK's
+ * own abort error is not a stable class to import. */
+export function isDraftCancellation(reason: unknown): boolean {
+  const name = reason instanceof Error ? reason.name : undefined;
+  return name === 'DraftCancelledError' || name === 'GatewayAbortedError' || name === 'AbortError';
+}
+
+export function cancelledDraft(sectionType: string): BatchDraftFailure {
+  return { error: 'DRAFT_CANCELLED', message: 'Drafting was stopped before this section completed. Nothing was saved.', sectionType };
+}
 
 /** True for a failed slot. A draft has `content`; a failure has `error` and none. */
 export function isBatchDraftFailure(result: unknown): result is BatchDraftFailure {
@@ -52,6 +86,11 @@ export function batchSectionRecord(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
 }
 
+function draftTermination(result: DocumentDraftResponse | undefined) {
+  const finishReason = result?.finishReason ?? null;
+  return { finishReason, truncated: result?.truncated === true || isTruncated(finishReason) };
+}
+
 export function batchDraftReceipt(
   rawSections: unknown[],
   requests: Array<{ requestIndex: number; sectionType: string; sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
@@ -67,26 +106,40 @@ export function batchDraftReceipt(
     }
     const result = byIndex.get(requestIndex);
     if (isBatchDraftFailure(result)) {
-      return { ...base, status: 'failed', error: result.error, message: result.message };
+      return { ...base, status: result.error === 'DRAFT_CANCELLED' ? 'cancelled' : 'failed', error: result.error, message: result.message };
+    }
+    const termination = draftTermination(result);
+    if (termination.truncated) {
+      return { ...base, status: 'failed', error: 'DRAFT_TRUNCATED', truncated: true,
+        finishReason: termination.finishReason,
+        message: 'This draft was cut off. Shorten or split this section before retrying this section only.' };
     }
     if (!result || !result.content?.trim()) {
       return { ...base, status: 'failed', error: 'DRAFT_FAILED', message: 'No usable draft was returned for this section. Retry this section only.' };
     }
     const context = requests.find(r => r.requestIndex === requestIndex)?.sourceContext;
     return { ...base, status: 'drafted', content: result.content, model: result.model, latencyMs: result.latencyMs,
+      finishReason: termination.finishReason, truncated: false,
       sourceStatus: context?.status ?? 'unassessed',
       sources: context?.sources.map(({ text: _text, ...receipt }) => receipt) ?? [],
       sourceQualification: 'unassessed' };
   });
+  // A stop is the person's decision, not a failure to repair: cancelled slots
+  // are reported apart from retryIndices and are retried only if asked again.
   const retryIndices = sections.filter((s) => s.status === 'failed').map((s) => s.requestIndex);
+  const cancelledIndices = sections.filter((s) => s.status === 'cancelled').map((s) => s.requestIndex);
   const failed = retryIndices.length;
+  const cancelled = cancelledIndices.length;
+  const count = sections.length - failed - cancelled;
   return {
-    status: failed === 0 ? 'drafted' : failed === sections.length ? 'failed' : 'partial',
-    count: sections.length - failed,
+    status: cancelled > 0 ? 'cancelled' : failed === 0 ? 'drafted' : count === 0 ? 'failed' : 'partial',
+    count,
     failed,
+    cancelled,
     requested: sections.length,
     savedCount: 0,
     sections,
     retryIndices,
+    cancelledIndices,
   };
 }

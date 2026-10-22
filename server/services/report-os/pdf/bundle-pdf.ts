@@ -14,7 +14,9 @@
  */
 import { GREY, ReportingPdfError, Writer, iso } from './writer';
 import { writeRunPdfContent, type RunPdfContent } from './run-pdf';
-import type { SealVerdict } from '../sealing/run-seal';
+import type { RunSealVerdict } from '../sealing/run-seal';
+import { prepareReportPdfBranding } from './company-branding';
+import type { CompanyDocumentProfile } from '../../../../shared/company-documents';
 
 export interface BundlePdfItem {
   runId: number;
@@ -34,6 +36,7 @@ export interface BundlePdfInput {
   items: BundlePdfItem[];
   exportId: string;
   exportedAt: string;
+  companyBranding?: CompanyDocumentProfile | null;
 }
 
 /** One report's line: its status now, and what it was bundled at when that differs. */
@@ -46,7 +49,7 @@ function itemLine(i: BundlePdfItem): string {
 
 /** Build the bundle's PDF. */
 export async function buildBundlePdf(input: BundlePdfInput): Promise<{ bytes: Buffer; pages: number; replacedCharacters: number }> {
-  const w = new Writer({ title: `Report bundle: ${input.bundle.name}`, exportId: input.exportId, exportedAt: input.exportedAt });
+  const w = new Writer({ title: `Report bundle: ${input.bundle.name}`, exportId: input.exportId, exportedAt: input.exportedAt }, await prepareReportPdfBranding(input.companyBranding));
 
   w.write(`Report bundle: ${input.bundle.name}`, { size: 16, bold: true, gap: 4 });
   w.write(`Bundle ${input.bundle.bundleId}`, { size: 9, color: GREY, gap: 8 });
@@ -83,7 +86,7 @@ export interface ReportPackPdfConstituent {
   bundledStatus: string;
   statusAtRead: string;
   sourceDocument: ReportPackPdfItem['sourceDocument'];
-  sealVerdict: SealVerdict | null;
+  sealVerdict: RunSealVerdict | null;
   sealHash: string | null;
   firstPage: number;
   lastPage: number;
@@ -156,7 +159,7 @@ function writePackCover(w: Writer, input: ReportPackPdfInput): void {
  * The returned ranges include every overflow/signature/calculation-evidence page. */
 export async function buildReportPackPdf(input: ReportPackPdfInput): Promise<ReportPackPdfResult> {
   assertReportPackContent(input.items);
-  const w = new Writer({ title: `Retained report pack: ${input.bundle.name}`, exportId: input.exportId, exportedAt: input.exportedAt });
+  const w = new Writer({ title: `Retained report pack: ${input.bundle.name}`, exportId: input.exportId, exportedAt: input.exportedAt }, await prepareReportPdfBranding(input.companyBranding));
   writePackCover(w, input);
   const constituents: ReportPackPdfConstituent[] = [];
   for (const item of input.items) {

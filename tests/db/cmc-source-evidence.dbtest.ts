@@ -27,12 +27,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-cse ';
-const CODE = 'DBTEST-CSE';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-cse ${RUN} `;
+const CODE = `DBTEST-CSE-${RUN}`;
 const SECTION = '3.2.P.5.4';
 const REASON = 'Values transcribed from the CDMO certificate of analysis.';
 
@@ -40,6 +41,7 @@ type Tenant = { orgId: number; orgUuid: string; programId: string; otherProgramI
 type Outcome = { ok: true; rows: Array<Record<string, unknown>> } | { ok: false; message: string };
 let owner: Pool;
 let userId: number;
+let viewerId: number;
 let mine: Tenant;
 let theirs: Tenant;
 const ids = { coaV1: '', coaV2: '', report: '', elsewhere: '', theirDoc: '' };
@@ -51,11 +53,12 @@ async function appFor(t: Tenant, role = 'admin'): Promise<express.Express> {
   const module3Routes = (await import('../../server/api/cmc/module3OperatingSystemRoutes')).default;
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
   const a = express();
+  const actorId = role === 'viewer' ? viewerId : userId;
   a.use(express.json());
   a.use((req, _res, next) => {
     Object.assign(req, {
-      userId, tenantId: t.orgId, userRole: role,
-      user: { id: userId, organizationId: t.orgId, organizationUuid: t.orgUuid, role },
+      userId: actorId, tenantId: t.orgId, userRole: role,
+      user: { id: actorId, organizationId: t.orgId, organizationUuid: t.orgUuid, role },
     });
     next();
   });
@@ -123,19 +126,22 @@ async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active')
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, status = 'active' RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-cse-${slug}`],
+    [`${PROBE}${slug}`, `dbtest-cse-${RUN}-${slug}`],
   );
   const program = async (suffix: string, name: string) => (await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Evidra 10 mg tablets') RETURNING id`,
     [`${PROBE}${slug} ${name}`, `${CODE}-${slug.toUpperCase()}${suffix}`, org.rows[0].id],
   )).rows[0].id;
-  return {
+  const scoped = {
     orgId: Number(org.rows[0].id),
     orgUuid: String(org.rows[0].uuid),
     programId: String(await program('', 'program')),
     otherProgramId: String(await program('-B', 'second program')),
   };
+  await seedVaultFixtureParent(owner, scoped, { userId, namespace: `${CODE}-${slug}` });
+  await seedVaultFixtureParent(owner, { ...scoped, programId: scoped.otherProgramId }, { userId, namespace: `${CODE}-${slug}-B` });
+  return scoped;
 }
 
 /** batch:1 and stability:2 recorded, then §3.2.P.5.4 compiled from batch:1 and approved. */
@@ -160,40 +166,21 @@ async function recordAndApprove(t: Tenant): Promise<void> {
   );
 }
 
-async function cleanup(): Promise<void> {
-  const orgs = `(SELECT id FROM organizations WHERE slug LIKE 'dbtest-cse-%')`;
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(`DELETE FROM audit_logs WHERE tenant_id IN ${orgs}`);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  // The links go with their versions, by the purge's own cascade: the one
-  // DELETE the table's guard admits.
-  await owner.query(`DELETE FROM cmc_section_lineage WHERE organization_id IN ${orgs}`);
-  await owner.query(`DELETE FROM cmc_module3_sections WHERE organization_id IN ${orgs}`);
-  await owner.query(`DELETE FROM cmc_source_objects WHERE organization_id IN ${orgs}`);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-}
-
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-cse@example.test', 'Cora Evidence', 'not-a-real-hash')
+    `INSERT INTO users (email, name, password_hash) VALUES ($1, 'Cora Evidence', 'not-a-real-hash')
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    [`dbtest-cse-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
+  viewerId = Number((await owner.query(`INSERT INTO users(email,name,password_hash)
+    VALUES($1,'Cora Viewer','not-a-real-hash') RETURNING id`, [`dbtest-cse-viewer-${RUN}@example.test`])).rows[0].id);
   mine = await tenant('mine');
   theirs = await tenant('theirs');
+  await seedVaultFixtureViewer(owner, mine, { userId: viewerId, invitedBy: userId });
+  await assertVaultFixtureRuntime(mine);
   ids.coaV1 = await ingest(mine, 'Certificate of analysis DP-001. Assay 99.1%.', { documentCode: `${CODE}-COA`, documentTitle: 'CoA DP-001' });
   ids.report = await ingest(mine, 'Stability report, 6 months.', { documentCode: `${CODE}-STAB`, documentTitle: 'Stability report' });
   ids.elsewhere = await ingest(mine, 'A certificate of another program.', { documentCode: `${CODE}-ELSE`, documentTitle: 'Other CoA' }, mine.otherProgramId);
@@ -202,11 +189,8 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
   await owner.end().catch(() => {});
-  for (const t of [mine, theirs]) {
-    if (t) await fs.rm(path.resolve(process.cwd(), 'storage', 'vault', String(t.orgId)), { recursive: true, force: true }).catch(() => {});
-  }
+  await closeVaultFixtureRuntime();
 });
 
 let v1Link = '';

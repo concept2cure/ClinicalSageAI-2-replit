@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getRulesForRegion,
   REGIONAL_RULES,
-  getGatewaySizeLimit,
+  getGatewaySizeLimitOnFile,
   validateRegionalPackage,
 } from '../ectd-regional-rules';
 import { REGION_IDENTITY, isCanonicalRegion } from '../../../../shared/regulatory/region-identity';
@@ -27,36 +27,32 @@ describe('the gateway rules speak the canonical region vocabulary', () => {
     }
   });
 
-  it('partitions the canonical regions into published limits and the conservative default', () => {
-    // NOT "every region returns a positive number" — getGatewaySizeLimit has a
-    // `default:` arm returning the conservative 1 GB, so that assertion passes for
-    // any string on earth and proves nothing. The honest pin is the PARTITION: six
-    // regions have an agency-specific limit, six fall through to the documented
-    // default pending published specs. If a published spec lands for one of the
-    // six, this test must be edited — which is the point.
+  it('partitions the canonical regions into limits on file and none on file', () => {
+    // The honest pin is the PARTITION. Until 2026-10-15 this pinned
+    // getGatewaySizeLimit's: CA "sharing" FDA's 4 GB, and 1 GB for CN and KR plus
+    // a 1 GB default for the other six, none of them a limit any agency publishes.
+    // That accessor is deleted; getGatewaySizeLimitOnFile answers null where no
+    // limit is on file. If a published limit is filed for a region, this test must
+    // be edited — which is the point.
     const GB = 1024 * 1024 * 1024;
-    const published: Record<string, number> = {
+    const onFile: Record<string, number> = {
       US: 4 * GB,
-      CA: 4 * GB, // shares the FDA gateway limit
       EU: 600 * 1024 * 1024,
       JP: GB,
-      CN: GB,
-      KR: GB,
     };
-    const awaitingSpec = ['UK', 'AU', 'CH', 'BR', 'IN', 'SG'];
+    const noneOnFile = ['CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG'];
 
     // The two groups together are exactly the canonical twelve — so a region
     // added to REGION_IDENTITY lands in neither and fails here.
-    expect([...Object.keys(published), ...awaitingSpec].sort()).toEqual(
+    expect([...Object.keys(onFile), ...noneOnFile].sort()).toEqual(
       Object.keys(REGION_IDENTITY).sort()
     );
 
-    for (const [region, bytes] of Object.entries(published)) {
-      expect(getGatewaySizeLimit(region as never), `${region} limit`).toBe(bytes);
+    for (const [region, bytes] of Object.entries(onFile)) {
+      expect(getGatewaySizeLimitOnFile(region as never)?.bytes, `${region} limit`).toBe(bytes);
     }
-    for (const region of awaitingSpec) {
-      // Stated as the default it is, not as a limit anyone published.
-      expect(getGatewaySizeLimit(region as never), `${region} falls back`).toBe(GB);
+    for (const region of noneOnFile) {
+      expect(getGatewaySizeLimitOnFile(region as never), `${region} has no limit on file`).toBeNull();
     }
   });
 
@@ -112,8 +108,10 @@ describe('regional eCTD rule catalog — NMPA (China)', () => {
     expect(lang!.description).toMatch(/Simplified Chinese/i);
   });
 
-  it('exposes a (conservative, flagged) gateway size limit for CN', () => {
-    expect(getGatewaySizeLimit('CN')).toBeGreaterThan(0);
+  // Was "exposes a (conservative, flagged) gateway size limit for CN": a 1 GB
+  // figure NMPA does not publish (removed 2026-10-15).
+  it('holds no gateway size limit for CN, since NMPA publishes none', () => {
+    expect(getGatewaySizeLimitOnFile('CN')).toBeNull();
   });
 });
 
@@ -201,8 +199,10 @@ describe('regional eCTD rule catalog — MFDS (Korea)', () => {
     expect(lang!.description).toMatch(/Korean/i);
   });
 
-  it('exposes a (conservative, flagged) gateway size limit for KR', () => {
-    expect(getGatewaySizeLimit('KR')).toBeGreaterThan(0);
+  // Was "exposes a (conservative, flagged) gateway size limit for KR": a 1 GB
+  // figure MFDS does not publish (removed 2026-10-15).
+  it('holds no gateway size limit for KR, since MFDS publishes none', () => {
+    expect(getGatewaySizeLimitOnFile('KR')).toBeNull();
   });
 });
 
@@ -303,10 +303,16 @@ describe('regional eCTD rule catalog — cross-region invariants', () => {
     }
   });
 
-  it('every supported region has at least one rule and a positive gateway limit', () => {
+  // Until 2026-10-15 this also required "a positive gateway limit" for every
+  // region, which only held because getGatewaySizeLimit invented one for nine of
+  // them. A limit is now held only where it is on file, and it cites a rule of the
+  // region's own pack.
+  it('every supported region has at least one rule, and any gateway limit on file cites one of them', () => {
     for (const region of ALL_REGIONS) {
-      expect(getRulesForRegion(region).length).toBeGreaterThan(0);
-      expect(getGatewaySizeLimit(region)).toBeGreaterThan(0);
+      const rules = getRulesForRegion(region);
+      expect(rules.length).toBeGreaterThan(0);
+      const limit = getGatewaySizeLimitOnFile(region);
+      if (limit) expect(rules.map((r) => r.citation), `${region} limit source`).toContain(limit.source);
     }
   });
 
@@ -426,7 +432,10 @@ describe('Health Canada (CA) package validator', () => {
         },
       ]
     );
-    expect(findings.filter(f => f.region === 'CA')).toHaveLength(0);
+    // 2026-10-15: HC-REP-002 (bilingual labelling) is catalogued and not
+    // evaluated; it is now named as not assessed rather than implied clean.
+    expect(findings.filter(f => f.region === 'CA' && f.ruleId !== 'REGION_RULES_NOT_ASSESSED')).toHaveLength(0);
+    expect(findings.find(f => f.ruleId === 'REGION_RULES_NOT_ASSESSED')?.message).toContain('HC-REP-002');
   });
 
   it('rejects a valid HC prefix followed by trailing garbage (end-anchored)', () => {

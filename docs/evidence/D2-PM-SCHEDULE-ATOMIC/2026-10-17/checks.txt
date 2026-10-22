@@ -1,0 +1,19 @@
+Warning: modified files without companion tests (non-blocking):
+ - server/services/projects/schedule-of-events/service.ts
+Companion-file scan complete. This scan does not execute or qualify tests.
+
+> concept2cure-riai@1.0.0 ci:db-test-isolation
+> node scripts/ci/check-db-test-isolation.mjs
+
+[ci:db-test-isolation] OK — 195 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+
+/workspace/ClinicalSageAI-2-replit/server/services/projects/schedule-of-events/service.ts
+  384:8  warning  Async function 'generateProjectSchedule' has too many lines (135). Maximum allowed is 100  max-lines-per-function
+  384:8  warning  Async function 'generateProjectSchedule' has a complexity of 16. Maximum allowed is 15     complexity
+  555:8  warning  Async function 'amendMilestone' has a complexity of 16. Maximum allowed is 15              complexity
+  605:1  warning  File has too many lines (821). Maximum allowed is 500                                      max-lines
+  783:8  warning  Async function 'reviewScheduleHealth' has too many lines (141). Maximum allowed is 100     max-lines-per-function
+  783:8  warning  Async function 'reviewScheduleHealth' has a complexity of 28. Maximum allowed is 15        complexity
+
+✖ 6 problems (0 errors, 6 warnings)
+

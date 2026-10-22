@@ -1,0 +1,15 @@
+# An HTML blob framed under the fixed production policy, beside the same page with no policy (control) (2026-10-22T05:37:09Z)
+## under the policy
+served frame-src: frame-src 'self' blob:
+served object-src: object-src 'none'
+frame url=http://127.0.0.1:<port>/html
+frame url=blob:http://127.0.0.1:<port>/<uuid>
+violations recorded by the page: []
+VERDICT: the framed HTML did not run its script
+## control: no policy
+served frame-src: (none)
+served object-src: (none)
+frame url=http://127.0.0.1:<port>/html-no-policy
+frame url=blob:http://127.0.0.1:<port>/<uuid>
+violations recorded by the page: []
+VERDICT: the framed HTML ran its script

@@ -56,12 +56,19 @@ function scopeRow(status = 'draft') {
   };
 }
 
+function permissionRows(options?: { throwOnPermission?: boolean; roles?: string[] }) {
+  if (options?.throwOnPermission) throw new Error('permission store unavailable');
+  return { rows: (options?.roles ?? []).map(role => ({ role })) };
+}
+
 function installQueryBehavior(options?: {
   status?: string;
   roles?: string[];
   throwOnPermission?: boolean;
+  qmsStatus?: string;
 }) {
   h.query.mockImplementation(async (sql: string) => {
+    if (/FROM qms_documents/i.test(sql)) return { rows: options?.qmsStatus ? [{ status: options.qmsStatus }] : [] };
     if (/FROM authoring_sections s/i.test(sql) && /JOIN authoring_documents d/i.test(sql)) {
       return { rows: [scopeRow(options?.status)] };
     }
@@ -77,10 +84,7 @@ function installQueryBehavior(options?: {
         ],
       };
     }
-    if (/FROM doc_permissions p/i.test(sql)) {
-      if (options?.throwOnPermission) throw new Error('permission store unavailable');
-      return { rows: (options?.roles ?? []).map(role => ({ role })) };
-    }
+    if (/FROM doc_permissions p/i.test(sql)) return permissionRows(options);
     return { rows: [] };
   });
 }
@@ -88,6 +92,28 @@ function installQueryBehavior(options?: {
 describe('mandatory authoring object authorization middleware', () => {
   beforeEach(() => {
     h.query.mockReset();
+  });
+
+  it.each(['in_review', 'effective', 'signed-version', 'retained-version'])('refuses edits of a linked controlled QMS record: %s', async qmsStatus => {
+    installQueryBehavior({ roles: ['OWNER'], qmsStatus });
+    const req = request({ method: 'PATCH', path: `/authoring/sections/${SECTION_ID}`, user: author, body: { content: 'Replacement' } });
+    const res = response(); const next = vi.fn();
+    await authoringObjectAuthorization(req, res, next);
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toMatchObject({ error: { code: 'QMS_DOCUMENT_CONTROLLED' } });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('allows editing a linked QMS draft, but directs its signing to Quality', async () => {
+    installQueryBehavior({ roles: ['OWNER'], qmsStatus: 'draft' });
+    const edited = response(); const next = vi.fn();
+    await authoringObjectAuthorization(request({ method: 'PATCH', path: `/authoring/sections/${SECTION_ID}`, user: author }), edited, next);
+    expect(next).toHaveBeenCalledOnce();
+    const signed = response(); const signedNext = vi.fn();
+    await authoringObjectAuthorization(request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/freeze`, user: author }), signed, signedNext);
+    expect(signed.statusCode).toBe(409);
+    expect(signed.body).toMatchObject({ error: { code: 'QMS_SIGN_IN_QUALITY' } });
+    expect(signedNext).not.toHaveBeenCalled();
   });
 
   it('ignores non-authoring API mutations at the shared /api mount', async () => {

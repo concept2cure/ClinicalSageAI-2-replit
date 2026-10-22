@@ -172,9 +172,11 @@ describe('SopRegister — a draft is sent for review before it can be approved',
     H.apiRequest.mockResolvedValue({ status: 200, ok: true, json: async () => ({ data: { id: 7, status: 'in_review' } }) });
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
     await waitFor(() => expect(H.refresh).toHaveBeenCalled());
     expect(H.apiRequest).toHaveBeenCalledTimes(1);
-    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/7', { status: 'in_review' });
+    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/7', { status: 'in_review', reason: 'Ready for independent Quality review.' });
     expect(screen.getByRole('status').textContent).toMatch(/WI-014 was sent for review/);
   });
 
@@ -183,6 +185,8 @@ describe('SopRegister — a draft is sent for review before it can be approved',
     H.apiRequest.mockRejectedValue(new Error('This document is effective. An approved document changes only through a revision.'));
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/changes only through a revision/));
     expect(H.refresh).not.toHaveBeenCalled();
   });

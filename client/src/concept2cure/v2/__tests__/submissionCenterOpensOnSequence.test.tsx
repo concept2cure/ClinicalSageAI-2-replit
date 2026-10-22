@@ -27,7 +27,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -86,9 +86,55 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   clearNavParams();
+  window.history.replaceState(null, '', '/');
 });
 
 describe('F10: Open in Submission Center lands on the sequence placed into', () => {
+  it('F19: a copied link opens the exact non-first sequence and a failed read retries that retained target', async () => {
+    let unread = true;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url === '/api/submissions/5/sequences' && unread) return json({ error: 'temporarily unavailable' }, 503);
+      const route = ROUTES[`${method} ${String(url).split('?')[0]}`];
+      return route ? route() : json([]);
+    });
+    window.history.replaceState(null, '', '/concept2cure/submission-center?submissionId=5&sequenceId=7&ws=builder');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()}/>);
+    expect(await screen.findByRole('button', { name: 'Retry linked submission' })).toBeTruthy();
+    expect(screen.queryByText('M2.7 Clinical Summary')).toBeNull();
+    unread = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Retry linked submission' }));
+    await waitFor(() => expect(tab('Builder').getAttribute('aria-selected')).toBe('true'));
+    expect(await screen.findByText('M2.7 Clinical Summary')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Retry linked submission' })).toBeNull();
+  });
+  it('F19: a repeated notification handoff opens its exact submission and sequence while this surface is already mounted', async () => {
+    mockApi();render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()}/>);
+    await screen.findByText('ZX-9 First-in-Human');
+    act(()=>stashNavParamsForTarget('submission-center',{submissionId:'5',sequenceId:'7',ws:'builder'}));
+    await waitFor(()=>expect(tab('Builder').getAttribute('aria-selected')).toBe('true'));
+    await waitFor(()=>expect(apiRequest).toHaveBeenCalledWith('GET','/api/submissions/sequences/7/leaves'));
+    act(()=>stashNavParamsForTarget('submission-center',{submissionId:'3',sequenceId:'2',ws:'sequences'}));
+    await waitFor(()=>expect(tab('Sequences').getAttribute('aria-selected')).toBe('true'));
+    await waitFor(()=>expect(document.body.textContent).not.toContain('M2.7 Clinical Summary'));
+  });
+  it('an already mounted response handoff sets only an admitted follow-up type on the exact submission', async () => {
+    mockApi();
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await screen.findByText('ZX-9 First-in-Human');
+    act(() => stashNavParamsForTarget('submission-center', {
+      submissionId: '5', sequenceId: '7', ws: 'sequences', followUp: 'response',
+    }));
+    await waitFor(() => expect(tab('Sequences').getAttribute('aria-selected')).toBe('true'));
+    const type = await screen.findByLabelText('Type of sequence 0002') as HTMLSelectElement;
+    expect(type.value).toBe('response');
+    expect((screen.getByLabelText('Submission to work on') as HTMLSelectElement).value).toBe('5');
+    act(() => stashNavParamsForTarget('submission-center', {
+      submissionId: '5', sequenceId: '7', ws: 'sequences', followUp: 'invented_follow_up',
+    }));
+    await waitFor(() => expect(type.value).toBe('response'));
+    expect(apiRequest.mock.calls.some(([method, path]) => method === 'POST' && String(path).startsWith('/api/submissions/'))).toBe(false);
+  });
+
   it('after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder', async () => {
     mockApi();
     const onNav = vi.fn();
@@ -142,6 +188,9 @@ describe('F10: Open in Submission Center lands on the sequence placed into', () 
     expect(tab('Sequences').getAttribute('aria-selected')).toBe('true');
     expect(tab('Dispatch').getAttribute('aria-selected')).toBe('false');
   });
+});
+
+describe("F10: Open in Submission Center lands on the sequence placed into — recovery", () => {
 
   it('a failed sequence read is said as a failed read, not as "not found"', async () => {
     mockApi();

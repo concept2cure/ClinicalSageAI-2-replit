@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/__tests__/sub-agent-passage-staging.test.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "7a55232aa5f111314324d120191dee2349ba22dc58a49729ee6f82e65d2aa5a5",
+  "note": "Summary omits duplicated source fields; not raw output.",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/sub-agent-passage-staging.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

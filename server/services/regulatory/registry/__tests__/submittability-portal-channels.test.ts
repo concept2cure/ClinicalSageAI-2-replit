@@ -102,11 +102,11 @@ describe('submittability honours the channel the entry declares', () => {
     expect(ind.tier).toBe('submittable');
   });
 
-  it('is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED', () => {
+  it('is the one channel function: CTIS is a portal, an IVDR PER retains its Notified Body recipient', () => {
     expect(submissionChannelFor(getApplicationType('EU_CTA')!).kind).toBe('portal');
-    expect(submissionChannelFor(getApplicationType('EU_PER')!)).toEqual({
-      kind: 'gateway', region: 'ema', name: 'eudamed',
-    });
+    const per = submissionChannelFor(getApplicationType('EU_PER')!);
+    expect(per.kind).toBe('unconnected');
+    if (per.kind === 'unconnected') expect(per.channel).toMatch(/Notified Body/);
     expect(submissionChannelFor(getApplicationType('US_IND')!)).toEqual({
       kind: 'gateway', region: 'fda', name: 'esg',
     });
@@ -141,8 +141,9 @@ describe('an EMA filing outside the centralised procedure is not sent to the eSu
        EU_PRIME carry submissionFormat 'eCTD' in the registry, and the round-1
        rule (EU + EMA + eCTD → eSubmission Gateway) told a client applying for
        orphan designation "Centralised procedure — the eSubmission Gateway/Web
-       Client is mandatory". EMA receives these through IRIS (regulator text,
-       ema.europa.eu — g-submission-channel-function-facts.md rows 4-5). */
+       Client is mandatory". EMA receives these through IRIS (recall: a search
+       extract of an ema.europa.eu page — g-submission-channel-function-facts.md
+       rows 4-5). */
     for (const id of ['EU_ORPHAN', 'EU_SCIENTIFIC_ADVICE', 'EU_PIP', 'EU_PRIME']) {
       const entry = getApplicationType(id);
       expect(entry, `${id} missing from the registry`).toBeTruthy();
@@ -160,17 +161,17 @@ describe('an EMA filing outside the centralised procedure is not sent to the eSu
     }
   });
 
-  it('fails closed for an EMA filing whose channel is not modelled — never the CESP region default', () => {
-    // These EMA-agency entries have no modelled channel. Falling through to
-    // REGION_IDENTITY.EU (cesp) reported them submittable through CESP, a
-    // channel nothing on record says accepts them.
-    for (const id of [
-      'EU_EUDRAVIGILANCE_ICSR', 'EU_PSMF', 'EU_ACCEL_ASSESS', 'EU_REF_LAB',
-      'EU_PERF_STUDY', 'EU_PMPF', 'EU_IVD_REEVAL', 'EU_IVDR_ART48_CONSULT',
+  it('fails closed for each actual recipient whose channel is not modelled — never the CESP region default', () => {
+    // Device recipients read from their corrected registry identities, rather
+    // than reasserting the former EMA metadata as a premise.
+    for (const [id, agency] of [
+      ['EU_EUDRAVIGILANCE_ICSR', 'EMA'], ['EU_PSMF', 'EMA'], ['EU_ACCEL_ASSESS', 'EMA'],
+      ['EU_REF_LAB', 'EU_Reference_Laboratory'], ['EU_PERF_STUDY', 'National_Competent_Authority'],
+      ['EU_PMPF', 'Notified_Body'], ['EU_IVD_REEVAL', 'Notified_Body'], ['EU_IVDR_ART48_CONSULT', 'EMA'],
     ]) {
       const entry = getApplicationType(id);
       expect(entry, `${id} missing from the registry`).toBeTruthy();
-      expect(entry!.agency, `the premise: ${id} is an EMA-agency entry`).toBe('EMA');
+      expect(entry!.agency, `the premise: ${id} retains its actual recipient`).toBe(agency);
       const ch = submissionChannelFor(entry!);
       expect(ch.kind, `${id} fell through to the region default`).toBe('unconnected');
       const text = ch.kind === 'unconnected' ? `${ch.channel} ${ch.reason}` : '';
@@ -185,7 +186,8 @@ describe('the registry declares IRIS for the EMA filings that go through IRIS', 
   /* 2026-10-05 (step g-eu-medicines-dated-facts; finding 45). EU_ORPHAN,
      EU_PIP, EU_SCIENTIFIC_ADVICE and EU_PRIME declared submissionFormat 'eCTD'
      (and EU_PIP ctdModule 'M1 (EU regional)'), while EMA receives them through
-     IRIS (regulator text, ema.europa.eu — g-eu-medicines-dated-facts-facts.md).
+     IRIS (recall: a search extract of an ema.europa.eu page —
+     g-eu-medicines-dated-facts-facts.md).
      The channel function knew it only from a list of ids beside the registry;
      now the registry entry says it, and the channel is read from the entry. */
   const IRIS_IDS = ['EU_ORPHAN', 'EU_PIP', 'EU_SCIENTIFIC_ADVICE', 'EU_PRIME'];
@@ -221,5 +223,24 @@ describe('the registry declares IRIS for the EMA filings that go through IRIS', 
     const maa = submissionChannelFor(getApplicationType('EU_MAA')!);
     expect(maa.kind).toBe('unconnected');
     if (maa.kind === 'unconnected') expect(maa.channel).toMatch(/eSubmission Gateway/);
+  });
+});
+
+
+describe('corrected device recipient identity cannot inherit a regional gateway', () => {
+  it.each([
+    ['EU_PERF_STUDY', 'National_Competent_Authority', /national competent authority/i],
+    ['EU_REF_LAB', 'EU_Reference_Laboratory', /reference laboratory/i],
+    ['JP_NINTEI', 'Registered_Certification_Body', /registered certification body/i],
+  ] as const)('%s recipient has no modelled submission channel', (id, agency, body) => {
+    const entry = getApplicationType(id)!;
+    expect(entry.agency).toBe(agency);
+    const channel = submissionChannelFor(entry);
+    expect(channel.kind).toBe('unconnected');
+    if (channel.kind !== 'unconnected') throw new Error('An unmodelled device recipient inherited a gateway.');
+    expect(channel.channel).toMatch(body);
+    expect(channel.reason).toMatch(/not modelled/);
+    expect(channel.applicantStep).toMatch(/confirm|specified/i);
+    expect(getSubmittability(entry).tier).toBe('no_gateway');
   });
 });

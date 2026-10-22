@@ -36,9 +36,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Mock the unified AI client BEFORE importing csr-builder ────────────────
-// csr-builder.ts does `await import('../lib/unified-ai-client.js')` at
-// module load (top-level await), so the mock must be registered first via
-// vi.hoisted so `completeMock` exists when the hoisted vi.mock factory runs.
+// CSR drafting lazily imports the canonical unified client. Register its mock
+// before drafting so these cases remain offline with controlled model output.
 const { completeMock } = vi.hoisted(() => ({
   completeMock: vi.fn(async (_messages: unknown, _options?: unknown) => ''),
 }));

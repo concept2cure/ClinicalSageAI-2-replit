@@ -1,0 +1,49 @@
+{
+  "testFile": "server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts",
+  "sha256": "ae5c8cda43b31c7c4b02af0ed02bb7097110ba332017d8b44b891cd4f4132b52",
+  "productionBaseline": "8c6bd712ecbf0e8e6a62cd581d1b1f7186b98aaf",
+  "total": 9,
+  "intendedFailures": 7,
+  "passingControls": 2,
+  "tests": [
+    {
+      "name": "native SSE hard aggregate raw-body handoff caps a 20-call ordinary floor-overflow round without dropping calls or grounding on raw output",
+      "status": "failed"
+    },
+    {
+      "name": "native SSE hard aggregate raw-body handoff refuses irreducible passage replacement totals before recording, grounding or another model call",
+      "status": "failed"
+    },
+    {
+      "name": "native SSE hard aggregate raw-body handoff refuses size growth injected at the guard seam after allocation",
+      "status": "failed"
+    },
+    {
+      "name": "native SSE hard aggregate raw-body handoff refuses size growth injected at the settlement seam after allocation",
+      "status": "failed"
+    },
+    {
+      "name": "native SSE hard aggregate raw-body handoff rejects excessive redirected bodies at the actual stage boundary without running replaced tools",
+      "status": "failed"
+    },
+    {
+      "name": "SSE accepted-body and truthful guidance controls uses the accepted ordinary envelope rather than a raw zero-result statement in adaptation guidance",
+      "status": "failed"
+    },
+    {
+      "name": "SSE accepted-body and truthful guidance controls stages accepted raw bodies exactly without a second cap after recorder and corpus admission",
+      "status": "failed"
+    },
+    {
+      "name": "SSE accepted-body and truthful guidance controls CONTROL: a fitting ordinary result retains its raw body, corpus and existing miss guidance",
+      "status": "passed"
+    },
+    {
+      "name": "SSE accepted-body and truthful guidance controls CONTROL: fitting protected passage strings remain complete with locators and escaped framing",
+      "status": "passed"
+    }
+  ],
+  "baselineInputsUnchanged": true,
+  "command": "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 node node_modules/vitest/vitest.mjs run --config vitest.config.ts server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts --maxWorkers=1 --no-file-parallelism --reporter=verbose --reporter=json --outputFile=docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/baseline-vitest.json > docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/stream/baseline-vitest.txt 2>&1",
+  "exitCode": 1
+}

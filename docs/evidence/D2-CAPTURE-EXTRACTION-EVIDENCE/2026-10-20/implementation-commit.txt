@@ -1,0 +1,51 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3312 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 7efdd69d4] fix(data-room): retain exact capture extraction evidence
+ 44 files changed, 4001 insertions(+), 7 deletions(-)
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/README.md
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/baseline-inputs.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/README.md
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/baseline-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/baseline-red.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/evidence-sha256.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/first-baseline-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/first-baseline-red.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/first-lint-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/first-lint-raw.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/frozen-test.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/lint-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/cache/lint-raw.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/extractor/README.md
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/extractor/baseline-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/extractor/baseline-red.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/extractor/frozen-evidence.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/extractor/lint-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/extractor/lint-raw.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/frozen-tests.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/green-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/green-result.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/green-tests.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/independent-review.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/lint-baseline-stderr.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/lint-baseline.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/lint-final-stderr.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/lint-final.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/README.md
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/baseline-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/baseline-red.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/frozen-sha256.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/initial-baseline-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/initial-baseline-red.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/lint-command.json
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/persistence/lint-raw.txt
+ create mode 100644 docs/evidence/D2-CAPTURE-EXTRACTION-EVIDENCE/2026-10-20/source-input-pins.json
+ create mode 100644 server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts
+ create mode 100644 server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts
+ create mode 100644 server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts
+ create mode 100644 server/services/clinical-regulatory-evidence/capture-extraction-evidence.ts

@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-deploy-path"
+  ],
+  "at": "2026-10-20T22:54:41.796671+00:00",
+  "elapsedSeconds": 0.185,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-merged.json",
+  "stdout": "[ci:migration-deploy-path] OK \u2014 105 baselined file(s) on no deploy path, none new.\n",
+  "stderr": ""
+}

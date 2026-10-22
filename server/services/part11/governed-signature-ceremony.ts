@@ -39,8 +39,9 @@
  *
  * @module server/services/part11/governed-signature-ceremony
  */
-import type { PoolClient } from 'pg';
+import type { RequestConnectable, RequestSqlClient } from '../../db/requestDb';
 import { pool } from '../../db';
+import { signerReverificationDeps } from './reverify-signer-deps';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import {
   assertSignerIsNotAuthor,
@@ -85,13 +86,15 @@ export interface GovernedSignatureInput {
   ipAddress: string | null;
   /** Caller role snapshot retained for compatibility; permission uses the persisted role. */
   role: string;
+  /** Canonical pinned request client; legacy callers retain their pool. */
+  transactionPool?: RequestConnectable;
   /**
    * Server-owned reservation of the authoritative target before authorship is
    * read. Runs on this transaction after tenant setup; it must not write
    * content, versions or actions that could make the signer an author.
    * Throwing refuses the ceremony before its domain write or signature.
    */
-  prepare?: (client: PoolClient, meaning: CeremonySignMeaning) => Promise<void>;
+  prepare?: (client: RequestSqlClient, meaning: CeremonySignMeaning) => Promise<void>;
   /**
    * The domain write. Runs inside the transaction after the authorship check;
    * throw to refuse. `act` is what was decided (a reviewer's approve or reject,
@@ -99,7 +102,7 @@ export interface GovernedSignatureInput {
    * electronic_signatures manifest, so the signature row says what it signed.
    */
   write: (
-    client: PoolClient,
+    client: RequestSqlClient,
     meaning: CeremonySignMeaning,
   ) => Promise<{ act?: Record<string, unknown>; body: Record<string, unknown> }>;
 }
@@ -139,7 +142,7 @@ function refuseWithoutAuthority(authority: SigningAuthorityRefusal | null): void
 }
 
 async function checkMeaningAgainstAuthorship(
-  client: PoolClient,
+  client: RequestSqlClient,
   act: Pick<GovernedSignatureInput, 'target' | 'subject' | 'orgId' | 'userId'>,
   meaning: CeremonySignMeaning,
 ): Promise<void> {
@@ -172,7 +175,7 @@ async function checkMeaningAgainstAuthorship(
 }
 
 async function reserveTargetAndCheckMeaning(
-  client: PoolClient,
+  client: RequestSqlClient,
   input: GovernedSignatureInput,
   meaning: CeremonySignMeaning,
 ): Promise<void> {
@@ -186,7 +189,7 @@ async function reserveTargetAndCheckMeaning(
 
 /** Grants are read on the actual signing client after the parent wait. This
  * does not serialize independent grant writers through COMMIT. */
-async function checkCurrentResourceSigningPermission(client: PoolClient, input: GovernedSignatureInput): Promise<void> {
+async function checkCurrentResourceSigningPermission(client: RequestSqlClient, input: GovernedSignatureInput): Promise<void> {
   if (process.env.GOVERNANCE_RBAC_ENFORCE !== 'true') return;
   try {
     // The canonical authority check already holds this role and active actor
@@ -205,9 +208,7 @@ async function checkCurrentResourceSigningPermission(client: PoolClient, input: 
   }
 }
 
-export async function signGovernedAct(input: GovernedSignatureInput): Promise<Record<string, unknown>> {
-  const { orgId, userId, target, reason } = input;
-
+function requireCeremonyMeaning(input: GovernedSignatureInput): CeremonySignMeaning {
   if (typeof input.meaning !== 'string' || input.meaning.length === 0) {
     throw new GovernedSignatureRefusal(400, 'MEANING_REQUIRED', 'Declare what this signature means. Nothing was signed.');
   }
@@ -220,22 +221,32 @@ export async function signGovernedAct(input: GovernedSignatureInput): Promise<Re
     );
   }
 
+  return meaning;
+}
+
+export async function signGovernedAct(input: GovernedSignatureInput): Promise<Record<string, unknown>> {
+  const { orgId, userId, target, reason } = input;
+
+  const meaning = requireCeremonyMeaning(input);
+
   // Step 2 (§11.10(g)): identity is not authority. The platform's one policy
   // (signing-authority-gate.ts): the role from the membership row, never the
   // token or the body, asked before any credential is compared, so this
   // ceremony is not a password oracle for a role that may not sign. A lookup
   // that cannot run signs nothing. This module's own wrapper of it
   // (assertSigningAuthority) was removed on 2026-10-08 (P-27).
-  refuseWithoutAuthority(await checkSigningAuthority(userId, orgId));
+  refuseWithoutAuthority(input.transactionPool ? await checkSigningAuthority(userId, orgId, input.transactionPool) : await checkSigningAuthority(userId, orgId));
 
   const reauth = asReauth(input.reauth);
-  const verified = await verifyReauth(userId, reauth);
+  const verified = input.transactionPool
+    ? await verifyReauth(userId, reauth, signerReverificationDeps(input.transactionPool))
+    : await verifyReauth(userId, reauth);
   if (!verified.ok) {
     const code = verified.error ?? 'REAUTH_REQUIRED';
     throw new GovernedSignatureRefusal(401, code, REAUTH_MESSAGE[code] ?? REAUTH_MESSAGE.REAUTH_REQUIRED);
   }
 
-  const client = await pool.connect();
+  const client = await (input.transactionPool ?? pool).connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, orgId);

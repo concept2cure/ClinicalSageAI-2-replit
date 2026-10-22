@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-18",
+  "branch": "concept2cure-v2",
+  "mode": "Direct normal push; no PR, force or bypass",
+  "implementationCommit": "2d2ded13856d899257af394c3d8e29698d1034de",
+  "sourcePublishedCommit": "47d694363b29694558cfdfc89f8819e0c8252a71",
+  "remoteVerifiedBeforeFinalDocumentationCommit": "47d694363b29694558cfdfc89f8819e0c8252a71",
+  "baseline": {
+    "source": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+    "failingChecks": 41,
+    "passingControls": 34,
+    "frozenTests": "frozen-tests.json"
+  },
+  "initialQualification": {
+    "tests": 196,
+    "suites": 16,
+    "exitCode": 0,
+    "stableInputs": 23
+  },
+  "finalQualification": {
+    "tests": 286,
+    "suites": 20,
+    "exitCode": 0,
+    "stableInputs": 38,
+    "pins": "merged-final-pins.json",
+    "fixtureRemedy": "savedReuseRevision:0 required by incoming Owner type; original client control bytes preserved; three server fail-first suites unchanged"
+  },
+  "canonicalIntegration": {
+    "initialMetricsMerge": "b357a10166f015b6cf56949acd76bc6727ae3515",
+    "firstPush": {
+      "exitCode": 1,
+      "allHooksPassed": true,
+      "reason": "Remote advanced during checks",
+      "transcript": "code-push-first-race.txt"
+    },
+    "savedSourceMerge": "909dd60d20e633f353b93d85a627c51fbdde03a1",
+    "textualConflicts": 0,
+    "unmergedIndexEntries": 0,
+    "semanticFixtureCompatibilityResolved": true,
+    "requiredAncestorsVerified": [
+      "61a14c5d9406501dcc05c188e3975dcce59317f0",
+      "4684ff1d490ae3b1c618d2565cbf36795160e9b1",
+      "9fc40c80cf35c017bdc49c6b9247a146d31a68b7",
+      "e42a5e59b19a9874f32f4cc08d388533d909f6c3",
+      "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+      "2d2ded13856d899257af394c3d8e29698d1034de",
+      "b357a10166f015b6cf56949acd76bc6727ae3515",
+      "3cae08d236ba5be6dd96284bca2c47b4605c007d",
+      "909dd60d20e633f353b93d85a627c51fbdde03a1",
+      "47d694363b29694558cfdfc89f8819e0c8252a71"
+    ]
+  },
+  "finalCodePush": {
+    "exitCode": 0,
+    "transcript": "code-push.txt",
+    "wholeProjectTypeScriptErrors": 0,
+    "lintWarningGrowth": 0
+  },
+  "limits": [
+    "Known cutoff protection; unknown or legacy status is unconfirmed.",
+    "Existing saved-base/source/current-access and unconfirmed transaction gates retained.",
+    "No generic-save attestation, native PostgreSQL concurrency, live provider, scientific-completeness, deployment or agency-acceptance claim."
+  ],
+  "publicationRecordBoundary": "Completed source push verified here. Final documentation commit includes this record and artifact hashes; final remote equality checked after its normal push."
+}

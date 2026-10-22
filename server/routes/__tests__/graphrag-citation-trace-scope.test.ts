@@ -49,6 +49,7 @@ function app(org: number | null) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as any).user = { id: 1, organizationId: org };
+    (req as any).dbClient = { query: (...args: unknown[]) => query(...args) };
     next();
   });
   a.use('/api/graphrag', router);
@@ -92,6 +93,7 @@ describe('citation-trace is scoped to one organisation', () => {
     await request(app(7)).get('/api/graphrag/citation-trace/doc-of-org-999?depth=3');
 
     const reads = query.mock.calls.filter((c) => /FROM\s+citation_chains/i.test(String(c[0])));
+    expect(reads.length).toBeGreaterThan(0);
     for (const [sql, params] of reads as unknown as Array<[string, unknown[]]>) {
       // The read must name the org-keyed anchor table, not just the document ids.
       expect(sql, 'the citation read must be constrained by an org-keyed table').toMatch(

@@ -21,7 +21,7 @@ import { estimateFees, FEE_SCHEDULE, type FeeMarket } from '../regulatory-fee-es
 const UNMODELLED: FeeMarket[] = ['EMA', 'PMDA', 'HEALTH_CANADA'];
 const NAME: Record<FeeMarket, string> = { FDA: 'FDA', EMA: 'EMA', PMDA: 'PMDA', HEALTH_CANADA: 'Health Canada' };
 const notModelled = (status: string, market: FeeMarket) =>
-  new RegExp(`fee effect of ${status} status not modelled for ${NAME[market]}`, 'i');
+  `fee effect of ${status} status not modelled for ${NAME[market]}`.toLowerCase();
 
 describe('orphan — the fee effect per market', () => {
   it('FDA: the application and program fees are waived (the effect the reference holds)', () => {
@@ -47,7 +47,7 @@ describe('orphan — the fee effect per market', () => {
       const e = estimateFees({ market, orphan: true });
       expect(e.lineItems.every((li) => li.waived === false)).toBe(true);
       expect(e.total).toBe(FEE_SCHEDULE[market].applicationWithClinicalData + FEE_SCHEDULE[market].annualProgramFee);
-      expect(e.caveats).toEqual(expect.arrayContaining([expect.stringMatching(notModelled('orphan', market))]));
+      expect(e.caveats.map(c => c.toLowerCase())).toEqual(expect.arrayContaining([expect.stringContaining(notModelled('orphan', market))]));
     }
   });
 
@@ -58,7 +58,7 @@ describe('orphan — the fee effect per market', () => {
       for (const li of e.lineItems) {
         expect(li.waived).toBe(false);
         expect(li.note ?? '').not.toMatch(/would be waived/i);
-        expect(li.note).toMatch(notModelled('orphan', market));
+        expect(li.note?.toLowerCase()).toContain(notModelled('orphan', market));
       }
     }
   });
@@ -81,7 +81,7 @@ describe('small business / SME — the fee effect per market', () => {
       const e = estimateFees({ market, smallBusiness: true, programYears: 0 });
       expect(e.lineItems[0].waived).toBe(false);
       expect(e.total).toBe(FEE_SCHEDULE[market].applicationWithClinicalData);
-      expect(e.lineItems[0].note).toMatch(notModelled('small-business / SME', market));
+      expect(e.lineItems[0].note?.toLowerCase()).toContain(notModelled('small-business / SME', market));
     }
     expect(estimateFees({ market: 'EMA', smallBusiness: true }).lineItems[0].note).toMatch(/reductions, not a waiver/i);
   });

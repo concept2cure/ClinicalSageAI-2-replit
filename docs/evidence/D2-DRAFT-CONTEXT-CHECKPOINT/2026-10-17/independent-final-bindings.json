@@ -1,0 +1,47 @@
+{
+  "startedAt": "2026-10-17T22:47:05.581Z",
+  "finishedAt": "2026-10-17T22:47:11.042Z",
+  "node": "v22.23.3",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts"
+  ],
+  "exitCode": 0,
+  "before": {
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "server/services/ai-gateway/gateway-error-map.ts": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0",
+    "server/services/ai-gateway/gateway-outcome.ts": "cdff239dde4910567f2126969581e5ccceaf7687b96ff9ef9d49320b27e3b2f8",
+    "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts": "364ad83313ba343653b7055b928a101690fd3c0323db1c1e239b0d91f610e505",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md": "32220c2b6a97cb1ecc4ee7a2a614c3cf4dd7169dbed05a003fa9391383ff4fd0",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts": "5e2f338546f1ce986e4abd0550540a021ca298b8c69b8d002057939c52952977",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-run-checkpoint.mjs": "f9ad789ed98cf1f8f7cd1e906c76d21dbad5ba8e6bde53a5dc3e97748563dff1"
+  },
+  "after": {
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "server/services/ai-gateway/gateway-error-map.ts": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0",
+    "server/services/ai-gateway/gateway-outcome.ts": "cdff239dde4910567f2126969581e5ccceaf7687b96ff9ef9d49320b27e3b2f8",
+    "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts": "364ad83313ba343653b7055b928a101690fd3c0323db1c1e239b0d91f610e505",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md": "32220c2b6a97cb1ecc4ee7a2a614c3cf4dd7169dbed05a003fa9391383ff4fd0",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts": "5e2f338546f1ce986e4abd0550540a021ca298b8c69b8d002057939c52952977",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-run-checkpoint.mjs": "f9ad789ed98cf1f8f7cd1e906c76d21dbad5ba8e6bde53a5dc3e97748563dff1"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "counterfactual": null,
+  "scope": "Actual producer, drafting service and error classifier; synthetic catalog/actor/program and gateway route/provider boundary. Actual gateway exports/classes are loaded by a partial mock, but gateway route/provider execution is replaced. No DB, provider or network."
+}

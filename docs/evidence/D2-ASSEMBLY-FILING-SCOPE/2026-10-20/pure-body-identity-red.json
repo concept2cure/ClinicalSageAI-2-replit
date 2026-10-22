@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-20T23:44:50.580600+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts"
+  ],
+  "elapsedSeconds": 1.85,
+  "exitCode": 1,
+  "sources": {
+    "server/services/c2c/document-class.ts": "10cf42b32de096c28c7154749c9319d68b421563f7239ef65978760cbf0e8bc3",
+    "server/services/regulatory/market-support.ts": "39b922cf84151aa0dca8c419f456c39e3e0dd7a6b0724bea046f03e46b66a8cb",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts": "f3a4101d24903ca0c6a425a4f4feeaf261102168bbee747f4724ba43167a0a7b"
+  },
+  "sourceDrift": [],
+  "rawOutput": "pure-body-identity-red-output.txt.gz",
+  "outputSha256": "053c21857b71ff4ed237a932e9fce32b028bd47a46e4bd46464a736ccc31bf98",
+  "summary": [
+    "Test Files  1 failed (1)",
+    "Tests  3 failed | 25 passed (28)"
+  ]
+}

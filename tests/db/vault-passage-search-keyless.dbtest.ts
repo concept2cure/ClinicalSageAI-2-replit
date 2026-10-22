@@ -25,14 +25,18 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
+import { nativeCatalogRunId, withNativeCatalogClient } from './catalog-native-fixture';
 
 /* Production defaults: neither flag forced. These suites share one worker, and
    a sibling sets both at module scope. */
-delete process.env.ANA_DOCUMENT_CATALOG_FORCE_ON;
-delete process.env.ANA_VAULT_CHUNKING_FORCE_ON;
+const savedEnvironment = Object.fromEntries(['ANA_DOCUMENT_CATALOG_FORCE_ON', 'ANA_VAULT_CHUNKING_FORCE_ON', 'EMBEDDING_PROVIDER', 'EMBEDDING_LOCAL_BASE_URL', 'LOCAL_AI_BASE_URL'].map(key => [key, process.env[key]]));
+process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = '';
+process.env.ANA_VAULT_CHUNKING_FORCE_ON = '';
 
-const PROBE_PREFIX = 'dbtest-keyless ';
-const PROBE_CODE = 'DBTEST-KEYLESS-DOC';
+const RUN = nativeCatalogRunId();
+const PROBE_PREFIX = `dbtest-keyless-${RUN} `;
+const PROBE_CODE = `DBTEST-KEYLESS-DOC-${RUN}`;
 
 const TOX_BODY =
   'GLP 28-Day Repeat-Dose Toxicology Study TOX-77-A in Sprague-Dawley rats. ' +
@@ -60,14 +64,6 @@ let otherProgramId: string;
 let app: express.Express;
 let actingOrg: () => { id: number; uuid: string };
 
-async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Promise<T>): Promise<T> {
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
-  return runWithTenantScope(
-    { tenantId: String(org.id), orgUuid: org.uuid, role: 'admin', source: 'request', caller: 'tests/db/vault-passage-search-keyless.dbtest.ts' },
-    fn,
-  );
-}
-
 async function callSearch(
   input: Record<string, unknown>,
   ctx?: { organizationId: number; organizationUuid?: string; projectRef?: string },
@@ -76,8 +72,10 @@ async function callSearch(
   const handler = getToolHandler('search_document_passages');
   if (!handler) throw new Error('search_document_passages is not registered');
   const scope = ctx ?? { organizationId: orgId, organizationUuid: orgUuid };
-  const raw = await inTenantScope({ id: scope.organizationId, uuid: scope.organizationUuid ?? orgUuid }, () =>
+  const raw = await withNativeCatalogClient({ organizationId: scope.organizationId, organizationUuid: scope.organizationUuid ?? orgUuid,
+    userId, role: 'admin', caller: 'tests/db/vault-passage-search-keyless.dbtest.ts' }, sqlClient =>
     handler(input, {
+      sqlClient,
       organizationId: scope.organizationId,
       organizationUuid: scope.organizationUuid,
       userId,
@@ -108,38 +106,6 @@ async function buildApp(): Promise<express.Express> {
   return a;
 }
 
-async function cleanupProbeRows(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${PROBE_CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query(
-    `DELETE FROM vault.document_chunks WHERE document_id IN
-       (SELECT id FROM vault.documents WHERE document_code LIKE $1)`,
-    [`${PROBE_CODE}%`],
-  );
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
-  // Each deploy's backfill (migrations/20260529_phase9_backfill.sql) gives every
-  // program a document, so a probe program an interrupted run left behind can
-  // carry one by the next run.
-  await owner.query(
-    'DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)',
-    [`${PROBE_PREFIX}%`],
-  );
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
-}
 
 async function upload(code: string, title: string, body: string, program?: string): Promise<string> {
   const res = await request(app)
@@ -156,39 +122,35 @@ async function upload(code: string, title: string, body: string, program?: strin
 beforeAll(async () => {
   // No provider: a self-hosted lane with no address refuses every embedding.
   process.env.EMBEDDING_PROVIDER = 'local';
-  delete process.env.EMBEDDING_LOCAL_BASE_URL;
-  delete process.env.LOCAL_AI_BASE_URL;
+  process.env.EMBEDDING_LOCAL_BASE_URL = '';
+  process.env.LOCAL_AI_BASE_URL = '';
   const { resetEmbeddingProvider } = await import(
     '../../server/services/ai-gateway/embeddings/embedding-provider'
   );
   resetEmbeddingProvider();
 
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
 
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-keyless-tenant'],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE_PREFIX}tenant`, `dbtest-keyless-${RUN}-tenant`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
 
   const other = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE_PREFIX}other tenant`, 'dbtest-keyless-other'],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE_PREFIX}other tenant`, `dbtest-keyless-${RUN}-other`],
   );
   otherOrgId = Number(other.rows[0].id);
   otherOrgUuid = String(other.rows[0].uuid);
 
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-keyless@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+    [`dbtest-keyless-${RUN}@example.test`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
-
-  await cleanupProbeRows();
 
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
@@ -205,6 +167,9 @@ beforeAll(async () => {
     [`${PROBE_PREFIX}other program`, 'DBTEST-KEYLESS-B', otherOrgId, 'Otherin 5mg'],
   );
   otherProgramId = String(otherProg.rows[0].id);
+  await seedVaultFixtureParent(owner, { orgId, orgUuid, programId }, { userId, namespace: `${PROBE_PREFIX}parent` });
+  await seedVaultFixtureParent(owner, { orgId: otherOrgId, orgUuid: otherOrgUuid, programId: otherProgramId }, { userId, namespace: `${PROBE_PREFIX}other-parent` });
+  await assertVaultFixtureRuntime({ orgId, orgUuid, programId });
 
   actingOrg = () => ({ id: orgId, uuid: orgUuid });
   app = await buildApp();
@@ -218,8 +183,16 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
-  await owner.end().catch(() => {});
+  // Keep this invocation's source bytes, records and append-only history.
+  try { await closeVaultFixtureRuntime(); }
+  finally {
+    try { await owner?.end(); }
+    finally {
+      for (const [key, value] of Object.entries(savedEnvironment)) {
+        if (value === undefined) delete process.env[key]; else process.env[key] = value;
+      }
+    }
+  }
 });
 
 describe('the passage index is written with no key and no flag', () => {
@@ -259,7 +232,7 @@ describe('the passage index is written with no key and no flag', () => {
       expect(rows[0]).toMatchObject({ chunk_status: 'chunked', embedded: 0 });
       expect(Number(rows[0].chunks)).toBeGreaterThan(0);
     } finally {
-      delete process.env.ANA_VAULT_CHUNKING_FORCE_ON;
+      process.env.ANA_VAULT_CHUNKING_FORCE_ON = '';
     }
   }, 60_000);
 });

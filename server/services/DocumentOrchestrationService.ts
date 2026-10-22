@@ -27,7 +27,11 @@ interface GeneratedFormRecord {
   version: number;
   status: string;
   formData: Record<string, unknown>;
-  complianceScore: number;
+  /**
+   * The share of the form's fields filled, 0-100. 2026-10-15: it was also
+   * returned as `complianceScore`, which nothing assessed. (The
+   * fda510k_documents column it is stored in keeps that name.)
+   */
   completeness: number;
   createdBy: number;
   updatedBy: number;
@@ -38,6 +42,17 @@ interface GeneratedFormRecord {
 interface FormNotProduced {
   formType: string;
   reason: string;
+}
+
+/**
+ * The 510(k) project named is not one of the caller's organization's (or does
+ * not exist). The routes answer 404; they match it by name.
+ */
+export class OrchestrationProjectNotFoundError extends Error {
+  constructor() {
+    super('Project not found');
+    this.name = 'OrchestrationProjectNotFoundError';
+  }
 }
 
 class DocumentOrchestrationService {
@@ -78,9 +93,9 @@ class DocumentOrchestrationService {
       const userIdNum = parseInt(userIdStr);
       const orgIdNum = parseInt(orgIdStr);
 
-      // 1. Fetch project
-      const project = await this.fetchProject(projectIdNum);
-      if (!project) throw new Error('Project not found');
+      // 1. Fetch project — this organization's
+      const project = await this.fetchProject(projectIdNum, orgIdNum);
+      if (!project) throw new OrchestrationProjectNotFoundError();
 
       // 2. Draft and save the FDA forms
       const { forms, failed } = await this.generateFDAForms(project, userIdNum, orgIdNum);
@@ -107,15 +122,19 @@ class DocumentOrchestrationService {
   }
 
   /**
-   * Fetch project details
+   * The organization's 510(k) project with this id, or undefined. 2026-10-15:
+   * read by id alone, so another organization's 510(k) project was drafted
+   * against (and, when it pointed at this organization's base project, had
+   * this organization's forms filed under it).
    */
-  private async fetchProject(projectId: number) {
+  private async fetchProject(projectId: number, organizationId: number) {
+    if (!Number.isSafeInteger(projectId) || !Number.isSafeInteger(organizationId)) return undefined;
     const [project] = await db!
       .select()
       .from(fda510kProjects)
-      .where(eq(fda510kProjects.id, projectId))
+      .where(and(eq(fda510kProjects.id, projectId), eq(fda510kProjects.organizationId, organizationId)))
       .limit(1);
-    
+
     return project;
   }
 
@@ -139,7 +158,7 @@ class DocumentOrchestrationService {
     organizationId: number
   ): Promise<{ forms: GeneratedFormRecord[]; failed: FormNotProduced[] }> {
     const projectData = await loadFormProjectData(project.projectId, organizationId);
-    if (!projectData) throw new Error('Project not found');
+    if (!projectData) throw new OrchestrationProjectNotFoundError();
 
     const generator = new FDAFormGenerator();
     const forms: GeneratedFormRecord[] = [];
@@ -150,7 +169,7 @@ class DocumentOrchestrationService {
       try {
         form = await generator.generate510kForm(formType, projectData);
       } catch (error) {
-        console.error(`Error drafting ${formType}:`, error);
+        console.error('Error drafting FDA form:', { formType }, error);
         failed.push({ formType, reason: FORM_NOT_DRAFTED });
         continue;
       }
@@ -168,15 +187,14 @@ class DocumentOrchestrationService {
         version: 1,
         status: 'draft',
         formData: { ...form.formData, completeness: form.completeness },
-        complianceScore: form.completeness,
         createdBy: userId,
         updatedBy: userId,
         organizationId
       };
       try {
-        await db!.insert(fda510kDocuments).values({ ...row, createdAt: new Date(), updatedAt: new Date() });
+        await db!.insert(fda510kDocuments).values({ ...row, complianceScore: form.completeness, createdAt: new Date(), updatedAt: new Date() });
       } catch (error) {
-        console.error(`Error saving ${formType}:`, error);
+        console.error('Error saving FDA form:', { formType }, error);
         failed.push({ formType, reason: FORM_NOT_SAVED });
         continue;
       }

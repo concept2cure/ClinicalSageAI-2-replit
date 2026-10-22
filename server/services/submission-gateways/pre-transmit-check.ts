@@ -11,7 +11,8 @@
  *      for ≤10 GB, physical media above). This is a fact about the channel, not
  *      a policy toggle, so it always blocks — where the figure has a source.
  *      JP is exempt (a warning) until a PMDA size source is filed: its 1 GB
- *      figure is unsourced (see SIZE_LIMIT_UNSOURCED).
+ *      figure is unsourced (see SIZE_LIMIT_UNSOURCED). A region with no limit
+ *      on file gets no size check, and a warning saying so.
  *   2. PDF/A submission grade — blocks in production when ECTD_REQUIRE_PDFA and
  *      the bundle shows unconverted PDF leaves.
  *   3. DTD self-containment — blocks in production when ECTD_REQUIRE_DTD and the
@@ -31,7 +32,7 @@
  */
 
 import type { Region, SubmissionBundle } from './types';
-import { getGatewaySizeLimit, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
+import { getGatewaySizeLimitOnFile, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
 import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
@@ -39,7 +40,7 @@ import {
   type ExternalValidator,
 } from '../ectd/external-validator';
 import { pdfaRequirementFrom, pdfaRequirementWho, type PdfARequirement } from '../ectd/pdfa-requirement';
-import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
+import { dtdRequiredFromEnv, hasPassedPackageDtdValidation } from '../ectd/dtd-bundler';
 import {
   evaluateRegionalBackboneGate,
   regionalBackboneRequiredFromEnv,
@@ -66,7 +67,7 @@ const REGION_TO_REGULATORY: Record<Region, RegulatoryRegion> = {
 };
 
 /**
- * Gateway regions whose size figure (getGatewaySizeLimit) has no regulator
+ * Gateway regions whose size figure (getGatewaySizeLimitOnFile) has no regulator
  * source. Exceeding it is reported as a warning, never as a blocker: refusing a
  * send on a number nobody sourced is a fabricated verdict.
  *
@@ -134,18 +135,19 @@ export interface PreTransmitResult {
 function evaluateDtdSelfContainment(
   dtd: SubmissionBundle['dtdStatus'],
   isProd: boolean,
-  dtdRequired: boolean
-): { check: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
+  dtdRequired: boolean,
+  studyFiles?: number,
+): { check: PreTransmitCheck | null; validationCheck: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
+  const validated = hasPassedPackageDtdValidation(dtd, studyFiles);
+  const validationCheck = packageDtdCheck(validated, Boolean(dtd) || dtdRequired);
+  const enforced = isProd && dtdRequired;
   if (!dtd) {
+    const message = 'ECTD_REQUIRE_DTD is set but the bundle carries no DTD status or current validation proof — cannot prove package DTD validity at transmit time.';
     return {
       check: null,
-      blockers: [],
-      warnings:
-        isProd && dtdRequired
-          ? [
-              'ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.',
-            ]
-          : [],
+      validationCheck,
+      blockers: enforced ? [message] : [],
+      warnings: enforced ? [message] : [],
     };
   }
   // `dtdStatus` reaches this gate off a persisted bundle record, so its fields
@@ -176,14 +178,59 @@ function evaluateDtdSelfContainment(
         ? 'all required DTDs and stylesheets bundled'
         : `missing: ${absentText}`,
     },
+    validationCheck,
     blockers:
-      isProd && dtdRequired && !selfContained
+      enforced && !selfContained
         ? [
             `Package is not DTD self-contained (missing ${absentText}); ECTD_REQUIRE_DTD blocks this production transmit.`,
           ]
-        : [],
-    warnings: [],
+        : enforced && !validated ? ['Package DTD validation is absent, incomplete or failed; ECTD_REQUIRE_DTD blocks this production transmit. Re-assemble and validate the package.'] : [],
+    warnings: !validated && !enforced ? ['Package DTD validation is unverified or failed; presence of DTDs and stylesheets alone does not prove validity.'] : [],
   };
+}
+
+/**
+ * The package against the region gateway's size limit on file: a blocker over a
+ * sourced limit, a warning over an unsourced figure (SIZE_LIMIT_UNSOURCED), and
+ * no check at all where no limit is on file. 2026-10-15: this read
+ * getGatewaySizeLimit, which answered figures no agency publishes (FDA's 4 GB
+ * for CA, 1 GB for CN, KR and the rest) and refused packages against them.
+ */
+function checkGatewaySize(
+  region: Region,
+  sizeBytes: number,
+): { check?: PreTransmitCheck; blocker?: string; warning?: string } {
+  const R = region.toUpperCase();
+  const onFile = getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]);
+  if (!onFile) {
+    return { warning: `No published ${R} gateway package-size limit is on file; the package size was not checked against one.` };
+  }
+  const limit = onFile.bytes;
+  const sizeOk = sizeBytes <= limit;
+  const unsourced = SIZE_LIMIT_UNSOURCED[region];
+  const check: PreTransmitCheck = {
+    name: 'gateway-size-limit',
+    passed: sizeOk,
+    detail:
+      `${sizeBytes} bytes vs ${limit} byte limit for ${R} (source: ${onFile.source})` +
+      (unsourced ? ` (not enforced: ${unsourced})` : ''),
+  };
+  if (sizeOk) return { check };
+  const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
+  return unsourced
+    ? { check, warning: `Package is ${gb(sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ${R} gateway. Not enforced: ${unsourced}.` }
+    : {
+        check,
+        blocker:
+          `Package is ${gb(sizeBytes)} GB, over the ${R} gateway limit of ${gb(limit)} GB. ` +
+          "Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.",
+      };
+}
+
+function packageDtdCheck(passed: boolean, available: boolean): PreTransmitCheck | null {
+  return available ? { name: 'package-dtd-validation', passed,
+    detail: passed ? 'all package backbones/STFs passed current DTD checks with verified supportive bytes'
+      : 'current complete XML/DTD execution and supportive-file integrity proof is absent or failed; re-assemble and validate the package' } : null;
 }
 
 /** Evaluate the pre-transmit preconditions for a package. Pure + deterministic. */
@@ -228,35 +275,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   const checks: PreTransmitCheck[] = [];
   const isProd = input.environment === 'production';
 
-  // 1. Size limit — hard, always, where the figure is sourced; a warning where
-  // it is not (SIZE_LIMIT_UNSOURCED).
-  const limit = getGatewaySizeLimit(REGION_TO_REGULATORY[input.region]);
-  const sizeOk = input.bundle.sizeBytes <= limit;
-  const unsourced = SIZE_LIMIT_UNSOURCED[input.region];
-  checks.push({
-    name: 'gateway-size-limit',
-    passed: sizeOk,
-    detail: `${
-      input.bundle.sizeBytes
-    } bytes vs ${limit} byte limit for ${input.region.toUpperCase()}` +
-      (unsourced ? ` (not enforced: ${unsourced})` : ''),
-  });
-  const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
-  if (!sizeOk && unsourced) {
-    warnings.push(
-      `Package is ${gb(input.bundle.sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ` +
-        `${input.region.toUpperCase()} gateway. Not enforced: ${unsourced}.`
-    );
-  } else if (!sizeOk) {
-    blockers.push(
-      `Package is ${gb(
-        input.bundle.sizeBytes
-      )} GB, over the ${input.region.toUpperCase()} gateway limit of ` +
-        `${gb(
-          limit
-        )} GB. Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.`
-    );
-  }
+  // 1. Size limit — hard, always, where a limit is on file (checkGatewaySize).
+  const size = checkGatewaySize(input.region, input.bundle.sizeBytes);
+  if (size.check) checks.push(size.check);
+  if (size.blocker) blockers.push(size.blocker);
+  if (size.warning) warnings.push(size.warning);
 
   // 2. PDF/A submission grade. Required only when the deployment or the
   // organisation chose it: every agency here accepts plain PDF 1.4–1.7 too
@@ -270,9 +293,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   const dtdGate = evaluateDtdSelfContainment(
     input.bundle.dtdStatus,
     isProd,
-    dtdRequiredFromEnv(env)
+    dtdRequiredFromEnv(env),
+    input.bundle.stf?.studies,
   );
   if (dtdGate.check) checks.push(dtdGate.check);
+  if (dtdGate.validationCheck) checks.push(dtdGate.validationCheck);
   blockers.push(...dtdGate.blockers);
   warnings.push(...dtdGate.warnings);
 
@@ -355,6 +380,7 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
     status: input.bundle.regionalBackbone,
     environment: input.environment,
     required: regionalBackboneRequiredFromEnv(env),
+    validation: input.bundle.dtdStatus?.validation,
   });
   if (regionalGate.check) checks.push(regionalGate.check);
   blockers.push(...regionalGate.blockers);

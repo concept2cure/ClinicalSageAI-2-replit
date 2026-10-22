@@ -133,6 +133,7 @@ function fallbackMessage(status: number): string {
   // Each names the cause AND the next step. A 403 is the one case where "your
   // administrator" is the right actor — org admins really can grant access
   // (services/c2c/program-access.ts) — so it is said here and nowhere else.
+  if (status === 401) return 'Sign in again to continue.';
   if (status === 403) {
     return 'You do not have permission for this action. Contact your administrator if you need access.';
   }
@@ -294,6 +295,7 @@ export function invalidateApiCache() {
  */
 export const AUDIT_ROW_NOT_PERSISTED_EVENT = 'c2c:audit-row-not-persisted';
 export const AUDIT_ROW_NOT_PERSISTED_CODE = 'AUDIT_ROW_NOT_PERSISTED';
+export const AUDIT_ROW_NOT_RETRIEVABLE_CODE = 'AUDIT_ROW_NOT_RETRIEVABLE';
 
 export interface AuditRowNotPersistedDetail {
   method: ApiRequestMethod;
@@ -311,18 +313,36 @@ export function findUnpersistedAuditRow(headers: Headers, body: unknown): { code
   if (headers.get('X-Audit-Row-Persisted') === 'false') {
     return { code: headers.get('X-Audit-Row-Code') || AUDIT_ROW_NOT_PERSISTED_CODE };
   }
+  if (headers.get('X-Audit-Row-Persisted') === 'true' && headers.get('X-Audit-Row-Chained') === 'false') {
+    return { code: AUDIT_ROW_NOT_RETRIEVABLE_CODE };
+  }
   const seen = new Set<object>();
   let visited = 0;
-  const scan = (node: unknown, depth: number): boolean => {
-    if (node === null || typeof node !== 'object' || depth > AUDIT_SCAN_MAX_DEPTH) return false;
-    if (seen.has(node) || ++visited > AUDIT_SCAN_MAX_NODES) return false;
+  const scan = (node: unknown, depth: number, auditEnvelope = false): string | null => {
+    if (node === null || typeof node !== 'object' || depth > AUDIT_SCAN_MAX_DEPTH) return null;
+    if (seen.has(node) || ++visited > AUDIT_SCAN_MAX_NODES) return null;
     seen.add(node);
     const rec = node as Record<string, unknown>;
-    if (rec.persisted === false && rec.code === AUDIT_ROW_NOT_PERSISTED_CODE) return true;
+    if (rec.persisted === false && rec.code === AUDIT_ROW_NOT_PERSISTED_CODE) return AUDIT_ROW_NOT_PERSISTED_CODE;
+    if (auditEnvelope && rec.persisted === true && rec.chained === false) return AUDIT_ROW_NOT_RETRIEVABLE_CODE;
+    // Canonical request metadata must not sit behind thousands of table rows
+    // in the bounded fallback scan. Inspect these envelopes first at each level;
+    // the same depth, node and cycle limits still apply.
+    for (const key of ['auditTrail', 'meta', 'details']) {
+      if (Object.hasOwn(rec, key)) {
+        const code = scan(rec[key], depth + 1, key === 'auditTrail');
+        if (code) return code;
+      }
+    }
     const children = Array.isArray(node) ? node : Object.values(rec);
-    return children.some((child) => scan(child, depth + 1));
+    for (const child of children) {
+      const code = scan(child, depth + 1);
+      if (code) return code;
+    }
+    return null;
   };
-  return scan(body, 0) ? { code: AUDIT_ROW_NOT_PERSISTED_CODE } : null;
+  const code = scan(body, 0);
+  return code ? { code } : null;
 }
 
 function announceUnpersistedAuditRow(detail: AuditRowNotPersistedDetail): void {
@@ -335,7 +355,8 @@ function announceUnpersistedAuditRow(detail: AuditRowNotPersistedDetail): void {
 }
 
 /**
- * Inspect a successful write's response for a lost audit row, without touching
+ * Inspect a successful request's explicit audit headers and a write's JSON
+ * response for a lost audit row, without touching
  * the body the caller is about to read (`clone()`), and without delaying the
  * caller (not awaited). Only JSON bodies are parsed: a streamed or binary
  * response is never buffered for this.
@@ -354,7 +375,7 @@ export function probeAuditRowOutcome(method: ApiRequestMethod, url: string, resp
 }
 
 function inspectWriteResponse(method: ApiRequestMethod, url: string, response: Response): void {
-  if (method === 'GET' || !response.ok) return;
+  if (!response.ok) return;
   const detailFor = (code: string): AuditRowNotPersistedDetail => ({
     method,
     path: url.split('?')[0],
@@ -366,6 +387,9 @@ function inspectWriteResponse(method: ApiRequestMethod, url: string, response: R
     announceUnpersistedAuditRow(detailFor(fromHeaders.code));
     return;
   }
+  // Downloads can be audited GETs. Their explicit header reports this request's
+  // outcome; JSON history rows on an ordinary GET describe earlier actions.
+  if (method === 'GET') return;
   if (response.status === 204 || !(response.headers.get('Content-Type') || '').includes('application/json')) return;
   let probe: Response;
   try {
@@ -382,6 +406,26 @@ function inspectWriteResponse(method: ApiRequestMethod, url: string, response: R
     .catch(() => {
       /* Not JSON after all. The caller's own parse reports that, not this. */
     });
+}
+
+/**
+ * Refuse a non-success response with the canonical sanitized server message.
+ * `apiRequest` intentionally returns 401 so session-aware callers can handle
+ * it. A mutation must still check that response before confirming a write.
+ * Successful bodies are left untouched for the caller's receipt reader.
+ */
+export async function assertApiResponseOk(response: Response): Promise<void> {
+  if (response.ok) return;
+  const correlationId = response.headers.get('X-Request-Id') ?? undefined;
+  const contentType = response.headers.get('Content-Type') || '';
+  if (contentType.includes('application/json')) {
+    const errorPayload = await response.json().catch(() => ({}));
+    const { message, code } = extractApiError(errorPayload, response.status);
+    throw new ApiRequestError(message, response.status, errorPayload, code, correlationId);
+  }
+  // A non-JSON body belongs to a failing upstream layer, never to user copy.
+  const errorText = await response.text();
+  throw new ApiRequestError(fallbackMessage(response.status), response.status, errorText, undefined, correlationId);
 }
 
 export const apiRequest = async (
@@ -421,26 +465,7 @@ export const apiRequest = async (
   }
 
   if (!response.ok && response.status !== 401) {
-    // Echoed by the server's requestId middleware and exposed to the browser via
-    // Access-Control-Expose-Headers, so it is readable cross-origin.
-    const correlationId = response.headers.get('X-Request-Id') ?? undefined;
-    const contentType = response.headers.get('Content-Type') || '';
-    if (contentType.includes('application/json')) {
-      const errorPayload = await response.json().catch(() => ({}));
-      const { message, code } = extractApiError(errorPayload, response.status);
-      throw new ApiRequestError(message, response.status, errorPayload, code, correlationId);
-    }
-    // A non-JSON body is an upstream page (a proxy error, an HTML login
-    // redirect, a stack trace) — never something to show a user. It is kept on
-    // `payload` for diagnostics and replaced with a generic sentence.
-    const errorText = await response.text();
-    throw new ApiRequestError(
-      fallbackMessage(response.status),
-      response.status,
-      errorText,
-      undefined,
-      correlationId,
-    );
+    await assertApiResponseOk(response);
   }
 
   probeAuditRowOutcome(method, url, response);

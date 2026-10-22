@@ -1,0 +1,19 @@
+HTTP/1.1 200 OK
+date: Wed, 14 Oct 2026 02:53:30 GMT
+server: envoy
+
+HTTP/2 200 
+date: Wed, 14 Oct 2026 02:53:31 GMT
+referrer-policy: same-origin
+x-content-type-options: nosniff
+last-modified: Wed, 03 Jun 2026 07:39:56 GMT
+etag: "a8f4-6535488bc3342"
+accept-ranges: bytes
+x-xss-protection: 1; mode=block
+x-frame-options: SAMEORIGIN
+content-type: text/html
+set-cookie: ema-adc-cookie=252253612.38686.0000; path=/; Httponly; Secure
+set-cookie: TS01081319=011a8341cb5efac3340ce134bdb8881ea4c9187295a828f7abc8f0b4610354865558257862f80d3d6c75d1f0dde83222c661177b90; Path=/; Domain=.ema.europa.eu
+x-envoy-upstream-service-time: 1233
+server: envoy
+

@@ -1,0 +1,113 @@
+{
+  "qualifiedCommit": "5d4203b47c13a95b14d1d816ebd646e3532fbd72",
+  "canonicalBranch": "concept2cure-v2",
+  "remoteIntegrationBase": "92928e3529e463d69ee4347e752f2308d401ef1e",
+  "candidateFilesMatch": true,
+  "checks": {
+    "focused": {
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/projects/schedule-of-events/__tests__",
+        "server/routes/__tests__/project-schedule-of-events.test.ts",
+        "server/services/ana/__tests__/tool-authorization.test.ts",
+        "server/services/ana/__tests__/schedule-generation-reason.test.ts"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 29.53,
+      "sourceUnchanged": true,
+      "sourceBindings": "source-bindings.json"
+    },
+    "native": {
+      "command": [
+        "npm",
+        "run",
+        "test:db",
+        "--",
+        "tests/db/project-schedule-atomic.dbtest.ts"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 5.97,
+      "sourceUnchanged": true,
+      "sourceBindings": "source-bindings.json"
+    },
+    "build": {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 34.86,
+      "sourceUnchanged": true,
+      "sourceBindings": "source-bindings.json"
+    },
+    "typecheck": {
+      "command": [
+        "npm",
+        "run",
+        "ci:pushed-typecheck"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 338.94,
+      "sourceUnchanged": true,
+      "sourceBindings": "source-bindings.json"
+    }
+  },
+  "focusedPassed": 130,
+  "nativePassed": 29,
+  "typecheckCacheBindings": {
+    "server/services/projects/schedule-of-events/service.ts": {
+      "sourceSha256": "0102e881aa03caa386419c73c0ebb83ec8eb9070f146ffef8af3a021dd76b5ff",
+      "cachedVersion": "0102e881aa03caa386419c73c0ebb83ec8eb9070f146ffef8af3a021dd76b5ff",
+      "matches": true
+    },
+    "server/services/projects/schedule-of-events/preservation.ts": {
+      "sourceSha256": "27f1586af92d3d0c20c31c0f76968d8de24bf674fe5a6fc3df5bea70636529f7",
+      "cachedVersion": "27f1586af92d3d0c20c31c0f76968d8de24bf674fe5a6fc3df5bea70636529f7",
+      "matches": true
+    },
+    "server/services/projects/schedule-of-events/__tests__/preservation.test.ts": {
+      "sourceSha256": "86490e0c29aaea68a212cfce1bcc4722fb53af4b27957d812aab8aab5131db57",
+      "cachedVersion": "86490e0c29aaea68a212cfce1bcc4722fb53af4b27957d812aab8aab5131db57",
+      "matches": true
+    },
+    "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts": {
+      "sourceSha256": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410",
+      "cachedVersion": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410",
+      "matches": true
+    },
+    "server/routes/project-schedule-of-events.ts": {
+      "sourceSha256": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0",
+      "cachedVersion": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0",
+      "matches": true
+    },
+    "server/routes/__tests__/project-schedule-of-events.test.ts": {
+      "sourceSha256": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f",
+      "cachedVersion": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f",
+      "matches": true
+    },
+    "server/services/ana/AnaToolExecutor.ts": {
+      "sourceSha256": "720fc786b8532404202738ee779c455aaa72952a436d1d658500fdfef9028d49",
+      "cachedVersion": "720fc786b8532404202738ee779c455aaa72952a436d1d658500fdfef9028d49",
+      "matches": true
+    },
+    "server/services/ana/discovery-cheminformatics-tool-defs.ts": {
+      "sourceSha256": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33",
+      "cachedVersion": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33",
+      "matches": true
+    },
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts": {
+      "sourceSha256": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3",
+      "cachedVersion": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3",
+      "matches": true
+    }
+  },
+  "serverBundleSha256": "3426f4f2547d8a8e255e8049bff8d9ae24706f3256eefb2314f6b063e679f01b",
+  "guardsAndBaselinesUnchanged": true,
+  "publication": "Normal direct Git push; complete hook must succeed before transfer.",
+  "productionDeploymentPerformed": false
+}

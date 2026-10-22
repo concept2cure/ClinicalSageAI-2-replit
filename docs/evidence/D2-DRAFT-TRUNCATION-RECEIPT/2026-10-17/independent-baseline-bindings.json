@@ -1,0 +1,48 @@
+{
+  "node": "v22.23.3",
+  "startedAt": "2026-10-17T23:26:24.090Z",
+  "finishedAt": "2026-10-17T23:26:33.456Z",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/independent-tool.config.mts"
+  ],
+  "exitCode": 1,
+  "before": {
+    "server/services/ana/AnaToolExecutor.ts": "0f635afe9069793ef40d54507b2d4e8737ac0eec76204fb86fc561a74b907fcb",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "674575e6f1a7e97883874e18fd4490648036fec90cd2377f73250f8102ca1544",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/__tests__/batch-draft-termination-tool.test.ts": "713b95a28d7231651361d9527f50d5db36882564f8e96fa13c0733e3cfda7705",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts": "3177b8b81d23612aa3814e8da98e146386020c569b874c5e335bd5eda8cfb282",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/CONTRACT.md": "9ef117faddec54bd4cb302867a1baa863397ff7c3fc194879487a94171dc9314",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/independent-tool.config.mts": "8a6ff069cb6adaeb1f1821e270d4800e5a0a0c15edbe4dd7fc57ea5ba665207d",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/independent-run-tool.mjs": "03b1e037d9c654b9cb073fe63b1f7037a29f63a311a58de326fff9358d574ddc"
+  },
+  "after": {
+    "server/services/ana/AnaToolExecutor.ts": "0f635afe9069793ef40d54507b2d4e8737ac0eec76204fb86fc561a74b907fcb",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "674575e6f1a7e97883874e18fd4490648036fec90cd2377f73250f8102ca1544",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/__tests__/batch-draft-termination-tool.test.ts": "713b95a28d7231651361d9527f50d5db36882564f8e96fa13c0733e3cfda7705",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts": "3177b8b81d23612aa3814e8da98e146386020c569b874c5e335bd5eda8cfb282",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/CONTRACT.md": "9ef117faddec54bd4cb302867a1baa863397ff7c3fc194879487a94171dc9314",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/independent-tool.config.mts": "8a6ff069cb6adaeb1f1821e270d4800e5a0a0c15edbe4dd7fc57ea5ba665207d",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/independent-run-tool.mjs": "03b1e037d9c654b9cb073fe63b1f7037a29f63a311a58de326fff9358d574ddc"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "scope": "Actual registered batch handler, canonical receipt and source loader. Drafting service/catalog/actor/program and canonical Vitest pg seams are mocked. No real provider/DB/network use."
+}

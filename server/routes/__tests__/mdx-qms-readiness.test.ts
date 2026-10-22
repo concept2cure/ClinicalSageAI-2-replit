@@ -27,6 +27,7 @@ function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org };
+    (req as Request & { dbClient: unknown }).dbClient = { query: (...args: unknown[]) => query(...args) };
     next();
   });
   app.use('/api/mdx', qmsRouter);
@@ -38,7 +39,19 @@ const UNDEFINED_TABLE = () =>
 
 /** The five block queries answer in Promise.all order:
     documents, suppliers, training, audits, nonconforming. */
-function mockBlocks(rows: Array<Record<string, unknown> | 'absent'>) {
+/** Register rows for the documents block, which reads rows and decides "in force" from them
+    (services/qms/in-force-release.ts): `effective` in force, `overdue` of them past review,
+    `draft` first drafts with nothing in force. */
+function registerRows(effective: number, overdue: number, draft: number): Array<Record<string, unknown>> {
+  const row = (id: number, status: string, next_review_date: string | null) =>
+    ({ id, organization_id: 7, status, version: '1.0', next_review_date, metadata: {}, deleted_at: null });
+  return [
+    ...Array.from({ length: effective }, (_, i) => row(i + 1, 'effective', i < overdue ? '2020-01-01' : null)),
+    ...Array.from({ length: draft }, (_, i) => row(1000 + i, 'draft', null)),
+  ];
+}
+
+function mockBlocks(rows: Array<Record<string, unknown> | Array<Record<string, unknown>> | 'absent'>) {
   query.mockImplementation((sql: string) => {
     const order = [
       'qms_documents',
@@ -51,7 +64,7 @@ function mockBlocks(rows: Array<Record<string, unknown> | 'absent'>) {
     if (idx === -1) return Promise.resolve({ rows: [] });
     const spec = rows[idx];
     if (spec === 'absent') return Promise.reject(UNDEFINED_TABLE());
-    return Promise.resolve({ rows: [spec] });
+    return Promise.resolve({ rows: Array.isArray(spec) ? spec : [spec] });
   });
 }
 
@@ -65,7 +78,7 @@ describe('GET /api/mdx/qms/readiness', () => {
 
   it('returns all five blocks with camelCase counts and org scope', async () => {
     mockBlocks([
-      { effective: 12, review_overdue: 2, draft: 3 },
+      registerRows(12, 2, 3),
       { total: 8, critical_unapproved: 1, audit_overdue: 2 },
       { acknowledged: 40, expired: 5 },
       { open: 2, open_major_findings: 1 },
@@ -76,7 +89,7 @@ describe('GET /api/mdx/qms/readiness', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta.scope).toBe('organization');
     expect(res.body.data.documents).toEqual({
-      available: true, effective: 12, reviewOverdue: 2, draft: 3,
+      available: true, effective: 12, underRevision: 0, reviewOverdue: 2, draft: 3,
     });
     expect(res.body.data.suppliers).toEqual({
       available: true, total: 8, criticalUnapproved: 1, auditOverdue: 2,
@@ -90,7 +103,7 @@ describe('GET /api/mdx/qms/readiness', () => {
     /* The property that matters: absence of data is not evidence of
        health. */
     mockBlocks([
-      { effective: 12, review_overdue: 0, draft: 3 },
+      registerRows(12, 0, 3),
       'absent', // qms_suppliers not migrated
       { acknowledged: 40, expired: 0 },
       { open: 0, open_major_findings: 0 },
@@ -115,7 +128,7 @@ describe('GET /api/mdx/qms/readiness', () => {
 
   it('scopes every block query to the caller organization', async () => {
     mockBlocks([
-      { effective: 0, review_overdue: 0, draft: 0 },
+      registerRows(0, 0, 0),
       { total: 0, critical_unapproved: 0, audit_overdue: 0 },
       { acknowledged: 0, expired: 0 },
       { open: 0, open_major_findings: 0 },
@@ -139,7 +152,7 @@ describe('GET /api/mdx/qms/readiness', () => {
     /* A migrated tenant with no records yet is genuinely at zero — that
        is a real answer, distinct from "not tracked". */
     mockBlocks([
-      { effective: 0, review_overdue: 0, draft: 0 },
+      registerRows(0, 0, 0),
       { total: 0, critical_unapproved: 0, audit_overdue: 0 },
       { acknowledged: 0, expired: 0 },
       { open: 0, open_major_findings: 0 },
@@ -148,7 +161,7 @@ describe('GET /api/mdx/qms/readiness', () => {
     const res = await request(appWith(7)).get('/api/mdx/qms/readiness');
 
     expect(res.body.data.documents).toEqual({
-      available: true, effective: 0, reviewOverdue: 0, draft: 0,
+      available: true, effective: 0, underRevision: 0, reviewOverdue: 0, draft: 0,
     });
   });
 });

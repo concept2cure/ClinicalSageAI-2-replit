@@ -241,6 +241,18 @@ const someField = (p: Record<string, unknown>) => Object.values(p).some(v => v !
 /** Every settable column — what AnA's interview commit projects onto. */
 export const programmeProfilePatchSchema = z.object(PROFILE_SHAPE).refine(someField, atLeastOne);
 
+/**
+ * The two json columns of a programme row, for a writer that is not this one.
+ *
+ * `POST /api/c2c/projects` builds its own raw INSERT and wrote both by hand:
+ * `team_members` as a bare string array and `predicate_devices` as
+ * `[{ kNumber }]` with no id and no name — shapes this write refuses, so a row
+ * it created could not round-trip through the write that owns the column
+ * (2026-10-19). Exported rather than restated: one definition per column.
+ */
+export const programmeTeamMembersColumn = PROFILE_SHAPE.teamMembers;
+export const programmePredicateDevicesColumn = PROFILE_SHAPE.predicateDevices;
+
 /** The device-profile endpoint's own fields, unchanged from before this module. */
 export const deviceProfilePatchSchema = z
   .object({

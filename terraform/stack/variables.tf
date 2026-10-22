@@ -35,6 +35,13 @@ variable "azs" {
 
 variable "rds_instance_class" {
   type = string
+  # A burstable db.t* instance throttles to its baseline when its CPU credits
+  # run out, under exactly the PDF/A, OCR and compile load a filing day brings
+  # (MR-03 DATA-13). Staging may size down; production may not.
+  validation {
+    condition     = var.environment != "production" || !startswith(var.rds_instance_class, "db.t")
+    error_message = "Production's database must not be a burstable db.t* class; use a general-purpose class such as db.m6g.large."
+  }
 }
 
 variable "rds_allocated_storage" {
@@ -95,8 +102,13 @@ variable "api_desired_count" {
   type = number
 }
 
-variable "worker_desired_count" {
-  type = number
+variable "api_max_count" {
+  description = "Autoscaling ceiling for the API service. Production holds it at 2 until MR-14 closes OPS-07."
+  type        = number
+  validation {
+    condition     = var.api_max_count >= var.api_desired_count
+    error_message = "api_max_count must be at least api_desired_count, the autoscaling floor."
+  }
 }
 
 variable "alb_deletion_protection" {

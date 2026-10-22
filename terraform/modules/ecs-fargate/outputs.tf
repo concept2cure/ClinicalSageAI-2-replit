@@ -10,10 +10,6 @@ output "api_service_name" {
   value = aws_ecs_service.api.name
 }
 
-output "worker_service_name" {
-  value = aws_ecs_service.worker.name
-}
-
 output "ecs_tasks_security_group_id" {
   value = aws_security_group.ecs_tasks.id
 }
@@ -56,11 +52,6 @@ output "scanner_memory" {
   value       = var.scanner_memory
 }
 
-output "worker_container" {
-  description = "The worker container definition as rendered, for the same checks."
-  value       = jsondecode(aws_ecs_task_definition.worker.container_definitions)[0]
-}
-
 output "execution_secrets_policy" {
   description = "The execution role's Secrets Manager grant (JSON policy document)"
   value       = aws_iam_role_policy.ecs_execution_secrets.policy
@@ -83,4 +74,30 @@ output "api_service_arn" {
 
 output "api_log_group_arn" {
   value = aws_cloudwatch_log_group.api.arn
+}
+
+output "service_names" {
+  description = "Every ECS service this module creates, so the stack's tests can say which exist."
+  value       = [aws_ecs_service.api.name]
+}
+
+output "api_autoscaling" {
+  description = "The API service's autoscaling target and its two policies, for the stack's tests."
+  value = {
+    min_capacity       = aws_appautoscaling_target.api.min_capacity
+    max_capacity       = aws_appautoscaling_target.api.max_capacity
+    scalable_dimension = aws_appautoscaling_target.api.scalable_dimension
+    policies = {
+      cpu = {
+        metric         = aws_appautoscaling_policy.api_cpu.target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].predefined_metric_type
+        target         = aws_appautoscaling_policy.api_cpu.target_tracking_scaling_policy_configuration[0].target_value
+        resource_label = null
+      }
+      requests = {
+        metric         = aws_appautoscaling_policy.api_requests.target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].predefined_metric_type
+        target         = aws_appautoscaling_policy.api_requests.target_tracking_scaling_policy_configuration[0].target_value
+        resource_label = aws_appautoscaling_policy.api_requests.target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].resource_label
+      }
+    }
+  }
 }

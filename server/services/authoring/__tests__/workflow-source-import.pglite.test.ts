@@ -6,6 +6,7 @@ vi.mock('../../../db', () => ({pool:{query:async () => ({rows:[]})},getPool:()=>
 vi.mock('../../../lib/unified-ai-client', () => ({ai:null}));
 import { materializeWorkflowSource, WorkflowSourceImportError, type WorkflowMaterializationInput } from '../workflow-source-import';
 import { getProtocolExport } from '../../protocol-export/protocol-export-service';
+import { savedImportSource, verifySavedWorkflowImport } from '../import-source-references';
 import { removeVisitTx, removeSoaAssessmentTx } from '../../protocol-development/protocol-development-service';
 import { renderProtocolSoaMarkdown } from '../../protocol-export/protocol-export-logic';
 
@@ -20,6 +21,9 @@ const input=(source:WorkflowMaterializationInput['source'],over:Partial<Workflow
 beforeAll(async()=>{
   database=new PGlite();
   await database.exec(`
+    CREATE TABLE regulatory_programs(id uuid PRIMARY KEY,organization_id int,deleted_at timestamptz);
+    CREATE TABLE ivd_assessments(id uuid PRIMARY KEY,organization_id int,program_id uuid,assessment_type text,title text,inputs jsonb,result jsonb,verdict text,corpus_version text,engine_version text,created_by text,created_at timestamptz,updated_at timestamptz,deleted_at timestamptz);
+    CREATE TABLE ivd_generated_documents(id uuid PRIMARY KEY,organization_id int,program_id uuid,doc_type text,title text,payload jsonb,status text,corpus_version text,created_by text,created_at timestamptz,updated_at timestamptz,deleted_at timestamptz);
     CREATE TABLE users(id int PRIMARY KEY,status text);
     CREATE TABLE organizations(id int PRIMARY KEY,status text);
     CREATE TABLE organization_users(user_id int,organization_id int,role text);
@@ -29,7 +33,7 @@ beforeAll(async()=>{
     CREATE TABLE concept2cure_artifacts(id int,artifact_id text,organization_id int,project_id int);
     CREATE TABLE concept2cure_review_assignments(artifact_id int,organization_id int,reviewer_id int,status text);
     CREATE TABLE cdisc_prm_studies(study_id text,tenant_id int,program_id uuid);
-    CREATE TABLE protocol_documents(id int PRIMARY KEY,organization_id int,deleted_at timestamptz,study_design_id text,title text,protocol_number text,protocol_kind text,design_type text,phase text,version text,synopsis text,status text);
+    CREATE TABLE protocol_documents(id int PRIMARY KEY,organization_id int,deleted_at timestamptz,study_design_id text,title text,protocol_number text,protocol_kind text,design_type text,phase text,version text,synopsis text,status text,program_id uuid);
     CREATE TABLE protocol_sections(id int PRIMARY KEY,organization_id int,protocol_document_id int,deleted_at timestamptz,section_key text,title text,content text,required boolean,status text,order_index int);
     CREATE TABLE protocol_objectives(id int PRIMARY KEY,organization_id int,protocol_document_id int,deleted_at timestamptz,objective_type text,objective text,endpoint text,timepoint text,order_index int);
     CREATE TABLE protocol_eligibility_criteria(id int PRIMARY KEY,organization_id int,protocol_document_id int,deleted_at timestamptz,kind text,criterion text,order_index int);
@@ -48,14 +52,15 @@ beforeAll(async()=>{
 afterAll(async()=>{await database?.close();});
 beforeEach(async()=>{
   await database.exec(`
-    TRUNCATE users,organizations,organization_users,projects,project_visibility_settings,project_members,concept2cure_artifacts,concept2cure_review_assignments,cdisc_prm_studies,protocol_documents,protocol_sections,protocol_objectives,protocol_eligibility_criteria,protocol_schedule_visits,protocol_soa_assessments,protocol_soa_cells,electronic_signatures,csr_build_jobs,csr_section_outputs,document_span_lineage;
+    TRUNCATE regulatory_programs,ivd_assessments,ivd_generated_documents,users,organizations,organization_users,projects,project_visibility_settings,project_members,concept2cure_artifacts,concept2cure_review_assignments,cdisc_prm_studies,protocol_documents,protocol_sections,protocol_objectives,protocol_eligibility_criteria,protocol_schedule_visits,protocol_soa_assessments,protocol_soa_cells,electronic_signatures,csr_build_jobs,csr_section_outputs,document_span_lineage;
+    INSERT INTO regulatory_programs VALUES('${PROGRAM}',7,NULL),('${OTHER}',7,NULL);
     INSERT INTO users VALUES(5,'active'),(20,'active');
     INSERT INTO organizations VALUES(7,'active'),(8,'active');
     INSERT INTO organization_users VALUES(5,7,'member'),(20,7,'member');
     INSERT INTO projects VALUES(11,7,5,5,'{}','${PROGRAM}',NULL),(12,7,30,30,'{}','${OTHER}',NULL),(81,8,5,5,'{}',NULL,NULL);
     INSERT INTO project_visibility_settings VALUES(11,7,'private'),(12,7,'private'),(81,8,'private');
     INSERT INTO cdisc_prm_studies VALUES('study-1',7,'${PROGRAM}');
-    INSERT INTO protocol_documents VALUES(1,7,NULL,'study-1','Recorded phase2 protocol','P-001','clinical','interventional','Phase2','2.1','Actual stored synopsis','finalized'),(2,7,NULL,NULL,'Unbound protocol',NULL,'clinical',NULL,NULL,'0.1',NULL,'draft'),(8,8,NULL,NULL,'Foreign protocol',NULL,'clinical',NULL,NULL,'0.1','Foreign synopsis','draft');
+    INSERT INTO protocol_documents VALUES(1,7,NULL,'study-1','Recorded phase2 protocol','P-001','clinical','interventional','Phase2','2.1','Actual stored synopsis','finalized',NULL),(2,7,NULL,NULL,'Unbound protocol',NULL,'clinical',NULL,NULL,'0.1',NULL,'draft',NULL),(8,8,NULL,NULL,'Foreign protocol',NULL,'clinical',NULL,NULL,'0.1','Foreign synopsis','draft',NULL);
     INSERT INTO protocol_sections VALUES(101,7,1,NULL,'background','Actual background title','Scientific source content',true,'complete',1),(102,7,1,NULL,'statistics','Actual statistics','Planned analysis',true,'draft',2),(801,8,1,NULL,'foreign','Foreign row','Foreign section content',true,'complete',0);
     INSERT INTO protocol_objectives VALUES(201,7,1,NULL,'primary','Assess response','Response endpoint','Week24',0);
     INSERT INTO protocol_eligibility_criteria VALUES(301,7,1,NULL,'inclusion','Age >= 18',0),(302,7,1,NULL,'exclusion','Prior therapy',1);
@@ -159,8 +164,8 @@ describe('stored protocol materialization',()=>{
     await expect(materializeWorkflowSource(input({kind:'protocol',documentId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_SOURCE_INVALID'});
   });
   it('retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification',async()=>{
-    await database.query(`INSERT INTO document_span_lineage VALUES(7,'protocol_sections','101',0,$1,$2,'accepted_machine_draft','ana','5','2026-10-02T00:00:00Z',NULL,'5',NULL)`,['Scientific source content'.length,hash('Scientific source content')]);
-    await database.query(`INSERT INTO document_span_lineage VALUES(7,'protocol_documents','1',0,$1,$2,'machine_draft','ana',NULL,NULL,NULL,'5',NULL)`,['Actual stored synopsis'.length,hash('Actual stored synopsis')]);
+    await database.query(`INSERT INTO document_span_lineage VALUES(7,'protocol_sections','101',0,$1,$2,'accepted_machine_draft','ana','5','2026-10-02T00:00:00Z',NULL,'5',NULL,'asserted',NULL)`,['Scientific source content'.length,hash('Scientific source content')]);
+    await database.query(`INSERT INTO document_span_lineage VALUES(7,'protocol_documents','1',0,$1,$2,'machine_draft','ana',NULL,NULL,NULL,'5',NULL,'asserted',NULL)`,['Actual stored synopsis'.length,hash('Actual stored synopsis')]);
     const result=await materializeWorkflowSource(input({kind:'protocol',documentId:1}),q);
     expect(result.origin.sectionOrigins.find(s=>s.code==='background')).toMatchObject({originalAuthorship:'machine',model:null,modelEvidence:'unrecorded'});
     expect(result.origin.sectionOrigins.find(s=>s.code==='protocol.synopsis')?.originalAuthorship).toBe('machine');
@@ -169,7 +174,7 @@ describe('stored protocol materialization',()=>{
     await expect(materializeWorkflowSource(input({kind:'protocol',documentId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_SOURCE_LINEAGE_UNVERIFIED'});
   });
   it('does not mistake deterministic copy lineage for proof of original AI generation',async()=>{
-    await database.query(`INSERT INTO document_span_lineage VALUES(7,'protocol_sections','101',0,$1,$2,'machine_draft','workflow_import',NULL,NULL,NULL,'5',NULL)`,['Scientific source content'.length,hash('Scientific source content')]);
+    await database.query(`INSERT INTO document_span_lineage VALUES(7,'protocol_sections','101',0,$1,$2,'machine_draft','workflow_import',NULL,NULL,NULL,'5',NULL,'asserted',NULL)`,['Scientific source content'.length,hash('Scientific source content')]);
     const result=await materializeWorkflowSource(input({kind:'protocol',documentId:1}),q);
     expect(result.origin.sectionOrigins.find(s=>s.code==='background')).toMatchObject({originalAuthorship:'unknown',model:null});
   });
@@ -227,5 +232,63 @@ describe('stored CSR materialization',()=>{
     expect(queries.some(text=>/^\s*(INSERT|UPDATE|DELETE|LOCK)/i.test(text))).toBe(false);
     await database.exec("UPDATE users SET status='disabled' WHERE id=5");
     await expect(materializeWorkflowSource(input({kind:'csr',jobId:1}),q)).rejects.toMatchObject({status:403});
+  });
+});
+
+const IVD_ID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+async function savedIvd(programId: string | null = PROGRAM) {
+  await database.query(`INSERT INTO ivd_assessments VALUES($1,7,$2,'ivdr_classification','Retained classification','{"intendedPurpose":"Recorded treatment-selection assay"}','{"classification":"C","ruleTrace":["Recorded rule"]}','C','v137-recorded','ivdr-annex-viii-canonical','5',now(),now(),NULL)`,[IVD_ID,programId]);
+  return {kind:'ivd-assessment' as const,documentId:IVD_ID};
+}
+describe('saved IVD verified-source materialization',()=>{
+  it('reads the exact tenant/program row and verifies its actual UUID origin through the existing Authoring source verifier',async()=>{
+    const source=await savedIvd();
+    const result=await materializeWorkflowSource(input(source),q);
+    expect(result.origin).toMatchObject({kind:'ivd-assessment',id:IVD_ID,conversion:'ivd-assessment-snapshot',sourceScope:{level:'program',programId:PROGRAM,projectId:11}});
+    expect(result.sections.map(section=>section.content).join('')).toContain('Recorded treatment-selection assay');
+    expect(result.sections.map(section=>section.content).join('')).toContain('ivdr-annex-viii-canonical');
+    expect(result.origin.sectionOrigins.every(origin=>origin.originalAuthorship==='unknown'&&origin.model===null)).toBe(true);
+    const doc={client_program_id:PROGRAM,provenance:{importSource:result.origin}};
+    expect(savedImportSource(doc)).toEqual(result.origin);
+    const verified=await verifySavedWorkflowImport(doc,q,{organizationId:7,actor:{id:'5',email:'actor@example.test'}});
+    expect(verified?.fingerprint).toBe(result.fingerprint);
+    expect(queries.some(sql=>/^INSERT|^UPDATE|^DELETE/.test(sql))).toBe(false);
+  });
+  it('requires actual current source access, refuses a different target and a withdrawn saved source',async()=>{
+    const source=await savedIvd();
+    await expect(materializeWorkflowSource(input(source,{userId:20}),q)).rejects.toMatchObject({code:'IVD_SOURCE_ACCESS_DENIED'});
+    await expect(materializeWorkflowSource(input(source,{target:{programId:OTHER,projectId:12}}),q)).rejects.toMatchObject({code:'IVD_SOURCE_SCOPE_MISMATCH'});
+    await database.query('UPDATE ivd_assessments SET deleted_at=now() WHERE id=$1',[IVD_ID]);
+    await expect(materializeWorkflowSource(input(source),q)).rejects.toMatchObject({code:'IVD_SOURCE_NOT_FOUND'});
+  });
+  it('retains unfiled scope, demands an explicit association and detects changed result snapshots at governance time',async()=>{
+    const source=await savedIvd(null);
+    const result=await materializeWorkflowSource(input(source,{associationReason:'Explicitly associating this retained source'}),q);
+    expect(result.association).toMatchObject({mode:'explicit',required:true,reasonRequired:true,sourceProgramId:null});
+    const doc={client_program_id:PROGRAM,provenance:{importSource:result.origin}};
+    await database.query(`UPDATE ivd_assessments SET result='{"classification":"D"}' WHERE id=$1`,[IVD_ID]);
+    await expect(verifySavedWorkflowImport(doc,q,{organizationId:7,actor:{id:'5',email:'actor@example.test'}})).rejects.toThrow('changed or unavailable');
+  });
+  it('imports saved generated-document payloads as draft copies without transferring approval or transmission',async()=>{
+    await database.query(`INSERT INTO ivd_generated_documents VALUES($1,7,$2,'fsn','Retained field safety notice','{"riskToHealth":"Recorded patient risk"}','transmitted','v137-recorded','5',now(),now(),NULL)`,[IVD_ID,PROGRAM]);
+    const result=await materializeWorkflowSource(input({kind:'ivd-document',documentId:IVD_ID}),q);
+    expect(result.origin.conversion).toBe('ivd-document-snapshot');
+    expect(result.sections.map(section=>section.content).join('')).toContain('Recorded patient risk');
+    expect(result.origin.documentType).toBeNull();
+    expect(result.warnings.join(' ')).toContain('not transferred');
+  });
+  it('refuses deferred IVD through the otherwise launch-accessible Authoring endpoint before reading a source',async()=>{
+    const source=await savedIvd(); queries.length=0;
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE','on');
+    try { await expect(materializeWorkflowSource(input(source),q)).rejects.toMatchObject({status:403,code:'IVD_SOURCE_DEFERRED'}); }
+    finally { vi.unstubAllEnvs(); }
+    expect(queries).toHaveLength(0);
+  });
+  it('honors newly filed protocol scope even before its first study design and refuses binding disagreement',async()=>{
+    await database.query('UPDATE protocol_documents SET program_id=$1 WHERE id=2',[PROGRAM]);
+    const result=await materializeWorkflowSource(input({kind:'protocol',documentId:2}),q);
+    expect(result.origin.sourceScope).toMatchObject({level:'program',programId:PROGRAM,projectId:11});
+    await database.query('UPDATE protocol_documents SET program_id=$1 WHERE id=1',[OTHER]);
+    await expect(materializeWorkflowSource(input({kind:'protocol',documentId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_SOURCE_SCOPE_MISMATCH'});
   });
 });

@@ -1,0 +1,1083 @@
+{
+  "schemaVersion": 1,
+  "assembledAtUtc": "2026-10-18T00:09:21.167589+00:00",
+  "scope": "Continuation acceptance snapshots, before integrating incoming company-document and batch-draft changes. This is scoped acceptance, not a whole-product completion or deployment claim.",
+  "counting": "Cohorts overlap; do not sum their counts. Execution source hashes record the snapshots that actually ran. Final upstream integration and hook evidence belongs to the delivery record. Native PostgreSQL controls have a separate portable record.",
+  "receipts": [
+    {
+      "file": "oct17-release-standing-acceptance.json",
+      "sha256": "40364ff195d839131d3147bd9bfff50ef43801ccb7aa050387524d6e65c9b624",
+      "bytes": 6763,
+      "executionReceipt": {
+        "assembledUtc": "2026-10-18T00:00:37.929320+00:00",
+        "status": "source_frozen",
+        "passedCases": 140,
+        "testFiles": 9,
+        "tests": [
+          {
+            "file": "tests/golden-journeys/submission-release-signature.journey.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 1,
+            "sha256AtAssembly": "8dc1c6f80b59e9706419f7537fa8033c90610802700b1076a59ecbc6bd602b94"
+          },
+          {
+            "file": "tests/unit/submission-orchestrator-tenant-isolation.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 23,
+            "sha256AtAssembly": "567bc3bb4db1b12674885236ab3cb6ff6008faa1b9d48aa3e968e914d2f14361"
+          },
+          {
+            "file": "tests/unit/submission-package-orchestrator-uncovered.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 17,
+            "sha256AtAssembly": "0d6a69bd97a2ebf29196bac1dd90bf655d94365d29ec53441d8acadc995eb317"
+          },
+          {
+            "file": "tests/unit/submission-sign-release-route.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 25,
+            "sha256AtAssembly": "261701db36a4ed6ddd9807660c9ef89a8660eb2da8d108e34a14e8e5db2dea7f"
+          },
+          {
+            "file": "server/routes/__tests__/submission-sign-release-authority.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 4,
+            "sha256AtAssembly": "e754bc6fb89979134a5c7ac7d71931f76c5ab1f04d43c474ea6765ce846b1ee4"
+          },
+          {
+            "file": "server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 12,
+            "sha256AtAssembly": "893900483e72f4eb47372921e956a1dd0a60cf6bca2c3fb4599721616beacda0"
+          },
+          {
+            "file": "server/services/__tests__/account-lockout-read-fails-closed.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 3,
+            "sha256AtAssembly": "e1990ab4ec8389b903f4621771d6a35a198072f57d73ef5fa9ad72e29b23c184"
+          },
+          {
+            "file": "server/services/__tests__/submission-orchestrator-continuation.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 22,
+            "sha256AtAssembly": "f820d4acaa99023e08d5390146b79376d719c50a358a1fa45fad0c0e69691ecf"
+          },
+          {
+            "file": "server/services/part11/__tests__/reverify-signer.test.ts",
+            "receipt": "oct17-release-standing-final-tests.json",
+            "passed": 33,
+            "sha256AtAssembly": "e52418e3586388be4c19ccfa97666d0d12be4736d50bde7e0f88fe187cdb340c"
+          }
+        ],
+        "sourceFiles": [
+          {
+            "file": "server/routes/submission-sign-release.ts",
+            "sha256": "49ed6c98c699b842c289c87f2c33f8833205e5f9b8034eaceb1ede0f50a8f3b3"
+          },
+          {
+            "file": "server/services/submission-package-orchestrator.ts",
+            "sha256": "0aa1a5bcaafb9fe0deeecaa7a2d2d575718573842a2b91a587d6939ff180837a"
+          },
+          {
+            "file": "tests/golden-journeys/submission-release-signature.journey.test.ts",
+            "sha256": "8dc1c6f80b59e9706419f7537fa8033c90610802700b1076a59ecbc6bd602b94"
+          },
+          {
+            "file": "tests/unit/submission-sign-release-route.test.ts",
+            "sha256": "261701db36a4ed6ddd9807660c9ef89a8660eb2da8d108e34a14e8e5db2dea7f"
+          },
+          {
+            "file": "tests/unit/submission-package-orchestrator-uncovered.test.ts",
+            "sha256": "0d6a69bd97a2ebf29196bac1dd90bf655d94365d29ec53441d8acadc995eb317"
+          }
+        ],
+        "baselineReproductions": [
+          {
+            "receipt": "oct17-release-standing-baseline-tests.json",
+            "detail": "Original golden locked predicate failed because continuation input relation was missing; generic JourneyRecorder got-success text did not establish HTTP200."
+          },
+          {
+            "receipt": "oct17-release-replay-standing-red-tests.json",
+            "failed": 5,
+            "passed": 20,
+            "detail": "Real route with canonical ceremony and injected dependency states returned HTTP200/continued existing-signature requests for locked, inactive, newly MFA-enrolled and wrong-password actors; positive replay proved no password comparison."
+          },
+          {
+            "receipt": "oct17-release-continuation-fixture-tests.json",
+            "failed": 1,
+            "detail": "Real PGlite continuation exposed String(Date) yielding a GMT display string rejected by TIMESTAMPTZ on persistRun."
+          }
+        ],
+        "lint": {
+          "receipt": "oct17-release-standing-final-lint.json",
+          "files": 5,
+          "errors": 0,
+          "warnings": 18,
+          "detail": "No new suppression or baseline changes; existing structural warnings remain."
+        },
+        "behavior": [
+          "The single canonical signing ceremony executes after current membership authority/run identity/state and before payload preparation or an existing-signature response. Every admitted request requires current account standing, lockout, password and enrolled MFA; active signatures cannot authorize continuation.",
+          "Current program, immutable input receipts, frozen payload digest/seal and same-transaction source guard remain enforced before insertion/continuation. Credential-valid replay returns the existing signature without rewriting or duplicating it.",
+          "getRun normalizes both recorded timestamps through existing isoInstantOrNull; malformed recorded timestamps raise OrchestratorReadError rather than becoming absence. Real PGlite Date values now persist and read back during post-sign continuation.",
+          "Journey applies actual program/input/audit-chain creators, uses canonical bound digest/seal and immutable input capture, and retains one signature while two pending same-payload runs complete with two append-only completion events.",
+          "Golden controls enforce exact locked423/ACCOUNT_LOCKED before first signature and after a prior signature; inactive401 and wrong-password401 also refuse existing-signature continuation while signature/audit/step rows remain byte-equal."
+        ],
+        "journeySummary": {
+          "total": 17,
+          "ok": 5,
+          "blockedAsExpected": 12,
+          "failed": 0
+        },
+        "limits": [
+          "PGlite/HTTP and unit proof only; no native PostgreSQL, live browser, KMS-provider, scientific package validation, export/transmit, agency acceptance or multi-session advisory-lock contention qualification claimed.",
+          "Journey auth/tenant boundary uses explicitly documented principal headers; signing ceremony, standing, membership, program/payload verification, signature persistence and continuation services execute for real.",
+          "Journey release snapshot is synthetic; MFA replay is qualified in companion canonical-ceremony route units, not a real-enrolled-account journey."
+        ],
+        "scope": "Five source/test files only; no Git/index/TSC/dependency/migration/baseline edits. Historical source receipts remain historical; this manifest supplies current qualified per-file replacements where applicable."
+      }
+    },
+    {
+      "file": "oct17-section-outcome-acceptance.json",
+      "sha256": "f3625a690153d2e83a533f2561f9df1e0215d7a031564c3dd29414080940cf5b",
+      "bytes": 5732,
+      "executionReceipt": {
+        "assembledUtc": "2026-10-17T23:49:02.280784+00:00",
+        "baseHead": "36ecb3776a3fd2caf6440dfde8255f3ea336efd9",
+        "status": "source_frozen",
+        "passedCases": 83,
+        "testFiles": 7,
+        "tests": [
+          {
+            "file": "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts",
+            "receipt": "oct17-section-outcome-green-tests.json",
+            "passed": 7,
+            "sha256AtAssembly": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685"
+          },
+          {
+            "file": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+            "receipt": "oct17-section-outcome-green-tests.json",
+            "passed": 10,
+            "sha256AtAssembly": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280"
+          },
+          {
+            "file": "server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts",
+            "receipt": "oct17-section-outcome-green-tests.json",
+            "passed": 3,
+            "sha256AtAssembly": "00a7f92c8859a285572a6b31f032fffb781231abc6b6d93c7cefc31d0b1cb036"
+          },
+          {
+            "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+            "receipt": "oct17-section-outcome-green-tests.json",
+            "passed": 14,
+            "sha256AtAssembly": "f574053354eab92f5379e4b899f49902c089b8bf6e49e40d1c30e2f08b7057e1"
+          },
+          {
+            "file": "server/services/authoring/__tests__/authoring-section-outcome.test.ts",
+            "receipt": "oct17-section-outcome-green-tests.json",
+            "passed": 10,
+            "sha256AtAssembly": "df753f0da056119740c2626da8885434f40d148353f3e2501ffd2bd72b4cfef7"
+          },
+          {
+            "file": "server/services/authoring/__tests__/create-section-placement.pglite.test.ts",
+            "receipt": "oct17-section-outcome-green-tests.json",
+            "passed": 8,
+            "sha256AtAssembly": "f9dacc92b97a274a484c50b30f583e58937722465355bdc6095a93e5be85004f"
+          },
+          {
+            "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+            "receipt": "oct17-source-tool-tenant-predicate-tests.json",
+            "passed": 31,
+            "sha256AtAssembly": "edcd80e2ed9effdb50da99bd54cf83db0871c1bf33916775eab8376c488d284d"
+          }
+        ],
+        "sourceFiles": [
+          {
+            "file": "server/services/authoring/authoring-create-outcome.ts",
+            "sha256": "04003e0687ab8398b8c319db10ce27162d491273530604b7703758af58bd73dc"
+          },
+          {
+            "file": "server/services/authoring/authoring-section-outcome.ts",
+            "sha256": "fab6ae40bf15a4d2c21ef3cb14b9e4fc9093368bc8e61fd558fde3b95116283b"
+          },
+          {
+            "file": "server/services/authoring/authoring-documents.ts",
+            "sha256": "5f48c377b32e04dec8e0e2db878ee45e03b740b0001bd62eebb3ff0d8ffba8ad"
+          },
+          {
+            "file": "server/routes/authoring.router.ts",
+            "sha256": "504198e2904d0ef015eb0ace17d9a757d9f2cbfca981d50a95f06edc8127ce68"
+          },
+          {
+            "file": "server/services/authoring/__tests__/authoring-section-outcome.test.ts",
+            "sha256": "df753f0da056119740c2626da8885434f40d148353f3e2501ffd2bd72b4cfef7"
+          },
+          {
+            "file": "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts",
+            "sha256": "723f4d798ff16d298661a6dbef4674d241ac7c6b8d7358fbf575b9c1b247dcae"
+          }
+        ],
+        "baselineReproduction": {
+          "receipt": "oct17-section-outcome-red-tests.json",
+          "failed": 2,
+          "skipped": 8,
+          "method": "Same canonical PGlite/HTTP fault fixture on the actual pre-fix section-create and AI-accept paths; no production-source mutation control. Baseline lost-reply cases returned a false lineage failure/500 instead of uncertain outcomes."
+        },
+        "lint": {
+          "receipt": "oct17-section-outcome-lint.json",
+          "files": 6,
+          "errors": 0,
+          "warnings": 23,
+          "notes": "All warnings inherited from authoring.router.ts. No baseline/suppression changes."
+        },
+        "behavior": [
+          "Section creation, actual consumed AI candidate, content, revision, audit and lineage stay in their existing transaction and writer.",
+          "COMMIT-attempt failure returns explicit writeOutcome=unconfirmed and retryAllowed=false with only actual organization/document/section/candidate identifiers.",
+          "No success/created/saved/section/content/filing receipt is emitted for unknown COMMIT.",
+          "Connections are discarded using release(error) after uncertain COMMIT or failed rollback; no ROLLBACK follows an attempted COMMIT and no automatic write retry is introduced.",
+          "Known duplicate/expired/source/base/lineage refusals before COMMIT retain their existing status and roll back once.",
+          "Existing document creation uses the same canonical transaction failure/rollback mechanism; assembly seed writer is preserved.",
+          "Two extraction-correction fixture UPDATE/restore statements now bind the actual organization_id, without changing their identity assertions."
+        ],
+        "uiContract": {
+          "codes": [
+            "AUTHORING_SECTION_CREATE_COMMIT_UNCONFIRMED",
+            "AUTHORING_AI_ACCEPT_COMMIT_UNCONFIRMED"
+          ],
+          "status": 503,
+          "fields": [
+            "success:false",
+            "ok:false",
+            "error:{code,message}",
+            "writeOutcome:unconfirmed",
+            "retryAllowed:false",
+            "recovery:{organizationId,documentId,sectionId,draftId?}"
+          ],
+          "coordination": "Exact DTO sent to oct17_ui. Existing generic503 native-section/AI-accept holds apply; UI owner owns exact recovery interpretation."
+        },
+        "limits": [
+          "Synthetic transport over real canonical PGlite SQL verifies release(error) requests and actual retained/rolled-back rows; native socket destruction is not exercised.",
+          "The new fault fixture does not provision the governed filing-section store; filing/agency acknowledgement is not asserted.",
+          "No provider call, native database migration, index/Git/baseline/dependency or unrelated writer changes by this agent."
+        ]
+      }
+    },
+    {
+      "file": "oct17-document-detail-program-acceptance.json",
+      "sha256": "78e625f313f6ad6f6a9793f256d9035623ea344a498e197484fbf4d00769156a",
+      "bytes": 2189,
+      "executionReceipt": {
+        "assembledUtc": "2026-10-17T23:52:44.806516+00:00",
+        "status": "source_frozen",
+        "baseHead": "36ecb3776a3fd2caf6440dfde8255f3ea336efd9",
+        "passedCases": 30,
+        "testFiles": 2,
+        "tests": [
+          {
+            "file": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+            "receipt": "oct17-document-detail-program-green-tests.json",
+            "passed": 11,
+            "sha256AtAssembly": "c1f4c8addf71eabb57ef74775e94c6d1baa46153a219854da9d7c379c081c6cf"
+          },
+          {
+            "file": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+            "receipt": "oct17-document-detail-program-green-tests.json",
+            "passed": 19,
+            "sha256AtAssembly": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae"
+          }
+        ],
+        "sourceFiles": [
+          {
+            "file": "server/routes/authoring.router.ts",
+            "sha256": "4b871a74a9864000ba782b8c6850d35716676c5b5ea0d259c36ff593c14639ad"
+          },
+          {
+            "file": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+            "sha256": "c1f4c8addf71eabb57ef74775e94c6d1baa46153a219854da9d7c379c081c6cf"
+          }
+        ],
+        "baselineReproduction": {
+          "receipt": "oct17-document-detail-program-red-tests.json",
+          "failed": 1,
+          "passed": 1,
+          "skipped": 9,
+          "detail": "Actual current-object-gated detail returned undefined instead of the recorded client_program_id before the projection change."
+        },
+        "lint": {
+          "receipt": "oct17-document-detail-program-lint.json",
+          "files": 2,
+          "errors": 0,
+          "warnings": 23,
+          "detail": "Only inherited authoring.router.ts warnings."
+        },
+        "behavior": "Admitted GET/docs/:docId returns client_program_id directly from to_jsonb(d) in the same tenant-scoped canonical detail SELECT. Existing actor/org/private-parent admission, query executor, provenance/access handling and frontend strict current-program checks are unchanged. No prior inventory or inferred scope is used. Legacy absent/null programme metadata stays null and cannot qualify a strict recovery open.",
+        "scope": "One SQL projection field and one existing detail-case assertion using the actual current-object-gated fixture; no new writer or TSC/Git/baseline changes."
+      }
+    },
+    {
+      "file": "oct17-native-section-ui-acceptance.json",
+      "sha256": "c0d54411efec141f20a306d0c42a210123d269b106bb0cbaf4663dd8567fe860",
+      "bytes": 4285,
+      "executionReceipt": {
+        "task": "Native section creation actual recovery tuple and current actor/program readback",
+        "assembledAtUtc": "2026-10-17T23:53:43.209987+00:00",
+        "sourceFrozen": true,
+        "gitMutationsPerformed": false,
+        "backendContract": {
+          "code": "AUTHORING_SECTION_CREATE_COMMIT_UNCONFIRMED",
+          "writeOutcome": "unconfirmed",
+          "retryAllowed": false,
+          "identityFields": [
+            "recovery.organizationId",
+            "recovery.documentId",
+            "recovery.sectionId"
+          ],
+          "programIdOrigin": "Captured current UI scope, not asserted by backend recovery DTO",
+          "backendProof": "oct17-section-outcome-acceptance.json",
+          "parentDetailProof": "oct17-document-detail-program-acceptance.json"
+        },
+        "fixes": [
+          "Recognized section creation outcomes remain held even when recovery tuple is malformed or from another organization. No false saved/created receipt, ID adoption or retry is allowed.",
+          "Validated actual recovery tuple retains section and saved parent IDs matched to current organization/document/program context.",
+          "Explicit inspection verifies exact section row, current-program parent inventory, then strict actual parent detail client_program_id; no missing-field fallback. Empty/missing/wrong-section/foreign-parent/wrong-program reads retain hold.",
+          "Only a separate deliberate Open identified section action uses qualified actual row identity; inspection never creates or saves another row.",
+          "Native attempt ledger now fences actual actor and session as well as project/document; late same-organization account-switch reads cannot open an earlier owner\u2019s section.",
+          "Pure shared validation helpers keep document recovery contract unchanged and avoid new lint warnings; new section tests live in a bounded companion file."
+        ],
+        "tests": {
+          "proof": "oct17-native-section-ui-qualified-tests.json",
+          "passed": 122,
+          "failed": 0,
+          "files": 3
+        },
+        "afterFinalHelperExtraction": {
+          "proof": "oct17-native-section-ui-section-frozen.json",
+          "passed": 7,
+          "failed": 0,
+          "files": 1
+        },
+        "acceptedPerFile": {
+          "passedCases": 122,
+          "files": 3,
+          "failedCases": 0
+        },
+        "perFileAcceptance": [
+          {
+            "path": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+            "passedCases": 84,
+            "proof": "oct17-native-section-ui-qualified-tests.json"
+          },
+          {
+            "path": "client/src/concept2cure/v2/__tests__/authoringSectionCreationRecovery.test.tsx",
+            "passedCases": 7,
+            "proof": "oct17-native-section-ui-section-frozen.json"
+          },
+          {
+            "path": "client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx",
+            "passedCases": 31,
+            "proof": "oct17-native-section-ui-qualified-tests.json"
+          }
+        ],
+        "lint": {
+          "proof": "oct17-native-section-ui-qualified-lint.json",
+          "files": 5,
+          "errors": 0,
+          "warnings": 0
+        },
+        "files": [
+          {
+            "path": "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts",
+            "sha256": "34f5f5a500a81384bf256e41fc8c5988658161d0140704bab47864626fe97675"
+          },
+          {
+            "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+            "sha256": "c550a6a16cc34277bf30adaf1829a3d62475acbcca0bf98216ce8f56a2d7c050"
+          },
+          {
+            "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+            "sha256": "29e5340adff82767da74f0d45d76eb50f508af482b92a64cea137d13649ca255"
+          },
+          {
+            "path": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+            "sha256": "84ae2281f12c0a064630ddcd985aede2f05bbdcaf1b1314314ceb586025d5f2c"
+          },
+          {
+            "path": "client/src/concept2cure/v2/__tests__/authoringSectionCreationRecovery.test.tsx",
+            "sha256": "b4b16b10738bf741b77829ffd73a4177112acb9dffc31c24d28cdd6f42b4d199"
+          }
+        ],
+        "supersedes": "Native/shared recovery paths in oct17-recovery-ui-acceptance.json only; unrelated proof scopes retain their original qualification. Prior CI locale/CSS/reachability fixes remain in oct17-ci-ui-acceptance.json.",
+        "limits": [
+          "Synthetic transport UI tests; backend lifecycle/native SQL qualification belongs to the separately named source-owner receipts.",
+          "No whole TypeScript/build, Git/index, baseline, dependency, or database mutation performed by this agent."
+        ]
+      }
+    },
+    {
+      "file": "oct17-report-acceptance.json",
+      "sha256": "5cfc3cec990eb761a82fcd8a6231b24e6182299f75bed3bd3f22a750ac444d8c",
+      "bytes": 8643,
+      "executionReceipt": {
+        "scope": "F22 recorded lifecycle calendar and null-first generic table connection",
+        "status": "owned domain source frozen; must land with reserved Report-OS memory exclusion",
+        "canonicalCensusHead": "36ecb3776a3fd2caf6440dfde8255f3ea336efd9",
+        "currentHead": "36ecb3776a3fd2caf6440dfde8255f3ea336efd9",
+        "counts": {
+          "defined": 61,
+          "engineBacked": 23,
+          "predictionUnavailable": 5,
+          "uncomputed": 33
+        },
+        "qualification": {
+          "node": "22.23.3",
+          "main": {
+            "files": 19,
+            "passed": 189,
+            "failed": 0,
+            "receipt": "/workspace/audit/oct17-report-green-final.json"
+          },
+          "finalFocusedDispatcher": {
+            "passed": 4,
+            "failed": 0,
+            "receipt": "/workspace/audit/oct17-report-source-union.json"
+          },
+          "latestDistinct": {
+            "files": 20,
+            "passed": 197,
+            "failed": 0,
+            "skipped": 0
+          },
+          "lint": {
+            "files": 20,
+            "errors": 0,
+            "warnings": 11
+          },
+          "controlledBeforeAfter": "/workspace/audit/oct17-report-render-control.json",
+          "bundleProducer": {
+            "passed": 7,
+            "failed": 0,
+            "receipt": "/workspace/audit/oct17-report-bundle-source.json",
+            "boundary": "Actual route and Drizzle transaction, recorded driver bindings; not native persistence."
+          }
+        },
+        "independentReview": {
+          "agent": "/root/oct17_domain/report_review",
+          "ownedFindingsResolved": [
+            "Unrelated accessible program IDs explicitly redacted in retained query parameters",
+            "Malformed present source evidence refuses saved direct reads"
+          ],
+          "dependentOwner": "/root/oct17_routes",
+          "dependentFinding": "Reserved report_os_state manifests bypass constituent-source admission through generic project memory/recall; assigned to owner for exclusion before ranking/limits."
+        },
+        "sources": [
+          {
+            "path": "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx",
+            "sha256": "e0af7d8a602ea81f6d174585c2fd596e1efe603ede5d02187d7196175c5759af"
+          },
+          {
+            "path": "server/routes/__tests__/report-os-run-engine.test.ts",
+            "sha256": "a13d0b7dd68a6be573295ab8c80d8dc27d2a0231c95b624909633d69853698f1"
+          },
+          {
+            "path": "server/routes/report-os.ts",
+            "sha256": "f2c5531c06607b27764f35136a2c8a635268a241b67c0998eeb340dd86e536b9"
+          },
+          {
+            "path": "server/services/report-os/__tests__/compute-run-regional.test.ts",
+            "sha256": "b33ec2626e7816fcb10fcb4722e7f0bc188d77ebff0817650319516224435335"
+          },
+          {
+            "path": "server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts",
+            "sha256": "36109a636011488da0b85e40f84b737963cb662a3cea9b8c55d09de1c8da3d54"
+          },
+          {
+            "path": "server/services/report-os/__tests__/project-access-integration.test.ts",
+            "sha256": "89c850c83c4e4d5c2e305af585d0541d34aa1512e017676b50a920235b298463"
+          },
+          {
+            "path": "server/services/report-os/__tests__/run-history.test.ts",
+            "sha256": "85e8f7da3e88288a421816a1665b52b13c49687d1afc0294fb92e4632e96d89a"
+          },
+          {
+            "path": "server/services/report-os/compute-run.ts",
+            "sha256": "224cafbf18c179bf146773a2f3bdf59602e1b5ac4d22339d55c665270ee30845"
+          },
+          {
+            "path": "server/services/report-os/lifecycle-calendar.ts",
+            "sha256": "659558b98c985da64297f12b98dbc618dc9692eb08366bc3d466e1e5f188c71d"
+          },
+          {
+            "path": "server/services/report-os/project-access.ts",
+            "sha256": "3afbadd39095091f234ace21f14ef36fb138c8273c46b3d45be3ba9dde1cc96d"
+          },
+          {
+            "path": "server/services/report-os/render/__tests__/render.test.ts",
+            "sha256": "d0bd2dac4c215b17bbf179ec59e1f4243a5e7fd0e07f5f3e80601b0e4a321b1e"
+          },
+          {
+            "path": "server/services/report-os/render/lifecycle-calendar.ts",
+            "sha256": "38fac97466735345d70a54528222f39b95cfaa1da028720f38540208be546f35"
+          },
+          {
+            "path": "server/services/report-os/render/render.ts",
+            "sha256": "5531c533b329dfa08227b172f8ea5d3c616f064479349bf541a154b33f7029c1"
+          },
+          {
+            "path": "server/services/report-os/report-engine.ts",
+            "sha256": "519237ede039102d62d87da011074d648ee2d027fc0e1cf270be2cfd1c25d563"
+          },
+          {
+            "path": "server/services/report-os/research-compliance-report-providers.ts",
+            "sha256": "ad597cf68874517851ce4d67dae69bcf23919638e7585d1f101ccadd44673547"
+          },
+          {
+            "path": "server/services/report-os/run-history.ts",
+            "sha256": "edbfd875c754386ac52398031797d9ed026cefcd432ecdb7ea7ae367af4860b4"
+          },
+          {
+            "path": "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+            "sha256": "e73ba71dd074ad24778081f11a9bf1b601b0fcdaa6051f9d65614022eb171486"
+          },
+          {
+            "path": "server/services/report-os/scheduling/generate-deliver.ts",
+            "sha256": "f0953b648bf8e5dbda65ef4f1c2345d02b90036ed8a4bc3c21937e455cbc08a2"
+          },
+          {
+            "path": "server/services/research-compliance/compliance-briefing.ts",
+            "sha256": "35e5d0aab33cfa23df46f30f0f11e9d284a72f68189c2d517f5d98545e23dbce"
+          },
+          {
+            "path": "docs/evidence/AUDIT-REMEDIATION/2026-10-17/report-engine-continuation-contract.md",
+            "sha256": "3d1e4b6e202c8c28a8b9c6641b437e2987fb5133191245c781171896c1151146"
+          },
+          {
+            "path": "docs/evidence/AUDIT-REMEDIATION/2026-10-17/report-engine-continuation-results.md",
+            "sha256": "ced535245a0d83acf1c9f7b48fa73d4b50fa675cf7a0ce65ec3f288bd9d91fc4"
+          },
+          {
+            "path": "docs/evidence/AUDIT-REMEDIATION/2026-10-17/report-capability-inventory.json",
+            "sha256": "7c268a8d79ca92cad0793dd3877d4918fdb852ddf9cda4dd167636567ee06e19"
+          },
+          {
+            "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+            "sha256": "b3f703fb643991f84415e7510bd62f095d502ad0be98888fd8307f3a7c37d361"
+          }
+        ],
+        "tests": [
+          {
+            "file": "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+            "passed": 1,
+            "failed": 0
+          },
+          {
+            "file": "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx",
+            "passed": 1,
+            "failed": 0
+          },
+          {
+            "file": "server/routes/__tests__/report-os-run-engine.test.ts",
+            "passed": 29,
+            "failed": 0
+          },
+          {
+            "file": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+            "passed": 25,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/capability-inventory.test.ts",
+            "passed": 2,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/compute-run-regional.test.ts",
+            "passed": 4,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/domain-project-sql.test.ts",
+            "passed": 2,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/domain-provenance.test.ts",
+            "passed": 4,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts",
+            "passed": 13,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts",
+            "passed": 8,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/project-access-integration.test.ts",
+            "passed": 13,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/report-engine.test.ts",
+            "passed": 18,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/__tests__/run-history.test.ts",
+            "passed": 12,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/render/__tests__/render-market-assessment.test.ts",
+            "passed": 10,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/render/__tests__/render-one-readiness.test.ts",
+            "passed": 7,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/render/__tests__/render.test.ts",
+            "passed": 15,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+            "passed": 3,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+            "passed": 9,
+            "failed": 0
+          },
+          {
+            "file": "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+            "passed": 14,
+            "failed": 0
+          },
+          {
+            "file": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+            "passed": 7,
+            "failed": 0
+          }
+        ],
+        "notPerformed": [
+          "Git staging/commit/push",
+          "Whole-project TSC",
+          "Baseline/migration changes",
+          "Dependency installs",
+          "Native production-database qualification"
+        ]
+      }
+    },
+    {
+      "file": "oct17-digest-acceptance.json",
+      "sha256": "0854b0459940545eeff1e73d3bc8928faf17804289ad4fde3164797fb9a98ed2",
+      "bytes": 1807,
+      "executionReceipt": {
+        "assembledAt": "2026-10-17T23:57:52.084494+00:00",
+        "scope": "O01 retained Submission Operations digest recipient/private admission and explicit generation unavailability",
+        "sourceFrozen": true,
+        "passedTests": 22,
+        "unitTestFiles": 2,
+        "nativePassedTests": 11,
+        "nativeArtifact": "/workspace/audit/oct17-digest-native-final-acceptance.json",
+        "nativeScope": "Current408verifiedTLS/JWT/app_service actual audit seal/samexmin, critical rollback, before/after COMMIT transport faults with physical backend eviction and exact scoped readback; unanchored private concealment and actual owner repair refusal. All native rows retained.",
+        "lintErrors": 0,
+        "lintWarnings": 13,
+        "newHelperAndFixtureWarnings": 0,
+        "privateUnanchoredRedControl": {
+          "passed": 18,
+          "failed": 1,
+          "artifact": "/workspace/audit/oct17-digest-unanchored-private-red.json"
+        },
+        "writerless": "unchanged29; one digest reader file, no generator or schema added",
+        "files": [
+          {
+            "path": "server/routes/submission-ops.ts",
+            "sha256": "0f4d131738f65a287bb6a4109b053381b36158457fe670237b7c7c3ab474c847"
+          },
+          {
+            "path": "server/services/submission-ops/digest-access.ts",
+            "sha256": "c62b14f0cf4a3d5a951bbdbd94974605d4a46cfaac76b58ad5dcd2c77f4bc03d"
+          },
+          {
+            "path": "server/services/submission-ops/__tests__/digest-access.pglite.test.ts",
+            "sha256": "88554a6d993d03d426a66ce33285f3950a500eef4bed83d708b9be47eb483816"
+          },
+          {
+            "path": "tests/db/submission-digest-access.dbtest.ts",
+            "sha256": "7984a333e5a1dd645c6be31f71dec89a0037a1d51e9c2b3ab59764487cde7b58"
+          },
+          {
+            "path": "docs/evidence/AUDIT-REMEDIATION/2026-10-17/submission-digest-boundary.md",
+            "sha256": "76f6f03139c022cd2499264a3d63ceb2d4c1f7ab42ab4adb99034f6551ec3fe4"
+          }
+        ]
+      }
+    },
+    {
+      "file": "oct17-report-state-acceptance.json",
+      "sha256": "228a5ca84fa3f957d3ffa6207c53b0f71908cb4673e5916caa4586d180e8f246",
+      "bytes": 4426,
+      "executionReceipt": {
+        "assembledAt": "2026-10-18T00:06:17.986089+00:00",
+        "scope": "Reserved ReportOS state exclusion from raw project-memory read/prompt/recall surfaces",
+        "sourceFrozen": true,
+        "testResult": {
+          "passed": 184,
+          "failed": 0,
+          "files": 14,
+          "artifact": "/workspace/audit/oct17-report-state-final.json"
+        },
+        "redControl": {
+          "passed": 1,
+          "failed": 4,
+          "artifact": "/workspace/audit/oct17-report-state-raw-red.json"
+        },
+        "lint": {
+          "files": 13,
+          "errors": 0,
+          "warnings": 61,
+          "artifact": "/workspace/audit/oct17-report-state-eslint.json",
+          "nativeFixtureErrors": 0,
+          "nativeFixtureWarnings": 0
+        },
+        "native": {
+          "status": "passed",
+          "passed": 10,
+          "failed": 0,
+          "files": 1,
+          "artifact": "/workspace/audit/oct18-report-state-memory-native-acceptance.json",
+          "rawResult": "/workspace/audit/oct17-report-state-memory-final-native.json",
+          "transportPosture": "/workspace/audit/oct18-report-state-native-posture.json",
+          "scope": "Actual current408 verifiedTLS/JWT/app_service, actual current actor/public allowed/private source denied, mounted raw memory/shared pool/context/feed, filtered counts/limits, real pgvector default+legacy with only deterministic local embedding-provider boundary. All rows retained."
+        },
+        "limits": [
+          "PGlite directly retains canonical reserved mixed-source manifest; actual ReportOS producer is separately tested through recorded driver bindings, not one end-to-end native producer fixture.",
+          "Native fixture uses real pgvector and actual JWT/current policy/app_service; its embedding provider boundary alone supplies deterministic local vectors, with no external model call.",
+          "No guarded ReportOS reader, stored manifest/history, deployed schema, entitlement, generator, migration, or budget changed."
+        ],
+        "files": [
+          {
+            "path": "server/services/client-intelligence-memory.ts",
+            "sha256": "41c6d1ba8077c97ebbedb59593a06b3346718adddda12155c12986878b2cadbd"
+          },
+          {
+            "path": "server/services/intelligence/project-intelligence-service.ts",
+            "sha256": "4b859236ae36b704e6173bb3737281d7d80843cb28bae594b21df6cb8a9759b4"
+          },
+          {
+            "path": "server/services/advancedRAGPipeline.ts",
+            "sha256": "ff51126658b65263bf8e1e781a81c775fa57c205350c3e60ce074c180baa38a3"
+          },
+          {
+            "path": "server/services/ana-ri/context-enrichment.ts",
+            "sha256": "04e97fb6fb17d8665940c4731fc1f5e10c4061a3ed746884d54acceb92339958"
+          },
+          {
+            "path": "server/services/ana-ri/command-executor.ts",
+            "sha256": "fb19e27d8a992b1dbc4078f37d40ae9e38fd2ea7de28e0f79832a1d6dc344b37"
+          },
+          {
+            "path": "server/services/memory-consolidation-job.ts",
+            "sha256": "3dd1def7aa37544da6b4ba785d52a01c972b448c25214004c23e3e86fd78108c"
+          },
+          {
+            "path": "server/routes/ana-features.ts",
+            "sha256": "37519d41224be8aa9c3fe94b03d229f09caa538604f0ce8e35a3b86268a6c522"
+          },
+          {
+            "path": "server/services/__tests__/report-state-memory-isolation.pglite.test.ts",
+            "sha256": "427a3606ff41a6b0c601dafbb12f77f8dbde89898101fe80c1787acd6ac7b4f5"
+          },
+          {
+            "path": "server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts",
+            "sha256": "ede543fd35455a63c482c76029d63246a77a042caa6ab02d09e755235f77c1a2"
+          },
+          {
+            "path": "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts",
+            "sha256": "635be82f787109507bd1173a158cd9d582f6138407250ceca83b476a75a14b9f"
+          },
+          {
+            "path": "server/services/ana-ri/__tests__/project-memory-read.pglite.test.ts",
+            "sha256": "043ea4c8a9cba79e75470acae644d49332f2295ded1da94bf1de605dcdde6ef4"
+          },
+          {
+            "path": "server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts",
+            "sha256": "65d953996e53d90f9092731492d0aa92e8b2c6e0a264db35a90f34ce8de1f581"
+          },
+          {
+            "path": "server/services/__tests__/memory-consolidation.pglite.integration.test.ts",
+            "sha256": "2d1ed8eca57eac0bcd389370b7d317c0c0dc8527d2279d6d588709484965587a"
+          },
+          {
+            "path": "docs/evidence/AUDIT-REMEDIATION/2026-10-18/report-state-memory-isolation.md",
+            "sha256": "07121656c7fc2607a14c1ed774a2a84fbfddf821b0e3550b0309f96d9ac3f112"
+          },
+          {
+            "path": "tests/db/report-state-memory-isolation.dbtest.ts",
+            "sha256": "9b5a5ad15920c08068104ae77562148befcaaa240572f79b0db7aa012d96360a"
+          }
+        ]
+      }
+    },
+    {
+      "file": "oct17-ci-ui-acceptance.json",
+      "sha256": "a455e0fa515011a0dd0ff822d9e6573ecfc4ef312cccaee1315d665f9771ce4a",
+      "bytes": 6309,
+      "executionReceipt": {
+        "task": "UI CI locale, text-ramp, selector, reachability remedies",
+        "assembledAtUtc": "2026-10-17T23:48:58.543422+00:00",
+        "sourceFrozen": true,
+        "gitMutationsPerformed": false,
+        "fixes": [
+          "Complete8actualSSOtranslationsacross17locales (136missingkeys), preserving existing translations and token/markup parity.",
+          "Remove one duplicate identical disabled-button CSS selector; retain effective appearance.",
+          "Regenerate only canonical derived text-ramp output from actual stylesheets; generator and baselines unchanged.",
+          "Move intact P32 withheld IND safety card from production client into retained test specification; existing consumer regressions and docs updated, no runtime activation or artificial reachability."
+        ],
+        "guardProofs": [
+          {
+            "command": "node scripts/ci/check-i18n-integrity.mjs",
+            "red": "oct17-ci-ui-i18n-red.log",
+            "green": "oct17-ci-ui-i18n-green.log",
+            "exitCode": 0
+          },
+          {
+            "command": "npm run --silent ci:surface-text-ramp",
+            "red": "oct17-ci-ui-text-ramp-red.log",
+            "green": "oct17-ci-ui-text-ramp-green.log",
+            "exitCode": 0
+          },
+          {
+            "command": "npm run --silent ci:check-css-selector-shadowing",
+            "red": "oct17-ci-ui-css-red.log",
+            "green": "oct17-ci-ui-css-green.log",
+            "exitCode": 0
+          },
+          {
+            "command": "npm run --silent ci:check-client-reachability",
+            "red": "oct17-ci-ui-reach-red.log",
+            "green": "oct17-ci-ui-reach-green.log",
+            "exitCode": 0
+          },
+          {
+            "command": "npm run --silent ci:launch-scope-api",
+            "red": null,
+            "green": "oct17-ci-ui-launch-scope.log",
+            "exitCode": 0
+          }
+        ],
+        "tests": {
+          "proof": "oct17-ci-ui-regressions.json",
+          "passed": 26,
+          "failed": 0,
+          "files": 2
+        },
+        "lint": {
+          "proof": "oct17-ci-ui-scoped-lint.json",
+          "errors": 0,
+          "warnings": 7,
+          "files": 4
+        },
+        "retainedSourceProof": "oct17-ci-ui-withheld-move.json",
+        "removedProductionPath": "client/src/concept2cure/v2/surfaces/indSafetyReportCard.ts",
+        "relatedRootWork": "Client reachability green includes root-owned removal of analytics-docs.ts. This agent did not edit analytics-docs or rpi.",
+        "dormantAggregate": "Exact CI step Gates that existed but ran nowhere contains only server/database/runtime/export commands; root/backend owners handle it.",
+        "files": [
+          {
+            "path": "client/public/locales/cs/auth.json",
+            "sha256": "6c9ce648b52b4e656c718d22be6b202bee014062ed4d56df1fc95da7b6b12011"
+          },
+          {
+            "path": "client/public/locales/da/auth.json",
+            "sha256": "ca64252392b85da00d16337ab69c42e297c8b919867a5da54ca6f2192cc53078"
+          },
+          {
+            "path": "client/public/locales/de/auth.json",
+            "sha256": "80847a0fc496c0d6136ba0c6abdc7450b85bfcfc5a6305a39708bd3f2852c917"
+          },
+          {
+            "path": "client/public/locales/el/auth.json",
+            "sha256": "d1ef92255541bb6170633a2e5455db3e23b5d5f787d75af77d69b4eac8175f31"
+          },
+          {
+            "path": "client/public/locales/es/auth.json",
+            "sha256": "ca38be61e1da37590c19888441f1cedc96bb3d2363d2fa01bde9cb5386c0fcf3"
+          },
+          {
+            "path": "client/public/locales/fi/auth.json",
+            "sha256": "465948cc86411865c7ed2e94257083a4b160453081ec5895307246e07316bc1b"
+          },
+          {
+            "path": "client/public/locales/fr/auth.json",
+            "sha256": "f40f04433db2229c4b47735b8222ed38b7d928fcfa7a30bc19ad30ba7556d1f4"
+          },
+          {
+            "path": "client/public/locales/hu/auth.json",
+            "sha256": "a946d5e7fa41f093322eb79ffb45a85e2a4d5d7b84c777b1026fd08cc8e93991"
+          },
+          {
+            "path": "client/public/locales/it/auth.json",
+            "sha256": "9eb6c6ede0e45da3405fb91e9133b6ee250bebfea03098de1768f7546663d1bb"
+          },
+          {
+            "path": "client/public/locales/ja/auth.json",
+            "sha256": "bbf89904b635bfdcbd558b0be5f7cb09d1a19b407d38cdc89cfe4ec7343f42ad"
+          },
+          {
+            "path": "client/public/locales/ko/auth.json",
+            "sha256": "b474a5fe3074820fbc2c33924e9386951ef93394de2a65952dcdb999e5043455"
+          },
+          {
+            "path": "client/public/locales/nl/auth.json",
+            "sha256": "b696b120172b312ebc773b5a60d1128a8bd6d6ac848b8276e3b81b818cd84273"
+          },
+          {
+            "path": "client/public/locales/pl/auth.json",
+            "sha256": "ae645a0b68d959fe44d64e8563203a326755b0d2b5ba051db7a9bd32f62ae8f4"
+          },
+          {
+            "path": "client/public/locales/pt/auth.json",
+            "sha256": "9b90109d1f5f426d764d118f62258999e3974be7753b596ad8f8c3967d6f9c99"
+          },
+          {
+            "path": "client/public/locales/ro/auth.json",
+            "sha256": "1ee5e023fa5850c5e500231745b4d1cd2722eb231ba7647a3f4002f218fac300"
+          },
+          {
+            "path": "client/public/locales/sv/auth.json",
+            "sha256": "df320f6d3b529d1753c51de52bf368408faad613fa441ec21d7d1d589afd39f8"
+          },
+          {
+            "path": "client/public/locales/zh/auth.json",
+            "sha256": "9ce309cf1aefc568068db10481c7a4ff975c12b358d0f25eadbfcdf7cbecbe76"
+          },
+          {
+            "path": "client/src/concept2cure/quality/app.css",
+            "sha256": "627e227737266cf0b2281f50f39966eea227d3ef0b88a00cb20564016b433139"
+          },
+          {
+            "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+            "sha256": "143df7dfd66dde38b91cc3670e819a800a2a28804af516d80a1162134e5196a5"
+          },
+          {
+            "path": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
+            "sha256": "bf19e2a3aff812656f06e79d1c7f8df220d497f7ee09e0ddbfb90554d82b5201"
+          },
+          {
+            "path": "client/src/concept2cure/v2/fixtures/ind-lifecycle-data.ts",
+            "sha256": "62681c735c44f70e467231144248d9c4ef2c08b3b45b6d4ecceffdcbc2e5f0ed"
+          },
+          {
+            "path": "client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx",
+            "sha256": "1f75df95839eefa6230b8629c36b3cb7d2f47f017bc6ce0a38456bca56192978"
+          },
+          {
+            "path": "tests/fixtures/withheld/indSafetyReportCard.ts",
+            "sha256": "89b1343f0935b3a66ad17d1d8968ae156c2a53742e3df50a4ab8812ee8bada5d"
+          },
+          {
+            "path": "docs/IND_SAFETY_REPORT_WITHHELD.md",
+            "sha256": "129c1fe28042acebc48606af01d85496dc2b007ef1ec5dd49e7921a718bbf1cd"
+          }
+        ],
+        "limits": [
+          "Locale integrity verifies keys, interpolation and markup; it does not claim independent human translation review.",
+          "Existing UI tests use synthetic transport; no agency/provider qualification or whole-repository TypeScript/build proof claimed."
+        ]
+      }
+    },
+    {
+      "file": "oct17-ci-database-seams-acceptance.json",
+      "sha256": "a0246d2906e41adb6d46c9504f46adc9a4893c355e6070eb48ef97dc506298e5",
+      "bytes": 1219,
+      "executionReceipt": [
+        {
+          "command": "ci:audit-logs-fixture",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-audit-logs-fixture.log"
+        },
+        {
+          "command": "ci:audit-logs-fixture:selftest",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-audit-logs-fixture-selftest.log"
+        },
+        {
+          "command": "ci:unkeyed-request-tables",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-unkeyed-request-tables.log"
+        },
+        {
+          "command": "ci:unkeyed-request-tables:selftest",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-unkeyed-request-tables-selftest.log"
+        },
+        {
+          "command": "ci:tenant-isolation-justifications",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-tenant-isolation-justifications.log"
+        },
+        {
+          "command": "ci:tenant-isolation-justifications:selftest",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-tenant-isolation-justifications-selftest.log"
+        },
+        {
+          "command": "ci:tenant-isolation:no-regression",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-tenant-isolation-no-regression.log"
+        },
+        {
+          "command": "ci:tenant-isolation:selftest",
+          "exit": 0,
+          "log": "/workspace/audit/oct17-final-ci-tenant-isolation-selftest.log"
+        }
+      ]
+    },
+    {
+      "file": "resume-semgrep-independent-review-final.json",
+      "sha256": "9ef7a91475014b6a83a26f20f4ada37f0620b60447e9757a31b105f1d046d168",
+      "bytes": 1665,
+      "executionReceipt": {
+        "scope": "Independent review of immutable-evidence separation; CI honesty scratch-fixture repair",
+        "modified_file": {
+          "path": "tests/ci/ci-honesty.contract.test.ts",
+          "sha256": "ca83e9540d52c0516720acafe36d085260fe55a441cb063972422d5df28290be"
+        },
+        "validation": {
+          "workflow_honesty_tests_passed": 53,
+          "workflow_honesty_tests_failed": 0,
+          "receipt": "/workspace/audit/resume-semgrep-workflow-honesty-final.json",
+          "lint_errors": 0,
+          "lint_warnings": 0,
+          "independent_evidence_controls_passed": 11,
+          "manifest_count": 22,
+          "all_original_HEAD_hashes_match": true,
+          "exact_exclude_path_canary": "/workspace/audit/resume-semgrep-exclude-path-canary.json",
+          "dormant_commands": 14,
+          "dormant_commands_passed": 14
+        },
+        "contract": [
+          "Real Python validator copied to scratch checkout and executed by unchanged blocking step.",
+          "Six original baseline/scan outcome cases retained.",
+          "Changed bytes and attempted application-source exception fail before Semgrep invocation.",
+          "Full-scan command remains free of evidence exclusions and differential baseline.",
+          "Full and differential SARIF remain in always-uploaded artifact; Security upload receives full SARIF."
+        ],
+        "qualification": "reviewedRules are classification metadata; fixed-byte files are wholly excluded from differential scanning across all rules, while full Security-tab scanning remains complete. New or changed source bytes do not inherit the exception.",
+        "no_changes": [
+          "Immutable evidence files",
+          "Workflow/helper implementation owned by root",
+          "Git/index/history",
+          "Baselines",
+          "Gitleaks config/ignore"
+        ]
+      }
+    }
+  ]
+}

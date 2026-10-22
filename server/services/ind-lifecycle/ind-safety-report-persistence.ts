@@ -19,7 +19,7 @@
 import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../../db';
 import { indSafetyReports, type IndSafetyReportRow } from '../../../shared/schema/ind-safety-reports';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import {
   assembleIndSafetyReport,
@@ -28,6 +28,8 @@ import {
 import type { AdverseEvent, ICSR } from '../compliance/pharmacovigilanceService';
 
 const logger = createScopedLogger('ind-safety-report-persistence');
+
+export type AuditedIndSafetyReportRow = IndSafetyReportRow & { auditTrail: AuditRowOutcome };
 
 export type SafetyReportCtx = { organizationId: number; userId: number };
 
@@ -53,7 +55,7 @@ export interface CreateSafetyReportDraftInput {
 export async function createSafetyReportDraft(
   input: CreateSafetyReportDraftInput,
   ctx: SafetyReportCtx,
-): Promise<IndSafetyReportRow> {
+): Promise<AuditedIndSafetyReportRow> {
   const { classification, document } = assembleIndSafetyReport(input.event, {
     icsr: input.icsr ?? null,
     aggregateContext: input.aggregateContext,
@@ -87,7 +89,7 @@ export async function createSafetyReportDraft(
     })
     .returning();
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_SAFETY_REPORT_DRAFTED',
@@ -96,7 +98,7 @@ export async function createSafetyReportDraft(
     details: { submissionId: input.submissionId, obligation: classification.obligation, adverseEventId: input.event.id },
   });
   logger.info('Drafted IND safety report', { submissionId: input.submissionId, obligation: classification.obligation, organizationId: ctx.organizationId });
-  return row as IndSafetyReportRow;
+  return { ...(row as IndSafetyReportRow), auditTrail };
 }
 
 /** List a submission's safety reports (org-scoped, stable order). */
@@ -126,14 +128,14 @@ export async function markSafetyReportFiled(
   id: string,
   sequenceId: number,
   ctx: SafetyReportCtx,
-): Promise<IndSafetyReportRow> {
+): Promise<AuditedIndSafetyReportRow> {
   const [row] = await db
     .update(indSafetyReports)
     .set({ status: 'filed', sequenceId, filedAt: new Date(), updatedAt: new Date() })
     .where(and(eq(indSafetyReports.id, id), eq(indSafetyReports.organizationId, ctx.organizationId)))
     .returning();
   if (!row) throw new SafetyReportError('NOT_FOUND', 'Safety report not found.');
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_SAFETY_REPORT_FILED',
@@ -141,7 +143,7 @@ export async function markSafetyReportFiled(
     resourceId: row.id,
     details: { sequenceId },
   });
-  return row as IndSafetyReportRow;
+  return { ...(row as IndSafetyReportRow), auditTrail };
 }
 
 /**

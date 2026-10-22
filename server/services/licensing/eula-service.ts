@@ -21,7 +21,7 @@
 
 import crypto from 'crypto';
 import { pool } from '../../db.js';
-import auditService from '../auditService.js';
+import { writeChainedAuditRow } from '../auditService.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('eula-service');
@@ -66,6 +66,17 @@ export interface RecordAcceptanceInput {
   method?: 'clickwrap' | 'sso' | 'api';
 }
 
+/** A lost COMMIT acknowledgement cannot establish either success or rollback. */
+export class LicenseAcceptanceCommitUnconfirmedError extends Error {
+  readonly code = 'LICENSE_ACCEPTANCE_COMMIT_UNCONFIRMED';
+  readonly statusCode = 503;
+  readonly recoveryUrl = '/api/licensing/acceptances';
+  constructor() {
+    super('The acceptance commit could not be confirmed. Review your acceptance history before trying again.');
+    this.name = 'LicenseAcceptanceCommitUnconfirmedError';
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers (unit-testable, no DB)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,6 +108,20 @@ export class AgreementTextMissingError extends Error {
     );
     this.name = 'AgreementTextMissingError';
     this.agreementId = agreementId;
+  }
+}
+
+/**
+ * An agreement published with neither a body nor a url. 2026-10-15: it was
+ * stored and superseded the active agreement, leaving every user owing an
+ * acceptance of terms nobody could read.
+ */
+export class AgreementPublishTextMissingError extends Error {
+  readonly code = 'AGREEMENT_TEXT_MISSING';
+  readonly statusCode = 400;
+  constructor() {
+    super('An agreement cannot be published without its text: give a body or a url.');
+    this.name = 'AgreementPublishTextMissingError';
   }
 }
 
@@ -252,17 +277,22 @@ export async function getOutstandingAgreements(
   const active = (await getActiveAgreements()).filter(a => a.required);
   if (active.length === 0) return [];
 
-  // Accepted by the user directly...
+  // User acceptances satisfy user-scoped agreements only. A colleague's
+  // acceptance can satisfy an organization agreement only in that organization.
   const userAccepted = await pool.query(
-    `SELECT DISTINCT agreement_id FROM license_acceptances WHERE user_id = $1`,
+    `SELECT DISTINCT acceptance.agreement_id
+       FROM license_acceptances acceptance
+       JOIN license_agreements agreement ON agreement.id = acceptance.agreement_id
+      WHERE acceptance.user_id = $1 AND agreement.scope = 'user'`,
     [userId]
   );
-  const acceptedIds = new Set<string>(userAccepted.rows.map((r: any) => r.agreement_id));
-
-  // ...plus org-scoped agreements accepted by anyone in the org.
+  const acceptedIds = new Set<string>(userAccepted.rows.map((r: { agreement_id: string }) => r.agreement_id));
   if (organizationId != null) {
     const orgAccepted = await pool.query(
-      `SELECT DISTINCT agreement_id FROM license_acceptances WHERE organization_id = $1`,
+      `SELECT DISTINCT acceptance.agreement_id
+         FROM license_acceptances acceptance
+         JOIN license_agreements agreement ON agreement.id = acceptance.agreement_id
+        WHERE acceptance.organization_id = $1 AND agreement.scope = 'organization'`,
       [organizationId]
     );
     for (const r of orgAccepted.rows) acceptedIds.add(r.agreement_id);
@@ -283,89 +313,111 @@ export async function hasAcceptedAll(
   return outstanding.length === 0;
 }
 
-/** Record an acceptance (append-only) and mirror to the audit log. */
+/** Record an append-only legal acceptance and its sealed audit in the same transaction. */
 export async function recordAcceptance(input: RecordAcceptanceInput): Promise<AcceptanceRecord> {
   await ensureSchema();
-
-  const agreementRes = await pool.query(
-    `SELECT id, agreement_key, version, title, body, url FROM license_agreements WHERE id = $1`,
-    [input.agreementId]
-  );
-  if (agreementRes.rows.length === 0) {
-    throw new Error(`Agreement '${input.agreementId}' not found`);
-  }
-  const agreement = agreementRes.rows[0];
-  // 2026-10-15: an acceptance used to be recorded for an agreement with no text
-  // at all (the seeded 'eula' and 'tos' rows have neither body nor url), i.e.
-  // consent to nothing. That is refused, and the hash now binds the text.
-  const contentHash = hashAgreementContent({ body: agreement.body ?? null, url: agreement.url ?? null });
-  if (contentHash == null) {
-    throw new AgreementTextMissingError(input.agreementId, agreement.title, agreement.version);
-  }
-  const acceptedAt = new Date().toISOString();
-  const hash = buildAcceptanceHash({
-    userId: input.userId,
-    organizationId: input.organizationId ?? null,
-    agreementKey: agreement.agreement_key,
-    agreementVersion: agreement.version,
-    agreementContentHash: contentHash,
-    acceptedAt,
-  });
-
-  const { rows } = await pool.query(
-    `INSERT INTO license_acceptances
-       (agreement_id, agreement_key, agreement_version, user_id, organization_id,
-        accepted_at, ip_address, user_agent, acceptance_hash, method, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
-     RETURNING id, agreement_id, agreement_key, agreement_version, user_id,
-               organization_id, accepted_at, method`,
-    [
-      input.agreementId,
-      agreement.agreement_key,
-      agreement.version,
-      input.userId,
-      input.organizationId ?? null,
-      acceptedAt,
-      input.ipAddress ?? null,
-      input.userAgent ?? null,
-      hash,
-      input.method ?? 'clickwrap',
-      JSON.stringify({ agreementContentHash: contentHash }),
-    ]
-  );
-
-  // Mirror into the canonical audit log. Routed through auditService rather
-  // than a raw INSERT: the raw form wrote a row with NULL sha256_chain /
-  // payload_hash / hmac_seal, i.e. a row that SITS IN audit_logs BUT OUTSIDE
-  // the hash chain — invisible to the chain verifier and therefore not
-  // tamper-evident. auditService computes the chain link and HMAC seal inside
-  // its own transaction (§11.10(e), §11.70).
-  await auditService.logAction({
-    organizationId: input.organizationId ?? undefined,
-    userId: input.userId,
-    action: 'license_accepted',
-    resourceType: 'license_acceptances',
-    resourceId: input.agreementId,
-    details: {
+  const client = await pool.connect();
+  let commitStarted = false;
+  let connectionError: Error | undefined;
+  try {
+    await client.query('BEGIN');
+    const agreementRes = await client.query(
+      `SELECT id, agreement_key, version, title, body, url, status FROM license_agreements WHERE id = $1 FOR SHARE`,
+      [input.agreementId]
+    );
+    if (agreementRes.rows.length === 0) {
+      throw new Error(`Agreement '${input.agreementId}' not found`);
+    }
+    const agreement = agreementRes.rows[0];
+    // 2026-10-15: a draft or superseded agreement was accepted like the active one.
+    if (agreement.status !== 'active') {
+      throw new Error(`Active agreement '${input.agreementId}' not found: this agreement is ${agreement.status}, not active.`);
+    }
+    // Bind the acceptance to the exact available text held under this lock.
+    // For a URL-only agreement this binds its URL, not unverified remote bytes.
+    const contentHash = hashAgreementContent({ body: agreement.body ?? null, url: agreement.url ?? null });
+    if (contentHash == null) {
+      throw new AgreementTextMissingError(input.agreementId, agreement.title, agreement.version);
+    }
+    const acceptedAt = new Date().toISOString();
+    const hash = buildAcceptanceHash({
+      userId: input.userId,
+      organizationId: input.organizationId ?? null,
       agreementKey: agreement.agreement_key,
-      version: agreement.version,
-      hash,
-      contentHash,
-      method: input.method ?? 'clickwrap',
-    },
-  });
+      agreementVersion: agreement.version,
+      agreementContentHash: contentHash,
+      acceptedAt,
+    });
 
-  const r = rows[0];
-  return {
-    id: r.id,
-    agreementId: r.agreement_id,
-    agreementKey: r.agreement_key,
-    agreementVersion: r.agreement_version,
-    userId: r.user_id,
-    organizationId: r.organization_id ?? null,
-    acceptedAt: r.accepted_at,
-    method: r.method,
-  };
+    const { rows } = await client.query(
+      `INSERT INTO license_acceptances
+         (agreement_id, agreement_key, agreement_version, user_id, organization_id,
+          accepted_at, ip_address, user_agent, acceptance_hash, method, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
+       RETURNING id, agreement_id, agreement_key, agreement_version, user_id,
+                 organization_id, accepted_at, method`,
+      [
+        input.agreementId,
+        agreement.agreement_key,
+        agreement.version,
+        input.userId,
+        input.organizationId ?? null,
+        acceptedAt,
+        input.ipAddress ?? null,
+        input.userAgent ?? null,
+        hash,
+        input.method ?? 'clickwrap',
+        JSON.stringify({ agreementContentHash: contentHash }),
+      ]
+    );
+
+    // Legal acceptance is indivisible from its inspectable, sealed audit row.
+    // A best-effort mirror can resolve persisted:false after the append-only
+    // acceptance is already durable; use the canonical enlisted writer instead.
+    await writeChainedAuditRow(client, {
+      organizationId: input.organizationId ?? undefined,
+      userId: input.userId,
+      action: 'license_accepted',
+      resourceType: 'license_acceptances',
+      resourceId: input.agreementId,
+      details: {
+        agreementKey: agreement.agreement_key,
+        version: agreement.version,
+        hash,
+        contentHash,
+        method: input.method ?? 'clickwrap',
+      },
+    });
+
+    commitStarted = true;
+    await client.query('COMMIT');
+    const r = rows[0];
+    return {
+      id: r.id,
+      agreementId: r.agreement_id,
+      agreementKey: r.agreement_key,
+      agreementVersion: r.agreement_version,
+      userId: r.user_id,
+      organizationId: r.organization_id ?? null,
+      acceptedAt: r.accepted_at,
+      method: r.method,
+    };
+  } catch (error) {
+    if (commitStarted) {
+      connectionError = error instanceof Error ? error : new Error('Unconfirmed acceptance transaction');
+      logger.warn('Legal acceptance commit unconfirmed; acceptance history must be reviewed', {
+        organizationId: input.organizationId ?? null,
+        code: 'LICENSE_ACCEPTANCE_COMMIT_UNCONFIRMED',
+      });
+      throw new LicenseAcceptanceCommitUnconfirmedError();
+    }
+    try { await client.query('ROLLBACK'); } catch (rollbackError) {
+      connectionError = rollbackError instanceof Error ? rollbackError : new Error('Acceptance rollback failed');
+    }
+    throw error;
+  } finally {
+    client.release(connectionError);
+  }
 }
 
 /** A user's acceptance history (most recent first). Throws when it cannot be read. */
@@ -405,6 +457,9 @@ export async function publishAgreement(input: {
   required?: boolean;
   createdBy?: string;
 }): Promise<LicenseAgreement> {
+  const body = input.body?.trim() ? input.body : undefined;
+  const url = input.url?.trim() ? input.url : undefined;
+  if (!body && !url) throw new AgreementPublishTextMissingError();
   await ensureSchema();
   const client = await pool.connect();
   try {
@@ -424,8 +479,8 @@ export async function publishAgreement(input: {
         input.version,
         input.title,
         input.summary ?? null,
-        input.body ?? null,
-        input.url ?? null,
+        body ?? null,
+        url ?? null,
         input.scope ?? 'user',
         input.required !== false,
         input.createdBy ?? null,

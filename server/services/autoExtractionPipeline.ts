@@ -21,11 +21,13 @@
 
 import { governedActor } from './part11/governed-actor';
 import { pool } from '../db.js';
-import auditService from './auditService';
+import { runWithOrgJobScope } from '../db/tenantStore';
+import { recordAuditRow, combineAuditRowOutcomes, type AuditRowOutcome } from './audit/audit-write-outcome';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
+import { artifactDataEligibleSql } from './document-data-disposition/eligibility';
 import { usableOrgId } from '../utils/authedOrgId.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -50,6 +52,8 @@ export interface ExtractionJob {
   startedAt?: string;
   completedAt?: string;
   durationMs?: number;
+  persistence: 'process-local';
+  meta?: { auditTrail: AuditRowOutcome };
 }
 
 export type ExtractionStatus =
@@ -156,6 +160,7 @@ export interface StoredArtifact {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const extractionQueue: Map<string, ExtractionJob> = new Map();
+const processAdmissions = new Map<string, () => Promise<void>>();
 let isProcessing = false;
 
 /**
@@ -172,6 +177,7 @@ export async function queueExtraction(
   options?: {
     priority?: number;
     immediate?: boolean;
+    beforeProcess?: () => Promise<void>;
   }
 ): Promise<ExtractionJob> {
   const fileType = detectFileType(fileName);
@@ -189,6 +195,7 @@ export async function queueExtraction(
     fileType,
     fileSize,
     status: 'queued',
+    persistence: 'process-local',
     priority: options?.priority || calculatePriority(fileType, fileSize),
     stages: [
       { name: 'text_extraction', status: 'pending' },
@@ -202,9 +209,10 @@ export async function queueExtraction(
   };
 
   extractionQueue.set(job.id, job);
+  if (options?.beforeProcess) processAdmissions.set(job.id, options.beforeProcess);
 
-  // Store job in DB for persistence
-  await storeJob(job);
+  // Audit persistence does not make this process-local queue restartable.
+  job.meta = { auditTrail: await storeJob(job) };
 
   // Start processing if not already running
   if (options?.immediate || !isProcessing) {
@@ -279,7 +287,7 @@ async function processQueue(): Promise<void> {
       const nextJob = getNextJob();
       if (!nextJob) break;
 
-      await processJob(nextJob);
+      await runWithOrgJobScope(nextJob.organizationId, 'auto-extraction', () => processJob(nextJob));
     }
   } finally {
     isProcessing = false;
@@ -304,6 +312,7 @@ async function processJob(job: ExtractionJob): Promise<void> {
   job.startedAt = new Date().toISOString();
 
   try {
+    await processAdmissions.get(job.id)?.();
     // Stage 1: Text extraction
     updateStage(job, 'text_extraction', 'running');
     job.status = 'extracting_text';
@@ -313,13 +322,13 @@ async function processJob(job: ExtractionJob): Promise<void> {
     // Stage 2: Table extraction
     updateStage(job, 'table_extraction', 'running');
     job.status = 'extracting_tables';
-    const tables = await extractTables(textContent, job.fileType);
+    const tables = await extractTables(textContent, job.fileType, job);
     updateStage(job, 'table_extraction', 'completed', `${tables.length} tables`);
 
     // Stage 3: Classification
     updateStage(job, 'classification', 'running');
     job.status = 'classifying';
-    const { metadata, sections, entities } = await classifyAndEnrich(textContent, job.fileName);
+    const { metadata, sections, entities } = await classifyAndEnrich(textContent, job.fileName, job);
     updateStage(job, 'classification', 'completed', metadata.documentType);
 
     // Stage 4: Metadata enrichment
@@ -334,6 +343,8 @@ async function processJob(job: ExtractionJob): Promise<void> {
     const qualityScore = computeExtractionQuality(textContent, tables, sections, entities);
     updateStage(job, 'quality_scoring', 'completed', `Score: ${qualityScore}`);
 
+    // Queue admission is re-read after provider work, before any content write.
+    await processAdmissions.get(job.id)?.();
     // Stage 6: Store artifacts
     updateStage(job, 'artifact_storage', 'running');
     job.status = 'storing';
@@ -365,16 +376,15 @@ async function processJob(job: ExtractionJob): Promise<void> {
     job.completedAt = new Date().toISOString();
     job.durationMs = Date.now() - startTime;
 
-    await updateJobInDB(job);
-    await logExtractionAudit(job);
+    await recordTerminalOutcome(job);
   } catch (error: any) {
     job.status = 'failed';
     job.error = error.message;
     job.completedAt = new Date().toISOString();
     job.durationMs = Date.now() - startTime;
-    await updateJobInDB(job);
+    await recordTerminalOutcome(job);
     console.error(`[AutoExtraction] Job ${job.id} failed:`, error);
-  }
+  } finally { processAdmissions.delete(job.id); }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -418,9 +428,10 @@ export class ExtractionSourceUnavailableError extends Error {
  */
 async function extractText(job: ExtractionJob): Promise<string> {
   const artifactResult = await pool.query(
-    `SELECT content FROM concept2cure_artifacts
-      WHERE artifact_id = $1 AND organization_id = $2`,
-    [job.fileId, job.organizationId],
+    `SELECT a.content FROM concept2cure_artifacts a
+      WHERE a.artifact_id = $1 AND a.organization_id = $2 AND a.project_id = $3
+        AND a.status NOT IN ('deleted', 'archived', 'superseded', 'withdrawn') AND ${artifactDataEligibleSql('a')}`,
+    [job.fileId, job.organizationId, job.projectId],
   );
   const content = artifactResult.rows[0]?.content;
   if (typeof content === 'string' && content.trim().length > 0) {
@@ -433,7 +444,8 @@ async function extractText(job: ExtractionJob): Promise<string> {
 
 async function extractTables(
   content: string,
-  fileType: SupportedFileType
+  _fileType: SupportedFileType,
+  job: ExtractionJob
 ): Promise<ExtractedTableData[]> {
   if (!content || content.length < 50) return [];
 
@@ -444,6 +456,7 @@ async function extractTables(
   const aiResult = await ai.chat({
     taskType: 'document_drafting',
     callerModule: 'autoExtraction.extractTables',
+    organizationId:job.organizationId, userId:job.userId, projectId:job.projectId,
     temperature: 0.1,
     response_format: { type: 'json_object' },
     messages: [
@@ -477,7 +490,8 @@ Return empty tables array if no tables found.`,
 
 async function classifyAndEnrich(
   content: string,
-  fileName: string
+  fileName: string,
+  job: ExtractionJob
 ): Promise<{
   metadata: DocumentMetadata;
   sections: DetectedSection[];
@@ -489,6 +503,7 @@ async function classifyAndEnrich(
   const aiResult = await ai.chat({
     taskType: 'regulatory_review',
     callerModule: 'autoExtraction.classifyAndEnrich',
+    organizationId:job.organizationId, userId:job.userId, projectId:job.projectId,
     temperature: 0.1,
     response_format: { type: 'json_object' },
     messages: [
@@ -640,7 +655,7 @@ async function storeExtractedArtifacts(
       body: {
         projectId: job.projectId,
         metadata: {
-          sourceRefs: [`upload:${job.fileId}`],
+          sourceRefs: [`artifact:${job.fileId}`],
           traceId: job.id,
         },
       },
@@ -667,7 +682,7 @@ async function storeExtractedArtifacts(
     placementContainerId: String(job.projectId),
     title: job.fileName,
     content: mainContent,
-    sourceRefs: [`upload:${job.fileId}`],
+    sourceRefs: [`artifact:${job.fileId}`],
     provider: 'auto_extraction_pipeline',
     model: 'metadata_classifier',
     exportAllowed: false,
@@ -754,7 +769,7 @@ async function storeExtractedArtifacts(
         body: {
           projectId: job.projectId,
           metadata: {
-            sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+            sourceRefs: [`artifact:${mainId}`, `artifact:${job.fileId}`],
             traceId: `${job.id}:table:${table.id}`,
           },
         },
@@ -781,7 +796,7 @@ async function storeExtractedArtifacts(
       placementContainerId: String(job.projectId),
       title: table.title,
       content: tableContent,
-      sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+      sourceRefs: [`artifact:${mainId}`, `artifact:${job.fileId}`],
       provider: 'auto_extraction_pipeline',
       model: 'table_extractor',
       exportAllowed: false,
@@ -858,7 +873,7 @@ async function storeExtractedArtifacts(
           body: {
             projectId: job.projectId,
             metadata: {
-              sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+              sourceRefs: [`artifact:${mainId}`, `artifact:${job.fileId}`],
               traceId: `${job.id}:section:${section.code}`,
             },
           },
@@ -886,7 +901,7 @@ async function storeExtractedArtifacts(
         title: sectionTitle,
         content: section.content,
         ctdSection: section.code,
-        sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+        sourceRefs: [`artifact:${mainId}`, `artifact:${job.fileId}`],
         provider: 'auto_extraction_pipeline',
         model: 'section_classifier',
         exportAllowed: false,
@@ -1021,11 +1036,11 @@ function updateStage(
   }
 }
 
-async function storeJob(job: ExtractionJob): Promise<void> {
+async function storeJob(job: ExtractionJob): Promise<AuditRowOutcome> {
   // Chained via auditService — the previous raw INSERT named columns audit_logs
   // does not have (organization_id / entity_type / entity_id / details), so it
   // raised 42703 into a bare catch and recorded nothing.
-  await auditService.logAction({
+  return recordAuditRow({
     organizationId: job.organizationId,
     userId: job.userId,
     action: 'extraction_job_created',
@@ -1041,10 +1056,10 @@ async function storeJob(job: ExtractionJob): Promise<void> {
   });
 }
 
-async function updateJobInDB(job: ExtractionJob): Promise<void> {
+async function updateJobInDB(job: ExtractionJob): Promise<AuditRowOutcome> {
   // Chained via auditService (see storeJob above for why the raw INSERT could
   // never have written a row).
-  await auditService.logAction({
+  return recordAuditRow({
     organizationId: job.organizationId,
     userId: job.userId,
     action: job.status === 'completed' ? 'extraction_job_completed' : 'extraction_job_failed',
@@ -1065,6 +1080,7 @@ async function updateJobInDB(job: ExtractionJob): Promise<void> {
   });
 }
 
-async function logExtractionAudit(job: ExtractionJob): Promise<void> {
-  // Already handled in updateJobInDB
+async function recordTerminalOutcome(job: ExtractionJob): Promise<void> {
+  const terminal = await updateJobInDB(job);
+  job.meta = { auditTrail: job.meta ? combineAuditRowOutcomes(job.meta.auditTrail, terminal) : terminal };
 }

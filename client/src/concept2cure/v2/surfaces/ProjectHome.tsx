@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
+import { useAuthUser } from '@/services/portal/authService';
 import { I } from '../icons';
 import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -7,9 +8,10 @@ import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers 
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
-import { PJ_LIFECYCLE, Ring, pjInitials } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, Ring } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
+import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
@@ -17,6 +19,7 @@ import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
+import { SourceAssemblyAction } from '../editor/SourceAssemblyDialog';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 import type { ReviewItem } from '../fixtures/review-data';
@@ -30,6 +33,11 @@ import { ComingLater } from './ProjectComingLater';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
 import { sourceReadView } from '@shared/data-room-processing-status';
+import type { ProjectTeamResponse } from '@shared/project-team';
+import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
+import { ProjectTeamSharing } from './ProjectTeamSharing';
+import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
+import { AGENCY_LABEL } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
@@ -127,14 +135,6 @@ const DEVICE_FLAG_LABEL: Record<string, string> = Object.fromEntries(DEVICE_FLAG
 const isDeviceProgram = (productType: string | null | undefined): boolean =>
   (DEVICE_FAMILY_PRODUCT_TYPES as readonly string[]).includes(String(productType ?? '').toLowerCase());
 
-/** GET /api/c2c/projects/:id/team → { team: [...] } (project_members ∪ users). */
-interface TeamRow {
-  user_id: number | null;
-  role: string | null;
-  name: string | null;
-  email: string | null;
-}
-
 /** GET /api/c2c/projects/:id/activity → { activity: [...] } (audit_logs). */
 interface ActivityRow {
   id: string | number;
@@ -144,6 +144,24 @@ interface ActivityRow {
   /** COALESCE(users.name, users.email) for actor_id; null for system rows. */
   actor_name: string | null;
   occurred_at: string | null;
+  /** The reason recorded with the row (21 CFR 11.10(e)); absent from an older server. */
+  reason?: string | null;
+  /** The governed action's own event and agency, when the row is one (2026-10-21). */
+  event?: string | null;
+  event_agency?: string | null;
+}
+
+/** Governed events the feed names in words; any other row reads as before. */
+const ACTIVITY_EVENT_LABEL: Record<string, string> = {
+  market_added: 'Market added',
+  home_submission_added: 'Submission added',
+};
+
+/** What the feed says a row was: the governed event by name, else the action as recorded. */
+export function activityLabel(a: Pick<ActivityRow, 'action' | 'resource_type' | 'event' | 'event_agency'>): string {
+  const named = a.event ? ACTIVITY_EVENT_LABEL[a.event] : undefined;
+  if (named) return a.event_agency ? `${named} · ${a.event_agency.toUpperCase()}` : named;
+  return `${String(a.action ?? '').replace(/_/g, ' ')}${a.resource_type ? ' · ' + a.resource_type : ''}`;
 }
 
 /** GET /api/c2c/projects/:id/workstreams → { workstreams: [...] } (section rollup). */
@@ -248,7 +266,7 @@ function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
           </button>
         )}
       </div>
-      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk}
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav}
         onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />
       <C2CToast msg={toast} />
     </section>
@@ -396,6 +414,18 @@ function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; pr
   </div>;
 }
 
+function DataRoomBuildAction({ pid, pinned, sources, onNav, disabled }: {
+  pid: string | null; pinned: number[]; sources: SourceRow[]; onNav: (id: string) => void; disabled: boolean;
+}) {
+  if (!pid || !pinned.length) return null;
+  const selected = pinned.map(id => sources.find(source => source.id === id));
+  return <div data-testid="data-room-build-selected"><SourceAssemblyAction programId={pid} onNav={onNav} disabled={disabled}
+    sources={pinned.map((sourceId, index) => ({ kind: 'data-room', sourceId,
+      ...(selected[index]?.checksum ? { expectedChecksum: selected[index]!.checksum! } : {}) }))}
+    titles={selected.map((source, index) => source?.title || `Source ${pinned[index]}`)}
+    unavailable={selected.some(source => !source) ? 'Refresh the source list before building from this selection.' : null} /></div>;
+}
+
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
   const available = useSurfaceAvailable();
   const [reloadKey, setReloadKey] = useState(0);
@@ -478,7 +508,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   /* Hand a set of sources to AnA. It resolves each source back to the upload
      its bytes live in and grounds the turn on exactly those documents, not on
      whatever its own retrieval would have picked. */
+  const sourceReadConfirmed = !state.loading && !state.error && Boolean(state.data);
   const handOff = (ids: number[], words: string) => {
+    if (!sourceReadConfirmed || uploading || !ids.every(id => groundable.includes(id))) return;
     window.C2C_SOURCE_PINS = ids.map(String);
     onAsk(words);
   };
@@ -590,7 +622,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
-              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}` : ''}
+              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords, a.extractionCoverage)}` : ''}
               {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
             </span>
           ))}
@@ -732,11 +764,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             context of the next turn, in the one conversation. With sources
             pinned, the pinned set is the one handed over. A data room with
             nothing readable offers neither. */}
+        <DataRoomBuildAction pid={pid} pinned={pinned} sources={sources} onNav={onNav} disabled={uploading || !sourceReadConfirmed} />
         {pinned.length === 0 && groundable.length > 0 && (
           <button
             className="btn ghost"
             style={{ fontSize: 12, padding: '4px 12px' }}
-            disabled={uploading}
+            disabled={uploading || !sourceReadConfirmed}
             title={`Ask AnA to draft from ${handedWords} in this data room`}
             onClick={() => handOff(
               handed,
@@ -750,6 +783,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           <button
             className="btn"
             style={{ fontSize: 12, padding: '4px 12px' }}
+            disabled={uploading || !sourceReadConfirmed}
             onClick={() => handOff(
               pinned,
               `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
@@ -841,14 +875,21 @@ const WORK_SOURCE_LABEL: Record<string, string> = {
 const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
 const WORK_SHOWN = 10;
 
-function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null }) {
   const available = useSurfaceAvailable();
+  const targetRef = useRef<HTMLDivElement>(null);
   const ident = pid ? encodeURIComponent(pid) : null;
   const state = useLiveData<WorkViewRow>(
     ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
     [ident],
     hasKeys<WorkViewRow>('items'),
   );
+  useEffect(() => {
+    if (!state.loading && !state.error && targetId) {
+      targetRef.current?.focus();
+      targetRef.current?.scrollIntoView?.({ block: 'nearest' });
+    }
+  }, [state.loading, state.error, state.data, targetId]);
   return (
     <section className="pj-sec" aria-label={title}>
       <div className="pj-sec-h">
@@ -873,7 +914,11 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           render={(d) => {
             const items = d.items ?? [];
             const open = items.filter((w) => w.status !== 'done');
-            const shown = open.slice(0, WORK_SHOWN);
+            const target = targetId ? items.find((w) => w.id === targetId) : null;
+            const shown = target
+              ? [target, ...open.filter((w) => w.id !== target.id).slice(0, WORK_SHOWN - 1)]
+              : open.slice(0, WORK_SHOWN);
+            const hiddenOpen = open.length - shown.filter((w) => w.status !== 'done').length;
             const done = items.length - open.length;
             return (
               <>
@@ -881,7 +926,11 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
                   {shown.map((w) => {
                     const due = fmtDue(w.dueAt);
                     return (
-                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}>
+                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}
+                        ref={w.id === targetId ? targetRef : undefined}
+                        tabIndex={w.id === targetId ? -1 : undefined}
+                        data-work-target={w.id === targetId || undefined}
+                        aria-label={w.id === targetId ? `Requested task: ${w.title}` : undefined}>
                         <div className="pj-file-top">
                           <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
                           <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
@@ -900,7 +949,7 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
                   })}
                 </div>
                 <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
-                  {open.length > WORK_SHOWN ? `+${open.length - WORK_SHOWN} more open · ` : ''}
+                  {hiddenOpen > 0 ? `+${hiddenOpen} more open · ` : ''}
                   {done > 0 ? `${done} done · ` : ''}
                   {items.length} item{items.length === 1 ? '' : 's'} total
                 </div>
@@ -914,6 +963,7 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           }}
         />
       )}
+      <MissingRequestedWork targetId={targetId} state={state} />
       {/* The board these rows live on, by its own id. This sent people to
           the `task-board` alias, which the project no longer names
           (FILING_SPINE.md §5, F7); `tasks` is the surface the alias resolved
@@ -1389,7 +1439,7 @@ function ModuleRow({ w, match, onOpen }: {
 }
 
 function AuthorWorkspace({
-  pid, completion, readinessAsOf, onNav, teamState, activityState, wsState, docs, onRetryDocs, onOpenDoc,
+  pid, completion, readinessAsOf, onNav, teamState, sharingProjectId, onRetryTeam, activityState, wsState, docs, onRetryDocs, onOpenDoc,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
@@ -1398,7 +1448,9 @@ function AuthorWorkspace({
   /** "Measured …" for that figure, or null. */
   readinessAsOf: string | null;
   onNav: (id: string) => void;
-  teamState: DataState<{ team: TeamRow[] }>;
+  teamState: DataState<ProjectTeamResponse>;
+  sharingProjectId: number | null;
+  onRetryTeam: () => void;
   activityState: DataState<{ activity: ActivityRow[] }>;
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
   /** GET /api/authoring/docs?programId= — the project's documents. */
@@ -1456,28 +1508,12 @@ function AuthorWorkspace({
           </section>
         )}
 
-        {/* Team & activity — REAL: project_members + audit_logs */}
+        {/* Sourced responsibility/sharing facts and the existing audit read. */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Team &amp; activity</h2></div>
-          <Anchored
-            state={teamState}
-            loadingText="Loading team…"
-            errorTitle="Couldn't load the project team"
-            errorHint="The project members read didn't respond. Sign in and retry, or check the service is reachable."
-            emptyTitle="No project members yet"
-            emptyHint="Members added to this project (with their role) appear here."
-            isEmpty={(d) => (d.team ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-team">
-                {(d.team ?? []).map((g, i) => {
-                  const nm = g.name || g.email || 'Member';
-                  return (
-                    <span key={i} className="pj-team-m"><span className="pj-team-av">{pjInitials(nm)}</span>{nm}{g.role && <span className="rd-chip tone-idle">{g.role}</span>}</span>
-                  );
-                })}
-              </div>
-            )}
-          />
+          <ProjectTeamResponsibilities programId={pid} state={teamState} onRetry={onRetryTeam} />
+          {pid && sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
+            suspended={teamState.loading || Boolean(teamState.error)} onChanged={onRetryTeam} />}
           <div style={{ marginTop: 12 }}>
             <Anchored
               state={activityState}
@@ -1492,7 +1528,11 @@ function AuthorWorkspace({
                   {(d.activity ?? []).map((a, i) => (
                     <div key={i} className="pj-act">
                       <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
-                      <span className="pj-act-t">{String(a.action ?? '').replace(/_/g, ' ')}{a.resource_type ? ' · ' + a.resource_type : ''}</span>
+                      <span className="pj-act-t">
+                        {activityLabel(a)}
+                        {/* The reason recorded with the act, available for review (21 CFR 11.10(e)). */}
+                        {a.reason ? <span data-testid="pj-act-reason">. Reason: {a.reason}</span> : null}
+                      </span>
                       <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
                     </div>
                   ))}
@@ -1585,10 +1625,19 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // it is why this resolves to null instead: no project is a state the surface
   // renders honestly, whereas the wrong project is not.
   const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
+  const pinProgram = useRef(pid);
+  useEffect(() => {
+    if (pinProgram.current === pid) return;
+    pinProgram.current = pid;
+    window.C2C_SOURCE_PINS = [];
+  }, [pid]);
+
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
-  const teamState = useLiveData<{ team: TeamRow[] }>(pid ? `/api/c2c/projects/${pid}/team` : null);
+  const teamActor = useAuthUser();
+  const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
+  const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
   const wsState = useLiveData<{ workstreams: WorkstreamRow[] }>(pid ? `/api/c2c/projects/${pid}/workstreams` : null);
   /* The project's documents (FILING_SPINE.md F3), read once for the Author
@@ -1599,7 +1648,12 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const markets = useProgramMarkets(pid);
   const reviews = useProjectReviews(pid);
 
+  const [workTarget, setWorkTarget] = useState<string | null>(null);
   const [stage, setStage] = useState('author');
+  useEffect(() => {
+    const target = consumeNavParams('project-home')?.workId;
+    if (target) { setWorkTarget(target); setStage('review'); }
+  }, []);
 
   const prog = progState.data;
 
@@ -1619,8 +1673,11 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
   const clientType = sel?.ws ?? null;
-  const submissionType = sel?.code || prog?.code || prog?.program_type || null;
+  /* A filing document class is named by its label ("Prior Approval
+     Supplement"), never its key ("pas"). */
+  const submissionType = sel?.code || prog?.code || filingDocumentClassOf(prog?.program_type)?.label || prog?.program_type || null;
   const region = prog?.primary_agency ?? null;
+  const regionLabel = region && Object.hasOwn(AGENCY_LABEL, region) ? AGENCY_LABEL[region as keyof typeof AGENCY_LABEL] : region;
   const indication = prog?.indication ?? null;
   // Program identity facts (WO-9 Click 1). Read from the row only — never from
   // the navigation handoff, never derived from the title — so what the screen
@@ -1645,7 +1702,11 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
      selection made from the MDX workspace (the old Workspace grid's medtech
      segment). Only a project that is read and is neither is an eCTD filing. */
   const deviceFiling = deviceProgram || clientType === 'MDX';
-  const ectdFiling = !!prog && !deviceFiling;
+  /* A filing document class (a PAS, a CSR, a meeting package) is authored
+     here and never built as a sequence, so it is no eCTD filing either
+     (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
+  const documentClass = filingDocumentClassOf(prog?.program_type);
+  const ectdFiling = !!prog && !deviceFiling && !documentClass;
   const predicateKs = (prog?.predicate_devices ?? [])
     .map((p) => String(p?.kNumber ?? '').trim())
     .filter(Boolean);
@@ -1714,7 +1775,18 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         },
         team: teamState.loading || teamState.error || !Array.isArray(team)
           ? null
-          : team.slice(0, 12).map((t) => ({ name: t.name, role: t.role })),
+          : team.slice(0, 12).map((t) => ({
+              // Display labels may contain disambiguating email. Keep contact
+              // details on screen, outside model context (as on Projects).
+              entry_id: t.entry_id, user_id: t.user_id, identity: t.identity,
+              name: t.name && !t.name.includes('@') ? t.name : null, role: t.role, responsibilities: t.responsibilities,
+              sharing_role: t.sharing_role, sources: t.sources,
+            })),
+        teamProgramId: teamState.loading || teamState.error ? null : teamState.data?.program_id ?? null,
+        teamProjectId: teamState.loading || teamState.error ? null : teamState.data?.project_id ?? null,
+        teamTotal: teamState.loading || teamState.error || !team ? null : team.length,
+        teamTruncated: teamState.loading || teamState.error || !team ? null : team.length > 12,
+        teamAuthority: PROJECT_TEAM_AUTHORITY_NOTE,
         teamUnavailable: teamState.error ? 'the team read failed' : null,
         workstreams: wsState.loading || wsState.error || !Array.isArray(workstreams)
           ? null
@@ -1806,7 +1878,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           <div className="pj-tags">
             {clientType && <span className="rd-chip tone-ai">{clientType}</span>}
             {submissionType && <span className="rd-chip tone-idle">{submissionType}</span>}
-            {region && <span className="rd-chip tone-idle">{region}</span>}
+            {region && <span className="rd-chip tone-idle">{regionLabel}</span>}
             {indication && <span className="rd-chip tone-idle">{indication}</span>}
             {status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[status] ?? 'tone-idle'}`}>{status}</span>}
             {priority && <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>priority: {priority}</span>}
@@ -1860,7 +1932,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
           and the documents in review, from the reads the tabs show. */}
       {pid && !progState.error && (
-        <ProjectStatusLine markets={markets} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+        <ProjectStatusLine markets={markets} documentClass={documentClass} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
       )}
 
       {/* Before the tabs (FILING_SPINE.md §2): the start box and the
@@ -1912,7 +1984,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
               <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
-              <DataRoom pid={pid} onNav={onNav} onAsk={ask} />
+              <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
             </div>
           )}
 
@@ -1921,7 +1993,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} documentClass={documentClass} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}
@@ -1932,7 +2004,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
-              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} />
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
             </div>
           )}
 
@@ -1949,6 +2021,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               readinessAsOf={readinessAsOf}
               onNav={onNav}
               teamState={teamState}
+              sharingProjectId={sharingProjectId}
+              onRetryTeam={reloadTeam}
               activityState={activityState}
               wsState={wsState}
               docs={docsRead}
@@ -1961,3 +2035,14 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
     </div>
   );
 }
+
+function MissingRequestedWork({ targetId, state }: {
+  targetId?: string | null; state: ReturnType<typeof useLiveData<WorkViewRow>>;
+}) { return <>
+      {targetId && !state.loading && !state.error && state.data &&
+        !(state.data.items ?? []).some((w) => w.id === targetId) && (
+          <div role="alert" className="sp-tone-warn">{state.data.summary?.partial
+            ? 'The program work record is incomplete because a store could not be read. The requested task could not be located; retry the read.'
+            : "The requested task is not available in this program's work record. No other task was opened in its place."}</div>
+        )}
+  </>; }

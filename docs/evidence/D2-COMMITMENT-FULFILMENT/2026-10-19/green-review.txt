@@ -1,0 +1,355 @@
+# GREEN after the review's fixes, 2026-10-19, on the final tree (re-run after the last code change). ANSI colours stripped.
+# PostgreSQL 16 + pgvector at 127.0.0.1:55432/c2c_test after deploy-migrate (migration-replay-review.txt). Every run below
+# had DATABASE_URL, TEST_DATABASE_URL and APP_DATABASE_URL (the runtime role app_service) set, RLS_ENFORCE=on, AUDIT_HMAC_KEY set.
+
+## 1. DB: the fulfilment routes, what the database holds, and the agency-response suite
+# npx vitest run --config vitest.db.config.ts tests/db/commitment-fulfilment-evidence.dbtest.ts tests/db/commitment-fulfilment-database.dbtest.ts tests/db/agency-response-signed-approval.dbtest.ts
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 6ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged 1ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault 49ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign 46ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 33ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date 26ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component 31ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 36ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 32ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 24ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 30ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing 32ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing 34ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing 28ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing 30ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing 75ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door 28ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 108ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 57ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused 24ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes 33ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row 66ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none 39ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too 69ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it 113ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said 18ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open 111ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > another organisation's admin reaches neither the options nor the fulfilment 68ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 3ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on a project's door: the newer submission's sequences are offered, newest first, and the oldest are the ones cut 141ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open 44ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 7ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer 259ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role 18ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a recorded fulfilment is not removed from the register by an UPDATE (deleted_at) 4ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a removal is written once: deleted_at, once set, is not cleared 102ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT 22ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR that names nothing fails at COMMIT 19ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a move into fulfilled must say who recorded it 40ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > control: a forged signature correct in every respect the guard reads is accepted, so each refusal below is for its own clause 27ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature signed by another user than the one recorded (signer) does not count (M5) 24ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature signed over another sequence than the one stored (manifest) does not count (M5) 42ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature signed over another date (manifest) does not count (M5) 46ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature bound to the ledger hash, not the content (basis) does not count (M5) 42ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature meaning review, which does not attest (meaning) does not count (M5) 46ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature revoked (withdrawn) does not count (M5) 54ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature voided (withdrawn) does not count (M5) 44ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature superseded (withdrawn) does not count (M5) 43ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature marked invalid (withdrawn) does not count (M5) 41ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature committed by an earlier transaction does not count: the fulfilment and its signature commit together (M5) 40ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > names only a version of this organisation, at its own sha256 41ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > names only a sequence the agency received 24ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > evidence is attached only in the update that records the fulfilment, never to a legacy row afterwards 23ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > an open PMR cannot be retyped out of its signature: not in the update that fulfils it, nor before it 41ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR 59ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a tenant whose commitments name evidence can still be erased > purge removes the commitments before the Vault versions they name, with no 23503; the signature stays 345ms
+ Test Files  3 passed (3)
+      Tests  95 passed (95)
+# (agency-response-signed-approval.dbtest.ts: its 39 cases pass; counted in the totals above, as in green.txt §2)
+
+## 2. DB: the tenant purge suites and the QMS signature guard
+# npx vitest run --config vitest.db.config.ts tests/db/tenant-purge.dbtest.ts tests/db/tenant-purge-audit.dbtest.ts tests/db/tenant-purge-artifact-records.dbtest.ts tests/db/qms-document-signature-required.dbtest.ts
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 104ms
+   → SOURCE_READ_RECEIPT_PURGE_REFUSED: an identified platform purge scope and positive target are required.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+error: SOURCE_READ_RECEIPT_PURGE_REFUSED: an identified platform purge scope and positive target are required.
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 30 passed (31)
+# The one failure is green.txt §4's (SOURCE_READ_RECEIPT_PURGE_REFUSED), identical on the trunk code.
+
+## 3. Unit, route and client: green.txt §1's 21 files, §6's 95-file sweep, every client test that imports a surface
+##    the review changed (Vault.tsx, VaultLibraryResults.tsx, CommitmentRow.tsx, CommitmentFulfilment.tsx,
+##    CommunicationCenter.tsx, CompanyDocumentSettings.tsx), and the two Vault search route suites: 136 files
+# npx vitest run <the 136 files below>
+#   client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+#   client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx
+#   client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx
+#   client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx
+#   client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx
+#   client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx
+#   client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+#   client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts
+#   client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultSigningPosture.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx
+#   client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx
+#   server/__tests__/migrations/gcc-seeds-no-invented-figures.pglite.test.ts
+#   server/__tests__/routes/ana-tool-policy.test.ts
+#   server/__tests__/routes/q-sub.test.ts
+#   server/__tests__/routes/smoke.test.ts
+#   server/__tests__/security/audit-trail-contract.test.ts
+#   server/__tests__/security/tenant-isolation-q-sub.contract.test.ts
+#   server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+#   server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+#   server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts
+#   server/middleware/__tests__/launch-scope-api-gate.test.ts
+#   server/routes/__tests__/commitment-fulfil-route.test.ts
+#   server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+#   server/routes/__tests__/financial-disclosure-certify-meaning.test.ts
+#   server/routes/__tests__/governed-ledger-gap-surfaced.test.ts
+#   server/routes/__tests__/governed-signed-act.request-context.test.ts
+#   server/routes/__tests__/ha-interactions-error-containment.test.ts
+#   server/routes/__tests__/manufacturing.no-seed-plant.test.ts
+#   server/routes/__tests__/mdx-qms-retire.test.ts
+#   server/routes/__tests__/part11-signature-post-removed.test.ts
+#   server/routes/__tests__/protocol-signatures.routes.test.ts
+#   server/routes/__tests__/qms-change-approval-signature.test.ts
+#   server/routes/__tests__/qms-document-approval-signature.test.ts
+#   server/routes/__tests__/report-os-audit-recording.test.ts
+#   server/routes/__tests__/report-os-finalize-signature.test.ts
+#   server/routes/__tests__/report-os-regional-context.test.ts
+#   server/routes/__tests__/report-os-report-pack-export.test.ts
+#   server/routes/__tests__/vault-search.test.ts
+#   server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+#   server/routes/c2c/__tests__/communication-advance.pglite.test.ts
+#   server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+#   server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+#   server/services/__tests__/DocumentOrchestrationService.drafts-forms-with-FDAFormGenerator.test.ts
+#   server/services/__tests__/adaptive-decision-is-governed.test.ts
+#   server/services/__tests__/operating-system.test.ts
+#   server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts
+#   server/services/__tests__/signature-content-verification.test.ts
+#   server/services/__tests__/signature-write-path-single.test.ts
+#   server/services/agency-responses/__tests__/response-logic.test.ts
+#   server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts
+#   server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts
+#   server/services/ana-ri/__tests__/mdx-command-handlers.test.ts
+#   server/services/ana-ri/__tests__/mdx-context-resolver.test.ts
+#   server/services/ana-ri/__tests__/mdx-explain-audit-row.test.ts
+#   server/services/ana-ri/__tests__/mdx-tool-policy-loader.test.ts
+#   server/services/ana-ri/__tests__/mdx-tool-policy-multi-turn.test.ts
+#   server/services/ana/__tests__/addons-tools.test.ts
+#   server/services/ana/__tests__/ana-cannot-sign.test.ts
+#   server/services/ana/__tests__/deadline-radar-block.test.ts
+#   server/services/ana/__tests__/deadline-radar.test.ts
+#   server/services/ana/__tests__/document-template-description.test.ts
+#   server/services/ana/__tests__/ha-tools.test.ts
+#   server/services/ana/__tests__/session-briefing.test.ts
+#   server/services/ana/__tests__/since-last-visit.test.ts
+#   server/services/ana/__tests__/tool-selection-routing.test.ts
+#   server/services/commitments/__tests__/commitments-service.test.ts
+#   server/services/commitments/__tests__/extraction-unavailable.test.ts
+#   server/services/cover-letter/__tests__/section-pull.test.ts
+#   server/services/digest/__tests__/proactive-digest.test.ts
+#   server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts
+#   server/services/ectd/__tests__/filed-sequence-rejection.test.ts
+#   server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts
+#   server/services/ectd/__tests__/sequence-release-signature.test.ts
+#   server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+#   server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+#   server/services/grants/__tests__/closeout-readiness.test.ts
+#   server/services/grants/__tests__/grants-logic.test.ts
+#   server/services/ha-interactions/__tests__/fulfilment-logic.test.ts
+#   server/services/ha-interactions/__tests__/ha-logic.test.ts
+#   server/services/ha-interactions/__tests__/meeting-package.test.ts
+#   server/services/market-specs/__tests__/document-preparation.test.ts
+#   server/services/other-support/__tests__/other-support-logic.test.ts
+#   server/services/part11/__tests__/commitment-fulfilment-binder.test.ts
+#   server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts
+#   server/services/part11/__tests__/electronic-signature-meaning-required.test.ts
+#   server/services/part11/__tests__/governed-sign-meaning.test.ts
+#   server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts
+#   server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts
+#   server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts
+#   server/services/part11/__tests__/signer-org-scope.test.ts
+#   server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+#   server/services/pdev/__tests__/pdev-fda-feedback-rollup.test.ts
+#   server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+#   server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+#   server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+#   server/services/q-sub/__tests__/q-sub.service.test.ts
+#   server/services/qms/__tests__/controlled-document-content.test.ts
+#   server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+#   server/services/qms/__tests__/qms-send-for-review-respects-the-seal.pglite.test.ts
+#   server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts
+#   server/services/rbm/__tests__/rbm-actuator.test.ts
+#   server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+#   server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts
+#   server/services/submission-service/__tests__/gateway-selection.test.ts
+#   server/services/submission-service/__tests__/packageability-dry-run.test.ts
+#   server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+#   tests/routes/c2c-commitments.test.ts
+#   tests/unit/charters-routes.test.ts
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 133 passed (136)
+      Tests  18 failed | 1751 passed (1769)
+      9  FAIL  server/routes/__tests__/report-os-audit-recording.test.ts
+      8  FAIL  server/routes/__tests__/report-os-report-pack-export.test.ts
+      1  FAIL  server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+# Every failure is in three files that fail identically on the trunk code (§4): the two report-os route suites of
+# green.txt §4, and freeze-gate-row-lock.pg.test.ts, which runs only with a database URL set (green.txt's sweep ran
+# without one, so it skipped there).
+# The slice's own suites in that run:
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > offers Sign only once a sequence or document is named, and says so 307ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > signs through the project's door with the date, the evidence and the signature components 250ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > does not report a signature the server did not confirm 144ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says the submissions could not be read, distinct from there being none, and offers no other project's Vault in their place 98ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says plainly when no sequence the agency received is on file 88ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > shows a viewer why they cannot sign, before anything is typed 77ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a meeting commitment is recorded with a reason > posts through the organisation's door, without the signature dialog 87ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > names the sequence and the version, who signed, and opens each where it lives 57ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > says evidence is in a project the reader cannot open, legacy rows, and a signature that no longer holds 60ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the version's project and sha256 on the picked line and in the signature dialog, on the organisation's door 164ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > a version with no recorded sha256 cannot be named: it says so, and Sign stays off 119ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > on a project's door, offers no Vault search until the project's program is read 64ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > says the server's own refusal of the options, and offers nothing to record 129ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the submission an organisation commitment was made under when none of its sequences is on file, or says it cannot be opened 104ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > a 401 is a refusal: no success, the server says why, the dialog stays open 97ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > one full stop after the server's sentence 87ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > no answer at all is not "nothing was stored": the outcome could not be confirmed, and the register is read again 85ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: a meeting commitment, recorded with a reason > an emptied date is not sent, and the server records today; a future date is refused before sending 118ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > a signature with no answer says the outcome could not be confirmed, never the browser's error 157ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > focus: to Remove once a document is chosen, back to the search when removed, to Sign when the signature dialog is cancelled, and to the row when the dialog closes 304ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > reads a project's search with the Vault find view's own guard: a hit sent without `current` is listed, as the find view lists it 144ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > says how many matched when the search lists fewer than match 88ms
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > the row names the type as the dialog does, and the signature's time against the audit trail's UTC 69ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a future date, before the commitment is even read 36ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR that names neither a sequence nor a document 6ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR with no date: the signer is shown the date the signature binds, so the server never picks it 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > evidence the server refuses, answered with its own code and no credential check 5ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > access that could not be verified is a 503, not a 500 or a 404 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a password sent for a meeting commitment, which takes none 3ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > a PMR with evidence and no password is refused by the ceremony as a missing component 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > signs, re-checks the evidence under lock, and answers with the signature 6ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > counts nothing as fulfilled when the ceremony refuses the password 6ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the unsigned fulfilment > a meeting commitment with no evidence is a governed resolve with the same body shape 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > fulfilments refused before the password spend none of it: twelve refusals, then the signature still goes through 60ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > a request that reaches the password still spends it: the eleventh within the window is refused before any credential check 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > offers the exact receiver candidate formats, including raw structured text and signature-supported images 180ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 66ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 84ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 63ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 265ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 371ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > is reachable inside the existing Admin Settings tab 145ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > saves the exact revision and audited reason, then reads the stored profile 162ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a refused draft and does not announce it saved 70ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a conflicting draft and requires deliberate reload before retry 84ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > disables management for a reader and shows a failed read as unavailable 27ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > imports canonical formatting into a draft and displays extraction warnings 69ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > rejects an SVG logo before reading or uploading it 19ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > registers the selected immutable Vault version without inventing approval 145ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > does not turn a Vault search outage into an empty library 56ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > shows a superseded-source refusal without claiming another administrator changed the profile 87ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > clears unsaved reasons, extraction warnings and archived selection when the signed-in session changes 147ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > lists the project's commitments, naming the letter and question, beside the organisation's own 258ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > signs a project's PMC through the project's door, and the organisation's PMR through its own 365ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > records a meeting commitment with a reason through the organisation's door, with no signature 89ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > shows an error, not the organisation's list alone, when the project's read fails 30ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > says what the empty register will show, without a status the register never returns 34ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project 292ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search leaves its result unverified 84ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches 73ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > refuses without organization context, concealed as 404 on a read, and searches nothing 22ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > refuses a caller who is not a current member, concealed as 404, and searches nothing 5ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s when the programme is not this org's, and never searches it 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s on a non-uuid programme id rather than 500ing on the cast 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > returns no results rather than the whole vault 5ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > does not query at all for an absent or whitespace query 6ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > returns the page and the REAL total, not the page length 5ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > carries a body snippet when the match was in the content 5ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > omits an empty snippet rather than rendering a blank line 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > clamps limit and offset to a sane page 7ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > reports an honest zero when nothing matches 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > failure is not an empty result > 500s with a message saying nothing was searched 4ms
+
+## 4. Not this slice: failures identical on the trunk code (a git-archive export of HEAD ae287394 with this tree's
+##    node_modules, run against the same database, with the same environment)
+# a. The two files of §3 that fail outside this change, alone, this tree:
+#    npx vitest run server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts server/routes/__tests__/report-os-audit-recording.test.ts
+#    -> Tests 10 failed | 13 passed (23): freeze-gate-row-lock 1, report-os-audit-recording 9
+#    The same two files on HEAD ae287394:
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  10 failed | 13 passed (23)
+      9  FAIL  server/routes/__tests__/report-os-audit-recording.test.ts
+      1  FAIL  server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+# b. A full run of client/src/concept2cure/v2/__tests__ showed failures in five files that import nothing the review
+#    changed. Run alone, this tree:
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed (5)
+      Tests  34 failed | 200 passed (234)
+      1  FAIL  client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx
+     10  FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx
+      1  FAIL  client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts
+     11  FAIL  client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+     11  FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx
+#    HEAD ae287394:
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed (5)
+      Tests  34 failed | 200 passed (234)
+      1  FAIL  client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx
+     10  FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx
+      1  FAIL  client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts
+     11  FAIL  client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+     11  FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx
+
+## 5. Typecheck: npm run -s typecheck
+
+real	6m21.098s
+user	7m6.377s
+sys	0m47.476s
+exit 0
+# No diagnostic printed: 0 errors.

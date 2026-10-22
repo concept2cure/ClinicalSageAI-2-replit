@@ -413,7 +413,7 @@ function roNotComputed(types: ReportType[]): string[] {
    file — and "narrates and explains" describes a language model doing work that
    a `switch` is doing. The half that was true, and the half that matters, is
    that no metric on this surface originates here. */
-const RO_GUARDRAIL = 'Find a report matches your words to a governed report type and runs it; it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
+const RO_GUARDRAIL = 'Find a report matches your words to an available governed report type and runs it; it does not answer in its own words. Metrics and scores come from recorded inputs and canonical providers; none is originated here. Prediction definitions remain unavailable as governed runs; no validated prediction model is part of this release.';
 
 /* ── Resolve type from free text ──
    Whole words, not substrings, and none of the words every request carries.
@@ -1233,7 +1233,13 @@ function finalizeRefusalNote(status: unknown, payload: unknown): string | null {
  *  requiredTier; the write gate's does not. Every 403 read as "needs a higher
  *  plan" before the write gate existed, and would have told a viewer to upgrade. */
 function runRefusalNote(label: string, status: unknown, payload: unknown): string {
-  const tier = (payload as { requiredTier?: unknown } | null)?.requiredTier;
+  const p = payload as { requiredTier?: unknown; tier?: unknown } | null;
+  const tier = p?.requiredTier;
+  /* 2026-10-15: a plan the server could not read (tier: null, requiredTier still
+     the gate's 'standard') read as "needs a higher plan (standard)". */
+  if (status === 403 && p != null && 'tier' in p && p.tier === null) {
+    return `"${label}" wasn't run — your plan could not be read.`;
+  }
   if (status === 403 && tier) {
     return `"${label}" needs a higher plan (${String(tier)}). No estimated result is shown on a plan that has not unlocked the governed model.`;
   }
@@ -2059,7 +2065,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             {found?.locked && tierResolved && (
               <div className="rc-lock">
                 <div className="rc-lock-h">{I.lock} {tierLabel(found.locked.requiredTier)} plan unlocks {found.locked.typeLabel}</div>
-                <div className="rc-lock-s">{RO_FEATURE_LABEL[found.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
+                <div className="rc-lock-s">{RO_FEATURE_LABEL[found.locked.feature]} requires the stated plan and an implemented report engine at the requested scope. A plan does not supply a missing engine or qualify a prediction.</div>
                 <div className="rc-lock-acts">
                   <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
                   <button className="rc-chip" onClick={() => setTierOverride(found.locked!.requiredTier)}>Preview on {tierLabel(found.locked.requiredTier)}</button>

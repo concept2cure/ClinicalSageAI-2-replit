@@ -395,12 +395,13 @@ export async function pgliteSeed(db: PGlite, st: FakeState): Promise<void> {
     await db.query('INSERT INTO regulatory_programs (id, organization_id, deleted_at) VALUES ($1,$2,$3)', [p.id, p.organization_id, p.deleted ? new Date().toISOString() : null]);
   }
   for (const m of st.memberships) {
-    await db.query('INSERT INTO organizations VALUES($1,$2) ON CONFLICT DO NOTHING', [m.organizationId, m.organizationStatus]);
-    await db.query('INSERT INTO users VALUES($1,$2) ON CONFLICT DO NOTHING', [m.userId, m.userStatus]);
-    await db.query('INSERT INTO organization_users VALUES($1,$2,$3)', [m.organizationId, m.userId, m.role]);
+    await db.query('INSERT INTO organizations (id,status) VALUES($1,$2) ON CONFLICT DO NOTHING', [m.organizationId, m.organizationStatus]);
+    // tenant-isolation-safe: global account identities in this isolated PGlite fixture; tenant membership is explicitly recorded in organization_users below.
+    await db.query('INSERT INTO users (id,status) VALUES($1,$2) ON CONFLICT DO NOTHING', [m.userId, m.userStatus]);
+    await db.query('INSERT INTO organization_users (organization_id,user_id,role) VALUES($1,$2,$3)', [m.organizationId, m.userId, m.role]);
   }
   for (const p of st.projects) {
-    await db.query('INSERT INTO projects VALUES($1,$2,$3,$4,$5,$5,$6)', [p.id, p.organizationId, p.programId, p.organizationId * 10, p.ownerId, {}]);
+    await db.query('INSERT INTO projects (id,organization_id,regulatory_program_id,client_workspace_id,owner_id,created_by_id,settings) VALUES($1,$2,$3,$4,$5,$5,$6)', [p.id, p.organizationId, p.programId, p.organizationId * 10, p.ownerId, {}]);
     await db.query('INSERT INTO project_visibility_settings VALUES($1,$2,$3)', [p.id, p.organizationId, 'private']);
     for (const m of p.members) await db.query('INSERT INTO project_members VALUES($1,$2,$3,$4,$5)', [p.id, p.organizationId, m.userId, m.role, m.status]);
   }

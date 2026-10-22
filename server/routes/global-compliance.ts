@@ -22,6 +22,13 @@ import { authenticateToken } from '../middleware/auth.js';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
+import {
+  calculateReportingDeadline,
+  mapCountryToRegion,
+  requiresExpeditedReport,
+  type EventType,
+  type SeriousnessCriteria,
+} from '../services/compliance/pharmacovigilanceService';
 
 const router = Router();
 
@@ -641,46 +648,49 @@ router.post('/pharmacovigilance/:orgId/adverse-event', async (req: Request, res:
     if (!enforceOrgScope(req, res, orgId)) return;
     const { projectId, eventType, patientId, eventDescription, onsetDate,
             seriousnessCriteria, causality, outcome, reporterType,
-            countryOfOccurrence } = req.body;
+            countryOfOccurrence, reportDate } = req.body;
 
     if (!eventType || !eventDescription) {
       return res.status(400).json({ error: 'eventType and eventDescription are required' });
     }
 
-    // Calculate reporting deadline based on severity and region
-    const isFatalOrLifeThreatening = (seriousnessCriteria || []).some(
-      (c: string) => c === 'death' || c === 'life_threatening'
-    );
-    const expedited = eventType === 'SAE' || eventType === 'SUSAR';
-    const deadlineDays = isFatalOrLifeThreatening ? 7 : (expedited ? 15 : 30);
-    const deadline = new Date();
-    deadline.setDate(deadline.getDate() + deadlineDays);
+    /* 2026-10-15: this carried its own 7/15/30-day rule, counted from today,
+       gave every SAE the expedited clock, and left report_date to its DEFAULT
+       CURRENT_DATE. The deadline is now the canonical rule's
+       (calculateReportingDeadline), from the stated report date and the
+       region of the country of occurrence; what they do not determine is null
+       with the reason. The most severe stated criterion decides the window. */
+    const criteria: string[] = Array.isArray(seriousnessCriteria) ? seriousnessCriteria.map(String) : [];
+    const criterion = (['death', 'life_threatening'].find((c) => criteria.includes(c)) ?? criteria[0] ?? null) as SeriousnessCriteria | null;
+    const region = mapCountryToRegion(countryOfOccurrence);
+    const clockStart = reportDate ? new Date(String(reportDate)) : null;
+    const { deadline, reason } = region
+      ? calculateReportingDeadline(eventType as EventType, criterion, region, clockStart)
+      : { deadline: null, reason: 'regulatory region undetermined: country of occurrence maps to no region on record' };
+    const expedited = requiresExpeditedReport(eventType as EventType);
 
     const result = await pool.query(
       `INSERT INTO pv_adverse_events
         (organization_id, project_id, event_type, patient_id, event_description,
          onset_date, seriousness_criteria, causality, outcome, reporter_type,
-         country_of_occurrence, regulatory_reporting_deadline, expedited_report_required)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+         country_of_occurrence, regulatory_reporting_deadline, expedited_report_required, report_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
       [orgId, projectId || null, eventType, patientId || null, eventDescription,
        onsetDate || null, seriousnessCriteria || [], causality || 'not_assessed',
        outcome || 'unknown', reporterType || 'sponsor', countryOfOccurrence || null,
-       deadline, expedited]
+       deadline, expedited, clockStart && !Number.isNaN(clockStart.getTime()) ? clockStart : null]
     );
 
     res.json({
       success: true,
       data: result.rows[0],
       reporting: {
-        deadlineDays,
-        deadline: deadline.toISOString(),
+        deadline: deadline ? deadline.toISOString() : null,
+        // Why there is no deadline; null when one was computed.
+        reason,
+        // true for a SUSAR, false for a non-serious AE, null when the type does not decide it.
         expedited,
-        isFatalOrLifeThreatening,
-        guidance: isFatalOrLifeThreatening
-          ? 'FDA/EMA/PMDA require 7-day initial report for fatal/life-threatening events'
-          : expedited
-            ? '15 calendar day reporting deadline for SAE/SUSAR (all major agencies)'
-            : '30-day routine reporting',
+        region,
       },
     });
   } catch (err: any) {

@@ -22,8 +22,8 @@
 
 import type { Page } from '@playwright/test';
 
-/** The canonical org-admin seed provisions this user; override for explicit fixtures. */
-export const DEFAULT_DEV_USER = process.env.SMOKE_USER_EMAIL || 'jm.smith@concept2cure.pro';
+/** The dev identity the run names (SMOKE_USER_EMAIL, else DEMO_USER_EMAIL); no personal default. */
+export const DEFAULT_DEV_USER = process.env.SMOKE_USER_EMAIL || process.env.DEMO_USER_EMAIL || '';
 
 interface DevLoginResponse {
   success?: boolean;
@@ -41,6 +41,9 @@ export async function authenticateViaDevLogin(
   baseURL: string,
   email: string = DEFAULT_DEV_USER
 ): Promise<{ email: string; organizationId: string }> {
+  if (!email) {
+    throw new Error('dev-login needs an identity: set SMOKE_USER_EMAIL or DEMO_USER_EMAIL.');
+  }
   const dl = (await (
     await fetch(`${baseURL}/api/auth/dev-login`, {
       method: 'POST',

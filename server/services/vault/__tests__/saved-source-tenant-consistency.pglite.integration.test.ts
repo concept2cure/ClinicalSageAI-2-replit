@@ -9,6 +9,7 @@ import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG } from '.
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn() } }));
 import { loadDocumentForOrg, type Queryable } from '../document-catalog.service';
 import { verifyDraftSourceReferences } from '../../authoring/draft-source-references';
+import { draftSourceIdentityForText } from '../../ana/draft-source-identity';
 
 let db: JourneyDb;
 // The journey pool hides rowCount in its declared interface. These source
@@ -38,7 +39,10 @@ async function source(organizationId: number | null): Promise<{ id: string; hash
     VALUES ($1,$2,'extracted',8)`, [id, hash]);
   return { id, hash };
 }
-const references = (documentId: string, hash: string) => [{ documentId, contentHash: hash, span: { start: 0, end: 8, totalChars: 8 } }];
+const references = (documentId: string, hash: string) => {
+  const span = { start: 0, end: 8, totalChars: 8 };
+  return [{ documentId, contentHash: hash, span, ...draftSourceIdentityForText('Evidence', span) }];
+};
 
 describe('new current-only saved-source admission requires a consistent recorded tenant', () => {
   it.each([

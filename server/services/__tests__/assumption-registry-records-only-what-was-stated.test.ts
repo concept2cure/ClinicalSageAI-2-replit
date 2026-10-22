@@ -40,9 +40,10 @@ function checkList(column: string): string[] {
     'utf8',
   );
   const table = sql.slice(sql.indexOf('CREATE TABLE IF NOT EXISTS assumption_records'));
-  const m = table.match(new RegExp(`${column} TEXT(?: NOT NULL)? CHECK \\(${column} IN \\(([^)]*)\\)`));
-  expect(m, `assumption_records.${column} CHECK not found`).not.toBeNull();
-  return m![1].split(',').map((v) => v.trim().replace(/^'|'$/g, ''));
+  const m = [...table.matchAll(/^\s*(\w+) TEXT(?: NOT NULL)? CHECK \((\w+) IN \(([^)]*)\)/gm)]
+    .find(check => check[1] === column && check[2] === column);
+  expect(m, `assumption_records.${column} CHECK not found`).toBeDefined();
+  return m![3].split(',').map((v) => v.trim().replace(/^'|'$/g, ''));
 }
 
 describe('the registry vocabulary is the CHECK that enforces it', () => {

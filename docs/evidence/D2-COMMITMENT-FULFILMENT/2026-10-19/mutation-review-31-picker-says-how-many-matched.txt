@@ -1,0 +1,32 @@
+# Review mutation 31 — the picker says how many matched when it lists fewer (finding 26)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "says how many matched")
+# Restored afterwards: sha256 before 20c5c9ad437e7ebce9868e05682a2d22298fa1cea7098809f5495ad89774f769, after 20c5c9ad437e7ebce9868e05682a2d22298fa1cea7098809f5495ad89774f769 (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx (mutated)
+@@ -257,7 +257,7 @@
+       {!search.loading && !search.error && search.read && (
+         <div className="vpick-results">
+           {search.hits.length === 0 && <p>No matching documents in {where}.</p>}
+-          {search.total > search.hits.length && (
++          {false && search.total > search.hits.length && (
+             <p role="status">
+               Showing {search.hits.length} of {search.total} matches. Refine the search to find one not listed.
+             </p>
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > says how many matched when the search lists fewer than match 414ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > says how many matched when the search lists fewer than match 5386ms
+   → Unable to find an element with the text: Showing 1 of 40 matches. Refine the search to find one not listed.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: the signed path with no answer, focus, the picker and the row > says how many matched when the search lists fewer than match
+TestingLibraryElementError: Unable to find an element with the text: Showing 1 of 40 matches. Refine the search to find one not listed.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

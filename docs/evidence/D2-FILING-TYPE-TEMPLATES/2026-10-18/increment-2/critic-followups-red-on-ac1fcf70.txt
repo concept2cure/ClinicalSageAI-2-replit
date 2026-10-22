@@ -1,0 +1,9 @@
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — subtype-scoped IND safety scaffold > keeps numeric compatibility keys without assigning all safety reports to Module 5 or requiring every case component
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a component document is drafted to its whole outline, not its first level (review critic, 2026-10-18) > a section bound to an earlier outline answers to the heading it had there
+ × server/services/ana/__tests__/lifecycle-outline-drafting.test.ts > a component document is drafted to its whole outline, not its first level (review critic, 2026-10-18) > a meeting section no record part backs is the outline's own, never attributed to the record
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > US_BTD requires its own statutory criteria
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > US_RMAT requires its own statutory criteria
+ × tests/regulatory/filing-class-corrections-scope.test.ts > the designation and orphan corrections stay with the US requests > the EU orphan request carries no 21 CFR 316.20 node; the US request does
+ × tests/regulatory/chat-pbrer-e2c.test.ts > the PBRER AnA drafts in chat follows ICH E2C(R2) > has the front matter, the E2C(R2) headings and their subsections, in order
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 71 passed (78)

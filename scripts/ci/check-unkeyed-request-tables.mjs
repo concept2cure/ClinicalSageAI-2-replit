@@ -94,6 +94,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { chainedParentPolicyTables } from './lib/chained-parent-policy.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -251,6 +252,12 @@ function walk(dir, exts, acc = []) {
 
 const stripSql = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
 
+// The final deploy sweep installs literal chained child declarations through
+// one guarded generator, so no literal CREATE POLICY names their tables. Model
+// that existing mechanism rather than inventing tenant columns or debt entries.
+const chainedPolicyFile = 'db/migrations/20260813_child_table_parent_scoped_rls.sql';
+const chainedPolicies = chainedParentPolicyTables(fs.readFileSync(path.join(repoRoot, chainedPolicyFile), 'utf8'));
+
 // ── 1. What the SQL creates, and which tenant columns each table ends up with ──
 
 /** table -> { columns:Set<string>, files:string[] } */
@@ -366,7 +373,7 @@ for (const [table, files] of referencedBy) {
   const info = created.get(table);
   if ([...info.columns].some((c) => TENANT_COLUMNS.test(c))) continue;
   if (dynamicKeyerFor(table)) continue;
-  if (directlyPolicied.has(table)) continue;
+  if (directlyPolicied.has(table) || chainedPolicies.has(table.replace(/^public\./, ''))) continue;
   unkeyed.push({
     table,
     createdIn: [...new Set(info.files)].sort(),

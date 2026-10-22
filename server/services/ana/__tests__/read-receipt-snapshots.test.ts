@@ -39,10 +39,7 @@ vi.mock('../../vault/document-catalog-admission.js', () => ({
     return { role: 'viewer', projectId: 3 };
   },
 }));
-vi.mock('../../vault/document-catalog.service.js', () => ({
-  loadDocumentForOrg: h.load,
-  recordReadReceipt: async (r: any) => { h.inserted.push([r.documentId, r.contentHash, r.span.start, r.span.end, r.readBy]); },
-}));
+vi.mock('../../vault/document-catalog-document.js', () => ({ loadDocumentForAdmittedScope: h.load }));
 
 const DOC = '10000000-0000-4000-8000-000000000001';
 const PROGRAM = '20000000-0000-4000-8000-000000000001';
@@ -97,7 +94,7 @@ describe('server-pinned legacy read receipt snapshots', () => {
   it('does not write when current private-project access was revoked', async () => {
     const r = candidate(); const map = deferred(r); h.admitted = false;
     expect(await receipts.settleReadReceipts([entry(r.result)], [entry(r.result)], map)).toBe(0);
-    expect(h.inserted).toEqual([]);
+    expect(h.inserted).toEqual([]); expect(h.load).not.toHaveBeenCalled();
   });
   it.each(['program', 'hash', 'withdrawal', 'successor'] as const)('does not write after source %s change', async change => {
     const r = candidate(); const map = deferred(r);
@@ -126,7 +123,10 @@ describe('server-pinned legacy read receipt snapshots', () => {
     expect(h.inserted).toEqual([[DOC, 'a'.repeat(64), 0, TEXT.length, 7, 'thread-7']]);
     const insert = h.queries.find(q => q.includes('INSERT INTO vault.document_read_receipts'))!;
     expect(insert).not.toContain('extracted_text_sha256');
-    expect(h.load).toHaveBeenCalledWith(DOC, 42, expect.objectContaining({ currentOnly: true, programId: PROGRAM, includeText: true, executor: expect.any(Object) }));
+    const ownedQuery = h.admit.mock.calls[0][0];
+    expect(h.admit).toHaveBeenCalledWith(ownedQuery, expect.objectContaining({ organizationId: 42, userId: 7, requestedProgramId: PROGRAM }));
+    expect(h.load).toHaveBeenCalledWith(DOC, 42, { currentOnly: true, programId: PROGRAM, includeText: true, executor: ownedQuery });
+    expect(h.admit.mock.invocationCallOrder[0]).toBeLessThan(h.load.mock.invocationCallOrder[0]);
     expect(h.queries).toContain('COMMIT'); expect(h.releases).toBe(1); expect(map.size).toBe(0);
   });
   it.each(['zero', 'wrong_actor', 'error'] as const)('does not count a failed persistence receipt (%s)', async mode => {

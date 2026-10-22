@@ -436,7 +436,7 @@ export async function buildAnAContext(params: {
   const unread = new Set<string>();
   const read = <T, A>(source: string, load: Promise<T>, absent: A): Promise<T | A> =>
     load.catch((error: unknown) => {
-      console.warn(`[AnA RI] Could not read ${source}:`, error instanceof Error ? error.message : error);
+      console.warn('[AnA RI] Could not read source:', { source }, error instanceof Error ? error.message : error);
       unread.add(source);
       return absent;
     });
@@ -566,7 +566,7 @@ export async function assembleSystemPrompt(
     const expertise = u.expertiseLevel;
     parts.push(`
 ## User Identity — You Know This Person
-- **Name**: ${u.greetingName} (${u.name})
+- **Name**: ${u.name}${u.greetingName && u.greetingName !== u.name ? ` (goes by "${u.greetingName}")` : ''}
 - **Email**: ${u.email}${u.title ? `\n- **Title**: ${u.title}` : ''}${
       u.department ? `\n- **Department**: ${u.department}` : ''
     }
@@ -577,7 +577,12 @@ export async function assembleSystemPrompt(
     }
 
 ### How to Address This User:
-- They go by "${u.greetingName}"; use it the way a colleague would, not as a ritual
+- ${
+      // greetingName is null when no name is recorded (2026-10-15: it was built from the job title).
+      u.greetingName
+        ? `They go by "${u.greetingName}"; use it the way a colleague would, not as a ritual`
+        : 'No name is recorded for them; do not invent one or address them by their title'
+    }
 - ${
       expertise === 'expert'
         ? 'Skip basic explanations — they know regulatory science deeply. Focus on nuanced analysis and strategic implications.'

@@ -17,7 +17,7 @@
  * for this IND-table harness) so emissions can be asserted.
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi, type Mock } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi, type Mock } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 import type {
   AdverseEvent,
@@ -123,6 +123,41 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await harness.close();
+});
+afterEach(() => {
+  vi.mocked(auditService.logAction).mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
+});
+
+describe('supplemental IND audit outcomes preserve actual committed rows', () => {
+  const registers = [
+    { name: 'safety', action: 'IND_SAFETY_REPORT_FILED', create: () => createSafetyReportDraft({ submissionId: 71, event: reportableEvent('ae-audit-outcome') }, ctx), get: getSafetyReport, file: markSafetyReportFiled },
+    { name: 'annual', action: 'IND_ANNUAL_REPORT_FILED', create: () => createAnnualReportDraft({ submissionId: 72, report: annualReportInput() }, ctx), get: getAnnualReport, file: markAnnualReportFiled },
+    { name: 'amendment', action: 'IND_AMENDMENT_FILED', create: () => createAmendmentDraft({ submissionId: 73, amendment: amendmentInput() }, ctx), get: getAmendment, file: markAmendmentFiled },
+  ];
+  for (const register of registers) {
+    for (const failure of ['resolved', 'thrown'] as const) {
+      it(`${register.name} draft and filed rows survive ${failure} audit failure with bounded warnings`, async () => {
+        const sink = vi.mocked(auditService.logAction);
+        if (failure === 'resolved') sink.mockResolvedValue({ persisted: false, chained: false, tamperProof: false, error: 'synthetic private SQL detail' });
+        else sink.mockRejectedValue(new Error('synthetic private SQL detail'));
+        const drafted = await register.create();
+        expect(drafted).toMatchObject({ status: 'draft', auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' } });
+        expect(JSON.stringify(drafted)).not.toContain('synthetic private SQL detail');
+        expect((await register.get(drafted.id, ctx)).status).toBe('draft');
+        const filed = await register.file(drafted.id, 741, ctx);
+        expect(filed).toMatchObject({ id: drafted.id, status: 'filed', sequenceId: 741, auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' } });
+        expect((await register.get(drafted.id, ctx)).sequenceId).toBe(741);
+        expect(auditCalls(register.action).some(call => call.resourceId === drafted.id)).toBe(true);
+      });
+    }
+    it(`${register.name} reports the actual queryable audit result without copying it to later reads`, async () => {
+      const drafted = await register.create();
+      expect(drafted).toHaveProperty('auditTrail', { persisted: true, chained: true });
+      expect(await register.get(drafted.id, ctx)).not.toHaveProperty('auditTrail');
+      const filed = await register.file(drafted.id, 742, ctx);
+      expect(filed).toHaveProperty('auditTrail', { persisted: true, chained: true });
+    });
+  }
 });
 
 describe('safety-report register (312.32) against PGlite', () => {

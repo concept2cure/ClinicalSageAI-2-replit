@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > retains the nested 422 classification through the shared generation transport 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > a fresh refusal creates no review body or Accept control and reports the repair action 91ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > failed regeneration preserves the prior valid candidate and edited review until explicit acceptance 57ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 3ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  00:41:16
+   Duration  1.90s (transform 664ms, setup 292ms, import 717ms, tests 157ms, environment 540ms)
+

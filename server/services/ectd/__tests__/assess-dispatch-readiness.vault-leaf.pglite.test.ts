@@ -81,9 +81,9 @@ async function seedVaultDoc(opts: { approved?: boolean } = {}): Promise<{ uuid: 
 
 async function seedSequence(): Promise<number> {
   const sub = await harness.pglite.query<{ id: number }>(
-    `INSERT INTO submissions (title, product_name, application_type, client_type, primary_region, organization_id, created_by)
-     VALUES ('NeuroPanel-Dx 510(k)', 'NeuroPanel-Dx', '510k', 'ivd', 'fda', $1, $2) RETURNING id`,
-    [ORG, USER],
+    `INSERT INTO submissions (title, product_name, application_type, client_type, primary_region, organization_id, created_by, program_id)
+     VALUES ('NeuroPanel-Dx 510(k)', 'NeuroPanel-Dx', '510k', 'ivd', 'fda', $1, $2, $3::uuid) RETURNING id`,
+    [ORG, USER, PROGRAM],
   );
   const seq = await harness.pglite.query<{ id: number }>(
     `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
@@ -115,6 +115,7 @@ beforeAll(async () => {
   holder.db = harness.db;
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, settings JSONB NOT NULL DEFAULT '{}');
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     -- supersedes_id / organization_id / document_code: the family columns the
     -- transmit rule reads to decide whether a version is current.
@@ -124,6 +125,7 @@ beforeAll(async () => {
     );
     -- The Shadow Review store the assessor reads (shared/schema/shadow-review.ts).
   `);
+  await harness.pglite.query('INSERT INTO organizations(id) VALUES($1)', [ORG]);
   await harness.pglite.query(`INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid, $2)`, [PROGRAM, ORG]);
   // The vault lookup reads the assembler's binary-availability predicate (2026-10-17).
   await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
@@ -134,6 +136,37 @@ afterAll(async () => {
 });
 
 describe('assessSequenceDispatchReadiness — vault-backed leaves resolve', () => {
+  it.each([
+    { scope: { agencies: ['EMA'], countries: ['US'], submissionTypes: ['510k'] }, reason: 'agency' },
+    { scope: { agencies: ['FDA'], countries: ['EU'], submissionTypes: ['510k'] }, reason: 'country or region' },
+    { scope: { agencies: ['FDA'], countries: ['US'], submissionTypes: ['IND'] }, reason: 'submission type' },
+  ])('blocks an already placed approved company original when its $reason scope no longer matches the recorded target', async ({ scope, reason }) => {
+    const sequenceId = await seedSequence();
+    const source = await seedVaultDoc();
+    await seedLeaf(sequenceId, { sectionCode: '1.2', title: 'Company authorization', documentTable: 'vault_documents', documentUuid: source.uuid, pin: source.hash });
+    const legal = { id: source.uuid, title: 'Company authorization', kind: 'authorization', programId: PROGRAM,
+      vaultDocumentId: source.uuid, contentHash: source.hash, version: '1', agencies: ['FDA'], countries: ['US'], submissionTypes: ['510k'],
+      language: 'en', effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-01T00:00:00Z', registeredBy: String(USER) };
+    const save = (document: typeof legal) => harness.pglite.query('UPDATE organizations SET settings=$1::jsonb WHERE id=$2', [JSON.stringify({ companyDocuments: { legalDocuments: [document] } }), ORG]);
+    try {
+      await save(legal);
+      const matching = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG });
+      expect(matching.readiness.findings.filter(finding => finding.code === 'DOCUMENT_NOT_APPROVED')).toHaveLength(0);
+      await save({ ...legal, ...scope });
+      const blocked = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG });
+      const refusal = blocked.readiness.findings.find(finding => finding.code === 'DOCUMENT_NOT_APPROVED');
+      expect(refusal?.sectionCode).toBe('1.2');
+      expect(refusal?.message).toContain(`selected ${reason} is outside`);
+      expect(blocked.readiness.releaseBlockers).toBe(1);
+      for (const gate of [blocked.freezeGate, blocked.gate, blocked.dispatchGateOnSigning]) {
+        expect(gate.cleared).toBe(false);
+        expect(gate.blockers.join(' ')).toMatch(/not yet approved/);
+      }
+      const record = await harness.pglite.query('SELECT stage,content_hash FROM canonical_documents WHERE canonical_id=$1', [`cd-${source.uuid}`]);
+      expect(record.rows[0]).toEqual({ stage: 'approved', content_hash: source.hash });
+    } finally { await harness.pglite.query("UPDATE organizations SET settings='{}'::jsonb WHERE id=$1", [ORG]); }
+  });
+
   it('resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes', async () => {
     const sequenceId = await seedSequence();
     const vaultOk = await seedVaultDoc();

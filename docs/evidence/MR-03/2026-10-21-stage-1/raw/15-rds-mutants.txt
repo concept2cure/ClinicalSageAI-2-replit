@@ -1,0 +1,17 @@
+# Mutants of the slice B tree (scratch copy), terraform test -filter=tests/boot_contract.tftest.hcl,
+# Terraform 1.11.4, AWS provider 5.100.0 mocked. Each line restored before the next.
+== storage_type line removed (provider default gp2)
+  run "rds_is_gp3_with_tagged_snapshots_and_database_insights"... fail
+Failure! 65 passed, 1 failed.
+== copy_tags_to_snapshot removed
+  run "rds_is_gp3_with_tagged_snapshots_and_database_insights"... fail
+Failure! 65 passed, 1 failed.
+== database_insights_mode removed
+  run "rds_is_gp3_with_tagged_snapshots_and_database_insights"... fail
+Failure! 65 passed, 1 failed.
+== storage_type = gp2
+  run "rds_is_gp3_with_tagged_snapshots_and_database_insights"... fail
+Failure! 65 passed, 1 failed.
+== production class validation removed (terraform/stack/variables.tf)
+  run "refuses_a_burstable_production_database"... fail
+Failure! 47 passed, 1 failed, 18 skipped.

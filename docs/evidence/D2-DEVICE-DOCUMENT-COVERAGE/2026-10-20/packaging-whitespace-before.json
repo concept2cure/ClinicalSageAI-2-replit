@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "exitCode": 2,
+  "rawLogFormattingIssues": {
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/canonical-gate-ci-token-cascade-output.txt": 43,
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/integration-final-output.txt": 1,
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/integration-output.txt": 1,
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/merged-gate-ci-token-cascade-output.txt": 43,
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/qms-green-output.txt": 1,
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/qms-red-output.txt": 1,
+    "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/release-gate-ci-token-cascade-output.txt": 43
+  },
+  "sourceIssues": [],
+  "resolution": "Store exact padded raw logs losslessly as gzip; verify original output SHA-256 after decompression. No source/check suppression."
+}

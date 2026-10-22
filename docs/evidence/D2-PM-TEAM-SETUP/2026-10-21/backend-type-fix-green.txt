@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:37:19.733Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > binds current actor, UUID, anchor and workspace and disambiguates only real active candidates 106ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > exposes no candidate directory or controls to an admitted reader with a stale admin claim 41ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > refuses stale management controls when the project is archived during the roster read 40ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > grants a current account despite a stale viewer claim and records the existing audit outcome 65ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > revokes in place and removes subsequent private read access without erasing attribution 76ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > allows revocation of a departed account without restoring or exposing its identity 35ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies a read-only owner on member and visibility operations despite a stale administrator claim 41ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies an ordinary reader attempting to grant access with a stale administrator claim 19ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 8 22ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 11 27ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses wrong UUID anchors and a second client workspace 27ms
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > preserves existing truthful best-effort audit failure metadata after a committed grant
+{
+  "timestamp": "2026-10-21T01:37:26.921Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792546646918_548f0e33d2827a91,7,project,101,UPDATE,data-change,{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"id\":32,\"user_id\":6,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-01T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:37:26.891Z\",\"updated_at\":\"2026-10-21T01:37:26.891Z\"},{\"id\":33,\"user_id\":8,\"role\":\"edit\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-02T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:37:26.891Z\",\"updated_at\":\"2026-10-21T01:37:26.891Z\"}]}},{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"id\":32,\"user_id\":6,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-01T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:37:26.891Z\",\"updated_at\":\"2026-10-21T01:37:26.891Z\"},{\"id\":34,\"user_id\":7,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-10-21T01:37:26.900Z\",\"created_at\":\"2026-10-21T01:37:26.900Z\",\"updated_at\":\"2026-10-21T01:37:26.900Z\"},{\"id\":33,\"user_id\":8,\"role\":\"edit\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-02T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:37:26.891Z\",\"updated_at\":\"2026-10-21T01:37:26.891Z\"}]}},5,a***@example.test,member,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"b0835f437a9b37c1dbccdfbebf7cc8d7ef45dedd6c59cd0235bccf04b321e096\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "101"
+  }
+}
+
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > protects implicit ownership and refuses archived writes 81ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > reports missing stores and missing request clients as unavailable without a pool fallback 25ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not acknowledge a zero-row visibility write 27ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not acknowledge a zero-row revoke write 28ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > preserves existing truthful best-effort audit failure metadata after a committed grant 40ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not claim rollback after a committed grant loses its acknowledgement 34ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  01:37:16
+   Duration  10.04s (transform 2.38s, setup 111ms, import 4.53s, tests 5.05s, environment 0ms)
+
+
+Node22 scoped ESLint command: npx eslint server/routes/__tests__/project-sharing-team-setup.pglite.test.ts --format json
+Result: 0 errors, 0 warnings.

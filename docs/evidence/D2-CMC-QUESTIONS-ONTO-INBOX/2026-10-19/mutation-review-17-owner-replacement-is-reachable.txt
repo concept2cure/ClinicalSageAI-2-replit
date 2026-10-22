@@ -1,0 +1,41 @@
+# MUTATION-REVIEW 17 the owner route not registered (the state the review found: owner_user_id with no write path)
+# Finding: Finding (deletion record): CMC's per-question assignment was removed with no replacement.
+# File: server/routes/c2c/agency-responses.ts
+# Replaced:
+#   -   router.patch(`${BASE}/questions/:questionId/owner`, async (req, res) => {
+# With:
+#   +   router.patch(`${BASE}/questions/:questionId/owner-not-registered`, async (req, res) => {
+# Command: (database env) npx vitest run --config vitest.db.config.ts tests/db/cmc-agency-questions-converged.dbtest.ts
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored server/routes/c2c/agency-responses.ts: sha256 d120e49ea062be21… before = d120e49ea062be21… after (byte-identical)
+
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the setting > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > records a question with its section in the repository's one spelling, with the section in its ledger row 200ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > refuses a section that is not a CTD code, and records nothing 69ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > corrects a section with a reason, records from and to, and refuses what it should 384ms
+ × tests/db/cmc-agency-questions-converged.dbtest.ts > who owns a question's response is set on the letter, through the governed write > sets, refuses and clears an owner with a reason, records from and to, and Module 3 shows it 71ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/cmc-agency-questions-converged.dbtest.ts > who owns a question's response is set on the letter, through the governed write > a person who may not change the project is refused 111ms
+   → expected 404 to be 403 // Object.is equality
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > lists the Module 3 questions with the server's state and overdue, and an approved answer is never overdue 322ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > counts from every row it read, and keeps the earlier CMC file out of the count 26ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > a Module 3 question on a letter the person may not see is neither listed nor counted; the letter is counted as withheld 114ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > refuses a module that is not one of the five 20ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > another organisation's member is refused by project admission; the runtime role in their scope reads none of these rows 22ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > GET lists the organisation's rows as they are stored, with counts from the store 14ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > POST and PATCH answer 410 and change nothing 15ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the runtime role is refused INSERT, UPDATE, DELETE and TRUNCATE by the privilege, before any trigger, even WHERE false 13ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the owner too is refused an INSERT, an UPDATE, a DELETE and a TRUNCATE by the guard 11ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+- Expected
++ Received
+- 200
++ 404
+AssertionError: expected 404 to be 403 // Object.is equality
+- Expected
++ Received
+- 403
++ 404

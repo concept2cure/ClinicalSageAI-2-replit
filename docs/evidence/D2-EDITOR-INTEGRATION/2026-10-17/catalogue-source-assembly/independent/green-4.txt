@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=false) 1828ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=true) 1385ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > does not bind sources after cancelling the actual dirty-work navigation 1215ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > refuses source binding while a governed ceremony owns the current editor 639ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  23:48:16
+   Duration  9.79s (transform 2.63s, setup 411ms, import 3.09s, tests 5.07s, environment 830ms)

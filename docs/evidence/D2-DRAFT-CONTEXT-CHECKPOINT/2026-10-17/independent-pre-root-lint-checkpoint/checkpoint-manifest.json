@@ -1,0 +1,10 @@
+{
+  "scope": "Stable 20-case green and limited original-source 17-red/3-control counterfactual before root lint-only route/classifier reconciliation; final current proof must be refreshed afterward",
+  "files": {
+    "independent-final.txt": "cb91f8aca7389e30252ba7a4a9bef4850f8b2649715cad11b17161ec7269757c",
+    "independent-final-bindings.json": "b035ff6daf6f070063eabab9d19804392f07453f9f5f1939526259e122f80d13",
+    "independent-counterfactual.txt": "3db3d0cddec9b95a69e4c3eec22215782be3a836cc33014dda7868275793643e",
+    "independent-counterfactual-bindings.json": "035556d0fd3d2d5292022d40b18bdd128fe652b83d10d3d46a9c393646a09fb6",
+    "independent-lint.json": "9b5cff619dbcd7a0867bf48dd46491cb513d33ec18028494bbe75604ff40a8ca"
+  }
+}

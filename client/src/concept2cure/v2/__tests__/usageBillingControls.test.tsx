@@ -16,47 +16,30 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({
-  apiRequest,
-  redactInternals: (x: unknown) => x,
-  serverMessage: (b: unknown) => (b as { error?: string } | null)?.error ?? null,
-}));
+vi.mock('@/lib/queryClient', () => ({ apiRequest, redactInternals: (x: unknown) => x, serverMessage: (b: unknown) => (b as { error?: string } | null)?.error ?? null }));
 vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 't', getJwtOrgId: () => 1 }));
 vi.mock('../surfaceContext', () => ({ usePublishSurfaceContext: () => {} }));
-
 import { UsageBilling } from '../surfaces/UsageBilling';
-
-const CREDITS = {
-  balanceCents: 4200,
-  ledger: [],
-  autoReload: { enabled: false, thresholdCents: 1000, topupCents: 5000 },
+const credits = {
+  balanceCents: 4200, ledger: [],
+  autoReload: { enabled: false, requestedEnabled: false, available: false, thresholdCents: 1000, topupCents: 5000 },
+  capabilities: { balanceMode: 'administrative_allocation', purchase: { available: false }, autoReload: { available: false }, usageDebit: { available: false } },
 };
-
-const ok = (b: unknown) => ({ ok: true, status: 200, json: async () => b } as unknown as Response);
-function apiError(status: number, body: unknown) {
-  const e = new Error((body as { error?: string })?.error ?? `HTTP ${status}`) as Error & {
-    name: string; status: number; payload: unknown;
-  };
-  e.name = 'ApiRequestError'; e.status = status; e.payload = body;
-  return e;
-}
-
-function route(over: Partial<Record<string, (body?: unknown) => Promise<Response>>> = {}) {
-  apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-    const key = `${method} ${url}`;
-    if (over[key]) return over[key]!(body);
-    if (method === 'GET' && url === '/api/billing/credits') return ok(CREDITS);
+const ok = (b: unknown) => ({ ok: true, status: 200, json: async () => b } as Response);
+function route(reloadRequested = false, portal: unknown = { portalUrl: 'https://billing.stripe.test/s/1' }) {
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'GET' && url === '/api/billing/credits') return ok({ ...credits, autoReload: { ...credits.autoReload, requestedEnabled: reloadRequested } });
+    if (method === 'GET' && url === '/api/billing/invoices') return ok({ invoices: [] });
     if (method === 'GET') return ok({});
-    throw apiError(404, { error: `unrouted ${key}` });
+    if (method === 'POST' && url === '/api/billing/portal') return ok(portal);
+    if (method === 'PUT' && url === '/api/billing/credits/auto-reload') return ok({ autoReload: { ...credits.autoReload }, auditTrail: { persisted: true, chained: true } });
+    throw new Error(`unexpected ${method} ${url}`);
   });
 }
-
-const props = { surface: { id: 'usage' } as never, onAsk: () => {}, onNav: () => {}, segment: 'biopharma' };
-
+const props = { surface: { id: 'billing' } as never, onAsk: () => {}, onNav: () => {}, segment: 'biopharma' };
 beforeEach(() => { apiRequest.mockReset(); });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 /** Opens the Billing tab. */
 async function mount() {

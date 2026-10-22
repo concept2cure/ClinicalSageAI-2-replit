@@ -1,0 +1,30 @@
+Mutant run — P-40
+Target:  server/services/qms/controlled-document-service.ts
+Suite:   server/services/qms/__tests__/   (all 9 files, 128 tests — the
+         neighbouring lifecycle cases cover revise from in_review/effective,
+         which Q6 exists to break)
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <suite>
+
+Q1 the sealed branch is removed                      KILLED  Tests  4 failed | 124 passed (128)
+Q2 sealed refusal reuses the permission wording      KILLED  Tests  1 failed | 127 passed (128)
+Q3 sealed refusal names no remedy                    KILLED  Tests  1 failed | 127 passed (128)
+Q4 draft admitted unconditionally                    KILLED  Tests  1 failed | 127 passed (128)
+Q5 any unwritable copy counts as sealed              SURVIVED  Tests  128 passed (128)
+Q6 only draft+sealed is revisable, other states dropped KILLED  Tests  1 failed | 127 passed (128)
+
+killed 5/6
+
+Q5 — SURVIVED, deliberately, and predicted before the run.
+
+  It swaps `code === 'DOCUMENT_FROZEN'` for `!writable`, so DOCUMENT_NOT_FOUND
+  would also read as sealed. Unreachable through this path:
+  captureQmsAuthoringContent runs before it and refuses a document it cannot
+  read (QMS_CONTENT_REQUIRED), so both forms behave identically here.
+
+  The precise form is kept anyway — if that upstream guard changes, `!writable`
+  admits a revision of a missing document — and no test is written for a state
+  the code cannot reach. A survivor that is explained is honest; a survivor
+  that is quietly dropped from the table is not.
+
+The target file was restored and verified clean after the run (git diff showed
+only the P-40 change, 27 insertions / 2 deletions).

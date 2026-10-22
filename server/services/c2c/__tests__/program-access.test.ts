@@ -232,6 +232,38 @@ describe('programInOrganization — the one program check (D3, 2026-10-01)', () 
   });
 });
 
+describe('program ownership reservation on the actual transaction client', () => {
+  const PROGRAM = '33333333-3333-4333-8333-333333333333';
+  it.each([false, true])('retains an exclusive parent lock with includeDeleted=%s', async includeDeleted => {
+    const calls: Array<{ sql: string; values?: unknown[] }> = [];
+    const transaction = { query: async (sql: string, values?: unknown[]) => {
+      calls.push({ sql, values }); return { rows: [{ id: PROGRAM }] };
+    } };
+    expect(await programInOrganization(transaction, PROGRAM, 7, { forUpdate: true, includeDeleted })).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].sql).toMatch(/LIMIT 1 FOR UPDATE$/);
+    expect(calls[0].sql.includes('deleted_at IS NULL')).toBe(!includeDeleted);
+    expect(calls[0].values).toEqual([PROGRAM, 7]);
+  });
+  it('keeps the exclusive reservation when a composed caller also requests a shared hold', async () => {
+    const statements: string[] = [];
+    const db = { query: async (sql: string) => { statements.push(sql); return { rows: [{ id: PROGRAM }] }; } };
+    expect(await programInOrganization(db, PROGRAM, 7, { forUpdate: true, forShare: true })).toBe(true);
+    expect(statements).toHaveLength(1); expect(statements[0]).toMatch(/FOR UPDATE$/);
+  });
+
+  it('keeps ordinary reads free of an exclusive write reservation', async () => {
+    const statements: string[] = [];
+    const db = { query: async (sql: string) => { statements.push(sql); return { rows: [] }; } };
+    expect(await programInOrganization(db, PROGRAM, 7)).toBe(false);
+    expect(statements[0]).not.toContain('FOR UPDATE');
+  });
+  it('preserves typed unavailable refusal when the parent reservation fails', async () => {
+    const db = { query: async () => { throw new Error('Synthetic reservation unavailable'); } };
+    await expect(programInOrganization(db, PROGRAM, 7, { forUpdate: true })).rejects.toMatchObject({ name: 'VerificationUnavailableError' });
+  });
+});
+
 describe('program ownership with a caller-owned shared row reservation', () => {
   const LIVE = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   const DELETED = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -291,5 +323,6 @@ describe('program ownership with a caller-owned shared row reservation', () => {
     await expect(programInOrganization(failing, LIVE, 7, { forShare: true, includeDeleted })).rejects.toMatchObject({
       name: 'VerificationUnavailableError', detail: '42501: held query unavailable',
     });
+
   });
 });

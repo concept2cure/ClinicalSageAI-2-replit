@@ -16,6 +16,8 @@ import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-d
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { createDocumentDispositionService } from '../../document-data-disposition/service';
 import { runWithTenantScope } from '../../../db/tenantStore';
+import { draftSourceIdentityForText } from '../draft-source-identity';
+import { registerDraftSourceToolIdentityControls } from './support/draft-source-tool-v2-controls';
 import { AUTHORING_TOOL_MIGRATIONS, DISPOSITION_IMPACT_PREREQ, authoringCountsOn } from './support/authoring-tool-db';
 
 /** The request's tenant scope, as the global /api gate opens it for every AnA
@@ -82,9 +84,9 @@ const SOURCE_ID = '10000000-0000-4000-8000-000000000001';
 const OTHER_SOURCE_ID = '10000000-0000-4000-8000-000000000002';
 const FOREIGN_SOURCE_ID = '10000000-0000-4000-8000-000000000003';
 const SOURCE_TEXT = 'Processed study report: endpoint observed in 12 of 30 subjects.';
-const sourceRef = (documentId = SOURCE_ID, hash = 'a') => ({ documentId, contentHash: hash.repeat(64),
-  span: { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } });
-const sourcedInput = (reference = sourceRef()) => ({ ...input,
+const sourceRef = (documentId = SOURCE_ID, hash = 'a', span = { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length }) =>
+  ({ documentId, contentHash: hash.repeat(64), span, ...draftSourceIdentityForText(SOURCE_TEXT, span) });
+const sourcedInput = (reference: unknown = sourceRef()) => ({ ...input,
   sections: [{ ...M25_SECTIONS[0], sourceReferences: [reference] }] });
 
 describe('draft_authoring_document — durable project source references', () => {
@@ -94,8 +96,8 @@ describe('draft_authoring_document — durable project source references', () =>
     const saved = await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
     const savedRow = saved.rows[0] as { provenance: { projectSourceReferences: unknown } };
     expect(savedRow.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
-    expect(out.projectSourceReferences[0]).toMatchObject({ sectionCode: M25_SECTIONS[0].code, verification: 'current_at_save', qualification: 'unassessed',
-      sources: [{ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), completeText: true }] });
+    expect(out.projectSourceReferences[0]).toMatchObject({ sectionCode: M25_SECTIONS[0].code, sourceReferenceVersion: 2, verification: 'current_at_save', qualification: 'unassessed',
+      sources: [{ ...sourceRef(), completeText: true, identityVerification: 'exact_extraction_and_span' }] });
     const audit = await jdb.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
     const auditRow = audit.rows[0] as { metadata: { provenance: { projectSourceReferences: unknown } } };
     expect(auditRow.metadata.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
@@ -200,7 +202,7 @@ describe('draft_authoring_document — figure lineage and grounded excerpts (S5c
 
   it('saves a reference whose excerpt starts inside the document, and every offset is the document\'s own (S5d)', async () => {
     const start = SOURCE_TEXT.indexOf('endpoint');
-    const windowRef = { documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } };
+    const windowRef = sourceRef(SOURCE_ID, 'a', { start, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length });
     const out = JSON.parse(await handler({ ...input, sections: [{ ...M25_SECTIONS[0],
       content: '<p>The endpoint was observed in 30 subjects.</p>', sourceReferences: [windowRef] }] },
     { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
@@ -214,11 +216,12 @@ describe('draft_authoring_document — figure lineage and grounded excerpts (S5c
 
   it('refuses an excerpt longer than 12,000 characters wherever it starts, and saves nothing', async () => {
     const before = await authoringCounts();
-    const tooLong = { documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 5, end: 12010, totalChars: 20000 } };
+    const tooLong = { ...sourceRef(), span: { start: 5, end: 12010, totalChars: 20000 } };
     const out = JSON.parse(await handler(sourcedInput(tooLong), { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
     expect(out.saved).toBeUndefined();
     expect(await authoringCounts()).toEqual(before);
   });
+
 });
 
 describe('project catalog — source-version truth', () => {
@@ -231,7 +234,8 @@ describe('project catalog — source-version truth', () => {
       // Its identity only: the stale record's content never leaves the database.
       expect(loaded?.catalog).toMatchObject({ version: 'other', status: 'cataloged', summary: null, keyData: null, charCount: 0 });
       const { getToolHandler } = await import('../AnaToolExecutor');
-      const read = JSON.parse(await getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM }));
+      const read = JSON.parse(await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, () =>
+        getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM })));
       expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
       expect(JSON.stringify(read)).not.toContain('9 of 10');
       // A 'cataloged' record for other bytes is not a studied document: placement refuses before any write.
@@ -257,13 +261,21 @@ describe('project catalog — source-version truth', () => {
     }
   }));
 
-  it('does not report success when the non-vector catalog compare-and-set updates zero rows', () => inRequestScope(async () => {
+  it('refuses a catalog source-version change during embedding before a suggestion is saved', () => inRequestScope(async () => {
     const { recordReadReceipt, completeCatalog, loadDocumentForOrg } = await import('../../vault/document-catalog.service');
     await recordReadReceipt({ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 0, end: SOURCE_TEXT.length }, readBy: Number(AUTHOR.id) });
     h.beforeEmbedding = async () => { await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['d'.repeat(64), SOURCE_ID]); };
     try {
-      const outcome = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, executor: requestExecutor, userId: Number(AUTHOR.id), documentKind: 'csr', purpose: 'Review', summary: 'Must not report saved' });
-      expect(outcome).toMatchObject({ ok: false, refusal: expect.stringContaining('has a newer version than the one you read') });
+      const outcome = await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, () =>
+        completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, executor: requestExecutor, userId: Number(AUTHOR.id), documentKind: 'csr', purpose: 'Review', summary: 'Must not report saved' }));
+      expect(outcome).toMatchObject({ ok: false, refusal: 'This document has a newer version than the one you read. Read the current version, then catalog it. Nothing was saved.' });
+      expect(outcome).not.toHaveProperty('embeddingStatus');
+      expect(outcome).not.toHaveProperty('source');
+      expect(outcome).not.toHaveProperty('text');
+      expect(outcome).not.toHaveProperty('summary');
+      const retained = await jdb.pool.query(`SELECT d.content_hash,c.content_hash AS catalog_content_hash,c.catalog_status
+        FROM vault.documents d JOIN vault.document_catalog c ON c.document_id=d.id WHERE d.id=$1`, [SOURCE_ID]);
+      expect(retained.rows).toEqual([{ content_hash: 'a'.repeat(64), catalog_content_hash: 'd'.repeat(64), catalog_status: 'extracted' }]);
       expect((await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) }))?.catalog?.summary).toBeNull();
     } finally {
       h.beforeEmbedding = null;
@@ -372,7 +384,11 @@ describe('draft_authoring_document', () => {
   });
 });
 
+const authoringCounts = () => authoringCountsOn(jdb.pool as never);
 const withdrawalContext = { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true };
+
+registerDraftSourceToolIdentityControls({ database: () => jdb, call: (body, programId = PROGRAM) => handler(body, { ...withdrawalContext, projectRef: programId }),
+  counts: authoringCounts, sourceId: SOURCE_ID, sourceText: SOURCE_TEXT, sourcedInput, reference: span => sourceRef(SOURCE_ID, 'a', span), programId: PROGRAM_B, organizationId: ORG });
 
 async function seedWithdrawalSource(hashCharacter: string) {
   const documentId = randomUUID();
@@ -384,7 +400,7 @@ async function seedWithdrawalSource(hashCharacter: string) {
   await jdb.pool.query(`INSERT INTO vault.document_catalog
     (document_id,content_hash,catalog_status,extraction_method,char_count)
     VALUES ($1,$2,'extracted','pdf-text',$3)`, [documentId, contentHash, SOURCE_TEXT.length]);
-  return { documentId, contentHash, span: { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } };
+  return sourceRef(documentId, hashCharacter);
 }
 
 function withdrawalService() {
@@ -406,8 +422,6 @@ const withdrawalScope = (documentId: string) => ({
   organizationId: ORG, programId: PROGRAM, actorId: Number(AUTHOR.id), orgRole: 'manager',
   targetType: 'vault_document' as const, targetId: documentId,
 });
-
-const authoringCounts = () => authoringCountsOn(jdb.pool as never);
 
 async function expectWithdrawalCommitted(documentId: string) {
   const records = await jdb.pool.query(`SELECT choice,audit_receipt FROM document_data_dispositions

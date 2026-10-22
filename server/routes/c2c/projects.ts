@@ -21,6 +21,8 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
+import { readProjectActivity } from '../../services/c2c/project-activity.js';
+import { requestPgClient } from '../../db/requestDb';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import type { PoolClient } from 'pg';
 import {
@@ -47,7 +49,9 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
-import { workstreamSqlCase } from '../../../shared/constants/domain/product-types.js';
+import { workstreamSqlCase, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
+import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
+import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
    VALID_PRODUCT_TYPES / DRUG_APPLICATION_TYPES) and its canonical
@@ -66,6 +70,11 @@ import {
   normalizeDeviceClassification,
   usesDeviceClassification,
 } from '../../../shared/constants/domain/device-classification.js';
+import {
+  programmePredicateDevicesColumn,
+  programmeTeamMembersColumn,
+  programmeProfilePatchSchema,
+} from '../../services/c2c/programme-profile-write.js';
 /* Every 5xx on this router goes through the canonical helper. Its job here is
    the one the MDX UAT (item A1) proved was missing: it logs the failure keyed
    by the SAME `X-Request-Id` the user is shown as "Reference <id>", and echoes
@@ -89,6 +98,7 @@ import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, Prog
 import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 import { AnaProjectScopeError } from '../../services/ana/project-scope-admission';
 import { readProjectAuthoringRecords } from '../../services/c2c/project-authoring-records';
+import { readProjectTeam } from '../../services/c2c/project-team';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
 
 /** A filing the market verdict does not offer, found once the scaffold has
@@ -461,7 +471,7 @@ function allowProgramMutation(
  *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
  *  match on lower() — otherwise every real row falls through to the ELSE branch
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
-const WS_CASE = workstreamSqlCase('p.program_type');
+const WS_CASE = workstreamSqlCase('p.program_type', 'p.product_type');
 
 // ── The program DETAIL — one projection, one serializer ──────────────────────
 //
@@ -698,8 +708,11 @@ router.post('/', async (req: Request, res: Response) => {
   const name = str(body.name);
   const productName = str(body.productName) || name;
   const programType = str(body.programType).toLowerCase().replace(/[\s-]+/g, '_');
-  const primaryAgency = str(body.primaryAgency) || 'FDA';
-  const submissionTypeId = str(body.submissionTypeId) || null;
+  const requestedAgency = str(body.primaryAgency) || 'FDA';
+  const primaryAgency = regionalDeviceApplicationClassOf(programType)
+    ? documentAgencyFor({ applicationType: programType, market: requestedAgency }) ?? requestedAgency
+    : requestedAgency;
+  const submissionTypeId = str(body.submissionTypeId) || regionalDeviceApplicationClassOf(programType)?.registryId || null;
   const indication = str(body.indication) || null;
   // Agency-assigned application number (IND / NDA / BLA / MAA). Optional: a
   // program has none until the agency assigns one, and it is never invented.
@@ -709,8 +722,14 @@ router.post('/', async (req: Request, res: Response) => {
   // Accept 'YYYY-MM-DD' (wizard <input type=date>); '' → null.
   const rawDate = str(body.targetSubmissionDate);
   const targetSubmissionDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : null;
-  const teamMembers = Array.isArray(body.teamMembers)
-    ? (body.teamMembers as unknown[]).filter((m) => typeof m === 'string')
+  /* The wizard sends names. `team_members` is a TeamMember[] column and the
+     governed write stores `{ name, role? }` with role OPTIONAL, so a name with
+     no stated role maps onto the canonical shape and asserts nothing extra.
+     Until 2026-10-19 this wrote the bare string array: the service that reads
+     `Array<{ name?, userId?, role? }>` saw `{}` for every member, and the
+     owner initials computed from `teamMembers[].name` came out undefined. */
+  const teamMemberNames = Array.isArray(body.teamMembers)
+    ? (body.teamMembers as unknown[]).filter((m): m is string => typeof m === 'string' && m.trim() !== '')
     : [];
 
   if (!name) return send400(res, 'name is required');
@@ -742,7 +761,7 @@ router.post('/', async (req: Request, res: Response) => {
   // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
   // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
   // not be recorded as medicinal. The rules are productTypeForIntake's.
-  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase());
+  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase(), submissionTypeId);
   if ('refusal' in classDecision) return send400(res, classDecision.refusal);
   const { productType } = classDecision;
 
@@ -794,7 +813,35 @@ router.post('/', async (req: Request, res: Response) => {
      created with an oncology therapeutic area and no product code. Validated
      rather than trusted: an unparseable value is dropped and named, never
      coerced into something that reads as data. */
-  const deviceCls = normalizeDeviceClassification((req.body ?? {}).deviceClassification);
+  const documentAgency = documentAgencyFor(marketInput);
+  const euRegulation = documentAgency === 'EMA'
+    ? programType === 'ivdr' ? 'ivdr' : ['mdr', 'cer'].includes(programType) ? 'mdr' : null
+    : null;
+  const regional = programmeProfilePatchSchema.safeParse({
+    euMdrClass: body.euMdrClass ?? null, euIvdrClass: body.euIvdrClass ?? null,
+  });
+  if (!regional.success) return send400(res, 'EU device classification must use the applicable MDR or IVDR class.');
+  const { euMdrClass = null, euIvdrClass = null } = regional.data;
+  const selectedFiling = submissionTypeId ? resolveFilingCatalogEntry(submissionTypeId) : null;
+  const classScope = deviceClassScopeForFiling(submissionTypeId);
+  const declaredEuClass = euRegulation === 'mdr' ? euMdrClass : euIvdrClass;
+  if (classScope && (classScope.regulation !== euRegulation || (declaredEuClass !== null && !classScope.classes.includes(declaredEuClass)))) {
+    return send400(res, 'The stated EU class conflicts with the selected class-specific filing. Choose the matching filing or leave the class unconfirmed.');
+  }
+  if ((euMdrClass !== null && euRegulation !== 'mdr') || (euIvdrClass !== null && euRegulation !== 'ivdr')
+    || (euRegulation && (euRegulation === 'ivdr') !== isIvdFamily(productType))
+    || (euRegulation && selectedFiling && (selectedFiling.region !== 'EU'
+      || selectedFiling.pathwayKey !== programType))) {
+    return send400(res, 'The EU classification, product type and selected filing must describe the same MDR or IVDR context.');
+  }
+  const rawClassification = body.deviceClassification as Record<string, unknown> | undefined;
+  const fdaFields = ['productCode', 'regulationNumber', 'deviceClass', 'reviewPanel', 'predicateK', 'predicateName', 'flags'];
+  if (usesDeviceClassification(productType) && documentAgency !== 'FDA'
+    && rawClassification && fdaFields.some(key => {
+      const value = rawClassification[key];
+      return Array.isArray(value) ? value.length > 0 : typeof value === 'string' ? value.trim() !== '' : value != null;
+    })) return send400(res, 'FDA device classification and predicate fields apply only to an FDA filing.');
+  const deviceCls = normalizeDeviceClassification(body.deviceClassification);
   if (deviceCls.rejected.length && !usesDeviceClassification(productType)) {
     // A pharma filing sent device fields — ignore them rather than 400.
     deviceCls.rejected.length = 0;
@@ -807,11 +854,26 @@ router.post('/', async (req: Request, res: Response) => {
   }
   const dc = deviceCls.value;
 
+  /* Both json columns through the governed write's own schemas, so a shape it
+     would refuse cannot be written here either. The predicate pair is already
+     enforced by normalizeDeviceClassification, which 400s above when only one
+     half arrives; `id` is the submission number, the key the audit row records
+     the claim under. */
+  const teamMembersColumn = programmeTeamMembersColumn.parse(
+    teamMemberNames.map((name) => ({ name })),
+  ) ?? [];
+  const predicateDevicesColumn = programmePredicateDevicesColumn.parse(
+    dc.predicateK && dc.predicateName
+      ? [{ id: dc.predicateK, name: dc.predicateName, kNumber: dc.predicateK }]
+      : [],
+  ) ?? [];
+
   const targetAgencies = JSON.stringify([primaryAgency]);
   const metadata = JSON.stringify({
     createdVia: 'v2-new-project-wizard',
     ...(submissionTypeId ? { submissionTypeId } : {}),
-    ...(teamMembers.length ? { teamMemberNames: teamMembers } : {}),
+    /* `teamMemberNames` was mirrored here and read by nothing — one capability,
+       one home: the `team_members` column below. */
     /* Review panel and the device flags have no column of their own. The flags
        are load-bearing — each one adds a statutory section, so they drive the
        required-content model rather than describing the product. */
@@ -836,16 +898,16 @@ router.post('/', async (req: Request, res: Response) => {
           target_submission_date, progress_percent, lead_user_id, team_members,
           metadata, created_by, updated_by,
           device_class, regulatory_path, product_code, intended_use, predicate_devices,
-          application_number)
+          application_number, eu_mdr_class, eu_ivdr_class)
        VALUES ($1, $2, $3, $4, $5, $6, $7::json, $8, $9, 'active', 'planning', $10,
                $11::timestamp, 0, $12, $13::json, $14::json, $15, $15,
                $16, $17, $18, $19, $20::json,
-               $21)
+               $21, $22, $23)
        RETURNING id`,
       [
         orgId, name, code, programType, productType, primaryAgency,
         targetAgencies, productName, indication, priority,
-        targetSubmissionDate, userId, JSON.stringify(teamMembers), metadata, createdBy,
+        targetSubmissionDate, userId, JSON.stringify(teamMembersColumn), metadata, createdBy,
         dc.deviceClass ?? null,
         /* The US premarket route, derived from the filing type the user picked
            — not asked for twice. FILING_TYPE_PRODUCT_CLASS already knows a
@@ -853,8 +915,9 @@ router.post('/', async (req: Request, res: Response) => {
         devicePathFor(programType),
         dc.productCode ?? null,
         dc.intendedUse ?? null,
-        JSON.stringify(dc.predicateK ? [{ kNumber: dc.predicateK }] : []),
+        JSON.stringify(predicateDevicesColumn),
         applicationNumber,
+        euMdrClass, euIvdrClass,
       ],
     );
 
@@ -971,6 +1034,8 @@ router.post('/', async (req: Request, res: Response) => {
         program_type: programType,
         product_type: productType,
         primary_agency: primaryAgency,
+        eu_mdr_class: euMdrClass,
+        eu_ivdr_class: euIvdrClass,
         created_via: 'v2-new-project-wizard',
         // The audit row covers EVERY creation this transaction performed: the
         // linked canonical submission is part of the record, whether newly
@@ -1169,79 +1234,20 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
 
 // ── GET /api/c2c/projects/:id/team ───────────────────────────────────────────
 //
-// The roster comes from `regulatory_programs` itself: lead_user_id resolved
-// against `users`, plus whatever the wizard stored in team_members.
-//
-// It used to read `project_members` — and could never return a row. That table
-// keys on project_id INTEGER (projects.id), while this surface's :id is a
-// regulatory_programs UUID, so the join raised 42883 (operator does not exist:
-// uuid = integer) on every request; it also selected pm.added_at, a column the
-// table does not have (it has created_at / accepted_at). Both errors landed in
-// a bare `catch { team: [] }`, so the panel rendered "no members" forever with
-// nothing logged. project_members cannot hold membership for a uuid-keyed
-// program at all, so the fix is to stop pretending it does.
-//
-// team_members entries are surfaced name-only with a null user_id: the create
-// handler stores bare strings there (it filters the wizard payload to
-// `typeof m === 'string'`), and a name is not an identity — inventing a user id
-// or an email to fill the shape would be fabricating a person.
+// Recorded responsibilities and current sharing are independent facts. The
+// admitted integer anchor joins the durable roster; recorded names stay
+// unlinked. The service rechecks current project admission before returning.
 
 router.get('/:id/team', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
-    const { rows } = await pool.query(
-      `SELECT p.lead_user_id, p.team_members, u.name, u.email
-         FROM regulatory_programs p
-         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
-        WHERE p.id = $1 AND p.organization_id = $2
-        LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (rows.length === 0) return send404(res);
-
-    const program = rows[0] as {
-      lead_user_id: number | null;
-      team_members: unknown;
-      name: string | null;
-      email: string | null;
-    };
-
-    const team: Array<{
-      user_id: number | null;
-      role: string | null;
-      name: string | null;
-      email: string | null;
-    }> = [];
-
-    if (program.lead_user_id != null) {
-      team.push({
-        user_id: Number(program.lead_user_id),
-        role: 'lead',
-        name: program.name ?? null,
-        email: program.email ?? null,
-      });
-    }
-
-    const named = Array.isArray(program.team_members) ? program.team_members : [];
-    for (const member of named) {
-      if (typeof member !== 'string') continue;
-      const memberName = member.trim();
-      if (!memberName) continue;
-      team.push({ user_id: null, role: null, name: memberName, email: null });
-    }
-
-    return res.json({ team });
+    const access = res.locals.currentProgramAccess;
+    if (!access) throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    return res.json(await readProjectTeam(requestPgClient(req), { organizationId: orgId, access }));
   } catch (err: unknown) {
-    // Only an undefined table degrades to an empty roster — that is a
-    // not-yet-provisioned store, not a failure. Anything else is a real error
-    // and is logged and reported; the previous silent swallow is what let the
-    // uuid/integer join fail unnoticed for the life of this endpoint.
-    if ((err as { code?: string })?.code === '42P01') {
-      return res.json({ team: [] });
-    }
-    return serverError(res, logger, 'loading the project team', err, { programId: String(req.params.id) });
+    return sendProjectAccessFailure(res, err, true);
   }
 });
 
@@ -1363,36 +1369,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   try {
     if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
-    // Columns aliased from what audit_logs ACTUALLY has (table_name /
-    // record_id / new_values — see migrations/0000_sweet_joseph.sql plus the
-    // chain fields from 20260527_mutation_primitives.sql) to the names the
-    // client's ActivityRow reads. The projection previously named
-    // resource_type / resource_id / details, none of which are columns, so
-    // every request raised 42703 into the catch below and the feed rendered
-    // empty no matter how much audited activity a project had.
-    const { rows } = await pool.query(
-      `SELECT
-         al.id, al.action, al.table_name AS resource_type, al.record_id AS resource_id,
-         COALESCE(al.actor_id, al.user_id) AS actor_id, al.new_values AS details,
-         COALESCE(u.name, u.email) AS actor_name,
-         al.occurred_at, al.ip_address
-       FROM audit_logs al
-       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
-       WHERE al.tenant_id = $2
-         AND (al.record_id = $1
-              OR al.target = 'regulatory_program:' || $1
-              OR al.new_values->>'project_id' = $1
-              OR al.new_values->>'programId' = $1
-              -- A governed action on one of the project's own filing documents
-              -- names its target (document:<id>), not the project (PF-17): the
-              -- scaffold that created the project's dossier was invisible here.
-              OR (al.target_type = 'document' AND al.target_id IN (
-                    SELECT d.id::text FROM c2c_documents d WHERE d.project_id = $1::uuid AND d.org_id = $2)))
-       ORDER BY al.occurred_at DESC NULLS LAST
-       LIMIT $3`,
-      [req.params.id, orgId, limit],
-    );
-
+    const rows = await readProjectActivity(pool, String(req.params.id), orgId, limit);
     return res.json({ activity: rows });
   } catch (err: unknown) {
     // The activity feed is an audit-log read; a caught failure must not render
@@ -1568,20 +1545,30 @@ async function processAdopted(orgId: number, programId: string, sourceId: number
   }
 }
 
-router.post('/:id/adopt', async (req: Request, res: Response) => {
+function adoptionRequestIdentity(req: Request, res: Response): { orgId: number; userId: number; programId: string; fileUploadId: string } | null {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
-  if (!orgId || !userId) return send403(res);
+  if (!orgId || !userId) { send403(res); return null; }
   const programId = String(req.params.id).toLowerCase();
-  if (!UUID_RE.test(programId)) return send404(res);
+  if (!UUID_RE.test(programId)) { send404(res); return null; }
   const fileUploadId = typeof req.body?.fileUploadId === 'string' ? req.body.fileUploadId.trim() : '';
-  if (!fileUploadId) return send400(res, 'fileUploadId is required.');
+  if (!fileUploadId) { send400(res, 'fileUploadId is required.'); return null; }
+  return { orgId, userId, programId, fileUploadId };
+}
+
+router.post('/:id/adopt', async (req: Request, res: Response) => {
+  const identity = adoptionRequestIdentity(req, res);
+  if (!identity) return;
+  const { orgId, userId, programId, fileUploadId } = identity;
   const scope = { orgId, programId };
 
   const client = await pool.connect();
   let clientOwned = true;
-  const releaseCaptureClient = () => {
-    if (clientOwned) { clientOwned = false; client.release(); }
+  let commitAttempted = false;
+  let commitConfirmed = false;
+  let pendingSourceId: number | null = null;
+  const releaseCaptureClient = (error?: Error) => {
+    if (clientOwned) { clientOwned = false; client.release(error); }
   };
   try {
     await client.query('BEGIN');
@@ -1627,19 +1614,30 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
       metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: upload.buffer.length,
         ...(lineage ? { scientificQualification: 'unassessed', formulaResults: 'not_recalculated' } : {}) },
     }, client);
+    pendingSourceId = source.id;
     await writeProgramAudit(client, {
       orgId, userId, programId,
       action: 'c2c.project.adopt',
       details: { file_upload_id: upload.fileId, source_id: source.id, checksum: sha256, from: 'conversation' },
     });
+    commitAttempted = true;
     await client.query('COMMIT');
+    commitConfirmed = true;
     // Processing opens its own short transactions. Return this connection
     // first so concurrent captures cannot occupy the whole pool while waiting.
     releaseCaptureClient();
     const processing = await processAdopted(orgId, programId, source.id, f, upload);
     return res.status(201).json({ adopted: true, sourceId: source.id, processed: processing.processed, processing });
   } catch (err: unknown) {
-    if (clientOwned) await client.query('ROLLBACK').catch(() => {});
+    if (commitAttempted && !commitConfirmed) {
+      releaseCaptureClient(err instanceof Error ? err : new Error('Adoption commit unconfirmed'));
+      return res.status(503).json({ adopted: null, sourceId: pendingSourceId, code: 'ADOPTION_COMMIT_UNCONFIRMED',
+        message: 'The capture result could not be confirmed. Check this project’s Data Room before trying to add the file again.',
+        recovery: { method: 'GET', url: `/api/c2c/projects/${programId}/sources`, programId, fileUploadId, sourceId: pendingSourceId } });
+    }
+    if (clientOwned) await client.query('ROLLBACK').catch(rollbackError => {
+      releaseCaptureClient(rollbackError instanceof Error ? rollbackError : new Error('Adoption rollback unconfirmed'));
+    });
     const refusal = adoptionRefusalResponse(res, err);
     if (refusal) return refusal;
     return serverError(res, logger, 'adopting the file into the project', err, { programId });
@@ -1914,6 +1912,8 @@ function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown
     origin: prov.origin ?? null,
     fileUploadId: prov.fileUploadId ?? null,
     extractionMethod: prov.extractionMethod ?? null,
+    // How much of a scanned PDF OCR read; null when not recorded or malformed.
+    extractionCoverage: readExtractionCoverage(prov.extractionCoverage),
     evidenceKind: (meta.dossier?.evidenceKind as string | undefined) ?? null,
   };
 }

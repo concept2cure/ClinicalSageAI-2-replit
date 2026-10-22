@@ -17,12 +17,12 @@
  */
 
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
-import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
-import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
+import { parseDraftSourceReferences, verifyDraftSourceReferences, reserveDraftSourceStores, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import { checkSectionFigures, figureSpansInContent, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
 import { checkSectionClaims, type ClaimsExcerpt, type SectionClaimsCheck } from './section-claims-check';
 import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
+import { AuthoringCreateOutcomeError } from './authoring-create-outcome';
 import { ANA_MACHINE_AUTHOR_ID, WORKFLOW_IMPORT_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { servedModelsForTurnOrRun } from './authoring-record';
 import type { QualifiedServedModel } from '../ai-governance/approved-models';
@@ -36,7 +36,7 @@ import {
   resolveBinding,
   type Binding,
   type CreateContext,
-  type Refusal,
+  type AuthoringRefusal,
   type SectionSeed,
   type DocumentRowSpec,
 } from './authoring-documents';
@@ -58,7 +58,7 @@ export interface DocumentProvenance {
   /** Declared references checked against current project records at save.
    * This is not claim-level support, generation proof, approval, or filing readiness. */
   projectSourceReferences?: Array<{
-    sectionCode: string; sources: VerifiedDraftSourceReference[]; qualification: 'unassessed'; verification: 'current_at_save';
+    sectionCode: string; sources: VerifiedDraftSourceReference[]; sourceReferenceVersion?: 2; qualification: 'unassessed'; verification: 'current_at_save';
     /** Each figure of the stored section, found in these excerpts or unverified (S5a, draft-figure-check.ts). */
     figures?: SectionFigureCheck;
     /**
@@ -309,7 +309,7 @@ async function governedWriteOf(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CreateDocumentFromDraftOutcome =
-  | Refusal
+  | AuthoringRefusal
   | {
       kind: 'created';
       document: Record<string, unknown>;
@@ -332,12 +332,12 @@ const CHANGE_REASON: Record<ProvenanceSource, string> = {
 /** Each section that cites sources: its references and the content as it is stored. */
 type SelectedDraftSources = Array<{ sectionCode: string; refs: DraftSourceReference[]; storedContent: string }>;
 class DraftSourceVerificationError extends Error {}
-const SOURCE_VERIFICATION_REFUSAL: Refusal = { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
+const SOURCE_VERIFICATION_REFUSAL: AuthoringRefusal = { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
 
 async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, programId: string, selected: SelectedDraftSources, provenance: DocumentProvenance): Promise<void> {
   if (!selected.length) return;
   try {
-    await lockDocumentDispositionProgram(q, ctx.tenantId, programId);
+    await reserveDraftSourceStores(q, ctx.tenantId, programId);
     const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
     for (const section of selected) {
       const excerpts: Array<CitedExcerpt & ClaimsExcerpt> = [];
@@ -348,7 +348,7 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
       // the same frame. One load of the excerpts serves both.
       const figures = checkSectionFigures(sectionText, excerpts);
       const claims = checkSectionClaims(section.sectionCode, sectionText, excerpts);
-      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save', figures, claims });
+      references.push({ sectionCode: section.sectionCode, sources, sourceReferenceVersion: 2, qualification: 'unassessed', verification: 'current_at_save', figures, claims });
     }
     // Keep the same object used by the document and every CREATE audit row.
     provenance.projectSourceReferences = references;
@@ -486,13 +486,20 @@ export async function createDocumentFromDraft(
   if (!inserted) return SOURCE_VERIFICATION_REFUSAL;
   if (inserted instanceof AuthoringProgramAccessError) return { kind: 'refused', status: inserted.status, code: inserted.code, error: inserted.message };
   const { document, binding } = inserted;
-  await grantCreatorOwnership(ctx, docId);
-
-  const sections = await ctx.pool.query(
-    `SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id
-       FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2
-      ORDER BY order_index, created_at`,
-    [docId, ctx.tenantId],
-  );
-  return { kind: 'created', document, sections: sections.rows, provenance, binding };
+  try {
+    await grantCreatorOwnership(ctx, docId);
+    const access = { tenantId: ctx.tenantId, actor: ctx.actor, programId: input.programId, forWrite: false };
+    await authorizeAuthoringProgram(ctx.pool, access);
+    const sections = await ctx.pool.query(
+      `SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id
+         FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2
+        ORDER BY order_index, created_at`,
+      [docId, ctx.tenantId],
+    );
+    const result = globalThis.structuredClone({ kind: 'created' as const, document, sections: sections.rows, provenance, binding });
+    await authorizeAuthoringProgram(ctx.pool, access);
+    return result;
+  } catch {
+    throw new AuthoringCreateOutcomeError('committed', { organizationId: ctx.tenantId, programId: input.programId, documentId: docId });
+  }
 }

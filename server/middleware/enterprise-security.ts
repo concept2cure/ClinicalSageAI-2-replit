@@ -24,6 +24,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { randomBytes } from 'crypto';
+import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { reportSecurityAlert } from '../services/security-alerts';
 import { requestFullPath } from './request-path';
 import { SIGN_IN_LIMITS } from '../config/platform-limits';
@@ -189,7 +190,8 @@ export const securityHeaders = config.isDevelopment
           // enforcing production policy below keeps it.
           upgradeInsecureRequests: null,
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-          frameSrc: ["'self'"],
+          // As the enforcing policy below: the PDF viewer frames a blob: URL.
+          frameSrc: ["'self'", 'blob:'],
           // Hardening directives (defense-in-depth, report-only in dev):
           //   base-uri locks <base href> so an injected element can't
           //     re-root every relative URL on the page.
@@ -249,7 +251,18 @@ export const securityHeaders = config.isDevelopment
           // breaking live integrations. Revisit once the connector registry
           // can emit the canonical host list.
           connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:'],
-          frameSrc: ["'self'"],
+          // blob: is the in-browser PDF viewer (PdfViewerPane,
+          // client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx): it frames
+          // the audited Vault download as an object URL, only bytes that begin
+          // %PDF, typed application/pdf (pdfBytes.ts). Without it this
+          // enforcing policy refused the frame and the viewer showed Chromium's
+          // error page (docs/evidence/D3/2026-10-22-pdf-viewer-csp/). blob: is
+          // a scheme source, so it matches any origin's blob URL, but framing
+          // one takes an <iframe> the page builds (the sanitizer admits none)
+          // and a blob URL only its minter knows. A framed blob document
+          // inherits this policy, so it adds no script source (shown in
+          // Chromium, with a no-policy control). data: stays refused.
+          frameSrc: ["'self'", 'blob:'],
           objectSrc: ["'none'"],
           // Hardening directives (enforced in prod):
           //   base-uri 'self' blocks <base href> injection from rewriting
@@ -388,7 +401,7 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
      not apply to. */
   res.setHeader(
     'Access-Control-Expose-Headers',
-    'X-Request-Id, X-RateLimit-Remaining, X-Audit-Row-Persisted, X-Audit-Row-Code',
+    'X-Request-Id, X-RateLimit-Remaining, X-Audit-Row-Persisted, X-Audit-Row-Code, X-Audit-Row-Chained',
   );
 
   if (req.method === 'OPTIONS') {
@@ -549,7 +562,7 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
 // TENANT ISOLATION
 // ============================================================================
 
-export function validateTenantContext(req: Request, res: Response, next: NextFunction) {
+export async function validateTenantContext(req: Request, res: Response, next: NextFunction) {
   // No public-path skip list here (removed 2026-09-26, IAM-18 item 4 re-check).
   // The detector is mounted on '/api' behind the auth boundary (applyAuthBoundary,
   // server/startup/middleware.ts), and the boundary establishes no session for a
@@ -585,36 +598,36 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
         method: req.method,
         ipAddress: req.ip,
       };
-      // Fire-and-forget audit. Dynamic import keeps this middleware
-      // free of a top-level audit-service dependency (which itself
-      // imports DB code and would slow boot).
-      (async () => {
-        try {
-          const { default: auditService } = await import('../services/auditService');
-          await auditService.logAction({
-            tenantId: user.organizationId,
-            userId: user.id || user.userId,
-            action: 'tenant_impersonation_attempt',
-            resourceType: 'security_event',
-            resourceId: String(headerOrgId),
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent'],
-            details: impersonationDetail,
-          });
-        } catch {
-          /* audit failure is non-fatal */
-        }
-      })();
+      // Complete the denial receipt before answering. Dynamic loading preserves
+      // the middleware's boot dependency boundary; failure never grants access.
+      let auditTrail: AuditRowOutcome;
+      try {
+        const { recordAuditRow } = await import('../services/audit/audit-write-outcome');
+        auditTrail = await recordAuditRow({
+          tenantId: user.organizationId,
+          userId: user.id || user.userId,
+          action: 'tenant_impersonation_attempt',
+          resourceType: 'security_event',
+          resourceId: String(headerOrgId),
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          details: impersonationDetail,
+        });
+      } catch {
+        auditTrail = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED',
+          message: 'The security decision was enforced, but its audit entry is unavailable.' };
+      }
       // Keep the structured-log line as well for ops dashboards; also
       // forward to the monitoring webhook when one is configured.
       reportSecurityAlert({
         kind: 'tenant_impersonation_blocked',
         message: 'Tenant impersonation attempt blocked',
-        detail: impersonationDetail as unknown as Record<string, unknown>,
+        detail: { ...impersonationDetail, auditTrail },
       });
       return res.status(403).json({
         error: 'Organization mismatch',
         code: 'TENANT_MISMATCH',
+        meta: { auditTrail },
       });
     }
     (req as any).organizationId = user.organizationId;

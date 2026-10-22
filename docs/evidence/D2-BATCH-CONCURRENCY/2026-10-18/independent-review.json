@@ -1,0 +1,16 @@
+{
+  "mode": "independent read-only; no test execution by reviewer",
+  "reviewedAt": "2026-10-18",
+  "findings": [
+    "No blocker in shared resolver, entrance order or contract compatibility.",
+    "Canonical service cap5 is an intentional extension of the old HTTP-only bound; all current production callers supply3 or5.",
+    "Frozen final33 cases:24 intended reds and9 passing controls; actual-service negative case is bounded by the request getter.",
+    "Final retained transcript156tests/10suites inspected; not an independent rerun.",
+    "Cancellation, source authority, editor output completion and filing acceptance are outside this repair."
+  ],
+  "sourceSha256": {
+    "server/services/ana/batch-draft-concurrency.ts": "3fdd927d9202b01019004a2167c6d0be1252c83a652c6a63c25b0810c39600d3",
+    "server/services/ana/AnaDocumentDraftingService.ts": "cc6d1db2231d4618164e5674eae84010f38578758efbef89318c6db96b98d741",
+    "server/routes/ana-intelligence.ts": "80ae4dace7c889d4e56426e07f19e5684c24ebeaf8695c06e1092f25428fce95"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "sourcePage": "https://www.fda.gov/industry/getting-started-esg-nextgen/user-guides",
+  "downloadUrl": "https://www.fda.gov/media/193542/download?attachment",
+  "titleFromSourcePage": "ESG NextGen AS2 Guide for Industry Users v2.2 \u2014 July 2026",
+  "retrievedOn": "2026-10-14",
+  "retrievedBy": "Codex audit remediation",
+  "bytes": 357644,
+  "sha256": "fa6658702047084d768d9ef769c94261ccad56c78eb7bf1017ffff418d139600",
+  "interpretation": "Section 2.1 recommends AES, supports AES-128/192/256 and says AES-256-GCM unsupported. Encryption is optional in section 2.4. Section 2.5 names MDN/ACK2/ACK3/4 but does not supply ACK schemas or a MIC algorithm."
+}

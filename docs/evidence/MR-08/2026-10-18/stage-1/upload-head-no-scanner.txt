@@ -1,0 +1,32 @@
+# RED — HEAD 8ca7e74ca server code (securityHealth.ts, inline-endpoints.ts, virusScan.ts at HEAD; bundle dist/index-head.js)
+# booted locally with ci.yml production-boot-smoke's env (NODE_ENV=production, RLS_ENFORCE=on, app_service over TLS,
+# freshly provisioned Postgres 16 + pgvector via install-fresh + deploy-migrate), CLAMAV_HOST UNSET — what both compose stacks ran at HEAD.
+# It boots green, /readyz says nothing about the scanner, and every upload is refused 503 FILE_SCAN_UNAVAILABLE.
+# The beta compose stack itself was not brought up here (docker compose up --build is too heavy for this host).
+
+$ boot dist/index-head.js
+pid=18109
+/readyz=200 after 7s
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+
+$ node scripts/ci/image-boot-signin.mjs   # the extended script (this change), against the HEAD server
+enrolled user 1 in organisation 5, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+POST /api/c2c/projects → 201, project f0245773-f1d5-49a2-b501-933a6c74c074
+::error::image sign-in FAILED at EICAR upload: expected 400 FILE_SCAN_REJECTED; got 503 {"error":{"code":"FILE_SCAN_UNAVAILABLE","message":"File scanning is temporarily unavailable; upload rejected"}}
+exit=1
+
+$ node <copy of image-boot-signin.mjs with step 7 (EICAR) removed>   # clean one-page PDF, the work order red case
+enrolled user 1 in organisation 5, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+POST /api/c2c/projects → 201, project c23a0664-6cd8-462e-9908-8241f756a6a5
+::error::image sign-in FAILED at clean PDF upload: expected 201; got 503 {"error":{"code":"FILE_SCAN_UNAVAILABLE","message":"File scanning is temporarily unavailable; upload rejected"}}
+exit=1

@@ -32,8 +32,8 @@ vi.mock('../../../db', () => ({
 }));
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 
-import { assembleSubmissionEctd } from '../assemble-from-core';
-import { PackageIdentityMissingError } from '../package-identity';
+import { assembleSubmissionEctd, assembleSequence } from '../assemble-from-core';
+import { PackageIdentityMissingError, readRecordedPackageIdentity, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../package-identity';
 
 let harness: IndPgliteDb;
 const ORG = 7;
@@ -42,6 +42,8 @@ const NAMELESS_ORG = 8;
 const RECORDED = '11111111-1111-4111-8111-111111111111';
 const CODE_ONLY = '22222222-2222-4222-8222-222222222222';
 const NAMELESS = '33333333-3333-4333-8333-333333333333';
+const SPONSOR = '44444444-4444-4444-8444-444444444444';
+const NAMELESS_SPONSOR = '55555555-5555-4555-8555-555555555555';
 
 async function regionalOf(buffer: Buffer): Promise<string> {
   const zip = await JSZip.loadAsync(buffer);
@@ -73,6 +75,11 @@ beforeAll(async () => {
       ('${RECORDED}', ${ORG}, 'Vorelinib (IND)', 'BX-512', 'IND', 'Vorelinib', '000512'),
       ('${CODE_ONLY}', ${ORG}, 'Pre-IND program', 'BX-900', 'IND', 'Compound 900', NULL),
       ('${NAMELESS}', ${NAMELESS_ORG}, 'Nameless sponsor IND', 'NN-1', 'IND', 'Compound N', '000777');
+    INSERT INTO ind_sponsors (id, organization_id, name, duns, contact_name, contact_phone, contact_email) VALUES
+      ('${SPONSOR}', ${ORG}, 'Concept2Cure Therapeutics', '123456789', 'Regulatory Contact', '+1 212 555 0100', 'ra@example.test'),
+      ('${NAMELESS_SPONSOR}', ${NAMELESS_ORG}, '   ', '987654321', 'Regulatory Contact', '+1 212 555 0100', 'ra@example.test');
+    UPDATE regulatory_programs SET applicant_sponsor_id = '${SPONSOR}' WHERE organization_id = ${ORG};
+    UPDATE regulatory_programs SET applicant_sponsor_id = '${NAMELESS_SPONSOR}' WHERE organization_id = ${NAMELESS_ORG};
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id) VALUES
       (1, 'recorded number', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${RECORDED}'),
       (2, 'code only', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${CODE_ONLY}'),
@@ -138,12 +145,96 @@ describe('the applicant an exported package names', () => {
     expect(regional).toMatch(/<company-name>Concept2Cure Therapeutics<\/company-name>/);
     expect(regional).not.toMatch(/UNASSIGNED \(organization/);
     expect(regional).not.toMatch(/BX-512/);
+    expect(regional).toContain('<id>123456789</id>');
+    expect(regional).toContain('<applicant-contacts>');
+    expect(regional).toContain('<applicant-contact-name applicant-contact-type="fdaact1">Regulatory Contact</applicant-contact-name>');
+    expect(regional).toContain('<telephone>+1 212 555 0100</telephone>');
+    expect(regional).toContain('<email>ra@example.test</email>');
+    expect(regional).not.toMatch(/UNASSIGNED-ORG-/);
   });
 
   it('an organisation whose record has no usable name is refused by name', async () => {
     const refused = await exportOf(4, undefined, NAMELESS_ORG).catch((e) => e);
     expect(refused).toBeInstanceOf(PackageIdentityMissingError);
     expect(refused).toMatchObject({ missing: ['applicantName'] });
-    expect(refused.message).toMatch(/organization's record has no usable name/);
+    expect(refused.message).toMatch(/bound sponsor record has no usable applicant name/);
+  });
+});
+
+
+describe('recorded FDA sponsor facts remain authoritative at export', () => {
+  it('refuses an unbound sponsor even when the organization name is present', async () => {
+    await harness.pglite.query('UPDATE regulatory_programs SET applicant_sponsor_id = NULL WHERE id = $1', [RECORDED]);
+    try {
+      const refused = await exportOf(1).catch((e) => e);
+      expect(refused).toMatchObject({ code: 'PACKAGE_IDENTITY_MISSING', missing: expect.arrayContaining(['applicantSponsorId', 'applicantId', 'contact']) });
+    } finally {
+      await harness.pglite.query('UPDATE regulatory_programs SET applicant_sponsor_id = $1 WHERE id = $2', [SPONSOR, RECORDED]);
+    }
+  });
+  it('refuses a caller-supplied DUNS that differs from the bound sponsor', async () => {
+    await expect(assembleSubmissionEctd({ submissionId: 1, organizationId: ORG, userId: USER,
+      sequenceNumber: '0000', applicantId: '999999999' })).rejects.toThrow(/does not match the recorded sponsor/);
+  });
+  it('refuses incomplete contact facts instead of producing a placeholder', async () => {
+    await harness.pglite.query('UPDATE ind_sponsors SET contact_email = NULL WHERE id = $1', [SPONSOR]);
+    try {
+      const refused = await exportOf(1).catch((e) => e);
+      expect(refused).toMatchObject({ code: 'PACKAGE_IDENTITY_MISSING', missing: ['contact.email'] });
+    } finally {
+      await harness.pglite.query("UPDATE ind_sponsors SET contact_email = 'ra@example.test' WHERE id = $1", [SPONSOR]);
+    }
+  });
+  it('keeps telephone vocabulary and agency DTD qualification gaps visible', async () => {
+    const result = await exportOf(1);
+    const xml = await regionalOf(result.buffer);
+    expect(xml).not.toContain('telephone-number-type=');
+    // This integration fills recorded facts; it does not invent agency codes.
+    expect(xml).toContain('<applicant-contacts>');
+  });
+});
+
+
+describe('assembly returns the exact supplied identity capture', () => {
+  it('ships the capture by value even when the caller later mutates its input object', async () => {
+    const identity = await readRecordedPackageIdentity(harness.pglite, ORG, RECORDED);
+    const snapshot = recordedPackageIdentitySnapshot(identity);
+    const assembling = assembleSequence({ sequenceId: 11, organizationId: ORG, userId: USER,
+      applicationId: '000512', sponsorId: '123456789', sponsorName: 'Concept2Cure Therapeutics',
+      contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: snapshot });
+    snapshot.identity.contact.email = 'changed-after-capture@example.test';
+    const result = await assembling;
+    try {
+      expect(result.recordedPackageIdentity?.identity.contact.email).toBe('ra@example.test');
+      const xml = await regionalOf(await (await import('node:fs/promises')).readFile(result.bundle.path));
+      expect(xml).toContain('<email>ra@example.test</email>');
+      expect(xml).not.toContain('changed-after-capture');
+    } finally { await result.cleanup(); }
+  });
+  it('refuses packaging inputs that disagree with the claimed FDA identity', async () => {
+    const identity = await readRecordedPackageIdentity(harness.pglite, ORG, RECORDED);
+    await expect(assembleSequence({ sequenceId: 11, organizationId: ORG, userId: USER,
+      applicationId: '000512', sponsorId: '999999999', sponsorName: 'Concept2Cure Therapeutics',
+      contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity),
+    })).rejects.toThrow(/do not match the captured recorded applicant identity/);
+  });
+});
+
+
+describe('non-FDA identifiers retain their regional meaning', () => {
+  it('does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier', async () => {
+    await harness.pglite.query("UPDATE ectd_sequences SET region = 'ema' WHERE id = 11");
+    try {
+      for (const applicantId of [undefined, 'EMA-ORG-42']) {
+        const result = await assembleSubmissionEctd({ submissionId: 1, organizationId: ORG, userId: USER,
+          sequenceNumber: '0000', ...(applicantId === undefined ? {} : { applicantId }) });
+        const zip = await JSZip.loadAsync(result.buffer);
+        const xml = await zip.file('m1/eu/eu-regional.xml')!.async('string');
+        expect(xml).toContain(`<id>${applicantId ?? ''}</id>`);
+        expect(xml).not.toContain('<id>123456789</id>');
+        expect(xml).not.toContain('UNASSIGNED-ORG-');
+        expect(xml).not.toContain('<applicant-contacts>');
+      }
+    } finally { await harness.pglite.query("UPDATE ectd_sequences SET region = 'fda' WHERE id = 11"); }
   });
 });

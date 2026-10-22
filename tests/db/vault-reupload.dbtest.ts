@@ -22,9 +22,12 @@ import request from 'supertest';
 import { Pool } from 'pg';
 import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
+import { nativeCatalogRunId } from './catalog-native-fixture';
 
-const PROBE_PREFIX = 'dbtest-vr05 ';
-const CODE = 'DBTEST-VR05-DOC';
+const RUN = nativeCatalogRunId();
+const PROBE_PREFIX = `dbtest-vr05-${RUN} `;
+const CODE = `DBTEST-VR05-DOC-${RUN}`;
 
 let owner: Pool;
 let orgId: number;
@@ -57,45 +60,20 @@ async function buildApp(): Promise<express.Express> {
   return a;
 }
 
-async function cleanup(): Promise<void> {
-  // audit_logs is append-only; the probe rows go as the owner with the DELETE
-  // trigger disabled for this transaction only (as vault-ingest.dbtest.ts does).
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action IN ('vault.document.ingest', 'vault.document.reupload')
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
-}
-
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-vr05-tenant'],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id`,
+    [`${PROBE_PREFIX}tenant`, `dbtest-vr05-${RUN}-tenant`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String((await owner.query('SELECT uuid FROM organizations WHERE id = $1', [orgId])).rows[0].uuid);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-vr05@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+    [`dbtest-vr05-${RUN}@example.test`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
        (name, code, organization_id, program_type, product_type, primary_agency, product_name)
@@ -103,12 +81,15 @@ beforeAll(async () => {
     [`${PROBE_PREFIX}device program`, 'DBTEST-VR05-A', orgId, 'AeroFlow AF-1000'],
   );
   programId = String(prog.rows[0].id);
+  await seedVaultFixtureParent(owner, { orgId, orgUuid, programId }, { userId, namespace: `${PROBE_PREFIX}parent` });
+  await assertVaultFixtureRuntime({ orgId, orgUuid, programId });
   app = await buildApp();
 });
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
+  // Keep this invocation's source bytes, records and append-only history.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 const upload = (fields: Record<string, string>) => {

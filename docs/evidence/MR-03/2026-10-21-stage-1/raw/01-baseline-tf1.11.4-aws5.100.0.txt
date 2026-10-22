@@ -1,0 +1,9 @@
+terraform/bootstrap                  Success! The configuration is valid. 
+terraform/environments/production    Success! The configuration is valid. 
+terraform/environments/staging       Success! The configuration is valid. 
+terraform/stack                      Success! 60 passed, 0 failed. 
+terraform/modules/alb                Success! 4 passed, 0 failed. 
+terraform/modules/cloudfront         Success! 9 passed, 0 failed. 
+terraform/modules/compliance-evidence Success! 5 passed, 0 failed. 
+terraform/modules/github-deploy-roles Success! 6 passed, 0 failed. 
+terraform/modules/vpc-secure         Success! 2 passed, 0 failed. 

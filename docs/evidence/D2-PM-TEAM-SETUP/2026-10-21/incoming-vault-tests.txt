@@ -1,0 +1,2059 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project
+{
+  "timestamp": "2026-10-21T01:39:30.553Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d1a550cc-5ad4-4936-81ae-62c7fc021ddb",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row
+{
+  "timestamp": "2026-10-21T01:39:30.562Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "61380da1-02df-4d94-9544-8cc91622149e",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > canonical admission ownership is based on the returned row UUID > mints an appended INSERT UUID and confirms only the candidate row
+{
+  "timestamp": "2026-10-21T01:39:30.565Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3a7be40e-feec-4aee-b241-f0a18257f165",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > canonical admission ownership is based on the returned row UUID > does not claim creation when ON CONFLICT returns a winner after an empty pre-read
+{
+  "timestamp": "2026-10-21T01:39:30.568Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "already-recorded-winner",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > canonical admission ownership is based on the returned row UUID > does not claim creation when ON CONFLICT returns a winner after an empty pre-read
+{
+  "timestamp": "2026-10-21T01:39:30.568Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+{
+  "timestamp": "2026-10-21T01:39:30.572Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault file persistence failed — refusing to record the document",
+  "context": {
+    "reason": "bucket unreachable",
+    "contentHash": "f3c9d586682936c8987ce11239d2d886f1b9710840ddcf4d36211f4e6a3d3398"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > uses the explicit preview executor and actual BEGIN client before any child insert
+{
+  "timestamp": "2026-10-21T01:39:30.593Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "bce61bd5-c30d-4ad9-99b0-bcc52a3a2296",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > uses a fresh member grant even when the old session still says viewer
+{
+  "timestamp": "2026-10-21T01:39:30.599Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6a9d4171-c8db-4fa3-814a-c7a08cedf2c6",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > retains a named source 403 refusal on the actual writer and removes unrecorded bytes
+{
+  "timestamp": "2026-10-21T01:39:30.608Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > retains a named source 409 refusal on the actual writer and removes unrecorded bytes
+{
+  "timestamp": "2026-10-21T01:39:30.617Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > retains a named source 503 refusal on the actual writer and removes unrecorded bytes
+{
+  "timestamp": "2026-10-21T01:39:30.621Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed
+{
+  "timestamp": "2026-10-21T01:39:30.624Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-21T01:39:30.627Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-21T01:39:30.629Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed
+{
+  "timestamp": "2026-10-21T01:39:30.632Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-21T01:39:30.636Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-21T01:39:30.637Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates
+{
+  "timestamp": "2026-10-21T01:39:30.640Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes
+{
+  "timestamp": "2026-10-21T01:39:30.644Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "40d5b65a-fd3e-4f83-9cbd-fce6e4565e4c",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 14ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 4ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > canonical admission ownership is based on the returned row UUID > mints an appended INSERT UUID and confirms only the candidate row 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > canonical admission ownership is based on the returned row UUID > does not claim creation when ON CONFLICT returns a winner after an empty pre-read 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > a viewer: 403, nothing stored, nothing written 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > missing current membership refuses despite the old member session 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 4ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > uses the explicit preview executor and actual BEGIN client before any child insert 7ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > uses a fresh member grant even when the old session still says viewer 6ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > does not store bytes when source preview observes a current writer downgrade 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > retains a named source 403 refusal on the actual writer and removes unrecorded bytes 8ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > retains a named source 409 refusal on the actual writer and removes unrecorded bytes 8ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > source and current actor checks use the admission executor > retains a named source 503 refusal on the actual writer and removes unrecorded bytes 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 4ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 5ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 5ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 4ms
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-21T01:39:30.646Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-21T01:39:30.646Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal
+{
+  "timestamp": "2026-10-21T01:39:30.650Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7,
+    "err": "bucket unreachable"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-10-21T01:39:30.651Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest transaction outcome is unconfirmed; stored bytes retained",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started
+{
+  "timestamp": "2026-10-21T01:39:30.654Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0934afaf-1764-419e-97e8-4d0a548e2ba9",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6)
+{
+  "timestamp": "2026-10-21T01:39:30.656Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "87fc89f5-e1a3-47bc-9424-74a55d3f2664",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names the current version at that code, so the screen can offer a new version of it
+{
+  "timestamp": "2026-10-21T01:39:30.662Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names no document when none holds the code, and the refusal is otherwise unchanged
+{
+  "timestamp": "2026-10-21T01:39:30.665Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a check-in keeps the document it adds to: its code and filing, and records the title it is given (QA-2026-10-08) > the new version takes the head's code, and records the title it is given, so a retitled version shows the change
+{
+  "timestamp": "2026-10-21T01:39:30.667Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-2",
+    "code": "Protocol-Stability.pdf",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a check-in keeps the document it adds to: its code and filing, and records the title it is given (QA-2026-10-08) > the new version takes the head's code, and records the title it is given, so a retitled version shows the change
+{
+  "timestamp": "2026-10-21T01:39:30.668Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6) 4ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names the current version at that code, so the screen can offer a new version of it 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names no document when none holds the code, and the refusal is otherwise unchanged 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a check-in keeps the document it adds to: its code and filing, and records the title it is given (QA-2026-10-08) > the new version takes the head's code, and records the title it is given, so a retitled version shows the change 3ms
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:39:33.025Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:39:47.836Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:39:47.841Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:39:47.842Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a new row once and retains the original row on an ordinary same-byte re-upload
+{
+  "timestamp": "2026-10-21T01:39:49.247Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "identity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a new row once and retains the original row on an ordinary same-byte re-upload
+{
+  "timestamp": "2026-10-21T01:39:49.253Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a new row once and retains the original row on an ordinary same-byte re-upload
+{
+  "timestamp": "2026-10-21T01:39:49.291Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "99f2df54-b6b0-4ae7-a3dc-1b6a375204be",
+    "code": "a0a291fe-c554-4aba-ac20-cc7d889ec7e2",
+    "type": "OTHER",
+    "size": 45,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a new row once and retains the original row on an ordinary same-byte re-upload
+{
+  "timestamp": "2026-10-21T01:39:49.299Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "identity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a new row once and retains the original row on an ordinary same-byte re-upload
+{
+  "timestamp": "2026-10-21T01:39:49.305Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a new row once and retains the original row on an ordinary same-byte re-upload
+{
+  "timestamp": "2026-10-21T01:39:49.318Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "99f2df54-b6b0-4ae7-a3dc-1b6a375204be",
+    "code": "a0a291fe-c554-4aba-ac20-cc7d889ec7e2",
+    "type": "OTHER",
+    "size": 45,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost COMMIT acknowledgement
+{
+  "timestamp": "2026-10-21T01:39:49.329Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "identity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost COMMIT acknowledgement
+{
+  "timestamp": "2026-10-21T01:39:49.337Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost COMMIT acknowledgement
+{
+  "timestamp": "2026-10-21T01:39:49.357Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest transaction outcome is unconfirmed; stored bytes retained",
+  "context": {
+    "err": "COMMIT acknowledgement lost after PostgreSQL executed it"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a new row once and retains the original row on an ordinary same-byte re-upload 89ms
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost ROLLBACK acknowledgement
+{
+  "timestamp": "2026-10-21T01:39:49.368Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "identity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost ROLLBACK acknowledgement
+{
+  "timestamp": "2026-10-21T01:39:49.373Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost ROLLBACK acknowledgement
+{
+  "timestamp": "2026-10-21T01:39:49.387Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest transaction outcome is unconfirmed; stored bytes retained",
+  "context": {
+    "err": "audit failed before commit"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a raced existing row was reused even when the pre-read missed it
+{
+  "timestamp": "2026-10-21T01:39:49.399Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "identity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a raced existing row was reused even when the pre-read missed it
+{
+  "timestamp": "2026-10-21T01:39:49.404Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a raced existing row was reused even when the pre-read missed it
+{
+  "timestamp": "2026-10-21T01:39:49.416Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "39d87500-e610-4722-b12d-e34bdc8e359b",
+    "code": "b52a8a8d-4605-4cf6-9df7-9e4ab00aa2f8",
+    "type": "OTHER",
+    "size": 45,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a raced existing row was reused even when the pre-read missed it
+{
+  "timestamp": "2026-10-21T01:39:49.422Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "identity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a raced existing row was reused even when the pre-read missed it
+{
+  "timestamp": "2026-10-21T01:39:49.426Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a raced existing row was reused even when the pre-read missed it
+{
+  "timestamp": "2026-10-21T01:39:49.438Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "39d87500-e610-4722-b12d-e34bdc8e359b",
+    "code": "b52a8a8d-4605-4cf6-9df7-9e4ab00aa2f8",
+    "type": "OTHER",
+    "size": 45,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:49.572Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b7d292a-99ce-4055-bda0-051697df24aa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:49.589Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b7d292a-99ce-4055-bda0-051697df24aa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:49.604Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b7d292a-99ce-4055-bda0-051697df24aa by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost COMMIT acknowledgement 41ms
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > retains bytes and reports an unknown ingest outcome after lost ROLLBACK acknowledgement 28ms
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT > proves a raced existing row was reused even when the pre-read missed it 49ms
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:49.678Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:50.089Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Clinical_Overview_parity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:50.099Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:50.115Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "09061884-2495-4d0d-8bab-587504c33674",
+    "code": "authoring-6b7d292a-99ce-4055-bda0-051697df24aa",
+    "type": "MODULE_2",
+    "size": 4436,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:50.156Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 6b7d292a-99ce-4055-bda0-051697df24aa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-21T01:39:50.242Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > both compile to a materialized PDF leaf with nothing unresolved or unfinalized 1ms
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.104Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 35e692d5-1f3e-4ef2-92de-177058a81749 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.119Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 35e692d5-1f3e-4ef2-92de-177058a81749 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.133Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 35e692d5-1f3e-4ef2-92de-177058a81749 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > the bytes differ — by construction, not by timestamps — and every authored section body is in both 734ms
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > (a) is deterministic across compiles; (b) is the stored bytes themselves 30ms
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > PIN SEMANTICS DIFFER: the coauthor pin is the copy TEXT, the vault pin is the emitted PDF bytes 2ms
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > dispatch readiness, release (freeze/dispatch/transmit) and the transmit blocker rule give the same verdict 7ms
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > OPEN GAP: a vault leaf carries no authoring lineage into the governance manifest 0ms
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.182Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.217Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Clinical_Overview_draft.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.222Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.236Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "21ebb230-28ee-4315-8d37-944e1949230d",
+    "code": "authoring-35e692d5-1f3e-4ef2-92de-177058a81749",
+    "type": "MODULE_2",
+    "size": 3247,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.263Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 35e692d5-1f3e-4ef2-92de-177058a81749 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-21T01:39:51.283Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-21T01:39:51.355Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 754c90b8-9b35-446b-a4b7-d29ce02e1e4c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-21T01:39:51.370Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 754c90b8-9b35-446b-a4b7-d29ce02e1e4c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-21T01:39:51.385Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 754c90b8-9b35-446b-a4b7-d29ce02e1e4c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why 260ms
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-21T01:39:51.499Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.571Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7411920e-e176-4137-ab56-2940aa2b1fd7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.584Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7411920e-e176-4137-ab56-2940aa2b1fd7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.596Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7411920e-e176-4137-ab56-2940aa2b1fd7 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place 212ms
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.719Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Clinical_Overview_docx.docx",
+    "declaredMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.725Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.737Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "dcb1eb9d-1aa6-40c6-b631-d936d437e195",
+    "code": "authoring-7411920e-e176-4137-ab56-2940aa2b1fd7",
+    "type": "MODULE_2",
+    "size": 9337,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.762Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 7411920e-e176-4137-ab56-2940aa2b1fd7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-21T01:39:51.835Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17) 325ms
+ □ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today
+stdout | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:39:53.558Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:39:53.560Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:39:53.560Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > uses signing order for duplicate section indices in the rendered and retained full snapshot 146ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-21T01:39:58.790Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "06bc97ac-210e-4b06-8a1e-8e07b73d256c",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-21T01:39:58.860Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "b6e6c66c-bc4c-426d-b8dc-8c3783184dca",
+    "why": "document sections changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data 247ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission 68ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-21T01:39:58.937Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "86f15b2b-2dcc-4ca7-941f-5f7cc70d12a8",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-21T01:39:59.021Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "abb6354d-3e36-43af-9eaa-26874b75aadf",
+    "why": "document sections changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission 60ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission 77ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status title header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.068Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "262a3633-9dd7-45c9-9264-28dc10b1859d",
+    "why": "document header changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status module header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.128Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "fecb5801-cd45-4a46-9e1c-5e6bea5ec399",
+    "why": "document header changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission 87ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status title header drift before history or approval 42ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status project header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.176Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "d3770c18-e027-44aa-8331-7a6df731b0ae",
+    "why": "document header changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status version header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.251Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "51c2398f-e0f5-4923-b5f2-5ff8e54a01aa",
+    "why": "document header changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status module header drift before history or approval 64ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status project header drift before history or approval 45ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status author header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.313Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "a9cd1e62-8da3-4a1d-a0aa-0f7ed59a0690",
+    "why": "document header changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status creation timestamp header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.368Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "44928f35-64df-4d89-880b-b17124f7e082",
+    "why": "document header changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status version header drift before history or approval 74ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status author header drift before history or approval 68ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status provenance header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.430Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "dcd1526e-e467-4976-8591-1baa021eedfc",
+    "why": "document header changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status locale header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.475Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "f4dedb65-9b67-4999-9b2f-86400172be1d",
+    "why": "document header changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status creation timestamp header drift before history or approval 48ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status provenance header drift before history or approval 63ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status product header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.545Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "c65130ce-241e-4c21-a18c-8b8cb79cfaad",
+    "why": "document header changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status template header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.616Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "29eeb317-cf92-4da6-9a2f-c90cb10e569f",
+    "why": "document header changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status locale header drift before history or approval 45ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status product header drift before history or approval 72ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status governed binding header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.663Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "f6d37f9f-1435-4db1-bba2-ff2a1f0cdc04",
+    "why": "document header changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status lock timestamp header drift before history or approval
+{
+  "timestamp": "2026-10-21T01:39:59.729Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "70d5e5e8-a26b-40d7-96da-5e2ee3f63c7e",
+    "why": "document header changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status template header drift before history or approval 74ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status governed binding header drift before history or approval 41ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > refuses unchanged-status lock timestamp header drift before history or approval 69ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not manipulate a reused or unverified admission: false 46ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not manipulate a reused or unverified admission: "missing" 42ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not manipulate a reused or unverified admission: null 44ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not manipulate a reused or unverified admission: {} 61ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > reports an unknown outcome when the real compensation transaction rolls back on audit failure
+{
+  "timestamp": "2026-10-21T01:40:00.033Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "f1c099b1-04f6-4818-98a4-3ed1e3cc575c",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > reports an unknown outcome when the real compensation transaction rolls back on audit failure
+{
+  "timestamp": "2026-10-21T01:40:00.036Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault compensation failed; an admitted vault row may remain",
+  "context": {
+    "vaultDocumentId": "ed23eb89-7307-4c57-bea3-5ae059ac33bb",
+    "programId": "3d3ba766-fd66-4490-9127-a71458260592",
+    "err": "audit unavailable"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not confirm compensation for a missing row
+{
+  "timestamp": "2026-10-21T01:40:00.076Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "44fed321-129a-4df6-bcdb-77754e5e225a",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not confirm compensation for a missing row
+{
+  "timestamp": "2026-10-21T01:40:00.078Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault compensation failed; an admitted vault row may remain",
+  "context": {
+    "vaultDocumentId": "71de606c-4063-4a91-b24d-38ef11be2000",
+    "programId": "c6b0f8d1-039d-455f-b807-f87830c452cf",
+    "err": "The operation-created Vault row could not be confirmed for compensation"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not manipulate a reused or unverified admission: {"created":"true"} 42ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > reports an unknown outcome when the real compensation transaction rolls back on audit failure 69ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not confirm compensation for a different tenant
+{
+  "timestamp": "2026-10-21T01:40:00.143Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "b8231e30-682f-4008-881d-b9f7ad475fb8",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not confirm compensation for a different tenant
+{
+  "timestamp": "2026-10-21T01:40:00.145Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault compensation failed; an admitted vault row may remain",
+  "context": {
+    "vaultDocumentId": "38ead647-ccba-4786-8540-096a19702e2e",
+    "programId": "6a29ad3a-dfa9-4f5d-9035-4a8404375c19",
+    "err": "The operation-created Vault row could not be confirmed for compensation"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > retains its own committed record when the final COMMIT reply is lost
+{
+  "timestamp": "2026-10-21T01:40:00.193Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "4d259e5c-0653-4f0f-8bf9-b7483abb726a",
+    "why": "The filing recording transaction outcome is unconfirmed"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not confirm compensation for a missing row 40ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not confirm compensation for a different tenant 68ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not compensate after an unacknowledged recording rollback
+{
+  "timestamp": "2026-10-21T01:40:00.241Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed",
+  "context": {
+    "docId": "273040d5-d797-410f-845a-2056c4506500",
+    "why": "The filing recording transaction outcome is unconfirmed"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > retains its own committed record when the final COMMIT reply is lost 49ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault preserves current document and admission identity > does not compensate after an unacknowledged recording rollback 46ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault retains the saved filing agreement > records on the filed rendition that the filing holds other text, without refusing the draft 43ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault retains the saved filing agreement > says nothing on the record when the document is bound to no filing 32ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault retains the saved filing agreement > files a stable working snapshot with its canonical digest and locks sections before the final read/history 51ms
+stderr | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:40:02.779Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:40:08.039Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:40:08.042Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:40:08.042Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-21T01:40:08.455Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ad52528-45d5-49e8-8850-acc00201549c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-21T01:40:08.481Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ad52528-45d5-49e8-8850-acc00201549c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-21T01:40:08.503Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ad52528-45d5-49e8-8850-acc00201549c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-21T01:40:08.584Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "CSR_carried.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-21T01:40:08.591Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-21T01:40:08.617Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1f868c72-f3f3-41c3-8e17-6656977c151f",
+    "code": "authoring-9ad52528-45d5-49e8-8850-acc00201549c",
+    "type": "MODULE_2",
+    "size": 4620,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-21T01:40:08.662Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 9ad52528-45d5-49e8-8850-acc00201549c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:08.835Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7d35ba4d-0747-4a77-8b80-29c85124c98b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:08.852Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7d35ba4d-0747-4a77-8b80-29c85124c98b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:08.872Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7d35ba4d-0747-4a77-8b80-29c85124c98b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file 498ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:08.919Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__a_working_draft.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:08.927Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:08.945Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5d2980cb-033a-4c5c-9437-81397bfac40a",
+    "code": "authoring-7d35ba4d-0747-4a77-8b80-29c85124c98b",
+    "type": "MODULE_2",
+    "size": 4825,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:08.975Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 7d35ba4d-0747-4a77-8b80-29c85124c98b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.045Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8a341b79-80ea-46dc-86e1-5ec352269de4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.060Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8a341b79-80ea-46dc-86e1-5ec352269de4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.078Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8a341b79-80ea-46dc-86e1-5ec352269de4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed 217ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.122Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__frozen__never_approved.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.131Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.144Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c31c0516-971b-427a-b0bf-21a3f381ea72",
+    "code": "authoring-8a341b79-80ea-46dc-86e1-5ec352269de4",
+    "type": "MODULE_2",
+    "size": 4204,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.181Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 8a341b79-80ea-46dc-86e1-5ec352269de4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.257Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7ef75f0d-d0ce-4c31-ad01-c73e8e0a7a60 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.279Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7ef75f0d-d0ce-4c31-ad01-c73e8e0a7a60 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.297Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7ef75f0d-d0ce-4c31-ad01-c73e8e0a7a60 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed 205ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.339Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__approved_with_no_review.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.343Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.354Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "373622ef-40f0-40fd-952a-da45580febd0",
+    "code": "authoring-7ef75f0d-d0ce-4c31-ad01-c73e8e0a7a60",
+    "type": "MODULE_2",
+    "size": 4207,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.387Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 7ef75f0d-d0ce-4c31-ad01-c73e8e0a7a60 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.445Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f950d566-a6a3-4365-95b5-72254858397c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.458Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f950d566-a6a3-4365-95b5-72254858397c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.473Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f950d566-a6a3-4365-95b5-72254858397c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed 201ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.522Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__reviewed_after_the_approval.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.527Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.540Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "84800fde-6f6f-4f90-b575-735f41d5ea48",
+    "code": "authoring-f950d566-a6a3-4365-95b5-72254858397c",
+    "type": "MODULE_2",
+    "size": 4649,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.564Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc f950d566-a6a3-4365-95b5-72254858397c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.626Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9085129b-ab8e-48a0-8406-24fd643aa32f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.645Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9085129b-ab8e-48a0-8406-24fd643aa32f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.657Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9085129b-ab8e-48a0-8406-24fd643aa32f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed 178ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.695Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__reviewed_and_approved_by_one_person.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.699Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.711Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4ecfac14-1943-499c-ac27-e3720933d2f9",
+    "code": "authoring-9085129b-ab8e-48a0-8406-24fd643aa32f",
+    "type": "MODULE_2",
+    "size": 4657,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.737Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 9085129b-ab8e-48a0-8406-24fd643aa32f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.800Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c2f718d7-ef57-450b-8187-0ce64532e7d6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.812Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c2f718d7-ef57-450b-8187-0ce64532e7d6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.827Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c2f718d7-ef57-450b-8187-0ce64532e7d6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.864Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__approved_by_its_author.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.870Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.885Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2f815e5b-6c3b-42f7-99b7-80367c571483",
+    "code": "authoring-c2f718d7-ef57-450b-8187-0ce64532e7d6",
+    "type": "MODULE_2",
+    "size": 4647,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.920Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc c2f718d7-ef57-450b-8187-0ce64532e7d6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed 173ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:09.989Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d2ed5475-1545-495d-8b6d-a8fe8d8e8cc2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.004Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d2ed5475-1545-495d-8b6d-a8fe8d8e8cc2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.025Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d2ed5475-1545-495d-8b6d-a8fe8d8e8cc2 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed 188ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.064Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__reviewed_by_its_author.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.068Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.079Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f2a7c291-5a91-40c8-9a91-e6bc19c62e0a",
+    "code": "authoring-d2ed5475-1545-495d-8b6d-a8fe8d8e8cc2",
+    "type": "MODULE_2",
+    "size": 4647,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.100Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc d2ed5475-1545-495d-8b6d-a8fe8d8e8cc2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.163Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0a82c822-758f-4d4a-9b8a-0ceba69da793 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.177Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0a82c822-758f-4d4a-9b8a-0ceba69da793 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.188Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0a82c822-758f-4d4a-9b8a-0ceba69da793 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.228Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__a_signer_outside_the_organization.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.235Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.247Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7dbfb9e1-5742-4a08-8b04-ff25ece29e1e",
+    "code": "authoring-0a82c822-758f-4d4a-9b8a-0ceba69da793",
+    "type": "MODULE_2",
+    "size": 4656,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.278Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 0a82c822-758f-4d4a-9b8a-0ceba69da793 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed 178ms
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.331Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fce4dc6d-8440-4537-a650-104201fb0456 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.346Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fce4dc6d-8440-4537-a650-104201fb0456 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.359Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fce4dc6d-8440-4537-a650-104201fb0456 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.401Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__an_approval_of_other_content.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.406Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.420Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "20a482f4-141a-4976-87d5-dcf6fa72adaa",
+    "code": "authoring-fce4dc6d-8440-4537-a650-104201fb0456",
+    "type": "MODULE_2",
+    "size": 4787,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-21T01:40:10.446Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc fce4dc6d-8440-4537-a650-104201fb0456 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed 178ms
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed 163ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with non-UUID Vault identity for review without replay 96ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with empty Vault identity for review without replay 35ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with missing project for review without replay 25ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with another project for review without replay 18ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with non-UUID project for review without replay 24ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with missing content hash for review without replay 17ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with short content hash for review without replay 17ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with non-hex content hash for review without replay 18ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with missing format for review without replay 22ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with another requested format for review without replay 18ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with unsupported format for review without replay 17ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with explicit false success for review without replay 27ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with contradictory error envelope for review without replay 22ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds a successful HTTP answer with missing record for review without replay 18ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds lost reply through ordinary close and reopen 24ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds unreadable body through ordinary close and reopen 29ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds bodyless 204 through ordinary close and reopen 24ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds null body through ordinary close and reopen 23ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds HTTP 500 through ordinary close and reopen 19ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds outcome unknown through ordinary close and reopen 23ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > holds existing version through ordinary close and reopen 24ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > retains a definite HTTP 401 refusal and allows a deliberate retry 27ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > retains a definite HTTP 403 refusal and allows a deliberate retry 25ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > retains a definite HTTP 409 refusal and allows a deliberate retry 34ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > retains a definite HTTP 422 refusal and allows a deliberate retry 27ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > retains a definite HTTP 429 refusal and allows a deliberate retry 24ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > keeps the request project and UUID for navigation and never invents missing approval 19ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault receipt confirmation > keeps older data-envelope compatibility without inventing approval 23ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not file a retained document from another existing shell project 13ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > keeps the standalone dialog usable when no shell project is selected 20ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not toast in a context retired by the synchronous filing callback 13ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > accepts a pending result across a genuine same-account bearer refresh 17ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old result after changing document 12ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old result after changing document project 24ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old result after changing shell project 21ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old result after changing shell round trip 15ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old result after changing account 15ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old result after changing organization 14ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old result after changing logout 12ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > does not publish an old rejection after changing the source document 14ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > retires a confirmed navigation after leaving and returning to the shell project 20ms
+ ✓ client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx > File to vault current request ownership > posts once when the submit action is activated twice before the reply 13ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > calls the route with the chosen format and renders the server’s folder, hash and id 538ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the Authoring approval carried, naming who reviewed and approved, as the server reported it (FD5 (c)) 243ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the approval did not carry, with the server’s reason and what to do next 242ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > claims no approval when the server reported none 214ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > renders the server’s refusal as a refusal, with nothing claimed 190ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a 2xx without a vault record is not a success 221ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > with no program the dialog says so and offers no submit 187ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > "Open in Vault" names the filed document for the Vault to open on, and says the next step 228ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a Word copy is said to be unplaceable into a submission, not offered as the next step 205ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > an unapproved filing is told to approve first, not to place 192ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > keeps an uncertain filing held when the workbench closes and reopens the existing dialog 229ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx > carries the returned Vault UUID through Open in Vault and the existing vault_documents leaf write 512ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasFilingBinding.test.tsx > DocumentCanvas carries the filing binding into the workbench > c2c_document_id = doc_ind_33333333 reaches the workbench as read 88ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasFilingBinding.test.tsx > DocumentCanvas carries the filing binding into the workbench > c2c_document_id = null reaches the workbench as read 25ms
+
+ Test Files  8 passed (8)
+      Tests  139 passed | 1 todo (140)
+   Start at  01:39:26
+   Duration  58.83s (transform 16.54s, setup 646ms, import 27.61s, tests 26.26s, environment 2.37s)

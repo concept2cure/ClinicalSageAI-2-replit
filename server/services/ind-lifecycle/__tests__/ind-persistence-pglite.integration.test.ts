@@ -10,7 +10,7 @@
  * for this IND-table harness).
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 import type { DispatchSnapshotVerdict } from '../ind-dispatch-snapshot-service';
 
@@ -25,6 +25,7 @@ import {
   getLatestDispatchSnapshot,
 } from '../ind-dispatch-snapshot-service';
 import { createSponsor, listSponsors, getSponsor } from '../../ind-master-data/ind-master-data-service';
+import auditService from '../../auditService';
 
 let harness: IndPgliteDb;
 const ctx = { organizationId: 1, userId: 9 };
@@ -42,6 +43,9 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await harness.close();
+});
+afterEach(() => {
+  vi.mocked(auditService.logAction).mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
 });
 
 describe('master-data service against PGlite', () => {
@@ -65,6 +69,17 @@ describe('master-data service against PGlite', () => {
 });
 
 describe('dispatch-snapshot service against PGlite', () => {
+  for (const failure of ['resolved', 'thrown'] as const) {
+    it(`keeps a saved verdict visible after ${failure} supplemental audit failure`, async () => {
+      const sink = vi.mocked(auditService.logAction);
+      if (failure === 'resolved') sink.mockResolvedValue({ persisted: false, chained: false, tamperProof: false, error: 'synthetic private audit detail' });
+      else sink.mockRejectedValue(new Error('synthetic private audit detail'));
+      const saved = await createDispatchSnapshot({ submissionId: 81, sequenceId: 841, sequenceNumber: '0041', verdict: verdict(false) }, ctx);
+      expect(saved).toMatchObject({ canDispatch: false, auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' } });
+      expect(JSON.stringify(saved)).not.toContain('synthetic private audit detail');
+      expect((await listDispatchSnapshots(841, ctx)).some(row => row.id === saved.id)).toBe(true);
+    });
+  }
   it('persists a verdict and lists it newest-first', async () => {
     const blocked = await createDispatchSnapshot(
       { submissionId: 7, sequenceId: 42, sequenceNumber: '0001', verdict: verdict(false) },

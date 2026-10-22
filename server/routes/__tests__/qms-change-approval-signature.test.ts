@@ -29,6 +29,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 const H = vi.hoisted(() => ({
   query: vi.fn(),
@@ -95,7 +96,13 @@ function app(userId = SIGNER) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId, role: 'member' };
-    Object.assign(req, { dbClient: { query: (...args: unknown[]) => H.txQuery(...args) } });
+    let inTransaction = false;
+    (req as unknown as { dbClient: RequestSqlClient }).dbClient = { query: async (sql: string, params?: unknown[]) => {
+      if (/^BEGIN/.test(sql)) inTransaction = true;
+      const result = await (inTransaction ? H.txQuery : H.query)(sql, params);
+      if (/^(COMMIT|ROLLBACK)/.test(sql)) inTransaction = false;
+      return result;
+    } };
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);

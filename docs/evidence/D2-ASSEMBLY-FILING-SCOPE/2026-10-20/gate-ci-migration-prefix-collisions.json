@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-20T23:58:55.447326+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-prefix-collisions"
+  ],
+  "elapsedSeconds": 0.258,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze.json",
+  "rawOutput": "gate-ci-migration-prefix-collisions-output.txt.gz",
+  "outputSha256": "7953f2e3d93bf978aa0ab01afe8bdb54f05f06b2b7d3bd18f6951a17e726b043",
+  "stdout": "[ci:migration-prefix-collisions] OK \u2014 no NEW collisions (3 baselined collision prefix(es) tolerated)\n"
+}

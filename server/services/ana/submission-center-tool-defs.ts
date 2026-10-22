@@ -27,7 +27,10 @@ import { MDR_FACT_VOCABULARY, IVDR_FACT_VOCABULARY } from '../market-specs/devic
 export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
   name: 'compute_lifecycle_operations',
   description:
-    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on, naming that leaf by its sequence\'s backbone and its leaf ID (e.g. ../0000/index.xml#leaf-3-2-S-1-general). Two ways to supply the prior state: (a) list prior_leaves by hand, each with the leaf_id and backbone its sequence recorded, plus prior_sequence_prefix — a prior leaf listed without them gets no pointer, because a leaf is never named by its file path; or (b) give application_number + prior_sequence_number and the prior sequence\'s stored leaf manifest is loaded automatically from your organization\'s compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
+    // 2026-10-15: (b) said the prior sequence's stored manifest was loaded from the
+    // compilation history; the loader reads only filed (sent or acknowledged)
+    // sequences, folds them through the named one, and refuses one not on file.
+    'Compute the eCTD lifecycle operator (new, replace, append, delete) for each leaf of a new sequence by diffing it against the prior state. You get each leaf\'s operation plus a summary count (new, replace, append, delete, unchanged); every replace/append/delete carries an ICH modified-file pointer naming the prior leaf by its sequence\'s backbone and leaf ID (e.g. ../0000/index.xml#leaf-3-2-S-1-general). Supply the prior state either (a) as prior_leaves listed by hand, each with the leaf_id and backbone its sequence recorded, plus prior_sequence_prefix — a prior leaf listed without them gets no pointer, as a leaf is never named by its file path; or (b) as application_number + prior_sequence_number: the state on file through that sequence is loaded from your organization\'s sequences sent or acknowledged (the prefix is derived for you), and a named sequence not on file fails with PRIOR_SEQUENCE_NOT_FOUND. Nothing is written. Use it when planning a sequence, so the user sees which leaves change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -56,11 +59,11 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
       },
       application_number: {
         type: 'string',
-        description: 'When set together with prior_sequence_number (and prior_leaves is NOT given), the prior sequence\'s published leaf manifest is loaded automatically from that application\'s compilation history — you do not need to list prior leaves by hand. Scoped to your organization.',
+        description: 'When set together with prior_sequence_number (and prior_leaves is NOT given), the state on file through that sequence is loaded from this application\'s sequences sent or acknowledged — you do not need to list prior leaves by hand. Scoped to your organization.',
       },
       prior_sequence_number: {
         type: 'string',
-        description: 'The prior eCTD sequence to diff against, e.g. "0000". With application_number set (and prior_leaves omitted), the engine loads that sequence\'s stored leaves and derives the "../<seq>/" modified-file prefix automatically.',
+        description: 'The prior eCTD sequence to diff against, e.g. "0000". With application_number set (and prior_leaves omitted), the engine loads the state on file through that sequence and derives the "../<seq>/" modified-file prefix; a sequence not on file fails with PRIOR_SEQUENCE_NOT_FOUND.',
       },
       desired_leaves: {
         type: 'array',
@@ -591,8 +594,8 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   name: 'get_document_template',
   description:
     'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
-    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. ' +
-    '`offset`/`limit` page results. Editor UUIDs read the same outline, exact filing scope and source checks. ' +
+    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. ' +
+    '`offset`/`limit` page results. Editor UUIDs retain exact outline, scope and source checks. ' +
     '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
     '`discussed_topics` only prevents re-asking. ' +
     "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +
@@ -603,7 +606,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
     type: 'object',
     properties: {
       template_id: { type: 'string', description: "An exact editor template UUID or component id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'. Follow all UUID reference pages, including preparation JSON parts when requested." },
-      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, EU_MAA, CA_NDS or JP_MKT_APPROVAL. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
+      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, US_510K, EU_IVDR, CA_MDL, JP_SHONIN or JP_TODOKEDE. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
       market: { type: 'string', enum: ['US', 'EU', 'CA', 'JP'], description: 'Confirmed target jurisdiction for preparation; do not infer from the conversation language.' },
       prepare: { type: 'boolean', description: 'Include a regional route and up to 3 prioritized client questions. This creates an inquiry brief, not a readiness or evidence-sufficiency verdict.' },
       discussed_topics: {
@@ -611,7 +614,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
         description: 'Topics already discussed in this conversation, to avoid asking them again. These are conversational markers only; they never establish that source data are supplied, verified or sufficient.',
         items: { type: 'string', enum: ['scope', 'source_versions', 'data_cutoff', 'statistical_results', 'estimands', 'safety', 'quality', 'local_requirements', 'japan_evidence', 'agency_commitments', 'review_owners'] },
       },
-      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing biotech registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
+      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing medicinal, device and diagnostics registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
       offset: { type: 'integer', minimum: 0, default: 0, description: 'Zero-based catalog/section offset. Continue with nextOffset when one is returned.' },
       limit: { type: 'integer', minimum: 1, maximum: 30, default: 12, description: 'Maximum catalog entries or template sections to return in this page.' },
       family: {
@@ -793,6 +796,10 @@ export const BUILD_DEVICE_BLUEPRINT: AnaTool = {
       classification: { type: 'object', description: 'Optional { framework: mdr|ivdr|fda, facts: {...} } to classify the device.' },
       contact: { type: 'object', description: 'Optional { nature, duration } — when present, biocompatibility applies.' },
       software: { type: 'object', description: 'Optional { applicable, canContributeToDeathOrSeriousInjury?, canContributeToNonSeriousInjury?, presentDeliverableIds? }.' },
+      // 2026-10-15: the handler relays these two (blueprintDeviceFacts) but the
+      // model was not told they exist, so a powered or sterile device read "not applicable".
+      electrical: { type: 'object', description: 'Optional { electricallyPowered?, hasAlarms?, closedLoopControl?, homeUse?, emsUse?, hasParticularStandard? } (true/false); when electricallyPowered, IEC 60601 applies.' },
+      sterilization: { type: 'object', description: 'Optional { sterile?, method? } — method ∈ eo|radiation|steam|dry_heat|vh2o2|aseptic|unknown; when sterile, ISO 11135/11137/17665 applies.' },
       present: { type: 'object', description: 'Optional { cerSectionIds?, perSectionIds?, rmfSectionIds? } already authored, for gap assessment.' },
       equivalence_claimed: { type: 'boolean', description: 'CER equivalence claim (mdr_td).' },
     },

@@ -38,12 +38,16 @@ const client = {
   }),
   release: vi.fn(),
 };
+const pinnedSigningClient = { query: client.query, release: () => undefined };
+const pinnedSigningPool = { query: client.query, connect: async () => pinnedSigningClient };
 
 vi.mock('../../db', () => ({
   pool: { connect: vi.fn(async () => client), query: vi.fn(async () => ({ rows: [] })) },
   db: {},
 }));
-vi.mock('../../db/requestDb', () => ({ requestPgClient: () => client }));
+vi.mock('../../db/requestDb', () => ({ requestPgClient: () => client,
+  requestConnectable: () => pinnedSigningPool,
+}));
 // Every case here signs as the same user; the attempt limit has its own suite
 // (server/middleware/__tests__/signing-attempt-limiter.test.ts).
 vi.mock('../../middleware/signing-attempt-limiter', () => ({
@@ -167,7 +171,8 @@ function expectCommittedAuthorshipEvidence(body: unknown) {
   expect(ledger.payload.meaning).toBe('authorship');
   expect(ledger.reason).toBe(REASON);
   const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
-  expect(sig[0]).toBe(client); // the SAME transaction client
+  expect(sig[0]).toBe(pinnedSigningClient); // the SAME pinned request transaction client
+  expect(recordGovernedAction.mock.calls[0][0]).toBe(pinnedSigningClient);
   expect(sig[1]).toMatchObject({
     target: 'protocol-document:5',
     actionId: 'act_1',
@@ -277,11 +282,11 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
       'SIGNATURE:protocol-document:5',
       'COMMIT',
     ]);
-    expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH);
-    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(client, 2, 5);
+    expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH, expect.objectContaining({ loadPasswordHash: expect.any(Function), verifyMfaToken: expect.any(Function) }));
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(pinnedSigningClient, 2, 5);
     // An authorship signature is checked against the recorded authors, on the
     // signing transaction's own client.
-    expect(resolveTargetAuthors).toHaveBeenCalledWith('protocol-document:5', 2, client);
+    expect(resolveTargetAuthors).toHaveBeenCalledWith('protocol-document:5', 2, pinnedSigningClient);
     expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
     expectCommittedAuthorshipEvidence(r.body);
   });
@@ -303,8 +308,8 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
 
   it('an approval is checked for independence on the signing client', async () => {
     await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
-    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(client, 2, 5);
-    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client });
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(pinnedSigningClient, 2, 5);
+    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client: pinnedSigningClient });
     expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'FINALIZE', 'LEDGER:sign:protocol-document:5', 'SIGNATURE:protocol-document:5', 'COMMIT']);
   });
 
@@ -323,13 +328,13 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
     expect(r.status).toBe(403);
     expect(r.body.error.code).toBe('SEPARATION_OF_DUTIES');
-    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(client, 2, 5);
-    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client });
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(pinnedSigningClient, 2, 5);
+    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client: pinnedSigningClient });
     expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'ROLLBACK']);
     expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
     expect(persistGovernedSignSignature).not.toHaveBeenCalled();
-    expect(client.release).toHaveBeenCalledOnce();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
   });
 
   it.each([
@@ -346,7 +351,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
     expect(persistGovernedSignSignature).not.toHaveBeenCalled();
-    expect(client.release).toHaveBeenCalledOnce();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
   });
 
   it('an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned', async () => {
@@ -368,7 +373,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     expect(r.status).toBe(500);
     expect(h.log).toContain('ROLLBACK');
     expect(h.log).not.toContain('COMMIT');
-    expect(client.release).toHaveBeenCalled();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
   });
 });
 
@@ -440,7 +445,7 @@ describe('the protocol signing ceremony checks signing authority before the pass
       code: 'ESIGNATURE_NO_AUTHORITY',
       message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
     });
-    expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2);
+    expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2, pinnedSigningPool);
     expect(verifyReauth).not.toHaveBeenCalled();
     expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(h.log).toEqual([]);
@@ -481,15 +486,15 @@ describe('current transaction authority after protocol reservation', () => {
     const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
     expect(r.status).toBe(403);
     expect(r.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
-    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2);
-    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, client);
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2, pinnedSigningPool);
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, pinnedSigningClient);
     expect(resolveSignerOrgRole.mock.invocationCallOrder[1]).toBeGreaterThan(lockProtocolForSignatureTx.mock.invocationCallOrder[0]);
     expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
     expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
     expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
     expect(persistGovernedSignSignature).not.toHaveBeenCalled();
-    expect(client.release).toHaveBeenCalledOnce();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
   });
 
   it('returns typed unavailable authority when the reserved transaction role cannot be verified', async () => {

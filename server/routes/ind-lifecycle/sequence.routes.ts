@@ -147,7 +147,7 @@ router.post('/sequence/:seqId/dispatch-gate/snapshot', limiter, requireRole(AUTH
       { submissionId: sequence.submissionId, sequenceId: seqId, sequenceNumber: sequence.sequenceNumber, verdict },
       ctx,
     );
-    res.status(201).json({ snapshot, ...result });
+    res.status(201).json({ snapshot, ...result, meta: { auditTrail: snapshot.auditTrail } });
   } catch (err) {
     fail(res, err);
   }
@@ -197,7 +197,7 @@ router.get('/sequence/:currentId/diff/pdf', limiter, requireRole(AUTHOR), async 
   }
   try {
     const [prior, current] = await Promise.all([sequenceForDiff(priorId, ctx), sequenceForDiff(currentId, ctx)]);
-    sendPdf(res, 'ind-sequence-diff.pdf', await renderSequenceDiffPdf(diffSequences(prior, current)));
+    await sendPdf(req, res, 'ind-sequence-diff.pdf', await renderSequenceDiffPdf(diffSequences(prior, current)));
   } catch (err) {
     fail(res, err);
   }
@@ -223,7 +223,7 @@ router.get('/sequence/:seqId/manifest/pdf', limiter, requireRole(AUTHOR), async 
   const seqId = seqIdOf(req.params.seqId);
   if (!seqId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
   try {
-    sendPdf(res, 'ind-package-manifest.pdf', await renderPackageManifestPdf(await manifestForSequence(seqId, ctx)));
+    await sendPdf(req, res, 'ind-package-manifest.pdf', await renderPackageManifestPdf(await manifestForSequence(seqId, ctx)));
   } catch (err) {
     fail(res, err);
   }

@@ -1,119 +1,59 @@
-# FDA eSTAR templates (drop-point)
+# Official FDA eSTAR templates
 
-This directory holds the **official FDA eSTAR interactive PDF templates**. They
-are distributed by FDA and, following the same vendoring policy as
-`assets/ectd-dtd/`, are **committed here verbatim** and pinned by
-`checksums.txt` — a template swap without re-verification would silently change
-what gets written into a submission. The code in
-`server/services/pathway-engines/estar/estar-template-registry.ts` reads the
-templates from here (or from `ESTAR_TEMPLATE_DIR`) and fails closed — when a
-required template is missing and `ESTAR_REQUIRE_TEMPLATE=true` in production —
-so the platform never claims a "submittable eSTAR" it cannot actually produce.
+FDA's interactive PDFs are vendored here verbatim under the existing public
+agency-artifact policy and pinned by `checksums.txt`. The canonical registry
+`server/services/pathway-engines/estar/estar-template-registry.ts` reads these
+files or `ESTAR_TEMPLATE_DIR`; a required missing, altered or unpinned form
+cannot become an official submission artifact.
 
-This mirrors the eCTD DTD drop-point pattern in `assets/ectd-dtd/`.
+The FDA eSTAR Program page was read verbatim on **2026-10-14**:
+<https://www.fda.gov/medical-devices/how-study-and-market-your-device/estar-program>.
+The current-version table names nIVD/IVD **7.1** and PreSTAR **3.1**, including
+the OMB numbers below. It does not publish retirement dates for 7.0/3.0; no dates
+were inferred. The PDFs themselves identify **2026-09-21** as their version date.
+Full source, response headers, download provenance and field-map checks are filed
+under `docs/evidence/AUDIT-REMEDIATION/2026-10-14/agency-assets/`.
 
-## Why this matters
-
-CDRH/CBER ingests the **official eSTAR PDF** (a specific interactive AcroForm the
-manufacturer downloads and fills), not a ZIP of separately-rendered section
-PDFs. To produce a real submission the platform fills the official template —
-which requires the template file to be present here.
-
-## The three eSTAR template families
-
-FDA distributes eSTAR as three interactive-PDF families. The authoritative
-version/OMB/retirement facts live in
-`server/services/pathway-engines/estar/estar-versions.ts` (`ESTAR_VERSIONS`), and
-the full list of what each can carry lives in `estar-catalog.ts`:
-
-| Family | Current version | Vendored here | Used for | OMB numbers |
+| File | Family/version | Logical descriptors | OMB numbers | Direct FDA source |
 |---|---|---|---|---|
-| Non-In Vitro Diagnostic (nIVD) eSTAR | **7.1** (7.0 superseded, retirement date unread; 6.2 retired 2026-08-03) | 7.0 | 510(k), De Novo, **PMA** — non-IVD devices | 0910-0120, 0910-0844, 0910-0231 |
-| In Vitro Diagnostic (IVD) eSTAR | **7.1** (7.0 superseded, retirement date unread; 6.2 retired 2026-08-03) | 7.0 | 510(k), De Novo, **PMA** — IVD devices | 0910-0120, 0910-0844, 0910-0231 |
-| Early Submission Requests eSTAR (PreSTAR) | **3.1** (3.0 superseded, retirement date unread; 2.2 retired 2026-08-03) | not vendored | Q-Submissions, IDEs, 513(g) requests | 0910-0756, 0910-0078, 0910-0511 |
+| `eSTAR-510k-non-ivd.pdf` | nIVD 7.1 | 510(k), De Novo, PMA × device | 0910-0120, 0910-0844, 0910-0231 | <https://www.fda.gov/media/192777/download?attachment> |
+| `eSTAR-510k-ivd.pdf` | IVD 7.1 | 510(k), De Novo, PMA × IVD | 0910-0120, 0910-0844, 0910-0231 | <https://www.fda.gov/media/192778/download?attachment> |
+| `PreSTAR-q-sub.pdf` | PreSTAR 3.1 | Q-Sub, IDE, 513(g) × PreSTAR | 0910-0756, 0910-0078, 0910-0511 | <https://www.fda.gov/media/192779/download?attachment> |
 
-The "Current version" column was last checked on 2026-10-05, from fda.gov
-search extracts of the eSTAR Program page (fda.gov is not fetchable from the
-build environment). It is labelled `recall` in `ESTAR_VERSIONS` until someone
-reads the page verbatim and records the 7.0 / 3.0 retirement date. The OMB
-numbers for 7.1 / 3.1 are carried forward from 7.0 / 3.0 and were not re-read.
+There is one physical FDA PDF per family. The Q-Sub-named file is also the
+IDE/513(g) form, just as the 510(k)-named files also carry De Novo/PMA. The
+pathway is selected inside the official form; this platform does not invent
+separate FDA forms or set that declaration on the applicant's behalf.
 
-**The vendored files are 7.0; FDA's current version is 7.1.** Until the 7.1
-PDFs are vendored, filing readiness (`assessEstarFilingReadiness`) reports
-"Official template on file is eSTAR v7.0; FDA's current version is v7.1." as a
-blocker and `canFileNow` stays false. That is the honest state, not a bug.
-Re-vendoring is an ops step (see **Versioning** below): new PDFs,
-`checksums.txt`, the manifest `version`s, and a re-enumeration of the field map
-in `estar-field-map.ts`, as one reviewed change. What changed between 7.0 and
-7.1 has not been read.
+All existing marketing field-map primary and secondary SOM paths were
+re-enumerated against 7.1 and exist in both the template and datasets skeleton.
+The form-script behaviour suite also passes against the new exact bytes.
+**PreSTAR administrative preparation is available:** Q-Sub, IDE and 513(g)
+share four verified applicant/correspondent company/email mappings. The canonical
+pipeline also preserves the actual PreSTAR `***Begin***` manifest seed and can
+embed a cover letter under its measured chapter without changing FDA's form or
+scripts. Prepared files are labeled as administrative prefills and retained under
+distinct document codes; the filing picker excludes them, and signed filing
+explicitly refuses their document codes. Request-specific questions/declarations,
+the remaining attachment routing and an Adobe-rendered completed request are
+not qualified. Filing readiness stays blocked, even with complete content and
+registration. Evidence: `prestar-prefill-verification.md` in the audit-remediation
+directory above. No agency acceptance is inferred from these local checks.
 
-A retired eSTAR version is still accepted by FDA but may draw information
-requests about the version delta; the current version is recommended for
-immediate use.
+These are dynamic Adobe LiveCycle XFA forms with an empty AcroForm `/Fields`
+array. `fillXfaDatasets` writes the datasets packet by an incremental PDF update
+that preserves the official original. FDA directs applicants to download the
+form and use a compatible PDF editor; it does not open as an interactive form
+in a browser. A filled administrative field alone is not proof of a completed
+submission or transport qualification.
 
-## What to drop in
+Verify verbatim acquisition with `sha256sum -c checksums.txt` from this directory.
+When FDA republishes a template, replace its bytes, update the checksum and
+manifest version, record official source/date/OMB facts, and re-enumerate every
+primary/secondary map path plus form behaviour before enabling production fills.
+No version may be bumped solely to clear a readiness blocker.
 
-Download the current eSTAR templates from FDA and place them here, matching the
-filenames in `ESTAR_TEMPLATE_MANIFEST` (update the manifest filenames + pinned
-`version` if FDA's distribution names differ). Several logical descriptors
-resolve to the **same** physical FDA PDF: per the family table above FDA ships
-ONE nIVD eSTAR PDF and ONE IVD eSTAR PDF that each carry 510(k), De Novo and PMA
-— the pathway is selected inside the form (`root.ApplicationType.USA.ATRadioButton110`),
-not by downloading a different file. So the De Novo and PMA descriptors point at
-the 510(k)-named files below; only their field maps differ (the 510(k) Summary
-page and predicate fields are 510(k)-only):
-
-| Pathway | Variant | Family | Descriptor id | Expected filename |
-|---|---|---|---|---|
-| 510(k) | Device (non-IVD) | nIVD | `510k-device` | `eSTAR-510k-non-ivd.pdf` |
-| 510(k) | IVD | IVD | `510k-ivd` | `eSTAR-510k-ivd.pdf` |
-| De Novo | Device (non-IVD) | nIVD | `de_novo-device` | `eSTAR-510k-non-ivd.pdf` (same file as 510(k)) |
-| De Novo | IVD | IVD | `de_novo-ivd` | `eSTAR-510k-ivd.pdf` (same file as 510(k)) |
-| PMA | Device (non-IVD) | nIVD | `pma-device` | `eSTAR-510k-non-ivd.pdf` (same file as 510(k)) |
-| PMA | IVD | IVD | `pma-ivd` | `eSTAR-510k-ivd.pdf` (same file as 510(k)) |
-| Q-Submission | PreSTAR | PreSTAR | `q_sub-prestar` | `PreSTAR-q-sub.pdf` (not vendored) |
-| IDE | PreSTAR | PreSTAR | `ide-prestar` | `PreSTAR-ide.pdf` (not vendored) |
-| 513(g) | PreSTAR | PreSTAR | `513g-prestar` | `PreSTAR-513g.pdf` (not vendored) |
-
-FDA eSTAR program page: <https://www.fda.gov/medical-devices/how-study-and-market-your-device/estar-program>
-
-## Currently vendored (7.0 — superseded by FDA's 7.1)
-
-| File | Family | Version | FDA effective date | Descriptors filled from it | SHA-256 |
-|---|---|---|---|---|---|
-| `eSTAR-510k-non-ivd.pdf` | nIVD | **7.0** | 2026-06-01 | `510k-device`, `de_novo-device`, `pma-device` | `73de2f1e…0edb92` |
-| `eSTAR-510k-ivd.pdf` | IVD | **7.0** | 2026-06-01 | `510k-ivd`, `de_novo-ivd`, `pma-ivd` | `90d93649…c1594f` |
-
-Both are pinned in `ESTAR_TEMPLATE_MANIFEST` (`version: '7.0'` on all six marketing
-descriptors) and their versions are read from the templates' own XFA `template`
-packet, not from the FDA page. The De Novo and PMA descriptors share these files
-because FDA distributes one PDF per family that carries all three marketing
-pathways; each descriptor keeps its own field map in `estar-field-map.ts`. The
-PreSTAR2 template is not vendored, so its three descriptors stay `'unset'`.
-
-**These are Adobe LiveCycle DYNAMIC XFA forms.** Their AcroForm `/Fields` array is
-EMPTY and `/NeedsRendering true` is set — `listAcroFields` returns 0 fields, and no
-`acroField` name can ever match. They are filled by writing the XFA `datasets`
-packet through a PDF incremental update (`fillXfaDatasets`), which preserves the
-original bytes so the output stays the real FDA form. See
-`server/services/forms/fill-official-pdf.ts`.
-
-## Versioning
-
-FDA revises eSTAR roughly twice a year. A version bump is a tracked **data** change,
-never a code change:
-1. Replace the PDF(s) here.
-2. Update the matching `version` in `ESTAR_TEMPLATE_MANIFEST` and, for a new FDA
-   program version/retirement/OMB change, `ESTAR_VERSIONS` in `estar-versions.ts`.
-3. Re-enumerate with `listXfaFields` and re-validate the field map
-   (`canonical key → XFA SOM path`) in `estar-field-map.ts` against the new
-   template before enabling it for production fills. Every mapped path must be
-   declared by the template AND present in its `datasets` skeleton; the fill
-   engine skips+warns on anything else rather than inventing a data node.
-4. Update `checksums.txt` with the new SHA-256s.
-
-## Environment flags
-
-- `ESTAR_TEMPLATE_DIR` — override this directory.
-- `ESTAR_REQUIRE_TEMPLATE=true` — fail closed on missing templates for
-  production builds (advisory/report-only otherwise, like the DTD and PDF/A gates).
+- `ESTAR_TEMPLATE_DIR` overrides this drop point.
+- `ESTAR_REQUIRE_TEMPLATE=true` enforces missing-template refusal for production.
+- Filing readiness independently checks template currency, populated maps,
+  governed content, client registration, and other submission prerequisites.

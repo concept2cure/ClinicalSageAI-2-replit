@@ -1,0 +1,9 @@
+{
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH npm run --silent ci:typecheck:no-regression -- --incremental",
+  "qualificationBase": "accf8c6ba",
+  "exitCode": 0,
+  "errors": 0,
+  "qualification": "Compiler began before final two-identifier same-client assembly guard refinement and single-slot fixture constraint. Final normal pre-push hook reruns the official compiler on final frozen bytes.",
+  "rawSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+  "rawOutput": "[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)\n[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)\n[ci:typecheck-no-regression] OK \u2014 error count 0 matches baseline.\n"
+}

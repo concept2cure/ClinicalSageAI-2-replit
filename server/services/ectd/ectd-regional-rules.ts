@@ -16,6 +16,8 @@
 
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
 import type { CanonicalRegion } from '../../../shared/regulatory/region-identity.js';
+import { FILENAME_PATTERN } from '../../../shared/regulatory/ectd-leaf-rules';
+export { FILENAME_PATTERN } from '../../../shared/regulatory/ectd-leaf-rules';
 
 /**
  * The twelve jurisdictions, aliased to the canonical type rather than restated.
@@ -77,6 +79,8 @@ export interface RegionalLeafRef {
   fileSize: number;
   studyId?: string;
   language?: string;
+  /** The PDF header version (e.g. '1.7'), when the caller read it. Absent: FDA-ESG-006 is not assessed. */
+  pdfVersion?: string | null;
 }
 
 export interface RegionalFinding {
@@ -361,20 +365,12 @@ const PMDA_APPLICATION_PREFIX = /^\d{8}$/;
 // followed by garbage does not slip through as a conformant identifier.
 const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+$/i;
 const SEQUENCE_PATTERN = /^\d{4}$/;
-/** eCTD leaf file name: lowercase, [a-z0-9.-], at most 64 characters including
- *  the extension (ICH eCTD v3.2.2 Appendix; EMA-CESP-005). Exported so the
- *  assemble path composes names to it and the structural validator refuses
- *  names that break it — one rule, not three spellings of it. */
-export const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
-
 const FDA_GATEWAY_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
 const PMDA_LIMIT_BYTES = 1024 * 1024 * 1024;
 // NMPA and MFDS publish no single eCTD gateway package-size limit in the
-// accessible specifications. These two figures are NOT published limits; they
-// survive only for the deprecated getGatewaySizeLimit.
-const NMPA_LIMIT_BYTES = 1024 * 1024 * 1024;
-const MFDS_LIMIT_BYTES = 1024 * 1024 * 1024;
+// accessible specifications, so none is held for CN or KR (2026-10-15: a 1 GB
+// figure for each, which no agency publishes, was removed with getGatewaySizeLimit).
 
 // Region → its M1 regional backbone path. Every eCTD region requires a
 // {code}-regional.xml backbone under /m1/{code}/; centralised here so the
@@ -480,6 +476,70 @@ export function isRegionalRulePackEncoded(region: RegulatoryRegion): boolean {
   return REGIONAL_RULE_PACKS.has(region);
 }
 
+/**
+ * Catalogued rules of an encoded region that its validator does not evaluate.
+ * 2026-10-15: these were neither evaluated nor reported, so a clean result
+ * implied they had been checked. They are named as not assessed.
+ */
+const ENCODED_RULES_NOT_ASSESSED: Partial<Record<RegulatoryRegion, readonly string[]>> = {
+  EU: ['EMA-CESP-003'],
+  JP: ['PMDA-005'],
+  CA: ['HC-REP-002'],
+};
+
+function pushEncodedRulesNotAssessed(region: RegulatoryRegion, findings: RegionalFinding[]): void {
+  const ids = ENCODED_RULES_NOT_ASSESSED[region];
+  if (!ids?.length) return;
+  const rules = getRulesForRegion(region).filter(r => ids.includes(r.id));
+  findings.push({
+    ruleId: 'REGION_RULES_NOT_ASSESSED',
+    region,
+    severity: 'info',
+    message: `Not assessed: ${rules.map(r => `${r.id} (${r.description})`).join('; ')}.`,
+    fix: `Check the package against ${ids.join(', ')} before filing; this validator does not evaluate them.`,
+    scope: 'package',
+  });
+}
+
+const isPdfLeaf = (l: RegionalLeafRef): boolean =>
+  /pdf/i.test(l.mimeType ?? '') || /\.pdf$/i.test(l.filePath ?? '');
+
+/**
+ * FDA-ESG-006: a PDF leaf must be PDF 1.4–1.7 (PDF/A-1b is PDF 1.4-based); PDF
+ * 2.0 is refused. Evaluated per leaf where the caller read the version.
+ * 2026-10-15: the rule (error severity) was catalogued and never evaluated, so
+ * a US package of unchecked PDFs could be gatewayReady. A PDF leaf whose
+ * version was not read is a blocking "not assessed" finding.
+ */
+function checkFdaPdfVersions(leaves: RegionalLeafRef[], findings: RegionalFinding[]): void {
+  const pdfs = leaves.filter(isPdfLeaf);
+  const unread = pdfs.filter(l => !l.pdfVersion);
+  for (const leaf of pdfs) {
+    if (!leaf.pdfVersion || /^1\.[4-7]$/.test(leaf.pdfVersion.trim())) continue;
+    findings.push({
+      ruleId: 'FDA-ESG-006',
+      region: 'US',
+      severity: 'error',
+      message: `PDF ${leaf.filePath} is version ${leaf.pdfVersion}; FDA accepts PDF 1.4–1.7 or PDF/A-1b (no PDF 2.0)`,
+      fix: 'Re-save the PDF as PDF 1.4–1.7 or PDF/A-1b',
+      scope: 'leaf',
+      leafPath: leaf.filePath,
+    });
+  }
+  if (unread.length > 0) {
+    findings.push({
+      ruleId: 'FDA-ESG-006',
+      region: 'US',
+      severity: 'error',
+      message:
+        `PDF version not assessed for ${unread.length} PDF leaf/leaves (e.g. ${unread[0].filePath}): ` +
+        'no version was read, so conformance to PDF 1.4–1.7 / PDF/A-1b is unknown',
+      fix: 'Validate the package through a path that reads each PDF header version before marking it gateway-ready',
+      scope: 'package',
+    });
+  }
+}
+
 /** Say, for a universal-checks-only region, what was not assessed. */
 function pushRulesNotEncoded(
   region: RegulatoryRegion,
@@ -565,6 +625,7 @@ export function validateRegionalPackage(
 
   const evaluatedOnly = UNIVERSAL_CHECKS_ONLY[context.region];
   if (evaluatedOnly) pushRulesNotEncoded(context.region, evaluatedOnly, findings);
+  pushEncodedRulesNotAssessed(context.region, findings);
 
   return findings;
 }
@@ -617,6 +678,8 @@ function validateFDAPackage(
     'Generate and include the US regional XML at /m1/us/us-regional.xml',
     findings
   );
+
+  checkFdaPdfVersions(leaves, findings);
 
   // STF check for M4/M5 study leaves
   const studyLeaves = leaves.filter(
@@ -905,30 +968,4 @@ export function getGatewaySizeLimitOnFile(region: RegulatoryRegion): GatewaySize
   const entry = SIZE_RULE_BY_REGION[region];
   const rule = entry && REGIONAL_RULES.find(r => r.id === entry.ruleId);
   return entry && rule ? { bytes: entry.bytes, source: rule.citation } : null;
-}
-
-/**
- * @deprecated Use getGatewaySizeLimitOnFile. For CA (FDA's figure), CN, KR, UK,
- * AU, CH, BR, IN and SG this returns a figure no agency publishes (2026-10-15);
- * it remains only until its two consumers, submission-gateways/pre-transmit-check
- * and regulatory/workspace-config-enrichment, move to the sourced accessor.
- */
-export function getGatewaySizeLimit(region: RegulatoryRegion): number {
-  switch (region) {
-    case 'US':
-      return FDA_GATEWAY_LIMIT_BYTES;
-    case 'EU':
-      return EMA_CESP_LIMIT_BYTES;
-    case 'JP':
-      return PMDA_LIMIT_BYTES;
-    case 'CA':
-      return FDA_GATEWAY_LIMIT_BYTES;
-    case 'CN':
-      return NMPA_LIMIT_BYTES;
-    case 'KR':
-      return MFDS_LIMIT_BYTES;
-    // Not a published limit (see the deprecation note above).
-    default:
-      return PMDA_LIMIT_BYTES;
-  }
 }

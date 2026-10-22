@@ -65,6 +65,13 @@ beforeAll(async () => {
     INSERT INTO organizations (id, name) VALUES (${ORG}, 'Rehearsal Sponsor Inc.');
     INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, application_number)
       VALUES ('0e000000-0000-4000-8000-0000000000e1', ${ORG}, 'Rehearsal IND', 'RH-1', 'IND', 'Rehearsalinib', '000101');
+    -- The existing FDA export now reads the explicitly bound sponsor registry.
+    -- These are isolated synthetic fixture facts, never product seed data.
+    INSERT INTO ind_sponsors (id, organization_id, name, duns, contact_name, contact_phone, contact_email)
+      VALUES ('0e000000-0000-4000-8000-0000000000e2', ${ORG}, 'Rehearsal Sponsor Inc.', '123456789',
+              'Recorded rehearsal contact', '+1 212 555 0100', 'rehearsal@example.test');
+    UPDATE regulatory_programs SET applicant_sponsor_id = '0e000000-0000-4000-8000-0000000000e2'
+      WHERE id = '0e000000-0000-4000-8000-0000000000e1';
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'unfiled original', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (2, 'rehearsal row later sent', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),

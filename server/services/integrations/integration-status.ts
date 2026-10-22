@@ -174,8 +174,10 @@ export async function getIntegrationStatuses(
   // exactly what search_connected_repositories searches. The credential-free
   // public sources in the catalog count as configured, and are not among them.
   // The catalog's `healthy` means no stored credential is marked invalid —
-  // credentials are stored valid without a call — so this is "credentials
-  // stored", not "connected" (2026-10-15: the label read "Connected …").
+  // credentials are stored unvalidated (is_valid NULL) and nothing here calls
+  // the repository — so this is "credentials stored", not "connected"
+  // (2026-10-15: the label read "Connected …"; this comment said credentials
+  // were "stored valid without a call", which they no longer are).
   if (organizationId && deps.getConnectorCatalog) {
     try {
       const catalog = await deps.getConnectorCatalog(Number(organizationId));

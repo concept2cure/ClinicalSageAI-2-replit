@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { assessmentState, mayReassure } from '../assessmentState';
@@ -431,7 +432,8 @@ function parseProtocol(text: string): ParsedProtocol {
 /* ═══ Main surface ═══ */
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
-  const saveToAuthoring = useAuthoringHandoff();
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const ask = onAsk || (() => {});
   const [text, setText] = useState('');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -557,28 +559,22 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
    * an honest reason, because navigating away from work that was not saved is
    * the same defect this replaces.
    */
-  const openingRef = useRef(false);
-  const [opening, setOpening] = useState(false);
+  const opening = handoff.state?.phase === 'pending';
   const openEditor = async () => {
-    if (openingRef.current) return; // a second click must not create a second document
+    if (handoff.blocked) return;
     const title = docDef?.label || 'Protocol analysis';
     if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.', 'error'); return; }
-    openingRef.current = true; setOpening(true);
-    try {
-      // Protocol-derived analysis files under Module 5; the server would
-      // default to M3.
-      const r = await saveToAuthoring({
-        title, module: 'M5', code: docDef?.id || 'protocol_analysis',
-        content: md, subject: 'the analysis',
-      });
-      // Navigate only on a clean write — see authoringHandoff.
-      if (!r.isCurrent()) return;
-      if (!r.ok) { fireToast(r.message, 'error'); return; }
-      if (onNav) openSavedAuthoring(r, onNav);
-      else fireToast(r.message);
-    } finally {
-      openingRef.current = false; setOpening(false);
-    }
+    // Protocol-derived analysis files under Module 5; the server would
+    // default to M3.
+    const r = await saveToAuthoring({
+      title, module: 'M5', code: docDef?.id || 'protocol_analysis',
+      content: md, subject: 'the analysis',
+    });
+    // Navigate only on a clean write — see authoringHandoff.
+    if (!r.isCurrent()) return;
+    if (!r.ok) { fireToast(r.message, 'error'); return; }
+    if (onNav) openSavedAuthoring(r, onNav);
+    else fireToast(r.message);
   };
 
   return (
@@ -613,6 +609,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         />
       )}
 
+      <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
       <div className="ra-layout">
         <div className="pj-card ra-input">
           <div className="pj-card-h"><span className="t">Protocol</span><span className="s">paste or edit</span></div>
@@ -650,7 +647,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
                 {analysis.source === 'live' ? 'Live analytics service' : 'Ported generator — offline'} — draft</span></div>
               <div className="bs-doc-bar-a">
                 <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ' for this protocol')}>{I.sparkles} Refine</button>
-                <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
+                <button className="bs-da primary" onClick={() => void openEditor()} disabled={handoff.blocked}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
               </div>
             </div>
             <div className="bs-doc-page"><div className="bs-doc-render" dangerouslySetInnerHTML={{ __html: html }} /></div>

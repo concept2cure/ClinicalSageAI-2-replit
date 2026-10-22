@@ -156,6 +156,7 @@ describe('generateSAP — whether the inputs reached the assumption registry', (
 });
 
 describe('updateSap', () => {
+  // Organization 3 is the caller's: the protocol is read only within it (2026-10-15).
   beforeEach(() => {
     // generateSAP writes <protocol_id>_sap.txt under data/sap; not from a test.
     vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);

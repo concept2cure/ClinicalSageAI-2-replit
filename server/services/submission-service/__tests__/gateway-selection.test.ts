@@ -10,7 +10,8 @@
  * non-device EU dossier was routed to ema:cesp, so an e-signed centralised MAA
  * sequence would have been POSTed to CESP's /baskets. EMA has made the
  * eSubmission Gateway / Web Client mandatory for every centralised-procedure
- * eCTD submission since 2014-03-01 (regulator text; basis in docs/evidence/
+ * eCTD submission since 2014-03-01 (recall: a search extract of an
+ * ema.europa.eu page, not a fetched copy; basis in docs/evidence/
  * D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-cesp-centralised-refusal-
  * facts.md), and the platform has no connector for it (DECISIONS.md row 10).
  * Only a filing the channel function routes to ema:cesp — the national, MRP
@@ -51,12 +52,15 @@ vi.mock('../../../db', () => {
   const textOf = (q: any): string => (q?.queryChunks ?? []).map((c: any) => (Array.isArray(c?.value) ? c.value.join('') : '?')).join('');
   const execute = async (q: any) => {
     const t = textOf(q);
-    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit' } }] };
+    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit', meaning: 'release' } }] };
     if (t.includes('electronic_signatures')) return { rows: [{ bound_payload_digest: 'd', binding_basis: 'ectd-sequence-leaf-manifest-sha256', superseded_by: null, is_valid: true, verification_status: 'valid' }] };
     return { rows: [] };
   };
   const pool = {
     query: async (text: string) => {
+      if (/LEFT JOIN ind_sponsors/.test(text)) return { rows: [{ organization_name: 'Concept2Cure Therapeutics', application_number: rows.applicationNumber,
+        applicant_sponsor_id: '22222222-2222-4222-8222-222222222222', sponsor_id: '22222222-2222-4222-8222-222222222222',
+        sponsor_name: 'Concept2Cure Therapeutics', duns: '123456789', contact_name: 'Regulatory Contact', contact_phone: '+1 617 555 0100', contact_email: 'regulatory@example.test' }] };
       if (/FROM organizations/.test(text)) return { rowCount: 1, rows: [{ name: 'Concept2Cure Therapeutics' }] };
       if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: rows.applicationNumber }] };
       return { rowCount: 0, rows: [] };

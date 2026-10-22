@@ -1,0 +1,95 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+{
+  "timestamp": "2026-10-22T06:04:21.921Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine
+{
+  "timestamp": "2026-10-22T06:04:25.782Z",
+  "level": "error",
+  "message": "[cmc-quality-summary-tool] draft_quality_overall_summary_m2_3 failed",
+  "context": {
+    "err": "SAVEPOINT can only be used in transaction blocks"
+  }
+}
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words
+{
+  "timestamp": "2026-10-22T06:04:25.798Z",
+  "level": "error",
+  "message": "[cmc-quality-summary-tool] draft_quality_overall_summary_m2_3 failed",
+  "context": {
+    "err": "SAVEPOINT can only be used in transaction blocks"
+  }
+}
+
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > a bare SAVEPOINT is refused here, as in production: this engine is the one that matters
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > lists exactly the 3.2.R section the compile composes for a US IND
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a monoclonal antibody, typed, and scores nothing
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a small molecule whose program files an NDA
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > judges the NEWEST drug substance, as compose does, whatever order the rows are stored in
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a biologic, the newer a small molecule
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a small molecule, the newer a biologic
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > gives a program with no CMC records yet its empty board, not a refusal
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records whose declared class is outside the boundary
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > assessProgramCompositionScope — the boundary for a caller holding no transaction > admits a small-molecule IND program, refuses a biologic, and leaves no transaction open
+ × server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine 52ms
+   → expected 'The program’s CMC data could not be r…' to be undefined
+ × server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words 10ms
+   → expected 'The program’s CMC data could not be r…' to match /biolog/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine
+AssertionError: expected 'The program’s CMC data could not be r…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"The program’s CMC data could not be read just now. Say so; do not compose a summary from anything else."
+
+ ❯ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts:279:23
+    277|   it('drafts for a small-molecule IND program on a real engine', async…
+    278|     const out = JSON.parse(await draftQualityOverallSummary(async () =…
+    279|     expect(out.error).toBeUndefined();
+       |                       ^
+    280|     expect(out.drafted).toBe(true);
+    281|     expect(out.sectionKey).toBe('2.3');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words
+AssertionError: expected 'The program’s CMC data could not be r…' to match /biolog/i
+
+- Expected:
+/biolog/i
+
++ Received:
+"The program’s CMC data could not be read just now. Say so; do not compose a summary from anything else."
+
+ ❯ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts:289:23
+    287|     const out = JSON.parse(await draftQualityOverallSummary(async () =…
+    288|     expect(out.drafted).toBeUndefined();
+    289|     expect(out.error).toMatch(/biolog/i);
+       |                       ^
+    290|     await noTransactionOpen();
+    291|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 skipped (12)
+   Start at  06:04:19
+   Duration  6.56s (transform 2.30s, setup 110ms, import 3.20s, tests 2.92s, environment 0ms)
+

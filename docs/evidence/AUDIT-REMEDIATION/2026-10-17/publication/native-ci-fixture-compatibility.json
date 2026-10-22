@@ -1,0 +1,109 @@
+{
+  "verifiedTls": {
+    "cases": 51,
+    "files": 7,
+    "evidence": "oct17-transport-tls-final-native-summary.json"
+  },
+  "explicitLocalNoSsl": {
+    "cases": 51,
+    "files": 7,
+    "evidence": "oct17-transport-plaintext-final-native-summary.json"
+  },
+  "fixtureChanges": [
+    {
+      "file": "tests/db/adoption-commit-outcome.dbtest.ts",
+      "priorSha256": "9d581c627b091602a053497dfb6804a86c0935f87ba15b4dad1f5e70abe81fad",
+      "currentSha256": "33f60e5c1bf55adf760c6f70edfd1b66a221c7747d1f9ee1ea7bff2ef11abb6f",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "paired transport requalified"
+    },
+    {
+      "file": "tests/db/part11-audit-receipts.dbtest.ts",
+      "priorSha256": "bf3c61405ff71750d3af48b459c1a6d0043d371da98ee4f48a002590faceab5d",
+      "currentSha256": "d1f78917e355959be0eb7e3af5a1d24c8afa79f5183255d67b4684287c137719",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "paired transport requalified"
+    },
+    {
+      "file": "tests/db/tenant-source-read-receipt-retention.dbtest.ts",
+      "priorSha256": "b6b7866890ab0c4dab72e8318145e46e4893d911d2f9bec923bd548cf9243816",
+      "currentSha256": "31f1bccd20e807084558295d8fa3a2bacde17a126d46670d01f984231964c683",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "paired transport requalified"
+    },
+    {
+      "file": "tests/db/agency-requirement-tenant-isolation.dbtest.ts",
+      "priorSha256": "d1e39f6163877a71b5086ed0ff6651c66c4e7fd7f042970b5cb721774bea7788",
+      "currentSha256": "4d9691833580fc8598cbe7d4433fd33b84dbdb7807da5d5bda2e8d1f6fb106fa",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "paired transport requalified"
+    },
+    {
+      "file": "tests/db/mdx-qms-request-rls.dbtest.ts",
+      "priorSha256": "1b4e15e465a10695c6e8153b49efdbd1d2e0b55332eb5a31ec14383dbb43b3b0",
+      "currentSha256": "eee239c57da13104ca275f48863bf8e2e7eed0f4849398248f20e5a0e29f3e46",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "paired transport requalified"
+    },
+    {
+      "file": "tests/db/data-room-processing.dbtest.ts",
+      "priorSha256": "f1d49b74d5bf03785dc78a4cd79c9939786b6196714932708f1b5414a4d65df1",
+      "currentSha256": "eb18b1beca41f8e5fb2ae862bd0bdcfb83605a12e28c4d26be38c56b2417bb03",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "paired transport requalified"
+    },
+    {
+      "file": "tests/db/content-audit-consumers.dbtest.ts",
+      "priorSha256": "5049cc98a23712880766d7fbd1acfd51b998f26d696c3b2f7161a2e61cc6c08a",
+      "currentSha256": "df2b8df96f962fc4e96093179f44124f8b9921e8df488df1a4fe17f2da4d9c9c",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "native feature follow-up qualified"
+    },
+    {
+      "file": "tests/db/csr-vault-source-input.dbtest.ts",
+      "priorSha256": "b78115c52a469c7106904c4ce581a4d4e4e9befac49c1c90d2d19c9a29d9bb30",
+      "currentSha256": "f1409ea9c05772d91e9c519bf9e1e1d66888f5517fc56728638a7954038a1c19",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "paired transport requalified"
+    },
+    {
+      "file": "tests/db/ind-audit-outcomes.dbtest.ts",
+      "priorSha256": "e7896f250d8b9f394edc341f51a341b7459792904d5b3cb0e4c9222e5a812e53",
+      "currentSha256": "7181d81062f5dc24a15314acb5c09397aaffe056672a59a6a64c79b66401c656",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "native feature follow-up qualified"
+    },
+    {
+      "file": "tests/db/provenance-audit-outcomes.dbtest.ts",
+      "priorSha256": "2e8eb5040eed8a5b423ad24b03a6cc42a17f47252e3f58e0475e0c008f916aad",
+      "currentSha256": "f3dd66e528815074ab1c1adaf8a8e2c987844dc23a3b158983a9b5898acd5363",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "native feature follow-up qualified"
+    },
+    {
+      "file": "tests/db/tmf-assessment-audit-outcomes.dbtest.ts",
+      "priorSha256": "17584a6c988a2a026c72e76c23888ee3fd96d7959ef2831a4efd0d86332e0be7",
+      "currentSha256": "3628d139f1544fef185ff964573e51ceebf3e7b47b9df44d44bcea00c6fdf531",
+      "priorSourceCommit": "aff01a100029c029b71cd0929cd714527082ab74^",
+      "priorHashMeaning": "Source before the mechanical transport edit; not newly asserted feature qualification.",
+      "qualificationStatus": "native feature follow-up qualified"
+    }
+  ],
+  "transportOnlyUnrunFeatureQualification": [],
+  "additionalFeatureQualification": {
+    "cases": 60,
+    "files": 4,
+    "evidence": "oct17-remaining-transport-features-native-summary.json"
+  },
+  "scope": "Contextual test transport expectations support explicit local CI no-SSL URLs. Paired 51/7 replaces existing cases within the prior 73/9. Disjoint 60/4 qualifies the other four modified fixtures, yielding 133/13 actual TLS native acceptance. No production TLS policy was weakened, no native history was removed and no accepted case was skipped."
+}

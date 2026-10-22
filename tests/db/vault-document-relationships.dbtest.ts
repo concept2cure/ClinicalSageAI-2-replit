@@ -24,17 +24,19 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
+import { nativeCatalogRunId } from './catalog-native-fixture';
 
-const PROBE = 'dbtest-vrel ';
-const CODE = 'DBTEST-VREL';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-vrel-${RUN} `;
+const CODE = `DBTEST-VREL-${RUN}`;
 
 type Tenant = { orgId: number; orgUuid: string; programId: string; otherProgramId: string };
 type Outcome = { ok: true; rows: Array<Record<string, unknown>> } | { ok: false; message: string };
 let owner: Pool;
 let userId: number;
+let viewerId: number;
 let mine: Tenant;
 let theirs: Tenant;
 let gone: Tenant;
@@ -45,11 +47,12 @@ async function appFor(t: Tenant, role = 'admin'): Promise<express.Express> {
   const createProjectVaultRoutes = (await import('../../server/routes/c2c/project-vault')).default;
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
   const a = express();
+  const actorId = role === 'viewer' ? viewerId : userId;
   a.use(express.json());
   a.use((req, _res, next) => {
     Object.assign(req, {
-      userId, tenantId: t.orgId, userRole: role,
-      user: { id: userId, organizationId: t.orgId, organizationUuid: t.orgUuid, role },
+      userId: actorId, tenantId: t.orgId, userRole: role,
+      user: { id: actorId, organizationId: t.orgId, organizationUuid: t.orgUuid, role },
     });
     next();
   });
@@ -108,55 +111,39 @@ const refused = (r: Outcome) => {
 
 async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active')
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, status = 'active' RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vrel-${slug}`],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}${slug}`, `dbtest-vrel-${RUN}-${slug}`],
   );
   const program = async (suffix: string, name: string) => (await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Relata 5mg') RETURNING id`,
     [`${PROBE}${slug} ${name}`, `${CODE}-${slug.toUpperCase()}${suffix}`, org.rows[0].id],
   )).rows[0].id;
-  return {
+  const current = {
     orgId: Number(org.rows[0].id),
     orgUuid: String(org.rows[0].uuid),
     programId: String(await program('', 'program')),
     otherProgramId: String(await program('-B', 'second program')),
   };
-}
-
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(`DELETE FROM audit_logs WHERE tenant_id IN (SELECT id FROM organizations WHERE slug LIKE 'dbtest-vrel-%')`);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  // As the table's owner, the one role its delete guard admits.
-  await owner.query(`DELETE FROM public.vault_document_relationships WHERE organization_id IN
-                       (SELECT id FROM organizations WHERE slug LIKE 'dbtest-vrel-%')`).catch(() => {});
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-  await owner.query(`UPDATE organizations SET status = 'active' WHERE slug LIKE 'dbtest-vrel-%'`).catch(() => {});
+  await seedVaultFixtureParent(owner, current, { userId, namespace: `${PROBE}${slug}-parent` });
+  await seedVaultFixtureParent(owner, { ...current, programId: current.otherProgramId }, { userId, namespace: `${PROBE}${slug}-second-parent` });
+  return current;
 }
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-vrel@example.test', 'Rhea Relate', 'not-a-real-hash')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Rhea Relate', 'not-a-real-hash', 'active') RETURNING id`,
+    [`dbtest-vrel-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
+  viewerId = Number((await owner.query("INSERT INTO users(email,name,password_hash,status) VALUES($1,'QA Viewer','not-a-real-hash','active') RETURNING id",
+    [`dbtest-viewer-${RUN}@example.test`])).rows[0].id);
+  await seedVaultFixtureViewer(owner, mine, { userId: viewerId, invitedBy: userId });
+  await assertVaultFixtureRuntime(mine);
   gone = await tenant('gone');
   ids.protocol = await ingest(mine, 'Protocol BX-301.', { documentCode: `${CODE}-PROT`, documentTitle: 'Protocol' });
   ids.csr = await ingest(mine, 'Clinical study report.', { documentCode: `${CODE}-CSR`, documentTitle: 'Clinical study report' });
@@ -169,11 +156,9 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
-  for (const t of [mine, theirs, gone]) {
-    if (t) await fs.rm(path.resolve(process.cwd(), 'storage', 'vault', String(t.orgId)), { recursive: true, force: true }).catch(() => {});
-  }
+  // Keep this invocation's source bytes, records and append-only history.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 let csrSupportedByProtocol = '';

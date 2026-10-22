@@ -207,6 +207,11 @@ vi.mock('../../db.js', () => ({
 
 let app: express.Express;
 
+/** Share the actual invitation endpoint; each case still supplies its complete body. */
+function invite(body: Record<string, unknown>) {
+  return request(app).post('/api/tenant-users').send(body);
+}
+
 beforeEach(async () => {
   vi.clearAllMocks();
   authState.callerRole = 'member';
@@ -261,9 +266,7 @@ describe('Tenant-users authorization', () => {
 
   it('POST / — non-admin of the target org cannot create users (403)', async () => {
     authState.membershipRole = 'member';
-    await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'x@y.com', name: 'New User', role: 'admin', organizationId: 999 })
+    await invite({ email: 'x@y.com', name: 'New User', role: 'admin', organizationId: 999 })
       .expect(403);
   });
 
@@ -283,9 +286,7 @@ describe('Tenant-users authorization', () => {
   it('a membership role of super_admin with no platform grant cannot administer another org\'s users (403, nothing written)', async () => {
     authState.callerRole = 'super_admin';
     authState.membershipRole = null; // not a member of org 999
-    await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'x@y.com', name: 'New User', role: 'admin', organizationId: 999 })
+    await invite({ email: 'x@y.com', name: 'New User', role: 'admin', organizationId: 999 })
       .expect(403);
     await request(app).patch('/api/tenant-users/999/42').send({ role: 'admin', reason: 'Promotion' }).expect(403);
     await request(app).delete('/api/tenant-users/999/42').send({ reason: 'Left the company' }).expect(403);
@@ -295,9 +296,7 @@ describe('Tenant-users authorization', () => {
   it('a super_admin platform grant holder administers another org\'s users (membership role member, not a member of the target)', async () => {
     authState.platformGrant = 'super_admin';
     authState.membershipRole = null;
-    await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
+    await invite({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
       .expect(201);
     expect(executedMatching(/INSERT INTO organization_users/i)).toHaveLength(1);
     await request(app).delete('/api/tenant-users/999/42').send({ reason: 'Left the company' });
@@ -328,9 +327,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     dbState.existingUserIdByEmail = 42; // email already registered to another org's user
     dbState.invitedUserInTargetOrg = false;
 
-    const res = await request(app)
-      .post('/api/tenant-users')
-      .send({
+    const res = await invite({
         email: 'existing@other-org.com',
         name: 'Existing User',
         role: 'member',
@@ -339,6 +336,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
       .expect(202);
 
     expect(res.body.pendingInvitation).toBe(true);
+    expect(res.body.delivery).toEqual({ emailSent: false, inbox: true });
     expect(res.body.data?.status).toBe('pending');
 
     // A pending invitation row was written…
@@ -353,9 +351,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     authState.membershipRole = 'admin';
     dbState.existingUserIdByEmail = null; // email not registered anywhere
 
-    await request(app)
-      .post('/api/tenant-users')
-      .send({
+    await invite({
         email: 'brand-new@example.com',
         name: 'Brand New',
         role: 'member',
@@ -371,9 +367,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     authState.membershipRole = 'admin';
     authState.sessionOrgId = 999;
 
-    await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'brand-new@example.com', name: 'Brand New', role: 'member' })
+    await invite({ email: 'brand-new@example.com', name: 'Brand New', role: 'member' })
       .expect(201);
 
     // The admin check, the quota lock and the membership all name org 999.
@@ -386,9 +380,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
   it('POST / — with no session organization and no body organizationId, 400 (never a guessed tenant)', async () => {
     authState.membershipRole = 'admin';
     authState.sessionOrgId = null;
-    await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'brand-new@example.com', name: 'Brand New', role: 'member' })
+    await invite({ email: 'brand-new@example.com', name: 'Brand New', role: 'member' })
       .expect(400);
     expect(executedMatching(/INSERT INTO/i).length).toBe(0);
   });
@@ -397,9 +389,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     authState.membershipRole = 'admin';
     emailState.configured = false;
 
-    const res = await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
+    const res = await invite({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
       .expect(201);
 
     // The users row carries an UNUSABLE password hash and must_change_password.
@@ -435,9 +425,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     authState.membershipRole = 'admin';
     dbState.tokenStoreFails = true;
 
-    const res = await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
+    const res = await invite({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
       .expect(201);
 
     // The membership was committed before the token step …
@@ -474,9 +462,7 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     authState.membershipRole = 'admin';
     emailState.configured = true;
 
-    const res = await request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
+    const res = await invite({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
       .expect(201);
 
     expect(res.body.invitation).toMatchObject({ delivery: 'email', emailSent: true });
@@ -618,9 +604,7 @@ describe('Tenant-users self-modification (#973 port)', () => {
  */
 describe('Re-issuing an invitation (POST / for a member who never activated)', () => {
   const reinvite = (body: Record<string, unknown> = {}) =>
-    request(app)
-      .post('/api/tenant-users')
-      .send({ email: 'pat.pending@example.com', name: 'Pat Pending', role: 'admin', organizationId: 999, ...body });
+    invite({ email: 'pat.pending@example.com', name: 'Pat Pending', role: 'admin', organizationId: 999, ...body });
 
   it('replaces the setup token, returns the new link, keeps the stored role, creates nothing (200)', async () => {
     authState.membershipRole = 'admin';

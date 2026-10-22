@@ -1,0 +1,3388 @@
+# RED — the new and changed tests against the unchanged tree (HEAD ae287394, no migration applied), 2026-10-19
+# PostgreSQL 16 at 127.0.0.1:55432/c2c_test, runtime role app_service, RLS_ENFORCE=on. ANSI colours stripped.
+
+## 1. Unit, route and client (npx vitest run ...)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot
+{
+  "timestamp": "2026-10-19T02:36:54.126Z",
+  "level": "warn",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_API_UNATTRIBUTED=report in production: API paths no surface claims are served and recorded, not refused",
+  "context": {}
+}
+
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the workflow runner AnA Command used, now that AnA Command is locked 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 9ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > the gate production builds refuses them 403 LAUNCH_SCOPE, and serves what the CMC screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims no /api/cmc prefix the CMC screens do not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims nothing, and no surface claims the retired store 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > answers launch for the agency-response paths Communication and Respond call 1ms
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > offers Sign only once a sequence or document is named, and says so 361ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > signs through the project's door with the date, the evidence and the signature components 135ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > does not report a signature the server did not confirm 68ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says the submissions could not be read, distinct from there being none, and keeps the Vault usable 76ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says plainly when no sequence the agency received is on file 101ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > shows a viewer why they cannot sign, before anything is typed 97ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a meeting commitment is recorded with a reason > posts through the organisation's door, without the signature dialog 84ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="meeting_commitment"
+  >
+    MEETING_COMMITMENT
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Send the briefing package
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > names the sequence and the version, who signed, and opens each where it lives 33ms
+   → expected 'PMRFinal CSR for study 301due 2027-06…' to match /Met by sequence 0042 of IND 123456, a…/
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > says evidence is in a project the reader cannot open, legacy rows, and a signature that no longer holds 38ms
+   → expected 'PMRHidden evidence PMRdue 2027-06-30 …' to match /Met by a sequence in a project you ca…/
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > is reachable inside the existing Admin Settings tab 165ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > saves the exact revision and audited reason, then reads the stored profile 194ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a refused draft and does not announce it saved 97ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a conflicting draft and requires deliberate reload before retry 96ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > disables management for a reader and shows a failed read as unavailable 43ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > imports canonical formatting into a draft and displays extraction warnings 74ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > rejects an SVG logo before reading or uploading it 20ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > registers the selected immutable Vault version without inventing approval 148ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > does not turn a Vault search outage into an empty library 53ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > shows a superseded-source refusal without claiming another administrator changed the profile 100ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > clears unsaved reasons, extraction warnings and archived selection when the signed-in session changes 142ms
+stdout | server/services/ana/__tests__/ana-cannot-sign.test.ts
+{
+  "timestamp": "2026-10-19T02:37:02.743Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:37:02.744Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-cannot-sign.test.ts
+{
+  "timestamp": "2026-10-19T02:37:02.744Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-cannot-sign.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-cannot-sign.test.ts
+{
+  "timestamp": "2026-10-19T02:37:03.312Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-cannot-sign.test.ts
+Created cache directory: /home/user/ClinicalSageAI-2-replit/data/cache
+
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan writes nothing and hands the act to the person 7ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_assessment writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_plan writes nothing, even on a confirmation 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > transmit_submission writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > transmit_submission points to the sequence, not the retired package transmit (audit 2026-10-17) 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > retire_qms_document refuses as a signature and points to the Retire action 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > every handler-refused tool in the register is pinned here or named 2ms
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmr: writes nothing, says AnA cannot sign, and points to Meetings & commitments 22ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmc: writes nothing, says AnA cannot sign, and points to Meetings & commitments 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a rems: writes nothing, says AnA cannot sign, and points to Meetings & commitments 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a meeting commitment is still fulfilled from chat, as a governed resolve 1ms
+   → {"error":"fulfill_regulatory_commitment could not confirm your role in this organization, so nothing was changed: [vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"}: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > is described as handing a PMR, PMC or REMS to the person 1ms
+   → expected 'Mark a regulatory commitment (PMR/PMC…' to match /AnA cannot sign/
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a future date, before the commitment is even read 50ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR that names neither a sequence nor a document 6ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR with no date: the signer is shown the date the signature binds, so the server never picks it 5ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > evidence the server refuses, answered with its own code and no credential check 5ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > access that could not be verified is a 503, not a 500 or a 404 6ms
+   → expected 500 to be 503 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a password sent for a meeting commitment, which takes none 4ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > a PMR with evidence and no password is refused by the ceremony as a missing component 5ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > signs, re-checks the evidence under lock, and answers with the signature 5ms
+   → {}: expected 500 to be 201 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > counts nothing as fulfilled when the ceremony refuses the password 6ms
+   → expected 500 to be 401 // Object.is equality
+ × server/routes/__tests__/commitment-fulfil-route.test.ts > the unsigned fulfilment > a meeting commitment with no evidence is a governed resolve with the same body shape 7ms
+   → {}: expected 500 to be 201 // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > lists the project's commitments, naming the letter and question, beside the organisation's own 225ms
+ × client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > signs a project's PMC through the project's door, and the organisation's PMR through its own 95ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmc"
+  >
+    PMC
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Submit 24-month stability data
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30 · made in the answer to Q2 of Information request
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ × client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > records a meeting commitment with a reason through the organisation's door, with no signature 75ms
+   → Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="meeting_commitment"
+  >
+    MEETING_COMMITMENT
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Send the briefing package
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > shows an error, not the organisation's list alone, when the project's read fails 41ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > says what the empty register will show, without a status the register never returns 46ms
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a PMR, PMC or REMS needs a signature, what met it, and its date 5ms
+   → fulfilmentRule is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a meeting commitment or other is a governed write: no signature, what met it optional 1ms
+   → fulfilmentRule is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > an unknown type is held to the signed rule, never the looser one 1ms
+   → fulfilmentRule is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > the signed list is the three postmarketing obligations 0ms
+   → SIGNED_FULFILMENT_TYPES is not iterable
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence 1ms
+   → fulfilmentEvidenceRefusal is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > accepts a sequence alone, a document alone, or both 1ms
+   → fulfilmentEvidenceRefusal is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > a meeting commitment needs none 1ms
+   → fulfilmentEvidenceRefusal is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > is stable, hex sha256, and tagged with its recipe 0ms
+   → commitmentFulfilmentDigest is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > changes with every one of its eleven fields 1ms
+   → commitmentFulfilmentDigest is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > does not depend on the order the fields were given in 0ms
+   → commitmentFulfilmentDigest is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a commitment not fulfilled has no fulfilment to read 1ms
+   → fulfilmentRecordState is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > fulfilled before fulfilments were recorded is legacy, keyed on the record, not on what is missing 0ms
+   → fulfilmentRecordState is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a signed type with a live signature that binds the record is signed; one that does not, is a mismatch 1ms
+   → fulfilmentRecordState is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a recorded signed type whose signature was withdrawn says so, and one with none says that 0ms
+   → fulfilmentRecordState is not a function
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > an unsigned type that was recorded is recorded 0ms
+   → fulfilmentRecordState is not a function
+ × server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > is registered, so a fulfilment signature never falls back to the ledger basis 9ms
+   → expected undefined to be type of 'function'
+ × server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > digests the commitment, its date and what met it, with the shared recipe 2ms
+   → CONTENT_BINDERS.regulatory-commitment is not a function
+ × server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > binds the Vault version’s sha256: a different pin is a different digest 1ms
+   → CONTENT_BINDERS.regulatory-commitment is not a function
+ × server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > falls back when the commitment is not readable, or carries no recorded fulfilment 1ms
+   → CONTENT_BINDERS.regulatory-commitment is not a function
+ × server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > refuses a malformed pointer rather than querying for it 1ms
+   → CONTENT_BINDERS.regulatory-commitment is not a function
+stderr | server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-19T02:37:17.829Z",
+  "level": "error",
+  "message": "[ha-interactions] handling the health-authority interaction request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 23ms
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 7ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 46 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a future date, before the commitment is even read
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:91:24
+     89|   it('a future date, before the commitment is even read', async () => {
+     90|     const res = await request(app()).post(URL).send({ ...SIGNED, fulfi…
+     91|     expect(res.status).toBe(400);
+       |                        ^
+     92|     expect(res.body.error.code).toBe('BAD_INPUT');
+     93|     expect(h.read).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR that names neither a sequence nor a document
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:99:24
+     97|   it('a PMR that names neither a sequence nor a document', async () =>…
+     98|     const res = await request(app()).post(URL).send(SIGNED);
+     99|     expect(res.status).toBe(400);
+       |                        ^
+    100|     expect(res.body.error.code).toBe('EVIDENCE_REQUIRED');
+    101|     expect(res.body.error.message).toMatch(/A PMR is met by a submissi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR with no date: the signer is shown the date the signature binds, so the server never picks it
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:108:24
+    106|   it('a PMR with no date: the signer is shown the date the signature b…
+    107|     const res = await request(app()).post(URL).send({ ...SIGNED, fulfi…
+    108|     expect(res.status).toBe(400);
+       |                        ^
+    109|     expect(res.body.error.code).toBe('FULFILMENT_DATE_REQUIRED');
+    110|     expect(h.reverify).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > evidence the server refuses, answered with its own code and no credential check
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:116:24
+    114|     h.resolve.mockRejectedValueOnce(new HaError('SEQUENCE_NOT_FILED', …
+    115|     const res = await request(app()).post(URL).send({ ...SIGNED, evide…
+    116|     expect(res.status).toBe(409);
+       |                        ^
+    117|     expect(res.body.error.code).toBe('SEQUENCE_NOT_FILED');
+    118|     expect(h.reverify).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > access that could not be verified is a 503, not a 500 or a 404
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:125:24
+    123|     h.resolve.mockRejectedValueOnce(new HaError('EVIDENCE_ACCESS_UNAVA…
+    124|     const res = await request(app()).post(URL).send({ ...SIGNED, evide…
+    125|     expect(res.status).toBe(503);
+       |                        ^
+    126|     expect(h.reverify).not.toHaveBeenCalled();
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a password sent for a meeting commitment, which takes none
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:132:24
+    130|     h.read.mockResolvedValue(MEETING);
+    131|     const res = await request(app()).post(URL).send({ ...SIGNED, evide…
+    132|     expect(res.status).toBe(400);
+       |                        ^
+    133|     expect(res.body.error.code).toBe('SIGNATURE_NOT_TAKEN');
+    134|     expect(h.reverify).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > a PMR with evidence and no password is refused by the ceremony as a missing component
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:142:24
+    140|   it('a PMR with evidence and no password is refused by the ceremony a…
+    141|     const res = await request(app()).post(URL).send({ ...SIGNED, passw…
+    142|     expect(res.status).toBe(400);
+       |                        ^
+    143|     expect(res.body.error.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    144|     expect(h.fulfil).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > signs, re-checks the evidence under lock, and answers with the signature
+AssertionError: {}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:149:50
+    147|   it('signs, re-checks the evidence under lock, and answers with the s…
+    148|     const res = await request(app()).post(URL).send({ ...SIGNED, evide…
+    149|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    150|     expect(res.body).toMatchObject({
+    151|       success: true, actionId: 'act_1', auditId: 'aud_1', sha256Chain:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > counts nothing as fulfilled when the ceremony refuses the password
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:169:24
+    167|     h.reverify.mockResolvedValue({ ok: false, status: 401, code: 'PASS…
+    168|     const res = await request(app()).post(URL).send({ ...SIGNED, evide…
+    169|     expect(res.status).toBe(401);
+       |                        ^
+    170|     expect(h.fulfil).not.toHaveBeenCalled();
+    171|     expect(h.metric).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/46]⎯
+
+ FAIL  server/routes/__tests__/commitment-fulfil-route.test.ts > the unsigned fulfilment > a meeting commitment with no evidence is a governed resolve with the same body shape
+AssertionError: {}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/commitment-fulfil-route.test.ts:180:50
+    178|     h.resolve.mockResolvedValue({ sequence: null, vaultVersion: null }…
+    179|     const res = await request(app()).post(URL).send({ reason: 'Briefin…
+    180|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    181|     expect(res.body).toMatchObject({ success: true, actionId: 'act_1',…
+    182|     expect(res.body.signatureId).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/46]⎯
+
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmr: writes nothing, says AnA cannot sign, and points to Meetings & commitments
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmc: writes nothing, says AnA cannot sign, and points to Meetings & commitments
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a rems: writes nothing, says AnA cannot sign, and points to Meetings & commitments
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ana-cannot-sign.test.ts:176:20
+    174|       { organizationId: 7, userId: 42, humanConfirmed: true } as never,
+    175|     ));
+    176|     expect(out.ok).toBe(false);
+       |                    ^
+    177|     expect(out.signatureRequired).toBe(true);
+    178|     expect(out.message).toMatch(/AnA cannot sign/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/46]⎯
+
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a meeting commitment is still fulfilled from chat, as a governed resolve
+AssertionError: {"error":"fulfill_regulatory_commitment could not confirm your role in this organization, so nothing was changed: [vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"}: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ana-cannot-sign.test.ts:192:41
+    190|       { organizationId: 7, userId: 42, humanConfirmed: true } as never,
+    191|     ));
+    192|     expect(out.ok, JSON.stringify(out)).toBe(true);
+       |                                         ^
+    193|     expect(sql.some((s) => /UPDATE\s+regulatory_commitments/i.test(s))…
+    194|     expect(recordGovernedAction).toHaveBeenCalledWith(expect.anything(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/46]⎯
+
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > is described as handing a PMR, PMC or REMS to the person
+AssertionError: expected 'Mark a regulatory commitment (PMR/PMC…' to match /AnA cannot sign/
+
+- Expected:
+/AnA cannot sign/
+
++ Received:
+"Mark a regulatory commitment (PMR/PMC/REMS/meeting commitment) fulfilled, optionally with the date it was met. Closes the commitment lifecycle. Governed + audited, org-scoped."
+
+ ❯ server/services/ana/__tests__/ana-cannot-sign.test.ts:199:30
+    197|   it('is described as handing a PMR, PMC or REMS to the person', () =>…
+    198|     const def = ALL_ANA_TOOLS.find((t) => t.name === 'fulfill_regulato…
+    199|     expect(def?.description).toMatch(/AnA cannot sign/);
+       |                              ^
+    200|     expect(def?.description).toMatch(/PMR/);
+    201|     expect(def?.description).toMatch(/fulfilled/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a PMR, PMC or REMS needs a signature, what met it, and its date
+TypeError: fulfilmentRule is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:40:14
+     38|   it('a PMR, PMC or REMS needs a signature, what met it, and its date'…
+     39|     for (const t of ['pmr', 'pmc', 'rems']) {
+     40|       expect(fulfilmentRule(t), t).toEqual({ signatureRequired: true, …
+       |              ^
+     41|     }
+     42|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a meeting commitment or other is a governed write: no signature, what met it optional
+TypeError: fulfilmentRule is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:46:14
+     44|   it('a meeting commitment or other is a governed write: no signature,…
+     45|     for (const t of ['meeting_commitment', 'other']) {
+     46|       expect(fulfilmentRule(t), t).toEqual({ signatureRequired: false,…
+       |              ^
+     47|     }
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > an unknown type is held to the signed rule, never the looser one
+TypeError: fulfilmentRule is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:51:12
+     49|
+     50|   it('an unknown type is held to the signed rule, never the looser one…
+     51|     expect(fulfilmentRule('something-new')).toEqual({ signatureRequire…
+       |            ^
+     52|   });
+     53|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > the signed list is the three postmarketing obligations
+TypeError: SIGNED_FULFILMENT_TYPES is not iterable
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:55:16
+     53|
+     54|   it('the signed list is the three postmarketing obligations', () => {
+     55|     expect([...SIGNED_FULFILMENT_TYPES]).toEqual(['pmr', 'pmc', 'rems'…
+       |                ^
+     56|   });
+     57| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence
+TypeError: fulfilmentEvidenceRefusal is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:61:21
+     59| describe('what met a commitment', () => {
+     60|   it('refuses a PMR that names neither a sequence nor a document, with…
+     61|     const refused = fulfilmentEvidenceRefusal('pmr', {});
+       |                     ^
+     62|     expect(refused).toMatch(/A PMR is met by a submission or a documen…
+     63|     expect(refused).toMatch(/Nothing was recorded\.$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > accepts a sequence alone, a document alone, or both
+TypeError: fulfilmentEvidenceRefusal is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:68:12
+     66|
+     67|   it('accepts a sequence alone, a document alone, or both', () => {
+     68|     expect(fulfilmentEvidenceRefusal('pmc', { sequenceId: 5 })).toBeNu…
+       |            ^
+     69|     expect(fulfilmentEvidenceRefusal('pmc', { vaultDocumentId: CONTENT…
+     70|     expect(fulfilmentEvidenceRefusal('pmc', { sequenceId: 5, vaultDocu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > a meeting commitment needs none
+TypeError: fulfilmentEvidenceRefusal is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:74:12
+     72|
+     73|   it('a meeting commitment needs none', () => {
+     74|     expect(fulfilmentEvidenceRefusal('meeting_commitment', {})).toBeNu…
+       |            ^
+     75|   });
+     76| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > is stable, hex sha256, and tagged with its recipe
+TypeError: commitmentFulfilmentDigest is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:80:15
+     78| describe('the fulfilment digest (recipe commitment-fulfilment/v1)', ()…
+     79|   it('is stable, hex sha256, and tagged with its recipe', () => {
+     80|     const d = commitmentFulfilmentDigest(CONTENT);
+       |               ^
+     81|     expect(d).toMatch(/^[0-9a-f]{64}$/);
+     82|     expect(commitmentFulfilmentDigest({ ...CONTENT })).toBe(d);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > changes with every one of its eleven fields
+TypeError: commitmentFulfilmentDigest is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:87:18
+     85|
+     86|   it('changes with every one of its eleven fields', () => {
+     87|     const base = commitmentFulfilmentDigest(CONTENT);
+       |                  ^
+     88|     const changed: Array<Partial<CommitmentFulfilmentContent>> = [
+     89|       { commitmentId: 13 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > does not depend on the order the fields were given in
+TypeError: commitmentFulfilmentDigest is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:107:12
+    105|   it('does not depend on the order the fields were given in', () => {
+    106|     const reversed = Object.fromEntries(Object.entries(CONTENT).revers…
+    107|     expect(commitmentFulfilmentDigest(reversed)).toBe(commitmentFulfil…
+       |            ^
+    108|   });
+    109| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a commitment not fulfilled has no fulfilment to read
+TypeError: fulfilmentRecordState is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:114:12
+    112|   const signed = { signatureRequired: true };
+    113|   it('a commitment not fulfilled has no fulfilment to read', () => {
+    114|     expect(fulfilmentRecordState({ status: 'open', ...signed, recorded…
+       |            ^
+    115|   });
+    116|   it('fulfilled before fulfilments were recorded is legacy, keyed on t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > fulfilled before fulfilments were recorded is legacy, keyed on the record, not on what is missing
+TypeError: fulfilmentRecordState is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:117:12
+    115|   });
+    116|   it('fulfilled before fulfilments were recorded is legacy, keyed on t…
+    117|     expect(fulfilmentRecordState({ status: 'fulfilled', ...signed, rec…
+       |            ^
+    118|   });
+    119|   it('a signed type with a live signature that binds the record is sig…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a signed type with a live signature that binds the record is signed; one that does not, is a mismatch
+TypeError: fulfilmentRecordState is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:120:12
+    118|   });
+    119|   it('a signed type with a live signature that binds the record is sig…
+    120|     expect(fulfilmentRecordState({ status: 'fulfilled', ...signed, rec…
+       |            ^
+    121|     expect(fulfilmentRecordState({ status: 'fulfilled', ...signed, rec…
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a recorded signed type whose signature was withdrawn says so, and one with none says that
+TypeError: fulfilmentRecordState is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:124:12
+    122|   });
+    123|   it('a recorded signed type whose signature was withdrawn says so, an…
+    124|     expect(fulfilmentRecordState({ status: 'fulfilled', ...signed, rec…
+       |            ^
+    125|     expect(fulfilmentRecordState({ status: 'fulfilled', ...signed, rec…
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/46]⎯
+
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > an unsigned type that was recorded is recorded
+TypeError: fulfilmentRecordState is not a function
+ ❯ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts:128:12
+    126|   });
+    127|   it('an unsigned type that was recorded is recorded', () => {
+    128|     expect(fulfilmentRecordState({ status: 'fulfilled', signatureRequi…
+       |            ^
+    129|   });
+    130| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/46]⎯
+
+ FAIL  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > is registered, so a fulfilment signature never falls back to the ledger basis
+AssertionError: expected undefined to be type of 'function'
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts:44:54
+     42| describe('the regulatory-commitment binder', () => {
+     43|   it('is registered, so a fulfilment signature never falls back to the…
+     44|     expect(CONTENT_BINDERS['regulatory-commitment']).toBeTypeOf('funct…
+       |                                                      ^
+     45|   });
+     46|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/46]⎯
+
+ FAIL  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > digests the commitment, its date and what met it, with the shared recipe
+TypeError: CONTENT_BINDERS.regulatory-commitment is not a function
+ ❯ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts:49:66
+     47|   it('digests the commitment, its date and what met it, with the share…
+     48|     const { client, calls } = clientReturning([ROW]);
+     49|     const binding = await CONTENT_BINDERS['regulatory-commitment'](cli…
+       |                                                                  ^
+     50|     expect(binding.basis).toBe(BINDING_BASIS.COMMITMENT_FULFILMENT_CON…
+     51|     expect(binding.basis).toBe('commitment-fulfilment-content-sha256');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/46]⎯
+
+ FAIL  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > binds the Vault version’s sha256: a different pin is a different digest
+TypeError: CONTENT_BINDERS.regulatory-commitment is not a function
+ ❯ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts:64:60
+     62|
+     63|   it('binds the Vault version’s sha256: a different pin is a different…
+     64|     const a = await CONTENT_BINDERS['regulatory-commitment'](clientRet…
+       |                                                            ^
+     65|     const b = await CONTENT_BINDERS['regulatory-commitment'](clientRet…
+     66|     expect(a.digest).not.toBe(b.digest);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/46]⎯
+
+ FAIL  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > falls back when the commitment is not readable, or carries no recorded fulfilment
+TypeError: CONTENT_BINDERS.regulatory-commitment is not a function
+ ❯ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts:72:52
+     70|     for (const rows of [[], [{ ...ROW, recorded: false }], [{ ...ROW, …
+     71|       let why = '';
+     72|       await CONTENT_BINDERS['regulatory-commitment'](clientReturning(r…
+       |                                                    ^
+     73|         why = reason;
+     74|         return { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/46]⎯
+
+ FAIL  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > refuses a malformed pointer rather than querying for it
+TypeError: CONTENT_BINDERS.regulatory-commitment is not a function
+ ❯ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts:83:50
+     81|     const client = { query: async () => { throw new Error('should not …
+     82|     let why = '';
+     83|     await CONTENT_BINDERS['regulatory-commitment'](client, '12; drop',…
+       |                                                  ^
+     84|       why = reason;
+     85|       return { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDG…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > offers Sign only once a sequence or document is named, and says so
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openDialogFor client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:126:33
+    124| async function openDialogFor(description: string) {
+    125|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    126|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    127|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    128| }
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:133:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > signs through the project's door with the date, the evidence and the signature components
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openDialogFor client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:126:33
+    124| async function openDialogFor(description: string) {
+    125|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    126|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    127|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    128| }
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:143:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > does not report a signature the server did not confirm
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openDialogFor client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:126:33
+    124| async function openDialogFor(description: string) {
+    125|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    126|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    127|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    128| }
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:172:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says the submissions could not be read, distinct from there being none, and keeps the Vault usable
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openDialogFor client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:126:33
+    124| async function openDialogFor(description: string) {
+    125|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    126|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    127|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    128| }
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:186:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > says plainly when no sequence the agency received is on file
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openDialogFor client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:126:33
+    124| async function openDialogFor(description: string) {
+    125|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    126|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    127|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    128| }
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:195:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > recording a PMR as fulfilled is a signature that names what met it > shows a viewer why they cannot sign, before anything is typed
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmr"
+  >
+    PMR
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Pediatric study under PREA
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openDialogFor client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:126:33
+    124| async function openDialogFor(description: string) {
+    125|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    126|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    127|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    128| }
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:203:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a meeting commitment is recorded with a reason > posts through the organisation's door, without the signature dialog
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="meeting_commitment"
+  >
+    MEETING_COMMITMENT
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Send the briefing package
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openDialogFor client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:126:33
+    124| async function openDialogFor(description: string) {
+    125|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    126|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    127|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    128| }
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:215:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > names the sequence and the version, who signed, and opens each where it lives
+AssertionError: expected 'PMRFinal CSR for study 301due 2027-06…' to match /Met by sequence 0042 of IND 123456, a…/
+
+- Expected:
+/Met by sequence 0042 of IND 123456, acknowledged by the agency\./
+
++ Received:
+"PMRFinal CSR for study 301due 2027-06-30 · fulfilled 2026-10-01fulfilled"
+
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:231:31
+    229|     await openCommitments();
+    230|     const rowEl = (await screen.findByText('Final CSR for study 301'))…
+    231|     expect(rowEl.textContent).toMatch(/Met by sequence 0042 of IND 123…
+       |                               ^
+    232|     expect(rowEl.textContent).toMatch(/Final CSR v2\.0 \(a later versi…
+    233|     expect(rowEl.textContent).toMatch(/Signed by Dana Reyes on .* \(re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > a fulfilled row says what met it > says evidence is in a project the reader cannot open, legacy rows, and a signature that no longer holds
+AssertionError: expected 'PMRHidden evidence PMRdue 2027-06-30 …' to match /Met by a sequence in a project you ca…/
+
+- Expected:
+/Met by a sequence in a project you cannot open\./
+
++ Received:
+"PMRHidden evidence PMRdue 2027-06-30 · fulfilled 2026-01-01fulfilled"
+
+ ❯ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx:253:47
+    251|     await openCommitments();
+    252|     const text = async (d: string) => ((await screen.findByText(d)).cl…
+    253|     expect(await text('Hidden evidence PMR')).toMatch(/Met by a sequen…
+       |                                               ^
+    254|     expect(await text('Hidden evidence PMR')).toMatch(/Met by a Vault …
+    255|     expect(await text('Legacy PMR')).toMatch(/Recorded as fulfilled be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > signs a project's PMC through the project's door, and the organisation's PMR through its own
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="pmc"
+  >
+    PMC
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Submit 24-month stability data
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30 · made in the answer to Q2 of Information request
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openFulfil client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:105:33
+    103| async function openFulfil(description: string) {
+    104|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    105|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    106|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    107| }
+ ❯ signFulfil client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:111:18
+ ❯ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:132:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/46]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx > Meetings & commitments, through both doors of the one register > records a meeting commitment with a reason through the organisation's door, with no signature
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record fulfilment"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Mark fulfilled":
+  <button
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA about this commitment":
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="cc-row"
+>
+  <span
+    class="cc-row-tag"
+    data-kind="meeting_commitment"
+  >
+    MEETING_COMMITMENT
+  </span>
+  <div
+    class="cc-row-b"
+  >
+    <div
+      class="cc-row-t"
+    >
+      Send the briefing package
+    </div>
+    <div
+      class="cc-row-s mono"
+    >
+      due 2027-06-30
+    </div>
+  </div>
+  <span
+    class="rd-chip tone-idle"
+  >
+    open
+  </span>
+  <button
+    class="cc-btn sm"
+  >
+    Mark fulfilled
+  </button>
+  <button
+    aria-label="Ask AnA about this commitment"
+    class="cc-btn sm"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </button>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openFulfil client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:105:33
+    103| async function openFulfil(description: string) {
+    104|   const rowEl = (await screen.findByText(description)).closest('.cc-ro…
+    105|   fireEvent.click(within(rowEl).getByRole('button', { name: 'Record fu…
+       |                                 ^
+    106|   return screen.findByRole('dialog', { name: 'Record a commitment as f…
+    107| }
+ ❯ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:143:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/46]⎯
+
+
+ Test Files  6 failed | 3 passed (9)
+      Tests  46 failed | 85 passed (131)
+   Start at  02:36:53
+   Duration  24.83s (transform 11.08s, setup 424ms, import 18.21s, tests 2.93s, environment 1.50s)
+
+
+## 2. tests/db/commitment-fulfilment-evidence.dbtest.ts (vitest.db.config.ts)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-19T02:38:28.834Z","pid":18034,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-19T02:38:28.836Z","pid":18034,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-19T02:38:28.836Z","pid":18034,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/commitment-fulfilment-evidence.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/commitment-fulfilment-evidence.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 6ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer 93ms
+   → Cannot read properties of undefined (reading 'includes')
+{"level":20,"time":"2026-10-19T02:38:32.089Z","pid":18034,"hostname":"vm","context":{"auditId":"audit_1792377512083_a319fb733e629ab3","action":"CREATE","entityType":"project","entityId":"proj_83"},"msg":"[concept2cure-api] Audit entry persisted"}
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged 8ms
+   → Cannot find module '/server/services/submission-service/filed-dispatch' imported from /home/user/ClinicalSageAI-2-replit/tests/db/commitment-fulfilment-evidence.dbtest.ts
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > offers only this project's sequences the agency received, and this project's Vault 16ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a viewer reads the options as unable to write or sign 15ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a PMR that names nothing is refused before the password, which is never checked 49ms
+   → {"success":true,"data":{"id":53,"status":"fulfilled"},"governance":{"actionId":"act_f5251a4861644f598a5705da0aa8a159","auditId":"4b494118-4cef-4152-aae5-3046b04d7b4b","sha256Chain":"936723ff6a02440f8ef8aa7b970f42ba39ec841f7229ef08a80f0c853efc6957"}}: expected 201 to be 400 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a PMR with no date is refused before the password: the server never chooses the signed date 32ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 400 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > evidence but no password is a missing signature component 36ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 400 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a sequence still pending transmit, before the password, and records nothing 39ms
+   → expected 'INVALID_STATE' to be 'SEQUENCE_NOT_FILED' // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a sequence the agency rejected, before the password, and records nothing 30ms
+   → expected 'INVALID_STATE' to be 'SEQUENCE_NOT_FILED' // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a frozen sequence never dispatched, before the password, and records nothing 34ms
+   → expected 'INVALID_STATE' to be 'SEQUENCE_NOT_FILED' // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another project's sequence, before the password, and records nothing 26ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another organisation's sequence, before the password, and records nothing 24ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another project's Vault version, before the password, and records nothing 26ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another organisation's Vault version, before the password, and records nothing 27ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a version that does not exist, before the password, and records nothing 26ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a version whose data was withdrawn, before the password, and records nothing 21ms
+   → expected 'INVALID_STATE' to be 'VAULT_VERSION_WITHDRAWN' // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a viewer cannot fulfil it at either door 20ms
+   → column "fulfilment_sequence_id" does not exist
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > signs: the row names the sequence and the version with its sha256, and the signature binds them 21ms
+   → {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 201 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > the list names what met it, who signed, and that the signature matches the record 23ms
+   → expected undefined to match object { state: 'signed', …(4) }
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a second fulfilment is refused 26ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role 9ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /IMMUTABILITY_VIOLATION/
+{"level":20,"time":"2026-10-19T02:38:32.687Z","pid":18034,"hostname":"vm","context":{"auditId":"audit_1792377512680_e72f652702124302","action":"CREATE","entityType":"project","entityId":"proj_83"},"msg":"[concept2cure-api] Audit entry persisted"}
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a removal is written once: deleted_at, once set, is not cleared 86ms
+   → expected true to be false // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > names no sequence or Vault version, and says why 15ms
+   → {"success":false,"error":{"message":"Project not found.","code":"PROJECT_NOT_FOUND"}}: expected 404 to be 200 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT 30ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_SIGNATURE_REQUIRED/
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR that names nothing fails at COMMIT 15ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_EVIDENCE_REQUIRED/
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a move into fulfilled must say who recorded it 19ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_FULFILMENT_UNATTRIBUTED/
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a signature by someone else, or over other evidence, does not count (M5) 21ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_SIGNATURE_REQUIRED/
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > names only a version of this organisation, at its own sha256 14ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_EVIDENCE_INVALID|violates …/
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > names only a sequence the agency received 15ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_EVIDENCE_INVALID/
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > evidence is attached only in the update that records the fulfilment, never to a legacy row afterwards 20ms
+   → expected 'column "fulfilment_sequence_id" of re…' to match /IMMUTABILITY_VIOLATION|COMMITMENT_SIG…/
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR 38ms
+   → expected true to be false // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row 30ms
+   → expected { id: 63, status: 'fulfilled', …(3) } to match object { success: true, …(1) }
+(5 matching properties omitted from actual)
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none 25ms
+   → {"id":64,"status":"fulfilled","actionId":"act_4a0cad1ceaf145b6a49b28968029036a","auditId":"a32c67dc-4ca0-4d57-8edb-db4d294127ce","sha256Chain":"7a617789604adbff13f61062ad622cdc08eee114300c5a38a0bae59c168d2f84"}: expected 201 to be 400 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said 15ms
+   → {"id":65,"status":"fulfilled","actionId":"act_d84875d6c6c747c9828ca7bc97afbf52","auditId":"653f410b-10b6-4040-905a-77be4717621f","sha256Chain":"9de2f170eef8e6a921b955337facec5b616ebcdb7b1ea7d9e73842ece9e8fee3"}: expected 201 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open 22ms
+   → {"error":{"code":"INVALID_STATE","message":"That commitment is already fulfilled, waived or released."}}: expected 409 to be 201 // Object.is equality
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > another organisation's admin reaches neither the options nor the fulfilment 59ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 2ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a tenant whose commitments name evidence can still be erased > purge removes the commitments before the Vault versions they name, with no 23503; the signature stays 130ms
+   → inconsistent types deduced for parameter $4
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer
+TypeError: Cannot read properties of undefined (reading 'includes')
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:321:85
+    319|       const cid = await orgCommitment(type, `Type pin ${type}`);
+    320|       const r = await asRuntime([rawFulfil(cid, { seq: seq.ok }, users…
+    321|       const signed = ((await logic()).SIGNED_FULFILMENT_TYPES as reado…
+       |                                                                                     ^
+    322|       expect(r.ok, `${type}: ${JSON.stringify(r)}`).toBe(!signed);
+    323|       if (!r.ok) expect(r.message).toMatch(/COMMITMENT_SIGNATURE_REQUI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged
+Error: Cannot find module '/server/services/submission-service/filed-dispatch' imported from /home/user/ClinicalSageAI-2-replit/tests/db/commitment-fulfilment-evidence.dbtest.ts
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:328:41
+    326|
+    327|   it('the filed rule is the platform one: sent and acknowledged', asyn…
+    328|     const { FILED_DISPATCH_STATUSES } = await import('../../server/ser…
+       |                                         ^
+    329|     expect([...FILED_DISPATCH_STATUSES]).toEqual(['sent', 'acknowledge…
+    330|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > offers only this project's sequences the agency received, and this project's Vault
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:341:50
+    339|   it("offers only this project's sequences the agency received, and th…
+    340|     const res = await request(app).get(optionsUrl(project.X, cid)).set…
+    341|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    342|     const d = res.body.data;
+    343|     expect(d.rule).toMatchObject({ signatureRequired: true, evidenceRe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a viewer reads the options as unable to write or sign
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:354:50
+    352|   it('a viewer reads the options as unable to write or sign', async ()…
+    353|     const res = await request(app).get(optionsUrl(project.X, cid)).set…
+    354|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    355|     expect(res.body.data.viewer).toMatchObject({ canWrite: false, canS…
+    356|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a PMR that names nothing is refused before the password, which is never checked
+AssertionError: {"success":true,"data":{"id":53,"status":"fulfilled"},"governance":{"actionId":"act_f5251a4861644f598a5705da0aa8a159","auditId":"4b494118-4cef-4152-aae5-3046b04d7b4b","sha256Chain":"936723ff6a02440f8ef8aa7b970f42ba39ec841f7229ef08a80f0c853efc6957"}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:361:50
+    359|     const before = await failedAttempts('prober');
+    360|     const res = await request(app).post(fulfilUrl(project.X, cid)).set…
+    361|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    362|     expect(res.body.error.code).toBe('EVIDENCE_REQUIRED');
+    363|     expect(await failedAttempts('prober')).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a PMR with no date is refused before the password: the server never chooses the signed date
+AssertionError: {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 409
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:371:50
+    369|     const res = await request(app).post(fulfilUrl(project.X, cid)).set…
+    370|       .send(signedBody({ sequenceId: seq.ok }, { fulfilledDate: undefi…
+    371|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    372|     expect(res.body.error.code).toBe('FULFILMENT_DATE_REQUIRED');
+    373|     expect(await failedAttempts('prober')).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > evidence but no password is a missing signature component
+AssertionError: {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 409
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:378:50
+    376|   it('evidence but no password is a missing signature component', asyn…
+    377|     const res = await request(app).post(fulfilUrl(project.X, cid)).set…
+    378|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    379|     expect(res.body.error.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    380|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a sequence still pending transmit, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a sequence the agency rejected, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a frozen sequence never dispatched, before the password, and records nothing
+AssertionError: expected 'INVALID_STATE' to be 'SEQUENCE_NOT_FILED' // Object.is equality
+
+Expected: "SEQUENCE_NOT_FILED"
+Received: "INVALID_STATE"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:396:33
+    394|     const res = await request(app).post(fulfilUrl(project.X, cid)).set…
+    395|     expect(res.status, JSON.stringify(res.body)).toBe(status);
+    396|     expect(res.body.error.code).toBe(code);
+       |                                 ^
+    397|     expect(await failedAttempts('prober'), 'a refused fulfilment spent…
+    398|     expect((await stateOf(cid)).status).toBe('open');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another project's sequence, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another organisation's sequence, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another project's Vault version, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses another organisation's Vault version, before the password, and records nothing
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a version that does not exist, before the password, and records nothing
+AssertionError: {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 409
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:395:50
+    393|     const before = await failedAttempts('prober');
+    394|     const res = await request(app).post(fulfilUrl(project.X, cid)).set…
+    395|     expect(res.status, JSON.stringify(res.body)).toBe(status);
+       |                                                  ^
+    396|     expect(res.body.error.code).toBe(code);
+    397|     expect(await failedAttempts('prober'), 'a refused fulfilment spent…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > refuses a version whose data was withdrawn, before the password, and records nothing
+AssertionError: expected 'INVALID_STATE' to be 'VAULT_VERSION_WITHDRAWN' // Object.is equality
+
+Expected: "VAULT_VERSION_WITHDRAWN"
+Received: "INVALID_STATE"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:396:33
+    394|     const res = await request(app).post(fulfilUrl(project.X, cid)).set…
+    395|     expect(res.status, JSON.stringify(res.body)).toBe(status);
+    396|     expect(res.body.error.code).toBe(code);
+       |                                 ^
+    397|     expect(await failedAttempts('prober'), 'a refused fulfilment spent…
+    398|     expect((await stateOf(cid)).status).toBe('open');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a viewer cannot fulfil it at either door
+error: column "fulfilment_sequence_id" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ stateOf tests/db/commitment-fulfilment-evidence.dbtest.ts:196:13
+    194|
+    195| async function stateOf(cid: number) {
+    196|   const r = await owner.query(
+       |             ^
+    197|     `SELECT status, to_char(fulfilled_date, 'YYYY-MM-DD') AS fulfilled…
+    198|             fulfilment_vault_sha256 AS sha, fulfilment_recorded_by AS …
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:407:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 122, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '73', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > signs: the row names the sequence and the version with its sha256, and the signature binds them
+AssertionError: {"success":false,"error":{"message":"That commitment is already fulfilled, waived or released.","code":"INVALID_STATE"}}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:413:50
+    411|     const res = await request(app).post(fulfilUrl(project.X, cid)).set…
+    412|       .send(signedBody({ sequenceId: seq.ok, vaultDocumentId: vault.P …
+    413|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    414|     expect(res.body).toMatchObject({ success: true, meaning: 'responsi…
+    415|     expect(typeof res.body.signatureId).toBe('number');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > the list names what met it, who signed, and that the signature matches the record
+AssertionError: expected undefined to match object { state: 'signed', …(4) }
+
+- Expected:
+{
+  "recordedBy": {
+    "id": 175,
+    "name": "Fulfil Signer",
+  },
+  "sequence": {
+    "dispatchStatus": "sent",
+    "filed": true,
+    "id": 8,
+    "readable": true,
+    "sequenceNumber": "0042",
+    "submissionId": 4,
+  },
+  "signature": {
+    "bindsRecord": true,
+    "meaning": "responsibility",
+    "signerName": "Fulfil Signer",
+  },
+  "state": "signed",
+  "vaultVersion": {
+    "id": "8581d7aa-55e8-42be-891d-d8beb4560132",
+    "readable": true,
+    "removed": false,
+    "sha256": "a2a759e7acfea5b6b9a26e49be26f92edc50fca572353fd9530d2c883c2ed085",
+    "superseded": false,
+    "title": "Final CSR",
+    "version": "2.0",
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:440:28
+    438|     expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(20…
+    439|     const row = res.body.data.commitments.find((c: { id: number }) => …
+    440|     expect(row.fulfilment).toMatchObject({
+       |                            ^
+    441|       state: 'signed',
+    442|       recordedBy: { id: users.signer.id, name: 'Fulfil Signer' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a second fulfilment is refused
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:455:37
+    453|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+    454|     expect(res.body.error.code).toBe('INVALID_STATE');
+    455|     expect(await signaturesOn(cid)).toHaveLength(1);
+       |                                     ^
+    456|   });
+    457|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:469:36
+    467|       const r = await asRuntime([[sql, params]]);
+    468|       expect(r.ok, sql).toBe(false);
+    469|       if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+       |                                    ^
+    470|     }
+    471|     expect((await stateOf(cid))).toMatchObject({ status: 'fulfilled', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named > a removal is written once: deleted_at, once set, is not cleared
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:478:18
+    476|     expect((await asRuntime([['UPDATE regulatory_commitments SET delet…
+    477|     const r = await asRuntime([['UPDATE regulatory_commitments SET del…
+    478|     expect(r.ok).toBe(false);
+       |                  ^
+    479|     if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+    480|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > names no sequence or Vault version, and says why
+AssertionError: {"success":false,"error":{"message":"Project not found.","code":"PROJECT_NOT_FOUND"}}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ projectCommitment tests/db/commitment-fulfilment-evidence.dbtest.ts:170:54
+    168|     urgency: 'high', responseRequired: true, dueDate: '2026-11-15T00:0…
+    169|   });
+    170|   expect(letter.status, JSON.stringify(letter.body)).toBe(200);
+       |                                                      ^
+    171|   const eventId = String(letter.body.data.id);
+    172|   const q = await request(app).post(`${projectBase(pid)}/agency-commun…
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:485:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_SIGNATURE_REQUIRED/
+
+- Expected:
+/COMMITMENT_SIGNATURE_REQUIRED/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:500:34
+    498|     const r = await asRuntime([rawFulfil(cid, { seq: seq.ok }, users.s…
+    499|     expect(r.ok).toBe(false);
+    500|     if (!r.ok) expect(r.message).toMatch(/COMMITMENT_SIGNATURE_REQUIRE…
+       |                                  ^
+    501|     expect((await stateOf(cid)).status).toBe('open');
+    502|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR that names nothing fails at COMMIT
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_EVIDENCE_REQUIRED/
+
+- Expected:
+/COMMITMENT_EVIDENCE_REQUIRED/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:508:34
+    506|     const r = await asRuntime([rawFulfil(cid, {}, users.signer.id)]);
+    507|     expect(r.ok).toBe(false);
+    508|     if (!r.ok) expect(r.message).toMatch(/COMMITMENT_EVIDENCE_REQUIRED…
+       |                                  ^
+    509|   });
+    510|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a move into fulfilled must say who recorded it
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_FULFILMENT_UNATTRIBUTED/
+
+- Expected:
+/COMMITMENT_FULFILMENT_UNATTRIBUTED/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:515:34
+    513|     const r = await asRuntime([rawFulfil(cid, {}, null)]);
+    514|     expect(r.ok).toBe(false);
+    515|     if (!r.ok) expect(r.message).toMatch(/COMMITMENT_FULFILMENT_UNATTR…
+       |                                  ^
+    516|   });
+    517|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a signature by someone else, or over other evidence, does not count (M5)
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_SIGNATURE_REQUIRED/
+
+- Expected:
+/COMMITMENT_SIGNATURE_REQUIRED/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:539:36
+    537|       const r = await asRuntime(statements);
+    538|       expect(r.ok).toBe(false);
+    539|       if (!r.ok) expect(r.message).toMatch(/COMMITMENT_SIGNATURE_REQUI…
+       |                                    ^
+    540|     }
+    541|     expect((await stateOf(cid)).status).toBe('open');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > names only a version of this organisation, at its own sha256
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_EVIDENCE_INVALID|violates …/
+
+- Expected:
+/COMMITMENT_EVIDENCE_INVALID|violates foreign key/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:549:36
+    547|       const r = await asRuntime([rawFulfil(cid, ev, users.signer.id)]);
+    548|       expect(r.ok, JSON.stringify(ev)).toBe(false);
+    549|       if (!r.ok) expect(r.message).toMatch(/COMMITMENT_EVIDENCE_INVALI…
+       |                                    ^
+    550|     }
+    551|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > names only a sequence the agency received
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /COMMITMENT_EVIDENCE_INVALID/
+
+- Expected:
+/COMMITMENT_EVIDENCE_INVALID/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:557:34
+    555|     const r = await asRuntime([rawFulfil(cid, { seq: seq.pending }, us…
+    556|     expect(r.ok).toBe(false);
+    557|     if (!r.ok) expect(r.message).toMatch(/COMMITMENT_EVIDENCE_INVALID/…
+       |                                  ^
+    558|     const other = await asRuntime([rawFulfil(cid, { seq: seq.foreign }…
+    559|     expect(other.ok).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > evidence is attached only in the update that records the fulfilment, never to a legacy row afterwards
+AssertionError: expected 'column "fulfilment_sequence_id" of re…' to match /IMMUTABILITY_VIOLATION|COMMITMENT_SIG…/
+
+- Expected:
+/IMMUTABILITY_VIOLATION|COMMITMENT_SIGNATURE_REQUIRED/
+
++ Received:
+"column \"fulfilment_sequence_id\" of relation \"regulatory_commitments\" does not exist"
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:579:34
+    577|     ]]);
+    578|     expect(r.ok).toBe(false);
+    579|     if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION|COMMI…
+       |                                  ^
+    580|   });
+    581|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the database holds it, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:587:18
+    585|     expect(ok.status, JSON.stringify(ok.body)).toBe(201);
+    586|     const r = await asRuntime([["UPDATE regulatory_commitments SET com…
+    587|     expect(r.ok).toBe(false);
+       |                  ^
+    588|     if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+    589|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row
+AssertionError: expected { id: 63, status: 'fulfilled', …(3) } to match object { success: true, …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "data": {
++   "actionId": "act_c73e3506abc44f89a04d457ff72a8219",
++   "auditId": "0b7f49c7-50da-4e4b-8255-6f5a6b119153",
+    "id": 63,
+-     "signed": false,
++   "sha256Chain": "655fc52ab13e536bb249e2709ee2dbb91bea60bd9638187c9a57e7770587831e",
+    "status": "fulfilled",
+-   },
+-   "success": true,
+  }
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:598:22
+    596|       .send({ fulfilledDate: '2026-10-02', reason: 'Briefing package s…
+    597|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    598|     expect(res.body).toMatchObject({ success: true, data: { id: cid, s…
+       |                      ^
+    599|     expect(res.body.signatureId).toBeUndefined();
+    600|     expect(await stateOf(cid)).toMatchObject({ status: 'fulfilled', fu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none
+AssertionError: {"id":64,"status":"fulfilled","actionId":"act_4a0cad1ceaf145b6a49b28968029036a","auditId":"a32c67dc-4ca0-4d57-8edb-db4d294127ce","sha256Chain":"7a617789604adbff13f61062ad622cdc08eee114300c5a38a0bae59c168d2f84"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:609:50
+    607|     const cid = await orgCommitment('meeting_commitment', 'Password pr…
+    608|     const res = await request(app).post(fulfilUrl('org', cid)).set(as(…
+    609|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    610|     expect(res.body.error.code).toBe('SIGNATURE_NOT_TAKEN');
+    611|     expect((await stateOf(cid)).status).toBe('open');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said
+AssertionError: {"id":65,"status":"fulfilled","actionId":"act_d84875d6c6c747c9828ca7bc97afbf52","auditId":"653f410b-10b6-4040-905a-77be4717621f","sha256Chain":"9de2f170eef8e6a921b955337facec5b616ebcdb7b1ea7d9e73842ece9e8fee3"}: expected 201 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 201
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:623:50
+    621|   it("a member who cannot open program Q cannot name its sequence: 404…
+    622|     const res = await request(app).post(fulfilUrl('org', cid)).set(as(…
+    623|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+       |                                                  ^
+    624|     expect(res.body.error.code).toBe('SEQUENCE_NOT_FOUND');
+    625|     expect(JSON.stringify(res.body)).not.toContain('0917');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open
+AssertionError: {"error":{"code":"INVALID_STATE","message":"That commitment is already fulfilled, waived or released."}}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:630:56
+    628|   it("the signer, who can open it, signs; the member's list says only …
+    629|     const signed = await request(app).post(fulfilUrl('org', cid)).set(…
+    630|     expect(signed.status, JSON.stringify(signed.body)).toBe(201);
+       |                                                        ^
+    631|
+    632|     const mine = await request(app).get(ORG).set(as('signer'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/36]⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a tenant whose commitments name evidence can still be erased > purge removes the commitments before the Vault versions they name, with no 23503; the signature stays
+error: inconsistent types deduced for parameter $4
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:689:21
+    687|     try {
+    688|       await c.query('BEGIN');
+    689|       sig = Number((await c.query(
+       |                     ^
+    690|         `INSERT INTO electronic_signatures (organization_id, signed_ta…
+    691|                                             authentication_method, aut…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 155, severity: 'ERROR', code: '42P08', detail: 'character varying versus text', hint: undefined, position: '516', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_param.c', routine: 'variable_coerce_param_hook' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/36]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  36 failed | 3 passed (39)
+   Start at  02:38:26
+   Duration  6.47s (transform 2.60s, setup 73ms, import 236ms, tests 5.87s, environment 0ms)
+
+
+## 3. tests/db/agency-response-signed-approval.dbtest.ts (the unsigned PMR fulfil case rewritten to a refusal)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-19T02:38:02.022Z","pid":17903,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-19T02:38:02.024Z","pid":17903,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-19T02:38:02.024Z","pid":17903,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/agency-response-signed-approval.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/agency-response-signed-approval.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 6ms
+{"level":20,"time":"2026-10-19T02:38:05.054Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377485048_c43a78e5c76334db","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+(node:17903) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > records a question on a letter, with its ledger row, as unanswered 212ms
+{"level":20,"time":"2026-10-19T02:38:05.183Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377485180_d40e497037a74dde","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:05.278Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377485275_9e554af22cc92c5d","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > refuses a second question with the same agency number on one letter 93ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > a viewer can read the questions and write none 109ms
+{"level":20,"time":"2026-10-19T02:38:05.395Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377485392_25f962a603b4bbae","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > tells the author, before they try, that they cannot approve their own answer 90ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses an approval with no password, and writes nothing 24ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a meaning an approval cannot carry 20ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses the author, with the right password, and writes nothing 41ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a viewer: identity is not authority 13ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a signature over a revision the signer did not see 29ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > signs: one electronic_signatures row binding the exact response text 82ms
+{"level":20,"time":"2026-10-19T02:38:05.836Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377485833_00db4b27f14f122f","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a second approval of the same text 43ms
+{"level":20,"time":"2026-10-19T02:38:06.036Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377486033_7ddc2ca42df24e84","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses the package while one response is unsigned, naming it 35ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses to close the letter while a response is unsigned 53ms
+{"level":30,"time":"2026-10-19T02:38:06.182Z","pid":17903,"hostname":"vm","context":{"userId":164,"tenantId":96,"resourceId":"ace_1792377485832_91e29977"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED agency_response_package"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > records a commitment made in a response, naming the project, letter and question 63ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > once every response is signed: the package assembles, recorded with the bytes delivered 68ms
+{"level":20,"time":"2026-10-19T02:38:06.348Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377486343_558394cde229e126","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again 70ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes 85ms
+{"level":20,"time":"2026-10-19T02:38:06.424Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377486417_f7a1be1de5ae792b","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a closed letter takes no new question and no edited response 50ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > lists the commitment under its project, with the letter and question it was made in 16ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation-wide register does not list a project's commitment (project admission applies) 13ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it, through either door 19ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation's door does not reach a project's commitment, even for an editor 10ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future, and a date that does not exist, with a sentence 37ms
+{"level":20,"time":"2026-10-19T02:38:06.631Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377486629_151d7f67dfe28826","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ × tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an unsigned PMR fulfilment that names nothing is refused, and nothing changes 41ms
+   → {"success":true,"data":{"id":49,"status":"fulfilled"},"governance":{"actionId":"act_d20f77f9e9034246967e25c59d3137ec","auditId":"5b56ef1a-7996-49f9-998a-2f7dc62e7657","sha256Chain":"9511ff09c50059df173627bc9edcb57444ce9254132bf59b85b04954b372f519"}}: expected 201 to be 400 // Object.is equality
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a commitment from a letter the person may not see is not listed to them 113ms
+{"level":20,"time":"2026-10-19T02:38:06.742Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377486739_fbb302dd5863a25e","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > keeps every text: after an edit, the earlier approved text is in the history, with its signature 154ms
+{"level":20,"time":"2026-10-19T02:38:06.909Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377486906_6ca88e596fe26daf","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > the history is append-only for the runtime role 12ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver 205ms
+{"level":20,"time":"2026-10-19T02:38:07.110Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487108_35955eeead5d721d","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":30,"time":"2026-10-19T02:38:07.315Z","pid":17903,"hostname":"vm","context":{"userId":164,"tenantId":96,"resourceId":"ace_1792377487105_a7c51dbd"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED agency_response_package"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a withdrawn question needs no answer, takes no edit, and is left out of the package 234ms
+{"level":20,"time":"2026-10-19T02:38:07.348Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487345_1a6b1845077ae4e5","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.369Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487367_7296e7ce829ef499","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.443Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487440_d9bcd1eea5726152","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.469Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487466_3f29011900ef7d68","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.540Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487538_61e287ddc5890d41","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does 119ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter with questions recorded cannot be marked as asking nothing 61ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response cannot be logged as already closed 15ms
+{"level":20,"time":"2026-10-19T02:38:07.659Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487657_27986ac2cc52cb14","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.695Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487691_49d937dff59a1d3c","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.718Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487715_6edc9da0e6536b52","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.818Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487816_6e212e17af544180","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.849Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487846_3da6b0a1e188c715","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.871Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487869_12bf42949d527de3","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:07.978Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377487975_047f3643d24ac1bf","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:08.031Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377488025_1078bf251f9329b5","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:08.156Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377488153_bcb70f2f03e12690","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:08.210Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377488208_d4bee07112c2d04f","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:08.335Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377488332_6b95e399a9d4382f","action":"UPDATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a close and a new question cannot both land: the close is checked under the letter lock 842ms
+{"level":20,"time":"2026-10-19T02:38:08.382Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377488379_32604f35851858f4","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T02:38:08.456Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377488454_4f4f06966f1b663f","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":30,"time":"2026-10-19T02:38:08.585Z","pid":17903,"hostname":"vm","context":{"userId":164,"tenantId":96,"resourceId":"ace_1792377488452_8538c529"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED agency_response_package"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the screen is told what this person may do > a viewer may write nothing and sign nothing; an editor with signing authority may 76ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the Word package reproduces the signed text line for line > each line of a response is its own paragraph, and no Markdown marks are printed 184ms
+{"level":40,"time":"2026-10-19T02:38:08.877Z","pid":17903,"hostname":"vm","context":{"organizationId":98,"purgedByUserId":169,"retentionOverride":null,"finalExportDigest":"dbagr-53566e07-bd3e-48f3-b98f-72aecee9bf75-digest","deletedRows":{"ana_source_read_receipts":0,"mdx_notification_receipts":0,"mdx_notifications":0,"ai_feedback":0,"module_access_requests":0,"ana_run_events":0,"ana_runs":0,"project_workflows":0,"organization_users":0,"concept2cure_signatures":0,"concept2cure_submission_snapshots":0,"commitment_milestones":1,"regulatory_commitments":1,"agency_communication_questions":1,"projects":1,"client_workspaces":1,"documents":0,"vault.document_chunks":0,"vault.documents":0,"stats_computation_runs":0,"regulatory_programs":0,"file_uploads":0,"regulatory_twin_simulations":0,"cmc_container_closures":0,"cmc_reference_standards":0,"cmc_impurity_profiles":0,"cmc_dissolution_profiles":0,"cmc_material_specs":0,"cmc_formulation_records":0,"cmc_characterization_studies":0,"manufacturing_processes":0,"cmc_interview_sessions":"[REDACTED]","rendered_leaf_files":0,"assumption_records":0,"decision_records":0,"governed_decision_transitions":0,"collab_presence":0,"project_continuity_snapshots":0,"scheduled_job_claims":0,"cmc_workflow_tasks":0,"cmc_workflow_instances":0,"cmc_checklist_instances":0,"cmc_ai_tool_executions":0,"cmc_workflows":0,"organization_retention_settings":0,"ana_turn_records":0,"ana_record_blobs":0,"organization_gateway_accounts":0,"session_activity":"[REDACTED]","coordination_leases":0,"citation_chains":0},"turnRecordErasure":{"records":0,"blobs":0},"runEventErasure":{"events":0},"sourceReadReceiptErasure":{"receipts":0},"artifactRecordErasure":{"signatures":0,"snapshots":0}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history and the commitments from them; the signatures stay 257ms
+{"level":20,"time":"2026-10-19T02:38:08.899Z","pid":17903,"hostname":"vm","context":{"auditId":"audit_1792377488897_6c73f1816eac63d3","action":"CREATE","entityType":"project","entityId":"proj_76"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions 74ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 3ms
+{"level":30,"time":"2026-10-19T02:38:10.347Z","pid":17924,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-19T02:38:10.348Z","pid":17924,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-19T02:38:10.348Z","pid":17924,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+error: inconsistent types deduced for parameter $3
+ ❯ node_modules/pg-pool/index.js:45:11
+    282|   vault.B = await vaultVersion(foreignOrgId, program.B, 'Their CSR', u…
+    283|   vault.withdrawn = await vaultVersion(orgId, program.P, 'Withdrawn li…
+    284|   await owner.query(
+       |   ^
+    285|     `INSERT INTO document_data_dispositions (organization_id, program_…
+    286|                                              preview_hash, linked_ids,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 142, severity: 'ERROR', code: '42P08', detail: 'text versus uuid', hint: undefined, position: '254', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_param.c', routine: 'variable_coerce_param_hook' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an unsigned PMR fulfilment that names nothing is refused, and nothing changes
+AssertionError: {"success":true,"data":{"id":49,"status":"fulfilled"},"governance":{"actionId":"act_d20f77f9e9034246967e25c59d3137ec","auditId":"5b56ef1a-7996-49f9-998a-2f7dc62e7657","sha256Chain":"9511ff09c50059df173627bc9edcb57444ce9254132bf59b85b04954b372f519"}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/agency-response-signed-approval.dbtest.ts:476:50
+    474|       .set(as('author'))
+    475|       .send({ fulfilledDate: '2026-10-01', reason: 'Final study report…
+    476|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    477|     expect(res.body.error.code).toBe('EVIDENCE_REQUIRED');
+    478|     const st = await owner.query(`SELECT status, fulfilled_date FROM r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed | 38 passed | 39 skipped (78)
+   Start at  02:37:59
+   Duration  10.60s (transform 2.79s, setup 124ms, import 545ms, tests 9.41s, environment 0ms)
+

@@ -1,0 +1,41 @@
+{
+  "recordedAt": "2026-10-17T23:38:55.579972+00:00",
+  "branch": "concept2cure-v2",
+  "implementationCommit": "9fc40c80cf35c017bdc49c6b9247a146d31a68b7",
+  "contractCommit": "70cb689712a9517359fc82dacf4f0d61b6084fd2",
+  "synchronizedCanonical": "ad372567d29a8ad385a751dde57a397cdc20cb3f",
+  "focusedSuites": 23,
+  "focusedTests": 399,
+  "typecheckErrors": 0,
+  "warningGrowth": 0,
+  "production": {
+    "server/services/ana/batch-draft-result.ts": "981daafd2b37d93cd0a1a323a9de645d428e6d2903dff63cf103b83a24650401",
+    "server/services/ana/AnaToolExecutor.ts": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02"
+  },
+  "evidence": {
+    "CONTRACT.md": "9ef117faddec54bd4cb302867a1baa863397ff7c3fc194879487a94171dc9314",
+    "README.md": "38216c83b002bab753f43b62c079889e3d7f14673664d979460936c87aa541a8",
+    "regression-final-manifest.json": "a1c2fb047c0e747b02acf0b0852982352c4e0d8640b6d8340d2a195d9cef3c21",
+    "regression-final.txt": "1b2b3417b12739d0f9462ce47609f80b186648fd69005c59330f1702654fa045",
+    "regression-paths.json": "acebda3b51353d31897a9c544cef42982eb6d0bdd67a251c38516193d0011c32",
+    "run-regression.mjs": "5fe18c64eb3e74bcd3edb8ef5fb2372b56c6d2f8bf610494d3e5e05187616f9e",
+    "typecheck-final-manifest.json": "32fa5c5383f0eafb5ca8d9fbf4f2fb94f011a987a3fde6b879cb64d7abe73c24",
+    "typecheck-final.txt": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "run-typecheck.mjs": "295a43e94a36435cbf6a035aafbe9b1bfc469e321541d5772ae3b4f347d4a77c",
+    "receipt-type-erasure.json": "7af8f40d6e1c9b7aec822aac1a7faab4633efd21fbb995bf2dff24f0bb3ebe4a",
+    "receipt-type-counterfactual-red.json": "b76be93ccc901a3f196576b0179c4fa0782804240ef419818c9dfc3db29b2b6f",
+    "receipt-type-final-green.json": "3bc47aba23b663c755c8f01fc4bb784443cd6268296aed224dae048e32427f1b",
+    "independent-final-bindings.json": "c3d26a164dfec7a7faa49d4639921da5cc738701fda99a532965ff7ed2157bb9",
+    "independent-qualified-manifest.json": "f204fe84fbdc79b05550e04d566edf78c8fc9c6c0c22c215826037f2eec59295",
+    "independent-review.md": "3704ec9909932a5b5364d0598ab8ded5e724f58879a1bd64da6d0ce7b0376f26",
+    "lifecycle-review.md": "b729e0778381c0aa44b3c8c191cbb5a69fa1b243931b2f6e48051cbf61756461",
+    "production-owner-lint-summary.json": "162ef1be2a4ca3e87d49cfe1d093d37130c704a2f5a42857bd4fcb8427ad1bf7",
+    "release-runner-lint.json": "751440565e1201860c7ce9592553157ed031ac5053c2d96de6d297a3c3d2244c",
+    "canonical-pre-release-incoming.json": "6563711d4e603ac4d5219296c551b319336c77fea21de702c528f99e5b0b396d",
+    "canonical-final-incoming.json": "aa0cca2bc53a1030022f3cf299954b08c0a971b4b442f7e1ac2e7e3747a724c3",
+    "push-implementation.txt": "ea87f5d4955fea2a00aa6cd1ebf1f8550a98bafc3ffcfc752d113e0bc1b1f9fc"
+  },
+  "scope": "Bounded AnA receipt correction; overlapping independent counts are not additive. No live provider/database/full-application or agency qualification; no D2 closure claim.",
+  "metadataMerge": "bd1b9ffc9cff286d01019a29a8cd115d4286505e",
+  "publishedSourceHead": "ff5e065a79a99082a0fa156bdb225f87ec22784b"
+}

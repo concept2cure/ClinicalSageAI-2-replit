@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-20T23:04:31.429977+00:00",
+  "argv": [
+    "node",
+    "scripts/ci/check-eslint-warning-ratchet.mjs",
+    "--since",
+    "5d18c395084a8decb8514aed586e0c0de8a14ea4",
+    "--gate"
+  ],
+  "elapsedSeconds": 9.698,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-publication.json",
+  "sourceDrift": [],
+  "stdout": "[ci:eslint-warning-ratchet] --since 5d18c395084a8decb8514aed586e0c0de8a14ea4 (5d18c3950) -- 48 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since 5d18c395084a8decb8514aed586e0c0de8a14ea4.\n",
+  "stderr": ""
+}

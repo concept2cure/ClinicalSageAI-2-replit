@@ -1,0 +1,11 @@
+{
+  "cwd": "/workspace/Concept2Cure",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096"
+}

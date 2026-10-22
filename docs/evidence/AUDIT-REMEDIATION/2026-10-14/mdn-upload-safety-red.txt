@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes exact bytes with authenticated actor/org, restores the original tenant scope after multipart, and returns verified proof 22ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > retains the real editor permission gate before accepting a receipt 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes a typed cryptographic or tenant refusal back without a success claim 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects an invalid transmittal identifier and a missing receipt before verification 5ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > enforces the eight-megabyte multipart bound before verification 24ms
+ × server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > refuses executable filenames before receipt verification 8ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > runs the canonical malware gate before cryptographic verification 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects malformed binary CMS without passing it to receipt verification 6ms
+   → expected 200 to be 400 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > refuses executable filenames before receipt verification
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/mdx-as2-receipt.test.ts:72:29
+     70|   it('refuses executable filenames before receipt verification', async…
+     71|     const response = await post().field('contentType', 'multipart/sign…
+     72|     expect(response.status).toBe(400);
+       |                             ^
+     73|     expect(h.ingest).not.toHaveBeenCalled();
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > runs the canonical malware gate before cryptographic verification
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/mdx-as2-receipt.test.ts:79:29
+     77|     h.scan.mockResolvedValue({ clean: false, scanned: true });
+     78|     const response = await attach(post());
+     79|     expect(response.status).toBe(400);
+       |                             ^
+     80|     expect(response.body.code).toBe('FILE_SCAN_REJECTED');
+     81|     expect(h.scan).toHaveBeenCalledWith(Buffer.from('original signed M…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects malformed binary CMS without passing it to receipt verification
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/mdx-as2-receipt.test.ts:87:29
+     85|   it('rejects malformed binary CMS without passing it to receipt verif…
+     86|     const response = await post().field('contentType', 'application/pk…
+     87|     expect(response.status).toBe(400);
+       |                             ^
+     88|     expect(response.body.code).toBe('FILE_SIGNATURE_MISMATCH');
+     89|     expect(h.ingest).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  05:20:23
+   Duration  3.39s (transform 1.56s, setup 83ms, import 3.02s, tests 81ms, environment 0ms)
+

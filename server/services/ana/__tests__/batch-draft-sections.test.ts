@@ -20,6 +20,7 @@ vi.mock('../AnaDocumentDraftingService', () => ({
 }));
 
 import { getToolHandler } from '../AnaToolExecutor';
+import { draftSourceIdentityForText } from '../draft-source-identity';
 
 const executor = { query: async () => ({ rows: [] }) };
 const ctx = { organizationId: 7, userId: 3, projectId: 11, sqlClient: executor } as any;
@@ -105,12 +106,16 @@ describe('batch draft recovery receipts', () => {
   it('uses actual processed source records and returns version-bound receipts without copying raw text', async () => {
     const id = '10000000-0000-4000-8000-000000000001';
     const program = '20000000-0000-4000-8000-000000000001';
+    const text = 'Actual processed study results';
+    const span = { start: 0, end: text.length, totalChars: text.length };
+    const identity = draftSourceIdentityForText(text, span);
     sourceMocks.scope.mockResolvedValue({ programId: program, executor,
       admittedScope: { organizationId: 7, userId: 3, role: 'member', projectId: 11, programId: program, accessibleProgramIds: [program], actorFiltered: true },
       accessibleScope: { scope: 'verified-accessible-programs', actor: { userId: 3, role: 'member' }, programIds: [program], reconciliationRequired: false },
     });
     sourceMocks.load.mockResolvedValue({ id, programId: program, contentHash: 'a'.repeat(64),
-      documentTitle: 'Study CSR', extractedText: 'Actual processed study results',
+      documentTitle: 'Study CSR', extractedText: text, extractedTextSha256: identity.extractedTextSha256,
+      isCurrent: true, sourceAccess: { currentUseEligible: true }, originalFileAvailable: true, disposition: null,
       catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
     batchDraftMock.mockResolvedValue([{ content: 'Grounded draft', model: 'm', latencyMs: 1 }]);
     const out = JSON.parse(await getToolHandler('batch_draft_sections')!({
@@ -119,7 +124,7 @@ describe('batch draft recovery receipts', () => {
     }, { ...ctx, projectRef: program }));
     expect(batchDraftMock.mock.calls[0][0].requests[0].sourceContext.sources[0].text).toBe('Actual processed study results');
     expect(out.sections[0]).toMatchObject({ sourceStatus: 'loaded', sourceQualification: 'unassessed',
-      sources: [{ documentId: id, contentHash: 'a'.repeat(64) }] });
+      sources: [{ documentId: id, contentHash: 'a'.repeat(64), span, ...identity }] });
     expect(out.sections[0].sources[0]).not.toHaveProperty('text');
     expect(JSON.stringify(out)).not.toContain('fabricated model evidence');
   });

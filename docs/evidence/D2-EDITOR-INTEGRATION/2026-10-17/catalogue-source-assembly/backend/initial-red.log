@@ -1,0 +1,95 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:43:30.590Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:43:30.591Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:43:30.591Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+✅ Template tables initialized
+
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses an explicitly empty catalogue selection instead of silently building without its sources 134ms
+   → {"success":true,"data":{"version":1,"docId":"9f577f86-c20b-420a-a505-823729b8dbd6","programId":"11111111-1111-4111-8111-111111111111","templateId":"dddddddd-0000-4000-8000-000000000001","selection":{"target":"document"},"targetSnapshot":"01acc6990856c125642fb5c7802ac9945482eb2f3969a5b821c198a425521209","templateSnapshot":"d1f5eaa15676f2543c96fd47637854cc350c4e6cbf4e0e18ee418aa135797442","templateName":"Organization assembly template","draftRegion":"FDA","limitations":["Stored template structure and text are copied as recorded. Template selection does not establish applicability, verified evidence, approval or filing readiness."],"rows":[{"code":" 2.5.1 ","title":"Original title","content":"<p>Original authored text.</p>","ordering":900,"disposition":"preserve","existingSectionId":"1c00e274-6620-4e9b-8f96-6d1a6bf140e0","aiDraftable":false,"aiDraftableReason":"AnA drafting eligibility and one supported drafting region are not recorded for this template. Build its structure and review the text manually.","gaps":[]},{"code":"2.5.2","title":"Next template heading","content":"<p>Stored template text two.</p>","ordering":901,"disposition":"append","aiDraftable":false,"aiDraftableReason":"AnA drafting eligibility and one supported drafting region are not recorded for this template. Build its structure and review the text manually.","gaps":[]},{"code":"2.5.3","title":"Last template heading","content":"<p>Stored template text three.</p>","ordering":902,"disposition":"append","aiDraftable":false,"aiDraftableReason":"AnA drafting eligibility and one supported drafting region are not recorded for this template. Build its structure and review the text manually.","gaps":[]}],"gaps":[],"fingerprint":"ec887dfafa2084ed1f76369410d15d431d0cd1a3ea47fe93d4cd82a7b2dd9f52"}}: expected 200 to be 400 // Object.is equality
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > previews without writes and preserves normalized existing identities/content/order
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale text without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale order without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale title without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale template without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale guidance without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses viewer changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses disabled changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses private changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses grant changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses frozen changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses a foreign template, foreign project and a same-organization different project target
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order null without renumbering
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order 2147483647 without renumbering
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses normalized duplicate template codes and a missing selected code
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > uses Canadian drafting scope and refuses a module mismatch instead of assuming FDA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > keeps preparation templates in manual mode and rejects a recorded regional conflict
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses common sections in a bound market copy using the canonical filing rule
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact US_IND drafting region FDA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact CA_CTA drafting region Health Canada
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact EU_MAA drafting region EMA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact JP_CTN drafting region PMDA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses an explicitly empty catalogue selection instead of silently building without its sources
+AssertionError: {"success":true,"data":{"version":1,"docId":"9f577f86-c20b-420a-a505-823729b8dbd6","programId":"11111111-1111-4111-8111-111111111111","templateId":"dddddddd-0000-4000-8000-000000000001","selection":{"target":"document"},"targetSnapshot":"01acc6990856c125642fb5c7802ac9945482eb2f3969a5b821c198a425521209","templateSnapshot":"d1f5eaa15676f2543c96fd47637854cc350c4e6cbf4e0e18ee418aa135797442","templateName":"Organization assembly template","draftRegion":"FDA","limitations":["Stored template structure and text are copied as recorded. Template selection does not establish applicability, verified evidence, approval or filing readiness."],"rows":[{"code":" 2.5.1 ","title":"Original title","content":"<p>Original authored text.</p>","ordering":900,"disposition":"preserve","existingSectionId":"1c00e274-6620-4e9b-8f96-6d1a6bf140e0","aiDraftable":false,"aiDraftableReason":"AnA drafting eligibility and one supported drafting region are not recorded for this template. Build its structure and review the text manually.","gaps":[]},{"code":"2.5.2","title":"Next template heading","content":"<p>Stored template text two.</p>","ordering":901,"disposition":"append","aiDraftable":false,"aiDraftableReason":"AnA drafting eligibility and one supported drafting region are not recorded for this template. Build its structure and review the text manually.","gaps":[]},{"code":"2.5.3","title":"Last template heading","content":"<p>Stored template text three.</p>","ordering":902,"disposition":"append","aiDraftable":false,"aiDraftableReason":"AnA drafting eligibility and one supported drafting region are not recorded for this template. Build its structure and review the text manually.","gaps":[]}],"gaps":[],"fingerprint":"ec887dfafa2084ed1f76369410d15d431d0cd1a3ea47fe93d4cd82a7b2dd9f52"}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoring-assembly.pglite.test.ts:129:60
+    127|   it('refuses an explicitly empty catalogue selection instead of silen…
+    128|     const response = await preview({ sources: [] });
+    129|     expect(response.status, JSON.stringify(response.body)).toBe(400);
+       |                                                            ^
+    130|     expect(response.body.error).toBe('ASSEMBLY_SOURCES_INVALID');
+    131|     expect(seam.sql.some(sql => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 33 skipped (34)
+   Start at  23:43:23
+   Duration  8.70s (transform 3.76s, setup 87ms, import 1.49s, tests 6.87s, environment 0ms)

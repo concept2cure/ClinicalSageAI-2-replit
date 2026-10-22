@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-20T23:05:53.234081+00:00",
+  "argv": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "elapsedSeconds": 35.677,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-publication.json",
+  "sourceDrift": [],
+  "rawOutput": "publication-typecheck-output.txt.gz",
+  "outputSha256": "5d7a51f3aa7947579209de358e0abb585e4fa2d395be859b316f75489d41082e",
+  "stdout": "[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)\n[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)\n[ci:typecheck-no-regression] OK \u2014 error count 0 matches baseline.\n",
+  "stderr": ""
+}

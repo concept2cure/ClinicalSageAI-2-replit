@@ -1,0 +1,339 @@
+{
+  "scope": "Final source-assembly and company-preview integration after incoming canonical changes. Counts overlap earlier snapshots; select these later results rather than adding them.",
+  "receipts": [
+    {
+      "file": "oct18-selected-source-merge-acceptance.json",
+      "sha256": "86126d8e80b9e661ceba90f8d9a8a2a4b894688d62c54f9fe78573827c5f6f05",
+      "bytes": 8007,
+      "receipt": {
+        "assembledUtc": "2026-10-18T00:21:53.936713+00:00",
+        "status": "source_frozen",
+        "passedCases": 185,
+        "testFiles": 13,
+        "tests": [
+          {
+            "file": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 48,
+            "sha256AtAssembly": "f5328f518ffd82b581717a86d52a5e9290845dbeca677bdbaf2e8bb916668b9c"
+          },
+          {
+            "file": "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 7,
+            "sha256AtAssembly": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685"
+          },
+          {
+            "file": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 10,
+            "sha256AtAssembly": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280"
+          },
+          {
+            "file": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 11,
+            "sha256AtAssembly": "c1f4c8addf71eabb57ef74775e94c6d1baa46153a219854da9d7c379c081c6cf"
+          },
+          {
+            "file": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 19,
+            "sha256AtAssembly": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae"
+          },
+          {
+            "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 31,
+            "sha256AtAssembly": "edcd80e2ed9effdb50da99bd54cf83db0871c1bf33916775eab8376c488d284d"
+          },
+          {
+            "file": "server/services/authoring/__tests__/assembly-plan.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 2,
+            "sha256AtAssembly": "bf66c80604e33ebd58ca16937d39fc3d2142215e8d0265a084c44a2bebd0cc2c"
+          },
+          {
+            "file": "server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 3,
+            "sha256AtAssembly": "00a7f92c8859a285572a6b31f032fffb781231abc6b6d93c7cefc31d0b1cb036"
+          },
+          {
+            "file": "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 8,
+            "sha256AtAssembly": "d1f590b56c60d3aa459ea3db944a0187b4508fe81bcc4ed74199cd385864a743"
+          },
+          {
+            "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 14,
+            "sha256AtAssembly": "f574053354eab92f5379e4b899f49902c089b8bf6e49e40d1c30e2f08b7057e1"
+          },
+          {
+            "file": "server/services/authoring/__tests__/authoring-section-outcome.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 10,
+            "sha256AtAssembly": "df753f0da056119740c2626da8885434f40d148353f3e2501ffd2bd72b4cfef7"
+          },
+          {
+            "file": "server/services/authoring/__tests__/create-section-placement.pglite.test.ts",
+            "receipt": "oct18-selected-source-merge-tests.json",
+            "passed": 8,
+            "sha256AtAssembly": "f9dacc92b97a274a484c50b30f583e58937722465355bdc6095a93e5be85004f"
+          },
+          {
+            "file": "server/routes/__tests__/authoringSelectedSources.pglite.test.ts",
+            "receipt": "oct18-selected-source-merge-selected-green-tests.json",
+            "passed": 14,
+            "sha256AtAssembly": "6004eaf6ee1eaf02f81c58ff616ce036cb98ba28f9b0e6fe3a266fde92b729cd"
+          }
+        ],
+        "sourceFiles": [
+          {
+            "file": "server/routes/authoring.router.ts",
+            "sha256": "92409eeb62930b6622fb345120f86bb5a3762b122d04cf226fb3105b634443ec"
+          },
+          {
+            "file": "server/routes/__tests__/authoringSelectedSources.pglite.test.ts",
+            "sha256": "6004eaf6ee1eaf02f81c58ff616ce036cb98ba28f9b0e6fe3a266fde92b729cd"
+          },
+          {
+            "file": "server/services/authoring/authoring-assembly-sources.ts",
+            "sha256": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8"
+          },
+          {
+            "file": "server/services/authoring/authoring-assembly.ts",
+            "sha256": "393ebdfb3e28a4d863660a19fd7fed0cf37253bd4c8428526fb0aca80687d114"
+          },
+          {
+            "file": "server/services/authoring/authoring-assembly-plan.ts",
+            "sha256": "414b3ad4056a9e3c803aac5149c8c5bcc4a082369cc1944cdc3dd38547560916"
+          },
+          {
+            "file": "shared/authoring/assembly-sources.ts",
+            "sha256": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c"
+          },
+          {
+            "file": "shared/authoring/assembly.ts",
+            "sha256": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6"
+          },
+          {
+            "file": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+            "sha256": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba"
+          }
+        ],
+        "baselineReproduction": {
+          "receipt": "oct18-selected-source-merge-tests.json",
+          "failed": 2,
+          "passed": 183,
+          "detail": "Only incoming selected-source before/after lost-COMMIT tests expected legacy generic DRAFT_ACCEPT_UNCONFIRMED; current route preserves typed AUTHORING_AI_ACCEPT_COMMIT_UNCONFIRMED. Historical test pin oct18-selected-source-merge-red-test-pin.json."
+        },
+        "qualificationSelection": "Twelve unchanged passed files from first run contribute171cases; current selected-source14-case rerun replaces its failed first result. Total185/13, not the sum of run totals. This overlaps prior83/7 and30/2 and must not be added to them.",
+        "lint": {
+          "receipt": "oct18-selected-source-merge-final-lint.json",
+          "files": 2,
+          "errors": 0,
+          "warnings": 23,
+          "detail": "Router23 inherited warnings; selected-source spec0."
+        },
+        "behavior": [
+          "Resolved only authoring.router.ts working-file conflicts; root retained all Git/index/merge operations. Authorized test expectation update is the only other repository edit by this agent.",
+          "Retains current actual client_program_id detail projection and exact typed org/document/section/consumed-draft recovery, retryAllowed:false, no false saved/content/filing receipt, shared COMMIT-attempt fence and release(error), without a second transaction implementation.",
+          "Retains incoming selected-source manifest validation, exact bounded UTF-16 excerpts without600-character truncation, before/after generation current source verification, retained text-free generator manifest, same-transaction current source reservation, and canonical acceptance audit.",
+          "Required audit failure rolls candidate/content/lineage/revisions/source receipt back atomically. Lost COMMIT before/after dispatch retains correct actual rows and returns typed unconfirmed recovery without rollback/retry; failed precommit rollback keeps incoming conservative503hold and requests eviction.",
+          "Actual assembly HTTP48cases, existing authoring83/7 and detail30/2 companions qualify the integrated router; additional plan/template-guidance10cases are included."
+        ],
+        "limits": [
+          "Actual HTTP/JWT/current actor/source admission and canonical SQL execute on PGlite; model reply and optional broad retrieval are synthetic. No live provider/model consumption, scientific qualification, filing approval, transmit or agency acceptance claimed.",
+          "Fault transport proves release(error) eviction requests with explicit fixture cleanup of still-open PGlite transactions, not native PostgreSQL socket destruction or multi-session contention.",
+          "No TSC/native DB/browser/dependency/migration/index/Git mutations by this agent; root owns final whole-hook validation/publication."
+        ],
+        "supersedes": "Current per-file source acceptance replacement for merged router/selected-source test and changed incoming assembly sources; earlier83/7 and30/2 receipts remain historical, with their coverage represented once in this selected185/13 cohort."
+      }
+    },
+    {
+      "file": "oct18-company-api-attribution-acceptance.json",
+      "sha256": "5e17892e019e83dd9ed2589905b372f67b096d72dc5f9e6783c6bf09da2cf21a",
+      "bytes": 8175,
+      "receipt": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-18T00:21:51.129644+00:00",
+        "scope": "Oct18 postmerge Company documents reachability and canonical generated text ramp",
+        "observedHead": "192c601ec2f87334b48c04184ad1529f66e124ce",
+        "productionFrozen": true,
+        "allOwnedFilesFrozen": true,
+        "result": {
+          "selectedPassedCases": 105,
+          "selectedFailedCases": 0,
+          "selectedTestFiles": 5,
+          "eslintErrors": 0,
+          "eslintWarnings": 0,
+          "eslintFiles": 11,
+          "guardsPassed": [
+            "ci:launch-scope-api",
+            "ci:launch-scope-api:selftest",
+            "ci:surface-text-ramp"
+          ]
+        },
+        "perFileSelections": [
+          {
+            "path": "server/services/entitlements/__tests__/company-documents-launch-claim.test.ts",
+            "passedCases": 10,
+            "failedCases": 0,
+            "proofArtifact": "/workspace/audit/oct18-company-attribution-final.json",
+            "sourceSha256": "4a5481882dab801a76540b42795f14fca711c17a7b2fccc5b23d7709f8a4080e"
+          },
+          {
+            "path": "server/routes/__tests__/company-documents.test.ts",
+            "passedCases": 39,
+            "failedCases": 0,
+            "proofArtifact": "/workspace/audit/oct18-company-attribution-final.json",
+            "sourceSha256": "ca53aa821509e41762b098035ed6b9d4a3bbaed5def119c8a5200fc74dd436bc"
+          },
+          {
+            "path": "server/services/company-documents/__tests__/profile.test.ts",
+            "passedCases": 41,
+            "failedCases": 0,
+            "proofArtifact": "/workspace/audit/oct18-company-companion-final.json",
+            "sourceSha256": "0dfd4fd9e5790eb87dcd513b0c5566001069ed01c8563fd220d557a874ba7023"
+          },
+          {
+            "path": "server/routes/c2c/__tests__/templates-list.test.ts",
+            "passedCases": 4,
+            "failedCases": 0,
+            "proofArtifact": "/workspace/audit/oct18-company-companion-final.json",
+            "sourceSha256": "3844f23a3d865abfb5248a90b9bc9bddc548e904a33cd3b74648d6218a27df45"
+          },
+          {
+            "path": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+            "passedCases": 11,
+            "failedCases": 0,
+            "proofArtifact": "/workspace/audit/oct18-company-attribution-final.json",
+            "sourceSha256": "5072ef696df38b7bc019393eedd92b1a29012c6ded9f2c03e233a0d3198b18b6"
+          }
+        ],
+        "sourceHashes": [
+          {
+            "path": "server/routes/c2c/template-upload.ts",
+            "sha256": "547806ebc692751655fa67ba39d3ad7c5b84783b88f0bfb175c3dd8801ebdc6b"
+          },
+          {
+            "path": "server/routes/c2c/templates.ts",
+            "sha256": "068041246ab7ba5de5f8b4463ed73cbc2754db1c83be84109d01dd559656915b"
+          },
+          {
+            "path": "server/routes/company-documents.ts",
+            "sha256": "2b5c029a3671d3bfc9254e6ba18999f8443dadc62099b809db841f7e8ea9b256"
+          },
+          {
+            "path": "server/services/company-documents/profile.ts",
+            "sha256": "e6fa21c8adb363728407ece8302c643636e80950a7333b4c05a9c2abf1bb0050"
+          },
+          {
+            "path": "server/services/entitlements/launch-scope-api.ts",
+            "sha256": "eedef6daff525cdf641eff6931217eedf7fe59ac8fe791af67647fc5750bc2e9"
+          },
+          {
+            "path": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts",
+            "sha256": "f75f14be6581140b4c6b6741422a37feacd449f506acd427bd0355da0aa26de9"
+          },
+          {
+            "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+            "sha256": "cca86e6b9184e957b2e06f13247a8f9579e505a4f0248529f52a656171c42c0b"
+          },
+          {
+            "path": "server/services/entitlements/__tests__/company-documents-launch-claim.test.ts",
+            "sha256": "4a5481882dab801a76540b42795f14fca711c17a7b2fccc5b23d7709f8a4080e"
+          },
+          {
+            "path": "server/routes/__tests__/company-documents.test.ts",
+            "sha256": "ca53aa821509e41762b098035ed6b9d4a3bbaed5def119c8a5200fc74dd436bc"
+          },
+          {
+            "path": "server/services/company-documents/__tests__/profile.test.ts",
+            "sha256": "0dfd4fd9e5790eb87dcd513b0c5566001069ed01c8563fd220d557a874ba7023"
+          },
+          {
+            "path": "server/routes/c2c/__tests__/templates-list.test.ts",
+            "sha256": "3844f23a3d865abfb5248a90b9bc9bddc548e904a33cd3b74648d6218a27df45"
+          },
+          {
+            "path": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+            "sha256": "5072ef696df38b7bc019393eedd92b1a29012c6ded9f2c03e233a0d3198b18b6"
+          },
+          {
+            "path": "docs/design/COMPANY_DOCUMENTS.md",
+            "sha256": "4c0eef70d73defe16db254c027e1510f01b8b1081c04bccae924fa3c8da2435b"
+          }
+        ],
+        "behavior": [
+          "Company letterhead import calls /api/client-branding/company-documents/letterhead/extract, whose router requires authenticated tenant/actor and freshly admitted owner/admin membership before multipart receiving.",
+          "The old template preview route and Company route share the moved receiver, magic/malware gate and extractor; preview saves no template, profile or legal original and claims no governed export receipt.",
+          "Only the narrow Company documents namespace is shared platform attribution. No template-library launch exception or commercial gate change; existing template CRUD/extract/from-upload/render stay outside launch.",
+          "Commercial enforce-mode runtime uses a denied-license resolver; Company API reaches tenant/actor boundary without a deferred module, while template APIs return LAUNCH_SCOPE403.",
+          "Company profile/current program/export controls remain canonical. Generated CSS comes from the existing ramp generator."
+        ],
+        "routeBoundaryEvidence": [
+          {
+            "path": "server/bootstrap/register-advanced-platform-routes.ts",
+            "fact": "Client Branding is mounted through mountAll(..., authenticateToken)."
+          },
+          {
+            "path": "server/routes/client-branding.ts",
+            "fact": "Mounts the company-documents child router."
+          },
+          {
+            "path": "server/routes/company-documents.ts",
+            "fact": "Authenticated tenant+actor at router boundary; new preview calls requireCompanyDocumentManager before upload middleware."
+          },
+          {
+            "path": "server/services/company-documents/profile.ts",
+            "fact": "Shared context(req,true) uses requestPgClient and readCurrentProgramActor; owner/admin current role required."
+          }
+        ],
+        "proofs": {
+          "initialGuardFailure": "/workspace/audit/oct18-postmerge-guards/13.txt",
+          "launchScope": "/workspace/audit/oct18-company-launch-scope-green.log",
+          "launchScopeSelftest": "/workspace/audit/oct18-company-launch-scope-selftest.log",
+          "textRampRed": "/workspace/audit/oct18-company-css-ramp-red.log",
+          "textRampGenerator": "/workspace/audit/oct18-company-css-ramp-regenerate.log",
+          "textRampGreen": "/workspace/audit/oct18-company-css-ramp-green.log",
+          "eslint": "/workspace/audit/oct18-company-attribution-eslint-final.json"
+        },
+        "historicalRuns": [
+          {
+            "proofArtifact": "/workspace/audit/oct18-company-attribution-red.json",
+            "passedCases": 16,
+            "failedCases": 5,
+            "qualification": "Before source remedy: Company paths unmapped and UI uses deferred template URL. Red failures demonstrate exact missing integration."
+          },
+          {
+            "proofArtifact": "/workspace/audit/oct18-company-attribution-green.json",
+            "passedCases": 17,
+            "failedCases": 4,
+            "qualification": "Historical first post-fix attempt, despite filename: four test assertions expected undefined instead of canonical modulesForPath null. Not acceptance."
+          },
+          {
+            "proofArtifact": "/workspace/audit/oct18-company-attribution-final.json",
+            "passedCases": 103,
+            "failedCases": 0,
+            "qualification": "Broad 5-file green; profile test regrouping and added template-preview regression qualified by companion run, selected per-file above."
+          },
+          {
+            "proofArtifact": "/workspace/audit/oct18-company-companion-final.json",
+            "passedCases": 45,
+            "failedCases": 0,
+            "qualification": "Current changed profile and template-list test files only; selected as replacements, never double counted."
+          }
+        ],
+        "limitations": [
+          "Targeted unit/HTTP/jsdom qualification; root owns whole TSC, complete pre-push hook, build and final browser. No whole TSC run by this agent.",
+          "Prior audit profiles retain their original source scopes and are not relabeled as current qualification.",
+          "No Git/index, dependency, baseline, database or history changes by this agent."
+        ]
+      }
+    }
+  ]
+}

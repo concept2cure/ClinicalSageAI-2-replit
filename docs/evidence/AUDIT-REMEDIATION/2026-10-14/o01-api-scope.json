@@ -1,0 +1,126 @@
+[
+  {
+    "path": "/api/cmc/module3-board",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/integration-test",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/gcc/drafting",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/site-intel",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/trials",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/q-sub",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/tenant-stats",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/ana-features",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/submission-ops/digests",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/regulatory-graph",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/rtm-export",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/field-sync",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/fda-forms",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/fda510k",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/510k",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/clinical-ops",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/snowglobe",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/analytics",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/biostat-bridge",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/gspr",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/quality-management",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/cro",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/concept2cure/projects",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/ana-ri",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/admin/business-center",
+    "verdict": "never-gated"
+  },
+  {
+    "path": "/api/authoring",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/510k/estar/submissions",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/510k/estar/assemble",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/510k/estar/registration",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/ana/audit-trail",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/gspr-postmarket",
+    "verdict": "unmapped"
+  }
+]

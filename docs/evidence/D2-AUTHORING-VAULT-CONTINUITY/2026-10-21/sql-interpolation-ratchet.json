@@ -1,0 +1,10 @@
+{
+  "path": "scripts/ci/sql-interpolation-baseline.json",
+  "beforeSha256": "e866b1b19f8e51024dcc60f085eb18e139345ec44660373fa99cc4ccac26e791",
+  "afterSha256": "e757b0e5f1411b63368a06d756f2306bac1f279e6b8079992590b296439d7ad1",
+  "onlyRemovedAllowance": {
+    "server/services/authoring/authoring-file-to-vault.ts": 1
+  },
+  "reason": "One fixed locked header projection replaces optional SQL text interpolation; no allowance is needed. First gate correctly refused the unused allowance; final gate passes after lowering it.",
+  "finalGate": "gate-sql-interpolation-final.json"
+}

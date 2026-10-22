@@ -41,14 +41,16 @@ env:
   #
   # The path was removed rather than a Dockerfile invented, because there is no
   # worker to put in one:
-  #   • `npm run build` (scripts/build-server.mjs) emits exactly ONE artifact,
-  #     dist/index.js, from server/index.ts. There is no second entrypoint.
+  #   • `npm run build` (scripts/build-server.mjs) emits ONE server artifact,
+  #     dist/index.js, from server/index.ts. There is no second server
+  #     entrypoint. (Since 2026-10-18 it also emits dist/ops/verify-audit-chain.mjs,
+  #     an operator CLI run as a one-off task, never a service.)
   #   • Every background job — driftSentinel, auditChainIntegrity,
   #     corpusIngestion, regulatoryHorizon, externalIntelligence,
   #     scheduleOfEvents, taskDue (server/jobs/*) — is started IN-PROCESS by
   #     server/index.ts. There is no queue consumer to run separately.
   #   • The ECS worker task definition (terraform/modules/ecs-fargate/main.tf)
-  #     sets no `command`, so a container built from the app image would run the
+  #     set no `command`, so a container built from the app image would run the
   #     app's CMD (`npm run start`) — a SECOND copy of the API, with a SECOND
   #     copy of every scheduler. Duplicated retention deletes and audit sweeps
   #     are worse than no worker, so pointing the "worker" build at
@@ -59,10 +61,8 @@ env:
   # never the NODE_ENV=production image this ECS service expects. It was deleted
   # (D9, 2026-08-13) along with docker-compose.e2e.yml and its workflows.
   #
-  # TODO(infra): the `c2c-production-worker` ECS service + `worker` ECR repo are
-  # still declared in terraform/ with nothing to deploy into them. Remove them
-  # there (out of scope for this workflow) or land a real worker entrypoint and
-  # restore this path alongside it.
+  # The worker service, task definition, log group and ECR repository were
+  # removed from terraform/ on 2026-10-22 (MR-03 OPS-08, P-10 as amended).
   #
   # Task definition family and container name for the digest-pinned
   # register-then-deploy path in deploy-api. The container name must match the
@@ -77,7 +77,10 @@ env:
   # a second place to configure them. ECS creates the family on first register,
   # so this needs no pre-existing infrastructure.
   ECS_MIGRATE_TASK_FAMILY: c2c-production-migrate
-  FRONTEND_BUCKET: c2c-prod-frontend
+  # The bucket name carries the AWS account id (terraform/stack/main.tf,
+  # MR-03 OPS-03), so it is the repository variable set from
+  # `terraform output -raw frontend_bucket`, not a literal here.
+  FRONTEND_BUCKET: ${{ vars.FRONTEND_BUCKET }}
   CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
 jobs:
@@ -711,8 +714,9 @@ jobs:
           # ready, and refuses every Vault upload. On loopback, clamd must run
           # in this task: an essential, health-checked container the API
           # container waits on (dependsOn HEALTHY), which
-          # terraform/modules/ecs-fargate renders. Not in the name list above:
-          # the worker carries that list and has no scanner beside it.
+          # terraform/modules/ecs-fargate renders. Checked here rather than in
+          # the name list above, because its value and the scanner beside it
+          # matter, not only its name.
           CLAMAV_HOST_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
             .containerDefinitions[] | select(.name == $c)
             | (.environment // []) | map(select(.name == "CLAMAV_HOST")) | .[0].value // ""
@@ -993,6 +997,7 @@ jobs:
       #   index.html  revalidated on every load.
       - name: Sync to S3
         run: |
+          : "${FRONTEND_BUCKET:?Set the repository variable FRONTEND_BUCKET to \`terraform output -raw frontend_bucket\` (terraform/environments/production)}"
           aws s3 sync dist/public/assets/ "s3://$FRONTEND_BUCKET/assets/" \
             --cache-control "public,max-age=31536000,immutable"
 

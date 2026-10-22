@@ -19,6 +19,7 @@
  * gateway (so nothing leaves the process) are stubbed.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 const holder = vi.hoisted(() => ({
   db: null as any,
@@ -29,11 +30,12 @@ const holder = vi.hoisted(() => ({
   applicants: [] as string[],
 }));
 
-vi.mock('../../../db', () => {
-  const run = async (sql: string, params?: unknown[]) => {
-    const r = await holder.pglite.query(sql, params);
-    return { ...r, rowCount: r.affectedRows ?? r.rows.length };
-  };
+vi.mock('../../../db', async () => {
+  const { makeRequestDbClient } = await import('../../../../tests/golden-journeys/harness');
+  // Production callers pass both SQL strings and pg query configs. Reuse the
+  // canonical PGlite adapter rather than sending a config object to its parser.
+  const run = (textOrConfig: unknown, params?: unknown[]) =>
+    makeRequestDbClient(holder.pglite).query(textOrConfig, params);
   return {
     get db() { return holder.db; },
     pool: { query: run, connect: async () => ({ query: run, release: () => {} }) },
@@ -68,7 +70,7 @@ vi.mock('../../submission-gateways/index', async (orig) => ({
 }));
 
 import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../../db/pglite-harness';
-import { ORG, USER, FREEZE_GATE_SEED_SQL, freezeGateHelpers } from './_freeze-gate-fixture';
+import { ORG, USER, FREEZE_GATE_SEED_SQL, FREEZE_SPONSOR_ID, freezeGateHelpers } from './_freeze-gate-fixture';
 import { freezeSequence, transmitSequence, precheckGovernedStep } from '../submission-service';
 
 let h: IndPgliteDb;
@@ -105,18 +107,22 @@ beforeAll(async () => {
   holder.db = h.db;
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  // The real audit service also writes this append-only store; console fallback
+  // cannot stand in for the durable evidence a refused signature requires.
+  await h.pglite.exec(readFileSync(new URL('../../../../db/migrations/20260813_audit_tamper_proof_log.sql', import.meta.url), 'utf8'));
   await h.pglite.exec(FREEZE_GATE_SEED_SQL);
-  await h.pglite.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [ORG, SPONSOR]);
+  await h.pglite.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`, [ORG, SPONSOR]);
   await h.pglite.query(
     `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, application_number)
-     VALUES ($1, $2, 'Program C', 'C-1', 'ind', 'Gamma', 'IND-123456'),
-            ($3, $2, 'Program C0', 'C-0', 'ind', 'Gamma-0', 'IND-000061'),
+     VALUES ($1, $2, 'Program C', 'C-1', 'ind', 'Gamma', '123456'),
+            ($3, $2, 'Program C0', 'C-0', 'ind', 'Gamma-0', '000061'),
             ($4, $2, 'Program C2', 'C-2', 'ind', 'Gamma-2', NULL)`,
     [PROGRAM, ORG, PROGRAM_61, PROGRAM_UNNUMBERED],
   );
   await h.pglite.exec(`
+    UPDATE regulatory_programs SET applicant_sponsor_id = '${FREEZE_SPONSOR_ID}' WHERE id IN ('${PROGRAM}', '${PROGRAM_61}', '${PROGRAM_UNNUMBERED}');
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id) VALUES
-      (20, 'P-23 freeze', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, NULL),
+      (20, 'P-23 freeze', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM}'),
       (21, 'P-23 transmit', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM_61}'),
       (22, 'P-23 application number', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM}'),
       (23, 'P-23 another signer', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, NULL),
@@ -194,11 +200,11 @@ describe('a transmit that sent nothing voids the signature given for it', () => 
   it('with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits', async () => {
     holder.gw = { configured: false, sent: [] };
     const given = await sign(61, 'transmit');
-    const notSent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-000061' });
+    const notSent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: given, environment: 'staging', applicationId: '000061' });
     expect(notSent).toMatchObject({ transmitted: false, reason: 'gateway_not_configured' });
 
     holder.gw.configured = true;
-    const reused = await outcome(transmitSequence({ sequenceId: 61, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-000061' }));
+    const reused = await outcome(transmitSequence({ sequenceId: 61, ctx, signatureActionId: given, environment: 'staging', applicationId: '000061' }));
     expect(reused, 'a signature given for a transmit that sent nothing sent the package later').toMatchObject({
       code: 'GOVERNED_REQUIRED',
       message: expect.stringMatching(/given for a transmit the server refused, so it is void/),
@@ -209,7 +215,7 @@ describe('a transmit that sent nothing voids the signature given for it', () => 
     expect((await rowsNaming(given)).map((r) => [r.action, r.step])).toEqual([['GOVERNED_SIGNATURE_VOIDED', 'transmit']]);
 
     const fresh = await sign(61, 'transmit');
-    const sent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: fresh, environment: 'staging', applicationId: 'IND-000061' });
+    const sent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: fresh, environment: 'staging', applicationId: '000061' });
     expect(sent).toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
     expect(holder.gw.sent).toHaveLength(1);
     expect(await signatureRow(fresh)).toEqual({ is_valid: true, verification_status: 'valid' });
@@ -219,29 +225,29 @@ describe('a transmit that sent nothing voids the signature given for it', () => 
 describe('transmit checks the typed application number against the program record', () => {
   it('the precheck refuses a number that contradicts the record, before anyone signs', async () => {
     holder.gw = { configured: true, sent: [] };
-    const pre = await precheckGovernedStep(62, 'transmit', ctx, { environment: 'staging', applicationId: 'IND-999999' });
+    const pre = await precheckGovernedStep(62, 'transmit', ctx, { environment: 'staging', applicationId: '999999' });
     expect(pre.cleared).toBe(false);
-    expect(pre.refusal).toMatch(/"IND-999999" does not match the program's recorded application number "IND-123456"/);
-    const matching = await precheckGovernedStep(62, 'transmit', ctx, { environment: 'staging', applicationId: 'IND-123456' });
+    expect(pre.refusal).toMatch(/"999999" does not match the program's recorded application number "123456"/);
+    const matching = await precheckGovernedStep(62, 'transmit', ctx, { environment: 'staging', applicationId: '123456' });
     expect(matching).toMatchObject({ cleared: true, refusal: null });
   }, 120_000);
 
   it('a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits', async () => {
     holder.gw = { configured: true, sent: [] };
     const given = await sign(62, 'transmit');
-    const refused = await outcome(transmitSequence({ sequenceId: 62, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-999999' }));
+    const refused = await outcome(transmitSequence({ sequenceId: 62, ctx, signatureActionId: given, environment: 'staging', applicationId: '999999' }));
     expect(refused, 'transmit sent a package under a number the program record contradicts').toMatchObject({
       code: 'APPLICATION_NUMBER_MISMATCH',
-      message: expect.stringMatching(/"IND-999999" does not match the program's recorded application number "IND-123456"/),
+      message: expect.stringMatching(/"999999" does not match the program's recorded application number "123456"/),
     });
     expect(holder.gw.sent).toEqual([]);
     expect(await signatureRow(given)).toEqual({ is_valid: false, verification_status: 'voided' });
     expect((await statusOf(62)).dispatch_status).toBe('pending');
 
     const fresh = await sign(62, 'transmit');
-    const sent = await transmitSequence({ sequenceId: 62, ctx, signatureActionId: fresh, environment: 'staging', applicationId: ' IND-123456 ' });
+    const sent = await transmitSequence({ sequenceId: 62, ctx, signatureActionId: fresh, environment: 'staging', applicationId: ' 123456 ' });
     expect(sent).toMatchObject({ transmitted: true });
-    expect(holder.gw.sent).toEqual([expect.objectContaining({ applicationId: 'IND-123456' })]);
+    expect(holder.gw.sent).toEqual([expect.objectContaining({ applicationId: '123456' })]);
   }, 120_000);
 });
 
@@ -255,7 +261,7 @@ describe('transmit names the applicant and the application from the record', () 
     holder.gw = { configured: true, sent: [] };
     holder.applicants = [];
     const given = await sign(66, 'transmit');
-    const sent = await transmitSequence({ sequenceId: 66, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-123456' });
+    const sent = await transmitSequence({ sequenceId: 66, ctx, signatureActionId: given, environment: 'staging', applicationId: '123456' });
     expect(sent).toMatchObject({ transmitted: true });
     expect(holder.applicants).toEqual([SPONSOR]);
   }, 120_000);

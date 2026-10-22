@@ -25,15 +25,16 @@
  * combination: no tenant identity, full bypass.
  *
  * ── Why this shape rather than SET LOCAL ────────────────────────────────────
- * `SET LOCAL` inside an explicit transaction is the better idiom and is what
- * server/routes/innovation-routes.ts guardQuery() already does. It is not what
- * this file does, deliberately: of the seventeen call sites, thirteen are not
- * inside a transaction at all, and SET LOCAL outside one is a no-op with a
- * warning — the swap would silently REMOVE the bypass those queries depend on.
- * Restructuring each site into a transaction changes the semantics of the
- * queries inside it, and this whole directory is unmounted (the innovation
- * router is not registered and the service constructors have no callers), so
- * that refactor cannot be exercised by anything. Clearing the flags at release
+ * `SET LOCAL` inside an explicit transaction is the better idiom (guardQuery()
+ * in server/routes/innovation-routes.ts used it; that router was deleted on
+ * 2026-10-15, d7c044897). It is not what this file does, deliberately: of the
+ * seventeen call sites written, thirteen were not inside a transaction at all,
+ * and SET LOCAL outside one is a no-op with a warning — the swap would silently
+ * REMOVE the bypass those queries depend on. Restructuring each site into a
+ * transaction changes the semantics of the queries inside it. When this was
+ * written the directory was unmounted; since d7c044897 only
+ * submission-readiness-twin-service.ts remains (two sites, reached by AnA's
+ * get_submission_readiness_twin). Clearing the flags at release
  * changes no query's behaviour at all and still makes it impossible for a
  * connection to carry a bypass to the next borrower.
  *

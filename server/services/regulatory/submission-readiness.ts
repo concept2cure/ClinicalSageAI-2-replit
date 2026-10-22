@@ -1,16 +1,18 @@
 /**
  * Submission-readiness aggregator.
  *
- * The platform now has a dozen standalone readiness assessors (substantial
- * equivalence, analytical/clinical performance, §524B cybersecurity, human
- * factors, UDI/GUDID, SaMD, IVDR performance evaluation, companion diagnostics,
- * SPL labeling, post-market planning). This capstone composes the domains that
- * apply to a chosen regulatory pathway into a single weighted readiness score
- * with a prioritized gap list — so a program owner gets one "is this ready?"
- * answer instead of ten.
+ * The platform has standalone per-domain assessors (substantial equivalence,
+ * analytical/clinical performance, §524B cybersecurity, human factors, UDI/GUDID,
+ * SaMD, IVDR performance evaluation, companion diagnostics, SPL labeling,
+ * post-market planning). This capstone composes the domains that apply to a
+ * chosen regulatory pathway into the mean completeness of the domains that were
+ * assessed, a completeness verdict, the domains not assessed, and a prioritized
+ * gap list. It is completeness of what was assessed, not a readiness finding.
  *
- * Pure and deterministic. It consumes per-domain readiness scores (0–1) that the
- * individual assessors produce; it does not re-derive them.
+ * Pure and deterministic. It consumes per-domain completeness figures (0–1) that
+ * the individual assessors produce; it does not re-derive them. 2026-10-15: a
+ * domain with no figure was scored 0 and the mean was called the overall
+ * readiness score, with a 'ready' / 'nearly-ready' / 'not-ready' verdict.
  */
 
 export type ReadinessDomain =
@@ -40,7 +42,10 @@ export const PATHWAY_DOMAINS: Record<SubmissionPathway, ReadinessDomain[]> = {
 
 export interface SubmissionReadinessInput {
   pathway: SubmissionPathway;
-  /** Per-domain readiness scores in [0,1]; a missing domain is treated as 0. */
+  /**
+   * Per-domain completeness in [0,1], as its assessor computed it. A required domain
+   * with no figure is not assessed: excluded and named in `notAssessedDomains`.
+   */
   domainScores: Partial<Record<ReadinessDomain, number>>;
   /** A domain at/above this score is considered complete. Default 1. */
   completeThreshold?: number;
@@ -52,21 +57,30 @@ export interface DomainReadiness {
   complete: boolean;
 }
 
-export type ReadinessVerdict = 'ready' | 'nearly-ready' | 'not-ready';
+/**
+ * Over the required domains: 'complete' when every one was assessed and is complete;
+ * 'nearly-complete' when every one was assessed and the mean is ≥ 0.8; 'incomplete'
+ * when an assessed one is incomplete otherwise; 'not-assessed' when none assessed is
+ * incomplete but some required domain was not assessed.
+ */
+export type CompletenessVerdict = 'complete' | 'nearly-complete' | 'incomplete' | 'not-assessed';
 
 export interface SubmissionReadinessResult {
   pathway: SubmissionPathway;
-  /** Mean of the applicable-domain scores. */
-  overallScore: number;
-  verdict: ReadinessVerdict;
+  /** Mean completeness (0–1) of the assessed required domains only; null when none was assessed. Not readiness. */
+  assessedDomainCompleteness: number | null;
+  verdict: CompletenessVerdict;
+  /** The assessed required domains. */
   perDomain: DomainReadiness[];
-  /** Incomplete domains, lowest score first — the prioritized work list. */
+  /** Required domains with no figure: not assessed, not scored 0. */
+  notAssessedDomains: ReadinessDomain[];
+  /** Assessed domains that are incomplete, lowest score first — the prioritized work list. */
   prioritizedGaps: DomainReadiness[];
   requiredDomains: ReadinessDomain[];
   framework: 'Concept2Cure submission-readiness';
 }
 
-/** Compose per-domain readiness into an overall pathway readiness scorecard. */
+/** Compose per-domain completeness into the completeness of a pathway's assessed domains. */
 export function assessSubmissionReadiness(
   input: SubmissionReadinessInput
 ): SubmissionReadinessResult {
@@ -74,25 +88,36 @@ export function assessSubmissionReadiness(
   if (!required) throw new Error(`Unknown submission pathway: ${input.pathway}`);
   const threshold = input.completeThreshold ?? 1;
 
-  const perDomain: DomainReadiness[] = required.map(domain => {
-    const raw = input.domainScores[domain] ?? 0;
+  const perDomain: DomainReadiness[] = [];
+  const notAssessedDomains: ReadinessDomain[] = [];
+  for (const domain of required) {
+    const raw = input.domainScores[domain];
+    if (typeof raw !== 'number') {
+      notAssessedDomains.push(domain);
+      continue;
+    }
     if (raw < 0 || raw > 1) throw new Error(`Domain score for ${domain} must be in [0,1].`);
-    return { domain, score: raw, complete: raw >= threshold };
-  });
+    perDomain.push({ domain, score: raw, complete: raw >= threshold });
+  }
 
-  const overallScore = perDomain.reduce((s, d) => s + d.score, 0) / perDomain.length;
+  const assessedDomainCompleteness =
+    perDomain.length > 0 ? perDomain.reduce((s, d) => s + d.score, 0) / perDomain.length : null;
   const prioritizedGaps = perDomain
     .filter(d => !d.complete)
     .sort((a, b) => a.score - b.score || a.domain.localeCompare(b.domain));
 
-  const verdict: ReadinessVerdict =
-    prioritizedGaps.length === 0 ? 'ready' : overallScore >= 0.8 ? 'nearly-ready' : 'not-ready';
+  const allAssessed = notAssessedDomains.length === 0;
+  let verdict: CompletenessVerdict;
+  if (prioritizedGaps.length === 0) verdict = allAssessed ? 'complete' : 'not-assessed';
+  else if (allAssessed && assessedDomainCompleteness !== null && assessedDomainCompleteness >= 0.8) verdict = 'nearly-complete';
+  else verdict = 'incomplete';
 
   return {
     pathway: input.pathway,
-    overallScore,
+    assessedDomainCompleteness,
     verdict,
     perDomain,
+    notAssessedDomains,
     prioritizedGaps,
     requiredDomains: required,
     framework: 'Concept2Cure submission-readiness',

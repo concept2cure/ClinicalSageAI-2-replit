@@ -63,7 +63,7 @@ async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', pat
     const parsed = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body: parsed, message: null };
   } catch (e) {
-    if (e instanceof ApiRequestError) return { ok: false, status: e.status, body: null, message: e.message || null };
+    if (e instanceof ApiRequestError) return { ok: false, status: e.status, body: (e.payload ?? null) as T | null, message: e.message || null };
     return { ok: false, status: 0, body: null, message: null };
   }
 }
@@ -74,9 +74,16 @@ const readStateOf = (r: RawResult<unknown>): ReadState => (refused(r) ? 'forbidd
 /** A failed write, said as what the server answered: its refusal in its own
  *  words, no response as no response — never "HTTP 0". */
 function failText(r: RawResult<unknown>, verb: string): string {
-  if (r.status === 0) return `Couldn’t ${verb} — the server didn’t respond. Try again.`;
+  if (r.status === 0) return `Couldn’t ${verb} — the response could not be confirmed. Reload the list before trying again.`;
   if (refused(r)) return `Couldn’t ${verb} — this account is not a platform administrator.`;
   return r.message ? `Couldn’t ${verb}: ${r.message}` : `Couldn’t ${verb} (HTTP ${r.status}).`;
+}
+
+function validPolicyReason(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length >= 3 && value.trim().length <= 500;
+}
+function policyReadbackRequired(result: RawResult<unknown>): boolean {
+  return result.status === 0 || (result.body as { code?: unknown } | null)?.code === 'SCIM_POLICY_COMMIT_UNCONFIRMED';
 }
 
 const TOKEN_FORM: C2CFormConfig = {
@@ -181,11 +188,16 @@ export function IdentityConsole(_props: SurfaceViewProps) {
   }, [load, revealed, fireToast]);
 
   const addRule = useCallback(async (v: Record<string, string>) => {
+    if (!validPolicyReason(v.reason)) { fireToast('Give a reason for change between 3 and 500 characters.', 'error'); return; }
     const added = await rawJson<ScimRule>('POST', '/api/admin/scim-ip-allowlist', {
       organizationId: Number(v.organizationId), cidr: v.cidr, label: v.label || undefined, reason: v.reason,
     });
-    const { ok, status, body } = added;
-    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : failText(added, 'add the rule'), 'error'); return; }
+    const { ok, body } = added;
+    if (!ok || !body?.id) {
+      fireToast(failText(added, 'add the rule'), 'error');
+      if (policyReadbackRequired(added) || ok) { setDialog(null); await load(); }
+      return;
+    }
     setDialog(null);
     fireToast('Allowlist rule added · ' + body.cidr);
     void load();
@@ -193,6 +205,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
   const changeRule = async (values: Record<string, string>) => {
     if (!ruleChange || changingRule.current) return;
+    if (!validPolicyReason(values.reason)) { fireToast('Give a reason for change between 3 and 500 characters.', 'error'); return; }
     changingRule.current = true;
     const { rule, action } = ruleChange;
     try {
@@ -201,12 +214,14 @@ export function IdentityConsole(_props: SurfaceViewProps) {
         : await rawJson<ScimRule>('PATCH', `/api/admin/scim-ip-allowlist/${rule.id}`, { enabled: !rule.enabled, reason: values.reason.trim() });
       if (!result.ok) {
         fireToast(failText(result, action === 'delete' ? 'delete the allowlist rule' : 'change the allowlist rule'), 'error');
+        if (policyReadbackRequired(result)) { setRuleChange(null); await load(); }
         return;
       }
       const body = result.body as ScimRule | null;
       const confirmed = action === 'delete' ? result.status === 204 : body?.id === rule.id && body.enabled === !rule.enabled;
       if (!confirmed) {
         fireToast('The allowlist change was not confirmed by the response. Reload the list before retrying.', 'error');
+        setRuleChange(null); await load();
         return;
       }
       setRuleChange(null);

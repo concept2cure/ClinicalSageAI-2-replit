@@ -33,6 +33,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { installQmsAuthoringHarness, seedQmsEditingCopy, QMS_TEST_PROGRAM } from '../../qms/__tests__/qms-authoring-harness';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -144,7 +145,8 @@ async function breakAuditWrites() {
   await pglite.exec(`ALTER TABLE audit_logs ADD CONSTRAINT audit_write_broken CHECK (sha256_chain IS NULL);`);
 }
 async function repairAuditWrites() {
-  await pglite.exec(`ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_write_broken;`);
+  await pglite.exec(`ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_write_broken; ALTER TABLE authoring_audit_trail DROP CONSTRAINT IF EXISTS authoring_write_broken;
+    ALTER TABLE doc_permissions DROP CONSTRAINT IF EXISTS permission_write_broken;`);
 }
 
 beforeAll(async () => {
@@ -157,6 +159,7 @@ beforeAll(async () => {
   // organizations row for the FK, the evidence spine and the span-lineage store.
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (1, 'org-1'), (9, 'org-9') ON CONFLICT DO NOTHING;`);
+  await installQmsAuthoringHarness(pglite);
   for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql']) {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'));
   }
@@ -167,18 +170,19 @@ beforeEach(async () => {
   await pglite.exec(
     `DELETE FROM c2c_ana_actions; DELETE FROM audit_logs;
      DELETE FROM concept2cure_artifact_versions; DELETE FROM concept2cure_artifacts;
-     DELETE FROM qms_documents;`,
+     DELETE FROM qms_documents; DELETE FROM c2c_document_aliases; DELETE FROM doc_permissions; DELETE FROM authoring_audit_trail; DELETE FROM doc_revisions; DELETE FROM authoring_sections; DELETE FROM authoring_documents;`,
   );
 });
 
 async function call(name: string, input: Record<string, unknown>, ctx: unknown = CTX) {
   const handler = approvedToolHandler(name);
   expect(handler, `${name} must be registered`).toBeTypeOf('function');
-  return JSON.parse(await handler!(input, ctx as never));
+  const body = name === 'create_qms_document' ? { program_id: QMS_TEST_PROGRAM, ...input } : input;
+  return JSON.parse(await handler!(body, ctx as never));
 }
 
 const auditRows = async () =>
-  (await pglite.query(`SELECT * FROM audit_logs ORDER BY occurred_at`)).rows as any[];
+  (await pglite.query(`SELECT * FROM audit_logs WHERE action NOT LIKE 'authoring.%' ORDER BY occurred_at`)).rows as any[];
 const ledgerRows = async () =>
   (await pglite.query(`SELECT * FROM c2c_ana_actions`)).rows as any[];
 const docRow = async (id: number) =>
@@ -190,7 +194,9 @@ async function effectiveDoc(num: string) {
      VALUES (1, $1, 'Proc', 'sop', '3.1', 'effective', 11) RETURNING id`,
     [num],
   );
-  return (r.rows[0] as { id: number }).id;
+  const id = (r.rows[0] as { id: number }).id;
+    await seedQmsEditingCopy(pglite, id);
+    return id;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -216,6 +222,18 @@ describe('create_qms_document — controlled document creation is audited atomic
     // c2c_ana_actions_command_check permits, or this INSERT would have thrown.
     expect(ALLOWED_COMMANDS).toContain(ledger[0].command);
     expect(ledger[0].payload.kind).toBe('create');
+    const permissions = (await pglite.query('SELECT role,principal_id FROM doc_permissions WHERE doc_id=$1',[(await docRow(res.id)).authoring_document_id])).rows;
+    expect(permissions).toEqual(expect.arrayContaining([expect.objectContaining({role:'OWNER',principal_id:'10'}),expect.objectContaining({role:'AUTHOR',principal_id:'10'})]));
+  });
+
+  it('stores the periodic review date the user named, which review-due reads (gap 5.1)', async () => {
+    const res = await call('create_qms_document', {
+      doc_number: 'SOP-102', title: 'Reviewed procedure', doc_type: 'sop', next_review_date: '2027-10-01',
+      reason: 'New controlled procedure with a yearly review.',
+    });
+    expect(res.ok, JSON.stringify(res)).toBe(true);
+    const due = (await docRow(res.id)).next_review_date;
+    expect(due instanceof Date ? due.toISOString().slice(0, 10) : String(due).slice(0, 10)).toBe('2027-10-01');
   });
 
   it('FAILS CLOSED — a broken audit write rolls the document back', async () => {
@@ -228,6 +246,28 @@ describe('create_qms_document — controlled document creation is audited atomic
 
     const docs = (await pglite.query(`SELECT * FROM qms_documents`)).rows;
     expect(docs, 'the regulated document must NOT exist without its audit row').toHaveLength(0);
+    expect(await auditRows()).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
+  });
+
+  it('rolls back register, editing copy, sections and both ledgers when canonical authoring audit fails after the QMS ledger was written', async () => {
+    await pglite.exec('ALTER TABLE authoring_audit_trail ADD CONSTRAINT authoring_write_broken CHECK (false)');
+    const res = await call('create_qms_document', { doc_number: 'SOP-103', title: 'Must rollback', doc_type: 'sop', reason: 'Test late audit failure' });
+    expect(res.ok).not.toBe(true);
+    expect((await pglite.query('SELECT * FROM qms_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_sections')).rows).toHaveLength(0);
+    expect(await auditRows()).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
+  });
+
+  it('refuses the whole creation if canonical creator ownership cannot persist', async () => {
+    await pglite.exec('ALTER TABLE doc_permissions ADD CONSTRAINT permission_write_broken CHECK (false)');
+    const res = await call('create_qms_document',{doc_number:'SOP-NOGRANT',title:'Must remain editable',doc_type:'sop',reason:'Test creator ownership failure'});
+    expect(res.ok).not.toBe(true);
+    expect((await pglite.query('SELECT * FROM qms_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_sections')).rows).toHaveLength(0);
     expect(await auditRows()).toHaveLength(0);
     expect(await ledgerRows()).toHaveLength(0);
   });

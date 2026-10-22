@@ -78,6 +78,42 @@ const ENTRY_POINTS = [
 ];
 const ENTRY = ENTRY_POINTS[0];
 
+/**
+ * Client modules a RECORDED DECISION withholds from this release.
+ *
+ * ── Why this is not the baseline ─────────────────────────────────────────────
+ * The baseline may only SHRINK: an entry there means code was written the
+ * browser cannot load, which is a regression. A module that is unreachable
+ * BECAUSE a founder decision shut its capability is a different thing, and
+ * putting it in the baseline would spend the ratchet's one number on it and
+ * quietly raise the floor from 0.
+ *
+ * ── Why it is verified rather than listed ────────────────────────────────────
+ * An allowlist only guards what someone remembered to add, and an exemption
+ * nobody can check is just a way to make this gate quiet. So each entry must
+ * survive four checks, and ANY of them failing fails the gate:
+ *
+ *   1. the file still exists — otherwise the entry pre-approves a future file
+ *      at that path, the same defect assertAllowlistPathsExist exists for;
+ *   2. the decision has a `### <id>` heading in the decision log, so the
+ *      exemption cannot be claimed for a decision nobody made;
+ *   3. the FILE ITSELF cites that id, so whoever opens it learns why it is
+ *      unreachable instead of deleting it as dead weight — which is exactly
+ *      how five editor generations were lost in this repository;
+ *   4. the file is STILL unreachable. A withheld module that ships is the
+ *      exemption gone stale, and the entry must go.
+ *
+ * Entry 3 is the one that matters most here. The failure this gate exists to
+ * prevent is a reader grepping for a capability and finding product-shaped
+ * code that cannot run. A withheld file answers that in its own header or it
+ * does not get the exemption.
+ */
+// The P-32 card is retained under tests/fixtures/withheld, outside client code.
+const WITHHELD = {};
+
+/** Where a decision id must be written down for an exemption to stand. */
+const DECISION_LOG = 'docs/LAUNCH_DEFINITION_OF_DONE.md';
+
 /** Mirrors tsconfig paths + vite resolve.alias. */
 const ALIASES = [
   ['@/', 'client/src/'],
@@ -127,7 +163,7 @@ function resolve(spec, fromFile) {
  * the reasoning that a commented-out import should not keep a file alive. That
  * is true and it is not worth it: regex cannot tell a comment from a string, and
  * client/src/App.jsx opens with a header comment containing a path with `/*` in
- * it. The block-comment pattern matched from there to the next `*​/` and ate 2,039
+ * it. The block-comment pattern matched from there to the next closing delimiter and ate 2,039
  * of the file's 3,659 characters — every import among them. The tracer reported
  * 14 reachable files instead of ~337, and every gate built on it would have been
  * confidently, catastrophically wrong.
@@ -205,6 +241,9 @@ const dead = production
 
 const liveCount = production.filter((f) => reachable.has(f)).length;
 
+/** What a baseline regeneration may bank: the dead set MINUS the withheld. */
+const banked = dead.filter((m) => !WITHHELD[m]);
+
 if (process.argv.includes('--write-baseline')) {
   fs.writeFileSync(
     BASELINE_FILE,
@@ -216,9 +255,16 @@ if (process.argv.includes('--write-baseline')) {
           'regression, not a fix. Regenerate with --write-baseline ONLY after removing entries. ' +
           'Type-only imports are counted as reachable, so the real dead set is larger than this.',
         $entry: 'client/src/main.tsx',
+        $withheld:
+          'Modules a recorded decision withholds are NOT banked here. Writing one in would ' +
+          'spend the ratchet\'s one number on it and raise the floor off 0 permanently, and it ' +
+          'would be counted twice — once as a verified exemption, once as debt nobody can pay ' +
+          'down until the decision is reversed. They live in WITHHELD in this gate, where four ' +
+          'checks hold them to the decision that put them there: ' +
+          Object.keys(WITHHELD).join(', '),
         $generated: new Date().toISOString().slice(0, 10),
-        count: dead.length,
-        modules: dead,
+        count: banked.length,
+        modules: banked,
       },
       null,
       2,
@@ -238,8 +284,52 @@ if (!fs.existsSync(BASELINE_FILE)) {
 
 const baseline = new Set(JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8')).modules);
 const current = new Set(dead);
-const introduced = dead.filter((m) => !baseline.has(m));
+const introduced = dead.filter((m) => !baseline.has(m) && !WITHHELD[m]);
 const resolved = [...baseline].filter((m) => !current.has(m)).sort();
+
+/** The four checks above, run over every WITHHELD entry. */
+function withheldProblems() {
+  const problems = [];
+  let log;
+  try {
+    log = fs.readFileSync(path.join(repoRoot, DECISION_LOG), 'utf8');
+  } catch {
+    return [`${DECISION_LOG} could not be read, so no withheld exemption can be verified`];
+  }
+  for (const [rel, entry] of Object.entries(WITHHELD)) {
+    if (typeof entry?.why !== 'string' || entry.why.trim().length < 80) {
+      problems.push(`${rel}: withheld entry carries no written reason`);
+    }
+    const id = String(entry?.decision ?? '');
+    const abs = path.join(repoRoot, rel);
+    if (!fs.existsSync(abs)) {
+      problems.push(`${rel}: withheld entry names a file that no longer exists — remove the entry rather than pre-approving a future file at that path`);
+      continue;
+    }
+    const heading = new RegExp(`^###\\s+${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'm');
+    if (!id || !heading.test(log)) {
+      problems.push(`${rel}: decision "${id}" has no "### ${id}" heading in ${DECISION_LOG} — an exemption cannot rest on a decision nobody recorded`);
+    }
+    if (id && !fs.readFileSync(abs, 'utf8').includes(id)) {
+      problems.push(`${rel}: the file does not cite ${id} anywhere, so whoever opens it cannot learn why nothing imports it`);
+    }
+    if (!current.has(rel)) {
+      problems.push(`${rel}: is reachable from the entry point now — the withheld exemption has gone stale; remove the entry`);
+    }
+  }
+  return problems;
+}
+
+const withheldBad = withheldProblems();
+if (withheldBad.length > 0) {
+  console.error(`\n[ci:client-reachability] FAIL — ${withheldBad.length} withheld exemption(s) do not hold:\n`);
+  for (const p of withheldBad) console.error(`  ${p}`);
+  console.error(
+    '\nA withheld module is unreachable because a recorded decision shut its capability.\n' +
+      'The exemption is only as true as that record, so it is checked rather than trusted.\n',
+  );
+  process.exit(1);
+}
 
 if (process.argv.includes('--list')) {
   for (const m of dead) console.log(`  ${m}`);

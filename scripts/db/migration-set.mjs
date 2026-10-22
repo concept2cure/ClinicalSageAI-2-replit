@@ -804,6 +804,16 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260331_regulatory_correspondence_os.sql',
   'db/migrations/20260401_submission_center_items.sql',
   'db/migrations/20260508_artifact_citations.sql',
+  // cross_artifact_consistency_alerts (2026-10-15): read and written by the
+  // mounted /api/ana/consistency/* routes, the readiness aggregate and the
+  // authoring plan, and created by no deploy. A database provisioned before
+  // shared/schema.ts declared the table has none (42P01); one pushed after has
+  // it without the unique partial index the scanner's ON CONFLICT names, so
+  // every alert insert fails (42P10). public + organization_id INTEGER NOT NULL,
+  // CREATE … IF NOT EXISTS only, drops nothing; no dependency. Its sibling
+  // 20260508_guidance_alerts.sql is NOT listed: it also creates the unkeyed
+  // global guidance_reference_index (CLAUDE.md RULE 1, last corollary).
+  'db/migrations/20260508_consistency_alerts.sql',
   'db/migrations/20260520_growth_mindset_extensions.sql',
   'db/migrations/20260621_weekly_usage_limits.sql',
 
@@ -2935,6 +2945,38 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260615_ind_icsr_transmissions.sql',
   'migrations/20260615_regulatory_assessments.sql',
   'migrations/20260615_tmf_artifact_filings.sql',
+  // 2026-10-19 (D7, MR-10 CAT2-02 prerequisite): the third instance of this same
+  // gap in the same subsystem. `20260609_ind_master_data.sql` creates the Form
+  // 1571/1572 master-data registries — ind_sponsors, ind_regulatory_agents,
+  // ind_investigators — and nothing a deploy runs creates them: not this array,
+  // not AUTHORING_SUBSYSTEM_FILES, not the drizzle journal, and drizzle-kit does
+  // not push shared/schema/ind-master-data.ts. Yet /api/ind-master-data is
+  // MOUNTED in production (server/bootstrap/register-ind-lifecycle-routes.ts:24)
+  // and ind-master-data-service.ts both inserts into and selects from all three,
+  // as do the IND documents, filing and forms routes and the IND OpenAPI spec.
+  // So on any database this array provisioned, every one of those answers
+  // "relation does not exist". The file's own header even says its migration was
+  // left for "a human — NOT done here"; the export half of that note was done,
+  // the deploy half was not.
+  //
+  // It is also the blocker under CAT2-02. The FDA us-regional backbone names the
+  // applicant's <id> (a D-U-N-S number) and an <applicant-contacts> block, and
+  // the sequence path has no recorded home for either, so it writes the
+  // placeholder UNASSIGNED-ORG-<orgId> (package-identity.ts header records the
+  // gap). ind_sponsors.duns and its contact_name/contact_phone/contact_email are
+  // that home — and a column cannot be read on a database where its table was
+  // never created.
+  //
+  // CREATE TABLE/INDEX IF NOT EXISTS only, no DROP, no ALTER, public, each table
+  // keyed by organization_id INTEGER NOT NULL and indexed on it — so it is a
+  // no-op where the tables exist, and the sweep below gives them their tenant
+  // policy where they were missing. Replayed twice against PostgreSQL 16.13 on
+  // an empty database: clean both passes, 3 of 3 tables with organization_id
+  // NOT NULL. Evidence docs/evidence/D7-IND-MASTER-DATA-ON-DEPLOY-PATH/.
+  'migrations/20260609_ind_master_data.sql',
+  // MR-10 CAT2-02: bind programs to that existing registry, preserving one
+  // DUNS/contact authority. Replay-safe nullable link + same-tenant FK only.
+  'migrations/20261021_regulatory_programs_applicant_sponsor.sql',
 
   // ── Shared state across API tasks: continuity baseline and presence roster
   //    (2026-10-01, D1, audit W2 fix units U14 + U16) ───────────────────────
@@ -3087,6 +3129,52 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-k510-denovo-pack-v1-1-*.
   'migrations/20261005c_k510_denovo_estar_outline_v1_1.sql',
 
+  // ── Filing document classes: the filing picked is the outline built (2026-10-18, D2)
+  // A supplement, an annual report, an IND amendment / safety report / annual
+  // report, a Type A/B/C meeting package, a designation request, a PSP, a REMS,
+  // a PADER, the CSR, protocol, IB, SAP, ICF, DSUR and the EU PSUR were each
+  // scaffolded as the NDA (or IND) dossier, or not offered. Nineteen packs, one
+  // per class (shared/regulatory/filing-document-classes.ts), generated from the
+  // outline the platform already served for each filing
+  // (scripts/db/emit-filing-class-packs.ts); csr/ib/protocol:ich, briefing:fda
+  // and psur:ema get new versions, fourteen classes their first. The doc_type
+  // CHECK is widened only while it does not admit every class (a strict
+  // superset). ON CONFLICT DO NOTHING, provenance after 20260810c, guarded
+  // supersede, exact-tree / one-live-pack RAISE; no DROP of anything another
+  // file creates. Pinned by tests/schema-contract/c2c-filing-class-packs.contract.test.ts.
+  // Evidence docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/.
+  'migrations/20261018_filing_class_rule_packs.sql',
+
+  // D2: the review corrections to ten of those packs (PAS, CBE, NDA annual
+  // report, PADER, IND safety report, IND annual report, orphan, designation,
+  // ICF, PSUR), each a NEW version superseding exactly the one 20261018 seeded.
+  // 20261018 is frozen: rewriting it would put a second live version beside
+  // the first on a deployed database. GENERATED by
+  // scripts/db/emit-filing-class-packs.ts. Must follow 20261018 (it supersedes
+  // that file's rows); adds no doc_type, so touches no constraint. ON CONFLICT
+  // DO NOTHING, guarded supersede, exact-tree / one-live-pack RAISE; no DROP.
+  // Pinned by tests/schema-contract/c2c-filing-class-packs.contract.test.ts.
+  'migrations/20261018c_filing_class_packs_review_corrections.sql',
+
+  // D2: the completeness critic's follow-ups to 20261018c, which was already on
+  // the applier. Six packs, each a new version superseding exactly the one
+  // 20261018c seeded: the PAS patent-information part (314.53(d)(2)), and codes
+  // that sort in document order (IND safety report, Breakthrough, RMAT, orphan,
+  // ICF). GENERATED by scripts/db/emit-filing-class-packs.ts. Must follow
+  // 20261018c. It adds no doc_type, so it touches no constraint. ON CONFLICT DO
+  // NOTHING, guarded supersede, exact-tree / one-live-pack RAISE; no DROP.
+  'migrations/20261019b_filing_class_packs_v1_2_critic_followups.sql',
+
+  // W1/D2: eight exact regional device application preparation packs, projected
+  // from the existing editor outlines by emit-filing-class-packs.ts. Distinct
+  // HDE, Canada MDL/IVD licence and Japan approval/certification/notification
+  // identities; jp_rcb is a registered certification body, never PMDA. Widen
+  // doc_type/agency CHECKs only while needed, preserving later supersets.
+  // Immutable literal trees, unreviewed low-confidence provenance, no transmit
+  // channel, exact-tree/one-live assertions. Runs after prior pack/provenance
+  // files; replay retains documents bound to every previous version.
+  'migrations/20261020_regional_device_application_packs.sql',
+
   // W2/D2 + D5: append-only typed logical file/extracted-data dispositions.
   // Source/Vault/lineage rows and physical retention remain intact. Before the
   // final RLS sweeps because this is public + organization_id INTEGER.
@@ -3209,6 +3297,30 @@ export const C2C_MIGRATION_FILES = [
   // columns or policies change. D2 onboarding browser validation evidence:
   // docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/report-index-repair.md.
   'migrations/20261014_immutable_report_tenant_index.sql',
+  // Audit F18/D08: recipient-specific notification state and organization-
+  // scoped subscriptions. Public integer tenant keys; policies installed below.
+  'migrations/20261014_notification_recipient_receipts.sql',
+  // Native fresh-install required-object contract: restore canonical Report OS indexes.
+  'migrations/20261014_immutable_report_record_indexes.sql',
+  // Match asynchronous verified receipts to the currently retained dispatch attempt.
+  'migrations/20261014_ectd_transmit_attempt_binding.sql',
+
+  // Audit F12: deploy the existing canonical allocation-ledger schema.
+  'migrations/20260702_usage_model_credit_ledger.sql',
+
+  // Audit F01: same-tenant canonical QMS content bindings, immutable signed
+  // snapshots and controlled authoring write guards; all parents already exist.
+  'db/migrations/20261014_qms_controlled_authoring_content.sql',
+
+  // Audit F09/F11: explicit protocol-program ownership; legacy rows remain
+  // unfiled until an authorized person binds them, never guessed from ordering.
+  'migrations/20261014_protocol_program_scope.sql',
+
+  // Audit F05: write-once tenant/program continuation inputs for paused runs.
+  'db/migrations/20261014_orchestrator_continuation_inputs.sql',
+  // Persist the existing feedback API's store during deployment, before grants
+  // and tenant isolation; the non-DDL runtime role must never create it.
+  'db/migrations/20261014_ai_feedback_persistence.sql',
   // complaints.patient_harm / severity_assessment lose their 'none' / 'minor'
   // defaults (2026-10-15): the intake triage computed "no MDR" from a harm
   // nobody assessed. Companion to the in-place amendment of the overlay-only
@@ -3266,18 +3378,22 @@ export const C2C_MIGRATION_FILES = [
   // installed earlier. Conditional on the function existing; creates nothing.
   'migrations/20261015g_innovation_readiness_score_refuses.sql',
 
-  // ibc_registrations.nih_guidelines_section and involves_human_gene_transfer
-  // become nullable (2026-10-15): an unanswered NIH Guidelines category or
-  // gene-transfer question was stored as "not applicable" / "no", so the
-  // convened-IBC review read as not required. The creator,
+  // ibc_registrations.nih_guidelines_section, involves_human_gene_transfer,
+  // biosafety_level and involves_recombinant_dna, and ibc_reviews.convened_quorum,
+  // lose their defaults and become nullable (2026-10-15): an unanswered NIH
+  // Guidelines category, gene-transfer, containment-level or recombinant-DNA
+  // question, or an undescribed quorum, was stored as an answer ("not
+  // applicable" / "no" / 'BSL-1' / no convened quorum), so the convened-IBC
+  // review read as not required. The creator,
   // migrations/20260610_ibc_biosafety.sql, is amended in place but runs on
   // install-fresh only; this relaxes the columns where an earlier install
-  // created them. Conditional on the table and the live shape; creates nothing.
+  // created them. Conditional on the tables and the live shape; creates nothing.
   'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
 
-  // Four cortex engine functions stored fixed priors and random jitter as
-  // model output, or "no signals" for an extraction nothing ran (2026-10-15).
-  // Their creators, db/migrations/074_ and 076_gcc_*, are amended in place but
+  // Seven cortex engine functions stored fixed priors and random jitter as
+  // model output, "no signals" for an extraction nothing ran, an invented
+  // prediction error, a 0.5 similarity or fixed risk bands (2026-10-15).
+  // Their creators, db/migrations/074_, 076_ and 078_gcc_*, are amended in place but
   // run on install-fresh only; this replaces the functions on databases
   // installed earlier. Conditional on each function existing; creates nothing.
   'migrations/20261015i_cortex_engine_functions_refuse.sql',
@@ -3308,6 +3424,64 @@ export const C2C_MIGRATION_FILES = [
   // are created above. Creates nothing the sweeps below must reach beyond the
   // four tables, which they give their tenant policy. Drops nothing.
   'migrations/20260610_ha_interactions_commitments.sql',
+  // Correspondence & commitments (2026-10-18, rows D2 and D5): the questions an
+  // agency asked in one inbox letter and the response to each, approved by a
+  // Part 11 signature that binds the response text (no approval column: the
+  // signature table is the record), and three nullable columns on
+  // regulatory_commitments naming the project, letter and question a
+  // commitment came from. After both parents (the inbox, line ~803, and the
+  // file above). Public, integer organization_id, so the sweeps below policy
+  // the new table. Additive and IF NOT EXISTS throughout; drops nothing.
+  'migrations/20261018b_agency_response_questions.sql',
+  // A commitment's fulfilment names what met it (2026-10-19, rows D2 and D5;
+  // decision P-41): five nullable columns on regulatory_commitments (the
+  // sequence, the Vault version and its sha256, who recorded it and when), a
+  // same-organisation key on ectd_sequences for the composite FK, and the
+  // guards that hold a fulfilled PMR/PMC/REMS to its signature at COMMIT and a
+  // recorded fulfilment to what it recorded. After every parent: the two
+  // files above, the submission core (ectd_sequences, line ~154) and the Vault
+  // shape (~1859). Creates no table; adds columns to one the sweeps already
+  // policy. Additive, guarded, drops nothing another file creates.
+  'migrations/20261019_commitment_fulfilment_evidence.sql',
+
+  // The signer and date of a stability study's shelf-life close-out (2026-10-19).
+  // The shelf life §3.2.S.7 / §3.2.P.8 prints as the dossier's claim, and the
+  // value the ICH Q1E rule judges, was set by an ordinary PUT with no
+  // signature: the last ungoverned signed state in the CMC registers after the
+  // 2026-10-18 ceremony generalisation. Two nullable columns and a partial
+  // index, IF NOT EXISTS; no backfill, because a study closed out before this
+  // has no signer and inventing one is the fabrication the columns prevent.
+  // public, and the table already carries organization_id INTEGER NOT NULL, so
+  // the sweep at the tail polices it.
+  'migrations/20261019_stability_shelf_life_signature.sql',
+  // The earlier CMC agency-question file is read-only (2026-10-19, rows D2 and
+  // D5; decisions P-38 and P-39 item 1): reg_questions refuses every INSERT and
+  // UPDATE, for every role, by a row trigger; the runtime role's SELECT-only
+  // ceiling is APPEND_ONLY_TABLES. Agency questions are recorded on the letter
+  // (20261018b above, which gains ctd_section in place the same day). After the
+  // table's own column file (db/migrations/20260830_reg_questions_response_doc.sql,
+  // line ~2029); no set file issues DML on it. Creates no table (the sweeps are
+  // unaffected) and drops nothing; CREATE OR REPLACE throughout.
+  'migrations/20261019b_reg_questions_read_only.sql',
+
+  // client_memory_entries / project_memory_entries.confidence_score defaulted
+  // to 0.8, so a memory entry whose writer stated no confidence claimed 80%
+  // (2026-10-15). The creator, shared/schema.ts, dropped the default, but it is
+  // pushed by install-fresh only; this drops it on databases provisioned
+  // earlier. Conditional on each table and the live default; keeps stored
+  // scores; nothing in the set re-creates the default; creates nothing.
+  'migrations/20261015l_memory_confidence_no_default.sql',
+
+  // evidence_claims.confidence was NOT NULL DEFAULT 0.50, so an unscored claim
+  // (and the governed fact established from it) read back at 0.5; and
+  // fact_drift.severity defaulted to 'medium', so an unrated drift read as a
+  // medium one (2026-10-15). The creators — shared/schema.ts (pushed by
+  // install-fresh), db/migrations/20260319_evidence_fabric.sql and
+  // migrations/20260603_living_record_spine.sql — are amended in place but none
+  // runs on a deploy; this relaxes the columns on databases installed earlier.
+  // Conditional on each table and the live shape; keeps stored values; creates
+  // nothing, drops nothing.
+  'migrations/20261015m_claim_confidence_and_drift_severity_unstated.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

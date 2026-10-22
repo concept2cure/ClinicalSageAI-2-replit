@@ -24,11 +24,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { useAuthoringHandoff } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { engineResultToHtml, type EngineProvenance } from '../engineResultHtml';
 
 interface Overview {
@@ -59,8 +60,9 @@ const EVENT_TYPES = ['AE', 'SAE', 'SUSAR', 'AESI'];
 const SERIOUSNESS = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'];
 const REGIONS = ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada'];
 
-export function PvCockpit({ onAsk }: SurfaceViewProps) {
-  const saveToAuthoring = useAuthoringHandoff();
+export function PvCockpit({ onAsk, onNav }: SurfaceViewProps) {
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
      so the one screen where a safety reviewer is looking at a disproportionality
      signal or an expedited-reporting clock had no way to ask about it. The
@@ -77,12 +79,16 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
   const [scr, setScr] = useState({ drug: '', event: '', a: '', b: '', c: '', d: '' });
   const [scrRes, setScrRes] = useState<Disproportion | null>(null);
   const [scrProv, setScrProv] = useState<EngineProvenance | null>(null);
-  const [scrFiling, setScrFiling] = useState(false);
+  const scrFiling = handoff.state?.phase === 'pending';
   const [scrBusy, setScrBusy] = useState(false);
 
   // Reporting-deadline calculator state.
-  const [dl, setDl] = useState({ eventType: 'SAE', seriousnessCriteria: 'hospitalization', region: 'FDA' });
+  /* 2026-10-15: no report date was sent, so the server (which no longer counts
+     from today) could only answer 422; the clock start is now entered here, and
+     a 422 shows the server's reason instead of "Calculation failed". */
+  const [dl, setDl] = useState({ eventType: 'SAE', seriousnessCriteria: 'hospitalization', region: 'FDA', reportDate: '' });
   const [dlRes, setDlRes] = useState<DeadlineResult | null>(null);
+  const [dlUndetermined, setDlUndetermined] = useState<string | null>(null);
   const [dlBusy, setDlBusy] = useState(false);
 
   useEffect(() => {
@@ -122,10 +128,18 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
 
   const runDeadline = useCallback(async () => {
     setDlBusy(true);
+    setDlRes(null);
+    setDlUndetermined(null);
     try {
-      const { ok, status, data } = await readData<DeadlineResult>('POST', '/api/pharmacovigilance/calculate-deadline', dl);
-      if (!ok || !data) { fireToast(status === 401 ? 'Sign in to calculate.' : `Calculation failed (HTTP ${status}).`, 'error'); return; }
+      const { reportDate, ...rest } = dl;
+      const res = await apiRequest('POST', '/api/pharmacovigilance/calculate-deadline', { ...rest, ...(reportDate ? { reportDate } : {}) });
+      const data = ((await res.json().catch(() => null)) as { data?: DeadlineResult } | null)?.data ?? null;
+      if (!res.ok || !data) { fireToast(res.status === 401 ? 'Sign in to calculate.' : `Calculation failed (HTTP ${res.status}).`, 'error'); return; }
       setDlRes(data);
+    } catch (e) {
+      const detail = e instanceof ApiRequestError && e.status === 422 ? (e.payload as { detail?: unknown } | undefined)?.detail : null;
+      if (typeof detail === 'string' && detail) setDlUndetermined(detail);
+      else fireToast(`Calculation failed (HTTP ${e instanceof ApiRequestError ? e.status : 0}).`, 'error');
     } finally { setDlBusy(false); }
   }, [dl, fireToast]);
 
@@ -243,38 +257,35 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
                 <button
                   className="btn"
                   style={{ height: 30, marginTop: 8 }}
-                  disabled={scrFiling}
+                  disabled={handoff.blocked}
                   onClick={() => void (async () => {
-                    setScrFiling(true);
-                    try {
-                      const outcome = await saveToAuthoring({
+                    if (handoff.blocked) return;
+                    const outcome = await saveToAuthoring({
+                      title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
+                      module: 'M5',
+                      code: 'pv.signal-screen',
+                      content: engineResultToHtml({
                         title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
-                        module: 'M5',
-                        code: 'pv.signal-screen',
-                        content: engineResultToHtml({
-                          title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
-                          rows: [
-                            ['Signal detected', scrRes.signalDetected ? 'Yes' : 'No'],
-                            ['PRR', fmt(scrRes.prr)],
-                            ['ROR (95% CI)', `${fmt(scrRes.ror)} (${fmt(scrRes.rorCi?.lower)}–${fmt(scrRes.rorCi?.upper)})`],
-                            ['Chi-squared (Yates)', fmt(scrRes.chiSquared)],
-                            ['EBGM', fmt(scrRes.ebgm)],
-                            ['EB05', fmt(scrRes.eb05)],
-                          ],
-                          provenance: scrProv,
-                        }),
-                        subject: 'the screened signal',
-                      });
-                      if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
-                    } finally {
-                      setScrFiling(false);
-                    }
+                        rows: [
+                          ['Signal detected', scrRes.signalDetected ? 'Yes' : 'No'],
+                          ['PRR', fmt(scrRes.prr)],
+                          ['ROR (95% CI)', `${fmt(scrRes.ror)} (${fmt(scrRes.rorCi?.lower)}–${fmt(scrRes.rorCi?.upper)})`],
+                          ['Chi-squared (Yates)', fmt(scrRes.chiSquared)],
+                          ['EBGM', fmt(scrRes.ebgm)],
+                          ['EB05', fmt(scrRes.eb05)],
+                        ],
+                        provenance: scrProv,
+                      }),
+                      subject: 'the screened signal',
+                    });
+                    if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
                   })()}
                 >
                   {scrFiling ? 'Filing…' : 'Insert into document'}
                 </button>
               </div>
             )}
+            <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
           </div>
         </div>
 
@@ -285,8 +296,12 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
               <label style={{ fontSize: 12 }}>Event type<select className="c2c-input" style={{ height: 30 }} value={dl.eventType} onChange={(e) => setDl({ ...dl, eventType: e.target.value })}>{EVENT_TYPES.map((x) => <option key={x}>{x}</option>)}</select></label>
               <label style={{ fontSize: 12 }}>Seriousness<select className="c2c-input" style={{ height: 30 }} value={dl.seriousnessCriteria} onChange={(e) => setDl({ ...dl, seriousnessCriteria: e.target.value })}>{SERIOUSNESS.map((x) => <option key={x} value={x}>{x.replace(/_/g, ' ')}</option>)}</select></label>
               <label style={{ fontSize: 12 }}>Region<select className="c2c-input" style={{ height: 30 }} value={dl.region} onChange={(e) => setDl({ ...dl, region: e.target.value })}>{REGIONS.map((x) => <option key={x} value={x}>{x.replace(/_/g, ' ')}</option>)}</select></label>
+              <label style={{ fontSize: 12 }}>Report date (sponsor awareness — the clock start)<input type="date" className="c2c-input" style={{ height: 30 }} value={dl.reportDate} onChange={(e) => setDl({ ...dl, reportDate: e.target.value })} /></label>
             </div>
             <button className="btn primary" style={{ height: 32 }} onClick={runDeadline} disabled={dlBusy}>{I.clock} {dlBusy ? 'Calculating…' : 'Calculate deadline'}</button>
+            {dlUndetermined && (
+              <div role="status" style={{ marginTop: 10, fontSize: 13 }}>No deadline: {dlUndetermined}.</div>
+            )}
             {dlRes && (
               <div style={{ marginTop: 10, fontSize: 13 }}>
                 <div><span className={'rd-chip tone-' + (dlRes.expeditedReport ? 'warn' : 'ok')}>{dlRes.expeditedReport ? 'Expedited report required' : 'Not expedited'}</span></div>

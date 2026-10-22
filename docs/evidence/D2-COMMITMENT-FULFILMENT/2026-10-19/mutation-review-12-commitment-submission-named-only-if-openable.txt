@@ -1,0 +1,32 @@
+# Review mutation 12 — the commitment's own submission is named only to a reader who can open its program (finding 16)
+#
+# File mutated: server/services/ha-interactions/commitment-fulfilment.ts
+# Test selection (db): tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "made under a submission")
+# Restored afterwards: sha256 before 8041be22c862418b1f0586da3068054e90c4b7cdeb524bba2804355fc9ae39c5, after 8041be22c862418b1f0586da3068054e90c4b7cdeb524bba2804355fc9ae39c5 (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/server/services/ha-interactions/commitment-fulfilment.ts
++++ b/server/services/ha-interactions/commitment-fulfilment.ts (mutated)
+@@ -305,7 +305,7 @@
+         `SELECT sub.id, sub.title, sub.program_id::text AS program_id FROM submissions sub WHERE sub.id = $1 AND sub.organization_id = $2`,
+         [p.commitment.submissionId, p.orgId],
+       )).rows[0];
+-      const openable = !!own && (own.program_id == null || access.programIds.includes(String(own.program_id)));
++      const openable = !!own;
+       submission = openable ? { readable: true, id: Number(own.id), title: text(own.title) } : { readable: false };
+     }
+     rows = p.commitment.submissionId != null
+
+## Control: the same selection on the unmutated tree
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it 149ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 30 skipped (31)
+
+## With the mutation in place
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it 138ms
+   → expected { readable: true, id: 386, …(1) } to deeply equal { readable: false }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it
+AssertionError: expected { readable: true, id: 386, …(1) } to deeply equal { readable: false }
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)

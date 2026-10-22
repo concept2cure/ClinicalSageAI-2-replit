@@ -1,0 +1,57 @@
+Intentional mutation: omit the derived destination context at the canonical Vault transmit verdict.
+Expected: all three real-SQL readiness scope regressions fail.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'agency' scope no longer matches the recorded target 40ms
+   → expected undefined to be '1.2' // Object.is equality
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'country or region' scope no longer matches the recorded target 22ms
+   → expected undefined to be '1.2' // Object.is equality
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'submission type' scope no longer matches the recorded target 23ms
+   → expected undefined to be '1.2' // Object.is equality
+ ↓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes
+ ↓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real
+ ↓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict
+ ↓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a nda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1
+ ↓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a BLA supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1
+ ↓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a anda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1
+ ↓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > with the 356h filed under 1.1, nothing is missing
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 skipped (10)
+   Start at  22:49:32
+   Duration  5.65s (transform 2.13s, setup 62ms, import 3.66s, tests 1.74s, environment 0ms)
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+{
+  "timestamp": "2026-10-17T22:49:33.860Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'agency' scope no longer matches the recorded target
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'country or region' scope no longer matches the recorded target
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'submission type' scope no longer matches the recorded target
+AssertionError: expected undefined to be '1.2' // Object.is equality
+
+- Expected:
+"1.2"
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts:155:36
+    153|       const blocked = await assessSequenceDispatchReadiness({ sequence…
+    154|       const refusal = blocked.readiness.findings.find(finding => findi…
+    155|       expect(refusal?.sectionCode).toBe('1.2');
+       |                                    ^
+    156|       expect(refusal?.message).toContain(`selected ${reason} is outsid…
+    157|       expect(blocked.readiness.releaseBlockers).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯

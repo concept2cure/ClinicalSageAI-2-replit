@@ -1,7 +1,13 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useLocation, useSearch } from 'wouter';
+import { capturedActorHeaders } from '@/utils/authToken';
+import { readTaskNavigationTarget, taskActorScope, type TaskActorScope } from '../taskTarget';
+import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
+import type { ListState } from '../dataConnect';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
+import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { canGovernedWrite } from '@shared/constants/permissions';
@@ -12,7 +18,9 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { publishShellProject } from '../shellProject';
+import { consumeNavParams, NAV_PARAMS_EVENT, stashNavParamsForTarget } from '../navParams';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { isTaskFilingHome, isTrackedFilingId, type TaskFilingHome } from '@shared/types/task-filing-home';
 import {
   // TB_PROJECTS (three invented programmes) is gone — the board, the project
   // filter, the detail label and the workflow picker all read the org's real
@@ -115,11 +123,11 @@ interface TaskItem {
   /** Work that lives in another store (schedule, correspondence, filing). The
    *  board shows it and does not write it; `home` is where it is changed. */
   readOnly?: boolean;
-  /** `programId` is the regulatory_programs UUID the numeric project anchors
-   *  (projects.regulatory_program_id), resolved by the server; null when that
-   *  project anchors no program. Only the UUID is ever published as the open
-   *  project: a v2 surface handed the number reads a legacy store. */
-  home?: { surface: 'project-home' | 'submission-center'; projectId: number | null; programId?: string | null } | null;
+  home?: {
+    surface: 'project-home' | 'submission-center'; projectId: number | null;
+    programId?: string | null; programTitle?: string | null;
+    source?: string; nativeId?: string;
+  } | null;
   /** The owning store's own note (a blocker, a module, a catalogue key). */
   detail?: string | null;
   /** unified_tasks.description: what the task asks (Assign review stores the
@@ -290,7 +298,141 @@ function AutomationCard() {
 
 /* ── Main surface ── */
 
-export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
+export function TaskBoard(props: SurfaceViewProps) {
+  const { user } = useAuth();
+  const owner = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
+  const liveOwner = useRef({ owner, generation: 0 });
+  if (liveOwner.current.owner !== owner) liveOwner.current = { owner, generation: liveOwner.current.generation + 1 };
+  const generation = liveOwner.current.generation;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const isCurrent = () => mounted.current && liveOwner.current.generation === generation;
+  const scope = taskActorScope(user);
+  const canCallShell = () => scope ? currentTaskActor(scope, isCurrent) : isCurrent();
+  return <TaskBoardSession key={owner} {...props} user={user} isCurrent={isCurrent}
+    onAsk={text => { if (canCallShell()) props.onAsk?.(text); }}
+    onNav={id => { if (canCallShell()) props.onNav?.(id); }} />;
+}
+
+type BoardSessionProps = SurfaceViewProps & {
+  user: ReturnType<typeof useAuth>['user'];
+  isCurrent: () => boolean;
+};
+
+/** Accept links only after a fresh, readable unified-store result. */
+function targetTask(read: ListState<TaskItem>, taskId: string): TaskItem | string {
+  if (read.error) return 'The task board could not be read. Retry from Your work.';
+  if (read.meta?.pendingStore === true ||
+      (Array.isArray(read.meta?.unreadSources) && read.meta.unreadSources.includes('unified_tasks'))) {
+    return 'The unified task store is unavailable. Retry from Your work when it can be read.';
+  }
+  const matches = read.rows.filter(row => row.taskId === taskId);
+  if (matches.length !== 1) return 'This task is no longer available on the current board. Reopen Your work to refresh it.';
+  const task = matches[0];
+  if (task.readOnly || !['unified', 'section', 'module', 'template', 'wbs', 'pyramid'].includes(task.source)) {
+    return 'This task belongs to another store. Open it from its owning store instead of unified-task controls.';
+  }
+  if (task.status === 'cancelled') return 'This task was archived and is no longer open. Reopen Your work to refresh it.';
+  return task;
+}
+
+function taskActorHeaders(scope: TaskActorScope | null, isCurrent: () => boolean): Record<string, string> | null {
+  if (!scope || !isCurrent()) return null;
+  try {
+    return capturedActorHeaders({ userId: Number(scope.userId), organizationId: Number(scope.organizationId) });
+  } catch { return null; }
+}
+
+function currentTaskActor(scope: TaskActorScope | null, isCurrent: () => boolean): boolean {
+  return taskActorHeaders(scope, isCurrent) !== null;
+}
+
+interface TaskTargetOptions {
+  scope: TaskActorScope | null;
+  isCurrent: () => boolean;
+  read: ListState<TaskItem>;
+  reloadKey: number;
+  reload: () => void;
+  guard: () => string | null;
+  select: (task: TaskItem) => void;
+}
+
+function useTaskTarget(options: TaskTargetOptions) {
+  const search = useSearch();
+  const [location, setLocation] = useLocation();
+  const latest = useRef(options);
+  latest.current = options;
+  const seen = useRef<string | null>(null);
+  const pending = useRef<{ taskId: string; readKey: number; sawLoading: boolean } | null>(null);
+  const currentSearch = useRef(search);
+  currentSearch.current = search;
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const consume = useCallback(() => {
+    const params = new URLSearchParams(search);
+    ['taskId', 'taskActor', 'taskOrg'].forEach(key => params.delete(key));
+    const remaining = params.toString();
+    setLocation(`${location.split('?')[0]}${remaining ? `?${remaining}` : ''}`, { replace: true });
+  }, [search, location, setLocation]);
+  const finish = useCallback((text?: string) => {
+    pending.current = null;
+    setMessage(text ? { text, error: true } : null);
+    consume();
+  }, [consume]);
+  const begin = useCallback((targetSearch: string) => {
+    const context = latest.current;
+    const target = readTaskNavigationTarget(targetSearch, context.scope);
+    if (!target) { pending.current = null; return; }
+    if ('error' in target) { finish(target.error); return; }
+    if (!currentTaskActor(context.scope, context.isCurrent)) {
+      finish('Your signed-in account or organization changed. Reopen the task from Your work.'); return;
+    }
+    const refusal = context.guard() || surfaceLeaveRefusal();
+    if (refusal) { finish(refusal); return; }
+    if (pending.current?.taskId === target.taskId) return;
+    pending.current = { taskId: target.taskId, readKey: context.reloadKey + 1, sawLoading: false };
+    setMessage({ text: 'Refreshing the current task before opening it…', error: false });
+    context.reload();
+  }, [finish]);
+  const beginRef = useRef(begin);
+  beginRef.current = begin;
+  useEffect(() => {
+    const receive = () => {
+      const params = consumeNavParams('tasks', Date.now(), true);
+      if (!params || !['taskId', 'taskActor', 'taskOrg'].some(key => Object.hasOwn(params, key))) return;
+      // A new handoff wins over a copied URL and is consumed only once, even
+      // under StrictMode or an unrelated navigation-params event.
+      seen.current = currentSearch.current;
+      beginRef.current(new URLSearchParams(params).toString());
+    };
+    receive();
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, []);
+  useEffect(() => {
+    if (seen.current === search) return;
+    seen.current = search;
+    begin(search);
+  }, [search, begin]);
+  useEffect(() => {
+    const request = pending.current;
+    if (!request || options.reloadKey < request.readKey) return;
+    if (options.read.loading) { request.sawLoading = true; return; }
+    if (!request.sawLoading) return;
+    const context = latest.current;
+    if (!currentTaskActor(context.scope, context.isCurrent)) {
+      finish('Your signed-in account or organization changed. Reopen the task from Your work.'); return;
+    }
+    const refusal = context.guard() || surfaceLeaveRefusal();
+    if (refusal) { finish(refusal); return; }
+    const task = targetTask(context.read, request.taskId);
+    if (typeof task === 'string') { finish(task); return; }
+    finish();
+    context.select(task);
+  }, [search, options.reloadKey, options.read, finish]);
+  return message;
+}
+
+function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) {
   /* Org-wide unifiedTasks board — REAL, org-scoped read model
      (GET /api/task-management/board -> server/routes/taskBoard.routes.ts: a real
      drizzle query over unified_tasks + task_dependencies). Real rows, an honest
@@ -337,7 +479,6 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   /* "My tasks" needs the signed-in user's real id. It used to compare against
      the fixture short-id 'jc', which no real row can carry — so the filter
      returned an empty board for every user of the product. */
-  const { user } = useAuth();
   const myId = user?.id != null ? String(user.id) : '';
   /* Every task write is refused to a viewer by requireEditorAccess. The board
      offered a viewer New task, Start workflow, move, archive and sign anyway,
@@ -352,6 +493,13 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   const [mine, setMine] = useState(false);
   const [mod, setMod] = useState('all');
   const [sel, setSel] = useState<TaskItem | null>(null);
+  const selectedTask = useRef(sel);
+  selectedTask.current = sel;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const [openingFiling, setOpeningFiling] = useState<string | null>(null);
+  const [filingHomeError, setFilingHomeError] = useState('');
+  const filingOpenSerial = useRef(0);
   const [creating, setCreating] = useState(false);
   const [wf, setWf] = useState(false);
   /** State-machine / archive failures the server reported, surfaced in a banner. */
@@ -359,7 +507,6 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   /** A completion the server answered 428 ESIGN_REQUIRED for — the pending
    *  21 CFR 11 §11.50 signature ceremony for an approval-gated task. */
   const [signReq, setSignReq] = useState<{ t: TaskItem; status: string; progress: number } | null>(null);
-
   const modules = useMemo(() => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))], [tasks]);
   /* Memoized because its IDENTITY is load-bearing, not for speed.
      `list` seeds `stats`, `stats` and `list` seed `anaContext`, and
@@ -402,6 +549,15 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
     if (wf) return { ok: false, reason: 'The workflow picker is open — close it first.' };
     return null;
   };
+  const leaveGuard = useRef<() => string | null>(() => null);
+  leaveGuard.current = () => boardBusyGuard()?.reason ?? (sel ? 'A task detail is open — close it first.' : null);
+  useEffect(() => registerSurfaceLeaveGuard(() => leaveGuard.current()), []);
+  const targetMessage = useTaskTarget({
+    scope: taskActorScope(user), isCurrent, read: liveTasks, reloadKey,
+    reload: () => setReloadKey(key => key + 1),
+    guard: () => leaveGuard.current(),
+    select: task => { setProj('all'); setMod('all'); setMine(false); setSel(task); },
+  });
   useSurfaceActionHandlers('tasks', {
     'tasking.set-view': (params) => {
       const guarded = boardBusyGuard();
@@ -653,6 +809,19 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
     };
   }, [list]);
 
+  /* What the Analytics tab measured, or null when it measured every card the
+     board read. `tasks` is the board's whole read (the /board route is
+     uncapped and spans every work store); `list` is what the filters and the
+     unconditional cancelled-card exclusion leave. */
+  const analyticsScope = useMemo(
+    () => taskAnalyticsScope({
+      shown: list.length,
+      total: tasks.length,
+      filters: { project: proj, moduleType: mod, mineOnly: mine },
+    }),
+    [list.length, tasks.length, proj, mod, mine],
+  );
+
   /* What AnA can see of this screen. Until now she was told the user was on
      "task-board" and nothing more, so "what should I do next?" had to be
      answered from the message text — on the one surface whose entire purpose is
@@ -726,6 +895,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         'Open a task to see its detail, dependencies and signatures',
         'Advance or move a task back through pending → in-progress → review → completed',
         'Create a task, or start a workflow from a template',
+        'Auto-assign an existing unfinished task from its detail, or retry a failed assignment',
         'Archive a task (requires a reason, written to the audit trail)',
         'Complete an approval-gated task (requires an electronic signature)',
         'Filter the board by module, priority, assignee or search text',
@@ -802,6 +972,11 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         )}
       </div>
 
+      {targetMessage && (
+        <div className={targetMessage.error ? 'tb-alert' : 'scaf-note'} role={targetMessage.error ? 'alert' : 'status'}>
+          <span>{targetMessage.text}</span>
+        </div>
+      )}
       {actionErr && (
         <div className="tb-alert" role="alert">
           {I.alertTriangle} <span>{actionErr}</span>
@@ -816,6 +991,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the task board"
+          retry={() => setReloadKey((k) => k + 1)}
           hint="The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
         />
       ) : liveTasks.empty ? (
@@ -855,7 +1031,10 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         action={canWrite ? {
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : critDesignated ? 'Start a workflow from a template' : 'Mark the tasks that gate the milestone',
           onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
-          alt: { label: 'Auto-balance assignments', onClick: () => onAsk && onAsk('Rebalance open task assignments by workload using getOptimalAssignee') },
+          alt: list.some((t) => !t.readOnly && t.status !== 'completed') ? { label: 'Assign a saved task', onClick: () => {
+            const candidate = list.find((t) => !t.readOnly && t.status !== 'completed');
+            if (candidate) setSel(candidate);
+          } } : undefined,
         } : { label: 'See the critical path', onClick: () => setView('path') }}
         secondary="Or work the board, critical path, and analytics below."
       />
@@ -1007,6 +1186,13 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'analytics' && (
         <div>
+          {/* Every figure below is computed from `list`, the FILTERED rows, so
+              the tab says what it measured. See taskBoardAnalyticsScope. */}
+          {analyticsScope && (
+            <div className="ro-dash-note" role="status" data-testid="tb-analytics-scope">
+              {I.info} {analyticsScope}
+            </div>
+          )}
           <div className="metrics">
             {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
               <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>
@@ -1095,6 +1281,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       {wf && (
         <WorkflowStart
           proj={proj}
+          actorHeaders={() => taskActorHeaders(taskActorScope(user), isCurrent)}
           onClose={() => setWf(false)}
           onInstantiate={(createdCount, warning) => {
             setWf(false);
@@ -1110,12 +1297,40 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         <OtherStoreTaskDetail
           t={sel}
           projLabel={projLabel}
-          onClose={() => setSel(null)}
-          onOpenHome={(t) => {
-            if (!t.home || !canOpenHome(t.home)) return;
-            if (t.home.programId) {
-              publishShellProject({ id: t.home.programId, title: projLabel(String(t.home.projectId)) });
+          opening={openingFiling === sel.taskId}
+          error={filingHomeError}
+          onClose={() => { filingOpenSerial.current += 1; selectedTask.current = null; setSel(null); setOpeningFiling(null); setFilingHomeError(''); }}
+          onOpenHome={async (t) => {
+            if (!t.home) return;
+            const headers = taskActorHeaders(taskActorScope(user), isCurrent);
+            if (!headers) { setFilingHomeError('Your signed-in account or organization changed. Reopen the task from Your work.'); return; }
+            if (t.home.source === 'filing') {
+              const filingId = t.home.nativeId;
+              if (!isTrackedFilingId(filingId)) {
+                setFilingHomeError('This exact tracked filing could not be verified because its identifier is invalid. The current programme has not changed.');
+                return;
+              }
+              if (openingFiling === t.taskId) return;
+              const serial = ++filingOpenSerial.current;
+              setOpeningFiling(t.taskId); setFilingHomeError('');
+              const stillSelected = () => mounted.current && filingOpenSerial.current === serial && selectedTask.current === t
+                && currentTaskActor(taskActorScope(user), isCurrent);
+              try {
+                const { home } = await loadTaskFilingHome(filingId, headers);
+                if (!stillSelected()) return;
+                if (home.programId) publishShellProject({ id: home.programId, title: home.programTitle || 'Tracked filing programme' });
+                stashNavParamsForTarget('submission-center', { filingId, ws: 'portfolio' });
+                setSel(null); onNav('submission-center');
+              } catch (error) {
+                if (!stillSelected()) return;
+                setFilingHomeError(filingHomeErrorText(error));
+              } finally {
+                if (mounted.current && filingOpenSerial.current === serial) setOpeningFiling(null);
+              }
+              return;
             }
+            if (!t.home.programId) return;
+            publishNativeTaskHome(t, projLabel);
             setSel(null);
             onNav(t.home.surface);
           }}
@@ -1123,7 +1338,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       )}
       {sel && !sel.readOnly && (
         <TaskDetail
-          t={sel}
+          t={tasks.find((t) => t.taskId === sel.taskId) ?? sel}
           byId={byId}
           projLabel={projLabel}
           onClose={() => setSel(null)}
@@ -1131,6 +1346,13 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           onMove={move}
           nameOf={nameOf}
           canWrite={canWrite}
+          pendingNotification={targetMessage?.error ? targetMessage.text : null}
+          onAssign={async (task) => {
+            const warning = await autoAssignCreated([task.taskId], 1, () => taskActorHeaders(taskActorScope(user), isCurrent), true);
+            if (!currentTaskActor(taskActorScope(user), isCurrent)) return 'The account changed. Check the original account’s task board to confirm assignment.';
+            setReloadKey((k) => k + 1);
+            return warning;
+          }}
           onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
         />
       )}
@@ -1161,6 +1383,8 @@ interface TaskDetailProps {
   onClose: () => void;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
+  onAssign: (t: TaskItem) => Promise<string | undefined>;
+  pendingNotification?: string | null;
   /** Resolves a real assignee id to a name; see makeNameOf. */
   nameOf: (id: string | null | undefined) => string;
   /** Called after a successful soft-delete so the board closes + refetches. */
@@ -1177,21 +1401,6 @@ const ARCHIVE_REASON_MAX = 1000;
  * store, so this panel offers none of the board's controls (move, archive,
  * sign): it says what the store records and opens the screen that owns it.
  */
-/** Whether the owning screen can be opened on this work's project: a project
- *  must reach the screen as its program, never as the bare number. */
-function canOpenHome(home: NonNullable<TaskItem['home']>): boolean {
-  return home.projectId == null || Boolean(home.programId);
-}
-
-/** "Open in …" for another store's work, or why it cannot be opened. */
-function OpenHomeAction({ t, home, onOpenHome }: { t: TaskItem; home: string | null; onOpenHome: (t: TaskItem) => void }) {
-  if (!home || !t.home) return null;
-  if (!canOpenHome(t.home)) {
-    return <div className="tb-detail-note" data-testid="tb-home-unlinked">Its project is not linked to a program, so {home} cannot be opened on it from here.</div>;
-  }
-  return <button className="btn primary" onClick={() => onOpenHome(t)}>Open in {home}</button>;
-}
-
 /** Where another store's work lives, in one sentence. */
 function whereItLives(home: string | null, project: string | null): React.ReactNode {
   if (!home) return 'This work lives in another store. The board shows it and does not edit it.';
@@ -1199,11 +1408,13 @@ function whereItLives(home: string | null, project: string | null): React.ReactN
   return `This work lives in ${home}${forProject}. It is changed there; the board shows it and does not edit it.`;
 }
 
-function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome }: {
+function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, error }: {
   t: TaskItem;
   projLabel: (id: string) => string;
   onClose: () => void;
-  onOpenHome: (t: TaskItem) => void;
+  onOpenHome: (t: TaskItem) => void | Promise<void>;
+  opening: boolean;
+  error: string;
 }) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const status = (TB_COLS.find(c => c.id === t.status) || { label: t.status }).label;
@@ -1218,24 +1429,20 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome }: {
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.detail || 'Blocked'}</div>}
-        <div className="tb-detail-grid">
-          <div><label>Project</label><span>{project ?? '—'}</span></div>
-          <div><label>Status</label><span>{status}</span></div>
-          <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due || '—'}</span></div>
-          <div><label>Store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
-          {t.priority && <div><label>Priority</label><span>{t.priority}</span></div>}
-          {t.detail && !t.blocked && <div><label>Note</label><span>{t.detail}</span></div>}
-        </div>
+        <OtherStoreTaskFields t={t} project={project} status={status} src={src} />
         <div className="tb-detail-sec">
           <div className="tb-detail-note">{whereItLives(home, project)}</div>
-          <OpenHomeAction t={t} home={home} onOpenHome={onOpenHome} />
+          {error && <div role="alert" className="tb-detail-note">{error}</div>}
+          {home && (t.home?.source === 'filing' || t.home?.programId
+              ? <button className="btn primary" disabled={opening} aria-busy={opening} onClick={() => void onOpenHome(t)}>Open in {home}</button>
+              : <div role="status" className="tb-detail-note">This task has no available program link. Open its program from Projects; the current program has not been changed.</div>)}
         </div>
       </div>
     </div>
   );
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArchived, canWrite }: TaskDetailProps) {
+function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
@@ -1265,6 +1472,16 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
   // A refusal, shown IN this panel: the board's banner sits behind the
   // backdrop, where the user who just clicked Confirm cannot see it.
   const [archiveErr, setArchiveErr] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [assignmentNote, setAssignmentNote] = useState<string | null>(null);
+  const assign = async () => {
+    if (assigning || !canWrite) return;
+    setAssigning(true); setAssignmentNote(null);
+    try {
+      const warning = await onAssign(t);
+      setAssignmentNote(warning ?? 'Assignment recorded. The board is being re-read to show the saved assignee.');
+    } finally { setAssigning(false); }
+  };
   // There used to be a 4s timer that silently disarmed the confirm. With a
   // reason textarea in the flow that would wipe a half-written justification
   // mid-sentence, so disarming is now an explicit Cancel button instead.
@@ -1309,6 +1526,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
           {t.regulatoryImpact && <span className="tb-flag reg lg">{I.shieldCheck} regulatory</span>}
         </div>
         {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
+        {pendingNotification && <div role="status" className="tb-detail-note">{pendingNotification}</div>}
         {/* QA 2026-10-08 (j4): the instructions a review task was created with
             were stored and never shown, so the reviewer could not read them. */}
         {t.description && t.description.trim() && (
@@ -1327,6 +1545,15 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
           <div><label>Origin store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
+        {canWrite && t.status !== 'completed' && (
+          <div className="tb-detail-sec">
+            <button className="btn ghost" disabled={assigning || confirmArchive} onClick={() => void assign()}>
+              {assigning ? 'Assigning…' : 'Auto-assign task'}
+            </button>
+            <div className="tb-detail-note">Assigns this saved task to an available member by workload. The change is recorded in the audit trail.</div>
+            {assignmentNote && <div className="tb-detail-note" role={assignmentNote.startsWith('Assignment recorded.') ? 'status' : 'alert'}>{assignmentNote}</div>}
+          </div>
+        )}
         {t.approvalRequired && (
           <div className="tb-detail-sec">
             <div className="tb-detail-sec-h">Approval checkpoint <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus.replace('_', ' ')}</span></div>
@@ -1619,6 +1846,8 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
 
 interface WorkflowStartProps {
   proj: string;
+  /** Captures this owner's matched bearer; a retired owner cannot start a follow-up write. */
+  actorHeaders: () => Record<string, string> | null;
   onClose: () => void;
   /** Called with the COUNT the server actually created — the tasks themselves
    *  are already persisted, so the board reloads rather than being handed
@@ -1633,26 +1862,50 @@ interface WorkflowStartProps {
  * to the sentence to show when the assignment did NOT happen, or happened for
  * only some of them, else undefined.
  */
-async function autoAssignCreated(ids: string[], created: number): Promise<string | undefined> {
-  const notAssigned = `${created} tasks were created but not assigned — assign them on the board.`;
+async function autoAssignCreated(ids: string[], created: number, actorHeaders: WorkflowStartProps['actorHeaders'], savedTask = false): Promise<string | undefined> {
+  const headers = actorHeaders();
+  if (!headers) return savedTask ? 'Your signed-in account or organization changed. No assignment request was sent.' : workflowActorChanged(created, false);
+  const notAssigned = savedTask
+    ? 'The saved task was not assigned. Retry auto-assign from this detail after an eligible member is available.'
+    : `${created} tasks were created but not assigned — assign them on the board.`;
   try {
-    const res = await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids });
+    const res = await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids }, headers);
     if (res.status === 401) return sessionExpired(notAssigned);
     if (!res.ok) return notAssigned;
     // A 200 is not "all assigned": the route leaves out a task nobody could
     // take, or one archived meanwhile, and answers with the count it made.
     const body = (await res.json().catch(() => null)) as { count?: unknown; data?: unknown } | null;
-    const assigned = typeof body?.count === 'number' ? body.count : Array.isArray(body?.data) ? body.data.length : null;
+    const assigned = assignedTaskCount(body);
     if (assigned === null) {
-      return `${created} tasks were created, but whether auto-assign assigned them could not be confirmed — check the board.`;
+      return savedTask
+        ? 'Whether the saved task was assigned could not be confirmed — check the board before retrying.'
+        : `${created} tasks were created, but whether auto-assign assigned them could not be confirmed — check the board.`;
     }
     if (assigned >= ids.length) return undefined;
+    if (savedTask) return notAssigned;
     const left = ids.length - assigned;
     return `${created} tasks were created; ${assigned} of ${ids.length} were assigned and ${left} ${left === 1 ? 'was' : 'were'} not assigned — assign ${left === 1 ? 'it' : 'them'} on the board.`;
   } catch (e) {
     const why = refusalText(e, 'the service could not be reached.');
-    return `${created} tasks were created, but auto-assignment failed: ${why}`;
+    return savedTask
+      ? `The saved task's assignment could not be confirmed: ${why}`
+      : `${created} tasks were created, but auto-assignment failed: ${why}`;
   }
+}
+
+/** A successful creation stays a fact even when its optional follow-up is refused. */
+function workflowActorChanged(created: number, assignmentAttempted: boolean): string {
+  const assignment = assignmentAttempted
+    ? 'Check the original account’s task board to confirm whether automatic assignment completed.'
+    : 'Automatic assignment was not attempted.';
+  return `${created} tasks were created. ${assignment} Your signed-in account or organization changed; reopen the original account to check the recorded tasks.`;
+}
+
+function createdWorkflowTasks(data: unknown, fallback: number): { created: number; ids: string[] } {
+  const tasks: unknown[] = Array.isArray(data) ? data : [];
+  const ids = tasks.map(task => (task as { taskId?: string })?.taskId)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+  return { created: tasks.length || fallback, ids };
 }
 
 /** GET /api/task-management/templates render contract. */
@@ -1671,7 +1924,7 @@ interface WorkflowTemplate {
   tasksTruncated: boolean;
 }
 
-function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
+function WorkflowStart({ proj, onClose, onInstantiate, actorHeaders }: WorkflowStartProps) {
   /* Real org templates. The picker used to be populated from TB_WORKFLOWS, a
      fixture constant, and `instantiate` fabricated the entire task set in the
      browser: ids from 'C2C-TASK-' + Math.random(), assignees defaulting to the
@@ -1717,6 +1970,8 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
   const instantiate = async () => {
     if (!tpl || busy) return;
     if (!project) { setErr('Choose a project — the tasks are created against it.'); return; }
+    const headers = actorHeaders();
+    if (!headers) { setErr('Your signed-in account or organization changed. Reopen the workflow; no workflow request was sent.'); return; }
     setBusy(true);
     setErr('');
     try {
@@ -1728,6 +1983,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
           startDate: new Date().toISOString(),
           adjustDates: true,
         },
+        headers,
       );
       if (res.status === 401) { setErr(sessionExpired('No tasks were created.')); return; }
       const body = await res.json().catch(() => null);
@@ -1744,8 +2000,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
         setErr(serverMessage(payload) ?? 'Could not create the tasks (HTTP ' + res.status + ').');
         return;
       }
-      const createdTasks: unknown[] = Array.isArray(payload.data) ? payload.data : [];
-      const created = createdTasks.length || tpl.taskCount;
+      const { created, ids } = createdWorkflowTasks(payload.data, tpl.taskCount);
 
       /* Auto-assign is a SEPARATE governed step; the instantiate route takes no
          assignee. It runs against the ids that were just created, and a failure
@@ -1753,10 +2008,12 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
          were. The report travels OUT with onInstantiate: it used to be set on
          this dialog's own error line and then the dialog closed, so it was
          never seen — and a 401 (returned, not thrown) was not caught at all. */
-      const ids = createdTasks
-        .map(t => (t as { taskId?: string })?.taskId)
-        .filter((x): x is string => typeof x === 'string' && x.length > 0);
-      const warning = autoAssign && ids.length ? await autoAssignCreated(ids, created) : undefined;
+      // Recheck after both the creation request and its JSON read: another
+      // account must never inherit the optional assignment of these task IDs.
+      if (!actorHeaders()) { setErr(workflowActorChanged(created, false)); return; }
+      const assignmentAttempted = autoAssign && ids.length > 0;
+      const warning = assignmentAttempted ? await autoAssignCreated(ids, created, actorHeaders) : undefined;
+      if (!actorHeaders()) { setErr(workflowActorChanged(created, assignmentAttempted)); return; }
       onInstantiate(created, warning);
     } catch (e) {
       // `e instanceof Error` also matched a browser-native fetch rejection, so a
@@ -1846,4 +2103,46 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
       </div>
     </div>
   );
+}
+
+async function loadTaskFilingHome(filingId: string, headers: Record<string, string>): Promise<TaskFilingHome> {
+  const response = await apiRequest('GET', `/api/task-management/filings/${encodeURIComponent(filingId)}`, undefined, headers);
+  if (!response.ok) throw new ApiRequestError('The tracked filing could not be opened.', response.status);
+  const payload: unknown = await response.json();
+  const envelope = payload && typeof payload === 'object' ? payload as Record<string, unknown> : null;
+  if (envelope?.success !== true || !isTaskFilingHome(envelope.data, filingId)) {
+    throw new Error('The tracked filing response did not identify this exact record.');
+  }
+  return envelope.data;
+}
+function filingHomeErrorText(error: unknown): string {
+  const status = error instanceof ApiRequestError ? error.status : null;
+  if (status === 401) return 'Your session expired. Sign in again before opening this tracked filing.';
+  if (status === 403) return 'Your current access does not permit this tracked filing. The current programme has not changed.';
+  if (status === 404) return 'This tracked filing or its project is no longer available. The current programme has not changed.';
+  return 'This exact tracked filing could not be verified. Retry; the current programme has not changed.';
+}
+function publishNativeTaskHome(t: TaskItem, projLabel: (id: string) => string): void {
+  if (!t.home?.programId) return;
+            publishShellProject({ id: t.home.programId, title: t.home.programTitle || projLabel(String(t.home.projectId)) });
+            stashNavParamsForTarget(t.home.surface, {
+              stage: 'review', workId: t.taskId,
+              workSource: t.home.source || t.source, workNativeId: t.home.nativeId || '',
+            });
+ }
+function OtherStoreTaskFields({ t, project, status, src }: {
+  t: TaskItem; project: string | null; status: string; src: typeof TB_SRC[keyof typeof TB_SRC];
+}) { return (
+        <div className="tb-detail-grid">
+          <div><label>Project</label><span>{project ?? '—'}</span></div>
+          <div><label>Status</label><span>{status}</span></div>
+          <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due || '—'}</span></div>
+          <div><label>Store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
+          {t.priority && <div><label>Priority</label><span>{t.priority}</span></div>}
+          {t.detail && !t.blocked && <div><label>Note</label><span>{t.detail}</span></div>}
+        </div>
+ ); }
+function assignedTaskCount(body: { count?: unknown; data?: unknown } | null): number | null {
+  if (typeof body?.count === 'number') return body.count;
+  return Array.isArray(body?.data) ? body.data.length : null;
 }

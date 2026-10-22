@@ -48,7 +48,13 @@ export interface IbcCompletenessInput {
 }
 
 const CHECK_AGENT_LEVEL = "each agent registered at or above its risk group's containment (NIH Guidelines Appendix B; BMBL)";
-const CHECK_CONTAINMENT = 'declared containment at or above the highest level the agents require (BMBL)';
+// "call for", not "require", and deliberately: ci:commonjs-require matches
+// /(?<![.\w$])require\s*\(/ and does NOT strip string contents — on purpose, since a
+// `require(` inside a string in server source is worth a look. Here it was English
+// prose, "the agents require (BMBL)", immediately before the house-style citation.
+// Rewording keeps that gate at full strength; baselining would have exempted this
+// whole file, where a real require() is a runtime ReferenceError, not a lint nit.
+const CHECK_CONTAINMENT = 'declared containment at or above the highest level the agents call for (BMBL)';
 const CHECK_CONVENED = 'whether the work needs convened-IBC review (NIH Guidelines III-A/B/C, human gene transfer)';
 
 /**

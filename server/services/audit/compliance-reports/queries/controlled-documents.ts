@@ -20,6 +20,8 @@
  */
 import type { ReportDefinition, RunContext, SectionResult } from '../types';
 import { actorJoin, cappedSection, columns, isoNaiveUtc, isoUtc, naiveUtcNote, utcWallClock } from './section';
+import { readInForceReleases } from '../../../qms/in-force-release';
+import type { QmsDocumentRow } from '../../../qms/document-approval-signature';
 
 /** A signature that stands now: valid, not revoked, not superseded. */
 const STANDING = (a: string) =>
@@ -130,16 +132,64 @@ SELECT c.id,
    AND (c.deleted_at IS NULL OR c.deleted_at >= $2::timestamptz)
  ORDER BY c.created_at, c.id`;
 
+/* $1 organisation, $2 the documents in draft or review. */
+const UNDER_REVISION_SQL = `SELECT * FROM qms_documents WHERE organization_id = $1 AND id = ANY($2::int[]) AND deleted_at IS NULL`;
+
+/* $1 organisation, $2 the end of the as-of day, $3 {"qms-document:<id>": "<version in force>"}:
+   each in-force version's standing approval, signed by the end of the day. */
+const IN_FORCE_APPROVAL_SQL = `
+SELECT DISTINCT ON (s.signed_target) s.signed_target, s.id,
+       to_char(s.signed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS signed_at, s.signer_name
+  FROM electronic_signatures s
+ WHERE s.organization_id = $1
+   AND s.signed_target = ANY(ARRAY(SELECT jsonb_object_keys($3::jsonb)))
+   AND s.signature_type = 'qms-document-approval'
+   AND s.signature_manifest->>'version' = ($3::jsonb ->> s.signed_target)
+   AND s.is_valid IS TRUE AND s.verification_status IS DISTINCT FROM 'revoked' AND s.superseded_by IS NULL
+   AND s.signed_at < ($2::timestamptz AT TIME ZONE 'UTC')
+ ORDER BY s.signed_target, s.signed_at DESC, s.id DESC`;
+
+const day = (value: unknown): string | null =>
+  value == null ? null : (value instanceof Date ? value.toISOString() : String(value)).slice(0, 10);
+
+/**
+ * While a successor is drafted or reviewed, the register row is that draft and
+ * the approved predecessor still governs the work. Which version is in force is
+ * decided by the one resolver (services/qms/in-force-release.ts), not re-derived
+ * here; this adds it, with the standing signature that approved it, beside the
+ * draft. A row with no successor open carries nulls: it is itself what is in force.
+ */
+async function withVersionInForce(ctx: RunContext, section: SectionResult): Promise<SectionResult> {
+  const empty = { in_force_version: null, in_force_effective_date: null, in_force_approval_signature_id: null, in_force_approval_signer_name: null };
+  const revising = section.rows.filter((row) => row.status === 'draft' || row.status === 'in_review').map((row) => Number(row.id));
+  if (!revising.length) return { ...section, rows: section.rows.map((row) => ({ ...row, ...empty })) };
+  const live = await ctx.client.query(UNDER_REVISION_SQL, [ctx.orgId, revising]);
+  const inForce = await readInForceReleases(ctx.client, ctx.orgId, live.rows as unknown as QmsDocumentRow[]);
+  const versions = Object.fromEntries([...inForce].map(([id, entry]) => [`qms-document:${id}`, entry.release.version]));
+  const approvals = Object.keys(versions).length
+    ? new Map((await ctx.client.query(IN_FORCE_APPROVAL_SQL, [ctx.orgId, ctx.bounds.end, JSON.stringify(versions)])).rows
+        .map((sig) => [String(sig.signed_target), sig]))
+    : new Map<string, Record<string, unknown>>();
+  return { ...section, rows: section.rows.map((row) => {
+    const entry = inForce.get(Number(row.id));
+    if (!entry?.underRevision) return { ...row, ...empty };
+    const approval = approvals.get(`qms-document:${row.id}`);
+    return { ...row, in_force_version: entry.release.version, in_force_effective_date: day(entry.release.effective_date),
+      in_force_approval_signature_id: approval?.id ?? null, in_force_approval_signer_name: approval?.signer_name ?? null };
+  }) };
+}
+
 async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
   const currentState =
     'Status is the record as it is at generation time. The signatures shown are the latest applied by the end of the date that are not revoked or superseded at generation time.';
   const times = naiveUtcNote('Signing times');
   return {
     documents: {
-      ...(await cappedSection(ctx.client, DOCUMENTS_SQL, [ctx.orgId, ctx.bounds.end])),
+      ...(await withVersionInForce(ctx, await cappedSection(ctx.client, DOCUMENTS_SQL, [ctx.orgId, ctx.bounds.end]))),
       notes: [
         'Documents created by the end of the chosen date and not deleted before it.',
         currentState,
+        'A document whose next version is in draft or review is listed as that draft; the version still in force, its effective date and the standing signature that approved it are given beside it. They are empty when no successor is open.',
         'Revoked approval signatures counts the approval signatures of this version that were revoked or superseded.',
         times,
       ],
@@ -183,6 +233,10 @@ export const controlledDocuments: ReportDefinition = {
         ['retired_at', 'Retired at'],
         ['retirement_signature_id', 'Retirement signature'],
         ['superseded_by_id', 'Superseded by document'],
+        ['in_force_version', 'In force while revised'],
+        ['in_force_effective_date', 'In force since'],
+        ['in_force_approval_signature_id', 'In-force approval signature'],
+        ['in_force_approval_signer_name', 'In-force approval signed by'],
         ['deleted_at', 'Deleted'],
       ]),
     },

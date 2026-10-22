@@ -497,4 +497,23 @@ describe('the release audit event commits WITH the signature, or not at all (L13
     const trail = await rows(`SELECT id FROM device_audit_trail`);
     expect(trail, 'the device_audit_trail row rolls back with it').toHaveLength(0);
   });
+  it('enlists a current-record guard before the signature insert on the actual transaction', async () => {
+    await pg.exec('CREATE TABLE source_guard_probe (id integer PRIMARY KEY)');
+    await signRelease({ transactionalGuard: async (q: { query: (sql: string) => Promise<{ rows: unknown[] }> }) => {
+      expect((await q.query('SELECT id FROM electronic_signatures')).rows).toHaveLength(0);
+      await q.query('INSERT INTO source_guard_probe VALUES (1)');
+    } });
+    expect(await rows('SELECT id FROM source_guard_probe')).toHaveLength(1);
+    expect(await rows('SELECT id FROM electronic_signatures')).toHaveLength(1);
+  });
+  it('a source withdrawn during the ceremony leaves no signature or audit writes behind', async () => {
+    await pg.exec('CREATE TABLE source_guard_probe (id integer PRIMARY KEY)');
+    await expect(signRelease({ transactionalGuard: async (q: { query: (sql: string) => Promise<unknown> }) => {
+      await q.query('INSERT INTO source_guard_probe VALUES (1)');
+      throw new Error('Synthetic source withdrawn after password/MFA re-verification');
+    } })).rejects.toThrow('source withdrawn');
+    expect(await rows('SELECT id FROM source_guard_probe')).toHaveLength(0);
+    expect(await rows('SELECT id FROM electronic_signatures')).toHaveLength(0);
+    expect(await rows('SELECT id FROM device_audit_trail')).toHaveLength(0);
+  });
 });

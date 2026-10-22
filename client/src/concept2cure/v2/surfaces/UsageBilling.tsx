@@ -464,7 +464,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h">
               <span className="t">Invoices</span>
-              <span className="s">Stripe</span>
+              <button className="sp-ask" onClick={() => nav('licensing')}>Manage billing</button>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               <Panel

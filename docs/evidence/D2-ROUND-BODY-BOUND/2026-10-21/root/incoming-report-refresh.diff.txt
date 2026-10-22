@@ -1,0 +1,259 @@
+diff --git a/docs/reports/repo-health-scan-latest.json b/docs/reports/repo-health-scan-latest.json
+index 0671189bd..852cdfba8 100644
+--- a/docs/reports/repo-health-scan-latest.json
++++ b/docs/reports/repo-health-scan-latest.json
+@@ -1,7 +1,7 @@
+ {
+-  "generatedAt": "2026-10-21T00:15:03.839Z",
++  "generatedAt": "2026-10-21T01:03:32.229Z",
+   "git": {
+-    "sha": "ff0155e5dd964b91c72f1a65eaf20e0debbfa9d8",
++    "sha": "218e49eb8898015938bf0a6603f077a1543f46af",
+     "branch": "concept2cure-v2"
+   },
+   "thresholds": {
+@@ -12,11 +12,11 @@
+   },
+   "managedMirrors": [],
+   "summary": {
+-    "duplicateBasenames": 237,
++    "duplicateBasenames": 239,
+     "contentDuplicateGroups": 0,
+     "contentDuplicateFiles": 0,
+     "largeFilesByBytes": 57,
+-    "largeFilesByLines": 112
++    "largeFilesByLines": 113
+   },
+   "findings": {
+     "duplicateBasenames": [
+@@ -1759,6 +1759,22 @@
+           "tests/services/project-module-bridge.test.ts"
+         ]
+       },
++      {
++        "basename": "project-team",
++        "count": 2,
++        "paths": [
++          "server/services/c2c/project-team.ts",
++          "shared/project-team.ts"
++        ]
++      },
++      {
++        "basename": "project-team.test",
++        "count": 2,
++        "paths": [
++          "server/services/c2c/__tests__/project-team.test.ts",
++          "shared/__tests__/project-team.test.ts"
++        ]
++      },
+       {
+         "basename": "projecthome",
+         "count": 2,
+@@ -2220,7 +2236,7 @@
+     "largeFilesByBytes": [
+       {
+         "file": "server/services/ana/AnaToolExecutor.ts",
+-        "bytes": 1155322
++        "bytes": 1156053
+       },
+       {
+         "file": "shared/schema.ts",
+@@ -2252,7 +2268,7 @@
+       },
+       {
+         "file": "server/routes/ana-ri/stream.ts",
+-        "bytes": 199479
++        "bytes": 199686
+       },
+       {
+         "file": "server/services/submission-service/submission-service.ts",
+@@ -2362,10 +2378,6 @@
+         "file": "shared/regulatory/project-bootstrap.ts",
+         "bytes": 121186
+       },
+-      {
+-        "file": "server/routes/c2c/projects.ts",
+-        "bytes": 120925
+-      },
+       {
+         "file": "server/services/ana-ri/context-enrichment.ts",
+         "bytes": 119989
+@@ -2378,6 +2390,10 @@
+         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+         "bytes": 119001
+       },
++      {
++        "file": "server/routes/c2c/projects.ts",
++        "bytes": 118827
++      },
+       {
+         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+         "bytes": 117107
+@@ -2432,7 +2448,7 @@
+       },
+       {
+         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+-        "bytes": 103332
++        "bytes": 103375
+       },
+       {
+         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+@@ -2450,7 +2466,7 @@
+     "largeFilesByLines": [
+       {
+         "file": "server/services/ana/AnaToolExecutor.ts",
+-        "lines": 22049
++        "lines": 22058
+       },
+       {
+         "file": "shared/schema.ts",
+@@ -2494,7 +2510,7 @@
+       },
+       {
+         "file": "server/routes/ana-ri/stream.ts",
+-        "lines": 3922
++        "lines": 3924
+       },
+       {
+         "file": "server/routes/submission-ops.ts",
+@@ -2600,10 +2616,6 @@
+         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+         "lines": 2386
+       },
+-      {
+-        "file": "server/routes/c2c/projects.ts",
+-        "lines": 2353
+-      },
+       {
+         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+         "lines": 2338
+@@ -2616,6 +2628,10 @@
+         "file": "services/regulatory/ind-ectd-sections.ts",
+         "lines": 2324
+       },
++      {
++        "file": "server/routes/c2c/projects.ts",
++        "lines": 2296
++      },
+       {
+         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+         "lines": 2294
+@@ -2680,6 +2696,10 @@
+         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+         "lines": 2115
+       },
++      {
++        "file": "server/routes/ectd-compile.ts",
++        "lines": 2101
++      },
+       {
+         "file": "server/services/biomarkers/biomarker-knowledge.ts",
+         "lines": 2095
+@@ -2708,10 +2728,6 @@
+         "file": "server/services/ana-ri/context-enrichment.ts",
+         "lines": 2044
+       },
+-      {
+-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+-        "lines": 2030
+-      },
+       {
+         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
+         "lines": 2029
+@@ -2721,8 +2737,8 @@
+         "lines": 2020
+       },
+       {
+-        "file": "server/routes/ectd-compile.ts",
+-        "lines": 2016
++        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
++        "lines": 2019
+       },
+       {
+         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+@@ -2756,6 +2772,10 @@
+         "file": "server/routes/regulatory-digital-twin.ts",
+         "lines": 1898
+       },
++      {
++        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
++        "lines": 1881
++      },
+       {
+         "file": "server/services/digital-health/digital-health-knowledge.ts",
+         "lines": 1871
+@@ -2796,10 +2816,6 @@
+         "file": "server/services/vaccine/vaccine-knowledge.ts",
+         "lines": 1836
+       },
+-      {
+-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+-        "lines": 1828
+-      },
+       {
+         "file": "server/services/compliance/globalComplianceEngine.ts",
+         "lines": 1824
+@@ -2892,6 +2908,10 @@
+         "file": "server/services/ana-biostats/computation-engine.ts",
+         "lines": 1555
+       },
++      {
++        "file": "server/services/submission-gateways/regional-packager.ts",
++        "lines": 1517
++      },
+       {
+         "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+         "lines": 1516
+@@ -2902,9 +2922,9 @@
+   "ownerSummary": [
+     {
+       "owner": "Backend Platform (server/routes + server/services owners)",
+-      "duplicateGroups": 443,
++      "duplicateGroups": 445,
+       "largeByBytes": 41,
+-      "largeByLines": 87
++      "largeByLines": 88
+     },
+     {
+       "owner": "Unassigned (TBD)",
+@@ -2914,7 +2934,7 @@
+     },
+     {
+       "owner": "Shared Contracts (shared/schema + shared/types owners)",
+-      "duplicateGroups": 90,
++      "duplicateGroups": 92,
+       "largeByBytes": 3,
+       "largeByLines": 3
+     },
+diff --git a/docs/reports/repo-health-scan-latest.md b/docs/reports/repo-health-scan-latest.md
+index 1842d8baa..27cf34e0c 100644
+--- a/docs/reports/repo-health-scan-latest.md
++++ b/docs/reports/repo-health-scan-latest.md
+@@ -1,21 +1,21 @@
+ # Repo Health Scan
+ 
+-Generated: 2026-10-21T00:15:03.839Z
++Generated: 2026-10-21T01:03:32.229Z
+ Branch: concept2cure-v2
+-SHA: ff0155e5dd964b91c72f1a65eaf20e0debbfa9d8
++SHA: 218e49eb8898015938bf0a6603f077a1543f46af
+ 
+ ## Summary
+ 
+ - Content-duplicate groups (gated): 0 (0 files)
+-- Duplicate basenames (reported, not gated): 237
++- Duplicate basenames (reported, not gated): 239
+ - Files over byte threshold: 57
+-- Files over line threshold: 112
++- Files over line threshold: 113
+ 
+ ## Owner Summary
+ 
+-- Backend Platform (server/routes + server/services owners): duplicateGroups=443, largeByBytes=41, largeByLines=87
++- Backend Platform (server/routes + server/services owners): duplicateGroups=445, largeByBytes=41, largeByLines=88
+ - Unassigned (TBD): duplicateGroups=168, largeByBytes=0, largeByLines=5
+-- Shared Contracts (shared/schema + shared/types owners): duplicateGroups=90, largeByBytes=3, largeByLines=3
++- Shared Contracts (shared/schema + shared/types owners): duplicateGroups=92, largeByBytes=3, largeByLines=3
+ - Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=58, largeByBytes=13, largeByLines=17
+ - Frontend Platform (client/src maintainers): duplicateGroups=11, largeByBytes=0, largeByLines=0
+ - Developer Experience (scripts maintainers): duplicateGroups=3, largeByBytes=0, largeByLines=0

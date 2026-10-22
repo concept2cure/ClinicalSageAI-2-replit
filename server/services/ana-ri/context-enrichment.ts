@@ -269,6 +269,7 @@ async function readProjectMemory(
       `SELECT content, title, confidence_score, importance_level, category
        FROM project_memory_entries
        WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND category IN (${catPlaceholders})
        ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
@@ -377,6 +378,7 @@ async function enrichWithPrecedents(projectId: ProjectRowId, orgId?: number): Pr
       `SELECT content, title, confidence_score AS confidence, importance_level AS importance, category
        FROM project_memory_entries
        WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND category IN (${catPlaceholders})
        ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
@@ -624,7 +626,10 @@ function claimsEvidenceBlock(rows: ClaimMemoryRow[]): string {
   if (sources.length > 0) {
     const chain = buildEvidenceChain(sources, 'ai_inferred');
     const factors = analyzeFactors(sources);
-    assessment = `**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${computeConfidence(sources)}/100\n` +
+    // 2026-10-15: printed as "**Confidence:** NN/100". computeConfidence is base
+    // 40 plus count, mean relevance, source-type and recency terms: a heuristic.
+    assessment = `**Evidence coverage (heuristic, not a confidence):** ${computeConfidence(sources)}/100, from the number of ` +
+      `entries, their mean recorded confidence, source types and recency | **Chain strength (from that heuristic):** ${chain.chainStrength}\n` +
       `**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}` +
       (unscored > 0 ? `\n**Not counted above:** ${unscored} of ${rows.length} entries (unscored)` : '');
   }
@@ -646,6 +651,7 @@ async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promis
       `SELECT content, title, confidence_score AS confidence, category
        FROM project_memory_entries
        WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
        ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
@@ -762,6 +768,7 @@ async function enrichWithKnowledgeSearch(query: string, projectId: ProjectRowId,
       `SELECT title, content, category, confidence_score AS confidence, importance_level AS importance
        FROM project_memory_entries
        WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
        ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
                   WHEN 'high'     THEN 3

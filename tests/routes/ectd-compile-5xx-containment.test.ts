@@ -3,7 +3,7 @@
  * (security audit 2026-09-24 IAM-18 (1); plan P1-17).
  *
  * compile / status / history / validate answered `{ error, message:
- * error.message }`. Each reads the program, ectd_compilations, the
+ * error.message }`. Each reads project_sections, ectd_compilations, the
  * required-section catalog and the submission spine on the shared pool, so the
  * message is driver text. Harness as ectd-compile-ident.test.ts; the
  * required-section resolver is the dependency made to throw (compile, status,
@@ -44,13 +44,8 @@ function getHandler(path: string, method: 'get' | 'post') {
   return layer.route.stack[layer.route.stack.length - 1].handle;
 }
 
-const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
-/** The ident resolves to a program (every ident does; DOCUMENT_STORE_CONSOLIDATION.md step 7). */
-const programRow = (sql: string) =>
-  String(sql).includes('FROM regulatory_programs') ? { rows: [{ id: PROGRAM, code: 'BX-1', name: 'BX-1' }] } : null;
-
 function makeReq(body: Record<string, unknown> = {}) {
-  const req = createMockRequest({ params: { projectIdent: PROGRAM }, body }) as any;
+  const req = createMockRequest({ params: { projectIdent: '42' }, body }) as any;
   req.tenantId = 7;
   return req;
 }
@@ -74,7 +69,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  poolQuery.mockImplementation(async (sql: string) => programRow(sql) ?? { rows: [] });
+  poolQuery.mockImplementation(async (sql: string) => ({ rows: sql.includes('FROM projects p') ? [{ regulatory_program_id: null, linked_program_id: null, program_type: null, primary_agency: null }] : [] }));
   resolveRequiredSections.mockRejectedValue(new Error(SENTINEL));
 });
 
@@ -100,8 +95,9 @@ describe('ectd-compile 500s: envelope out, detail to the log', () => {
 
   it('GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged', async () => {
     poolQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes('FROM projects p')) return { rows: [{ regulatory_program_id: null, linked_program_id: null, program_type: null, primary_agency: null }] };
       if (String(sql).includes('FROM ectd_compilations')) throw new Error(SENTINEL);
-      return programRow(sql) ?? { rows: [] };
+      return { rows: [] };
     });
     const res = resWithRequestId();
     await getHandler('/:projectIdent/history', 'get')(makeReq(), res);

@@ -1,0 +1,875 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > states qualification is unverified even when gateway credentials are configured 78ms
+   → Unable to find an element with the text: Agency qualification not verified. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-body"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mAgency gateways[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: flex; align-items: center; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"reg-cta"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Explain gateway posture[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 20h9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Record identifiers[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Assemble bundle[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-upload"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                [36m/>[39m
+                [36m<polyline[39m
+                  [33mpoints[39m=[32m"17 8 12 3 7 8"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"12"[39m
+                  [33mx2[39m=[32m"12"[39m
+                  [33my1[39m=[32m"3"[39m
+                  [33my2[39m=[32m"15"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Transmit[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33mclass[39m=[32m"reg-tbl"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th>[39m
+                  [0mGateway[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mRegion[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mEnvironment[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mstyle[39m=[32m"text-align: right;"[39m
+                [36m>[39m
+                  [0mCredentials[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-weight: 600;"[39m
+                [36m>[39m
+                  [0mFDA ESG[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mFDA[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mproduction[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"text-align: right;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"rd-chip tone-ok"[39m
+                  [36m>[39m
+                    [0mconfigured[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mTransmittal log[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33mclass[39m=[32m"reg-tbl"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th>[39m
+                  [0m#[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mRoute[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mGateway ref[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mStatus[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mSubmitted[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mTransmitted by[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mstyle[39m=[32m"text-align: right;"[39m
+                [36m>[39m
+                  [0mActions[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m#[0m
+                  [0m3[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mFDA[0m
+                  [0m / [0m
+                  [0mFDA ESG[0m
+                  [0m · original[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"font-size: 12px;"[39m
+                [36m>[39m
+                  [0mESG-XYZ[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"rd-chip tone-ok"[39m
+                  [36m>[39m
+                    [0macknowledged[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"white-space: nowrap;"[39m
+                [36m>[39m
+                  [0m7/21/2026, 12:00:00 AM[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mDr Ada Lovelace[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"text-align: right; white-space: nowrap;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"nda-open"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-zap"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Status[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"nda-open"[39m
+                    [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                    [33mtitle[39m=[32m"Download the acknowledgment or transmittal record — the file states which"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-download"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                      [36m/>[39m
+                      [36m<polyline[39m
+                        [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                      [36m/>[39m
+                      [36m<line[39m
+                        [33mx1[39m=[32m"12"[39m
+                        [33mx2[39m=[32m"12"[39m
+                        [33my1[39m=[32m"15"[39m
+                        [33my2[39m=[32m"3"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m ACK[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"nda-open"[39m
+                    [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-rotate-ccw"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 3v5h5"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Rollback[0m
+                  [36m</button>[39m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > lists gateways with credential status and the transmittal log 18ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > transmits with the governed reason + §11 re-auth and reports the gateway ref 148ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > surfaces a 401 re-auth rejection honestly (nothing left the platform) 58ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > the transmittal log names who transmitted, from the server-resolved person 15ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > the transmit form asks the signer to declare the §11.50 meaning 69ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > surfaces the 409 active-transmittal lock with the holder id 46ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > renders the structural gate’s findings on a 422 (errors first) so the refusal is actionable, and clears them on the next attempt 88ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > records regulatory identifiers through the governed PUT route and says the cleared bundle must be assembled again 42ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > sends no contact when none of its fields is filled (a 510(k) or a non-US package needs none) 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > surfaces a refused identifier (400) with the server’s own reason, and records nothing 40ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > assembles through the canonical packager and reports the bundle as ready to transmit 40ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > says so when the assembly’s governed-action ledger entry could not be written 39ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > shows a bundle assembled WITH error findings in the findings card, fetched from preflight, and offers to record identifiers when that is the finding 47ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > renders a packager REFUSAL (422) with its findings 48ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a transmit refusal that carries no findings (package never assembled) says so — never that findings were recorded on a bundle 44ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > says when the findings for an assembled-with-errors bundle could not be loaded, instead of an empty table under an error count 41ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a lost ledger entry on a SUCCESSFUL transmission is announced as an alert, never an unqualified success 39ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > Reload findings re-runs preflight for the last package, replaces the card’s findings, and says when the summary could not be saved 51ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a reload whose preflight itemizes nothing says so, and never reports "no error-severity findings" 47ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > offers the submission type a follow-up sequence needs, and says what the sequence did to what is already on file 36ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a follow-up refused for want of a submission type shows the server’s own reason 36ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > SENDS what the form collected: the submission type and the withdrawals reach the server 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a submission type the region cannot file shows the terms that would work 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > recording identifiers removes only the identifiers finding; an unrelated finding stays on the card 52ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > recording identifiers from the card’s own button clears the card it came from, and a lost ledger entry is announced as an alert 49ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > offers the org’s packages as ONE picker across transmit, assemble and identifiers, and falls back to the numeric id — saying so — when the list cannot be loaded 265ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > polls the live gateway status for a transmittal 37ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > does not call a platform-composed record the agency’s bytes 40ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > does call a genuine agency MDN the agency’s own bytes 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > does not claim a rollback retracted the submission at the agency 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a thrown 409 reaches the active-transmittal branch with the holder id 36ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a thrown 412 says the gateway credentials are not configured 39ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a thrown identifiers 404 reaches its own branch 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a network failure (not an ApiRequestError) still reads as a failure, never a success 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the declared signature meaning is shown back > the success confirmation names the signer and the declared meaning 36ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the declared signature meaning is shown back > does not claim a signature when the ledger transaction that carries it was lost 36ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the declared signature meaning is shown back > the transmittal log shows the meaning recorded on the transmittal with its signature 11ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > records it from the transmittal row: posts the notice, reason, meaning and re-auth, and says the sequence is off file 66ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a refusal closes the drawer and shows the server’s own sentence 53ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a request that never completed does not claim that nothing changed 40ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > is offered only on a package transmittal with no rejection recorded, and a recorded one is shown on its row 36ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a transmit refused because the sequence is already on file shows the server’s sentence, not "already active — roll it back" 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a refused rollback closes the drawer and shows the server’s reason 43ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a person whose role does not sign is not offered Transmit or Technical rejection, and is told why 39ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a signer is offered both 39ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > an authority the server could not read hides nothing: unknown is not "you cannot" 28ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a 403 ESIGNATURE_NO_AUTHORITY from the transmit is said in the server’s words, with no status code 42ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the picker says which packages this signer may not transmit > marks the package the signer created, and the one with no recorded creator 29ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the picker says which packages this signer may not transmit > marks nothing when the answer could not be read — unknown is not "you cannot" 30ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the picker says which packages this signer may not transmit > the assemble form is not marked — only transmitting is refused to the creator 30ms
+ × client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > separates configured credentials from agency qualification 38ms
+   → expected 'Production: Platform accountReadyChan…' to contain 'Credentials configured'
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > lists each gateway's environments with the choice and whether it can send 8ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > a read that fails says so and shows no account 8ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > choosing your own account sends identifier, certificate, key, reason and password, then reads again 179ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > a refused change says it was not changed, in the server's words 49ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > choosing the platform account sends no identifier and no secret 0ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > the transmittal log says whose account each transmittal went out under > as recorded on the row, and nothing when it was not recorded 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > separates configured credentials from agency qualification
+AssertionError: expected 'Production: Platform accountReadyChan…' to contain 'Credentials configured'
+
+Expected: "Credentials configured"
+Received: "Production: Platform accountReadyChange…"
+
+ ❯ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx:86:36
+     84|     render(<GatewayAccountsSetting />);
+     85|     const production = await screen.findByTestId('gateway-account-fda-…
+     86|     expect(production.textContent).toContain('Credentials configured');
+       |                                    ^
+     87|     expect(production.textContent).toContain('Agency qualification not…
+     88|     expect(production.textContent).not.toContain('Ready');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > states qualification is unverified even when gateway credentials are configured
+TestingLibraryElementError: Unable to find an element with the text: Agency qualification not verified. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-body"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mAgency gateways[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: flex; align-items: center; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"reg-cta"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Explain gateway posture[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 20h9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Record identifiers[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Assemble bundle[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-upload"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                [36m/>[39m
+                [36m<polyline[39m
+                  [33mpoints[39m=[32m"17 8 12 3 7 8"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"12"[39m
+                  [33mx2[39m=[32m"12"[39m
+                  [33my1[39m=[32m"3"[39m
+                  [33my2[39m=[32m"15"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Transmit[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33mclass[39m=[32m"reg-tbl"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th>[39m
+                  [0mGateway[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mRegion[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mEnvironment[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mstyle[39m=[32m"text-align: right;"[39m
+                [36m>[39m
+                  [0mCredentials[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-weight: 600;"[39m
+                [36m>[39m
+                  [0mFDA ESG[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mFDA[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mproduction[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"text-align: right;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"rd-chip tone-ok"[39m
+                  [36m>[39m
+                    [0mconfigured[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mTransmittal log[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33mclass[39m=[32m"reg-tbl"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th>[39m
+                  [0m#[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mRoute[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mGateway ref[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mStatus[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mSubmitted[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mTransmitted by[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mstyle[39m=[32m"text-align: right;"[39m
+                [36m>[39m
+                  [0mActions[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m#[0m
+                  [0m3[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mFDA[0m
+                  [0m / [0m
+                  [0mFDA ESG[0m
+                  [0m · original[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"font-size: 12px;"[39m
+                [36m>[39m
+                  [0mESG-XYZ[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"rd-chip tone-ok"[39m
+                  [36m>[39m
+                    [0macknowledged[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"white-space: nowrap;"[39m
+                [36m>[39m
+                  [0m7/21/2026, 12:00:00 AM[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mDr Ada Lovelace[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"text-align: right; white-space: nowrap;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"nda-open"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-zap"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Status[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"nda-open"[39m
+                    [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                    [33mtitle[39m=[32m"Download the acknowledgment or transmittal record — the file states which"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-download"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                      [36m/>[39m
+                      [36m<polyline[39m
+                        [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                      [36m/>[39m
+                      [36m<line[39m
+                        [33mx1[39m=[32m"12"[39m
+                        [33mx2[39m=[32m"12"[39m
+                        [33my1[39m=[32m"15"[39m
+                        [33my2[39m=[32m"3"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m ACK[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"nda-open"[39m
+                    [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-rotate-ccw"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 3v5h5"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Rollback[0m
+                  [36m</button>[39m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx:105:19
+    103|     render(<GatewayTransmittals {...props()} />);
+    104|     expect(await screen.findByText('configured')).toBeTruthy();
+    105|     expect(screen.getByText('Agency qualification not verified')).toBe…
+       |                   ^
+    106|     expect(screen.getByRole('columnheader', { name: 'Transport / quali…
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 57 passed (59)
+   Start at  03:07:12
+   Duration  4.54s (transform 395ms, setup 175ms, import 616ms, tests 2.77s, environment 767ms)
+

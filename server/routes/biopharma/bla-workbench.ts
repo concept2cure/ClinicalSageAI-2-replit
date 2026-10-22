@@ -21,7 +21,9 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb';
+import { saveBlaAssessment, BlaAssessmentRefusal, type BlaAssessmentKind } from '../../services/biologics/bla-assessment-store';
+import { ProgramRecordWriteRefusal, requireGovernedProgramWriteTx } from '../../services/c2c/governed-program-write';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act.js';
 import { SIGN_OFF_ACT_MEANINGS } from '../../services/part11/signature-meanings.js';
 import { isUuid } from '../../middleware/uuidParam.js';
@@ -33,7 +35,7 @@ import { assessBlaFilingRisk, type BlaFilingRiskInput } from '../../services/bio
 
 const router = Router();
 
-type Kind = 'analytical_similarity' | 'comparability' | 'immunogenicity' | 'filing_risk';
+type Kind = BlaAssessmentKind;
 
 const COMPUTE_PATHS: ReadonlySet<string> = new Set(['/analytical-similarity', '/comparability', '/immunogenicity', '/filing-risk']);
 
@@ -94,28 +96,11 @@ async function maybePersist(
   const programId: string | null = body.programId ?? null;
   if (!willPersist(body)) return null;
 
-  const { rows } = await pool.query(
-    `INSERT INTO c2c_bla_assessments
-       (org_id, program_id, kind, title, modality, reference_product, target_agency,
-        status, verdict, input, result, created_by, tenant_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9::jsonb, $10::jsonb, $11, $12)
-     RETURNING id, program_id, kind, title, status, verdict, created_at`,
-    [
-      orgId,
-      programId,
-      kind,
-      body.title ?? null,
-      input.modality ?? null,
-      input.referenceProduct ?? null,
-      input.targetAgency ?? null,
-      verdictFor(kind, result),
-      JSON.stringify(rawInput ?? {}),
-      JSON.stringify(result ?? {}),
-      resolveUserId(req),
-      String(orgId),
-    ],
-  );
-  return rows[0] ?? null;
+  const client = requestPgClient(req);
+  return saveBlaAssessment(client, { organizationId: orgId, userId: resolveUserId(req),
+    programId, reason: body.reason, title: body.title, kind,
+    modality: input.modality, referenceProduct: input.referenceProduct, targetAgency: input.targetAgency,
+    verdict: verdictFor(kind, result), inputs: rawInput, result });
 }
 
 // ── POST /analytical-similarity ───────────────────────────────────────────────
@@ -141,6 +126,7 @@ router.post('/analytical-similarity', async (req: Request, res: Response) => {
     );
     return send(res, 200, { result, assessment });
   } catch (err) {
+    if (err instanceof BlaAssessmentRefusal || err instanceof ProgramRecordWriteRefusal) return send(res, err.status, { error: { code: err.code, message: err.message } });
     console.error('[bla/analytical-similarity]', err);
     return send(res, 500, { error: 'INTERNAL_ERROR' });
   }
@@ -169,6 +155,7 @@ router.post('/comparability', async (req: Request, res: Response) => {
     );
     return send(res, 200, { result, assessment });
   } catch (err) {
+    if (err instanceof BlaAssessmentRefusal || err instanceof ProgramRecordWriteRefusal) return send(res, err.status, { error: { code: err.code, message: err.message } });
     console.error('[bla/comparability]', err);
     return send(res, 500, { error: 'INTERNAL_ERROR' });
   }
@@ -197,6 +184,7 @@ router.post('/immunogenicity', async (req: Request, res: Response) => {
     );
     return send(res, 200, { result, assessment });
   } catch (err) {
+    if (err instanceof BlaAssessmentRefusal || err instanceof ProgramRecordWriteRefusal) return send(res, err.status, { error: { code: err.code, message: err.message } });
     console.error('[bla/immunogenicity]', err);
     return send(res, 500, { error: 'INTERNAL_ERROR' });
   }
@@ -225,6 +213,7 @@ router.post('/filing-risk', async (req: Request, res: Response) => {
     );
     return send(res, 200, { result, assessment });
   } catch (err) {
+    if (err instanceof BlaAssessmentRefusal || err instanceof ProgramRecordWriteRefusal) return send(res, err.status, { error: { code: err.code, message: err.message } });
     console.error('[bla/filing-risk]', err);
     return send(res, 500, { error: 'INTERNAL_ERROR' });
   }
@@ -249,7 +238,7 @@ router.get('/assessments', async (req: Request, res: Response) => {
   }
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await requestPgClient(req).query(
       `SELECT id, program_id, kind, title, modality, reference_product, target_agency,
               status, verdict, created_by, created_at, updated_at, signed_by, signed_at
          FROM c2c_bla_assessments
@@ -261,7 +250,7 @@ router.get('/assessments', async (req: Request, res: Response) => {
     return send(res, 200, { assessments: rows });
   } catch (err) {
     // Fail closed to an honest empty list when the store is not yet provisioned
-    // (42P01 undefined_table) — the surface renders its sample fallback rather
+    // (42P01 undefined_table) — the surface reports an unavailable store rather
     // than a 500. Genuine errors still surface.
     if ((err as { code?: string })?.code === '42P01') {
       return send(res, 200, { assessments: [], pendingStore: true });
@@ -278,13 +267,14 @@ router.get('/assessments/:id', async (req: Request, res: Response) => {
   if (!orgId) return send(res, 403, { error: 'FORBIDDEN' });
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await requestPgClient(req).query(
       `SELECT * FROM c2c_bla_assessments WHERE id = $1 AND org_id = $2 LIMIT 1`,
       [req.params.id, orgId],
     );
     if (rows.length === 0) return send(res, 404, { error: 'NOT_FOUND' });
     return send(res, 200, rows[0]);
   } catch (err) {
+    if (err instanceof BlaAssessmentRefusal || err instanceof ProgramRecordWriteRefusal) return send(res, err.status, { error: { code: err.code, message: err.message } });
     console.error('[bla/assessments] GET /:id', err);
     return send(res, 500, { error: 'INTERNAL_ERROR' });
   }
@@ -302,7 +292,7 @@ router.get('/assessments/:id', async (req: Request, res: Response) => {
 // connected the two (P0-10b, DP-02).
 
 /** The assessment's own refusals; nothing was written. */
-const SIGN_CODE_STATUS = { NOT_FOUND: 404, ALREADY_SIGNED: 409 } as const;
+const SIGN_CODE_STATUS = { NOT_FOUND: 404, ALREADY_SIGNED: 409, PROGRAM_REQUIRED: 409, FORBIDDEN: 403, ACCESS_UNAVAILABLE: 503 } as const;
 const signRefusal = (code: keyof typeof SIGN_CODE_STATUS, message: string) => Object.assign(new Error(message), { code });
 
 router.post('/assessments/:id/sign', signedActAttempts, async (req: Request, res: Response) => {
@@ -321,11 +311,14 @@ router.post('/assessments/:id/sign', signedActAttempts, async (req: Request, res
     codeStatus: SIGN_CODE_STATUS,
     run: async (client, orgId, userId) => {
       const existing = await client.query(
-        `SELECT id, status FROM c2c_bla_assessments WHERE id = $1 AND org_id = $2 FOR UPDATE`,
+        `SELECT id, status, program_id, kind, input, result FROM c2c_bla_assessments WHERE id = $1 AND org_id = $2 FOR UPDATE`,
         [assessmentId, orgId],
       );
       if (existing.rows.length === 0) throw signRefusal('NOT_FOUND', 'Assessment not found.');
       if (existing.rows[0].status === 'signed') throw signRefusal('ALREADY_SIGNED', 'This assessment is already signed.');
+      const stored = existing.rows[0];
+      if (typeof stored.program_id !== 'string' || !isUuid(stored.program_id)) throw signRefusal('PROGRAM_REQUIRED', 'This historical assessment is unfiled. Save a program-filed assessment before signing.');
+      await requireGovernedProgramWriteTx(client, orgId, userId, stored.program_id);
       // The reason signGovernedAct validated (governedReason trims it).
       const reason = String(req.body?.reason ?? '').trim();
       await client.query(
@@ -335,7 +328,7 @@ router.post('/assessments/:id/sign', signedActAttempts, async (req: Request, res
           WHERE id = $3 AND org_id = $4`,
         [userId, reason, assessmentId, orgId],
       );
-      return { target: `bla_assessment:${assessmentId}`, payload: { kind: 'bla_assessment' }, body: { id: assessmentId, status: 'signed' } };
+      return { target: `bla_assessment:${assessmentId}`, payload: { kind: stored.kind, programId: stored.program_id, inputSnapshot: stored.input, resultSnapshot: stored.result }, body: { id: assessmentId, status: 'signed' } };
     },
   });
 });

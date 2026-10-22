@@ -1,0 +1,215 @@
+{
+  "key": "touch-light-partial",
+  "width": 390,
+  "height": 844,
+  "theme": "light",
+  "mode": "partial",
+  "status": "fail",
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Statistical insights', exact: true })\u001b[22m\n\n    at runCase (/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/browser.mjs:127:85)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/browser.mjs:155:49",
+  "stages": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "notice": {
+        "x": 32,
+        "y": 156.171875,
+        "width": 326,
+        "height": 122.421875,
+        "right": 358,
+        "bottom": 278.59375
+      },
+      "noticeScrollWidth": 322,
+      "noticeClientWidth": 322,
+      "noticeText": "Could not verify the current working document and sections. The save remains unresolved; no additional write was requested.Check document sections",
+      "noticeRole": "alert",
+      "controls": [
+        {
+          "text": "Check document sections",
+          "disabled": false,
+          "rect": {
+            "x": 51,
+            "y": 231.59375,
+            "width": 179.859375,
+            "height": 32,
+            "right": 230.859375,
+            "bottom": 263.59375
+          }
+        }
+      ],
+      "sourceRetained": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "notice": {
+        "x": 32,
+        "y": 156.171875,
+        "width": 326,
+        "height": 226.703125,
+        "right": 358,
+        "bottom": 382.875
+      },
+      "noticeScrollWidth": 322,
+      "noticeClientWidth": 322,
+      "noticeText": "The confirmed document “Design Recommendations” is present and section “recommendations” is absent. Review it or explicitly continue saving its original text. No new document was requested.Check document sectionsContinue saving textOpen document to review",
+      "noticeRole": "alert",
+      "controls": [
+        {
+          "text": "Check document sections",
+          "disabled": false,
+          "rect": {
+            "x": 51,
+            "y": 271.875,
+            "width": 179.859375,
+            "height": 32,
+            "right": 230.859375,
+            "bottom": 303.875
+          }
+        },
+        {
+          "text": "Continue saving text",
+          "disabled": false,
+          "rect": {
+            "x": 51,
+            "y": 303.875,
+            "width": 150.359375,
+            "height": 32,
+            "right": 201.359375,
+            "bottom": 335.875
+          }
+        },
+        {
+          "text": "Open document to review",
+          "disabled": false,
+          "rect": {
+            "x": 51,
+            "y": 335.875,
+            "width": 181.921875,
+            "height": 32,
+            "right": 232.921875,
+            "bottom": 367.875
+          }
+        }
+      ],
+      "sourceRetained": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/dashboard",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/analytics/analyze-protocol-text",
+      "query": "",
+      "body": {
+        "text": "Title: Synthetic protocol\nIndication: Synthetic indication\nPhase: 2\nSample size: 240\nDuration: 24 weeks\nPrimary endpoint: Synthetic outcome"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "query": "",
+      "body": {
+        "title": "Design Recommendations",
+        "module": "M5",
+        "client_program_id": "0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/sections",
+      "query": "",
+      "body": {
+        "doc_id": "synthetic-confirmed-document",
+        "code": "recommendations",
+        "title": "Design Recommendations",
+        "content": "# Synthetic design recommendations\n\nRetained source text for browser recovery verification.\n\nReview this synthetic working draft before use."
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/synthetic-confirmed-document",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/synthetic-confirmed-document/sections",
+      "query": ""
+    }
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "path": "/api/analytics/analyze-protocol-text",
+      "body": {
+        "text": "Title: Synthetic protocol\nIndication: Synthetic indication\nPhase: 2\nSample size: 240\nDuration: 24 weeks\nPrimary endpoint: Synthetic outcome"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "body": {
+        "title": "Design Recommendations",
+        "module": "M5",
+        "client_program_id": "0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/sections",
+      "body": {
+        "doc_id": "synthetic-confirmed-document",
+        "code": "recommendations",
+        "title": "Design Recommendations",
+        "content": "# Synthetic design recommendations\n\nRetained source text for browser recovery verification.\n\nReview this synthetic working draft before use."
+      }
+    }
+  ],
+  "documentWrites": 1,
+  "sectionWrites": 1,
+  "scopedInventoryReads": 2,
+  "navigation": [
+    {
+      "route": "document-authoring",
+      "target": {
+        "docType": null,
+        "docId": "synthetic-confirmed-document",
+        "sectionCode": null,
+        "sectionLabel": null,
+        "programId": "0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a",
+        "programTitle": null,
+        "returnTo": null,
+        "setAt": 1792276224697
+      }
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "unexpected": []
+}

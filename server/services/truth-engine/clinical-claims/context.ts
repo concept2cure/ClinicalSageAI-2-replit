@@ -17,7 +17,7 @@ import type {
   ClaimValue,
   Contrast,
   Measure,
-  Population,
+  ClaimPopulation,
   PopulationSet,
   ReasonCode,
   SlotFrom,
@@ -37,7 +37,7 @@ export interface Ctx {
   study?: StudyRef;
   studyFrom?: SlotFrom;
   /** The sentence mixes a pool and a study: each figure takes its own nearest scope. */
-  population?: Population;
+  population?: ClaimPopulation;
   populationFrom?: SlotFrom;
   period?: string;
   softPeriod?: string;
@@ -134,7 +134,7 @@ export interface Draft {
   /** Slots the form itself fills; they override the context. */
   own: {
     study?: StudyRef;
-    population?: Population;
+    population?: ClaimPopulation;
     subgroups?: string[];
     period?: string;
     timepoint?: string;
@@ -154,7 +154,7 @@ export interface Draft {
   slotFrom: Partial<Record<SlotName, SlotFrom>>;
 }
 
-export const populationOf = (set: PopulationSet, doc: DocInfo, stated = true): Population => ({
+export const populationOf = (set: PopulationSet, doc: DocInfo, stated = true): ClaimPopulation => ({
   set,
   stated,
   ...(doc.allRandomized.has(set) || set === 'randomized' ? { allRandomized: true as const } : {}),

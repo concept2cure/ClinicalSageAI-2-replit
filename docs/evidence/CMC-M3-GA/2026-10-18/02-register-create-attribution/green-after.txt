@@ -1,0 +1,272 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T16:51:16.965Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'drug_substance' 32ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'drug_product' 11ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'container_closure' 9ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'material_spec' 10ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'formulation_record' 8ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'characterization_study' 11ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'manufacturing_process' 8ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > no actor at all 4ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > a session that resolved nobody 3ms
+stderr | server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > leaves no register row behind when the audit row cannot be written
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > records the Module 3 link failure without rolling the attributed row back
+{
+  "timestamp": "2026-10-13T16:51:19.440Z",
+  "level": "error",
+  "message": "[cmc-module3-link] Module 3 canonical write-through failed",
+  "context": {
+    "recordId": "3",
+    "propagation": "write_through_drug_substance",
+    "error": "undefined"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > a null user 3ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > says what is required and that nothing was written 2ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > leaves no register row behind when the audit row cannot be written 10ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > records the Module 3 link failure without rolling the attributed row back 10ms
+ ✓ server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the creates join one verifiable chain > three creates by two people walk as one tenant chain 22ms
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+{
+  "timestamp": "2026-10-13T16:51:21.609Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T16:51:21.611Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+{
+  "timestamp": "2026-10-13T16:51:21.611Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+[database] Database connection successful
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+{
+  "timestamp": "2026-10-13T16:51:28.522Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_STARTED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+{
+  "timestamp": "2026-10-13T16:51:28.524Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-13T16:51:28.532Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_STARTED intelligence_flow",
+  "context": {
+    "userId": null,
+    "resourceId": "cmc-specification-v1"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-13T16:51:28.539Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:435:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-13T16:51:28.541Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:470:36",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id 64ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > refuses a project the organization does not hold — the interview is not started and nothing is written (PF-15) 3ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so 10ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > fails closed when the session cannot be persisted — the interview is not started 2ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > with a session_id: loads the state from the session (org-scoped), saves the step, ignores flow_state 5ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a validation failure returns the same question and saves nothing 2ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session id of another organization is refused and nothing is written 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session_id without an organization context is refused before the database 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session that is already complete refuses further answers 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a step that cannot be recorded does not count 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > without a session_id the stateless flow_state contract still works, touching no session 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > with neither a session_id nor a flow_state it says what is missing 0ms
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > commits every plan entry through the register creates under the session tenant and project, and marks the session committed
+{
+  "timestamp": "2026-10-13T16:51:28.576Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMITTED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > a refused entry stops the commit with the refusal, leaves the session complete, and reports what did land
+{
+  "timestamp": "2026-10-13T16:51:28.580Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMIT_REFUSED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session that is not complete
+{
+  "timestamp": "2026-10-13T16:51:28.581Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMIT_REFUSED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session with no project when none is supplied
+{
+  "timestamp": "2026-10-13T16:51:28.583Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMIT_REFUSED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > resume_intelligence_flow > reads the session back and returns the current question 7ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > resume_intelligence_flow > requires a session_id 0ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > dry_run returns the plan — register, write path, body — and writes nothing 3ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > commits every plan entry through the register creates under the session tenant and project, and marks the session committed 11ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > a refused entry stops the commit with the refusal, leaves the session complete, and reports what did land 2ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session that is not complete 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session with no project when none is supplied 1ms
+stdout | server/services/cmc/__tests__/interview-commit.test.ts
+{
+  "timestamp": "2026-10-13T16:51:29.503Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T16:51:29.504Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/cmc/__tests__/interview-commit.test.ts
+{
+  "timestamp": "2026-10-13T16:51:29.505Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/cmc/__tests__/interview-commit.test.ts
+[database] Database connection successful
+
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > is deterministic 3ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > describes exactly the eight records the answers describe, each on a real write path 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > drug substance: identity as answered, the phase as its label, the weight as the decimal string the column takes 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > drug product: the product identity and route, with select answers as their labels 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > formulation record: one component row per line as typed, batch formula from the manufacturing node 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > container closure: the drug-product primary system, E&L conclusion and CCI method as recorded 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > drug substance process: prose to text columns, CPPs one row per line, development history labelled 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > drug product process: equipment and IPCs one row per line, validation and sterility state labelled 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > novel excipient: a material spec flagged novel, with the safety package as recorded 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > characterization study: structural, the techniques as labels, chirality in supporting data 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > every answered field is consumed by an entry or listed as unprojected with a reason — nothing evaporates 5ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — cmc_specification > names the answers no register can take, with the reason 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — no placeholders > omits every field the interview did not capture; nothing is defaulted 2ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — no placeholders > blank answers are not answers 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — no placeholders > emits no entry for a node the interview never reached 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > buildInterviewCommitPlan — no placeholders > projects nothing for a flow with no register mapping, and says so per answer 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > executes every plan entry through the writer with the tenant scope, records the refs, and marks the session committed 7ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > refuses when the session has no project and none is supplied — nothing is written 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > a project supplied at commit time binds a session that had none 2ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > refuses a session that is not complete — nothing is written 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > a write failure mid-way: status stays complete, what landed is recorded AND reported, the rest is named 2ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > a retry skips the entries a previous partial commit already wrote 2ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > a committed session is not committed twice — the recorded refs are returned 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > refuses when the answers describe no register record 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession > a cross-organization session id is NOT FOUND — reported, never executed 0ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > the production writer > writes a container closure through createContainerClosure under the session tenant and project 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > the production writer > the project is always the session's, never one named in the plan body 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > the production writer > every register in the plan has a create, and a refusal from it fails the entry, not the process 3ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession — holds the session, checks the project, checks the plan > a session already held by another commit is refused, and nothing is written 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession — holds the session, checks the project, checks the plan > the race: two callers both read complete; the one whose hold matches no row is refused 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession — holds the session, checks the project, checks the plan > a plan entry the register would refuse stops the commit BEFORE any write, naming the entry and the reason 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession — holds the session, checks the project, checks the plan > a project supplied for an unbound session must belong to the tenant; when it does, the hold binds it and every write uses it 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession — holds the session, checks the project, checks the plan > a session bound at start to a project the tenant does not hold is refused at commit — nothing is held or written 1ms
+ ✓ server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession — holds the session, checks the project, checks the plan > a failed write releases the hold: the session is complete again with what landed recorded 1ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > createContainerClosure > refuses a self-declared qualification with the governed path named, and inserts nothing 5ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > createContainerClosure > strips the signature columns and the tenant key, inserts under the caller tenant, and links the row 5ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > createManufacturingProcess > refuses a self-declared validation under the process vocabulary 1ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > createManufacturingProcess > rejects a body the register schema does not accept, before any write 1ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > createFormulationRecord > refuses a second current formulation for the same project 1ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > createFormulationRecord > inserts when no other version is current 1ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > createDrugSubstance — a table with no project column > links under the project the caller names, and says so when none is named 1ms
+ ✓ server/services/cmc/__tests__/register-writes.test.ts > ungovernedQualificationRefusal — the one rule, two vocabularies > refuses the transition into the signed state, allows a round-trip, refuses an unsigned reversal, allows retiring 0ms
+
+ Test Files  4 passed (4)
+      Tests  75 passed (75)
+   Start at  16:51:15
+   Duration  15.38s (transform 6.83s, setup 146ms, import 11.78s, tests 2.65s, environment 1ms)
+

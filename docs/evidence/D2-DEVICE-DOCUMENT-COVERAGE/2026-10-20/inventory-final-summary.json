@@ -1,0 +1,44 @@
+{
+  "recordedAt": "2026-10-20T21:04:25.293960+00:00",
+  "command": [
+    "npx",
+    "tsx",
+    "-e",
+    "import {getBuiltinAuthoringTemplates,builtinTemplateSnapshot} from \"./server/services/authoring/builtin-authoring-templates.ts\"; import {GLOBAL_REGISTRY} from \"./shared/regulatory/global-document-registry.ts\"; (async()=>{const templates=await getBuiltinAuthoringTemplates();const rows=templates.map(t=>({id:t.id,entryId:t.entryId,sha256:builtinTemplateSnapshot(t),name:t.name,kind:t.kind,aiDraftable:t.aiDraftable,sectionCount:t.sections.length,filingContext:t.filingContext,segment:GLOBAL_REGISTRY.find(e=>t.entryId===`registry:${e.id}`)?.segment}));console.log(JSON.stringify(rows));})();"
+  ],
+  "exitCode": 0,
+  "rawOutputSha256": "4ac990e6cb49e52629f1b4bb207549d315668c3607b82227da3c0b6cacfdcab1",
+  "builtins": 392,
+  "previousTemplatesUnchanged": 305,
+  "newTemplates": 87,
+  "deviceRegistryEntries": 83,
+  "deviceRegistryByRegion": {
+    "US": 37,
+    "EU": 33,
+    "CA": 2,
+    "JP": 5,
+    "GLOBAL": 6
+  },
+  "additionalComponentTemplates": [
+    "component:k510_summary",
+    "component:gspr_checklist",
+    "component:ivdr_gspr_checklist",
+    "component:performance_evaluation_report"
+  ],
+  "scope": "Existing indexed platform authoring scaffolds; not current agency-template completeness, legal applicability or submission qualification.",
+  "newNarrativeEligible": 3,
+  "newManualPreparation": 84,
+  "executionBase": "eb4ecf5aca3f171d170ec9051e38371c11bccd76",
+  "deviceRegistrySegmentEntries": 76,
+  "deviceOnlyCrossCuttingQmsEntries": [
+    "registry:QMS_QUALITY_MANUAL",
+    "registry:QMS_DESIGN_CONTROLS",
+    "registry:QMS_DMR",
+    "registry:QMS_DHR",
+    "registry:QMS_MDSAP",
+    "registry:QMS_QSR_820",
+    "registry:QMS_ISO_13485"
+  ],
+  "inventoryFile": "template-inventory-final.json",
+  "inventorySha256": "1a8a14aeaa7aba7840bc9b0e1af4eee9990c58bcdaefc2aa6b7d5fb6bc4443ba"
+}

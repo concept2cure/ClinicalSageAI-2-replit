@@ -1,0 +1,17 @@
+== head: d0cde23b9 (+ working tree: 12 changed files)
+== provisioned from empty in 22s: 408/408 migration
+== RED: trunk's scripts/seed-admin.mjs
+User upserted: tester@example.com (id: 1)
+   concept2cure: 0 workspace(s); marked own: none
+   app up (healthz 200) after 37s total
+   signed in (login issued the session; no second factor asked of this account in development)
+   POST /api/c2c/projects → HTTP 409: {"error":"PROJECT_RECORD_UNAVAILABLE","reason":"NO_CLIENT_WORKSPACE","message":"The project was not created: this organization has no workspace set up yet, so the project could not be given its record. Nothing was saved. Share the reference
+== GREEN: this change's scripts/seed-admin.mjs (same database, same running app)
+User upserted: tester@example.com (id: 1)
+Workspace for organization 1: 1
+   concept2cure: 1 workspace(s); marked own: true
+   POST /api/c2c/projects → HTTP 201: {"data":{"id":"a7ec770a-5f48-4cf3-81ae-a92734950c2d","title":"HT-01 green","ws":"Biotech","code":"HT-01","stage":"Planning","readiness":0,"status":"active","lead":"JM Smith","blocker":null,"due":"—","due_date":null,"activity":"Updated Oct
+   anchored projects in the org: 1
+== GREEN as the runtime role (scripts/dev/up.mjs seeds as app_service): second run is a no-op
+Workspace for organization 1: 1
+   concept2cure: 1 workspace(s); marked own: true

@@ -68,6 +68,20 @@ function dateOf(value: string, field: string): Date {
   return d;
 }
 
+/**
+ * A stated day count, or the default when none is stated. 2026-10-15: the
+ * value went through as given, so a non-numeric horizonDays (the raw POST
+ * /timeline body) made the horizon NaN and the timeline silently held no
+ * annual-report milestones. Anything but a positive integer is refused.
+ */
+function dayCount(value: unknown, field: string, fallback: number): number {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    throw new Error(`VALIDATION: ${field} must be a positive integer number of days.`);
+  }
+  return value;
+}
+
 function statusFor(date: Date, asOf: Date, dueSoonDays: number): { status: MilestoneStatus; daysFromNow: number } {
   const daysFromNow = Math.round((date.getTime() - asOf.getTime()) / DAY_MS);
   if (daysFromNow < 0) return { status: 'past', daysFromNow };
@@ -81,8 +95,8 @@ function statusFor(date: Date, asOf: Date, dueSoonDays: number): { status: Miles
  */
 export function buildIndTimeline(input: IndTimelineInput): IndTimeline {
   const asOf = input.asOf ? dateOf(input.asOf, 'asOf') : new Date();
-  const dueSoonDays = input.dueSoonDays ?? 30;
-  const horizonDays = input.horizonDays ?? 730;
+  const dueSoonDays = dayCount(input.dueSoonDays, 'dueSoonDays', 30);
+  const horizonDays = dayCount(input.horizonDays, 'horizonDays', 730);
   const horizonEnd = addDays(asOf, horizonDays);
   const receiptRecorded = input.receiptRecorded === true;
 

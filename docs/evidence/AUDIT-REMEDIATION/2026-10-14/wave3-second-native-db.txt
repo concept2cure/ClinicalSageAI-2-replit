@@ -1,0 +1,1182 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T21:03:51.314Z","pid":74629,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:03:51.315Z","pid":74629,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:03:51.315Z","pid":74629,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/tmf-assessment-audit-outcomes.dbtest.ts > native TMF and assessment ancillary audit outcomes > uses verified TLS, genuine auth/ALS, app_service and the deployed FORCE RLS policies
+[database] Database connection successful
+
+stdout | tests/db/tmf-assessment-audit-outcomes.dbtest.ts > native TMF and assessment ancillary audit outcomes > uses verified TLS, genuine auth/ALS, app_service and the deployed FORCE RLS policies
+[database] Database connection successful { timestamp: '2026-10-14T21:03:51.792Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-14T21:03:51.888Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"bf0cafd5-0df3-4b3d-befc-47bf76b5e379"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:51.900Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-current-member-claims","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:51.921Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"0618201f-959e-4835-a780-422ceda8d6a3"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:51.927Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-positive","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:51.945Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"09755c54-2dab-42da-9a47-82e307dd28a4"},"msg":"[audit-service] [AUDIT] REGULATORY_ASSESSMENT_RECORDED regulatory_assessment"}
+{"level":30,"time":"2026-10-14T21:03:51.952Z","pid":74629,"hostname":"a5f657cec57d","context":{"submissionId":12345,"assessmentType":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-1","organizationId":94960},"msg":"[regulatory-assessment-persistence] Recorded regulatory assessment"}
+{"level":30,"time":"2026-10-14T21:03:51.968Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"8461af26-9a3a-46bf-ba3d-2f68b2a63908"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:51.976Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-access","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:51.990Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"83251389-e5f4-46d9-81a9-1fc4c22f7f5e"},"msg":"[audit-service] [AUDIT] REGULATORY_ASSESSMENT_RECORDED regulatory_assessment"}
+{"level":30,"time":"2026-10-14T21:03:51.996Z","pid":74629,"hostname":"a5f657cec57d","context":{"submissionId":12346,"assessmentType":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-2","organizationId":94960},"msg":"[regulatory-assessment-persistence] Recorded regulatory assessment"}
+{"level":30,"time":"2026-10-14T21:03:52.080Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94961,"resourceId":"2117c8d1-3353-4873-b055-33812b73fc24"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":50,"time":"2026-10-14T21:03:52.086Z","pid":74629,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at AuditService.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/tmf-assessment-audit-outcomes.dbtest.ts:131:22)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:03:52.087Z","pid":74629,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at AuditService.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/tmf-assessment-audit-outcomes.dbtest.ts:131:22)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:03:52.087Z","pid":74629,"hostname":"a5f657cec57d","context":{"action":"TMF_ARTIFACT_FILED","resourceType":"tmf_artifact","resourceId":"2117c8d1-3353-4873-b055-33812b73fc24","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:03:52.087Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-audit-refusal","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.101Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"2117c8d1-3353-4873-b055-33812b73fc24"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.106Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-audit-refusal","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":50,"time":"2026-10-14T21:03:52.124Z","pid":74629,"hostname":"a5f657cec57d","context":{"action":"TMF_ARTIFACT_FILED","resourceType":"tmf_artifact","resourceId":"2da45202-15a9-4299-9166-7a7ade0acedd","reason":"Synthetic internal driver detail must remain server-side"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:03:52.124Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-audit-thrown","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.138Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"2da45202-15a9-4299-9166-7a7ade0acedd"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.143Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-audit-thrown","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.157Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94961,"resourceId":"89b56e88-b3d2-4754-a25a-9bd0e2df2d2a"},"msg":"[audit-service] [AUDIT] REGULATORY_ASSESSMENT_RECORDED regulatory_assessment"}
+{"level":50,"time":"2026-10-14T21:03:52.161Z","pid":74629,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at AuditService.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/tmf-assessment-audit-outcomes.dbtest.ts:131:22)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:03:52.161Z","pid":74629,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at AuditService.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/tmf-assessment-audit-outcomes.dbtest.ts:131:22)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:03:52.161Z","pid":74629,"hostname":"a5f657cec57d","context":{"action":"REGULATORY_ASSESSMENT_RECORDED","resourceType":"regulatory_assessment","resourceId":"89b56e88-b3d2-4754-a25a-9bd0e2df2d2a","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:03:52.161Z","pid":74629,"hostname":"a5f657cec57d","context":{"submissionId":12348,"assessmentType":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-4","organizationId":94960},"msg":"[regulatory-assessment-persistence] Recorded regulatory assessment"}
+{"level":30,"time":"2026-10-14T21:03:52.195Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"30e8ac11-c8c5-4353-b525-c4aa17ad4c4a"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.211Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-remove","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.228Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94961,"resourceId":"30e8ac11-c8c5-4353-b525-c4aa17ad4c4a"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_REMOVED tmf_artifact"}
+{"level":50,"time":"2026-10-14T21:03:52.233Z","pid":74629,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at AuditService.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/tmf-assessment-audit-outcomes.dbtest.ts:131:22)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:03:52.233Z","pid":74629,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at AuditService.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/tmf-assessment-audit-outcomes.dbtest.ts:131:22)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:03:52.233Z","pid":74629,"hostname":"a5f657cec57d","context":{"action":"TMF_ARTIFACT_REMOVED","resourceType":"tmf_artifact","resourceId":"30e8ac11-c8c5-4353-b525-c4aa17ad4c4a","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+stderr | tests/db/tmf-assessment-audit-outcomes.dbtest.ts > native TMF and assessment ancillary audit outcomes > real RLS business refusals produce neither a business row nor an ancillary audit
+{
+  "timestamp": "2026-10-14T21:03:52.261Z",
+  "level": "error",
+  "message": "[etmf-routes] etmf route error",
+  "context": {
+    "err": "Failed query: insert into \"tmf_artifact_filings\" (\"id\", \"organization_id\", \"trial_id\", \"artifact_code\", \"zone_number\", \"document_ref\", \"created_by\", \"filed_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, default, default) on conflict (\"organization_id\",\"trial_id\",\"artifact_code\") do update set \"document_ref\" = $7, \"filed_at\" = $8, \"updated_at\" = $9 returning \"id\", \"organization_id\", \"trial_id\", \"artifact_code\", \"zone_number\", \"document_ref\", \"created_by\", \"filed_at\", \"updated_at\"\nparams: 94960,synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-business-refusal,protocol,2,external-archive-synthetic-reference,376,external-archive-synthetic-reference,2026-10-14T21:03:52.258Z,2026-10-14T21:03:52.258Z"
+  }
+}
+
+stderr | tests/db/tmf-assessment-audit-outcomes.dbtest.ts > native TMF and assessment ancillary audit outcomes > real RLS business refusals produce neither a business row nor an ancillary audit
+{
+  "timestamp": "2026-10-14T21:03:52.277Z",
+  "level": "error",
+  "message": "[regulatory-assessments-routes] regulatory-assessments route error",
+  "context": {
+    "err": "Failed query: insert into \"regulatory_assessments\" (\"id\", \"organization_id\", \"submission_id\", \"assessment_type\", \"ready\", \"summary\", \"result\", \"created_by\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default) returning \"id\", \"organization_id\", \"submission_id\", \"assessment_type\", \"ready\", \"summary\", \"result\", \"created_by\", \"created_at\"\nparams: 94960,12349,synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-5,false,{},{\"fixture\":\"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39\",\"verification\":\"not-established\"},376"
+  }
+}
+
+{"level":30,"time":"2026-10-14T21:03:52.299Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"eca01b08-8b27-474b-9fa9-4b65e2ee8773"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.308Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-business-refusal","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.319Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"2b1a3ad4-8c77-4b5a-986c-27ddc0fd2468"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.326Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-bulk-completion-loss","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+stderr | tests/db/tmf-assessment-audit-outcomes.dbtest.ts > native TMF and assessment ancillary audit outcomes > bulk completion loss preserves earlier receipts, marks uncertainty and stops before remaining writes
+{
+  "timestamp": "2026-10-14T21:03:52.328Z",
+  "level": "error",
+  "message": "[etmf-routes] TMF bulk filing stopped; read back before retry",
+  "context": {
+    "organizationId": 94960
+  }
+}
+
+{"level":30,"time":"2026-10-14T21:03:52.355Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"1bb15d6f-b807-4782-978a-c151bb52b045"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.364Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-bulk-completion-loss","artifactCode":"investigators_brochure","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.404Z","pid":74629,"hostname":"a5f657cec57d","context":{"userId":376,"tenantId":94960,"resourceId":"25ae48aa-fe2d-42ef-824a-ab8534442a76"},"msg":"[audit-service] [AUDIT] TMF_ARTIFACT_FILED tmf_artifact"}
+{"level":30,"time":"2026-10-14T21:03:52.410Z","pid":74629,"hostname":"a5f657cec57d","context":{"trialId":"synthetic-tmf-assessment-259d626d-8089-4480-9076-b7a1f247cf39-private-source-check","artifactCode":"protocol","organizationId":94960},"msg":"[tmf-artifact-persistence] Filed TMF artifact"}
+ ✓ tests/db/tmf-assessment-audit-outcomes.dbtest.ts (11 tests) 1220ms
+{"level":30,"time":"2026-10-14T21:03:53.329Z","pid":74666,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:03:53.330Z","pid":74666,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:03:53.330Z","pid":74666,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/wave3-critical-history.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:03:53.697Z', poolSize: 1 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > persists exact narrative and JSON seriousness, returns them on reload, and chains history in the same transaction
+[database] Database connection successful { timestamp: '2026-10-14T21:03:54.508Z', poolSize: 2 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > persists exact narrative and JSON seriousness, returns them on reload, and chains history in the same transaction
+[database] Database connection successful { timestamp: '2026-10-14T21:03:54.528Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > reports commit-after uncertainty without false rollback and recovers by exact read
+[database] Database connection successful { timestamp: '2026-10-14T21:03:54.808Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge
+[database] Database connection successful { timestamp: '2026-10-14T21:03:54.951Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge
+[database] Database connection successful { timestamp: '2026-10-14T21:03:55.222Z', poolSize: 4 }
+
+{"level":50,"time":"2026-10-14T21:03:55.419Z","pid":74666,"hostname":"a5f657cec57d","context":{"err":"Synthetic audit INSERT failure","correlationId":null,"code":null},"msg":"[cerv2-documents] recording the screening decision failed"}
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > keeps screening commit-after uncertainty and exact readback distinct
+[database] Database connection successful { timestamp: '2026-10-14T21:03:55.538Z', poolSize: 4 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > refuses foreign corpus/programmes, private programme access and viewers before a decision is written
+[database] Database connection successful { timestamp: '2026-10-14T21:03:55.620Z', poolSize: 4 }
+
+{"level":40,"time":"2026-10-14T21:03:55.625Z","pid":74666,"hostname":"a5f657cec57d","context":{"code":"ENTRY_NOT_IN_CORPUS","reason":"PMID 6597057714 — that article is not in this organization's literature corpus — record it to the corpus before screening it, so the decision has something durable to attach to"},"msg":"[cerv2-documents] Refused a literature screening decision"}
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > serializes concurrent screening preimages, revised=false
+[database] Database connection successful { timestamp: '2026-10-14T21:03:55.816Z', poolSize: 5 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > serializes concurrent screening preimages, revised=false
+[database] Database connection successful { timestamp: '2026-10-14T21:03:55.834Z', poolSize: 6 }
+
+ ✓ tests/db/wave3-critical-history.dbtest.ts (17 tests) 2810ms
+     ✓ filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge  412ms
+{"level":30,"time":"2026-10-14T21:03:56.849Z","pid":74812,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:03:56.851Z","pid":74812,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:03:56.851Z","pid":74812,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > uses genuine authentication, async scope, verified TLS runtime and deployed FORCE RLS
+[database] Database connection successful
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > uses genuine authentication, async scope, verified TLS runtime and deployed FORCE RLS
+[database] Database connection successful { timestamp: '2026-10-14T21:03:57.074Z', poolSize: 1 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > commits all eight actual mutation types with the corresponding timeline and chained audit
+[database] Database connection successful { timestamp: '2026-10-14T21:03:57.167Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-14T21:03:57.635Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:57.654Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"PROJECT_NOT_FOUND"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:57.672Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"PROJECT_ANCHOR_UNRESOLVED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:57.700Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_ACTOR_REQUIRED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:57.724Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:57.755Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:57.922Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:57.986Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.590Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.644Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.702Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.745Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.785Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.820Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.862Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.902Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.936Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:03:59.975Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:04:00.021Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:04:00.062Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:04:00.127Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:04:00.162Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:04:00.198Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:04:00.229Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-14T21:04:00.263Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"commit","code":"08006"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > reports an actual committed transaction with lost completion as uncertain and provides current authorized readback
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.284Z', poolSize: 2 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.384Z', poolSize: 3 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.384Z', poolSize: 4 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.385Z', poolSize: 5 }
+
+{"level":40,"time":"2026-10-14T21:04:00.424Z","pid":74812,"hostname":"a5f657cec57d","context":{"organizationId":94980,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.462Z', poolSize: 6 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.463Z', poolSize: 7 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.466Z', poolSize: 8 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.466Z', poolSize: 9 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.468Z', poolSize: 10 }
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:00.471Z', poolSize: 11 }
+
+ ❯ tests/db/capa-governed-transactions.dbtest.ts (12 tests | 1 failed) 3789ms
+     ✓ uses genuine authentication, async scope, verified TLS runtime and deployed FORCE RLS 110ms
+     ✓ commits all eight actual mutation types with the corresponding timeline and chained audit  408ms
+     ✓ refuses private, foreign and unanchored programmes and a current viewer with forged admin claims  345ms
+     ✓ proves the actual schema prevents a second programme anchor instead of inventing an impossible ambiguous fixture 11ms
+     ✓ refuses an invalid state transition without changing domain, timeline or audit rows 34ms
+     ✓ refuses an MDR backlink to another accessible programme without changing either complaint or the proposed MDR 69ms
+     ✓ holds actor, programme, anchor and private-sharing authority until state, timeline and audit commit together  1555ms
+     ✓ rolls back all eight mutation types on actual timeline-refusal without claiming successful audit  355ms
+     ✓ rolls back all eight mutation types on actual audit-refusal without claiming successful audit  328ms
+     ✓ reports an actual committed transaction with lost completion as uncertain and provides current authorized readback 95ms
+     ✓ serializes concurrent transitions and code creation without duplicate events or display codes 200ms
+     × verifies the real tenant audit chain and HMAC seals after successful, refused and uncertain operations 13ms
+{"level":30,"time":"2026-10-14T21:04:01.382Z","pid":74882,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:01.382Z","pid":74882,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:01.382Z","pid":74882,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/estar-audit-admission.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > reads only current admitted projects, retains unbound records and refuses malformed scopes
+[database] Database connection successful { timestamp: '2026-10-14T21:04:05.301Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-14T21:04:05.929Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"488b8977-6658-4ab2-8fcc-8f82d857b2ef"},"msg":"[audit-service] [AUDIT] ESTAR_REGISTRATION_UPDATED estar_registration"}
+{"level":30,"time":"2026-10-14T21:04:05.940Z","pid":74882,"hostname":"a5f657cec57d","context":{"organizationId":94970},"msg":"[estar-registration-service] Updated eSTAR registration"}
+{"level":30,"time":"2026-10-14T21:04:05.984Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"488b8977-6658-4ab2-8fcc-8f82d857b2ef"},"msg":"[audit-service] [AUDIT] ESTAR_REGISTRATION_UPDATED estar_registration"}
+{"level":30,"time":"2026-10-14T21:04:05.990Z","pid":74882,"hostname":"a5f657cec57d","context":{"organizationId":94970},"msg":"[estar-registration-service] Updated eSTAR registration"}
+{"level":30,"time":"2026-10-14T21:04:06.021Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"53af9564-d75d-4fd9-a477-209d71a54d42"},"msg":"[audit-service] [AUDIT] ESTAR_SUBMISSION_CREATED estar_submission"}
+{"level":30,"time":"2026-10-14T21:04:06.031Z","pid":74882,"hostname":"a5f657cec57d","context":{"id":"53af9564-d75d-4fd9-a477-209d71a54d42","organizationId":94970},"msg":"[estar-submission-service] Created eSTAR submission"}
+{"level":30,"time":"2026-10-14T21:04:06.064Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94971,"resourceId":"3adbfa17-4343-441d-9432-3919fa66edfe"},"msg":"[audit-service] [AUDIT] ESTAR_SUBMISSION_CREATED estar_submission"}
+{"level":50,"time":"2026-10-14T21:04:06.070Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:06.071Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94971 was requested inside tenant 94970's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94971 was requested inside tenant 94970's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:06.072Z","pid":74882,"hostname":"a5f657cec57d","context":{"action":"ESTAR_SUBMISSION_CREATED","resourceType":"estar_submission","resourceId":"3adbfa17-4343-441d-9432-3919fa66edfe","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:06.072Z","pid":74882,"hostname":"a5f657cec57d","context":{"id":"3adbfa17-4343-441d-9432-3919fa66edfe","organizationId":94970},"msg":"[estar-submission-service] Created eSTAR submission"}
+{"level":30,"time":"2026-10-14T21:04:06.099Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"3adbfa17-4343-441d-9432-3919fa66edfe"},"msg":"[audit-service] [AUDIT] ESTAR_SUBMISSION_ADVANCED estar_submission"}
+{"level":50,"time":"2026-10-14T21:04:06.138Z","pid":74882,"hostname":"a5f657cec57d","context":{"action":"ESTAR_SUBMISSION_CREATED","resourceType":"estar_submission","resourceId":"02278b55-50fd-43de-882e-3f732d9d15bc","reason":"Synthetic private audit sink failure; never expose this text."},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:06.138Z","pid":74882,"hostname":"a5f657cec57d","context":{"id":"02278b55-50fd-43de-882e-3f732d9d15bc","organizationId":94970},"msg":"[estar-submission-service] Created eSTAR submission"}
+{"level":30,"time":"2026-10-14T21:04:06.163Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"02278b55-50fd-43de-882e-3f732d9d15bc"},"msg":"[audit-service] [AUDIT] ESTAR_SUBMISSION_ADVANCED estar_submission"}
+{"level":30,"time":"2026-10-14T21:04:06.262Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"ae0cba2f-e445-48f3-966a-7f2ed765e420"},"msg":"[audit-service] [AUDIT] ESTAR_SUBMISSION_CREATED estar_submission"}
+{"level":30,"time":"2026-10-14T21:04:06.266Z","pid":74882,"hostname":"a5f657cec57d","context":{"id":"ae0cba2f-e445-48f3-966a-7f2ed765e420","organizationId":94970},"msg":"[estar-submission-service] Created eSTAR submission"}
+stdout | tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal
+[database] Database connection successful { timestamp: '2026-10-14T21:04:06.295Z', poolSize: 2 }
+
+stdout | tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal
+[database] Database connection successful { timestamp: '2026-10-14T21:04:06.296Z', poolSize: 3 }
+
+{"level":30,"time":"2026-10-14T21:04:06.306Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"ae0cba2f-e445-48f3-966a-7f2ed765e420"},"msg":"[audit-service] [AUDIT] ESTAR_SUBMISSION_ADVANCED estar_submission"}
+{"level":30,"time":"2026-10-14T21:04:06.580Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94971,"resourceId":"1414b487-da9a-4723-9cee-270977681d34"},"msg":"[audit-service] [AUDIT] DEVICE_TECHNICAL_FILE_ASSEMBLED regulatory_program"}
+{"level":50,"time":"2026-10-14T21:04:06.585Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:06.586Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94971 was requested inside tenant 94970's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94971 was requested inside tenant 94970's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:06.586Z","pid":74882,"hostname":"a5f657cec57d","context":{"action":"DEVICE_TECHNICAL_FILE_ASSEMBLED","resourceType":"regulatory_program","resourceId":"1414b487-da9a-4723-9cee-270977681d34","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:06.586Z","pid":74882,"hostname":"a5f657cec57d","context":{"resourceType":"regulatory_program","resourceId":"1414b487-da9a-4723-9cee-270977681d34","organizationId":94970,"regulation":"mdr","materialized":1,"skipped":0,"unresolved":0},"msg":"[assemble-technical-file] Assembled technical file from core"}
+{"level":30,"time":"2026-10-14T21:04:06.589Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"1414b487-da9a-4723-9cee-270977681d34"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED device_technical_file"}
+{"level":30,"time":"2026-10-14T21:04:06.632Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94971,"resourceId":"1414b487-da9a-4723-9cee-270977681d34"},"msg":"[audit-service] [AUDIT] DEVICE_TECHNICAL_FILE_ASSEMBLED regulatory_program"}
+{"level":50,"time":"2026-10-14T21:04:06.639Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:06.639Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94971 was requested inside tenant 94970's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94971 was requested inside tenant 94970's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:06.639Z","pid":74882,"hostname":"a5f657cec57d","context":{"action":"DEVICE_TECHNICAL_FILE_ASSEMBLED","resourceType":"regulatory_program","resourceId":"1414b487-da9a-4723-9cee-270977681d34","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:06.639Z","pid":74882,"hostname":"a5f657cec57d","context":{"resourceType":"regulatory_program","resourceId":"1414b487-da9a-4723-9cee-270977681d34","organizationId":94970,"regulation":"mdr","materialized":1,"skipped":0,"unresolved":0},"msg":"[assemble-technical-file] Assembled technical file from core"}
+{"level":30,"time":"2026-10-14T21:04:06.642Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94971,"resourceId":"1414b487-da9a-4723-9cee-270977681d34"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED device_technical_file"}
+{"level":50,"time":"2026-10-14T21:04:06.645Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+stderr | tests/db/estar-audit-admission.dbtest.ts > native technical-file assembly audit and final delivery gate > refuses native delivery when its final export audit is unavailable and recovers without relaxing that gate
+{
+  "timestamp": "2026-10-14T21:04:06.645Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "UNAUDITED_EXPORT_REFUSED: the export was not delivered because its audit row did not persist (new row violates row-level security policy for table \"audit_logs\")",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+{"level":50,"time":"2026-10-14T21:04:06.645Z","pid":74882,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94971 was requested inside tenant 94970's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94971 was requested inside tenant 94970's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":30,"time":"2026-10-14T21:04:06.674Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"1414b487-da9a-4723-9cee-270977681d34"},"msg":"[audit-service] [AUDIT] DEVICE_TECHNICAL_FILE_ASSEMBLED regulatory_program"}
+{"level":30,"time":"2026-10-14T21:04:06.682Z","pid":74882,"hostname":"a5f657cec57d","context":{"resourceType":"regulatory_program","resourceId":"1414b487-da9a-4723-9cee-270977681d34","organizationId":94970,"regulation":"mdr","materialized":1,"skipped":0,"unresolved":0},"msg":"[assemble-technical-file] Assembled technical file from core"}
+{"level":30,"time":"2026-10-14T21:04:06.684Z","pid":74882,"hostname":"a5f657cec57d","context":{"userId":168,"tenantId":94970,"resourceId":"1414b487-da9a-4723-9cee-270977681d34"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED device_technical_file"}
+ ✓ tests/db/estar-audit-admission.dbtest.ts (13 tests) 5401ms
+     ✓ reads only current admitted projects, retains unbound records and refuses malformed scopes  505ms
+{"level":30,"time":"2026-10-14T21:04:07.518Z","pid":74999,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:07.519Z","pid":74999,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:07.519Z","pid":74999,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/protocol-request-connection.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:07.818Z', poolSize: 1 }
+
+stdout | tests/db/protocol-request-connection.dbtest.ts
+[database] Database connection successful
+
+(node:74999) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > retains foreign tenant/record refusal and cannot create under a foreign program
+[database] Database connection successful { timestamp: '2026-10-14T21:04:08.625Z', poolSize: 2 }
+
+{"level":50,"time":"2026-10-14T21:04:08.834Z","pid":74999,"hostname":"a5f657cec57d","context":{"error":"Failed login could not be recorded: no account row for user 55","stack":"Error: Failed login could not be recorded: no account row for user 55\n    at recordFailedLogin (/workspace/ClinicalSageAI-2-replit/server/services/auth-security-service.ts:251:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Object.recordFailedAttempt (/workspace/ClinicalSageAI-2-replit/server/services/part11/reverify-signer-deps.ts:57:44)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:167:7\n    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:45:93)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:160:5\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[auth-security] Failed to record failed login"}
+ ✓ tests/db/protocol-request-connection.dbtest.ts (8 tests) 1992ms
+{"level":30,"time":"2026-10-14T21:04:09.891Z","pid":75039,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:09.895Z","pid":75039,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:09.895Z","pid":75039,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/csr-vault-source-input.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:09.950Z', poolSize: 1 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/csr-vault-source-input.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T21:04:11.995Z', poolSize: 2 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T21:04:11.998Z', poolSize: 3 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T21:04:12.000Z', poolSize: 4 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T21:04:12.000Z', poolSize: 5 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T21:04:12.002Z', poolSize: 6 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T21:04:12.004Z', poolSize: 7 }
+
+stderr | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[governed-evaluator] RIM emitter not registered — learning loop inactive
+
+{"level":30,"time":"2026-10-14T21:04:12.033Z","pid":75039,"hostname":"a5f657cec57d","context":{"code":"governed-fabric:9acd2769-dcf6-4a51-aaf7-12c3d9d87b67","project":0},"msg":"[decision-record] Creating decision record"}
+stderr | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+{
+  "timestamp": "2026-10-14T21:04:12.145Z",
+  "level": "warn",
+  "message": "[ectd-validator-hardening] SEQ_SUBMISSIONS_UNSCOPABLE — ectd_submissions has no organization_id; excluded from history rather than read across tenants",
+  "context": {
+    "applicationNumber": "IND-SYNTHETIC",
+    "attemptedSequence": "0000"
+  }
+}
+
+stderr | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[Orchestrator] run failed: Error: package not gateway-ready: 18 structural error(s), 2 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /workspace/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1979:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runStep (/workspace/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1404:22)
+    at runOrchestrator (/workspace/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1932:7)
+    at withCsrVaultSource (/workspace/ClinicalSageAI-2-replit/server/services/csr/vault-source-input.ts:127:20)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/submission-orchestrator.ts:290:9
+
+{"level":40,"time":"2026-10-14T21:04:12.227Z","pid":75039,"hostname":"a5f657cec57d","context":{"action":"orchestrator_csr_source_previewed","resourceType":"vault.documents","resourceId":"c8caf400-a6e7-4cf4-ab90-15c0cdc1ef27","code":"42501"},"msg":"[audit-write-outcome] Request-scoped post-commit audit unavailable"}
+{"level":30,"time":"2026-10-14T21:04:12.419Z","pid":75039,"hostname":"a5f657cec57d","context":{"code":"governed-fabric:3cadbef6-004d-4c30-862f-ca3f91f472be","project":0},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/csr-vault-source-input.dbtest.ts (7 tests) 2736ms
+{"level":30,"time":"2026-10-14T21:04:13.649Z","pid":75154,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:13.650Z","pid":75154,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:13.650Z","pid":75154,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/content-audit-consumers.dbtest.ts
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stdout | tests/db/content-audit-consumers.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > figure draft and mandatory lineage really persist with ancillary audit=none
+[database] Database connection successful { timestamp: '2026-10-14T21:04:14.975Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-14T21:04:14.996Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"fig-77cfd384"},"msg":"[audit-service] [AUDIT] figure_generated figure"}
+{"level":50,"time":"2026-10-14T21:04:15.040Z","pid":75154,"hostname":"a5f657cec57d","context":{"action":"figure_generated","resourceType":"figure","resourceId":"fig-8973af17","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:15.090Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"fig-9389fb1f"},"msg":"[audit-service] [AUDIT] figure_generated figure"}
+stdout | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > private project, stale viewer and foreign source refusals precede model execution
+[database] Database connection successful { timestamp: '2026-10-14T21:04:15.144Z', poolSize: 1 }
+
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > private project, stale viewer and foreign source refusals precede model execution
+[FigureService] Generation failed: Error: Figure source data could not be read. No figure was generated.
+    at resolveSourceData (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:535:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at generateFigure (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:297:24)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:73:20 {
+  [cause]: Error: A requested source is unavailable
+      at resolveSourceData (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:524:80)
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at generateFigure (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:297:24)
+      at /workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:73:20
+}
+
+{"level":30,"time":"2026-10-14T21:04:15.244Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":50,"time":"2026-10-14T21:04:15.284Z","pid":75154,"hostname":"a5f657cec57d","context":{"action":"keywords_extracted","resourceType":"document","resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > model unavailability is disclosed while actual pattern extraction remains available
+[KeywordExtraction] AI extraction failed: Error: Controlled unavailable keyword model
+    at /workspace/ClinicalSageAI-2-replit/tests/db/content-audit-consumers.dbtest.ts:146:30
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:38
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:13
+
+{"level":30,"time":"2026-10-14T21:04:15.315Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":50,"time":"2026-10-14T21:04:15.424Z","pid":75154,"hostname":"a5f657cec57d","context":{"action":"DOCUMENT_TAGS_UPDATED","resourceType":"device_data_center","resourceId":"10","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > Data Center tag mutation survives audit outage while refusing foreign tenant and viewer
+Error updating document tags: DocumentDataCenterRefusal: Document not found
+    at DocumentDataCenterService.updateDocumentTags (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:750:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/document-data-center.ts:124:20 {
+  status: 404
+}
+
+{"level":30,"time":"2026-10-14T21:04:15.609Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"19"},"msg":"[audit-service] [AUDIT] CREATE CER_REPORT"}
+{"level":30,"time":"2026-10-14T21:04:15.633Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":396,"tenantId":84,"resourceId":"20"},"msg":"[audit-service] [AUDIT] CREATE CER_REPORT"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > two tenants create native CER identities independently and a viewer/foreign device is refused
+Error generating CER: Error: Device not found
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:220:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at UnifiedCERService.generateReport (/workspace/ClinicalSageAI-2-replit/server/services/cer/index.ts:111:19)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/cer-routes.ts:608:20
+
+{"level":30,"time":"2026-10-14T21:04:15.696Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":30,"time":"2026-10-14T21:04:15.744Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_dbebf9c3-bbe2-4e20-8f17-0e2b6e814fde"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":30,"time":"2026-10-14T21:04:15.829Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+stdout | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > valid extraction computation reaches the existing governance fence and never reports a completed import
+[database] Database connection successful { timestamp: '2026-10-14T21:04:15.865Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-14T21:04:15.905Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > valid extraction computation reaches the existing governance fence and never reports a completed import
+[AutoExtraction] Job 15cc0b1f-cfcd-4b0e-a1cd-dbdff6f35847 failed: Error: governed extraction main artifact invalid: originSurface import_pipeline is not allowed for documentClass evidence_memo
+    at storeExtractedArtifacts (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:692:11)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:351:29)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+{"level":30,"time":"2026-10-14T21:04:15.962Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+{"level":30,"time":"2026-10-14T21:04:16.112Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":396,"tenantId":84,"resourceId":"artifact_f52fce61-9202-429d-9370-ac69e0029e83"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+{"level":30,"time":"2026-10-14T21:04:16.135Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":395,"tenantId":83,"resourceId":"artifact_9bff278a-c5bd-4802-a5fb-371dbf4393fc"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+{"level":30,"time":"2026-10-14T21:04:16.154Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > processes queued work after HTTP completion in each tenant scope and rechecks a revoked creator
+[AutoExtraction] Job 439919e4-c4c8-487d-8224-ffd5cb129559 failed: Error: governed extraction main artifact invalid: originSurface import_pipeline is not allowed for documentClass evidence_memo
+    at storeExtractedArtifacts (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:692:11)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:351:29)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+{"level":30,"time":"2026-10-14T21:04:16.193Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":396,"tenantId":84,"resourceId":"artifact_f52fce61-9202-429d-9370-ac69e0029e83"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > processes queued work after HTTP completion in each tenant scope and rechecks a revoked creator
+[AutoExtraction] Job ef58900b-f689-483e-9356-ce897a63b1da failed: Error: governed extraction main artifact invalid: originSurface import_pipeline is not allowed for documentClass evidence_memo
+    at storeExtractedArtifacts (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:692:11)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:351:29)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+{"level":30,"time":"2026-10-14T21:04:16.203Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":395,"tenantId":83,"resourceId":"artifact_9bff278a-c5bd-4802-a5fb-371dbf4393fc"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > processes queued work after HTTP completion in each tenant scope and rechecks a revoked creator
+[AutoExtraction] Job a57dbf4d-28c1-4878-a064-d6b743995727 failed: ProjectAdmissionRefusal: Current active organization membership is required.
+    at requireCurrentProjectActor (/workspace/ClinicalSageAI-2-replit/server/routes/c2c/project-access.ts:357:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at requireProjectAdmission (/workspace/ClinicalSageAI-2-replit/server/routes/c2c/project-access.ts:365:17)
+    at beforeProcess (/workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:346:33)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:315:5)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7) {
+  status: 403,
+  code: 'PROJECT_MEMBERSHIP_REQUIRED'
+}
+
+{"level":30,"time":"2026-10-14T21:04:16.259Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+{"level":30,"time":"2026-10-14T21:04:16.325Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > rechecks current writer authority after provider work before attempting artifact storage
+[AutoExtraction] Job 3dbad41f-07f0-4343-a686-908e23817948 failed: ProjectAdmissionRefusal: Your current organization role cannot change this project record.
+    at requireCurrentProjectActor (/workspace/ClinicalSageAI-2-replit/server/routes/c2c/project-access.ts:350:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at requireProjectAdmission (/workspace/ClinicalSageAI-2-replit/server/routes/c2c/project-access.ts:365:17)
+    at beforeProcess (/workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:346:33)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:347:5)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7) {
+  status: 403,
+  code: 'PROJECT_WRITE_PERMISSION_DENIED'
+}
+
+{"level":30,"time":"2026-10-14T21:04:16.377Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_4c28d1e9-eb85-4655-ada4-875b08323bf4"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":30,"time":"2026-10-14T21:04:16.415Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"fig-a03a4c39"},"msg":"[audit-service] [AUDIT] figure_generated figure"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > canonical remove_data disposition governs all three source readers before model access
+[FigureService] Generation failed: Error: Figure source data could not be read. No figure was generated.
+    at resolveSourceData (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:535:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at generateFigure (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:297:24)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:73:20 {
+  [cause]: Error: A requested source is unavailable
+      at resolveSourceData (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:524:80)
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at generateFigure (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:297:24)
+      at /workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:73:20
+}
+
+{"level":30,"time":"2026-10-14T21:04:16.493Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_637f51d6-1022-4433-b7c9-7b4bc27e0fb4"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+{"level":30,"time":"2026-10-14T21:04:16.515Z","pid":75154,"hostname":"a5f657cec57d","context":{"userId":393,"tenantId":83,"resourceId":"artifact_637f51d6-1022-4433-b7c9-7b4bc27e0fb4"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > canonical remove_data disposition governs all three source readers before model access
+[AutoExtraction] Job 3979aff2-b029-4b7d-aba6-dd98d44ebbc8 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=artifact_637f51d6-1022-4433-b7c9-7b4bc27e0fb4 (withdrawn.txt). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:442:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:319:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+{"level":50,"time":"2026-10-14T21:04:16.601Z","pid":75154,"hostname":"a5f657cec57d","context":{"action":"extraction_job_created","resourceType":"file","resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:16.622Z","pid":75154,"hostname":"a5f657cec57d","context":{"action":"extraction_job_failed","resourceType":"file","resourceId":"artifact_46fb17e2-6e61-4d33-b245-34b5cc9245d4","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > queue returns the actual process-local job identity and status/list retain its audit warning
+[AutoExtraction] Job 69afc5de-6317-41a6-b17a-d932c0395d92 failed: Error: Controlled model refusal
+    at /workspace/ClinicalSageAI-2-replit/tests/db/content-audit-consumers.dbtest.ts:278:51
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:38
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:13
+
+ ✓ tests/db/content-audit-consumers.dbtest.ts (20 tests) 3166ms
+     ✓ processes queued work after HTTP completion in each tenant scope and rechecks a revoked creator  303ms
+{"level":30,"time":"2026-10-14T21:04:17.523Z","pid":75225,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:17.527Z","pid":75225,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:17.527Z","pid":75225,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/ind-audit-outcomes.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:18.435Z', poolSize: 1 }
+
+stdout | tests/db/ind-audit-outcomes.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:18.447Z', poolSize: 2 }
+
+stdout | tests/db/ind-audit-outcomes.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/ind-audit-outcomes.dbtest.ts > IND audit outcome native qualification > uses genuine membership, ALS, LazyRequestDbClient, TLS and deployed FORCE RLS as app_service
+[database] Database connection successful { timestamp: '2026-10-14T21:04:19.096Z', poolSize: 3 }
+
+{"level":30,"time":"2026-10-14T21:04:19.136Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"8cc56f7a-cbb5-46f8-a836-069a1b776860"},"msg":"[audit-service] [AUDIT] IND_SAFETY_REPORT_DRAFTED ind_safety_report"}
+{"level":30,"time":"2026-10-14T21:04:19.148Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"obligation":"SEVEN_DAY","organizationId":94960},"msg":"[ind-safety-report-persistence] Drafted IND safety report"}
+{"level":30,"time":"2026-10-14T21:04:19.241Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"56"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.265Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"127"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.285Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"128"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.299Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"129"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.308Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"8cc56f7a-cbb5-46f8-a836-069a1b776860"},"msg":"[audit-service] [AUDIT] IND_SAFETY_REPORT_FILED ind_safety_report"}
+{"level":30,"time":"2026-10-14T21:04:19.343Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94961,"resourceId":"b84629ff-940e-4659-8f60-d9d79ff54499"},"msg":"[audit-service] [AUDIT] IND_SAFETY_REPORT_DRAFTED ind_safety_report"}
+{"level":50,"time":"2026-10-14T21:04:19.352Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:19.353Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:19.353Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_SAFETY_REPORT_DRAFTED","resourceType":"ind_safety_report","resourceId":"b84629ff-940e-4659-8f60-d9d79ff54499","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:19.354Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"obligation":"SEVEN_DAY","organizationId":94960},"msg":"[ind-safety-report-persistence] Drafted IND safety report"}
+{"level":30,"time":"2026-10-14T21:04:19.389Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"57"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.404Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"130"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.417Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"131"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.435Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"132"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.443Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94961,"resourceId":"b84629ff-940e-4659-8f60-d9d79ff54499"},"msg":"[audit-service] [AUDIT] IND_SAFETY_REPORT_FILED ind_safety_report"}
+{"level":50,"time":"2026-10-14T21:04:19.447Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:19.448Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:19.448Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_SAFETY_REPORT_FILED","resourceType":"ind_safety_report","resourceId":"b84629ff-940e-4659-8f60-d9d79ff54499","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:19.469Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_SAFETY_REPORT_DRAFTED","resourceType":"ind_safety_report","resourceId":"d4d7ad5a-37eb-417a-830f-e3182c279357","reason":"Synthetic private IND audit rejection"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:19.469Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"obligation":"SEVEN_DAY","organizationId":94960},"msg":"[ind-safety-report-persistence] Drafted IND safety report"}
+{"level":30,"time":"2026-10-14T21:04:19.508Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"58"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.520Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"133"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.531Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"134"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.550Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"135"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":50,"time":"2026-10-14T21:04:19.558Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_SAFETY_REPORT_FILED","resourceType":"ind_safety_report","resourceId":"d4d7ad5a-37eb-417a-830f-e3182c279357","reason":"Synthetic private IND audit rejection"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:19.592Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"e25d1fb8-f724-42bc-b2cb-0162cd68d605"},"msg":"[audit-service] [AUDIT] IND_ANNUAL_REPORT_DRAFTED ind_annual_report"}
+{"level":30,"time":"2026-10-14T21:04:19.597Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"gapCount":6,"organizationId":94960},"msg":"[ind-annual-report-persistence] Drafted IND annual report"}
+{"level":30,"time":"2026-10-14T21:04:19.620Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"59"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.630Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"136"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.646Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"137"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.657Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"138"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.665Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"e25d1fb8-f724-42bc-b2cb-0162cd68d605"},"msg":"[audit-service] [AUDIT] IND_ANNUAL_REPORT_FILED ind_annual_report"}
+{"level":30,"time":"2026-10-14T21:04:19.689Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94961,"resourceId":"ad1b2278-2254-469d-a391-095bff5d8a17"},"msg":"[audit-service] [AUDIT] IND_ANNUAL_REPORT_DRAFTED ind_annual_report"}
+{"level":50,"time":"2026-10-14T21:04:19.692Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:19.693Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:19.693Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_ANNUAL_REPORT_DRAFTED","resourceType":"ind_annual_report","resourceId":"ad1b2278-2254-469d-a391-095bff5d8a17","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:19.693Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"gapCount":6,"organizationId":94960},"msg":"[ind-annual-report-persistence] Drafted IND annual report"}
+{"level":30,"time":"2026-10-14T21:04:19.724Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"60"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.734Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"139"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.742Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"140"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.750Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"141"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.756Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94961,"resourceId":"ad1b2278-2254-469d-a391-095bff5d8a17"},"msg":"[audit-service] [AUDIT] IND_ANNUAL_REPORT_FILED ind_annual_report"}
+{"level":50,"time":"2026-10-14T21:04:19.759Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:19.759Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:19.759Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_ANNUAL_REPORT_FILED","resourceType":"ind_annual_report","resourceId":"ad1b2278-2254-469d-a391-095bff5d8a17","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:19.775Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_ANNUAL_REPORT_DRAFTED","resourceType":"ind_annual_report","resourceId":"639db3a1-75cf-419f-ad1d-89d2d1f492db","reason":"Synthetic private IND audit rejection"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:19.775Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"gapCount":6,"organizationId":94960},"msg":"[ind-annual-report-persistence] Drafted IND annual report"}
+{"level":30,"time":"2026-10-14T21:04:19.791Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"61"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.800Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"142"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.808Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"143"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.818Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"144"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":50,"time":"2026-10-14T21:04:19.828Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_ANNUAL_REPORT_FILED","resourceType":"ind_annual_report","resourceId":"639db3a1-75cf-419f-ad1d-89d2d1f492db","reason":"Synthetic private IND audit rejection"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:19.846Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"69e5826e-8dd5-43a5-9c4f-b31befd9e56a"},"msg":"[audit-service] [AUDIT] IND_AMENDMENT_DRAFTED ind_amendment"}
+{"level":30,"time":"2026-10-14T21:04:19.851Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"leafCount":2,"organizationId":94960},"msg":"[ind-amendment-persistence] Drafted IND amendment"}
+{"level":30,"time":"2026-10-14T21:04:19.866Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"62"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.878Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"145"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.887Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"146"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.896Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"147"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.903Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"69e5826e-8dd5-43a5-9c4f-b31befd9e56a"},"msg":"[audit-service] [AUDIT] IND_AMENDMENT_FILED ind_amendment"}
+{"level":30,"time":"2026-10-14T21:04:19.931Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94961,"resourceId":"cb1335c3-ef52-4126-9ac3-ae2bb1b9e986"},"msg":"[audit-service] [AUDIT] IND_AMENDMENT_DRAFTED ind_amendment"}
+{"level":50,"time":"2026-10-14T21:04:19.934Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:19.934Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:19.934Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_AMENDMENT_DRAFTED","resourceType":"ind_amendment","resourceId":"cb1335c3-ef52-4126-9ac3-ae2bb1b9e986","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:19.934Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"leafCount":2,"organizationId":94960},"msg":"[ind-amendment-persistence] Drafted IND amendment"}
+{"level":30,"time":"2026-10-14T21:04:19.949Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"63"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:19.965Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"148"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.975Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"149"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.984Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"150"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:19.996Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94961,"resourceId":"cb1335c3-ef52-4126-9ac3-ae2bb1b9e986"},"msg":"[audit-service] [AUDIT] IND_AMENDMENT_FILED ind_amendment"}
+{"level":50,"time":"2026-10-14T21:04:19.998Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:19.999Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:19.999Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_AMENDMENT_FILED","resourceType":"ind_amendment","resourceId":"cb1335c3-ef52-4126-9ac3-ae2bb1b9e986","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:20.014Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_AMENDMENT_DRAFTED","resourceType":"ind_amendment","resourceId":"3304bac3-33e7-4799-aabc-fd56b9f54481","reason":"Synthetic private IND audit rejection"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:20.014Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"leafCount":2,"organizationId":94960},"msg":"[ind-amendment-persistence] Drafted IND amendment"}
+{"level":30,"time":"2026-10-14T21:04:20.031Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"64"},"msg":"[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence"}
+{"level":30,"time":"2026-10-14T21:04:20.045Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"151"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:20.060Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"152"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-14T21:04:20.071Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"153"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":50,"time":"2026-10-14T21:04:20.081Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_AMENDMENT_FILED","resourceType":"ind_amendment","resourceId":"3304bac3-33e7-4799-aabc-fd56b9f54481","reason":"Synthetic private IND audit rejection"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:20.109Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"b2040091-aff7-4a36-95e0-8c707267efb3"},"msg":"[audit-service] [AUDIT] IND_DISPATCH_SNAPSHOT_CREATED ind_dispatch_snapshot"}
+{"level":30,"time":"2026-10-14T21:04:20.116Z","pid":75225,"hostname":"a5f657cec57d","context":{"sequenceId":55,"canDispatch":false,"organizationId":94960},"msg":"[ind-dispatch-snapshot-service] Recorded IND dispatch snapshot"}
+{"level":30,"time":"2026-10-14T21:04:20.147Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94961,"resourceId":"2e1acc33-75bb-4a44-8ba2-e0ceff6dae88"},"msg":"[audit-service] [AUDIT] IND_DISPATCH_SNAPSHOT_CREATED ind_dispatch_snapshot"}
+{"level":50,"time":"2026-10-14T21:04:20.149Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:20.149Z","pid":75225,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 94961 was requested inside tenant 94960's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 94961 was requested inside tenant 94960's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:20.149Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_DISPATCH_SNAPSHOT_CREATED","resourceType":"ind_dispatch_snapshot","resourceId":"2e1acc33-75bb-4a44-8ba2-e0ceff6dae88","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:20.149Z","pid":75225,"hostname":"a5f657cec57d","context":{"sequenceId":55,"canDispatch":false,"organizationId":94960},"msg":"[ind-dispatch-snapshot-service] Recorded IND dispatch snapshot"}
+{"level":50,"time":"2026-10-14T21:04:20.173Z","pid":75225,"hostname":"a5f657cec57d","context":{"action":"IND_DISPATCH_SNAPSHOT_CREATED","resourceType":"ind_dispatch_snapshot","resourceId":"719f66a3-5bfa-44f1-a68f-5f716f75da4a","reason":"Synthetic private IND audit rejection"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:20.173Z","pid":75225,"hostname":"a5f657cec57d","context":{"sequenceId":55,"canDispatch":false,"organizationId":94960},"msg":"[ind-dispatch-snapshot-service] Recorded IND dispatch snapshot"}
+{"level":40,"time":"2026-10-14T21:04:20.205Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"organizationId":94961},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":30,"time":"2026-10-14T21:04:20.215Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":164,"tenantId":94961,"resourceId":"1efb7a00-098e-4fcc-9d55-2056391f707f"},"msg":"[audit-service] [AUDIT] IND_ANNUAL_REPORT_DRAFTED ind_annual_report"}
+{"level":30,"time":"2026-10-14T21:04:20.221Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":23,"gapCount":6,"organizationId":94961},"msg":"[ind-annual-report-persistence] Drafted IND annual report"}
+stderr | tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > reports an actual PostgreSQL business refusal without an audit or a saved row, then recovers
+{
+  "timestamp": "2026-10-14T21:04:20.241Z",
+  "level": "error",
+  "message": "[ind-lifecycle-routes] ind-lifecycle route error",
+  "context": {
+    "err": "Failed query: insert into \"ind_annual_reports\" (\"id\", \"organization_id\", \"submission_id\", \"ind_number\", \"product_name\", \"reporting_period_start\", \"reporting_period_end\", \"due_date\", \"status\", \"sequence_id\", \"filed_at\", \"gap_count\", \"model\", \"created_by\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, default, default, $9, $10, $11, default, default) returning \"id\", \"organization_id\", \"submission_id\", \"ind_number\", \"product_name\", \"reporting_period_start\", \"reporting_period_end\", \"due_date\", \"status\", \"sequence_id\", \"filed_at\", \"gap_count\", \"model\", \"created_by\", \"created_at\", \"updated_at\"\nparams: 94960,22,SYNTHETIC-NOT-FDA,synthetic-native-ind-audit-d19df10d-91fb-4421-baf9-fb1c27455217-business-refusal,2026-01-01T00:00:00.000Z,2026-12-31T00:00:00.000Z,,draft,6,{\"reportType\":\"IND_ANNUAL_REPORT\",\"indNumber\":\"SYNTHETIC-NOT-FDA\",\"productName\":\"synthetic-native-ind-audit-d19df10d-91fb-4421-baf9-fb1c27455217-business-refusal\",\"organizationId\":\"94960\",\"projectId\":\"synthetic-ind-study\",\"reportingPeriod\":{\"start\":\"2026-01-01T00:00:00.000Z\",\"end\":\"2026-12-31T00:00:00.000Z\"},\"sections\":[{\"key\":\"individual_study_status\",\"heading\":\"Individual Study Information\",\"cfrRef\":\"312.33(a)\",\"dsurRef\":\"E2F §6 (Studies in the Period)\",\"body\":\"\",\"complete\":false},{\"key\":\"summary_safety_information\",\"heading\":\"Summary of Safety Information\",\"cfrRef\":\"312.33(b)\",\"dsurRef\":\"E2F §§7–16 (Safety Summary)\",\"body\":\"IND Safety Reports filed in period: 0 (7-day: 0, 15-day: 0).\",\"complete\":false},{\"key\":\"ind_safety_reports_list\",\"heading\":\"IND Safety Reports Submitted During the Period\",\"cfrRef\":\"312.33(b)\",\"dsurRef\":\"E2F §15 / Appendix (Line Listings)\",\"body\":\"No IND Safety Reports were submitted during the period.\",\"complete\":true},{\"key\":\"investigational_plan\",\"heading\":\"General Investigational Plan for the Coming Year\",\"cfrRef\":\"312.33(c)\",\"dsurRef\":\"E2F §4 (Update on Actions Taken)\",\"body\":\"\",\"complete\":false},{\"key\":\"ib_changes\",\"heading\":\"Investigator's Brochure Revisions\",\"cfrRef\":\"312.33(d)\",\"dsurRef\":\"E2F §3 (Changes to RSI)\",\"body\":\"No revisions to the Investigator's Brochure were made during the period.\",\"complete\":true},{\"key\":\"phase1_protocol_modifications\",\"heading\":\"Significant Phase 1 Protocol Modifications\",\"cfrRef\":\"312.33(e)\",\"dsurRef\":\"E2F §4 (Actions Taken for Safety)\",\"body\":\"\",\"complete\":false},{\"key\":\"foreign_marketing_developments\",\"heading\":\"Foreign Marketing Developments\",\"cfrRef\":\"312.33(f)\",\"dsurRef\":\"E2F §5 (Changes to Ref. Safety / Marketing)\",\"body\":\"\",\"complete\":false},{\"key\":\"outstanding_business\",\"heading\":\"Log of Outstanding Business with FDA\",\"cfrRef\":\"312.33(g)\",\"dsurRef\":\"E2F §2 (Worldwide Marketing Approval Status)\",\"body\":\"\",\"complete\":false}],\"gaps\":[{\"sectionKey\":\"individual_study_status\",\"heading\":\"Individual Study Information\",\"cfrRef\":\"312.33(a)\",\"message\":\"Section \\\"Individual Study Information\\\" (312.33(a)) is incomplete and must be authored before filing.\"},{\"sectionKey\":\"summary_safety_information\",\"heading\":\"Summary of Safety Information\",\"cfrRef\":\"312.33(b)\",\"message\":\"Section \\\"Summary of Safety Information\\\" (312.33(b)) is incomplete and must be authored before filing.\"},{\"sectionKey\":\"investigational_plan\",\"heading\":\"General Investigational Plan for the Coming Year\",\"cfrRef\":\"312.33(c)\",\"message\":\"Section \\\"General Investigational Plan for the Coming Year\\\" (312.33(c)) is incomplete and must be authored before filing.\"},{\"sectionKey\":\"phase1_protocol_modifications\",\"heading\":\"Significant Phase 1 Protocol Modifications\",\"cfrRef\":\"312.33(e)\",\"message\":\"Section \\\"Significant Phase 1 Protocol Modifications\\\" (312.33(e)) is incomplete and must be authored before filing.\"},{\"sectionKey\":\"foreign_marketing_developments\",\"heading\":\"Foreign Marketing Developments\",\"cfrRef\":\"312.33(f)\",\"message\":\"Section \\\"Foreign Marketing Developments\\\" (312.33(f)) is incomplete and must be authored before filing.\"},{\"sectionKey\":\"outstanding_business\",\"heading\":\"Log of Outstanding Business with FDA\",\"cfrRef\":\"312.33(g)\",\"message\":\"Section \\\"Log of Outstanding Business with FDA\\\" (312.33(g)) is incomplete and must be authored before filing.\"}]},162"
+  }
+}
+
+{"level":30,"time":"2026-10-14T21:04:20.260Z","pid":75225,"hostname":"a5f657cec57d","context":{"userId":162,"tenantId":94960,"resourceId":"36ac0908-bed8-4d3c-b983-b699a8d2876f"},"msg":"[audit-service] [AUDIT] IND_ANNUAL_REPORT_DRAFTED ind_annual_report"}
+{"level":30,"time":"2026-10-14T21:04:20.264Z","pid":75225,"hostname":"a5f657cec57d","context":{"submissionId":22,"gapCount":6,"organizationId":94960},"msg":"[ind-annual-report-persistence] Drafted IND annual report"}
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts (15 tests) 2836ms
+{"level":30,"time":"2026-10-14T21:04:21.160Z","pid":75273,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:21.163Z","pid":75273,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:21.163Z","pid":75273,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/provenance-audit-outcomes.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/provenance-audit-outcomes.dbtest.ts > real provenance stores and actual caller contracts > uses real TLS app_service, current membership, request scope and deployed parent-scoped packet RLS
+[database] Database connection successful { timestamp: '2026-10-14T21:04:22.264Z', poolSize: 1 }
+
+stdout | tests/db/provenance-audit-outcomes.dbtest.ts > real provenance stores and actual caller contracts > uses real TLS app_service, current membership, request scope and deployed parent-scoped packet RLS
+[database] Database connection successful { timestamp: '2026-10-14T21:04:22.265Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-14T21:04:22.320Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98120,"resourceId":"58f6e793-325e-4782-aea6-e81982eb749c"},"msg":"[audit-service] [AUDIT] canonical_fact.section_bound canonical_fact"}
+{"level":30,"time":"2026-10-14T21:04:22.383Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98120,"resourceId":"synthetic-provenance-9bb3adb2-07cf-4649-ae13-fdbf32ebdf6e-none"},"msg":"[audit-service] [AUDIT] canonical_fact.citations_bound concept2cure_artifact"}
+{"level":30,"time":"2026-10-14T21:04:22.414Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98120,"resourceId":"d540aa82-a919-4f37-a513-16afaba54831"},"msg":"[audit-service] [AUDIT] canonical_fact.citations_bound post_market_document"}
+{"level":30,"time":"2026-10-14T21:04:22.447Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98120,"resourceId":"58f6e793-325e-4782-aea6-e81982eb749c"},"msg":"[audit-service] [AUDIT] canonical_fact.propagated canonical_fact"}
+{"level":30,"time":"2026-10-14T21:04:22.491Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98121,"resourceId":"58f6e793-325e-4782-aea6-e81982eb749c"},"msg":"[audit-service] [AUDIT] canonical_fact.section_bound canonical_fact"}
+{"level":50,"time":"2026-10-14T21:04:22.496Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:22.498Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:22.498Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.section_bound","resourceType":"canonical_fact","resourceId":"58f6e793-325e-4782-aea6-e81982eb749c","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:22.528Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98121,"resourceId":"synthetic-provenance-9bb3adb2-07cf-4649-ae13-fdbf32ebdf6e-refusal"},"msg":"[audit-service] [AUDIT] canonical_fact.citations_bound concept2cure_artifact"}
+{"level":50,"time":"2026-10-14T21:04:22.531Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:22.531Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:22.531Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.citations_bound","resourceType":"concept2cure_artifact","resourceId":"synthetic-provenance-9bb3adb2-07cf-4649-ae13-fdbf32ebdf6e-refusal","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+stdout | tests/db/provenance-audit-outcomes.dbtest.ts > real provenance stores and actual caller contracts > preserves actual section bindings, persistent scans and fact propagation for refusal
+[database] Database connection successful { timestamp: '2026-10-14T21:04:22.540Z', poolSize: 3 }
+
+{"level":30,"time":"2026-10-14T21:04:22.553Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98121,"resourceId":"d540aa82-a919-4f37-a513-16afaba54831"},"msg":"[audit-service] [AUDIT] canonical_fact.citations_bound post_market_document"}
+{"level":50,"time":"2026-10-14T21:04:22.560Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:22.560Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:22.560Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.citations_bound","resourceType":"post_market_document","resourceId":"d540aa82-a919-4f37-a513-16afaba54831","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:22.586Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98121,"resourceId":"58f6e793-325e-4782-aea6-e81982eb749c"},"msg":"[audit-service] [AUDIT] canonical_fact.propagated canonical_fact"}
+{"level":50,"time":"2026-10-14T21:04:22.589Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:22.590Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:22.590Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.propagated","resourceType":"canonical_fact","resourceId":"58f6e793-325e-4782-aea6-e81982eb749c","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:22.616Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.section_bound","resourceType":"canonical_fact","resourceId":"58f6e793-325e-4782-aea6-e81982eb749c","reason":"Synthetic private provenance audit error"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:22.643Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.citations_bound","resourceType":"concept2cure_artifact","resourceId":"synthetic-provenance-9bb3adb2-07cf-4649-ae13-fdbf32ebdf6e-thrown","reason":"Synthetic private provenance audit error"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:22.658Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.citations_bound","resourceType":"post_market_document","resourceId":"d540aa82-a919-4f37-a513-16afaba54831","reason":"Synthetic private provenance audit error"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":50,"time":"2026-10-14T21:04:22.677Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.propagated","resourceType":"canonical_fact","resourceId":"58f6e793-325e-4782-aea6-e81982eb749c","reason":"Synthetic private provenance audit error"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:22.731Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","resourceType":"defense_packet","resourceId":"5a11da51-816e-4286-a2a8-5be34e3e686a","success":true},"msg":"[audit] [AUDIT] document:DEFENSE_PACKET_STALE_DETECTED"}
+{"level":30,"time":"2026-10-14T21:04:22.731Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","tenantId":"98120","resourceId":"5a11da51-816e-4286-a2a8-5be34e3e686a"},"msg":"[audit-service] [AUDIT] document.DEFENSE_PACKET_STALE_DETECTED defense_packet"}
+{"level":30,"time":"2026-10-14T21:04:22.878Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","resourceType":"defense_packet","resourceId":"523d20c6-142e-4244-9b4a-6465a82f5885","success":true},"msg":"[audit] [AUDIT] document:DEFENSE_PACKET_STALE_DETECTED"}
+{"level":30,"time":"2026-10-14T21:04:22.878Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","tenantId":98121,"resourceId":"523d20c6-142e-4244-9b4a-6465a82f5885"},"msg":"[audit-service] [AUDIT] document.DEFENSE_PACKET_STALE_DETECTED defense_packet"}
+{"level":50,"time":"2026-10-14T21:04:22.881Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:22.881Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:22.881Z","pid":75273,"hostname":"a5f657cec57d","context":{"auditEventId":"audit_1792011862878_mzop7jdyz","action":"document.DEFENSE_PACKET_STALE_DETECTED","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit] Audit event NOT persisted to the canonical store"}
+{"level":50,"time":"2026-10-14T21:04:22.881Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"document.DEFENSE_PACKET_STALE_DETECTED","resourceType":"defense_packet","resourceId":"523d20c6-142e-4244-9b4a-6465a82f5885","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.016Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","resourceType":"defense_packet","resourceId":"cc8d21b3-4978-4c78-80d5-b0f853436e13","success":true},"msg":"[audit] [AUDIT] document:DEFENSE_PACKET_STALE_DETECTED"}
+{"level":50,"time":"2026-10-14T21:04:23.016Z","pid":75273,"hostname":"a5f657cec57d","context":{"auditEventId":"audit_1792011863016_xo0ulq5bq","action":"document.DEFENSE_PACKET_STALE_DETECTED","reason":"Synthetic private provenance audit error"},"msg":"[audit] Audit event NOT persisted to the canonical store"}
+{"level":50,"time":"2026-10-14T21:04:23.016Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"document.DEFENSE_PACKET_STALE_DETECTED","resourceType":"defense_packet","resourceId":"cc8d21b3-4978-4c78-80d5-b0f853436e13","reason":"Synthetic private provenance audit error"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.173Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","resourceType":"defense_packet","resourceId":"e7732344-3f6f-4a18-89d5-391b25890ef6","success":true},"msg":"[audit] [AUDIT] document:DEFENSE_PACKET_STALE_DETECTED"}
+{"level":30,"time":"2026-10-14T21:04:23.173Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","tenantId":98121,"resourceId":"e7732344-3f6f-4a18-89d5-391b25890ef6"},"msg":"[audit-service] [AUDIT] document.DEFENSE_PACKET_STALE_DETECTED defense_packet"}
+{"level":50,"time":"2026-10-14T21:04:23.179Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:23.180Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:23.180Z","pid":75273,"hostname":"a5f657cec57d","context":{"auditEventId":"audit_1792011863173_g38pevxpe","action":"document.DEFENSE_PACKET_STALE_DETECTED","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit] Audit event NOT persisted to the canonical store"}
+{"level":50,"time":"2026-10-14T21:04:23.180Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"document.DEFENSE_PACKET_STALE_DETECTED","resourceType":"defense_packet","resourceId":"e7732344-3f6f-4a18-89d5-391b25890ef6","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.180Z","pid":75273,"hostname":"a5f657cec57d","context":{"trigger":"assumption_updated","source":"claim:26"},"msg":"[reactive-dependency] Propagating change"}
+{"level":30,"time":"2026-10-14T21:04:23.184Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":272,"tenantId":98121,"resourceId":"bae69e1e-df8b-4df6-9edb-282d5af2e6b7"},"msg":"[audit-service] [AUDIT] canonical_fact.governed_change canonical_fact"}
+{"level":50,"time":"2026-10-14T21:04:23.186Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:23.186Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:23.186Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"canonical_fact.governed_change","resourceType":"canonical_fact","resourceId":"bae69e1e-df8b-4df6-9edb-282d5af2e6b7","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.218Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"system","resourceType":"defense_packet","resourceId":"ace9c7fc-e235-4fba-9b34-f8b1d944ee10","success":true},"msg":"[audit] [AUDIT] document:DEFENSE_PACKET_STALE_DETECTED"}
+{"level":30,"time":"2026-10-14T21:04:23.218Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"system","tenantId":98121,"resourceId":"ace9c7fc-e235-4fba-9b34-f8b1d944ee10"},"msg":"[audit-service] [AUDIT] document.DEFENSE_PACKET_STALE_DETECTED defense_packet"}
+{"level":50,"time":"2026-10-14T21:04:23.221Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:23.221Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:23.221Z","pid":75273,"hostname":"a5f657cec57d","context":{"auditEventId":"audit_1792011863218_20mt33q7z","action":"document.DEFENSE_PACKET_STALE_DETECTED","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit] Audit event NOT persisted to the canonical store"}
+{"level":50,"time":"2026-10-14T21:04:23.221Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"document.DEFENSE_PACKET_STALE_DETECTED","resourceType":"defense_packet","resourceId":"ace9c7fc-e235-4fba-9b34-f8b1d944ee10","reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.221Z","pid":75273,"hostname":"a5f657cec57d","context":{"trigger":"assumption_updated","source":"claim:26"},"msg":"[reactive-dependency] Propagating change"}
+{"level":30,"time":"2026-10-14T21:04:23.245Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","tenantId":98120,"resourceId":"298"},"msg":"[audit-service] [AUDIT] decision:review synthetic_artifact"}
+{"level":30,"time":"2026-10-14T21:04:23.257Z","pid":75273,"hostname":"a5f657cec57d","context":{"decisionId":"DEC-846776d1-3c13-45f5-95b3-934aa56c2c1a","recorded":true,"queryable":true},"msg":"[decision-lineage] Decision persistence attempt completed"}
+{"level":30,"time":"2026-10-14T21:04:23.318Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","tenantId":98121,"resourceId":"298"},"msg":"[audit-service] [AUDIT] decision:review synthetic_artifact"}
+{"level":50,"time":"2026-10-14T21:04:23.320Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:23.321Z","pid":75273,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98121 was requested inside tenant 98120's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98121 was requested inside tenant 98120's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:23.321Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"decision:review","resourceType":"synthetic_artifact","resourceId":298,"reason":"new row violates row-level security policy for table \"audit_logs\""},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.321Z","pid":75273,"hostname":"a5f657cec57d","context":{"decisionId":"DEC-dcafae81-253a-481b-9758-4480d7b62945","recorded":false,"queryable":false},"msg":"[decision-lineage] Decision persistence attempt completed"}
+{"level":50,"time":"2026-10-14T21:04:23.338Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"decision:review","resourceType":"synthetic_artifact","resourceId":298,"reason":"Synthetic private provenance audit error"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.338Z","pid":75273,"hostname":"a5f657cec57d","context":{"decisionId":"DEC-456705c4-4c7c-4bce-ab56-a4fdde77c21c","recorded":false,"queryable":false},"msg":"[decision-lineage] Decision persistence attempt completed"}
+{"level":30,"time":"2026-10-14T21:04:23.370Z","pid":75273,"hostname":"a5f657cec57d","context":{"userId":"272","tenantId":98120,"resourceId":"298"},"msg":"[audit-service] [AUDIT] decision:review synthetic_artifact"}
+{"level":50,"time":"2026-10-14T21:04:23.378Z","pid":75273,"hostname":"a5f657cec57d","context":{"action":"decision:review","resourceType":"synthetic_artifact","resourceId":"298","reason":"Synthetic acknowledgment suppressed after real commit"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:23.378Z","pid":75273,"hostname":"a5f657cec57d","context":{"decisionId":"DEC-5a1ac4b3-310e-4c03-beac-8193ead13395","recorded":false,"queryable":false},"msg":"[decision-lineage] Decision persistence attempt completed"}
+ ✓ tests/db/provenance-audit-outcomes.dbtest.ts (13 tests) 2384ms
+{"level":30,"time":"2026-10-14T21:04:24.380Z","pid":75309,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:24.381Z","pid":75309,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:24.381Z","pid":75309,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:24.541Z', poolSize: 1 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:24.577Z', poolSize: 2 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[CMC Batch] Release testing for batch 031f5985-24c6-4dff-af12-428480cd314d: released
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch cf965fe8-ec89-4c64-850d-c493adecc962: rejected
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row
+[CMC Specs] Created specification 58d4d3da-8f09-4bed-898a-c3db1675cf19 for dbdsc 792011863 created-review
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts (53 tests) 2716ms
+{"level":30,"time":"2026-10-14T21:04:27.251Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:27.259Z","pid":75355,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:27.259Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:27.382Z', poolSize: 1 }
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:27.386Z', poolSize: 2 }
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-10-14T21:04:28.480Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.484Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.488Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.492Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.495Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.499Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.502Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.506Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+{"level":30,"time":"2026-10-14T21:04:28.510Z","pid":75355,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 245d4c61-f0f3-4f71-880d-e31b6989ee5d by unknown"}
+(node:75355) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-14T21:04:28.735Z","pid":75355,"hostname":"a5f657cec57d","context":{"action":"mdx.qms.training.acknowledge","resourceType":"qms_document","resourceId":10,"code":"42501"},"msg":"[audit-write-outcome] Request-scoped post-commit audit unavailable"}
+{"level":50,"time":"2026-10-14T21:04:28.855Z","pid":75355,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] doc-editor failed"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts (9 tests) 2218ms
+{"level":30,"time":"2026-10-14T21:04:29.687Z","pid":75472,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:29.688Z","pid":75472,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:29.688Z","pid":75472,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:29.988Z', poolSize: 1 }
+
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:29.990Z', poolSize: 2 }
+
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T21:04:30.306Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ID_INVALID",
+    "status": 400
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T21:04:30.320Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ID_INVALID",
+    "status": 400
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T21:04:30.339Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T21:04:30.360Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T21:04:30.376Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T21:04:30.396Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member
+{
+  "timestamp": "2026-10-14T21:04:30.420Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member
+{
+  "timestamp": "2026-10-14T21:04:30.461Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > rechecks persisted organization membership after genuine authentication and recovers after restoration
+{
+  "timestamp": "2026-10-14T21:04:30.499Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > rechecks active account status after genuine authentication and recovers after restoration
+{
+  "timestamp": "2026-10-14T21:04:30.729Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > reports a failed pinned filing query as unavailable and recovers to the same exact record
+{
+  "timestamp": "2026-10-14T21:04:31.039Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_READ_UNAVAILABLE",
+    "status": 503
+  }
+}
+
+ ✓ tests/db/task-filing-home.dbtest.ts (10 tests) 1318ms
+     ✓ rechecks active account status after genuine authentication and recovers after restoration  310ms
+{"level":30,"time":"2026-10-14T21:04:31.891Z","pid":75511,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:31.892Z","pid":75511,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:31.893Z","pid":75511,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/ai-feedback-persistence.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:31.989Z', poolSize: 1 }
+
+stdout | tests/db/ai-feedback-persistence.dbtest.ts
+[database] Database connection successful
+
+{"level":20,"time":"2026-10-14T21:04:32.862Z","pid":75511,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792011872857_5c9c7f0c61b7cde6","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-true-opaque'; DROP TABLE ai_feedback; --"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-14T21:04:32.897Z","pid":75511,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792011872894_7322836949179d74","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-false-opaque'; DROP TABLE ai_feedback; --"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-14T21:04:33.105Z","pid":75511,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792011873103_5199fa5c9a779579","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-foreign"},"msg":"[concept2cure-api] Audit entry persisted"}
+stdout | tests/db/ai-feedback-persistence.dbtest.ts > native AI feedback persistence and audit outcomes > keeps foreign feedback private and refuses forged tenant membership and actual cross-tenant INSERT
+[database] Database connection successful { timestamp: '2026-10-14T21:04:33.129Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-14T21:04:33.175Z","pid":75511,"hostname":"a5f657cec57d","context":{"code":"42501","outcome":"refused"},"msg":"[concept2cure-context-intelligence] Feedback persistence could not be confirmed"}
+{"level":20,"time":"2026-10-14T21:04:33.203Z","pid":75511,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792011873196_8362967deca96b5a","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-business-refusal"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":40,"time":"2026-10-14T21:04:33.223Z","pid":75511,"hostname":"a5f657cec57d","context":{"code":"ECONNRESET","outcome":"unconfirmed"},"msg":"[concept2cure-context-intelligence] Feedback persistence could not be confirmed"}
+{"level":20,"time":"2026-10-14T21:04:33.245Z","pid":75511,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792011873243_baf28618f7a1ccab","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-after-completion-loss"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":50,"time":"2026-10-14T21:04:33.265Z","pid":75511,"hostname":"a5f657cec57d","context":{"error":"Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792011873263_62c2c6b764e7fbb6,94910,ai_response,synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-audit-refusal,FEEDBACK,system,,{\"positive\":true},93,unknown,member,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"96956e9689e827ef1786c004b5a3634a6fe061ab6244db235a80b3d4ba296c6a\"}","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-audit-refusal"},"msg":"[concept2cure-api] Failed to persist audit entry"}
+{"level":20,"time":"2026-10-14T21:04:33.310Z","pid":75511,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792011873308_b037e0f0d0f9fe0b","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-9bc8ec3f-12ea-4852-8831-4a3031391e00-audit-recovery"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/ai-feedback-persistence.dbtest.ts (7 tests) 1520ms
+{"level":30,"time":"2026-10-14T21:04:34.267Z","pid":75555,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:34.268Z","pid":75555,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:34.268Z","pid":75555,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:34.386Z', poolSize: 1 }
+
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:34.421Z', poolSize: 2 }
+
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts > native BLA and IVD saved work survives refresh without a privileged reader > saves and refreshes BLA, IVD assessments and generated draft documents through actual authenticated HTTP
+[database] Database connection successful { timestamp: '2026-10-14T21:04:35.329Z', poolSize: 3 }
+
+ ✓ tests/db/bla-ivd-request-connection.dbtest.ts (5 tests) 1438ms
+{"level":30,"time":"2026-10-14T21:04:36.378Z","pid":75609,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:36.380Z","pid":75609,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:36.380Z","pid":75609,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > uses genuine authenticated pinned app_service scope, not owner or a mocked database
+[database] Database connection successful { timestamp: '2026-10-14T21:04:36.509Z', poolSize: 1 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > uses genuine authenticated pinned app_service scope, not owner or a mocked database
+[database] Database connection successful
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > uses genuine authenticated pinned app_service scope, not owner or a mocked database
+[database] Database connection successful { timestamp: '2026-10-14T21:04:36.513Z', poolSize: 2 }
+
+ ✓ server/routes/__tests__/defense-shadow-binding.dbtest.ts (12 tests) 823ms
+{"level":40,"time":"2026-10-14T21:04:38.190Z","pid":75665,"hostname":"a5f657cec57d","context":{"op":"pool.query","caller":"server/routes/__tests__/notification-request-binding.dbtest.ts:128:76","queryPreview":"SELECT n.*, COALESCE(receipt.read_at, CASE WHEN n.recipient_user_id IS NOT NULL THEN n.read_at END) AS read_at, receipt.archived_at AS archived_at FROM mdx_n...","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":50,"time":"2026-10-14T21:04:38.330Z","pid":75665,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-notifications] list failed"}
+{"level":50,"time":"2026-10-14T21:04:38.332Z","pid":75665,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-notifications] sub-list failed"}
+ ✓ server/routes/__tests__/notification-request-binding.dbtest.ts (19 tests) 665ms
+{"level":30,"time":"2026-10-14T21:04:39.291Z","pid":75708,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:39.292Z","pid":75708,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:39.292Z","pid":75708,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-label-matrix.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:04:39.420Z', poolSize: 1 }
+
+stdout | tests/db/report-label-matrix.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/report-label-matrix.dbtest.ts (5 tests) 466ms
+{"level":30,"time":"2026-10-14T21:04:41.364Z","pid":75752,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:04:41.365Z","pid":75752,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:04:41.365Z","pid":75752,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-14T21:04:41.439Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":421,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-4d8bd11a-f2a-healthy document"}
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > actual mandatory device RLS refusal precedes either ancillary mirror attempt
+Error creating audit trail: DrizzleQueryError: Failed query: insert into "device_audit_trail" ("id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default, default, default, default, default) returning "id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at"
+params: 98980,document,71,synthetic-part11-receipt-4d8bd11a-f2a-primary-refused,,,,,421,Synthetic current member,member,,,
+    at NodePgPreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+    ... 2 lines matching cause stack trace ...
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  query: 'insert into "device_audit_trail" ("id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default, default, default, default, default) returning "id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at"',
+  params: [
+    98980,
+    'document',
+    71,
+    'synthetic-part11-receipt-4d8bd11a-f2a-primary-refused',
+    null,
+    null,
+    null,
+    null,
+    421,
+    'Synthetic current member',
+    'member',
+    null,
+    null,
+    null
+  ],
+  cause: error: new row violates row-level security policy for table "device_audit_trail"
+      at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at runQueryScoped (/workspace/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:211:21)
+      at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:70:14)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:124:18
+      at NodePgPreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+      at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:405:26)
+      at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:166:5
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+    length: 141,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'execMain.c',
+    line: '2198',
+    routine: 'ExecWithCheckOptions'
+  }
+}
+
+{"level":30,"time":"2026-10-14T21:04:41.485Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":421,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-4d8bd11a-f2a-mirror-refused document"}
+{"level":50,"time":"2026-10-14T21:04:41.489Z","pid":75752,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:70:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:170:70\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":40,"time":"2026-10-14T21:04:41.496Z","pid":75752,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-4d8bd11a-f2a-mirror-refused","resourceType":"document","resourceId":"71"},"msg":"[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist"}
+{"level":30,"time":"2026-10-14T21:04:41.504Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":421,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-4d8bd11a-f2a-both-refused document"}
+{"level":50,"time":"2026-10-14T21:04:41.508Z","pid":75752,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:70:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:175:66\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:41.509Z","pid":75752,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98981 was requested inside tenant 98980's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98981 was requested inside tenant 98980's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at TamperProofAuditLog.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:116:22)\n    at TamperProofAuditLog.log (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:175:66"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:41.509Z","pid":75752,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-4d8bd11a-f2a-both-refused","resourceType":"document","resourceId":"71","reason":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:41.514Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":421,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-4d8bd11a-f2a-recovered document"}
+{"level":50,"time":"2026-10-14T21:04:41.525Z","pid":75752,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-4d8bd11a-f2a-throw","resourceType":"document","resourceId":71,"reason":"Private native injected mirror failure"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:41.528Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":421,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-4d8bd11a-f2a-throw-recovery document"}
+{"level":40,"time":"2026-10-14T21:04:41.545Z","pid":75752,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-4d8bd11a-f2a-unconfirmed-postcommit","resourceType":"organization","resourceId":98980,"code":null},"msg":"[audit-write-outcome] Request-scoped post-commit audit unavailable"}
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"userId":"7"}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:83:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"entityId":"organization"}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:83:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"entityId":null}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:83:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"organizationId":0}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:83:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"userId":-1}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:83:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"entityId":null}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:83:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:210:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+{"level":30,"time":"2026-10-14T21:04:41.569Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":422,"tenantId":98980,"resourceId":"98980"},"msg":"[audit-service] [AUDIT] ACCESS_DENIED organization"}
+{"level":50,"time":"2026-10-14T21:04:41.576Z","pid":75752,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:70:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:520:25)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:219:31\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:41.577Z","pid":75752,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98981 was requested inside tenant 98980's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98981 was requested inside tenant 98980's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at TamperProofAuditLog.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:116:22)\n    at TamperProofAuditLog.log (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:520:25)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:41.577Z","pid":75752,"hostname":"a5f657cec57d","context":{"action":"ACCESS_DENIED","resourceType":"organization","resourceId":"98980","reason":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > revoked and inactive membership fails closed and a restored current member recovers
+Error checking access control: CsrScopeError: The CSR actor is no longer an active member of this organization.
+    at readCsrProjectActor (/workspace/ClinicalSageAI-2-replit/server/services/csr/project-scope.ts:33:94)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:491:21)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:226:16
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  code: 'CSR_PROJECT_ACCESS_DENIED',
+  status: 403
+}
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > revoked and inactive membership fails closed and a restored current member recovers
+Error checking access control: CsrScopeError: The CSR actor is no longer an active member of this organization.
+    at readCsrProjectActor (/workspace/ClinicalSageAI-2-replit/server/services/csr/project-scope.ts:33:94)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:491:21)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:229:16
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  code: 'CSR_PROJECT_ACCESS_DENIED',
+  status: 403
+}
+
+{"level":30,"time":"2026-10-14T21:04:41.598Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":0,"tenantId":98980,"resourceId":"24"},"msg":"[audit-service] [AUDIT] INTEGRITY_CHECK submission"}
+{"level":50,"time":"2026-10-14T21:04:41.601Z","pid":75752,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:70:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.verifyDataIntegrity (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:585:23)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:235:31\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:04:41.601Z","pid":75752,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98981 was requested inside tenant 98980's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98981 was requested inside tenant 98980's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at TamperProofAuditLog.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:116:22)\n    at TamperProofAuditLog.log (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.verifyDataIntegrity (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:585:23)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:04:41.602Z","pid":75752,"hostname":"a5f657cec57d","context":{"action":"INTEGRITY_CHECK","resourceType":"submission","resourceId":"24","reason":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:04:41.605Z","pid":75752,"hostname":"a5f657cec57d","context":{"userId":0,"tenantId":98981,"resourceId":"98981"},"msg":"[audit-service] [AUDIT] SYSTEM_VALIDATION_REPORT organization"}
+ ✓ tests/db/part11-audit-receipts.dbtest.ts (18 tests) 340ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > verifies the real tenant audit chain and HMAC seals after successful, refused and uncertain operations
+AssertionError: expected { valid: false, brokenAt: +0 } to match object { valid: true }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "valid": true,
++   "valid": false,
+  }
+
+ ❯ tests/db/capa-governed-transactions.dbtest.ts:371:65
+    369|       const { verifyAuditChain, verifyAuditChainSeals } = await import…
+    370|       expect(await verifyAuditChain(q, { tenantId: ORG })).toMatchObje…
+    371|       expect(await verifyAuditChainSeals(q, { tenantId: ORG })).toMatc…
+       |                                                                 ^
+    372|     } finally { q.release(); }
+    373|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 17 passed (18)
+      Tests  1 failed | 253 passed (254)
+   Start at  21:03:49
+   Duration  51.96s (transform 8.46s, setup 393ms, import 11.70s, tests 37.84s, environment 1ms)
+
+JSON report written to /workspace/audit/wave3-integrated-native-db.json

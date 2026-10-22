@@ -26,6 +26,10 @@
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
+    "ctdPrograms": {
+      "readerCount": 1,
+      "reason": "An empty read is correct here (2026-10-15). Nothing in server/ inserts ctd_programs rows: migrations/0005_csr_knowledge_database.sql creates the table and preclinical-ingest-service writes nonclinical studies under a program id that must already exist. The one reader, preclinical/nonclinical-program-loader.ts, checks the program by id and organization first and refuses with CTD_PROGRAM_NOT_FOUND (422 on the routes, a refusal in AnA) when it is absent, so no reader presents an empty set as 'no studies'. Giving programs a creation path is a product decision, not a session's."
+    },
     "ctqFactors": {
       "readerCount": 4,
       "reason": "Adjudicated 2026-09-23, revised 2026-09-28 (D5). No API writer has ever saved a row: the create, update and batch routes handed their values to a Drizzle insert/update that never executed, and the section-gating POST failed on the real DDL. They answer 501 NOT_AVAILABLE (RULE 2: refused, not built out; qms-subrouters-governed.test.ts). The only remaining write is the governed DELETE. An empty read is answered correctly: lists return []; the plan dashboard (read by QmpWorkspace) reports completeness and risk shares as null, not assessed, never 0%; and a section is assessed only when an active factor with criteria was checked, so a rule naming no factor, a retired one, one without criteria or one that does not exist is not assessed rather than passed (server/services/qms/quality-gating-verdict.ts; quality-gating-not-assessed.pglite.integration.test.ts)."
@@ -33,10 +37,6 @@
     "dataLineageTracking": {
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
-    },
-    "defensePackets": {
-      "readerCount": 3,
-      "reason": "NOT ADJUDICATED \u2014 surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
     },
     "deviceProfiles": {
       "readerCount": 1,
@@ -78,13 +78,13 @@
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
+    "propensityModels": {
+      "readerCount": 1,
+      "reason": "An empty read is correct here (2026-10-15). The only writer, fitPropensityModel(), had no route or caller and fitted pseudo-patients simulated from arm means plus random jitter; it was deleted in 0c3e53fc5 (D2). The service holds arm-level summaries, not patient-level data, so it cannot fit a model, and giving the table a writer would be a feature, not a repair. The one reader file, external-control-arm-service.ts, states the absence wherever it reads: validateControl reports overlapAssessment null, with 'No propensity model has been fitted ... overlap was not assessed' in notAssessed, and no verdict; generateRegulatoryPackage's methods text for propensity_score says 'NO propensity model has been fitted' and its limitations call the estimates UNADJUSTED; getControl returns the recorded rows, an empty list, never a default model (external-control-arm-reports-only-what-it-computed.test.ts, external-control-arm-claims.test.ts)."
+    },
     "protocols": {
       "readerCount": 2,
       "reason": "ADJUDICATED 2026-09-05 (ledger L167): `protocols` has NO insert anywhere in the repo \u2014 not in server code, not in migrations, not even a seed \u2014 so it is empty on every deployment. Its one UPDATE (protocol-analyzer-service.ts:422) writes an embedding cache onto a row it just read, so it is empty-by-construction rather than an independent writer. Two consumers: findSimilarProtocols, which therefore always returns [], and strategic-report-generator, which has no callers and already fails closed ('Protocol not found'). The empty read is NOT correct \u2014 but the harm sits in the consumer, not here: POST /api/analytics/demo-analysis renders the always-zero count into a wisdom_trace 'Evidence Base' as \"Compared against database of 0 similar protocols\". See L167 for that and for the gate hole around it."
-    },
-    "qmpSectionGating": {
-      "readerCount": 3,
-      "reason": "Adjudicated 2026-09-23, revised 2026-09-28 (D5). No API writer has ever saved a row: the gating-rule update never executed, and the section-gating POST failed on the real DDL. Both answer 501 NOT_AVAILABLE (RULE 2: refused, not built out; qms-subrouters-governed.test.ts). An empty read is answered correctly: a section no rule covers is valid: null, assessed: false, never passed; a batch is valid only when every section was assessed and none failed; the dashboard counts zero gated sections; validate-section answers 404 for a plan the caller's organization does not have (quality-gating-not-assessed.pglite.integration.test.ts)."
     },
     "qSubCommitments": {
       "readerCount": 4,
@@ -101,6 +101,10 @@
     "qSubTimelineEntries": {
       "readerCount": 2,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+    },
+    "qmpSectionGating": {
+      "readerCount": 3,
+      "reason": "Adjudicated 2026-09-23, revised 2026-09-28 (D5). No API writer has ever saved a row: the gating-rule update never executed, and the section-gating POST failed on the real DDL. Both answer 501 NOT_AVAILABLE (RULE 2: refused, not built out; qms-subrouters-governed.test.ts). An empty read is answered correctly: a section no rule covers is valid: null, assessed: false, never passed; a batch is valid only when every section was assessed and none failed; the dashboard counts zero gated sections; validate-section answers 404 for a plan the caller's organization does not have (quality-gating-not-assessed.pglite.integration.test.ts)."
     },
     "regulatoryObligations": {
       "readerCount": 1,

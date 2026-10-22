@@ -1,138 +1,220 @@
 /**
- * What an eCTD package names as its APPLICANT and its APPLICATION, read from
- * the record only — the one reader every path that builds a package from a
- * submission uses: the export / inspection copy (assembleSubmissionEctd), the
- * eCTD compile, and the sequence transmit (submission-service transmitSequence).
- *
- * ── Why (QA 2026-10-08, j6) ──────────────────────────────────────────────────
- * The inspection copy of PLR-606 sequence 0000 carried
- *   <company-name>UNASSIGNED (organization 1)</company-name>
- * although the organisation record says Concept2Cure Therapeutics (the sponsor
- * of record, as Form FDA 1571 names it), and
- *   <application-number>PLR-606</application-number>
- * which is the program's own code, not a number FDA assigned. The sequence
- * transmit sent no sponsor name, so a transmitted package would have carried
- * the placeholder too. Each path filled the gap its own way
- * (recordedApplicationId fell back to the program code, then to
- * UNASSIGNED-SEQ-<id>; the applicant fell back to UNASSIGNED (organization N)).
- *
- * The rule now, in one place:
- *   - the applicant is `organizations.name`, the sponsor of record in this data
- *     model, held to the backbone's applicant-name contract (usableIdentifier);
- *   - the application number is `regulatory_programs.application_number` of the
- *     submission's project, and nothing else — never the program code;
- *   - with either missing, the package is refused by name
- *     (PackageIdentityMissingError). A regulated package never carries a
- *     placeholder for either.
- *
- * The applicant's <id> (D-U-N-S) has no recorded home on the sequence path yet;
- * it is out of this rule and reported as a decision (docs/evidence/QA-2026-10-08/
- * submission-center-3/README.md). The package spine (submission-ops) records
- * all three identifiers on the package and refuses on REGULATORY-IDENTIFIER-MISSING.
- *
- * Reads through an injected pg-style `query`, so a route on the pool and a
- * service on Drizzle (queryableFromDrizzle) ask the same two questions.
- *
- * @module server/services/ectd/package-identity
+ * The canonical recorded application and applicant identity for sequence
+ * compile, export, transmit and orchestrator runs. DUNS/contact facts live once
+ * in ind_sponsors; regulatory_programs explicitly selects that sponsor.
+ * A bound registry name is authoritative. Only an unbound legacy read uses
+ * organizations.name. FDA packages require the binding and complete facts;
+ * dry-run placeholders are minted only by dryRunPackageIdentity below.
  */
-import { usableIdentifier } from './regulatory-identifiers';
+import {
+  fdaIdentifierProblems,
+  sameRegulatoryContact,
+  usableContactField,
+  usableIdentifier,
+  type RegulatoryContactValues,
+} from './regulatory-identifiers';
+import type { FdaApplicantContact } from '../submission-gateways/ectd-packager/types';
 
 export interface PackageIdentityQueryable {
   query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
 }
 
 export interface RecordedPackageIdentity {
-  /** The submission's project; null when the submission is anchored to none. */
   programId: string | null;
-  /** regulatory_programs.application_number, when the project records a usable one. */
   applicationNumber: string | null;
-  /** organizations.name, when usable as the backbone's applicant name. */
+  /** The explicit ind_sponsors record, distinct from its packaged DUNS. */
+  applicantSponsorId: string | null;
   applicantName: string | null;
+  /** FDA DUNS only; never reinterpret it as an EMA/PMDA identifier. */
+  applicantId: string | null;
+  contact: RegulatoryContactValues;
 }
 
-export type PackageIdentityField = 'applicationNumber' | 'applicantName';
+/** Versioned captured facts carried by the existing governed package binding. */
+export interface RecordedPackageIdentitySnapshot {
+  version: 1;
+  identity: RecordedPackageIdentity;
+}
 
-/** A package refused because the record does not name its application or its applicant. */
+export type PackageIdentityField =
+  | 'applicationNumber' | 'applicantName' | 'applicantSponsorId' | 'applicantId'
+  | 'contact' | 'contact.name' | 'contact.phone' | 'contact.email';
+
 export class PackageIdentityMissingError extends Error {
   readonly code = 'PACKAGE_IDENTITY_MISSING' as const;
-  constructor(
-    readonly missing: PackageIdentityField[],
-    message: string,
-  ) {
+  constructor(readonly missing: PackageIdentityField[], message: string) {
     super(message);
     this.name = 'PackageIdentityMissingError';
   }
 }
 
-/** The organisation's name and the project's application number, as recorded. */
+/** Capture known fields by value, without retaining a mutable contact reference. */
+export function recordedPackageIdentitySnapshot(identity: RecordedPackageIdentity): RecordedPackageIdentitySnapshot {
+  return {
+    version: 1,
+    identity: {
+      programId: identity.programId ?? null,
+      applicationNumber: identity.applicationNumber ?? null,
+      applicantSponsorId: identity.applicantSponsorId ?? null,
+      applicantName: identity.applicantName ?? null,
+      applicantId: identity.applicantId ?? null,
+      contact: {
+        name: identity.contact?.name ?? null,
+        phone: identity.contact?.phone ?? null,
+        email: identity.contact?.email ?? null,
+      },
+    },
+  };
+}
+
+/** Intact historical snapshots without identity proof do not cover FDA identity. */
+export function sameRecordedPackageIdentitySnapshot(
+  a: RecordedPackageIdentitySnapshot | null | undefined,
+  b: RecordedPackageIdentitySnapshot | null | undefined,
+): boolean {
+  if (a?.version !== 1 || b?.version !== 1 || !a.identity || !b.identity) return false;
+  const fields = ['programId', 'applicationNumber', 'applicantSponsorId', 'applicantName', 'applicantId'] as const;
+  const isValue = (v: unknown) => v === null || typeof v === 'string';
+  if (!fields.every((field) => isValue(a.identity[field]) && isValue(b.identity[field]) && a.identity[field] === b.identity[field])) return false;
+  const ac = a.identity.contact;
+  const bc = b.identity.contact;
+  if (!ac || !bc || !['name', 'phone', 'email'].every((field) =>
+    isValue(ac[field as keyof RegulatoryContactValues]) && isValue(bc[field as keyof RegulatoryContactValues]))) return false;
+  return sameRegulatoryContact(ac, bc);
+}
+
+/** Map the existing registry's regulatory contact into the existing FDA shape. */
+export function fdaContactsForPackageIdentity(identity: RecordedPackageIdentity): FdaApplicantContact[] {
+  const { name, phone, email } = identity.contact ?? {};
+  return name && phone && email ? [{ type: 'regulatory', name, phone, email }] : [];
+}
+
+interface IdentityRow {
+  organization_name?: unknown;
+  application_number?: unknown;
+  applicant_sponsor_id?: unknown;
+  sponsor_id?: unknown;
+  sponsor_name?: unknown;
+  duns?: unknown;
+  contact_name?: unknown;
+  contact_phone?: unknown;
+  contact_email?: unknown;
+}
+
+/** One statement sees program, organization and same-tenant sponsor together. */
 export async function readRecordedPackageIdentity(
   q: PackageIdentityQueryable,
   organizationId: number,
   programId: string | null | undefined,
 ): Promise<RecordedPackageIdentity> {
-  const org = (await q.query(`SELECT name FROM organizations WHERE id = $1 LIMIT 1`, [organizationId])).rows[0] as
-    | { name?: unknown }
-    | undefined;
-  const program = programId
-    ? ((
-        await q.query(
-          `SELECT application_number FROM regulatory_programs
-            WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-          [programId, organizationId],
-        )
-      ).rows[0] as { application_number?: unknown } | undefined)
-    : undefined;
+  const row = (await q.query(
+    `SELECT o.name AS organization_name, p.application_number, p.applicant_sponsor_id,
+            s.id AS sponsor_id, s.name AS sponsor_name, s.duns,
+            s.contact_name, s.contact_phone, s.contact_email
+       FROM organizations o
+       LEFT JOIN regulatory_programs p
+         ON p.id = $2::uuid AND p.organization_id = o.id AND p.deleted_at IS NULL
+       LEFT JOIN ind_sponsors s
+         ON s.id = p.applicant_sponsor_id AND s.organization_id = p.organization_id
+      WHERE o.id = $1 LIMIT 1`,
+    [organizationId, programId ?? null],
+  )).rows[0] as IdentityRow | undefined;
+  return identityFromRow(row ?? {}, programId ?? null);
+}
+
+function identityFromRow(row: IdentityRow, programId: string | null): RecordedPackageIdentity {
+  const applicantSponsorId = typeof row.applicant_sponsor_id === 'string' ? row.applicant_sponsor_id : null;
+  // A missing/foreign explicit sponsor is a missing applicant, never the org.
+  const bound = applicantSponsorId !== null && row.sponsor_id === applicantSponsorId;
   return {
-    programId: programId ?? null,
-    applicationNumber: usableIdentifier('applicationNumber', program?.application_number ?? null),
-    applicantName: usableIdentifier('applicantName', org?.name ?? null),
+    programId,
+    applicationNumber: usableIdentifier('applicationNumber', row.application_number),
+    applicantSponsorId,
+    applicantName: usableIdentifier('applicantName', applicantSponsorId === null ? row.organization_name : bound ? row.sponsor_name : null),
+    applicantId: bound ? usableIdentifier('applicantId', row.duns) : null,
+    contact: {
+      name: bound ? usableContactField('name', row.contact_name) : null,
+      phone: bound ? usableContactField('phone', row.contact_phone) : null,
+      email: bound ? usableContactField('email', row.contact_email) : null,
+    },
   };
 }
 
 /**
- * The refusal naming what the record lacks, or null when the package can name
- * both. `outcome` closes the sentence in the caller's terms ("Nothing was
- * built.", "Nothing was sent.").
+ * Called inside the caller's transaction after its sequence lock. Lock program
+ * before sponsor, matching the binding writer; never hold these across network
+ * transmission. A missing record is judged by the canonical reader/refusal.
  */
-export function packageIdentityRefusal(identity: RecordedPackageIdentity, outcome: string): PackageIdentityMissingError | null {
+export async function lockRecordedPackageIdentity(
+  q: PackageIdentityQueryable,
+  organizationId: number,
+  programId: string | null | undefined,
+): Promise<void> {
+  if (!programId) return;
+  const row = (await q.query(
+    `SELECT applicant_sponsor_id FROM regulatory_programs
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE`,
+    [programId, organizationId],
+  )).rows[0] as { applicant_sponsor_id?: unknown } | undefined;
+  if (typeof row?.applicant_sponsor_id !== 'string') return;
+  await q.query(`SELECT id FROM ind_sponsors WHERE id = $1 AND organization_id = $2 FOR SHARE`,
+    [row.applicant_sponsor_id, organizationId]);
+}
+
+type LegacyReadableIdentity = Pick<RecordedPackageIdentity, 'programId' | 'applicationNumber' | 'applicantName'> &
+  Partial<Pick<RecordedPackageIdentity, 'applicantSponsorId' | 'applicantId' | 'contact'>>;
+
+/** Named actionable gaps, using the existing FDA identifier/contact rules. */
+export function packageIdentityRefusal(
+  identity: LegacyReadableIdentity,
+  outcome: string,
+  options: { fda?: boolean } = {},
+): PackageIdentityMissingError | null {
   const missing: PackageIdentityField[] = [];
   const gaps: string[] = [];
   if (!identity.applicationNumber) {
     missing.push('applicationNumber');
-    gaps.push(
-      identity.programId
-        ? 'its project records no agency application number (record the number the agency assigned on the project; the program code is not one)'
-        : 'the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)',
-    );
+    gaps.push(identity.programId
+      ? 'its project records no agency application number (record the number the agency assigned on the project; the program code is not one)'
+      : 'the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)');
   }
   if (!identity.applicantName) {
     missing.push('applicantName');
-    gaps.push("the organization's record has no usable name to give as the applicant");
+    gaps.push(identity.applicantSponsorId
+      ? 'the bound sponsor record has no usable applicant name in this organization'
+      : "the organization's record has no usable name to give as the applicant");
   }
-  if (missing.length === 0) return null;
-  return new PackageIdentityMissingError(
-    missing,
-    `A package names its application and its applicant from the record, never a placeholder, and ${gaps.join('; and ')}. ${outcome}`,
-  );
+  if (options.fda) {
+    if (!identity.applicantSponsorId) {
+      missing.push('applicantSponsorId');
+      gaps.push('its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms)');
+    }
+    if (!identity.applicantId) {
+      missing.push('applicantId');
+      gaps.push('the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry)');
+    }
+    for (const problem of fdaIdentifierProblems({
+      applicationNumber: identity.applicationNumber, applicantId: identity.applicantId,
+      contact: identity.contact,
+    })) {
+      for (const field of problem.fields) if (!missing.includes(field as PackageIdentityField)) missing.push(field as PackageIdentityField);
+      gaps.push(problem.message);
+    }
+  }
+  return missing.length ? new PackageIdentityMissingError(missing,
+    `A package names its application and its applicant from the record, never a placeholder, and ${gaps.join('; and ')}. ${outcome}`) : null;
 }
 
-/**
- * The project a submission is anchored to, then its recorded identity — for a
- * caller that holds a submission id rather than a project (the package
- * orchestrator). An unknown or foreign submission reads as anchored to none, so
- * its refusal names the missing application number.
- */
+/** Resolve the submission's same-tenant program before reading recorded facts. */
 export async function readSubmissionPackageIdentity(
   q: PackageIdentityQueryable,
   organizationId: number,
   submissionId: number,
 ): Promise<RecordedPackageIdentity> {
-  const row = (
-    await q.query(
-      `SELECT program_id FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [submissionId, organizationId],
-    )
-  ).rows[0] as { program_id?: unknown } | undefined;
+  const row = (await q.query(
+    `SELECT program_id FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [submissionId, organizationId],
+  )).rows[0] as { program_id?: unknown } | undefined;
   const programId = typeof row?.program_id === 'string' && row.program_id ? row.program_id : null;
   return readRecordedPackageIdentity(q, organizationId, programId);
 }

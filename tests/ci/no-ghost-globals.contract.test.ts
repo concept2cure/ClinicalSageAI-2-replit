@@ -226,10 +226,15 @@ describe('the "Open in editor" buttons hand off through the governed store', () 
    * a mocked transport, which is a stronger check than any source scan.
    */
   const HANDOFF = 'client/src/concept2cure/v2/authoringHandoff.ts';
+  /* CmcModule.tsx left this list on 2026-10-19: its one sender was the agency
+     question's "Draft response", deleted when agency questions converged onto
+     the letter (P-38, P-39 item 1; a response is written and approved on its
+     letter, AgencyResponses.tsx). CMC's editor sender is now the control
+     strategy's (CmcQuality.tsx), held to the same two rules here. */
   const senders = [
     'client/src/concept2cure/v2/surfaces/Biostatistics.tsx',
     'client/src/concept2cure/v2/surfaces/ReportEngine.tsx',
-    'client/src/concept2cure/v2/surfaces/CmcModule.tsx',
+    'client/src/concept2cure/v2/surfaces/CmcQuality.tsx',
   ];
 
   it('the shared handoff POSTs a document and a section', () => {

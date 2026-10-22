@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-10-17T23:51:18.651Z",
+  "node": "v22.23.3",
+  "esbuild": "0.28.1",
+  "entry": "shared/ai/finish-reason.ts",
+  "platform": "browser",
+  "format": "esm",
+  "target": "es2022",
+  "before": {
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691",
+    "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/run-browser-check.mjs": "3bb1fc485c87d331e85d6396dedeb68edd99f66f4625cea4b632a7d9e53a69c2"
+  },
+  "scope": "Only the canonical shared classifier is browser bundled. Actual component shared alias is exercised by canonical Vitest. This is not a full client build or deployment.",
+  "baselineHelperSha256": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+  "sharedImplementationByteIdenticalToBaseline": true,
+  "finishedAt": "2026-10-17T23:51:18.667Z",
+  "after": {
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691",
+    "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/run-browser-check.mjs": "3bb1fc485c87d331e85d6396dedeb68edd99f66f4625cea4b632a7d9e53a69c2"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "bundleSha256": "723e55e4bccf78007f3a94a1e8f486ea1a5d385e314f2e5ac755b6134b04a925",
+  "imports": [],
+  "exports": [
+    "TRUNCATING_FINISH_REASONS",
+    "isTruncated",
+    "isVerifiedComplete"
+  ],
+  "exitCode": 0
+}

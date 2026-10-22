@@ -1,0 +1,21 @@
+# GREEN at 28637579e + this change (2026-10-21T23:51:51Z)
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > lists the estate only inside the existing audited system lease
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > claims and reviews each plan with the same least-privilege tenant client
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > binds schedule, organization, project and the unchanged claim window
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > does no listing or tenant work when another process holds the lease
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > skips the review when the guarded claim loses inside the review window
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > a stale listing with the wrong 'organization' cannot claim the real schedule
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant admission > a stale listing with the wrong 'project' cannot claim the real schedule
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant lifecycle > does not claim or review a schedule whose tenant may not run background work
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant lifecycle > reviews nothing when entitlement cannot be read, and says so
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep tenant lifecycle > does no tenant work when no tenant is entitled
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > reports a listing failure as an error and never logs its private payload
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > does not stamp or review an inactive project parent
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > does not stamp or review an inactive organization parent
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > lets an unknown-commit failure reach the tenant wrapper for eviction and continues other plans
+ ✓ server/jobs/__tests__/scheduleOfEventsSweep.test.ts > schedule sweep failed and inactive work > counts a refused review as an error instead of implying a successful review
+ Test Files  9 passed (9)
+      Tests  105 passed (105)
+
+[ci:tenant-entry-points] 13 entry point(s); 7 consider tenant entitlement, 6 do not (baseline 6)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.

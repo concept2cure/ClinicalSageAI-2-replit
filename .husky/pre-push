@@ -157,6 +157,28 @@ if ! npm run --silent ci:migration-guard-order:selftest >/dev/null 2>&1 || ! npm
 fi
 echo "   ✅ Migration apply-order passed."
 
+# The two appliers read DIFFERENT file lists, and only one of them is exercised
+# by a fresh install. install-fresh's step-3 overlay reads <repo>/migrations and
+# never walks db/migrations/, so a root-tree file that FKs or ALTERs a table only
+# db/migrations/ creates defers on every pass and the installer reports
+# INCOMPLETE — while deploy-migrate, which applies the whole set, stays green and
+# hides it. That has cost five outages: three found by the 2026-07-30 blank-DB
+# audit, ana_runs on 2026-10-09, and 20261018b_agency_response_questions.sql on
+# 2026-10-19, which failed step 8 of Tier 5 Browser Smoke — a required
+# release-evidence job whose logs could not even be fetched to diagnose it.
+echo "   Validating the fresh-install overlay can reach what it depends on..."
+if ! npm run --silent ci:install-fresh-overlay-deps:selftest >/dev/null 2>&1 || ! npm run --silent ci:install-fresh-overlay-deps 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a root-tree migration depends on a table only db/migrations/ creates."
+  echo "   install-fresh's overlay never walks that tree, so this cannot apply on a"
+  echo "   fresh install and blank-db provisioning + Tier 5 will fail while the deploy"
+  echo "   path stays green. Add the creator to PRE_OVERLAY_CREATORS in"
+  echo "   scripts/db/install-fresh.mjs with a dated note saying which file needed it."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Fresh-install overlay dependencies reachable."
+
 # The sibling hazard to apply-order, and the same shape of invisible: the
 # applier re-executes EVERY file on every deploy (scripts/db/migration-set.mjs
 # applyMigrationFiles — no skip branch; the journal records a drift status the
@@ -341,8 +363,8 @@ if ! npm run --silent ci:session-scoped-rls-bypass 2>&1; then
   echo ""
   echo "🚫 ERROR: Session-scoped RLS bypass check FAILED."
   echo "   Use 'SET LOCAL app.bypass_rls' inside an explicit transaction so"
-  echo "   Postgres discards it at COMMIT/ROLLBACK, as guardQuery() does in"
-  echo "   server/routes/innovation-routes.ts."
+  echo "   Postgres discards it at COMMIT/ROLLBACK, or release the connection with"
+  echo "   releaseWithoutBypass() (server/services/innovation/rlsBypassSession.ts)."
   echo ""
   exit 1
 fi
@@ -522,6 +544,29 @@ echo "   ✅ One source for the client address."
 # protocol finalize and review-disposition routes, and an AnA tool, wrote such
 # rows with no password re-entry and no electronic_signatures row. The baseline
 # caps the remaining sites per file, each with a written reason; never grow it.
+# P-29.2: a seal, and anything built from the filing, must ask whether the
+# filing still holds this document's text. The selftest runs FIRST — the gate's
+# value is in a branch that does not fire on a healthy tree, and round 16
+# shipped the check at the freeze while /e-sign as APPROVER passed no check at
+# all, with every test green. The baseline caps the remaining doors per file,
+# each with a written reason; never grow it.
+echo "   Checking the filing-exit agreement gate catches what it must..."
+if ! npm run --silent ci:filing-exit-agreement:selftest 2>&1; then
+  echo ""
+  echo "🚫 ERROR: the filing-exit agreement gate does not fail on the shapes it exists to catch."
+  echo "   Fix scripts/ci/check-filing-exit-agreement.mjs, not the selftest."
+  exit 1
+fi
+echo "   ✅ The filing-exit gate fails on what it must."
+echo "   Checking that every seal asks whether the filing holds this document's text..."
+if ! npm run --silent ci:filing-exit-agreement 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a seal, or a package built from the filing, that never asks the agreement question."
+  echo "   Call filingAgreesWithEditing on the sealing transaction and refuse on the"
+  echo "   diverged-and-different subset -- see P-29.2 in docs/EXIT_ATTESTATION_DECISION_2026-10-18.md."
+  exit 1
+fi
+echo "   ✅ Every seal asks the filing-agreement question."
 echo "   Checking that every sign ledger row comes from a signature ceremony..."
 if ! npm run --silent ci:sign-ceremony 2>&1; then
   echo ""

@@ -1,0 +1,10 @@
+#!/bin/bash
+# run.sh <port> <label> : start the production-header server, drive Chromium at it, stop the server.
+cd "$(dirname "$0")"
+REPO=/home/user/ClinicalSageAI-2-replit NODE_ENV=production /home/user/ClinicalSageAI-2-replit/node_modules/.bin/tsx serve.mts "$1" > "serve-$2.log" 2>&1 &
+SP=$!
+for i in $(seq 1 60); do grep -qE "listening|Error" "serve-$2.log" 2>/dev/null && break; sleep 1; done
+timeout 90 node drive-pw.cjs "http://127.0.0.1:$1/${3:-}" "$2" > "$2.txt" 2>&1
+kill "$SP" 2>/dev/null
+wait "$SP" 2>/dev/null
+cat "$2.txt"

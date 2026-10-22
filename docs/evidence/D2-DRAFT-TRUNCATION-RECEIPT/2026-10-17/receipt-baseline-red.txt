@@ -1,0 +1,413 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens despite a contradictory false flag 12ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length despite a contradictory false flag 4ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout despite a contradictory false flag 2ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens when the flag is absent 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length when the flag is absent 2ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout when the flag is absent 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason max_tokens 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason length 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason chunk_timeout 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > uses the canonical classifier for a whitespace-padded finish reason 3ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason undefined 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason null 2ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason unknown 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason provider_future_stop 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason end_turn 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason stop 1ms
+   → expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason end_turn 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason provider_future_stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason null 0ms
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason end_turn and normalizes an absent truncation flag 1ms
+   → expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason stop and normalizes an absent truncation flag 0ms
+   → expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason unknown and normalizes an absent truncation flag 0ms
+   → expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason provider_future_stop and normalizes an absent truncation flag 0ms
+   → expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason undefined and normalizes an absent truncation flag 0ms
+   → expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason null and normalizes an absent truncation flag 0ms
+   → expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps blank and source-unavailable results failed without inventing truncation 1ms
+ × server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch recovery retains successful source receipts and original slots > retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings 1ms
+   → expected { status: 'partial', count: 3, …(5) } to match object { status: 'partial', count: 2, …(4) }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens despite a contradictory false flag
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length despite a contradictory false flag
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout despite a contradictory false flag
+AssertionError: expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "count": 0,
+-   "failed": 1,
++   "count": 1,
++   "failed": 0,
+    "requested": 1,
+-   "retryIndices": [
+-     0,
+-   ],
++   "retryIndices": [],
+    "savedCount": 0,
+-   "status": "failed",
++   "status": "drafted",
+  }
+
+ ❯ expectCutOff server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:25:19
+     23|
+     24| function expectCutOff(receipt: ReturnType<typeof one>, finishReason: s…
+     25|   expect(receipt).toMatchObject({ status: 'failed', count: 0, failed: …
+       |                   ^
+     26|   expect(receipt.sections[0]).toMatchObject({ requestIndex: 0, section…
+     27|     error: 'DRAFT_TRUNCATED', truncated: true, finishReason, saved: fa…
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:37:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens when the flag is absent
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length when the flag is absent
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout when the flag is absent
+AssertionError: expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "count": 0,
+-   "failed": 1,
++   "count": 1,
++   "failed": 0,
+    "requested": 1,
+-   "retryIndices": [
+-     0,
+-   ],
++   "retryIndices": [],
+    "savedCount": 0,
+-   "status": "failed",
++   "status": "drafted",
+  }
+
+ ❯ expectCutOff server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:25:19
+     23|
+     24| function expectCutOff(receipt: ReturnType<typeof one>, finishReason: s…
+     25|   expect(receipt).toMatchObject({ status: 'failed', count: 0, failed: …
+       |                   ^
+     26|   expect(receipt.sections[0]).toMatchObject({ requestIndex: 0, section…
+     27|     error: 'DRAFT_TRUNCATED', truncated: true, finishReason, saved: fa…
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:41:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason max_tokens
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason length
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason chunk_timeout
+AssertionError: expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "count": 0,
+-   "failed": 1,
++   "count": 1,
++   "failed": 0,
+    "requested": 1,
+-   "retryIndices": [
+-     0,
+-   ],
++   "retryIndices": [],
+    "savedCount": 0,
+-   "status": "failed",
++   "status": "drafted",
+  }
+
+ ❯ expectCutOff server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:25:19
+     23|
+     24| function expectCutOff(receipt: ReturnType<typeof one>, finishReason: s…
+     25|   expect(receipt).toMatchObject({ status: 'failed', count: 0, failed: …
+       |                   ^
+     26|   expect(receipt.sections[0]).toMatchObject({ requestIndex: 0, section…
+     27|     error: 'DRAFT_TRUNCATED', truncated: true, finishReason, saved: fa…
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:45:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > uses the canonical classifier for a whitespace-padded finish reason
+AssertionError: expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "count": 0,
+-   "failed": 1,
++   "count": 1,
++   "failed": 0,
+    "requested": 1,
+-   "retryIndices": [
+-     0,
+-   ],
++   "retryIndices": [],
+    "savedCount": 0,
+-   "status": "failed",
++   "status": "drafted",
+  }
+
+ ❯ expectCutOff server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:25:19
+     23|
+     24| function expectCutOff(receipt: ReturnType<typeof one>, finishReason: s…
+     25|   expect(receipt).toMatchObject({ status: 'failed', count: 0, failed: …
+       |                   ^
+     26|   expect(receipt.sections[0]).toMatchObject({ requestIndex: 0, section…
+     27|     error: 'DRAFT_TRUNCATED', truncated: true, finishReason, saved: fa…
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:49:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason undefined
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason null
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason unknown
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason provider_future_stop
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason end_turn
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason stop
+AssertionError: expected { status: 'drafted', count: 1, …(5) } to match object { status: 'failed', count: +0, …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "count": 0,
+-   "failed": 1,
++   "count": 1,
++   "failed": 0,
+    "requested": 1,
+-   "retryIndices": [
+-     0,
+-   ],
++   "retryIndices": [],
+    "savedCount": 0,
+-   "status": "failed",
++   "status": "drafted",
+  }
+
+ ❯ expectCutOff server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:25:19
+     23|
+     24| function expectCutOff(receipt: ReturnType<typeof one>, finishReason: s…
+     25|   expect(receipt).toMatchObject({ status: 'failed', count: 0, failed: …
+       |                   ^
+     26|   expect(receipt.sections[0]).toMatchObject({ requestIndex: 0, section…
+     27|     error: 'DRAFT_TRUNCATED', truncated: true, finishReason, saved: fa…
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:53:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason end_turn and normalizes an absent truncation flag
+AssertionError: expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": "end_turn",
+    "status": "drafted",
+-   "truncated": false,
+  }
+
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:67:33
+     65|   it.each(['end_turn', 'stop', 'unknown', 'provider_future_stop', unde…
+     66|     const receipt = one(generated({ finishReason }, COMPLETE));
+     67|     expect(receipt.sections[0]).toMatchObject({ status: 'drafted', fin…
+       |                                 ^
+     68|     expect(receipt.sections[0]).not.toHaveProperty('complete');
+     69|     expect(receipt.sections[0]).not.toHaveProperty('verifiedComplete');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason stop and normalizes an absent truncation flag
+AssertionError: expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": "stop",
+    "status": "drafted",
+-   "truncated": false,
+  }
+
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:67:33
+     65|   it.each(['end_turn', 'stop', 'unknown', 'provider_future_stop', unde…
+     66|     const receipt = one(generated({ finishReason }, COMPLETE));
+     67|     expect(receipt.sections[0]).toMatchObject({ status: 'drafted', fin…
+       |                                 ^
+     68|     expect(receipt.sections[0]).not.toHaveProperty('complete');
+     69|     expect(receipt.sections[0]).not.toHaveProperty('verifiedComplete');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason unknown and normalizes an absent truncation flag
+AssertionError: expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": "unknown",
+    "status": "drafted",
+-   "truncated": false,
+  }
+
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:67:33
+     65|   it.each(['end_turn', 'stop', 'unknown', 'provider_future_stop', unde…
+     66|     const receipt = one(generated({ finishReason }, COMPLETE));
+     67|     expect(receipt.sections[0]).toMatchObject({ status: 'drafted', fin…
+       |                                 ^
+     68|     expect(receipt.sections[0]).not.toHaveProperty('complete');
+     69|     expect(receipt.sections[0]).not.toHaveProperty('verifiedComplete');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason provider_future_stop and normalizes an absent truncation flag
+AssertionError: expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": "provider_future_stop",
+    "status": "drafted",
+-   "truncated": false,
+  }
+
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:67:33
+     65|   it.each(['end_turn', 'stop', 'unknown', 'provider_future_stop', unde…
+     66|     const receipt = one(generated({ finishReason }, COMPLETE));
+     67|     expect(receipt.sections[0]).toMatchObject({ status: 'drafted', fin…
+       |                                 ^
+     68|     expect(receipt.sections[0]).not.toHaveProperty('complete');
+     69|     expect(receipt.sections[0]).not.toHaveProperty('verifiedComplete');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason undefined and normalizes an absent truncation flag
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason null and normalizes an absent truncation flag
+AssertionError: expected { requestIndex: +0, …(10) } to match object { status: 'drafted', …(2) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": null,
+    "status": "drafted",
+-   "truncated": false,
+  }
+
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:67:33
+     65|   it.each(['end_turn', 'stop', 'unknown', 'provider_future_stop', unde…
+     66|     const receipt = one(generated({ finishReason }, COMPLETE));
+     67|     expect(receipt.sections[0]).toMatchObject({ status: 'drafted', fin…
+       |                                 ^
+     68|     expect(receipt.sections[0]).not.toHaveProperty('complete');
+     69|     expect(receipt.sections[0]).not.toHaveProperty('verifiedComplete');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/23]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch recovery retains successful source receipts and original slots > retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings
+AssertionError: expected { status: 'partial', count: 3, …(5) } to match object { status: 'partial', count: 2, …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,12 +1,11 @@
+  {
+-   "count": 2,
+-   "failed": 4,
++   "count": 3,
++   "failed": 3,
+    "requested": 6,
+    "retryIndices": [
+      1,
+-     2,
+      3,
+      4,
+    ],
+    "savedCount": 0,
+    "status": "partial",
+
+ ❯ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts:106:21
+    104|       generated({ finishReason: 'unknown', truncated: false }, '<p>Sep…
+    105|
+    106|     expect(receipt).toMatchObject({ status: 'partial', count: 2, faile…
+       |                     ^
+    107|     expect(receipt.sections.map(section => section.requestIndex)).toEq…
+    108|     expect(receipt.sections.map(section => section.sectionType)).toEqu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/23]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  23 failed | 7 passed (30)
+   Start at  23:26:41
+   Duration  476ms (transform 92ms, setup 75ms, import 48ms, tests 44ms, environment 0ms)
+

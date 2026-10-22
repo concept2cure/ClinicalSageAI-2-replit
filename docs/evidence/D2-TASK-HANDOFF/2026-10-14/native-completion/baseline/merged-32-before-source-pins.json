@@ -1,0 +1,133 @@
+{
+  "source": "23502318f439237cd2cc9a2246cba263f3b18f33",
+  "files": [
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "sha256": "878cbda45fe33f7748e55855a2d56b0bbed9416f20d8ceb1d772f55e7d6f2e72"
+    },
+    {
+      "path": "tests/db/cmc-source-evidence.dbtest.ts",
+      "sha256": "529adf9c4ddca00135cda1aeff726f576cc33e5516805c0a13f82c5d16093a79"
+    },
+    {
+      "path": "tests/db/document-catalog-governed.dbtest.ts",
+      "sha256": "28961dcf060223b7526f0d7e9471785c451c605f67a5063c3bad6289324f2c2b"
+    },
+    {
+      "path": "tests/db/document-catalog.dbtest.ts",
+      "sha256": "0c846ba6bcf45b49e64d726e47a99137c9337aa869d0361fa14467ebd8dd9241"
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "sha256": "038542d40ae0f6f170f485b57296da4791b1cf742d2bb70047c9db320afbf393"
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "sha256": "e12245cc819fc01b2f8407451c022230b2ebca9422584b5debd824091abd76fb"
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "sha256": "fbfd802f3ffeddf1b8a3b5653976cc0fc6cd419e34997f7394220c0b3d67baf0"
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "sha256": "ea9d057c1285bd1d8a063011db394fe2d23d52ca0f9a2ff1a04bcd1ff1d84fce"
+    },
+    {
+      "path": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "sha256": "6999bfc170f56352b1ea02f7f1649ef0b7375fff8defbe768a367cd56d43914b"
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "sha256": "74c5817e6a73bbab596408d13b6d8de5d8a06f7393895192a098bef6f4f41fbc"
+    },
+    {
+      "path": "tests/db/vault-version-annotations-record.dbtest.ts",
+      "sha256": "e34721424cd4ded1e85cf87835de78fc1c483c3149034e4613226cec9fc688b6"
+    },
+    {
+      "path": "tests/db/vault-version-annotations.dbtest.ts",
+      "sha256": "675adfd58c8c3e02696a452944dc5aa32b1d14dfbe98cb362e4cd53dfb7e6994"
+    },
+    {
+      "path": "tests/db/vault-version-compare.dbtest.ts",
+      "sha256": "0f0da51ddfb2779429d00360e665bd6f20dce62e1f410ef8b973a4367df63526"
+    },
+    {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "sha256": "1ce4a5cb5687510d35fc911ac82385abc304c3e1d12199c9faff7c3983644c52"
+    },
+    {
+      "path": "tests/db/vault-where-used.dbtest.ts",
+      "sha256": "262c352f76de43a6a71c358e8d1ec3dadc83017a746025b591ff7b7db9d4ad25"
+    },
+    {
+      "path": "tests/db/actor-displays.dbtest.ts",
+      "sha256": "ff7eef073efaa5d8d39f68269516059ae06adfba41ac9915845768760c671a4c"
+    },
+    {
+      "path": "tests/db/c2c-project-persistence.dbtest.ts",
+      "sha256": "1f52b9579832533c8f6ec964da17b5df752a006020f6c4ecf7484407ce453daa"
+    },
+    {
+      "path": "tests/db/data-room-catalog-facts.dbtest.ts",
+      "sha256": "bf8a11d57b39cb11cf695c433864e2a76495c693c98b8274bfd3b9b612581c6a"
+    },
+    {
+      "path": "tests/db/data-room-processing.dbtest.ts",
+      "sha256": "d35c40ee3db81f7803b7b496a537e802048ff4e0d4314de6afd7768032f1ec71"
+    },
+    {
+      "path": "tests/db/document-catalog-recall.dbtest.ts",
+      "sha256": "caf5b36ab3ae66a45203b1bb83d2d512328d22d893eb71ca00fa5b990b94ab86"
+    },
+    {
+      "path": "tests/db/document-catalog-role.dbtest.ts",
+      "sha256": "8be1b085f2f64733195f814d0c4c1e2fdb9720b9c56f14f7cfa5a12899a1a4b5"
+    },
+    {
+      "path": "tests/db/org-retention-period.dbtest.ts",
+      "sha256": "7e9b5f19e84ec6b08a687aeb8a16e316efc7213998008340117a73b447df81e1"
+    },
+    {
+      "path": "tests/db/vault-data-room-file.dbtest.ts",
+      "sha256": "6da4bcb6856c221f8848d131f3e62deb0d59bf160ac7a44ca71d2266e0cd3e96"
+    },
+    {
+      "path": "tests/db/vault-filing-vocabulary.dbtest.ts",
+      "sha256": "3e397eee6955373b45e1a0eb7c62ab24f0ff0b6836eacd679863548042e5a04f"
+    },
+    {
+      "path": "tests/db/vault-ingest.dbtest.ts",
+      "sha256": "69898a11f2ea34f6a9b1308de4c99cfd4fc962ea29496fe2bf529de4f26bff22"
+    },
+    {
+      "path": "tests/db/vault-lifecycle.dbtest.ts",
+      "sha256": "6187d57c426a891abc5b07ad95a30eab85f5c87e06d16da8414e44afde870952"
+    },
+    {
+      "path": "tests/db/vault-placement-batch.dbtest.ts",
+      "sha256": "d30a9f425db1a634dd0dc4390b961a71eaa62921f599960c38f41bf6840c8c43"
+    },
+    {
+      "path": "tests/db/vault-placement.dbtest.ts",
+      "sha256": "01ee99c31bd4dc1d083aa96e161240381e1e0dc253b8b83255b1be0ae1e9cf51"
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "sha256": "f3711f4bb381a429ff08ac5459cad91cdcc81db21c9ab399b0b8570c86705c6c"
+    },
+    {
+      "path": "tests/db/vault-version-checkin.dbtest.ts",
+      "sha256": "f82240ee01808c3abee0dad1f5f0d48c356b3d8b0a587d60bceed99cca13a65b"
+    },
+    {
+      "path": "tests/db/workflow-import-governance.dbtest.ts",
+      "sha256": "05f23eb65f244c7f6e061648285605a15670d33f8ba1cdb9a551face4aade6f8"
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "sha256": "c8ad759daddc40fe72e637eb7d839f613a9ea22d294b07d49d8f6612e6c82c76"
+    }
+  ]
+}

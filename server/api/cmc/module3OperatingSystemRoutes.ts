@@ -4,7 +4,7 @@ import { getPool } from '../../db';
 import { summarizeSectionDiff } from '../../services/cmc-module3-compiler';
 import { renderComposedSectionMarkdown } from '../../services/module3Composer';
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
-import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
+import { compositionRefusalBody, compositionRefusalStatus, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
@@ -19,6 +19,17 @@ import { placeModule3IntoSubmission } from '../../services/cmc/place-module3-int
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { getSectionLabels } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
+/* Four-eyes on a section approval: the signer may not be one of the people who
+   entered the register records the section was composed from. The rule AND the
+   refusal mapping are the platform's, used by every governed signature, so this
+   route cannot answer the same refusal differently — and they are imported
+   from the governance module rather than from routes/c2c/actions, which
+   re-exports the mapper only for its own older importer. */
+import {
+  assertSignerIsNotAuthor,
+  cmcModule3SectionTarget,
+  separationOfDutiesRefusal,
+} from '../../services/governance/separation-of-duties';
 import {
   persistGovernedActionSignature,
   sha256CanonicalJson,
@@ -190,7 +201,7 @@ router.post('/compile/:projectId', async (req, res) => {
        (services/cmc/composition-scope.ts). A business refusal, not a server
        fault: 409 with the reason and the path that does author it. */
     if (isCompositionOutOfScope(error)) {
-      return res.status(409).json(compositionRefusalBody(error.refusal));
+      return res.status(compositionRefusalStatus(error.refusal)).json(compositionRefusalBody(error.refusal));
     }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -592,6 +603,27 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       });
     }
     const signMeaning: SignatureMeaning = meaningParse.data;
+    /* An approval is not authorship. §11.50(a)(3) lists authorship among the
+       meanings a signature may carry, and for a draft it is the right one — but
+       THIS route flips the section to `approved` and snapshots the version the
+       export gate and the placement path then file. The platform already closed
+       the same hole on freeze/dispatch, where a release signer could be the
+       sequence's creator by choosing "Authorship" (released 2026-10-05): the
+       meaning is what decides whether independence is required
+       (`requiresIndependence`), so an authorship meaning here would be a
+       self-approval with the four-eyes check switched off by the signer. There
+       is no authoring act at this endpoint to carry that meaning, so it is
+       refused rather than reinterpreted. */
+    if (signMeaning === 'authorship') {
+      return res.status(400).json({
+        success: false,
+        error: 'APPROVAL_IS_NOT_AUTHORSHIP',
+        detail:
+          'Approving a Module 3 section is not an authorship signature: it is the approval the export gate and the ' +
+          'filing read. Sign with the meaning review, approval or responsibility — each of which must be independent ' +
+          'of whoever entered the records the section cites. Nothing was signed.',
+      });
+    }
     /* The signer's own reason, or no signature. The route used to record
        'Approved Module 3 section <key>' when none was stated — a reason the
        code made up, against recordGovernedAction's contract (GA plan item 4).
@@ -752,6 +784,28 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         });
       }
 
+      /* §11.10(g), and the predicate rules behind a quality unit's
+         second-person review (21 CFR 211.22, 211.100(a)): the approver may not
+         be one of the people who ENTERED the register records this section was
+         composed from. Until 2026-10-18 the question could not even be asked —
+         no register row recorded who wrote it — and URS-007 §3 said so. It is
+         asked here, on this transaction, with the section row already locked,
+         so the lineage the check walks is the lineage the signature covers; and
+         before anything at all is written, so a refusal signs nothing. */
+      let independence: { checked: boolean; reason: string };
+      try {
+        independence = await assertSignerIsNotAuthor(cmcModule3SectionTarget(projectId, sectionKey), orgId, actorId, {
+          command: 'sign',
+          meaning: signMeaning,
+          client,
+        });
+      } catch (err) {
+        const refusal = separationOfDutiesRefusal(err, 'cmc-m3-section-approve');
+        if (!refusal) throw err;
+        await client.query('ROLLBACK');
+        return res.status(refusal.status).json({ success: false, ...refusal.body });
+      }
+
       /* What is signed is what is filed: the compiled record AND the narrative
          placement renders from it. The snapshot carried deterministic_json
          only, so the §11.70 digest did not cover a word of the filed prose. */
@@ -810,7 +864,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         command: 'sign',
         target: signTarget,
         reason: signReason,
-        payload: { meaning: signMeaning, versionNumber, approvedVersionId },
+        payload: { meaning: signMeaning, versionNumber, approvedVersionId, independence: independence.reason },
         domain: 'cmc',
         surface: 'cmc-module3-section-approve',
         idempotencyKey,
@@ -962,7 +1016,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     // Same boundary as the compile: a refresh re-composes, so it is refused on
     // the same terms (services/cmc/composition-scope.ts).
     if (isCompositionOutOfScope(error)) {
-      return res.status(409).json(compositionRefusalBody(error.refusal));
+      return res.status(compositionRefusalStatus(error.refusal)).json(compositionRefusalBody(error.refusal));
     }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -1068,6 +1122,9 @@ router.post('/place-into-submission/:projectId', requireRole('regulatory-author'
       }
       if (result.refusedBy === 'cross-project') {
         return res.status(409).json({ success: false, code: 'CROSS_PROJECT', error: result.error });
+      }
+      if (result.refusedBy === 'composition-scope') {
+        return res.status(compositionRefusalStatus(result.refusal)).json(compositionRefusalBody(result.refusal));
       }
       return res.status(409).json({ success: false, error: result.error, skipped: result.skipped });
     }

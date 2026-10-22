@@ -53,6 +53,29 @@ describe('chooseSourceWindow', () => {
     const q = 'primary endpoint efficacy';
     expect(chooseSourceWindow(CSR, q, 3000)).toEqual(chooseSourceWindow(CSR, q, 3000));
   });
+
+  it('does not select a substring within a Unicode word, including astral letters', () => {
+    const text = filler(40) + '\n𐐀efficacy efficacy𐐀 preefficacy efficacy2';
+    expect(chooseSourceWindow(text, 'efficacy', 100)).toEqual({ start: 0, end: 100, basis: 'opening' });
+  });
+
+  it('matches literal hyphenated terms between punctuation and keeps source offsets', () => {
+    const text = filler(40) + '\nResult: (ANTI-DRUG), antibodies measured.\n' + filler(40);
+    const w = chooseSourceWindow(text, 'anti-drug', 500);
+    expect(w.basis).toBe('relevant');
+    expect(text.slice(w.start, w.end)).toContain('(ANTI-DRUG)');
+  });
+
+  it('keeps offsets in the original source when lowercasing expands an earlier character', () => {
+    const text = 'İ '.repeat(1000) + '\nEfficacy result confirmed.\n' + filler(40);
+    const w = chooseSourceWindow(text, 'efficacy', 100);
+    expect(text.slice(w.start, w.end)).toContain('Efficacy result confirmed.');
+    expect(w.end - w.start).toBe(100);
+  });
+
+  it('serves an empty span for a zero budget even when the document contains a matching term', () => {
+    expect(chooseSourceWindow('Efficacy result confirmed.', 'efficacy', 0)).toEqual({ start: 0, end: 0, basis: 'opening' });
+  });
 });
 
 describe('sectionTerms', () => {

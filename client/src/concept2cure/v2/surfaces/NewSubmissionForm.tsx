@@ -150,8 +150,10 @@ function submissionFields(
       // in the live description (design review item 7, 2026-10-15).
       // A region the server does not offer for the type is never preselected.
       default: market.offeredFor(defaults.primaryRegion) === false ? '' : defaults.primaryRegion, required: true,
-      desc: (defaults.primaryRegion ? "From this project's record. " : withheldNote(defaults)) + regionDesc,
-      descLive: true,
+      // Where the default came from is fixed; the region's statement changes
+      // with the choice and as the read lands, so only it is live.
+      desc: (defaults.primaryRegion ? "From this project's record." : withheldNote(defaults)).trim(),
+      descStatus: regionDesc,
     },
     {
       key: 'clientType', label: 'Client type', type: 'select',

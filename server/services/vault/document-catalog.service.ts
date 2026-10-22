@@ -14,15 +14,15 @@
  *
  * The rules themselves (spans, coverage, the gate, extraction outcomes) are
  * pure functions in document-catalog-core.ts, re-exported below; this file is
- * the thin DB layer. Source reads require the document's recorded organization
- * and its live regulatory program to agree with the requested organization.
+ * the thin DB layer. Document reads require the current verified actor and
+ * private-project policy; recorded tenant and live regulatory parent must agree.
  */
 
 import { createHash } from 'node:crypto';
 import { pool } from '../../db.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
-import { loadDocumentForOrg as loadCurrentActorDocument, loadDocumentForAdmittedScope, loadCatalogProposalSource, type CatalogDocumentRow } from './document-catalog-document.js';
+import { loadDocumentForOrg as loadCurrentActorDocument, loadDocumentForAdmittedScope, loadCatalogProposalSource, type CatalogDocumentRow, type CatalogDocumentReadOptions } from './document-catalog-document.js';
 import { LEGACY_CATALOG_VERIFICATION_SCOPE, type LegacyCatalogVerificationScope } from '../../../shared/ana/catalog-facts.js';
 import { runSourceFactPreview, type SourceFactPreviewArgs, type SourceFactPreviewResult } from './document-catalog-preview.js';
 import type { CompleteCatalogArgs, CompleteCatalogResult, VaultDocDigest } from './document-catalog-operation-types.js';
@@ -164,27 +164,18 @@ export async function recordExtractionOutcome(
 /** Interactive request-client reads require current-parent admission; actor
  * facades use the explicitly admitted raw primitive on their owned executor. */
 export function loadDocumentForOrg(documentId: string, organizationId: number,
-  opts: { executor: RequestSqlClient; userId: number | undefined; includeText?: boolean; programId?: string; currentOnly?: boolean }): Promise<CatalogDocumentRow | null>;
-// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
-export function loadDocumentForOrg(documentId: string, organizationId: number,
-  opts?: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] }): Promise<CatalogDocumentRow | null>;
-// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
-export async function loadDocumentForOrg(documentId: string, organizationId: number,
-  opts: { userId?: number; includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] } = {},
+  opts: CatalogDocumentReadOptions,
 ): Promise<CatalogDocumentRow | null> {
-  if (Object.prototype.hasOwnProperty.call(opts, 'userId')) {
-    return loadCurrentActorDocument(documentId, organizationId, { ...opts, executor: opts.executor as RequestSqlClient, userId: opts.userId });
-  }
-  return loadDocumentForAdmittedScope(documentId, organizationId, opts);
+  return loadCurrentActorDocument(documentId, organizationId, opts);
 }
 
-/** Interactive AnA reads must use current actor/project admission. The raw
- * loader above remains for callers that already perform their own admission. */
+/** Interactive AnA reads use current actor/project admission before the
+ * internal primitive reads on the coordinator's owned connection. */
 export function loadDocumentForActor(
   input: AnaSourceReadScopeInput & { documentId: string },
   opts: { includeText?: boolean; currentOnly?: boolean } = {},
 ): Promise<ActorCatalogDocumentRow | null> {
-  return runLoadDocumentForActor(input, opts, { load: loadDocumentForOrg });
+  return runLoadDocumentForActor(input, opts, { load: loadDocumentForAdmittedScope });
 }
 
 /** Trusted internal legacy span insert. Interactive AnA reads use the guarded
@@ -237,7 +228,7 @@ export { isSourceFactPreviewEnabled } from './document-catalog-preview.js';
 
 /** One canonical facade; the read-only helper uses these same query primitives. */
 export function previewSourceFacts(args: SourceFactPreviewArgs): Promise<SourceFactPreviewResult> {
-  return runSourceFactPreview(args, { connect: () => pool.connect(), isCatalogEnabled: isDocumentCatalogEnabled, loadDocument: loadDocumentForOrg, getCoverage: getReadCoverage });
+  return runSourceFactPreview(args, { connect: () => pool.connect(), isCatalogEnabled: isDocumentCatalogEnabled, loadDocument: loadDocumentForAdmittedScope, getCoverage: getReadCoverage });
 }
 
 async function embedCatalogProposal(doc: CatalogDocumentRow, args: CompleteCatalogArgs & { executor?: RequestSqlClient }): Promise<{

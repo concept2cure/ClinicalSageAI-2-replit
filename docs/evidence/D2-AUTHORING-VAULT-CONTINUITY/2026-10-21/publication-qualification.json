@@ -1,0 +1,35 @@
+{
+  "qualifiedAt": "2026-10-21T01:34:01.891384+00:00",
+  "canonicalBase": "440a1d0061aed53ef8a3e0772ef8c94351875880",
+  "sourceFreeze": "publication-source-freeze.json",
+  "sourcePinsMatched": 80,
+  "regressions": {
+    "passed": 616,
+    "suites": 47,
+    "todo": 1,
+    "exitCode": 0
+  },
+  "compiler": {
+    "errors": 0,
+    "baseline": 0,
+    "receipt": "typecheck-final.json"
+  },
+  "buildExitCode": 0,
+  "lint": {
+    "files": 15,
+    "errors": 0,
+    "inheritedWarnings": 40,
+    "newWarnings": 0
+  },
+  "repositoryGatesPassed": 16,
+  "noDeploymentOrProviderCalls": true,
+  "humanTestsRun": 0,
+  "manualCases": 58,
+  "remainingGaps": [
+    "Historical authoring hash-version supersession",
+    "Vault source authoring lineage in the governance manifest",
+    "Universal post-admission compensation and third-party use races are not qualified"
+  ],
+  "scope": "Existing authoring \u2192 Vault continuity; one existing editor and existing Vault placement",
+  "postQualificationChange": "One EOF newline byte removed from a type-only declaration file; publication-whitespace-note.json"
+}

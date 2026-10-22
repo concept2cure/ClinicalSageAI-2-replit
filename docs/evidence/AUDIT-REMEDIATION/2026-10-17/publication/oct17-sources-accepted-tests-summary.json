@@ -1,0 +1,218 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-sources-accepted-tests.json",
+    "sha256": "7a7754a289179ecf26fd3cd70753651e03e69a984bb9e2d55bc5000ffafe5660",
+    "bytes": 102511
+  },
+  "success": true,
+  "passedCases": 230,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 17,
+  "rows": [
+    {
+      "file": "tests/authoring-market-document-binding.pglite.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/schema-contract/document-alias-backfill.pglite.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/schema-contract/document-alias-map.pglite.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/schema-contract/document-alias-store-vocabulary.pglite.test.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/schema-contract/governed-document-binding.contract.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/batch-draft-settles-per-item.test.ts",
+      "status": "passed",
+      "cases": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 25,
+      "counts": {
+        "passed": 25,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+      "status": "passed",
+      "cases": 75,
+      "counts": {
+        "passed": 75,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/save-document-to-vault-tool.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-actor-read-facades.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-document-access.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 12,
+      "counts": {
+        "passed": 12,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-search-version.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/document-catalog-actor-access.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/document-catalog-preview.service.test.ts",
+      "status": "passed",
+      "cases": 23,
+      "counts": {
+        "passed": 23,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/document-catalog-source-snapshot.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

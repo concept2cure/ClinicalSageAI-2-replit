@@ -1,0 +1,94 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > blocks synchronous overlapping Open and Attach without sharing a success result 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > retains unknown outcome and refuses another document POST 3ms
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > reuses a confirmed complete payload only for a later deliberate action 10ms
+   → expected "vi.fn()" to be called 2 times, but got 3 times
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > does not release uncertainty after a wrong-project inventory 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > a scoped no-ID check exposes inventory without attributing a document 3ms
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > continues only original text into a confirmed empty document after an explicit scoped check 8ms
+   → expected last "vi.fn()" call to have been called with [ 'POST', …(2) ]
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > an existing normalized section is inspection only and never overwritten 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > returns the exact document, project and section code with its binding outcome 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 2 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not claim nothing was saved after a lost document response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains confirmed document identity after a lost section response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project-round-trip change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a account change before the section write 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a organization change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a session change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > rechecks scope after reading the response body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > allows same-project metadata updates for the unchanged account 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > opens the exact saved target and refuses a later project or account change 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > writes the document and its section, then reports ok 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > says so when the new document is not bound to a filing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > stays quiet when the document IS bound 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > invents no warning when the server reports no binding at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports NOT ok when the section write fails, even though the document exists 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports an unknown document outcome after a server failure and never attempts the section 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > names the 401 as a session problem rather than a server error 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never throws — a transport failure comes back as a message 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > creates the document in the open project 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when no project is open (PF-07) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when the open id is not a project (PF-07) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > carries the caller’s module rather than defaulting it 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > reuses a confirmed complete payload only for a later deliberate action
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:53:24
+     51|     await act(async () => { await hook.current().save(input); });
+     52|     let reused; await act(async () => { reused = await hook.current().…
+     53|     expect(apiRequest).toHaveBeenCalledTimes(2); expect(reused).toMatc…
+       |                        ^
+     54|   });
+     55|   it('does not release uncertainty after a wrong-project inventory', a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > continues only original text into a confirmed empty document after an explicit scoped check
+AssertionError: expected last "vi.fn()" call to have been called with [ 'POST', …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "POST",
+-   "/api/authoring/sections",
+-   {
+-     "code": "study.analysis",
+-     "content": "<p>Original result</p>",
+-     "doc_id": "33333333-3333-4333-8333-333333333333",
+-     "title": "Study analysis",
+-   },
++   "GET",
++   "/api/authoring/docs?status=all&programId=11111111-1111-4111-8111-111111111111",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:75:24
+     73|     expect(hook.current().state?.canContinue).toBe(true); expect(apiRe…
+     74|     apiRequest.mockResolvedValueOnce(sectionReply()); await act(async …
+     75|     expect(apiRequest).toHaveBeenLastCalledWith('POST', '/api/authorin…
+       |                        ^
+     76|     expect(apiRequest.mock.calls.filter(([method, path]) => method ===…
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 38 passed (40)
+   Start at  22:26:33
+   Duration  2.66s (transform 310ms, setup 287ms, import 399ms, tests 85ms, environment 1.42s)

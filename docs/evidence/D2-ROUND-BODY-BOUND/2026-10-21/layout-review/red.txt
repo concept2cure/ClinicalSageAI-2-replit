@@ -1,0 +1,1264 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:02:47.629Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:02:47.630Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:02:47.630Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:02:47.975Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+{
+  "timestamp": "2026-10-21T01:02:53.768Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000032",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ × server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > bounds a floor-overflowing ordinary round while preserving every call, raw callback and exact staged body 13ms
+   → expected 29960 to be less than or equal to 24000
+   → expected 0 to be greater than 0
+ × server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > stages accepted large-payload cap bytes exactly, without a second cap after allocation 45ms
+   → expected 'HEAD_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'HEAD_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+ × server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran 21ms
+   → expected null to match object { …(2) }
+   → expected [ …(2) ] to have a length of 1 but got 2
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly 3ms
+   → expected null to match object { …(2) }
+   → expected [ …(2) ] to have a length of 1 but got 2
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+ × server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt 3ms
+   → expected null to match object { …(2) }
+   → expected [ …(2) ] to have a length of 1 but got 2
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+ × server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed 4ms
+   → expected null to match object { …(2) }
+   → expected [ …(2) ] to have a length of 1 but got 2
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > CONTROL: a fitting native read remains exact and writes its existing legacy receipt 1ms
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged 8ms
+   → expected 26964 to be less than or equal to 24000
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt 3ms
+   → expected 27064 to be less than or equal to 24000
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > retains a fitting read byte for byte and settles only that exact host admission 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > private map identity takes precedence over a passage name without adopting payload offsets 0ms
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > passage fields and ordinary fake receipt fields cannot mint private settlement authority 1ms
+   → expected 28640 to be less than or equal to 24000
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement 3ms
+   → promise resolved "undefined" instead of rejecting
+   → expected true to be false // Object.is equality
+   → expected undefined to be 'tiny exact source' // Object.is equality
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > cancellation after strict allocation withdraws source context and settles no new receipt 1ms
+ ↓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects actual guard-envelope growth without mutating accepted bodies
+ ↓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > bounds a floor-overflowing ordinary round while preserving every call, raw callback and exact staged body
+AssertionError: expected 29960 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:150:39
+    148|     expect.soft(rawResults).toEqual(calls.map(() => raw));
+    149|     expect.soft([...sent().keys()]).toEqual(calls.map(item => item.id)…
+    150|     expect.soft(sum(sent().values())).toBeLessThanOrEqual(24000);
+       |                                       ^
+    151|     expect.soft(observed).toEqual([calls.map(item => ({ tool_use_id: i…
+    152|     const withheld = [...sent().values()].filter(body => parsed(body)?…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > bounds a floor-overflowing ordinary round while preserving every call, raw callback and exact staged body
+AssertionError: expected 0 to be greater than 0
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:153:34
+    151|     expect.soft(observed).toEqual([calls.map(item => ({ tool_use_id: i…
+    152|     const withheld = [...sent().values()].filter(body => parsed(body)?…
+    153|     expect.soft(withheld.length).toBeGreaterThan(0);
+       |                                  ^
+    154|     for (const body of withheld) {
+    155|       expect.soft(parsed(body)).toMatchObject({ delivered: false, code…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > stages accepted large-payload cap bytes exactly, without a second cap after allocation
+AssertionError: expected 'HEAD_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'HEAD_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+
+- Expected
++ Received
+
+  HEAD_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+- … [9992070 characters truncated to fit the model context] …
++ … [61 characters truncated to fit the model context] …
+  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_TAIL
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:166:36
+    164|     await run();
+    165|     expect(h.lastCandidate).toHaveLength(1);
+    166|     expect(sent().get('ordinary')).toBe(h.lastCandidate[0].content);
+       |                                    ^
+    167|     expect(sum(sent().values())).toBeLessThanOrEqual(24000);
+    168|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran
+AssertionError: expected null to match object { …(2) }
+
+- Expected:
+{
+  "code": "ANA_TOOL_RESULT_BUDGET_EXCEEDED",
+  "message": "This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.",
+}
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:178:24
+    176|     const raw = vi.fn();
+    177|     const error = await failureOf({ onToolResultsForModel: observer, o…
+    178|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+       |                        ^
+    179|     expect.soft(raw).toHaveBeenCalledTimes(calls.length);
+    180|     expect.soft(h.requests).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:180:29
+    178|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+    179|     expect.soft(raw).toHaveBeenCalledTimes(calls.length);
+    180|     expect.soft(h.requests).toHaveLength(1);
+       |                             ^
+    181|     expect.soft(observer).not.toHaveBeenCalled();
+    182|     expect.soft(h.settlements).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:181:31
+    179|     expect.soft(raw).toHaveBeenCalledTimes(calls.length);
+    180|     expect.soft(h.requests).toHaveLength(1);
+    181|     expect.soft(observer).not.toHaveBeenCalled();
+       |                               ^
+    182|     expect.soft(h.settlements).toBe(0);
+    183|     expect.soft(h.writerAttempts).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:182:32
+    180|     expect.soft(h.requests).toHaveLength(1);
+    181|     expect.soft(observer).not.toHaveBeenCalled();
+    182|     expect.soft(h.settlements).toBe(0);
+       |                                ^
+    183|     expect.soft(h.writerAttempts).toEqual([]);
+    184|     expect.soft(receiptsFor(DOC_A)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly
+AssertionError: expected null to match object { …(2) }
+
+- Expected:
+{
+  "code": "ANA_TOOL_RESULT_BUDGET_EXCEEDED",
+  "message": "This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.",
+}
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:199:24
+    197|       onToolExecution: (_name, input) => { if (input.documentId === DO…
+    198|     expect.soft(sum(h.lastCandidate.map(entry => entry.content))).toBe…
+    199|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+       |                        ^
+    200|     expect.soft(h.requests).toHaveLength(1);
+    201|     expect.soft(observer).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:200:29
+    198|     expect.soft(sum(h.lastCandidate.map(entry => entry.content))).toBe…
+    199|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+    200|     expect.soft(h.requests).toHaveLength(1);
+       |                             ^
+    201|     expect.soft(observer).not.toHaveBeenCalled();
+    202|     expect.soft(h.settlements).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:201:31
+    199|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+    200|     expect.soft(h.requests).toHaveLength(1);
+    201|     expect.soft(observer).not.toHaveBeenCalled();
+       |                               ^
+    202|     expect.soft(h.settlements).toBe(1);
+    203|     expect.soft(h.writerAttempts).toEqual([DOC_A]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+AssertionError: expected null to match object { …(2) }
+
+- Expected:
+{
+  "code": "ANA_TOOL_RESULT_BUDGET_EXCEEDED",
+  "message": "This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.",
+}
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:217:24
+    215|     const error = await failureOf({ onToolResultsForModel: observer });
+    216|     expect.soft(sum(h.lastCandidate.map(entry => entry.content))).toBe…
+    217|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+       |                        ^
+    218|     expect.soft(h.requests).toHaveLength(1);
+    219|     expect.soft(observer).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:218:29
+    216|     expect.soft(sum(h.lastCandidate.map(entry => entry.content))).toBe…
+    217|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+    218|     expect.soft(h.requests).toHaveLength(1);
+       |                             ^
+    219|     expect.soft(observer).not.toHaveBeenCalled();
+    220|     expect.soft(h.settlements).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:219:31
+    217|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+    218|     expect.soft(h.requests).toHaveLength(1);
+    219|     expect.soft(observer).not.toHaveBeenCalled();
+       |                               ^
+    220|     expect.soft(h.settlements).toBe(1);
+    221|     expect.soft(h.writerAttempts).toEqual([DOC_A, DOC_B]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed
+AssertionError: expected null to match object { …(2) }
+
+- Expected:
+{
+  "code": "ANA_TOOL_RESULT_BUDGET_EXCEEDED",
+  "message": "This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.",
+}
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:232:24
+    230|     const raw = vi.fn();
+    231|     const error = await failureOf({ checkpoint: async () => 'replan', …
+    232|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+       |                        ^
+    233|     expect.soft(h.requests).toHaveLength(1);
+    234|     expect.soft(observer).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:233:29
+    231|     const error = await failureOf({ checkpoint: async () => 'replan', …
+    232|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+    233|     expect.soft(h.requests).toHaveLength(1);
+       |                             ^
+    234|     expect.soft(observer).not.toHaveBeenCalled();
+    235|     expect.soft(raw).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+        [Object],
+      ],
+      1,
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/strict-round-body-executor.test.ts:234:31
+    232|     expect.soft(error).toMatchObject({ code: CODE, message: MESSAGE });
+    233|     expect.soft(h.requests).toHaveLength(1);
+    234|     expect.soft(observer).not.toHaveBeenCalled();
+       |                               ^
+    235|     expect.soft(raw).not.toHaveBeenCalled();
+    236|     expect.soft(h.lastCandidate).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged
+AssertionError: expected 26964 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:50:27
+     48|     const before = original.map(e => ({ ...e }));
+     49|     const out = strict(original);
+     50|     expect.soft(sum(out)).toBeLessThanOrEqual(24_000);
+       |                           ^
+     51|     expect.soft(out.map(e => [e.tool_use_id, e.name])).toEqual(origina…
+     52|     expect.soft(out.some(e => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:54:9
+     52|     expect.soft(out.some(e => {
+     53|       try { return JSON.parse(e.content).code === 'TOOL_RESULT_WITHHEL…
+     54|     })).toBe(true);
+       |         ^
+     55|     expect(original).toEqual(before);
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt
+AssertionError: expected 27064 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:66:32
+     64|     const before = original.map(e => ({ ...e }));
+     65|     const budgeted = strict(original, { wholeOrNothing: map });
+     66|     expect.soft(sum(budgeted)).toBeLessThanOrEqual(24_000);
+       |                                ^
+     67|     expect.soft(budgeted[0].content).toBe(loop.notDeliveredResult(37));
+     68|     expect.soft(budgeted[0].content).not.toContain('PRIVATE_SOURCE_');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > passage fields and ordinary fake receipt fields cannot mint private settlement authority
+AssertionError: expected 28640 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:121:32
+    119|     const map: DeferredReadReceipts = new Map();
+    120|     const budgeted = strict(original, { wholeOrNothing: map });
+    121|     expect.soft(sum(budgeted)).toBeLessThanOrEqual(24_000);
+       |                                ^
+    122|     expect.soft(JSON.parse(budgeted[0].content)).toMatchObject({ deliv…
+    123|     const write = vi.fn(async () => {});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:142:32
+    140|       await settleReadReceipts(original, budgeted, map, write);
+    141|     };
+    142|     await expect.soft(attempt()).rejects.toMatchObject({ code: 'ANA_TO…
+       |                                ^
+    143|     expect.soft(settlementEntered).toBe(false);
+    144|     expect.soft(write).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:143:36
+    141|     };
+    142|     await expect.soft(attempt()).rejects.toMatchObject({ code: 'ANA_TO…
+    143|     expect.soft(settlementEntered).toBe(false);
+       |                                    ^
+    144|     expect.soft(write).not.toHaveBeenCalled();
+    145|     // Allocation is non-mutating even when it cannot admit a round.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/23]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement
+AssertionError: expected undefined to be 'tiny exact source' // Object.is equality
+
+- Expected:
+"tiny exact source"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:146:39
+    144|     expect.soft(write).not.toHaveBeenCalled();
+    145|     // Allocation is non-mutating even when it cannot admit a round.
+    146|     expect.soft(map.get('1')?.result).toBe(body);
+       |                                       ^
+    147|   });
+    148|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/23]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 4 passed | 2 skipped (16)
+   Start at  01:02:45
+   Duration  8.85s (transform 5.37s, setup 75ms, import 8.28s, tests 113ms, environment 0ms)
+

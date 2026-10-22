@@ -1,0 +1,109 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:56:50.494Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:56:51.071Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:56:51.072Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:56:51.072Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read signs nothing: the ceremony's 503, with no detail
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written
+{
+  "timestamp": "2026-10-14T06:56:51.691Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "electronic_signatures refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-14T06:56:51.707Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts (25 tests) 113ms
+stdout | server/services/__tests__/adaptive-decision-is-governed.test.ts
+{
+  "timestamp": "2026-10-14T06:56:52.537Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:56:52.539Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/adaptive-decision-is-governed.test.ts
+{
+  "timestamp": "2026-10-14T06:56:52.539Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/adaptive-decision-is-governed.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/adaptive-decision-is-governed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/adaptive-decision-is-governed.test.ts
+{
+  "timestamp": "2026-10-14T06:56:52.637Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/adaptive-decision-is-governed.test.ts (16 tests) 13ms
+
+ Test Files  2 passed (2)
+      Tests  41 passed (41)
+   Start at  06:56:48
+   Duration  4.19s (transform 1.75s, setup 92ms, import 3.60s, tests 126ms, environment 0ms)
+

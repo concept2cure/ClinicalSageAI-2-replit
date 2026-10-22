@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:01:10.920133+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:design-system"
+  ],
+  "elapsedSeconds": 0.747,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "rawOutput": "final-gate-ci-design-system-output.txt.gz",
+  "outputSha256": "8af69f14b05e7c7d789156af88e967a3df16704b74206bc8b0a17dd95711eec5",
+  "stdout": "[design-system] OK \u2014 no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.\n"
+}

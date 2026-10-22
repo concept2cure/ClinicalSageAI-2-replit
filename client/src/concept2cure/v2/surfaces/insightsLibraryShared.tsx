@@ -54,6 +54,22 @@ export interface LibraryReportType {
   runScopeId?: string | null;
 }
 
+/** Counts refer to this authorized applicable catalog, never the global seed. */
+export function catalogCapabilityCounts(types: readonly LibraryReportType[]) {
+  return {
+    defined: types.length,
+    engineBacked: types.filter(type => type.computedScopes.length > 0).length,
+    available: types.filter(type => type.runnable && type.entitled !== false).length,
+    locked: types.filter(type => type.runnable && type.entitled === false).length,
+    contextRequired: types.filter(type => type.availabilityState === 'scope-required').length,
+    disabled: types.filter(type => type.availabilityState === 'disabled').length,
+    unregistered: types.filter(type => type.availabilityState === 'unregistered').length,
+    predictionUnavailable: types.filter(type => type.family === 'prediction' && !type.runnable).length,
+    uncomputed: types.filter(type => type.family !== 'prediction' && !type.runnable &&
+      (type.availabilityState === 'not-computed' || (!type.availabilityState && !type.computedScopes.length))).length,
+  };
+}
+
 export function PanelHead({
   title,
   sub,

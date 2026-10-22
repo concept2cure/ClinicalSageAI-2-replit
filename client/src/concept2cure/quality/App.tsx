@@ -37,10 +37,12 @@ const NO_CHANGES: ChangeControlRow[] = [];
 export interface QualityAppProps {
   /** Forward an AnA prompt to the host conversation surface. */
   onAskAna?: (text: string) => void;
-  /** Host navigation for rail cross-links (reserved; accepted for parity). */
+  /** Host navigation for the canonical workbench and project links. */
   onNavigate?: (target: string) => void;
   /** Which surface to open first ('sop' | 'change'). */
   initialTab?: QualityTab;
+  qmsDocumentId?: string;
+  qmsTargetRequest?: number;
 }
 
 type QualityTab = 'sop' | 'change';
@@ -64,8 +66,10 @@ const ASK_STARTER: Record<QualityTab, string> = {
     'and which linked deviations or CAPAs are still open.',
 };
 
-export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
+export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumentId,qmsTargetRequest }: QualityAppProps) {
   const [tab, setTab] = React.useState<QualityTab>(initialTab);
+  React.useEffect(()=>{if(qmsDocumentId)setTab('sop');},[qmsDocumentId,qmsTargetRequest]);
+  const [editingDocument, setEditingDocument] = React.useState(false);
   // ARIA tabs pattern: the tablist is one tab stop; Arrow, Home and End move
   // between tabs and select as they go (APG tablist). Without this a
   // screen-reader user hears "tab" but arrows do nothing.
@@ -112,18 +116,19 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
      person would make, and the detail says so. Every handler drives the SAME
      state the panes' own controls drive (setTab / setSopFilter / setStage /
      setOpenId) — no second path; misses are honest refusals, never guesses.
-     Approving, revising or retiring a document, raising or advancing a
-     change, and acknowledging a released revision are governed acts with no
-     handlers here. People personally acknowledge in the register reader;
-     approval and retirement use the native signature ceremony. */
+     Governed writes have no bus handlers. Explicit Quality controls call the
+     governed APIs; people read released text and personally acknowledge it in
+     the register reader. Approval and retirement use the Part 11 ceremony. */
   useSurfaceActionHandlers('quality', {
     'quality.open-tab': (params) => {
+      if (editingDocument) return { ok: false, reason: 'Return to the Quality register before switching tabs.' };
       const target: QualityTab = params.tab === 'change' ? 'change' : 'sop';
       if (tab === target) return { ok: true, detail: `Already on ${HERE[target]}` };
       setTab(target);
       return { ok: true, detail: `Opened ${HERE[target]}` };
     },
     'quality.filter-register': (params) => {
+      if (editingDocument) return { ok: false, reason: 'Return to the Quality register before applying its filters.' };
       // Belt behind the registry's enum: the chip must exist on the pane.
       const chip = STATUS_FILTERS.find((f) => f.id === params.status);
       if (!chip) return { ok: false, reason: `No status chip named "${params.status}".` };
@@ -140,6 +145,7 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
       return { ok: true, detail };
     },
     'quality.filter-changes': (params) => {
+      if (editingDocument) return { ok: false, reason: 'Return to the Quality register before switching tabs.' };
       const raw = params.stage ?? '';
       const next: ChangeState | 'all' | null =
         raw === 'all'
@@ -169,6 +175,7 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
       return { ok: true, detail };
     },
     'quality.open-change': (params) => {
+      if (editingDocument) return { ok: false, reason: 'Return to the Quality register before switching tabs.' };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // the ready signal below — the navigate→act gap.
       if (changeReg.loading) {
@@ -219,6 +226,11 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
      guess, and absent beats guessed. A loading or failed change read
      publishes itself as exactly that, never as an empty log. */
   const anaContext = React.useMemo(() => {
+    if (editingDocument) return {
+      summary: 'The user is in the controlled-document workbench inside Quality & Assurance. The document workbench owns the open content and edit permissions; Quality tabs and register actions are held until the user returns.',
+      facts: { tab, editingDocument: true },
+      availableActions: ['Read or edit the open document through its workbench permissions', 'Return to the Quality register using the workbench’s Back control'],
+    };
     const openRow = openId !== null ? (changes.find((c) => c.id === openId) ?? null) : null;
     const state: string[] = [];
     if (sopFilter !== 'all') {
@@ -258,11 +270,12 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
         'Filter the controlled-document register by status',
         'Filter the change log by lifecycle stage',
         'Expand a change to its linked deviations, CAPAs and validation records',
+        'Create, open and revise controlled documents in the register; edit their sections in the document workbench',
+        'Approval and retirement use the register’s electronic-signature ceremony',
         'People read controlled text and record their own personal acknowledgement in the SOP register; AnA cannot acknowledge for them',
-        'Document approval and retirement use native electronic signatures; other governed changes require their authorized workflow',
       ],
     };
-  }, [tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error]);
+  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error]);
   usePublishSurfaceContext('quality', anaContext);
 
   /* The bus's ready signal: a not-ready open-change (retry: true) held across
@@ -273,8 +286,8 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
   }, [changeReg.loading]);
 
   return (
-    <div className="qms-shell" data-screen-label="Quality & Assurance">
-      <div className="qms-topbar">
+    <div className="qms-shell" data-screen-label="Quality & Assurance" data-editing={editingDocument || undefined}>
+      {!editingDocument && <div className="qms-topbar">
         <div className="qms-crumbs">
           <span>Quality &amp; Assurance</span>
           <span className="sep" aria-hidden="true">/</span>
@@ -284,9 +297,9 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
         <button className="qms-tb-btn" onClick={() => onAsk(ASK_STARTER[tab])}>
           {I.sparkles} Ask AnA
         </button>
-      </div>
+      </div>}
 
-      <div className="qms-tabbar" role="tablist" aria-label="Quality surfaces">
+      {!editingDocument && <div className="qms-tabbar" role="tablist" aria-label="Quality surfaces">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -302,15 +315,16 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
             {t.label}
           </button>
         ))}
-      </div>
+      </div>}
 
       <div className="qms-page">
         <div className="qms-page-inner">
           {tab === 'sop' ? (
-            <SopRegister onAsk={onAsk} filter={sopFilter} onFilterChange={setSopFilter} />
+            <SopRegister onAsk={onAsk} onNavigate={onNavigate} filter={sopFilter} onFilterChange={setSopFilter}
+              onEditorOpenChange={setEditingDocument} qmsDocumentId={qmsDocumentId} qmsTargetRequest={qmsTargetRequest} />
           ) : (
             <ChangeControl
-              onAsk={onAsk}
+              onAsk={onAsk} onNavigate={onNavigate} onEditorOpenChange={setEditingDocument}
               stage={stage}
               onStageChange={setStage}
               openId={openId}

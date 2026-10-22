@@ -73,7 +73,7 @@ export {
   listStudyDesigns,
 } from './study-design-repository';
 export {
-  type ExtractOptions,
+  type CsrExtractOptions,
   type CsrEvidenceResult,
   extractEffectObservation,
   gatherCsrEffectEvidence,
@@ -157,7 +157,7 @@ export {
   type BurdenActivityInput,
   type BurdenCellInput,
   type BurdenMatrix,
-  type Measure,
+  type BurdenMeasure,
   type NotComputedNote,
   type BurdenPeakVisit,
   type BurdenVisitLoad,

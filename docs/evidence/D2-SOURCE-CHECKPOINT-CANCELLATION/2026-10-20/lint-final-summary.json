@@ -1,0 +1,1213 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/draft-project-sources.ts",
+    "server/services/ana/AnaDocumentDraftingService.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+    "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+    "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+    "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "447f48833126775ee064e4a22456f91154972039dcf16732767042ba85b1700d",
+  "note": "Summary excludes duplicated ESLint source fields; not a raw log.",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/AnaDocumentDraftingService.ts",
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'GatewayResponse' is defined but never used.",
+          "line": 25,
+          "column": 3,
+          "messageId": "unusedVar",
+          "endLine": 25,
+          "endColumn": 18,
+          "suggestions": [
+            {
+              "messageId": "removeUnusedVar",
+              "data": {
+                "varName": "GatewayResponse"
+              },
+              "fix": {
+                "range": [
+                  1097,
+                  1116
+                ],
+                "text": ""
+              },
+              "desc": "Remove unused variable \"GatewayResponse\"."
+            }
+          ]
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'ExtendedThinkingConfig' is defined but never used.",
+          "line": 29,
+          "column": 3,
+          "messageId": "unusedVar",
+          "endLine": 29,
+          "endColumn": 25,
+          "suggestions": [
+            {
+              "messageId": "removeUnusedVar",
+              "data": {
+                "varName": "ExtendedThinkingConfig"
+              },
+              "fix": {
+                "range": [
+                  1170,
+                  1196
+                ],
+                "text": ""
+              },
+              "desc": "Remove unused variable \"ExtendedThinkingConfig\"."
+            }
+          ]
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'AnaTool' is defined but never used.",
+          "line": 30,
+          "column": 3,
+          "messageId": "unusedVar",
+          "endLine": 30,
+          "endColumn": 10,
+          "suggestions": [
+            {
+              "messageId": "removeUnusedVar",
+              "data": {
+                "varName": "AnaTool"
+              },
+              "fix": {
+                "range": [
+                  1196,
+                  1207
+                ],
+                "text": ""
+              },
+              "desc": "Remove unused variable \"AnaTool\"."
+            }
+          ]
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'AnaToolResult' is defined but never used.",
+          "line": 31,
+          "column": 3,
+          "messageId": "unusedVar",
+          "endLine": 31,
+          "endColumn": 16,
+          "suggestions": [
+            {
+              "messageId": "removeUnusedVar",
+              "data": {
+                "varName": "AnaToolResult"
+              },
+              "fix": {
+                "range": [
+                  1207,
+                  1224
+                ],
+                "text": ""
+              },
+              "desc": "Remove unused variable \"AnaToolResult\"."
+            }
+          ]
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'TaskType' is defined but never used.",
+          "line": 32,
+          "column": 3,
+          "messageId": "unusedVar",
+          "endLine": 32,
+          "endColumn": 11,
+          "suggestions": [
+            {
+              "messageId": "removeUnusedVar",
+              "data": {
+                "varName": "TaskType"
+              },
+              "fix": {
+                "range": [
+                  1224,
+                  1236
+                ],
+                "text": ""
+              },
+              "desc": "Remove unused variable \"TaskType\"."
+            }
+          ]
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1023). Maximum allowed is 500.",
+          "line": 754,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1495,
+          "endColumn": 1
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 6,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/AnaToolExecutor.ts",
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'preHandlerRefusal' has a complexity of 22. Maximum allowed is 15.",
+          "line": 494,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 494,
+          "endColumn": 27
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 711,
+          "column": 65,
+          "messageId": "complex",
+          "endLine": 711,
+          "endColumn": 67
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (18431). Maximum allowed is 500.",
+          "line": 773,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 22066,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 23. Maximum allowed is 15.",
+          "line": 780,
+          "column": 71,
+          "messageId": "complex",
+          "endLine": 780,
+          "endColumn": 73
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 1296,
+          "column": 68,
+          "messageId": "complex",
+          "endLine": 1296,
+          "endColumn": 70
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (109). Maximum allowed is 100.",
+          "line": 1392,
+          "column": 75,
+          "messageId": "exceed",
+          "endLine": 1392,
+          "endColumn": 77
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 25. Maximum allowed is 15.",
+          "line": 1392,
+          "column": 75,
+          "messageId": "complex",
+          "endLine": 1392,
+          "endColumn": 77
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1485,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1485,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 31. Maximum allowed is 15.",
+          "line": 1526,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 1526,
+          "endColumn": 68
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 1654,
+          "column": 67,
+          "messageId": "complex",
+          "endLine": 1654,
+          "endColumn": 69
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 1781,
+          "column": 72,
+          "messageId": "complex",
+          "endLine": 1781,
+          "endColumn": 74
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 2129,
+          "column": 31,
+          "messageId": "complex",
+          "endLine": 2129,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 3311,
+          "column": 60,
+          "messageId": "complex",
+          "endLine": 3311,
+          "endColumn": 62
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 4313,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 4313,
+          "endColumn": 68
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 29. Maximum allowed is 15.",
+          "line": 4990,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 4990,
+          "endColumn": 68
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 27. Maximum allowed is 15.",
+          "line": 5088,
+          "column": 62,
+          "messageId": "complex",
+          "endLine": 5088,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15.",
+          "line": 5439,
+          "column": 88,
+          "messageId": "complex",
+          "endLine": 5439,
+          "endColumn": 90
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 5723,
+          "column": 93,
+          "messageId": "complex",
+          "endLine": 5723,
+          "endColumn": 95
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 6051,
+          "column": 98,
+          "messageId": "complex",
+          "endLine": 6051,
+          "endColumn": 100
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 6487,
+          "column": 106,
+          "messageId": "complex",
+          "endLine": 6487,
+          "endColumn": 108
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 22. Maximum allowed is 15.",
+          "line": 6529,
+          "column": 106,
+          "messageId": "complex",
+          "endLine": 6529,
+          "endColumn": 108
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 23. Maximum allowed is 15.",
+          "line": 7020,
+          "column": 99,
+          "messageId": "complex",
+          "endLine": 7020,
+          "endColumn": 101
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 7077,
+          "column": 99,
+          "messageId": "complex",
+          "endLine": 7077,
+          "endColumn": 101
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 7471,
+          "column": 67,
+          "messageId": "complex",
+          "endLine": 7471,
+          "endColumn": 69
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 27. Maximum allowed is 15.",
+          "line": 7584,
+          "column": 62,
+          "messageId": "complex",
+          "endLine": 7584,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 7708,
+          "column": 63,
+          "messageId": "complex",
+          "endLine": 7708,
+          "endColumn": 65
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 7995,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 7995,
+          "endColumn": 68
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 25. Maximum allowed is 15.",
+          "line": 8092,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 8092,
+          "endColumn": 68
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 8324,
+          "column": 56,
+          "messageId": "complex",
+          "endLine": 8324,
+          "endColumn": 58
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 23. Maximum allowed is 15.",
+          "line": 8540,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 8540,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 25. Maximum allowed is 15.",
+          "line": 8589,
+          "column": 60,
+          "messageId": "complex",
+          "endLine": 8589,
+          "endColumn": 62
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 8639,
+          "column": 60,
+          "messageId": "complex",
+          "endLine": 8639,
+          "endColumn": 62
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 8694,
+          "column": 74,
+          "messageId": "complex",
+          "endLine": 8694,
+          "endColumn": 76
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 8745,
+          "column": 63,
+          "messageId": "complex",
+          "endLine": 8745,
+          "endColumn": 65
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 8875,
+          "column": 79,
+          "messageId": "complex",
+          "endLine": 8875,
+          "endColumn": 81
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 8978,
+          "column": 63,
+          "messageId": "complex",
+          "endLine": 8978,
+          "endColumn": 65
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 9028,
+          "column": 63,
+          "messageId": "complex",
+          "endLine": 9028,
+          "endColumn": 65
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 9116,
+          "column": 69,
+          "messageId": "complex",
+          "endLine": 9116,
+          "endColumn": 71
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 9163,
+          "column": 56,
+          "messageId": "complex",
+          "endLine": 9163,
+          "endColumn": 58
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 9508,
+          "column": 69,
+          "messageId": "complex",
+          "endLine": 9508,
+          "endColumn": 71
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 9703,
+          "column": 56,
+          "messageId": "complex",
+          "endLine": 9703,
+          "endColumn": 58
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 22. Maximum allowed is 15.",
+          "line": 9890,
+          "column": 63,
+          "messageId": "complex",
+          "endLine": 9890,
+          "endColumn": 65
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 9965,
+          "column": 59,
+          "messageId": "complex",
+          "endLine": 9965,
+          "endColumn": 61
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 10007,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 10007,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 10047,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 10047,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 10669,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 10669,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 10711,
+          "column": 65,
+          "messageId": "complex",
+          "endLine": 10711,
+          "endColumn": 67
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 11076,
+          "column": 65,
+          "messageId": "complex",
+          "endLine": 11076,
+          "endColumn": 67
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 11117,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 11117,
+          "endColumn": 68
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 11188,
+          "column": 65,
+          "messageId": "complex",
+          "endLine": 11188,
+          "endColumn": 67
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 11429,
+          "column": 68,
+          "messageId": "complex",
+          "endLine": 11429,
+          "endColumn": 70
+        },
+        {
+          "ruleId": "max-params",
+          "severity": 1,
+          "message": "Async function 'governedPdev' has too many parameters (6). Maximum allowed is 5.",
+          "line": 11711,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 11711,
+          "endColumn": 28
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 12233,
+          "column": 117,
+          "messageId": "complex",
+          "endLine": 12233,
+          "endColumn": 119
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 12273,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 12273,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 12323,
+          "column": 68,
+          "messageId": "complex",
+          "endLine": 12323,
+          "endColumn": 70
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 12632,
+          "column": 67,
+          "messageId": "complex",
+          "endLine": 12632,
+          "endColumn": 69
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 12690,
+          "column": 69,
+          "messageId": "complex",
+          "endLine": 12690,
+          "endColumn": 71
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 12845,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 12845,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 12979,
+          "column": 62,
+          "messageId": "complex",
+          "endLine": 12979,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 13136,
+          "column": 59,
+          "messageId": "complex",
+          "endLine": 13136,
+          "endColumn": 61
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 13175,
+          "column": 59,
+          "messageId": "complex",
+          "endLine": 13175,
+          "endColumn": 61
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 13397,
+          "column": 68,
+          "messageId": "complex",
+          "endLine": 13397,
+          "endColumn": 70
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 13667,
+          "column": 67,
+          "messageId": "complex",
+          "endLine": 13667,
+          "endColumn": 69
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 13854,
+          "column": 62,
+          "messageId": "complex",
+          "endLine": 13854,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 22. Maximum allowed is 15.",
+          "line": 13912,
+          "column": 71,
+          "messageId": "complex",
+          "endLine": 13912,
+          "endColumn": 73
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 14211,
+          "column": 59,
+          "messageId": "complex",
+          "endLine": 14211,
+          "endColumn": 61
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 14247,
+          "column": 65,
+          "messageId": "complex",
+          "endLine": 14247,
+          "endColumn": 67
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 14357,
+          "column": 63,
+          "messageId": "complex",
+          "endLine": 14357,
+          "endColumn": 65
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15.",
+          "line": 14410,
+          "column": 56,
+          "messageId": "complex",
+          "endLine": 14410,
+          "endColumn": 58
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15.",
+          "line": 14462,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 14462,
+          "endColumn": 68
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 14697,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 14697,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 14780,
+          "column": 59,
+          "messageId": "complex",
+          "endLine": 14780,
+          "endColumn": 61
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 14815,
+          "column": 79,
+          "messageId": "complex",
+          "endLine": 14815,
+          "endColumn": 81
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 14842,
+          "column": 80,
+          "messageId": "complex",
+          "endLine": 14842,
+          "endColumn": 82
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 15188,
+          "column": 63,
+          "messageId": "complex",
+          "endLine": 15188,
+          "endColumn": 65
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 15285,
+          "column": 67,
+          "messageId": "complex",
+          "endLine": 15285,
+          "endColumn": 69
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (120). Maximum allowed is 100.",
+          "line": 15381,
+          "column": 61,
+          "messageId": "exceed",
+          "endLine": 15381,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 27. Maximum allowed is 15.",
+          "line": 15381,
+          "column": 61,
+          "messageId": "complex",
+          "endLine": 15381,
+          "endColumn": 63
+        },
+        {
+          "ruleId": "no-useless-escape",
+          "severity": 1,
+          "message": "Unnecessary escape character: \\..",
+          "line": 15993,
+          "column": 63,
+          "messageId": "unnecessaryEscape",
+          "endLine": 15993,
+          "endColumn": 64,
+          "suggestions": [
+            {
+              "messageId": "removeEscape",
+              "fix": {
+                "range": [
+                  812684,
+                  812685
+                ],
+                "text": ""
+              },
+              "desc": "Remove the `\\`. This maintains the current functionality."
+            },
+            {
+              "messageId": "escapeBackslash",
+              "fix": {
+                "range": [
+                  812684,
+                  812684
+                ],
+                "text": "\\"
+              },
+              "desc": "Replace the `\\` with `\\\\` to include the actual backslash character."
+            }
+          ]
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 17176,
+          "column": 73,
+          "messageId": "complex",
+          "endLine": 17176,
+          "endColumn": 75
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 17282,
+          "column": 86,
+          "messageId": "complex",
+          "endLine": 17282,
+          "endColumn": 88
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (164). Maximum allowed is 100.",
+          "line": 17355,
+          "column": 62,
+          "messageId": "exceed",
+          "endLine": 17355,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 17355,
+          "column": 62,
+          "messageId": "complex",
+          "endLine": 17355,
+          "endColumn": 64
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 17548,
+          "column": 72,
+          "messageId": "complex",
+          "endLine": 17548,
+          "endColumn": 74
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 17751,
+          "column": 78,
+          "messageId": "complex",
+          "endLine": 17751,
+          "endColumn": 80
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 19. Maximum allowed is 15.",
+          "line": 17932,
+          "column": 73,
+          "messageId": "complex",
+          "endLine": 17932,
+          "endColumn": 75
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 22. Maximum allowed is 15.",
+          "line": 18103,
+          "column": 89,
+          "messageId": "complex",
+          "endLine": 18103,
+          "endColumn": 91
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 38. Maximum allowed is 15.",
+          "line": 18286,
+          "column": 94,
+          "messageId": "complex",
+          "endLine": 18286,
+          "endColumn": 96
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 45. Maximum allowed is 15.",
+          "line": 18418,
+          "column": 96,
+          "messageId": "complex",
+          "endLine": 18418,
+          "endColumn": 98
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 18575,
+          "column": 101,
+          "messageId": "complex",
+          "endLine": 18575,
+          "endColumn": 103
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15.",
+          "line": 20413,
+          "column": 67,
+          "messageId": "complex",
+          "endLine": 20413,
+          "endColumn": 69
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 32. Maximum allowed is 15.",
+          "line": 20504,
+          "column": 72,
+          "messageId": "complex",
+          "endLine": 20504,
+          "endColumn": 74
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 24. Maximum allowed is 15.",
+          "line": 20639,
+          "column": 68,
+          "messageId": "complex",
+          "endLine": 20639,
+          "endColumn": 70
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 20722,
+          "column": 58,
+          "messageId": "complex",
+          "endLine": 20722,
+          "endColumn": 60
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 21615,
+          "column": 66,
+          "messageId": "complex",
+          "endLine": 21615,
+          "endColumn": 68
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 95,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/draft-project-sources.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

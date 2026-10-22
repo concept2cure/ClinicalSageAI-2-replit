@@ -40,6 +40,7 @@ beforeAll(async () => {
   await pg.exec(`CREATE TABLE project_memory_entries (
     id serial PRIMARY KEY, project_id integer NOT NULL, organization_id integer NOT NULL,
     category text NOT NULL, title text NOT NULL, content text NOT NULL,
+    source_document_type text,
     confidence_score real DEFAULT 0.8, importance_level text DEFAULT 'medium',
     status text DEFAULT 'active', created_at timestamp NOT NULL DEFAULT now()
   )`);
@@ -69,24 +70,41 @@ beforeEach(async () => {
 type MemoryRow = {
   title: string; category: string; projectId?: number; organizationId?: number;
   confidence?: number | null; importance?: string | null; status?: string | null; createdAt?: string;
+  sourceDocumentType?: string | null;
 };
 async function seed(row: MemoryRow) {
-  const { title, category, projectId = 42, organizationId = 7, confidence = 0.9, importance = 'medium', status = 'active', createdAt = '2026-10-01T00:00:00Z' } = row;
+  const { title, category, projectId = 42, organizationId = 7, confidence = 0.9, importance = 'medium', status = 'active', createdAt = '2026-10-01T00:00:00Z', sourceDocumentType = null } = row;
   await pg.query(`INSERT INTO project_memory_entries
-    (project_id, organization_id, category, title, content, confidence_score, importance_level, status, created_at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-  [projectId, organizationId, category, title, `${title} body`, confidence, importance, status, createdAt]);
+    (project_id, organization_id, category, title, content, confidence_score, importance_level, status, created_at, source_document_type)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+  [projectId, organizationId, category, title, `${title} body`, confidence, importance, status, createdAt, sourceDocumentType]);
 }
 const recall = (command: string) => enrichContextForChat({ ...INPUT, message: `/${command}` });
 const titles = (rows: Array<Record<string, unknown>>) => rows.map(row => row.title);
 const exactHealthyBlocks: Record<string, string> = {
   precedent: '\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Active record** [90% confidence]: Active record body',
-  claims: '\n\n## Evidence & Claims Analysis\n**Evidence Chain Strength:** moderate | **Confidence:** 66/100\n**Factors:** evidenceCount: 1, averageRelevance: 0.9, hasRegulatoryReference: false, hasUserVerification: false, recency: recent\n\n**Evidence Entries:**\n- **Active record** [90%]: Active record body\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.',
+  // 2026-10-15: the heuristic was labelled "**Confidence:** 66/100" (context-enrichment-claims-coverage-is-labelled-a-heuristic).
+  claims: '\n\n## Evidence & Claims Analysis\n**Evidence coverage (heuristic, not a confidence):** 66/100, from the number of entries, their mean recorded confidence, source types and recency | **Chain strength (from that heuristic):** moderate\n**Factors:** evidenceCount: 1, averageRelevance: 0.9, hasRegulatoryReference: false, hasUserVerification: false, recency: recent\n\n**Evidence Entries:**\n- **Active record** [90%]: Active record body\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.',
   knowledge: '\n\n## Knowledge Base Search Results\n**1 entries** found in project knowledge.\n\n- **Active record** [strategy] (90%): Active record body\n\nReference these knowledge atoms when answering. Cite the category and confidence level.',
   safety: '\n\n## Safety Intelligence\nProject-specific safety data. Reference directly in your response.\n- **Active record** [90% confidence]: Active record body',
 };
 
 describe('structured readers execute canonical columns and retain their healthy format', () => {
+  it.each(ROUTES)('/$command excludes reserved state before ranking/limits, retaining ordinary NULL/PDF memory', async route => {
+    for (let index = 0; index < route.limit + 1; index++) {
+      await seed({ title: `Private bundle source ${index}`, category: route.category,
+        sourceDocumentType: 'report_os_state', importance: 'critical', createdAt: '2026-10-18T00:00:00Z' });
+    }
+    await seed({ title: 'Ordinary legacy knowledge', category: route.category, importance: 'high' });
+    await seed({ title: 'Ordinary PDF knowledge', category: route.category, sourceDocumentType: 'application/pdf' });
+    const { block } = await recall(route.command);
+    expect(h.results[0].rows.map(row => row.title)).toEqual(['Ordinary legacy knowledge', 'Ordinary PDF knowledge']);
+    expect(block).toContain('Ordinary legacy knowledge');
+    expect(block).toContain('Ordinary PDF knowledge');
+    expect(block).not.toContain('Private bundle source');
+    expect(h.errors).toEqual([]);
+  });
+
   it.each(ROUTES)('/$command returns its primary heading and confidence from canonical columns', async route => {
     await seed({ title: 'Active record', category: route.category });
     const result = await recall(route.command);
@@ -109,7 +127,7 @@ describe('structured readers execute canonical columns and retain their healthy 
     expect(block).toContain(`## ${route.heading}`);
     expect(block).toContain(route.command === 'knowledge' ? '(0%)' : '[0%');
     if (route.command === 'claims') {
-      expect(block).toContain('**Confidence:** 48/100');
+      expect(block).toContain('**Evidence coverage (heuristic, not a confidence):** 48/100');
       expect(block).toContain('averageRelevance: 0,');
       expect(block).toContain('**Zero confidence** [0%]');
     }

@@ -1,0 +1,57 @@
+{
+  "exitCode": 0,
+  "errors": 0,
+  "warnings": 24,
+  "files": [
+    {
+      "file": "server/routes/authoring.router.ts",
+      "baselineErrors": 0,
+      "baselineWarnings": 23,
+      "finalErrors": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+      "baselineErrors": 0,
+      "baselineWarnings": 1,
+      "finalErrors": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/services/authoring/authoring-draft-termination.ts",
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "finalErrors": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "finalErrors": 0,
+      "finalWarnings": 23
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "finalErrors": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts",
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "finalErrors": 0,
+      "finalWarnings": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "finalErrors": 0,
+      "finalWarnings": 1
+    }
+  ],
+  "newErrors": []
+}

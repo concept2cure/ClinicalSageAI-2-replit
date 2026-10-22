@@ -23,7 +23,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Reviewer', email: 'reviewer@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));

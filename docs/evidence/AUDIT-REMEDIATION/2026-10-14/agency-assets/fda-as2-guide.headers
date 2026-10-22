@@ -1,0 +1,24 @@
+HTTP/1.1 200 OK
+date: Wed, 14 Oct 2026 03:13:41 GMT
+server: envoy
+
+HTTP/2 200 
+content-type: application/pdf
+content-length: 357644
+server: envoy
+content-disposition: inline; filename=esg_nextgen_as2_guide_for_industry_users_v2.2_-_july_2026.pdf
+content-language: en
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+accept-ranges: bytes
+last-modified: Fri, 10 Jul 2026 18:09:48 GMT
+x-cache-status: MISS
+cache-control: public, max-age=0
+expires: Wed, 14 Oct 2026 03:13:43 GMT
+date: Wed, 14 Oct 2026 03:13:43 GMT
+alt-svc: h3=":443"; ma=93600
+strict-transport-security: max-age=31536000 ; includeSubDomains ; preload
+set-cookie: _abck=B2A7D75A8466E5B2B13561717ED89A8D~-1~YAAQIkkVAvepFS+hAQAAd8pmOBB46GpKSEjibVU2Q5jso9bgm7E14J7JEyrzte3iQSuBQ86i3KLCOCfiDE19IaExXoAabK5iLgDafg0CB+pvoFH8RhBWL40pSV2AgLCUThC4IqcPVf0P9EbuHHyR+yGLWotqadZAGzRKQN0WqIcxTepWxf/+rRo0uY6oiLd9vYqgDLQxZrQFW3LxGzRJXUxUVAPTCMNBzvQx2AUTib8OVpxmijF0+iqUr6reYcZngEHlHUutoTTfFl8a+mo2W8l7+fUJ6OokUbt9n23JjOONAeH1YeFGT11hdCcYuc8qaD7r4Ql3oj7CCvVF6wg+6iQ0XAY0XKeguSb5FRI3AWf2bNg0h9g1Tx8upY2po6XhYJVuKdLuNE80U/Ee+xyETJxxNyVH3GJTAJJLTOnQyZytFUm42KEt5rfLAXYXmjtHxkM=~-1~-1~-1~-1~-1; Domain=.fda.gov; Path=/; Expires=Thu, 14 Oct 2027 03:13:43 GMT; Max-Age=31536000; Secure
+set-cookie: bm_sz=0EF08AF7C693B5B933E1FD532A7324DC~YAAQIkkVAvipFS+hAQAAd8pmOAFfePLJKhCXCOXoUCLOHfOv7A91QS4Zj/ki4r4N9Vo0qBStmhIBIs0w+srLMym76A5uoyEpQ1F8D7uI5WG5d6gH8Qspo8DFeeAFOYbysD7DzJ3unEPOskl84pzQ/Mo+11i2ucoTOpB/OrBmWv2F9+/LUKzYff6UfuAPCrLp1Hb4uTIRDGd/slXnqztZs+an84tNx8m3O9HxiwVT69Rf+74xeSLuk/57LTD6Is34rRWllheG5/dUw2DTp9XDxrM1gwJ9sGjCc6xvDz2FOQ7KrDpl7KdRs6kFTzXz8rnY2S13Wyx+7fQH2JHpMFjM9pHrpSQRsQGO3x4gzbW3z4hQxejn~3159361~4474169; Domain=.fda.gov; Path=/; Expires=Wed, 14 Oct 2026 07:13:42 GMT; Max-Age=14399
+x-envoy-upstream-service-time: 1633
+

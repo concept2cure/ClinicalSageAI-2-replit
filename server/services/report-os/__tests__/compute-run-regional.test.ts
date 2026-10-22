@@ -45,3 +45,10 @@ describe('shared regional dispatch', () => {
     expect(result.computed.summary.accessProjectIds).toEqual([11, 12]);
   });
 });
+
+
+it('retains contributing source projects as well as the selected program-group context', async () => {
+  vi.mocked(computeInitialRun).mockResolvedValue({ providers: [], blockers: [], criticalBlockers: [], summary: { accessProjectIds: [12,21] }, confidence: null });
+  const result = await computeRunForType({ ...input, engine: 'readiness', scopeType: 'program', programProjectIds: [11,12] });
+  expect(result.computed.summary.accessProjectIds).toEqual([11,12,21]);
+});

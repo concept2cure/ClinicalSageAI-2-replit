@@ -1,0 +1,84 @@
+{
+  "status": "completed-green-frozen",
+  "recorded_at_utc": "2026-10-18T00:34:11.257146+00:00",
+  "node_version": "v22.23.3",
+  "default_config": "vitest.config.ts",
+  "command": [
+    "node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts",
+    "server/services/ana/__tests__/batch-draft-concurrency.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/task-handoff-concurrency-backend-final.json"
+  ],
+  "result": {
+    "files_passed": 2,
+    "total_cases": 33,
+    "passed": 33,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "exit_code": 0,
+    "duration_seconds": 24.753012207999745
+  },
+  "execution_tree": {
+    "type": "committed frozen merge",
+    "head_at_execution_start": "22b1f50b964162664791c74638ca2aaedc94e0db",
+    "head_at_execution_end": "22b1f50b964162664791c74638ca2aaedc94e0db",
+    "incoming_commit": "61a14c5d9406501dcc05c188e3975dcce59317f0"
+  },
+  "source_integrity": {
+    "sha256_pin_count": 8027,
+    "all_before_after_sha256_match": true,
+    "changed_pinned_paths": [],
+    "scope": "all tracked server/shared/tests TS/JS/JSON/SQL plus package manifests and default Vitest config"
+  },
+  "scope": "18 service concurrency cases and 15 actual-route concurrency cases. Invalid supplied values refuse before request scheduling or downstream route work; omitted concurrency defaults to 3, positive concurrency caps at 5, bounded ordering and existing HTTP identity/summary/provenance controls remain covered. Upstream D2-BATCH-CONCURRENCY evidence retains its original red and broader 156-case result; no full backend/native replay is claimed.",
+  "limits": "Default Vitest regression evidence with synthetic route/service fixtures. No source edits, native database commands, live provider, compiler/build, deployment or human witness claim.",
+  "credential_scan": {
+    "files_scanned": 4,
+    "findings": 0,
+    "private_env_files_copied": 0
+  },
+  "archives": [
+    {
+      "archive": "task-handoff-concurrency-backend-final.log.gz",
+      "original_path": "/workspace/scratch/task-handoff-concurrency-backend-final.log",
+      "original_sha256": "8369a10d14375d4919a0c16ec9f7f485b3e089329d201d69fc16da461079f188",
+      "original_bytes": 7787,
+      "gzip_sha256": "ea64dc432fab8d9e5212330ff0ddea3dfc1aa6634e5e70453d031fa234263ee4",
+      "gzip_bytes": 1130,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-concurrency-backend-final.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-concurrency-backend-final.json",
+      "original_sha256": "c84c802a03af09e78d037204bd3e102a0207d893c3573b499857d909bf4a884c",
+      "original_bytes": 10794,
+      "gzip_sha256": "17bdf1afafac10905d67ba9ecf7a25b939580bb0d42e47206ed859d2241298aa",
+      "gzip_bytes": 1285,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-concurrency-backend-final.pins.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-concurrency-backend-final.pins.json",
+      "original_sha256": "cb1965d2cc024974ecc3f36830cd54c647037e1ceb780ab655c65aaeeb0888f1",
+      "original_bytes": 2115726,
+      "gzip_sha256": "58483f5330ecbcf07d979d640ae47cc0559199e920c316677c292519f4da2691",
+      "gzip_bytes": 818318,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-concurrency-backend-final.files.txt.gz",
+      "original_path": "/workspace/scratch/task-handoff-concurrency-backend-final.files.txt",
+      "original_sha256": "b79f1a12c5b3634caea6cd4afd0eef87d5e4281a08405c9b722453f54e3f0ebe",
+      "original_bytes": 129,
+      "gzip_sha256": "4e9bc8ca8946d5ef621dd7cf06c633fcad1a6a89b6115991cab7ae4ec16b5002",
+      "gzip_bytes": 101,
+      "gzip_mtime": 0
+    }
+  ]
+}

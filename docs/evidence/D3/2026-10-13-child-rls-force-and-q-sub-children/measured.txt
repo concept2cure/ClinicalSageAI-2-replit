@@ -1,0 +1,114 @@
+Environment
+===========
+PostgreSQL 16.15 at 127.0.0.1:55432, pgvector 0.6.0 installed BEFORE provisioning
+(the first attempt without it produced three false conclusions — see README).
+Databases provisioned from blank by `node scripts/db/install-fresh.mjs`:
+  c2cbefore  migration at HEAD
+  c2cafter   migration amended, then `node scripts/db/deploy-migrate.mjs`
+Reads below as app_service (NOSUPERUSER NOBYPASSRLS), app.rls_enforce = 'on'.
+
+
+1. install-fresh from blank, migration at HEAD
+==============================================
+  ✓ applied 0005_csr_knowledge_database.sql
+  ✓ governed content: 42/42 applied
+  ✓ child tables scoped to their tenant-keyed parents
+  tables (public): 808
+  RLS policies:    1006
+  required objects: 8/8 capabilities complete
+
+❌ Install failed: 4 tenant-keyed table(s) carry no RLS policy — rows are
+   readable across tenants once anything reads them: public.capa_actions
+   (child of public.capa_records, row security off), public.q_sub_meetings
+   (child of public.q_submissions, row security off), public.q_sub_questions
+   (child of public.q_submissions, row security off),
+   public.q_sub_timeline_entries (child of public.q_submissions, row security off)
+
+
+2. Catalog state on that database
+=================================
+relname                    | rls | forced | policies
+---------------------------+-----+--------+---------
+capa_actions               | f   | f      | 0
+q_sub_questions            | f   | f      | 0
+q_sub_commitments          | f   | f      | 0   <- not flagged: its parent had no
+                                                   row security yet either
+csr_endpoint_results       | t   | f      | 0   <- "deny-all", owner exempt
+ctd_documents              | t   | f      | 0   <- "deny-all", owner exempt
+ctd_module_sections        | t   | f      | 0   <- "deny-all", owner exempt
+capa_records               | t   | t      | 1   (policied 2026-10-12)
+q_submissions              | t   | t      | 1   (policied 2026-10-12)
+coauthor_document_versions | t   | t      | 1   (fine — the pgvector-less run
+                                                 reported this as f/f/0)
+
+Every FK used below is NOT NULL and matches its parent's key type:
+  capa_actions.capa_id             uuid NOT NULL -> capa_records.id        uuid
+  q_sub_meetings.q_submission_id   uuid NOT NULL -> q_submissions.id       uuid
+  q_sub_questions.q_submission_id  uuid NOT NULL -> q_submissions.id       uuid
+  q_sub_timeline_entries.q_submission_id uuid NOT NULL -> q_submissions.id uuid
+  q_sub_commitments.q_sub_question_id uuid NOT NULL -> q_sub_questions.id  uuid
+so no row is orphaned into invisibility and the chained block needs no cast.
+
+
+3. Cross-tenant read, as the runtime role
+=========================================
+Two programmes (organization_id 9001, 9002), one q_submission each, one
+q_sub_question each.
+
+  BEFORE (row security off on q_sub_questions)
+    SET app.rls_enforce='on'; SET app.current_tenant_id='9001';
+    SELECT count(*) FROM q_sub_questions;            -> 2
+
+  AFTER (chained policy applied)
+    tenant 9001                                      -> 1
+    tenant 9002                                      -> 1
+    scoped connection, no organisation               -> 0
+
+  Reproduced in both directions on the same rows:
+    ALTER TABLE q_sub_questions DISABLE ROW LEVEL SECURITY;  -> 2
+    ALTER TABLE q_sub_questions ENABLE  ROW LEVEL SECURITY;  -> 1
+
+
+4. The test, run against the pre-fix database (migration at HEAD)
+=================================================================
+× every table named by the migration ends up policied, enabled and FORCEd
+  → capa_actions has no tenant_isolation_policy: expected false to be true
+× q_sub_questions: each tenant sees its own row and not the other's
+  → q_sub_questions: tenant B can read tenant A's row: expected 1 to be +0
+× leaves the three chained tables deny-all against every role, deliberately
+  and visibly
+  → csr_endpoint_results is deny-all but not FORCEd — the table owner is
+    exempt from it and reads every tenant's rows: expected false to be true
+
+  Tests  3 failed | 13 passed (16)
+
+Same database, migration amended:
+
+  Test Files  1 passed (1)
+       Tests  16 passed (16)
+
+
+5. install-fresh from blank with the amendment, then deploy-migrate
+===================================================================
+  ✓ child tables scoped to their tenant-keyed parents
+  tenant isolation: every integer tenant-keyed table is policied ✓
+  runtime role app_service: LOGIN · non-superuser · NOBYPASSRLS ✓
+✅ Application schema install complete.
+
+  deploy-migrate (re-runs the amended file — idempotency):
+  ✓ 374/374 migration files applied
+  tenant_isolation_policy: 19/19 tables policied
+✅ Schema migration complete — safe to roll services.
+
+  scripts/db/rls-coverage-check.sql on the result: 0 rows.
+
+relname              | rls | forced | policies
+---------------------+-----+--------+---------
+capa_actions         | t   | t      | 1
+q_sub_commitments    | t   | t      | 1
+q_sub_meetings       | t   | t      | 1
+q_sub_questions      | t   | t      | 1
+q_sub_timeline_entries | t | t      | 1
+csr_endpoint_results | t   | t      | 0   <- deny-all, owner included
+ctd_documents        | t   | t      | 0   <- deny-all, owner included
+ctd_module_sections  | t   | t      | 0   <- deny-all, owner included

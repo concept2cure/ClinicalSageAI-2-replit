@@ -51,6 +51,7 @@
 
 import { evaluateFinalExportGate } from './final-export-gate.js';
 import { loadCmcSourcesForProject } from './load-cmc-sources-for-project.js';
+import { assessProgramCompositionScope } from './module3-compile.js';
 import type { CanonicalSource } from '../module3Composer';
 import { createScopedLogger } from '../../utils/logger.js';
 
@@ -121,6 +122,32 @@ export async function loadApprovedCmcSourcesForProject(
           `Approve every composed section in the CMC module and clear its findings first.`,
     };
   }
+
+  /* The composition boundary (decision P-28: small-molecule Module 3 for a US
+     IND). The gate judges approval, not what the program is: a biologic, or a
+     program filing an NDA, whose sections were approved before the boundary
+     existed passes it, and the orchestrator then composed, assembled and
+     signed that Module 3 into a package (2026-10-22, the launch-boundary
+     re-proof's review). Asked here, the one door the orchestrator's Module 3
+     comes through; the refusal is the reason the run records. */
+  let scopeRefusal: Awaited<ReturnType<typeof assessProgramCompositionScope>>;
+  try {
+    scopeRefusal = await assessProgramCompositionScope(orgId, projectId);
+  } catch (err) {
+    log.warn('composition boundary could not be evaluated; the package carries no Module 3', {
+      orgId,
+      projectId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return {
+      gate: 'unknown',
+      sources: [],
+      reason:
+        `Whether this program's Module 3 is within what this platform composes could not be established, so ` +
+        `no Module 3 was carried into the package. The failure is in the server log.`,
+    };
+  }
+  if (scopeRefusal) return { gate: 'closed', sources: [], reason: scopeRefusal.message };
 
   const sources = await loadCmcSourcesForProject(orgId, projectId);
   return { gate: 'open', sources, approvedSections: verdict.data.approvedSections };

@@ -7,9 +7,13 @@
  * transaction, and inserts only when the count is under the ceiling, so two
  * concurrent requests cannot both squeeze under the same limit.
  *
- * The ceilings are organizations.max_projects and organizations.max_users —
- * the values the tenant's plan writes and install-fresh / signup seed, and the
- * same values server/services/license-manager.ts reports as LicenseInfo.
+ * The ceilings are organizations.max_projects and organizations.max_users, read
+ * as the row records them — the reading server/services/license-manager.ts
+ * gives in readLicenseInfo, checkProjectQuota and checkUserQuota: a recorded 0
+ * is zero, and NULL is "not recorded". license-manager reports a NULL limit as
+ * undecided (withinQuota null); a create cannot be undecided, so here it
+ * refuses (QUOTA_NOT_RECORDED). license-manager's checkProgramQuota, which
+ * gates regulatory_programs, is a different rule: it reads NULL as 10.
  *
  * History, because it explains the shape of this file: every function here
  * used to lock a row in `licenses` keyed by organization_id and answer
@@ -30,12 +34,26 @@ import { unusableInvitePasswordHash } from './password-setup-token.js';
 import { recordInvitationConsent } from './tenant/invitation-consent.js';
 
 /**
- * Fallbacks for a NULL ceiling. They match the column defaults in
- * shared/schema.ts (organizations.max_users / max_projects) and the values
- * license-manager.ts substitutes, so a NULL means the same thing everywhere.
+ * A ceiling as the organization row records it: null when not recorded (or not
+ * a number), 0 when zero. 2026-10-15: the create paths read `max_projects || 10`
+ * and `max_users || 5`, so a recorded 0 still allowed 10 projects / 5 members
+ * and a NULL was enforced as those defaults.
  */
-const DEFAULT_MAX_PROJECTS = 10;
-const DEFAULT_MAX_USERS = 5;
+function recordedCeiling(raw) {
+  if (raw == null) return null;
+  const ceiling = Number(raw);
+  return Number.isFinite(ceiling) ? ceiling : null;
+}
+
+/** An unrecorded ceiling decides nothing, so the create it guards is refused. */
+function ceilingNotRecorded(kind, currentCount) {
+  return {
+    success: false,
+    error: 'QUOTA_NOT_RECORDED',
+    message: `The ${kind.toLowerCase()} limit is not recorded for this organization, so nothing was created.`,
+    details: { current: currentCount, maximum: null, remaining: null },
+  };
+}
 
 /**
  * Lock the organization row and return its ceilings, or null when the
@@ -96,7 +114,11 @@ export async function atomicCreateProject(organizationId, projectData) {
       [organizationId]
     );
     const currentCount = parseInt(countResult.rows[0].count, 10);
-    const maxProjects = organization.max_projects || DEFAULT_MAX_PROJECTS;
+    const maxProjects = recordedCeiling(organization.max_projects);
+    if (maxProjects == null) {
+      await client.query('ROLLBACK');
+      return ceilingNotRecorded('Project', currentCount);
+    }
 
     if (currentCount >= maxProjects) {
       await client.query('ROLLBACK');
@@ -176,7 +198,11 @@ export async function atomicCreateUser(organizationId, userData) {
     }
 
     const currentCount = await countMembers(client, organizationId);
-    const maxUsers = organization.max_users || DEFAULT_MAX_USERS;
+    const maxUsers = recordedCeiling(organization.max_users);
+    if (maxUsers == null) {
+      await client.query('ROLLBACK');
+      return ceilingNotRecorded('User', currentCount);
+    }
 
     if (currentCount >= maxUsers) {
       await client.query('ROLLBACK');
@@ -412,7 +438,11 @@ export async function atomicAcceptInvitation(invitationId, callerUserId, auditCo
     }
 
     const currentCount = await countMembers(client, organizationId);
-    const maxUsers = organization.max_users || DEFAULT_MAX_USERS;
+    const maxUsers = recordedCeiling(organization.max_users);
+    if (maxUsers == null) {
+      await client.query('ROLLBACK');
+      return ceilingNotRecorded('User', currentCount);
+    }
 
     if (currentCount >= maxUsers) {
       await client.query('ROLLBACK');

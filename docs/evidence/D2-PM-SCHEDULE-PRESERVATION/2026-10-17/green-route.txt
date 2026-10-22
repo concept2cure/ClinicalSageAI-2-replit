@@ -1,0 +1,77 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record"
+{
+  "timestamp": "2026-10-17T23:54:43.870Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] loading schedule of events failed",
+  "context": {
+    "err": "connection terminated",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident 12 org-scoped 24ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident proj_12 org-scoped 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > never truncates a regulatory_programs UUID to its leading digits 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 400s any digit-prefixed junk ident before a single query is issued 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 404s a project outside the caller org without revealing it exists 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the schedule of the project the program is anchored to 7ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the unified work of the anchored project 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > answers an unanchored program with a named 404 and reads nothing 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > never generates a schedule for an unanchored program 13ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record" 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > forwards the trimmed caller reason after the existing organization gate 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from undefined 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "" 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "   " 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from 42 3ms
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false)
+{
+  "timestamp": "2026-10-17T23:54:43.897Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true)
+{
+  "timestamp": "2026-10-17T23:54:43.905Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": "SCHEDULE_REVIEW_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation
+{
+  "timestamp": "2026-10-17T23:54:43.909Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Organization context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > returns the actionable preservation conflict as 409 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false) 8ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true) 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses a project outside the organization before invoking generation 3ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  23:54:43
+   Duration  805ms (transform 160ms, setup 95ms, import 246ms, tests 122ms, environment 0ms)
+

@@ -7,12 +7,15 @@ import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { isActiveAccountStatus } from '../account-standing';
 import { derivePosture } from '../tenant/tenant-lifecycle';
 import type { QmsDocumentRow } from './document-approval-signature';
+import { authorizeQmsContentRead } from './controlled-document-content';
 import { verifiedTrainingReceipt } from './training-content';
 import { readQmsTrainingReleaseContext, type CurrentQmsReleaseApproval } from './current-release-approval';
+import { resolveInForceRelease } from './in-force-release';
 
 export { readQmsTrainingCompliance } from './training-compliance';
 export interface TrainingSqlClient {
   query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
+  discard?(reason: Error): Promise<void>;
 }
 interface TrainingActor { organizationId: number; userId: number; now?: Date }
 interface TrainingInput extends TrainingActor {
@@ -78,10 +81,14 @@ async function currentReceipt(client: TrainingSqlClient, actor: TrainingActor, c
 export async function readQmsTrainingContext(client: TrainingSqlClient, input: TrainingActor & { document: QmsDocumentRow }) {
   if (input.document.organization_id !== input.organizationId) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
   const posture = await currentStanding(client, input);
-  const { context } = await readQmsTrainingReleaseContext(client, input.document, input.now);
+  // Training reads the version in force: while a successor is drafted that is
+  // its signed predecessor, and access is decided on what is read (in-force-release.ts).
+  const release = (await resolveInForceRelease(client, input.document))?.release ?? input.document;
+  await authorizeQmsContentRead(client, input.organizationId, input.userId, release);
+  const { context } = await readQmsTrainingReleaseContext(client, release, input.now);
   const acknowledgement = await currentReceipt(client, input, context);
   const canEditControlledText = posture.decision === 'allow' && !!posture.membershipRole
-    && GOVERNED_WRITE_ROLES.has(posture.membershipRole) && ['draft', 'in_review'].includes(input.document.status);
+    && GOVERNED_WRITE_ROLES.has(posture.membershipRole) && !input.document.authoring_document_id && ['draft', 'in_review'].includes(input.document.status);
   return { ...context, acknowledgement, canEditControlledText,
     ...(posture.decision === 'allow' ? {} : { eligible: false, unavailableReason: posture.reason }) };
 }
@@ -96,14 +103,17 @@ async function recordAcknowledgement(client: TrainingSqlClient, params: Training
   );
   const document = rows[0] as QmsDocumentRow | undefined;
   if (!document) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
-  const { context, approval } = await readQmsTrainingReleaseContext(client, document, now, { lock: true });
+  // The row stays locked; the acknowledgement is of the version in force (in-force-release.ts).
+  const release = (await resolveInForceRelease(client, document))?.release ?? document;
+  await authorizeQmsContentRead(client, params.organizationId, params.userId, release);
+  const { context, approval } = await readQmsTrainingReleaseContext(client, release, now, { lock: true });
   const releaseApprovalSignatureId = approvedTrainingSignatureId(context, approval);
   if (params.input.documentVersion !== context.documentVersion || params.input.contentDigest !== context.contentDigest) throw new QmsTrainingRefused(409, 'QMS_TRAINING_STALE', 'The released revision changed. Reload and read it before acknowledging.');
   const existing = await currentReceipt(client, { ...params, now }, context);
   if (existing) return { acknowledgement: existing, alreadyAcknowledged: true };
   const expiresAt = new Date(now.getTime() + 365 * 86_400_000);
   const metadata = { declaration: QMS_TRAINING_DECLARATION, contentDigest: context.contentDigest,
-    bindingBasis: 'qms-document-version-content-sha256', releaseApprovalSignatureId, documentSnapshot: document };
+    bindingBasis: 'qms-document-version-content-sha256', releaseApprovalSignatureId, documentSnapshot: release };
   const inserted = await client.query(
     `INSERT INTO qms_training_records (organization_id, user_id, document_id, document_version,
        acknowledgment_method, acknowledged_at, expires_at, metadata)
@@ -138,8 +148,11 @@ export async function withQmsTrainingTransaction<T>(client: TrainingSqlClient, m
     await client.query('COMMIT');
     return result;
   } catch (error) {
+    if (commitAttempted) {
+      await client.discard?.(error instanceof Error ? error : new Error('QMS training commit unconfirmed'));
+      throw new QmsTrainingCommitUnconfirmed(uncertainMessage);
+    }
     await client.query('ROLLBACK').catch(() => undefined);
-    if (commitAttempted) throw new QmsTrainingCommitUnconfirmed(uncertainMessage);
     throw error;
   }
 }

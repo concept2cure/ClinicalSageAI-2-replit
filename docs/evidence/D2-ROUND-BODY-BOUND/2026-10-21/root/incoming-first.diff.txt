@@ -1,0 +1,3148 @@
+diff --git a/client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx b/client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx
+new file mode 100644
+index 000000000..5a50bddd2
+--- /dev/null
++++ b/client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx
+@@ -0,0 +1,168 @@
++// @vitest-environment jsdom
++/** Package DTD evidence belongs to the exact compiled bytes and current actor/project. */
++import React from 'react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
++
++const { apiRequest, auth } = vi.hoisted(() => ({ apiRequest: vi.fn(), auth: { revision: 1, actor: 7 } }));
++vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
++vi.mock('@/services/portal/authService', () => ({ authService: {
++  getUser: () => ({ id: auth.actor, organizationId: 4 }),
++  captureSessionReadGuard: () => { const revision = auth.revision; return { sameRevision: () => revision === auth.revision }; },
++  on: () => () => {},
++} }));
++
++import { EctdCompile } from '../surfaces/EctdCompile';
++import { publishShellProject } from '../shellProject';
++import { stashNavParamsForTarget } from '../navParams';
++import { ok, props, SPINE_STATUS, SPINE_COMPILE } from './ectdCompile.fixtures';
++
++const A = '9a7f0b10-0000-4000-8000-0000000000aa';
++const B = '9a7f0b10-0000-4000-8000-0000000000bb';
++const PATHS = ['index.xml', 'm1/us/us-regional.xml', 'm5/stf-study-101.xml'];
++const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
++const STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl', 'ich-stf-stylesheet.xsl'];
++const lint = (mode: 'well-formed' | 'dtd', valid = true, ran = true, errors: string[] = []) => ({ mode, valid, ran, errors });
++const EVIDENCE = {
++  version: 1, expectedFiles: PATHS,
++  files: PATHS.map(relPath => ({ relPath, wellFormed: lint('well-formed'), doctype: { valid: true, errors: [] }, dtd: lint('dtd') })),
++  integrity: { verified: [...DTDS, ...STYLESHEETS], mismatched: [], missingFiles: [], unlistedFiles: [], ok: true },
++  passed: true,
++};
++const DTD = { required: DTDS, present: DTDS, missing: [], requiredStylesheets: STYLESHEETS, presentStylesheets: STYLESHEETS, missingStylesheets: [], selfContained: true, validation: EVIDENCE };
++const COMPILE = { ...SPINE_COMPILE, package: { ...SPINE_COMPILE.package, dtdStatus: DTD } };
++const ROW = { id: 3, compilation_name: 'Earlier package', compilation_type: 'initial', status: 'completed', version: '1', compiled_at: null, created_at: null, sequence_number: '0000', has_manifest: true };
++function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(r => { resolve = r; }); return { promise, resolve }; }
++function setup(compile: unknown = COMPILE, history: unknown[] = []) {
++  apiRequest.mockImplementation(async (method: string, path: string) => {
++    if (method === 'GET' && path.includes('/status')) return ok(SPINE_STATUS);
++    if (method === 'GET' && path.endsWith('/history')) return ok({ compilations: history });
++    if (method === 'POST' && path.endsWith('/compile')) return ok(compile);
++    return ok({});
++  });
++}
++async function compile() {
++  await screen.findByRole('button', { name: /Compile eCTD/ });
++  fireEvent.click(screen.getByRole('button', { name: /Compile eCTD/ }));
++  return screen.findByRole('region', { name: 'Package DTD validation' });
++}
++beforeEach(() => {
++  apiRequest.mockReset(); auth.revision = 1; auth.actor = 7;
++  publishShellProject({ id: A, title: 'Program A' });
++});
++afterEach(() => { cleanup(); delete window.C2C_PROJECT; delete window.C2C_NAV_PARAMS; });
++
++describe('existing compiled-package DTD evidence', () => {
++  it('shows actual index, regional and STF execution, validity and integrity', async () => {
++    setup(); render(<EctdCompile {...props()} />);
++    const proof = await compile();
++    expect(within(proof).getByText('DTD validation passed')).toBeTruthy();
++    for (const path of PATHS) expect(within(proof).getByText(path)).toBeTruthy();
++    expect(within(proof).getAllByText('Ran · valid')).toHaveLength(3);
++    expect(within(proof).getByText(/Supportive-file integrity verified/)).toBeTruthy();
++  });
++
++  it('shows invalid STF diagnostics and integrity gaps despite an aggregate pass claim', async () => {
++    const evidence = { ...EVIDENCE, files: EVIDENCE.files.map(file => file.relPath.includes('/stf-') ? { ...file, dtd: lint('dtd', false, true, ['STF study-identifier content is invalid']) } : file), integrity: { ...EVIDENCE.integrity, ok: false, missingFiles: ['util/dtd/ich-stf-v2-2.dtd'] } };
++    setup({ ...COMPILE, package: { ...COMPILE.package, dtdStatus: { ...DTD, validation: evidence } } });
++    render(<EctdCompile {...props()} />); const proof = await compile();
++    expect(within(proof).queryByText('DTD validation passed')).toBeNull();
++    expect(within(proof).getByText('STF study-identifier content is invalid')).toBeTruthy();
++    expect(within(proof).getByText(/util\/dtd\/ich-stf-v2-2.dtd/)).toBeTruthy();
++  });
++
++  it.each([
++    undefined,
++    { ...DTD, validation: undefined },
++    { ...DTD, validation: { ...EVIDENCE, expectedFiles: [], files: [] } },
++    { ...DTD, validation: { ...EVIDENCE, files: EVIDENCE.files.slice(0, 2) } },
++    { ...DTD, validation: { ...EVIDENCE, files: EVIDENCE.files.map(file => ({ ...file, dtd: lint('dtd', true, false, ['xmllint not available']) })) } },
++    { ...DTD, validation: { ...EVIDENCE, files: EVIDENCE.files.map(file => ({ ...file, dtd: lint('well-formed') })) } },
++    { ...DTD, validation: { ...EVIDENCE, files: 'malformed' } },
++    { ...DTD, requiredStylesheets: undefined, presentStylesheets: undefined },
++    { ...DTD, validation: { ...EVIDENCE, integrity: { ...EVIDENCE.integrity, verified: [] } } },
++  ])('never reports legacy, absent, incomplete or unexecuted evidence as a pass: %j', async dtdStatus => {
++    setup({ ...COMPILE, package: { ...COMPILE.package, dtdStatus } });
++    render(<EctdCompile {...props()} />); const proof = await compile();
++    expect(within(proof).queryByText('DTD validation passed')).toBeNull();
++    expect(proof.textContent).toMatch(/unverified|not recorded|did not run|incomplete/i);
++  });
++
++  it('keeps historical absence unverified and labels recorded proof with its package hash', async () => {
++    setup(COMPILE, [ROW, { ...ROW, id: 4, compilation_name: 'Recorded package', packageDtdValidation: { packageSha256: 'a'.repeat(64), dtdStatus: DTD } }]);
++    render(<EctdCompile {...props()} />);
++    const legacy = await screen.findByRole('region', { name: 'DTD validation for Earlier package' });
++    expect(legacy.textContent).toMatch(/not recorded|unverified/i);
++    const recorded = screen.getByRole('region', { name: 'DTD validation for Recorded package' });
++    expect(recorded.textContent).toContain('a'.repeat(64));
++    expect(within(recorded).getByText('DTD validation passed')).toBeTruthy();
++  });
++
++  it.each([
++    { regionalStatus: undefined, dtdStatus: DTD, expected: /Regional backbone: unverified/ },
++    { regionalStatus: { region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true }, dtdStatus: undefined, expected: /Regional backbone: unverified/ },
++    { regionalStatus: { region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: false, conformanceGap: 'Applicant contact is not recorded.' }, dtdStatus: DTD, expected: /Applicant contact is not recorded/ },
++    { regionalStatus: { region: 'kr', file: 'm1/kr/kr-regional.xml', regionConformant: false, placeholderOf: 'ema' }, dtdStatus: DTD, expected: /placeholder using ema/ },
++    { regionalStatus: { region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true }, dtdStatus: DTD, expected: /Regional backbone: conformant/ },
++  ])('renders the recorded regional fact with DTD proof rather than inferring it from region: %j', async ({ regionalStatus, dtdStatus, expected }) => {
++    setup({ ...COMPILE, package: { ...COMPILE.package, regionalStatus, dtdStatus } });
++    render(<EctdCompile {...props()} />); await compile();
++    expect(screen.getByText(expected)).toBeTruthy();
++  });
++});
++
++describe('compile DTD proof ownership', () => {
++  it.each(['success', 'refusal'])('drops a delayed compile %s across project A → B → A', async outcome => {
++    const late = deferred<Response>(); setup();
++    const original = apiRequest.getMockImplementation()!;
++    apiRequest.mockImplementation((method: string, path: string, body: unknown) => method === 'POST' && path.endsWith('/compile') ? late.promise : original(method, path, body));
++    render(<EctdCompile {...props()} />);
++    fireEvent.click(await screen.findByRole('button', { name: /Compile eCTD/ }));
++    await act(async () => { publishShellProject({ id: B }); });
++    await act(async () => { publishShellProject({ id: A }); });
++    await act(async () => { late.resolve(outcome === 'success' ? ok(COMPILE) : ok({ error: { message: 'Former project refusal' } }, 403)); await late.promise; });
++    expect(screen.queryByRole('region', { name: 'Package DTD validation' })).toBeNull();
++    expect(screen.queryByText('Compilation complete')).toBeNull();
++    expect(screen.queryByText(/Former project refusal/)).toBeNull();
++  });
++
++  it('drops delayed history after actor revision even when the same project returns', async () => {
++    const late = deferred<Response>(); setup();
++    const original = apiRequest.getMockImplementation()!;
++    let first = true;
++    apiRequest.mockImplementation((method: string, path: string, body: unknown) => {
++      if (path.endsWith('/history') && first) { first = false; return late.promise; }
++      return original(method, path, body);
++    });
++    const view = render(<EctdCompile {...props()} />);
++    await waitFor(() => expect(first).toBe(false));
++    auth.revision += 1; auth.actor = 8;
++    view.rerender(<EctdCompile {...props()} />);
++    await act(async () => { late.resolve(ok({ compilations: [{ ...ROW, compilation_name: 'Former actor private proof' }] })); await late.promise; });
++    expect(screen.queryByText('Former actor private proof')).toBeNull();
++  });
++
++  it('consumes the opened sequence once and does not carry it into another project visit', async () => {
++    setup(); stashNavParamsForTarget('ectd-compile', { sequenceId: '21' });
++    render(<EctdCompile {...props()} />);
++    await waitFor(() => expect(apiRequest.mock.calls.some(call => String(call[1]).endsWith('/status?sequenceId=21'))).toBe(true));
++    await act(async () => { publishShellProject({ id: B }); });
++    await waitFor(() => expect(apiRequest.mock.calls.some(call => call[1] === `/api/ectd-compile/${B}/status`)).toBe(true));
++    expect(apiRequest.mock.calls.some(call => call[1] === `/api/ectd-compile/${B}/status?sequenceId=21`)).toBe(false);
++  });
++
++  it('keeps the newer post-compile history when an earlier read settles last', async () => {
++    const late = deferred<Response>(); setup(COMPILE, [{ ...ROW, compilation_name: 'Current compilation proof' }]);
++    const original = apiRequest.getMockImplementation()!;
++    let first = true;
++    apiRequest.mockImplementation((method: string, path: string, body: unknown) => {
++      if (path.endsWith('/history') && first) { first = false; return late.promise; }
++      return original(method, path, body);
++    });
++    render(<EctdCompile {...props()} />); await compile();
++    expect(await screen.findByText('Current compilation proof')).toBeTruthy();
++    await act(async () => { late.resolve(ok({ compilations: [{ ...ROW, compilation_name: 'Obsolete earlier history' }] })); await late.promise; });
++    expect(screen.queryByText('Obsolete earlier history')).toBeNull();
++    expect(screen.getByText('Current compilation proof')).toBeTruthy();
++  });
++});
+diff --git a/client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts b/client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts
+index 27bebef8f..1316a8032 100644
+--- a/client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts
++++ b/client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts
+@@ -28,4 +28,26 @@ describe('the existing shell project channel revision', () => {
+     const next = project.captureShellProjectGuard();
+     expect(first()).toBe(false); expect(next()).toBe(true);
+   });
++  it.each([[42, 43], ['PROGRAM-A', 'PROGRAM-B']])('retires a batched accepted-ident visit from %s to %s and back', (a, b) => {
++    project.publishShellProject({ id: a });
++    const current = project.captureShellProjectGuard();
++    project.publishShellProject({ id: b });
++    project.publishShellProject({ id: a });
++    expect(current()).toBe(false);
++  });
++  it('keeps the same numeric identifier current across its string representation and metadata updates', () => {
++    project.publishShellProject({ id: 42 });
++    const current = project.captureShellProjectGuard();
++    project.publishShellProject({ id: '42', title: 'Recorded project' });
++    expect(current()).toBe(true);
++  });
++  it('keeps UUID case changes current without weakening the UUID-only routing helper', () => {
++    const id = 'ABCDEFAB-1111-4111-8111-ABCDEFABCDEF';
++    project.publishShellProject({ id });
++    const current = project.captureShellProjectGuard();
++    project.publishShellProject({ id: id.toLowerCase() });
++    expect(current()).toBe(true);
++    expect(project.shellProgramId({ id: 42 })).toBeNull();
++    expect(project.shellProgramId({ id: 'PROGRAM-A' })).toBeNull();
++  });
+ });
+diff --git a/client/src/concept2cure/v2/shellProject.ts b/client/src/concept2cure/v2/shellProject.ts
+index 6c3f9f82c..53d5bfd5d 100644
+--- a/client/src/concept2cure/v2/shellProject.ts
++++ b/client/src/concept2cure/v2/shellProject.ts
+@@ -83,9 +83,16 @@ const writeGlobal = (p: ShellProject): void => {
+   window.C2C_PROJECT = p as unknown as typeof window.C2C_PROJECT;
+ };
+ 
++/** Read guards cover every identifier accepted by existing program surfaces. */
++function projectVisitIdentity(project: ShellProject | null = readShellProject()): string | null {
++  const id = project?.id;
++  const ident = typeof id === 'string' ? id.trim() : typeof id === 'number' && Number.isFinite(id) ? String(id) : '';
++  return ident ? PROGRAM_UUID.test(ident) ? ident.toLowerCase() : ident : null;
++}
++
+ /** Set the open program: the live global plus its per-tab mirror. */
+ export function publishShellProject(project: ShellProject): void {
+-  if (shellProgramId()?.toLowerCase() !== shellProgramId(project)?.toLowerCase()) projectRevision += 1;
++  if (projectVisitIdentity() !== projectVisitIdentity(project)) projectRevision += 1;
+   try {
+     writeGlobal(project);
+   } catch {
+@@ -111,8 +118,8 @@ export function clearShellProject(): void {
+ /** A pending handoff belongs to one project visit, including A → B → A. */
+ export function captureShellProjectGuard(): () => boolean {
+   const revision = projectRevision;
+-  const programId = shellProgramId()?.toLowerCase();
+-  return () => revision === projectRevision && shellProgramId()?.toLowerCase() === programId;
++  const identity = projectVisitIdentity();
++  return () => revision === projectRevision && projectVisitIdentity() === identity;
+ }
+ 
+ /**
+diff --git a/client/src/concept2cure/v2/surfaces/EctdCompile.tsx b/client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+index 78b4c049d..37d8b2a67 100644
+--- a/client/src/concept2cure/v2/surfaces/EctdCompile.tsx
++++ b/client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+@@ -45,6 +45,9 @@ import { downloadBlob, downloadText, safeFileName } from '../download';
+ import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+ import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+ import { OrchestratorRunControls } from './OrchestratorRunControls';
++import { captureShellProjectGuard, useShellProject, type ShellProject } from '../shellProject';
++import { useSubmissionReadSession } from './submissionScopedRead';
++import { PackageDtdValidation, RegionalPackageFact, type PackageDtdStatus } from './EctdCompileDtdEvidence';
+ 
+ interface ModuleReadiness {
+   moduleCode: string;
+@@ -150,6 +153,8 @@ interface CompiledPackage {
+     /** FDA forms shipped with FDA's own security settings — never converted, by rule. */
+     agencyFormsAsIssued?: string[];
+   } | null;
++  dtdStatus?: PackageDtdStatus;
++  regionalStatus?: { region: string; file: string; regionConformant: boolean; conformanceGap?: string; placeholderOf?: string };
+ }
+ interface CompilationRow {
+   id: number | string;
+@@ -163,6 +168,7 @@ interface CompilationRow {
+   has_manifest?: boolean;
+   /** An agency-validator report run outside the product, imported against this compilation. */
+   external_validation?: ImportedReport | null;
++  packageDtdValidation?: { packageSha256: string; dtdStatus: PackageDtdStatus } | null;
+ }
+ 
+ /** A LORENZ eValidator report as the server keeps it (ectd_compilations.external_validation). */
+@@ -525,6 +531,7 @@ function PackageFacts({ result }: { result: CompileResult }) {
+       </li>
+       {result.recorded === true && <li>Recorded — its leaf manifest is what the next sequence is diffed against.</li>}
+       {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
++      {pkg && <RegionalPackageFact pkg={pkg} />}
+       {pdfa && <PdfaFacts pdfa={pdfa} />}
+     </ul>
+   );
+@@ -554,7 +561,7 @@ function reportCounts(r: Pick<ImportedReport, 'errorCount' | 'warningCount' | 'i
+  * focusable button (the input itself is not in the tab order). A refused report
+  * is shown in the server's words.
+  */
+-function EvalidatorImport({ identPath, row, onImported, seqBody }: { identPath: string; row: CompilationRow; onImported: () => void; seqBody: { sequenceId?: number } }) {
++function EvalidatorImport({ identPath, row, onImported, seqBody, isScopeCurrent }: { identPath: string; row: CompilationRow; onImported: () => void; seqBody: { sequenceId?: number }; isScopeCurrent: () => boolean }) {
+   const picker = useRef<HTMLInputElement | null>(null);
+   const [busy, setBusy] = useState(false);
+   const [error, setError] = useState<string | null>(null);
+@@ -562,9 +569,12 @@ function EvalidatorImport({ identPath, row, onImported, seqBody }: { identPath:
+   const seq = row.sequence_number ?? String(row.id);
+   const current = row.external_validation ?? null;
+   const verb = current ? 'Replace eValidator report' : 'Import eValidator report';
++  const mounted = useRef(true);
++  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
++  const stillCurrent = () => mounted.current && isScopeCurrent();
+ 
+   const onFile = async (file: File | undefined) => {
+-    if (!file) return;
++    if (!file || !stillCurrent()) return;
+     if (file.size > 2 * 1024 * 1024) { setError('This report is larger than 2 MB, the most one import carries.'); return; }
+     setBusy(true); setError(null);
+     let text: string;
+@@ -576,13 +586,16 @@ function EvalidatorImport({ identPath, row, onImported, seqBody }: { identPath:
+         reader.readAsText(file);
+       });
+     } catch {
++      if (!stillCurrent()) return;
+       setBusy(false); setError('The file could not be read.');
+       return;
+     }
++    if (!stillCurrent()) return;
+     const { ok, body } = await readJson<{ error?: { message?: string } }>('POST', `/api/ectd-compile/${identPath}/validate`, {
+       evalidatorReport: { compilationId: Number(row.id), fileName: file.name, text },
+       ...seqBody,
+     });
++    if (!stillCurrent()) return;
+     setBusy(false);
+     if (!ok) { setError(serverMessage(body) ?? 'The report was not imported.'); return; }
+     onImported();
+@@ -669,7 +682,7 @@ function EvalidatorReportView({ row }: { row: CompilationRow }) {
+ }
+ 
+ /** The compilation history, with each packaged compilation's imported agency-validator report. */
+-function CompilationHistoryTable({ history, identPath, onImported, seqBody }: { history: CompilationRow[]; identPath: string | null; onImported: () => void; seqBody: { sequenceId?: number } }) {
++function CompilationHistoryTable({ history, identPath, onImported, seqBody, isScopeCurrent }: { history: CompilationRow[]; identPath: string | null; onImported: () => void; seqBody: { sequenceId?: number }; isScopeCurrent: () => boolean }) {
+   return (
+     <>
+       <table className="reg-tbl"><thead><tr><th>Name</th><th>Sequence</th><th>Leaf manifest</th><th>Type</th><th>Version</th><th>Status</th><th>Agency validator</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
+@@ -682,11 +695,13 @@ function CompilationHistoryTable({ history, identPath, onImported, seqBody }: {
+             <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
+             <td>
+               {h.external_validation && <div>{reportCounts(h.external_validation)}</div>}
+-              {h.has_manifest && identPath != null ? <EvalidatorImport identPath={identPath} row={h} onImported={onImported} seqBody={seqBody} /> : (!h.external_validation && '—')}
++              {h.has_manifest && identPath != null ? <EvalidatorImport identPath={identPath} row={h} onImported={onImported} seqBody={seqBody} isScopeCurrent={isScopeCurrent} /> : (!h.external_validation && '—')}
+             </td>
+             <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
+           </tr>))}</tbody></table>
+       {history.map((h) => <EvalidatorReportView key={`report-${String(h.id)}`} row={h} />)}
++      {history.map(h => <PackageDtdValidation key={`dtd-${String(h.id)}`} status={h.packageDtdValidation?.dtdStatus}
++        packageSha256={h.packageDtdValidation?.packageSha256} label={`DTD validation for ${h.compilation_name}`} />)}
+     </>
+   );
+ }
+@@ -703,6 +718,21 @@ function exportRequestBody(result: CompileResult | null, regionBody: Record<stri
+   };
+ }
+ 
++function exportedPackageName(response: Response, ident: string | null, result: CompileResult | null): string {
++  const disposition = response.headers.get('Content-Disposition') ?? '';
++  return /filename="([^"]+)"/.exec(disposition)?.[1] ??
++    safeFileName(`ectd-${ident}-seq-${result?.sequenceNumber ?? 'package'}`) + '.zip';
++}
++
++function compilationNotice(body: CompileResult): { text: string; tone: 'ok' | 'error' } {
++  // Compilation and submission readiness remain separate server facts.
++  if (body.status === 'completed') return {
++    text: `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`,
++    tone: 'ok',
++  };
++  return { text: `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`, tone: 'error' };
++}
++
+ /** What a rehearsal was bound against, and what it is for. */
+ function RehearsalStatement({ life }: { life: CompiledLifecycle }) {
+   const unfiled = life.unfiledPriorSequences ?? [];
+@@ -785,6 +815,7 @@ function CompiledPackageView({ result, ident }: { result: CompileResult; ident:
+   return (
+     <div style={{ marginTop: 10 }}>
+       <PackageFacts result={result} />
++      <PackageDtdValidation status={pkg.dtdStatus} packageSha256={pkg.sha256} label="Package DTD validation" />
+       <LifecycleView result={result} />
+       <section aria-label="Leaf hierarchy" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+         <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Leaf hierarchy</div>
+@@ -819,8 +850,7 @@ function CompiledPackageView({ result, ident }: { result: CompileResult; ident:
+  * org-scoped; this surface never demands a numeric id (that demand was a
+  * permanent dead-end: window.C2C_PROJECT.id is a program UUID).
+  */
+-function readProjectIdent(): { ident: string | null; title?: string; code?: string } {
+-  const p = (window as unknown as { C2C_PROJECT?: { id?: unknown; title?: string; code?: string } }).C2C_PROJECT;
++function readProjectIdent(p: ShellProject | null): { ident: string | null; title?: string; code?: string } {
+   if (!p || p.id == null) return { ident: null };
+   const ident = String(p.id).trim();
+   return { ident: ident !== '' ? ident : null, title: p.title, code: p.code };
+@@ -830,24 +860,44 @@ const REGIONS = ['FDA', 'EMA'] as const;
+ const SUB_TYPES = ['initial', 'amendment'] as const;
+ 
+ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
++  const project = useShellProject();
++  const session = useSubmissionReadSession();
++  const proj = readProjectIdent(project);
++  const context = JSON.stringify([session.key, proj.ident]);
++  const visit = useRef({ context, generation: 0, projectCurrent: captureShellProjectGuard() });
++  if (visit.current.context !== context || !visit.current.projectCurrent()) {
++    visit.current = { context, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
++  }
++  const owner = visit.current;
++  // The navigation handoff belongs to the visit that consumed it, including A → B → A.
++  const [opened] = useState(() => {
++    const id = consumeNavParams('ectd-compile')?.sequenceId;
++    return { owner, sequence: id && /^\d+$/.test(id) ? id : null };
++  });
++  const isScopeCurrent = useCallback(() => visit.current === owner && session.sameRevision() && owner.projectCurrent(), [owner, session]);
++  return <EctdCompileForScope key={`${context}:${owner.generation}`} onAsk={onAsk} onNav={onNav}
++    proj={proj} openedSequence={opened.owner === owner ? opened.sequence : null} isScopeCurrent={isScopeCurrent} />;
++}
++
++function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurrent }: Pick<SurfaceViewProps, 'onAsk' | 'onNav'> & {
++  proj: ReturnType<typeof readProjectIdent>; openedSequence: string | null; isScopeCurrent: () => boolean;
++}) {
+   /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
+      so a publisher staring at a validation finding — the moment they most need
+      to know what a rule means and whether it blocks the filing — had no way to
+      ask. The prompts name the artefact on screen rather than the page. */
+   const ask = onAsk;
+-  const proj = readProjectIdent();
+   const ident = proj.ident;
+   const identPath = ident != null ? encodeURIComponent(ident) : null;
++  const mounted = useRef(true);
++  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
++  const current = useCallback(() => mounted.current && isScopeCurrent(), [isScopeCurrent]);
+ 
+   /* Opened on a sequence (F14, the Dispatch tab's door): every read and write
+      here names it, so this is that sequence's compile, not the one the
+      project's application type would pick. The server refuses a sequence the
+      project does not own. Read once, on mount, as the Submission Center reads
+      its own (F10). */
+-  const [openedSequence] = useState(() => {
+-    const id = consumeNavParams('ectd-compile')?.sequenceId;
+-    return id && /^\d+$/.test(id) ? id : null;
+-  });
+   const seqQuery = openedSequence ? `?sequenceId=${openedSequence}` : '';
+   const seqBody = useMemo(() => (openedSequence ? { sequenceId: Number(openedSequence) } : {}), [openedSequence]);
+ 
+@@ -870,6 +920,9 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+   // outcome is kept, exactly like statusState.
+   const [historyState, setHistoryState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+   const [busy, setBusy] = useState<'validate' | 'compile' | 'export' | null>(null);
++  const readRevision = useRef({ status: 0, history: 0 });
++  const actionRevision = useRef(0);
++  const actionCurrent = useCallback((request: number) => current() && actionRevision.current === request, [current]);
+   const [toast, fireToast] = useToast();
+ 
+   // ── Orchestrator pipeline state (folded in from the deleted duplicate) ──
+@@ -977,20 +1030,24 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+   }, [orchRun]);
+ 
+   const loadStatus = useCallback(async () => {
+-    if (identPath == null) return;
++    if (identPath == null || !current()) return;
++    const request = ++readRevision.current.status;
+     setStatusState('loading');
+     const { ok, body } = await readJson<StatusView>('GET', `/api/ectd-compile/${identPath}/status${seqQuery}`);
++    if (!current() || readRevision.current.status !== request) return;
+     if (!ok || !body) { setStatusState('error'); setStatus(null); return; }
+     setStatus(body); setStatusState('ready');
+-  }, [identPath, seqQuery]);
++  }, [identPath, seqQuery, current]);
+ 
+   const loadHistory = useCallback(async () => {
+-    if (identPath == null) return;
++    if (identPath == null || !current()) return;
++    const request = ++readRevision.current.history;
+     setHistoryState('loading');
+     const { ok, body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${identPath}/history`);
++    if (!current() || readRevision.current.history !== request) return;
+     if (!ok || !body || !Array.isArray(body.compilations)) { setHistoryState('error'); setHistory([]); return; }
+     setHistory(body.compilations); setHistoryState('ready');
+-  }, [identPath]);
++  }, [identPath, current]);
+ 
+   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
+ 
+@@ -1008,12 +1065,14 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+   const [rehearsal, setRehearsal] = useState(false);
+ 
+   const doValidate = useCallback(async () => {
+-    if (identPath == null) return;
++    if (identPath == null || !current()) return;
++    const request = ++actionRevision.current;
+     setBusy('validate');
+     try {
+       const { ok, status: st, body } = await readJson<{ valid: boolean; results: ValidationResult[]; summary: { pass: number; warnings: number; errors: number } }>(
+         'POST', `/api/ectd-compile/${identPath}/validate`, { ...regionBody, ...seqBody },
+       );
++      if (!actionCurrent(request)) return;
+       if (!ok || !body) {
+         fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
+         // Do NOT collapse a failed run into an empty findings list — that reads
+@@ -1023,8 +1082,8 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+       setValidationFailed(false);
+       setFindings(body.results ?? []);
+       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
+-    } finally { setBusy(null); }
+-  }, [identPath, regionBody, seqBody, fireToast]);
++    } finally { if (actionCurrent(request)) setBusy(null); }
++  }, [identPath, regionBody, seqBody, fireToast, current, actionCurrent]);
+ 
+   /* The actual deliverable. The compile proves the package exists (leaf
+      counts, sha256) — this hands the publisher its BYTES through the governed
+@@ -1034,33 +1093,36 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+      button never renders for them. */
+   const doExport = useCallback(async () => {
+     const subId = compileResult?.submissionId;
+-    if (subId == null) return;
++    if (subId == null || !current()) return;
++    const request = ++actionRevision.current;
+     setBusy('export');
+     try {
+       const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
++      if (!actionCurrent(request)) return;
+       if (!res.ok) {
+         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
++        if (!actionCurrent(request)) return;
+         fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
+         return;
+       }
+       const blob = await res.blob();
+-      const cd = res.headers.get('Content-Disposition') ?? '';
+-      const name =
+-        /filename="([^"]+)"/.exec(cd)?.[1] ??
+-        safeFileName(`ectd-${ident}-seq-${compileResult?.sequenceNumber ?? 'package'}`) + '.zip';
++      if (!actionCurrent(request)) return;
++      const name = exportedPackageName(res, ident, compileResult);
+       downloadBlob(name, blob);
+       fireToast(`eCTD package downloaded — ${name}.`);
+     } catch (e) {
++      if (!actionCurrent(request)) return;
+       // apiRequest throws on a refused build (422: validation failure or the
+       // completeness gate) with the server's own sentence — say it verbatim.
+       fireToast('The package was not returned — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.', 'error');
+     } finally {
+-      setBusy(null);
++      if (actionCurrent(request)) setBusy(null);
+     }
+-  }, [compileResult, regionBody, ident, fireToast]);
++  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent]);
+ 
+   const doCompile = useCallback(async () => {
+-    if (identPath == null) return;
++    if (identPath == null || !current()) return;
++    const request = ++actionRevision.current;
+     setBusy('compile');
+     try {
+       const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
+@@ -1069,6 +1131,7 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+         ...seqBody,
+         ...(followUp && rehearsal ? { rehearsal: true } : {}),
+       });
++      if (!actionCurrent(request)) return;
+       if (!ok || !body) {
+         const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
+         fireToast(
+@@ -1080,21 +1143,11 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+       setCompileResult(body);
+       setValidationFailed(false);
+       setFindings(body.validationResults ?? null);
+-      fireToast(
+-        body.status === 'completed'
+-          // The backbone compiled; that is what the toast reports. It does not
+-          // claim the package can be submitted — that is the blockers panel's job,
+-          // and saying "submission-ready" in a toast over an unrendered package is
+-          // the claim this surface got wrong.
+-          ? `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`
+-          : `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`,
+-        // One call, two opposite outcomes: the tone has to follow the same
+-        // branch the sentence does, or a blocked compile keeps the tick.
+-        body.status === 'completed' ? 'ok' : 'error',
+-      );
++      const notice = compilationNotice(body);
++      fireToast(notice.text, notice.tone);
+       void loadStatus(); void loadHistory();
+-    } finally { setBusy(null); }
+-  }, [identPath, submissionType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory]);
++    } finally { if (actionCurrent(request)) setBusy(null); }
++  }, [identPath, submissionType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory, current, actionCurrent]);
+ 
+   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
+      `usePublishSurfaceContext` is a hook and a hook below a conditional return
+@@ -1589,7 +1642,7 @@ export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
+           ) : history.length === 0 ? (
+             <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No compilations yet" hint="Each Compile run is recorded here with its status and version." /></div>
+           ) : (
+-            <CompilationHistoryTable history={history} identPath={identPath} seqBody={seqBody} onImported={() => { void loadHistory(); }} />
++            <CompilationHistoryTable history={history} identPath={identPath} seqBody={seqBody} onImported={() => { void loadHistory(); }} isScopeCurrent={current} />
+           )}
+         </div>
+       </div>
+diff --git a/client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx b/client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx
+new file mode 100644
+index 000000000..8dc3ef414
+--- /dev/null
++++ b/client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx
+@@ -0,0 +1,145 @@
++/** Existing eCTD Compile package/history DTD evidence, extracted without changing behavior. */
++import React from 'react';
++import type { DtdValidationEvidence } from '@shared/regulatory/ectd-dtd-validation';
++
++export interface PackageDtdStatus {
++  required: string[];
++  present: string[];
++  missing: string[];
++  missingStylesheets?: string[];
++  requiredStylesheets?: string[];
++  presentStylesheets?: string[];
++  selfContained: boolean;
++  validation?: DtdValidationEvidence;
++}
++
++const isRecord = (value: unknown): value is Record<string, unknown> => value != null && typeof value === 'object' && !Array.isArray(value);
++const stringList = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
++function xmlEvidence(value: unknown): boolean {
++  return isRecord(value) && typeof value.ran === 'boolean' && typeof value.valid === 'boolean' &&
++    stringList(value.errors) && ['well-formed', 'dtd', 'xsd'].includes(String(value.mode));
++}
++
++/** Decode recorded execution evidence; a plausible aggregate flag is insufficient. */
++function dtdEvidence(value: unknown): DtdValidationEvidence | null {
++  if (!isRecord(value) || value.version !== 1 || typeof value.passed !== 'boolean' ||
++      !stringList(value.expectedFiles) || !Array.isArray(value.files) || !isRecord(value.integrity)) return null;
++  const integrity = value.integrity;
++  if (typeof integrity.ok !== 'boolean' || !stringList(integrity.verified) || !stringList(integrity.missingFiles) ||
++      !stringList(integrity.unlistedFiles) || !Array.isArray(integrity.mismatched) ||
++      !integrity.mismatched.every(item => isRecord(item) && typeof item.fileName === 'string' &&
++        typeof item.expected === 'string' && typeof item.actual === 'string')) return null;
++  if (!value.files.every(file => isRecord(file) && typeof file.relPath === 'string' && xmlEvidence(file.wellFormed) &&
++      isRecord(file.doctype) && typeof file.doctype.valid === 'boolean' && stringList(file.doctype.errors) && xmlEvidence(file.dtd))) return null;
++  return value as unknown as DtdValidationEvidence;
++}
++
++function completeDtdCoverage(evidence: DtdValidationEvidence | null): boolean {
++  if (!evidence) return false;
++  const expected = evidence.expectedFiles;
++  return expected.length > 0 && expected.includes('index.xml') && new Set(expected).size === expected.length &&
++    evidence.files.length === expected.length && new Set(evidence.files.map(file => file.relPath)).size === evidence.files.length &&
++    expected.every(path => evidence.files.some(file => file.relPath === path));
++}
++
++function integrityVerified(integrity: DtdValidationEvidence['integrity']): boolean {
++  return integrity.ok === true && integrity.verified.length > 0 && integrity.mismatched.length === 0 && integrity.missingFiles.length === 0 && integrity.unlistedFiles.length === 0;
++}
++
++function supportiveBytesVerified(recorded: Record<string, unknown> | null, integrity: DtdValidationEvidence['integrity']): boolean {
++  if (!recorded || recorded.selfContained !== true) return false;
++  const fields = ['required', 'present', 'missing', 'requiredStylesheets', 'presentStylesheets', 'missingStylesheets'];
++  if (!fields.every(field => stringList(recorded[field]))) return false;
++  const status = recorded as unknown as Required<PackageDtdStatus>;
++  if (status.required.length === 0 || status.missing.length > 0 || status.missingStylesheets.length > 0) return false;
++  return status.required.every(file => status.present.includes(file) && integrity.verified.includes(file)) &&
++    status.requiredStylesheets.every(file => status.presentStylesheets.includes(file) && integrity.verified.includes(file));
++}
++
++function lintPassed(result: DtdValidationEvidence['files'][number]['dtd'], mode: 'well-formed' | 'dtd'): boolean {
++  return result.ran === true && result.valid === true && result.mode === mode && result.errors.length === 0;
++}
++
++function dtdFilesPassed(evidence: DtdValidationEvidence): boolean {
++  return evidence.files.every(file => lintPassed(file.wellFormed, 'well-formed') && file.doctype.valid === true &&
++    file.doctype.errors.length === 0 && lintPassed(file.dtd, 'dtd'));
++}
++
++function DtdFileRows({ evidence }: { evidence: DtdValidationEvidence }) {
++  return <>{evidence.expectedFiles.map(path => {
++    const file = evidence.files.find(item => item.relPath === path);
++    if (!file) return <tr key={path}><td className="mono">{path}</td><td colSpan={4}>No execution evidence — unverified.</td></tr>;
++    const dtdRan = file.dtd.ran === true && file.dtd.mode === 'dtd';
++    const diagnostics = [...file.wellFormed.errors, ...file.doctype.errors, ...file.dtd.errors];
++    return <tr key={path}>
++      <td className="mono">{path}</td>
++      <td>{file.wellFormed.ran && file.wellFormed.mode === 'well-formed' ? file.wellFormed.valid ? 'Well-formed' : 'Invalid XML' : 'Not checked'}</td>
++      <td>{file.doctype.valid ? 'Valid reference' : 'Invalid reference'}</td>
++      <td>{dtdRan ? file.dtd.valid ? 'Ran · valid' : 'Ran · invalid' : 'Did not run · unverified'}</td>
++      <td>{diagnostics.length > 0 ? <ul style={{ margin: 0, paddingLeft: 16 }}>{diagnostics.map((error, index) => <li key={index}>{error}</li>)}</ul> : '—'}</td>
++    </tr>;
++  })}</>;
++}
++
++function DtdIntegrityFacts({ integrity }: { integrity: DtdValidationEvidence['integrity'] }) {
++  return <>
++    <div style={{ marginTop: 6 }}>{integrityVerified(integrity) ? `Supportive-file integrity verified (${integrity.verified.length} files).` : 'Supportive-file integrity is unverified or failed.'}</div>
++    <ul style={{ margin: '4px 0', paddingLeft: 18 }}>
++      {integrity.mismatched.map(item => <li key={`mismatch:${item.fileName}`}>Checksum mismatch: {item.fileName} (expected {item.expected}; actual {item.actual})</li>)}
++      {integrity.missingFiles.map(path => <li key={`missing:${path}`}>Missing supportive file: {path}</li>)}
++      {integrity.unlistedFiles.map(path => <li key={`unlisted:${path}`}>Supportive file not listed in integrity manifest: {path}</li>)}
++    </ul>
++  </>;
++}
++
++function dtdOutcomeLabel(passed: boolean, evidence: DtdValidationEvidence | null, complete: boolean): string {
++  if (passed) return 'DTD validation passed';
++  if (!evidence) return 'DTD validation not recorded — unverified.';
++  if (!complete) return 'DTD validation evidence is incomplete — unverified.';
++  return 'DTD validation has not passed — unverified.';
++}
++
++function packageDtdProof(status: unknown, packageSha256?: string | null) {
++  const recorded = isRecord(status) ? status : null;
++  const evidence = dtdEvidence(recorded?.validation);
++  const hashKnown = typeof packageSha256 === 'string' && /^[a-f\d]{64}$/i.test(packageSha256);
++  const complete = completeDtdCoverage(evidence);
++  const passed = hashKnown && evidence?.passed === true && complete && dtdFilesPassed(evidence) &&
++    integrityVerified(evidence.integrity) && supportiveBytesVerified(recorded, evidence.integrity);
++  return { evidence, hashKnown, complete, passed };
++}
++
++/** Execution proof stays beside the package and its recorded history, never inferred from status. */
++export function PackageDtdValidation({ status, packageSha256, label }: { status: unknown; packageSha256?: string | null; label: string }) {
++  const { evidence, hashKnown, complete, passed } = packageDtdProof(status, packageSha256);
++  return (
++    <section aria-label={label} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', margin: '10px 0', fontSize: 12.5 }}>
++      <div style={{ fontWeight: 600 }}>Package DTD validation</div>
++      <div className={passed ? 'sp-tone-ok' : 'sp-tone-warn'}>
++        {dtdOutcomeLabel(passed, evidence, complete)}
++      </div>
++      {hashKnown && <div>Package SHA-256 <span className="mono">{packageSha256}</span></div>}
++      {evidence && (
++        <>
++          <table className="reg-tbl" style={{ marginTop: 6 }}>
++            <thead><tr><th>XML file</th><th>XML structure</th><th>DOCTYPE</th><th>DTD execution</th><th>Diagnostics</th></tr></thead>
++            <tbody><DtdFileRows evidence={evidence} /></tbody>
++          </table>
++          <DtdIntegrityFacts integrity={evidence.integrity} />
++        </>
++      )}
++    </section>
++  );
++}
++
++export function RegionalPackageFact({ pkg }: { pkg: { sha256?: string | null; dtdStatus?: unknown; regionalStatus?: unknown } }) {
++  const status = isRecord(pkg.regionalStatus) ? pkg.regionalStatus : null;
++  if (!status || typeof status.regionConformant !== 'boolean' || typeof status.file !== 'string') return <li className="sp-tone-warn">Regional backbone: unverified — no regional status was recorded.</li>;
++  if (status.regionConformant && !packageDtdProof(pkg.dtdStatus, pkg.sha256).passed) return <li className="sp-tone-warn">Regional backbone: unverified — package DTD validation has not passed.</li>;
++  return <li className={status.regionConformant ? undefined : 'sp-tone-warn'}>
++    Regional backbone: {status.regionConformant ? 'conformant' : 'not conformant'} · <span className="mono">{status.file}</span>
++    {typeof status.placeholderOf === 'string' && <> — placeholder using {status.placeholderOf}</>}
++    {typeof status.conformanceGap === 'string' && <> — {status.conformanceGap}</>}
++  </li>;
++}
++
+diff --git a/docs/design/DTD_VALIDATION_COMPLETION_2026-10-21.md b/docs/design/DTD_VALIDATION_COMPLETION_2026-10-21.md
+new file mode 100644
+index 000000000..020733acc
+--- /dev/null
++++ b/docs/design/DTD_VALIDATION_COMPLETION_2026-10-21.md
+@@ -0,0 +1,130 @@
++# Complete existing package DTD validation through eCTD Compile
++
++W5/D7, MR-10 Stage 3 integration. Starting source: `cb4065898`.
++Root owns the contract and canonical publication. Initial investigation is
++read-only; implementation interfaces are approved below before code changes.
++
++## What already exists
++
++- `server/services/ectd/xml-validator.ts`: the real `xmllint --nonet` engine,
++  capability probe and DTD/well-formedness/XSD results. Reuse this engine.
++- `server/services/ectd/qualification/qualify.ts`: `validateBackboneFile`,
++  package-relative DOCTYPE resolution and qualification reports. Today this
++  checks index/regional XML in the qualification path, not normal packaging;
++  the STF loop is missing. Extract/reach this canonical logic, do not duplicate.
++- `server/services/ectd/dtd-bundler.ts`: existing supportive-file discovery,
++  regional requirements, self-containment and the existing `ECTD_REQUIRE_DTD`
++  enforcement posture. STF requirements are not yet included.
++- `server/services/ectd/checksum-manifest.ts`: existing SHA-256 integrity checks;
++  qualification uses them, normal packaging does not expose validation proof.
++- `server/services/submission-gateways/regional-packager.ts` and `types.ts`:
++  existing ZIP builder, optional unzipped output, DTD/style copies and dtdStatus.
++  No actual per-file DTD result is carried on the normal bundle.
++- `server/services/ectd/regional-backbone-readiness.ts` and
++  `server/services/submission-gateways/pre-transmit-check.ts`: existing regional
++  status and transmit gates. A new validator/gate/store must not be added beside
++  them. Presence and actual validation are separate facts.
++- `server/routes/ectd-compile.ts`: the existing compile/write/history path,
++  bundle projection and self-containment submission blocker. Extend it.
++- `client/src/concept2cure/v2/surfaces/EctdCompile.tsx`: existing compiled viewer,
++  status/blockers and validation results; surface actual per-file results here.
++- `client/src/concept2cure/v2/shellProject.ts`: existing project revision and
++  `captureShellProjectGuard` track UUID visits, but numeric/code identifiers
++  accepted by the compiler collapse to null. Complete this same guard for
++  those identifiers; do not change the UUID-only creation/routing helper.
++- `Dockerfile.optimized`: already installs `libxml2-utils`; no production npm
++  dependency is needed. The current executor has no xmllint binary yet.
++- `assets/ectd-dtd/{README.md,checksums.txt,fixtures/*}` and
++  `docs/runbooks/ectd-dtd-vendoring.md`: existing drop point, placeholders,
++  structural fixtures and the separate agency acquisition procedure. Actual
++  agency DTDs/stylesheets have not been vendored. This increment does not
++  acquire them or claim agency conformance from synthetic test schemas.
++
++Searched DTD, XML validator, backbone, conformance, checksum, package identity,
++STF and readiness names across services, routes, UI, schema/migrations and AnA.
++Deleted-history searches for `*dtd*`, `*DTD*`, `*Dtd*`, `*xml-validator*` and
++`*backbone*valid*` found only unrelated gstack deletion `7df89f4f7`.
++The prior study placement/editor work is complete and remains unchanged.
++
++## Contract boundary
++
++Finish the existing validation path and expose its evidence through the existing
++UI. Preserve the current enforcement flag posture; MR-10 Stage 11 owns making
++submission-grade flags mandatory. Missing schemas, absent xmllint, malformed or
++invalid XML and missing validation evidence must never become a passed DTD check
++or a conformant regional backbone. Historical bundles are unverified when proof
++is absent. No additional writer, package store, viewer, schema corpus or runtime
++validator is introduced. Production refusal uses the existing gate when required.
++
++Agency acquisition remains a separate existing prerequisite: the vendoring
++runbook requires per-DTD counsel sign-off before acquisition. No sign-off is
++invented, and no agency artifact is downloaded or committed in this increment.
++Tests may use explicitly synthetic schemas in temporary directories to prove
++execution, invalid XML, missing tools/dependencies and integrity failures.
++
++## Ownership and verification
++
++Root initially coordinates two read-only traces: canonical validator/packager
++integration, and compile/UI projection. Implementation file scopes and exact
++interfaces are recorded here after those traces. Workers do not commit/push.
++Failing-first regressions, existing affected suites, actual xmllint execution
++with synthetic fixtures, Chromium, production build and normal compiler/push
++gates are required. Human witnessing and agency acceptance remain unexecuted.
++
++## Approved implementation interfaces
++
++- Extract the existing DOCTYPE resolver and `validateBackboneFile` into
++  `server/services/ectd/backbone-validation.ts`. Qualification re-exports its
++  public names and uses this implementation, including every generated STF.
++  Preserve `reports` and `dtdSkipped`; add `relPath`, `wellFormed`,
++  `doctype: { valid, errors }`, and `dtd: XmlLintResult`. An unexecuted DTD
++  result always has `ran:false`, `valid:false` and an explicit reason.
++- Extend the existing checksum implementation with
++  `verifyChecksumBuffers(files, manifestText, extensions?)`, where `files` is
++  an array of `{ fileName:string, content:Buffer }`; the filesystem wrapper
++  delegates to the same logic. Verify the captured bytes used in the ZIP.
++- A type-only shared DTO at `shared/regulatory/ectd-dtd-validation.ts` defines
++  `DtdValidationEvidence`: `version:1`, `expectedFiles:string[]`,
++  `files:Array<{relPath,wellFormed,doctype,dtd}>`,
++  `integrity:{verified,mismatched,missingFiles,unlistedFiles,ok}`, and
++  `passed:boolean`. XML results preserve `ran`, `valid`, `errors`, `mode`.
++  Extend the existing `dtdStatus` with optional `validation`; retain all
++  existing members. Missing/empty evidence is unverified, never passed.
++- Packaging owns exact expected-file coverage (index, regional, every STF),
++  private temporary materialization of captured ZIP bytes, cleanup, relative
++  diagnostics, required STF DTD/path, and aggregate truth. Passing requires
++  self-containment, verified required supportive bytes and every expected
++  file actually passing well-formedness, DOCTYPE and DTD validation.
++  Do not certify external, escaped or symlinked XML/DTD dependencies.
++- Extend existing regional classification and pre-transmit checks to consume
++  this proof. Required production fails closed on absent or failed proof;
++  report-only flags remain report-only. No flag default is changed.
++- Compile projects full `dtdStatus` and existing regional status into its
++  package. Persist one typed `package_dtd_validation` finding in the existing
++  `validation_results` JSON with `{packageSha256,dtdStatus}` evidence, along
++  with actionable per-file findings. History selects this existing column
++  and projects that evidence. No new table, package store or agency-report
++  record is introduced. Historical absence remains unverified.
++- Extend the existing package/history rendering in `EctdCompile.tsx` and
++  preserve its actor/project/request ownership. Status remains live content
++  readiness and does not fabricate a package validation execution.
++  Keep the existing DTD rendering and its shared history/package helpers in
++  adjacent `EctdCompileDtdEvidence.tsx` so the compile surface stays within
++  the repository's existing file-size ceiling. This is extraction of the same
++  renderer, with no additional view or policy implementation.
++
++Validator worker owns extracted validator, qualification, checksum and tests.
++Packaging worker owns shared DTO, bundler, STF path, packager, bundle types,
++assembly wrapper, existing regional/transmit gates and tests. UI worker owns
++compile route, existing UI and their tests. Root owns contract review,
++independent adversarial review, browser/build evidence and canonical release.
++Root also owns the narrow existing shell-project guard correction and its
++existing tests. The additional identifier search and deleted-history search
++for shellProject found the live canonical guard and no deleted predecessor.
++
++The dependency check is a conservative containment check around the existing
++xmllint engine, not a replacement grammar parser. Unsupported encodings or
++entity constructions whose external resources cannot be proven to come from
++the captured package are refused as unverified. Actual agency schemas must be
++qualified after their separate acquisition; synthetic grammar tests do not
++establish compatibility with that corpus.
+diff --git a/docs/work-orders/README.md b/docs/work-orders/README.md
+index 81b8be8f3..3ee3927c4 100644
+--- a/docs/work-orders/README.md
++++ b/docs/work-orders/README.md
+@@ -18,6 +18,7 @@ to one line; edit only your own row to limit merge conflicts.
+ 
+ | Lane | Session | State |
+ |---|---|---|
++| **W5/D7, MR-10 Stage 3 integration — complete existing DTD validation through eCTD Compile.** Contract `docs/design/DTD_VALIDATION_COMPLETION_2026-10-21.md`; evidence `docs/evidence/MR-10/2026-10-21-dtd-validation/`. Reuse xmllint, qualification DOCTYPE/path checks, existing bundler/checksum/gates and viewer. | Codex control tower + scoped workers | **claimed** 2026-10-21 at `cb4065898`; no duplicate validator/store/viewer or agency asset acquisition. Existing enforcement posture is preserved; human witnessing and agency qualification remain open. |
+ | **W5/D7, MR-10 Stage 1 — complete study metadata on existing placement forms.** Contract `docs/design/STUDY_PLACEMENT_COMPLETION_2026-10-20.md`; evidence `docs/evidence/MR-10/2026-10-20-study-placement/`. Reuse canonical metadata writer, pure STF rules, field kit and receipt handling across Vault, Authoring and Builder AddLeafForm. | Codex control tower + foundation/dialog workers | **released** 2026-10-21; source `359cc9f5e` accepted directly on canonical. 297 UI + 100 backend checks; final integrated placement/editor cohort 75/3; Chromium 19 stages; build and normal compiler/push gates passed. No new store, writer, viewer or dependency. Human witnessing, sourced tag vocabulary and DTD/agency acceptance remain open. |
+ | **MR-10 Stage 1 / CAT2-04 — complete existing Builder study tagging.** Contract `docs/design/BUILDER_STUDY_TAGGING_COMPLETION_2026-10-20.md`; evidence `docs/evidence/MR-10/2026-10-20-builder-study-tagging/`. Existing leaf PUT/writer, manifest signature binding and Builder UI only; preserve source pins and reuse audit/session guards. Direct placement dialog inputs and DTD conformance remain open. | Codex control tower + scoped backend/UI workers | **published directly to canonical; released** 2026-10-20 — accepted source `1a1683ece`; final build `cf9a57ec1`; corrected metadata46/3, packager54/5, UI82/7 and Chromium7 stages/4 deliberate writes pass, including PUT204 hold and null-revision refusal. Earlier broader backend150/13 retained with actual stage. 34 execution pin checks match published tree; full compiler0/exit0/baseline0, warning growth0, all normal pre-push gates pass. No duplicate store/route/viewer/dependency, baseline or hook bypass. Human witness unexecuted; MR-10/CAT2-04 remain open beyond this slice. |
+ | **D2 / W1 — Your work drawer opens the exact native unified task.** Contract `docs/design/TASK_DRAWER_HANDOFF_2026-10-14.md`; evidence `docs/evidence/D2-TASK-HANDOFF/2026-10-14/`. Scope: existing drawer, board, navigation helpers and Workbench leave refusal; real beta setup instructions and the current-membership project-create test fixture. Native follow-up contract `docs/design/NATIVE_BETA_FIXTURE_COMPLETION_2026-10-14.md` claims the remaining workflow/Vault/catalogue fixture prerequisites; incoming repairs are preserved. No new task store or write path. | Codex control tower, task handoff continuation | **published directly to canonical** 2026-10-20 — source `3450b68b5` finishes exact task handoff and existing authoring/saved-source owner guards. Client/shared production matches `ec57b5519`; final server cancellation overlay passes53/4. Initial 40-file run348 pass/21 fail and TS2741 compiler refusal retained; corrected subset45/7 at `c24db62ac` passes, unaffected33/324 remain byte-identical and are not replayed. Target121/5 and Chromium one scenario/five stages remain bound to `ec57b5519`. Fresh final build passed; final full-project compiler zero, warning ratchet net-1, CSS16605 uses/30 chunks/zero missing. Earlier UI91/host61/backend42/native311/19/61 retain actual anchors. Evidence `docs/evidence/D2-TASK-HANDOFF/2026-10-14/resume-2026-10-17/canonical-2026-10-20/`. Existing stores/writers reused; no baseline or gate bypass. Human witness unexecuted. |
+diff --git a/server/routes/ectd-compile.ts b/server/routes/ectd-compile.ts
+index 827401b3c..b986a6bab 100644
+--- a/server/routes/ectd-compile.ts
++++ b/server/routes/ectd-compile.ts
+@@ -59,6 +59,9 @@ import {
+ import { serverError } from '../lib/api-response';
+ import { createScopedLogger } from '../utils/logger';
+ import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
++import type { SubmissionBundle } from '../services/submission-gateways/types';
++import type { DtdValidationEvidence, DtdFileValidation } from '../../shared/regulatory/ectd-dtd-validation';
++import { hasPassedPackageDtdValidation, dtdFileValidationPassed } from '../services/ectd/dtd-bundler';
+ 
+ const router = Router();
+ const log = createScopedLogger('ectd-compile');
+@@ -503,6 +506,9 @@ interface CompiledPackage {
+   regionalBackbone: { path: string; xml: string } | null;
+   /** index-md5.txt: the MD5 of index.xml, verbatim. */
+   indexMd5: string | null;
++  /** Presence and actual validation are separate facts, from this exact bundle. */
++  dtdStatus: SubmissionBundle['dtdStatus'] | null;
++  regionalStatus: SubmissionBundle['regionalBackbone'] | null;
+   /** PDF/A conversion outcome over the package's PDF leaves; null when the
+    *  packager reported no grade. agencyFormsAsIssued are FDA forms shipped with
+    *  FDA's own security (leaf-pdf-security.ts): never converted, by rule, and
+@@ -542,6 +548,78 @@ interface ValidationResult {
+   message: string;
+   sectionCode?: string;
+   fix?: string;
++  evidence?: PackageDtdRecord;
++}
++
++interface PackageDtdRecord {
++  packageSha256: string | null;
++  dtdStatus: SubmissionBundle['dtdStatus'] | null;
++}
++
++// Decode the existing JSON finding as metadata. The packager's canonical
++// helper alone judges coverage and validity; JSON shape is never proof of pass.
++const xmlProofSchema = z.object({ ran: z.boolean(), valid: z.boolean(), errors: z.array(z.string()), mode: z.enum(['well-formed', 'dtd', 'xsd']) });
++const dtdProofSchema: z.ZodType<DtdValidationEvidence> = z.object({
++  version: z.literal(1), expectedFiles: z.array(z.string()), passed: z.boolean(),
++  files: z.array(z.object({ relPath: z.string(), wellFormed: xmlProofSchema,
++    doctype: z.object({ valid: z.boolean(), errors: z.array(z.string()) }), dtd: xmlProofSchema })),
++  integrity: z.object({ verified: z.array(z.string()), mismatched: z.array(z.object({ fileName: z.string(), expected: z.string(), actual: z.string() })),
++    missingFiles: z.array(z.string()), unlistedFiles: z.array(z.string()), ok: z.boolean() }),
++});
++const dtdStatusSchema = z.object({ required: z.array(z.string()), present: z.array(z.string()), missing: z.array(z.string()),
++  missingStylesheets: z.array(z.string()).optional(), requiredStylesheets: z.array(z.string()).optional(), presentStylesheets: z.array(z.string()).optional(),
++  selfContained: z.boolean(), validation: dtdProofSchema.optional() }).passthrough();
++const packageDtdRecordSchema = z.object({ packageSha256: z.string().regex(/^[a-f0-9]{64}$/), dtdStatus: dtdStatusSchema.nullable() });
++
++function recordedPackageDtdValidation(value: unknown): PackageDtdRecord | null {
++  if (!Array.isArray(value)) return null;
++  const records = value.filter(row => row && typeof row === 'object' && row.rule === 'package_dtd_validation');
++  if (records.length !== 1) return null;
++  const decoded = packageDtdRecordSchema.safeParse(records[0].evidence);
++  if (!decoded.success) return null;
++  const status = decoded.data.dtdStatus;
++  if (status?.validation?.passed === true && !hasPassedPackageDtdValidation(status)) return null;
++  return decoded.data;
++}
++
++function dtdFileOutcome(file: DtdFileValidation, hasDiagnostics: boolean) {
++  const invalid = !file.doctype.valid || (file.wellFormed.ran && !file.wellFormed.valid) || (file.dtd.ran && !file.dtd.valid);
++  if (invalid) return { severity: 'error' as const, text: 'XML/DOCTYPE/DTD validation failed' };
++  if (!dtdFileValidationPassed(file) || hasDiagnostics) return { severity: 'warning' as const, text: 'DTD validation did not run cleanly and completely; unverified' };
++  return { severity: 'info' as const, text: 'DTD validation ran and passed' };
++}
++
++/** Actionable facts for one existing XML result, including a diagnostic-free failure. */
++function dtdFileFinding(file: DtdFileValidation): ValidationResult {
++  const diagnostics = [...file.wellFormed.errors, ...file.doctype.errors, ...file.dtd.errors];
++  const outcome = dtdFileOutcome(file, diagnostics.length > 0);
++  return { rule: 'package_dtd_file', severity: outcome.severity,
++    message: `${file.relPath}: ${outcome.text}.${diagnostics.length ? ` ${diagnostics.join('; ')}` : ''}`,
++    fix: outcome.severity !== 'info' ? 'Resolve the XML, referenced supportive files or validator capability and compile again.' : undefined };
++}
++
++function dtdIntegrityFindings(proof: DtdValidationEvidence): ValidationResult[] {
++  const integrity = proof.integrity;
++  const problems = [
++    ...integrity.mismatched.map(row => `${row.fileName}: expected SHA-256 ${row.expected}, received ${row.actual}`),
++    ...integrity.missingFiles.map(file => `${file}: checksum-listed bytes are missing`),
++    ...integrity.unlistedFiles.map(file => `${file}: bytes have no checksum entry`),
++  ];
++  if (!integrity.ok && problems.length === 0) problems.push('Package checksum verification did not pass.');
++  return problems.map(message => ({ rule: 'package_dtd_integrity', severity: 'error', message,
++    fix: 'Restore the reviewed supportive files and checksum manifest, then compile again.' }));
++}
++
++function packageDtdFindings(pkg: CompiledPackage): ValidationResult[] {
++  const passed = hasPassedPackageDtdValidation(pkg.dtdStatus);
++  const summary: ValidationResult = { rule: 'package_dtd_validation', severity: passed ? 'info' : 'warning',
++    message: passed ? 'Package DTD validation passed for the captured package bytes.' : 'Package DTD validation has not passed; absent, incomplete or failed evidence is unverified.',
++    evidence: { packageSha256: pkg.sha256, dtdStatus: pkg.dtdStatus },
++    fix: passed ? undefined : 'Inspect per-file validation and integrity evidence, resolve the reported gaps, and compile again.' };
++  const decoded = dtdStatusSchema.safeParse(pkg.dtdStatus);
++  const proof = decoded.success ? decoded.data.validation : undefined;
++  if (!proof) return [summary];
++  return [summary, ...proof.files.map(dtdFileFinding), ...dtdIntegrityFindings(proof)];
+ }
+ 
+ // ═══════════════════════════════════════════════════════════════════════════════
+@@ -1097,6 +1175,8 @@ async function compileFromSpine(
+       compiledPackage = {
+         sha256: packageSha256,
+         files,
++        dtdStatus: assembled.bundle.dtdStatus ?? null,
++        regionalStatus: assembled.bundle.regionalBackbone ?? null,
+         regionalBackbone: regionalPath && regionalXml != null ? { path: regionalPath, xml: regionalXml } : null,
+         indexMd5: (await zip.file('index-md5.txt')?.async('string'))?.trim() ?? null,
+         pdfa: grade
+@@ -1153,6 +1233,7 @@ async function compileFromSpine(
+ 
+   const initialSequence = seq.sequenceNumber === '0000';
+   const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });
++  if (compiledPackage) validationResults.push(...packageDtdFindings(compiledPackage));
+   if (assembleFailure != null) {
+     validationResults.unshift({
+       rule: 'ASSEMBLY_REFUSED',
+@@ -1203,6 +1284,9 @@ async function compileFromSpine(
+         'The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission.',
+       );
+     }
++    if (!hasPassedPackageDtdValidation(compiledPackage?.dtdStatus)) {
++      blockers.push('Package DTD validation has not passed. Inspect the per-file XML/DTD execution and checksum evidence before treating this package as submission-ready.');
++    }
+     // The packager converts every PDF leaf to PDF/A when it can and ships the
+     // original bytes when it cannot (no Ghostscript on the host). It reported
+     // that grade; nothing read it, so a vanilla-PDF package compiled with no
+@@ -1452,14 +1536,15 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
+         `SELECT id, compilation_name, compilation_type, status, version,
+                 compiled_at, created_at, sequence_number,
+                 leaf_manifest IS NOT NULL AS has_manifest,
+-                external_validation
++                external_validation, validation_results
+          FROM ectd_compilations
+          WHERE organization_id = $1 AND compilation_name ~ $2
+          ORDER BY created_at DESC
+          LIMIT 20`,
+         [orgId, labelTokenPattern]
+       );
+-      compilations = result.rows;
++      compilations = result.rows.map(({ validation_results, ...row }) => ({ ...row,
++        packageDtdValidation: recordedPackageDtdValidation(validation_results) }));
+     } catch (err: any) {
+       // An unreadable history is not an empty one: "never compiled" is a claim
+       // about this submission that a failed read cannot make.
+diff --git a/server/services/ectd/__tests__/_dtd-validation-fixture.ts b/server/services/ectd/__tests__/_dtd-validation-fixture.ts
+new file mode 100644
+index 000000000..880933dd2
+--- /dev/null
++++ b/server/services/ectd/__tests__/_dtd-validation-fixture.ts
+@@ -0,0 +1,11 @@
++/** Structural proof fixture only; no agency or actual engine acceptance claimed. */
++import type { DtdValidationEvidence } from '@shared/regulatory/ectd-dtd-validation';
++export const REGIONAL_XML = 'm1/us/us-regional.xml';
++const xml = (mode: 'well-formed' | 'dtd') => ({ ran: true, valid: true, errors: [], mode });
++export function syntheticDtdStatus() {
++  const validation: DtdValidationEvidence = { version: 1, passed: true, expectedFiles: ['index.xml', REGIONAL_XML],
++    files: ['index.xml', REGIONAL_XML].map(relPath => ({ relPath, wellFormed: xml('well-formed'), doctype: { valid: true, errors: [] }, dtd: xml('dtd') })),
++    integrity: { verified: ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ectd-2-0.xsl', 'us-regional.xsl'], mismatched: [], missingFiles: [], unlistedFiles: [], ok: true } };
++  return { required: ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'], present: ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'], missing: [],
++    requiredStylesheets: ['ectd-2-0.xsl', 'us-regional.xsl'], presentStylesheets: ['ectd-2-0.xsl', 'us-regional.xsl'], missingStylesheets: [], selfContained: true, validation };
++}
+diff --git a/server/services/ectd/__tests__/backbone-validation-confinement.test.ts b/server/services/ectd/__tests__/backbone-validation-confinement.test.ts
+new file mode 100644
+index 000000000..5c1a2ab39
+--- /dev/null
++++ b/server/services/ectd/__tests__/backbone-validation-confinement.test.ts
+@@ -0,0 +1,156 @@
++/** Real libxml2 with synthetic package bytes; no agency schemas or live I/O. */
++import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
++import { promises as fs } from 'node:fs';
++import * as os from 'node:os';
++import * as path from 'node:path';
++import { pathToFileURL } from 'node:url';
++import { validateBackboneFile } from '../backbone-validation';
++import { __resetXmllintProbe, isXmllintAvailable } from '../xml-validator';
++
++let work: string;
++let pkg: string;
++let grammar: string;
++const emptyRoot = '<!ELEMENT root EMPTY>';
++const documentFor = (systemId = 'util/dtd/root.dtd') => `<!DOCTYPE root SYSTEM "${systemId}"><root/>`;
++
++beforeAll(async () => {
++  __resetXmllintProbe();
++  expect(await isXmllintAvailable(), 'Confinement qualification requires the real xmllint binary on PATH; absence is not a passing run.').toBe(true);
++});
++beforeEach(async () => {
++  work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-confinement-'));
++  pkg = path.join(work, 'pkg');
++  grammar = path.join(pkg, 'util/dtd/root.dtd');
++  await fs.mkdir(path.dirname(grammar), { recursive: true });
++  await fs.writeFile(grammar, emptyRoot);
++  await fs.writeFile(path.join(pkg, 'index.xml'), documentFor());
++});
++afterEach(async () => {
++  vi.unstubAllEnvs();
++  await fs.rm(work, { recursive: true, force: true });
++});
++
++async function outsideGrammar(): Promise<string> {
++  const outside = path.join(work, 'outside.dtd');
++  await fs.writeFile(outside, emptyRoot);
++  return outside;
++}
++async function expectConfinedRefusal(): Promise<void> {
++  const result = await validateBackboneFile(pkg, 'index.xml');
++  expect(result.dtd).toMatchObject({ ran: false, valid: false, mode: 'dtd' });
++  expect(result.dtd.errors.join(' ').length).toBeGreaterThan(0);
++  expect(result.reports.some(report => !report.passed)).toBe(true);
++}
++
++describe('actual package-confined DTD validation', () => {
++  it('executes a real contained DTD as its positive control', async () => {
++    const result = await validateBackboneFile(pkg, 'index.xml');
++    expect(result.wellFormed).toMatchObject({ ran: true, valid: true });
++    expect(result.doctype).toEqual({ valid: true, errors: [] });
++    expect(result.dtd).toMatchObject({ ran: true, valid: true, mode: 'dtd' });
++    expect(result.reports.every(report => report.passed)).toBe(true);
++  });
++
++  it('accepts a captured package-local secondary parameter entity', async () => {
++    await fs.writeFile(grammar, '<!ENTITY % module SYSTEM "module.ent">%module;');
++    await fs.writeFile(path.join(path.dirname(grammar), 'module.ent'), emptyRoot);
++    expect((await validateBackboneFile(pkg, 'index.xml')).dtd).toMatchObject({ ran: true, valid: true });
++  });
++
++  it('does not certify a DOCTYPE written only in a comment', async () => {
++    await fs.writeFile(path.join(pkg, 'index.xml'), '<!-- <!DOCTYPE root SYSTEM "util/dtd/root.dtd"> --><root/>');
++    const result = await validateBackboneFile(pkg, 'index.xml');
++    expect(result.doctype.valid).toBe(false);
++    expect(result.reports.find(report => report.name.startsWith('backbone DOCTYPE'))?.passed).toBe(false);
++  });
++
++  it('does not let a benign commented declaration mask the actual escaped DTD', async () => {
++    await outsideGrammar();
++    await fs.writeFile(path.join(pkg, 'index.xml'), '<!-- <!DOCTYPE root SYSTEM "util/dtd/root.dtd"> -->' + documentFor('../outside.dtd'));
++    await expectConfinedRefusal();
++  });
++
++  it('rejects a symlinked XML input even when its declaration names a local DTD', async () => {
++    const outside = path.join(work, 'outside.xml');
++    await fs.writeFile(outside, documentFor());
++    await fs.rm(path.join(pkg, 'index.xml'));
++    await fs.symlink(outside, path.join(pkg, 'index.xml'));
++    await expectConfinedRefusal();
++  });
++
++  it('rejects a symlinked primary DTD', async () => {
++    const outside = await outsideGrammar();
++    await fs.rm(grammar);
++    await fs.symlink(outside, grammar);
++    await expectConfinedRefusal();
++  });
++
++  it('rejects an intermediate DTD directory symlink', async () => {
++    const externalDirectory = path.join(work, 'external-dtd');
++    await fs.mkdir(externalDirectory);
++    await fs.writeFile(path.join(externalDirectory, 'root.dtd'), emptyRoot);
++    await fs.rm(path.dirname(grammar), { recursive: true });
++    await fs.symlink(externalDirectory, path.dirname(grammar));
++    await expectConfinedRefusal();
++  });
++
++  it('rejects a symlinked secondary parameter entity', async () => {
++    const outside = await outsideGrammar();
++    await fs.writeFile(grammar, '<!ENTITY % module SYSTEM "module.ent">%module;');
++    await fs.symlink(outside, path.join(path.dirname(grammar), 'module.ent'));
++    await expectConfinedRefusal();
++  });
++
++  it('refuses an absolute file URI hidden in a secondary DTD declaration', async () => {
++    const outside = await outsideGrammar();
++    await fs.writeFile(grammar, `<!ENTITY % external SYSTEM "${pathToFileURL(outside).href}">%external;`);
++    await expectConfinedRefusal();
++  });
++
++  it.each(['missing.ent', 'https://schemas.invalid/not-captured.ent'])('refuses a missing or remote module even when libxml can validate without it: %s', async module => {
++    await fs.writeFile(grammar, `<!ENTITY % optional SYSTEM "${module}">%optional;${emptyRoot}`);
++    await expectConfinedRefusal();
++  });
++
++  it('refuses an XML internal subset that references an outside entity', async () => {
++    const outside = path.join(work, 'outside.txt');
++    await fs.writeFile(outside, 'Synthetic outside text.');
++    await fs.writeFile(grammar, '<!ELEMENT root (#PCDATA)>');
++    await fs.writeFile(path.join(pkg, 'index.xml'), `<!DOCTYPE root SYSTEM "util/dtd/root.dtd" [<!ENTITY outside SYSTEM "${pathToFileURL(outside).href}">]><root>&outside;</root>`);
++    await expectConfinedRefusal();
++  });
++
++  it('does not use an ambient XML catalog as proof of a missing packaged module', async () => {
++    const outside = await outsideGrammar();
++    const module = path.join(path.dirname(grammar), 'missing.ent');
++    const catalog = path.join(work, 'catalog.xml');
++    await fs.writeFile(catalog, `<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog"><system systemId="${pathToFileURL(module).href}" uri="${pathToFileURL(outside).href}"/></catalog>`);
++    vi.stubEnv('XML_CATALOG_FILES', catalog);
++    vi.stubEnv('SGML_CATALOG_FILES', catalog);
++    await fs.writeFile(grammar, '<!ENTITY % module SYSTEM "missing.ent">%module;');
++    await expectConfinedRefusal();
++  });
++
++  it('rejects URI-encoded traversal even when a literal percent-path decoy exists in the package', async () => {
++    await outsideGrammar();
++    const system = 'util/dtd/%2e%2e/%2e%2e/%2e%2e/outside.dtd';
++    const decoy = path.join(pkg, system);
++    await fs.mkdir(path.dirname(decoy), { recursive: true });
++    await fs.writeFile(decoy, '<!ELEMENT different EMPTY>');
++    await fs.writeFile(path.join(pkg, 'index.xml'), documentFor(system));
++    await expectConfinedRefusal();
++  });
++
++  it('rejects a constructed external identifier split across parameter entities', async () => {
++    const outside = await outsideGrammar();
++    await fs.writeFile(grammar, `<!ENTITY % header "SYSTEM '${pathToFileURL(outside).href}'">\n<!ENTITY % external %header;>\n%external;`);
++    await expectConfinedRefusal();
++  });
++
++  it('does not audit UTF-16 DTD bytes as if they were dependency-free UTF-8', async () => {
++    const outside = await outsideGrammar();
++    const text = `\uFEFF<?xml encoding="UTF-16"?>\n<!ENTITY % external SYSTEM "${pathToFileURL(outside).href}">\n%external;`;
++    await fs.writeFile(grammar, Buffer.from(text, 'utf16le'));
++    await expectConfinedRefusal();
++  });
++});
+diff --git a/server/services/ectd/__tests__/backbone-validation.test.ts b/server/services/ectd/__tests__/backbone-validation.test.ts
+new file mode 100644
+index 000000000..d0db632c2
+--- /dev/null
++++ b/server/services/ectd/__tests__/backbone-validation.test.ts
+@@ -0,0 +1,97 @@
++import { afterEach, beforeEach, describe, expect, it } from 'vitest';
++import { promises as fs } from 'fs';
++import * as os from 'os';
++import * as path from 'path';
++import { validateBackboneFile } from '../qualification/qualify';
++import { __resetXmllintProbe } from '../xml-validator';
++
++let work: string;
++let pkg: string;
++const xml = (system = 'util/dtd/root.dtd', body = '<root/>') => `<!DOCTYPE root SYSTEM "${system}">${body}`;
++beforeEach(async () => {
++  work = await fs.mkdtemp(path.join(os.tmpdir(), 'backbone-proof-'));
++  pkg = path.join(work, 'pkg');
++  await fs.mkdir(path.join(pkg, 'util/dtd'), { recursive: true });
++  await fs.writeFile(path.join(pkg, 'util/dtd/root.dtd'), '<!ELEMENT root EMPTY>');
++  await fs.writeFile(path.join(pkg, 'index.xml'), xml());
++  __resetXmllintProbe();
++});
++afterEach(async () => { __resetXmllintProbe(); await fs.rm(work, { recursive: true, force: true }); });
++
++describe('canonical per-file DTD evidence', () => {
++  it('records actual well-formedness, DOCTYPE and DTD execution', async () => {
++    const result = await validateBackboneFile(pkg, 'index.xml');
++    expect(result).toMatchObject({ relPath: 'index.xml', wellFormed: { ran: true, valid: true, mode: 'well-formed' },
++      doctype: { valid: true, errors: [] }, dtd: { ran: true, valid: true, mode: 'dtd' } });
++  });
++  it('records grammar-invalid XML separately from well-formedness', async () => {
++    await fs.writeFile(path.join(pkg, 'index.xml'), xml(undefined, '<root><unexpected/></root>'));
++    expect(await validateBackboneFile(pkg, 'index.xml')).toMatchObject({ wellFormed: { ran: true, valid: true }, dtd: { ran: true, valid: false } });
++  });
++  it('records a declared but absent DTD as unexecuted, not passed', async () => {
++    await fs.rm(path.join(pkg, 'util/dtd/root.dtd'));
++    const result = await validateBackboneFile(pkg, 'index.xml');
++    expect(result).toMatchObject({ doctype: { valid: true }, dtdSkipped: { relPath: 'index.xml', dtd: 'root.dtd' }, dtd: { ran: false, valid: false } });
++    expect(result.dtd.errors.join(' ')).toMatch(/missing|absent|not.*package/i);
++  });
++  it('records a missing runtime as unexecuted, not passed', async () => {
++    const previousPath = process.env.PATH;
++    process.env.PATH = '';
++    __resetXmllintProbe();
++    try {
++      expect(await validateBackboneFile(pkg, 'index.xml')).toMatchObject({ wellFormed: { ran: false, valid: false }, dtd: { ran: false, valid: false, errors: ['xmllint not available'] } });
++    } finally { process.env.PATH = previousPath; __resetXmllintProbe(); }
++  });
++  it('does not let a commented declaration override the actual declaration', async () => {
++    await fs.writeFile(path.join(pkg, 'index.xml'), `<!-- <!DOCTYPE root SYSTEM "missing.dtd"> -->${xml()}`);
++    expect(await validateBackboneFile(pkg, 'index.xml')).toMatchObject({ doctype: { valid: true }, dtd: { ran: true, valid: true } });
++  });
++});
++
++describe('validation is confined to the shipped package', () => {
++  it.each(['../outside.xml', '/outside.xml'])('refuses unsafe XML path %s before invoking xmllint', async (relPath) => {
++    await fs.writeFile(path.join(work, 'outside.xml'), xml('pkg/util/dtd/root.dtd'));
++    expect(await validateBackboneFile(pkg, relPath)).toMatchObject({ doctype: { valid: false }, wellFormed: { ran: false }, dtd: { ran: false, valid: false } });
++  });
++  it('refuses a symlinked XML file outside the package', async () => {
++    await fs.writeFile(path.join(work, 'outside.xml'), '<root/>');
++    await fs.symlink(path.join(work, 'outside.xml'), path.join(pkg, 'linked.xml'));
++    expect(await validateBackboneFile(pkg, 'linked.xml')).toMatchObject({ doctype: { valid: false }, dtd: { ran: false, valid: false } });
++  });
++  it.each(['absolute', 'symlink', 'network'])('refuses %s primary DTD references', async (kind) => {
++    let system = path.join(pkg, 'util/dtd/root.dtd');
++    if (kind === 'symlink') {
++      await fs.writeFile(path.join(work, 'outside.dtd'), '<!ELEMENT root EMPTY>');
++      await fs.symlink(path.join(work, 'outside.dtd'), path.join(pkg, 'util/dtd/link.dtd'));
++      system = 'util/dtd/link.dtd';
++    }
++    if (kind === 'network') system = 'https://example.invalid/root.dtd';
++    await fs.writeFile(path.join(pkg, 'index.xml'), xml(system));
++    expect(await validateBackboneFile(pkg, 'index.xml')).toMatchObject({ doctype: { valid: false }, dtd: { ran: false, valid: false } });
++  });
++  it.each(['outside', 'network', 'missing', 'symlink', 'public'])('never certifies an unsafe %s secondary dependency', async (kind) => {
++    let system = '../../../outside.dtd';
++    await fs.writeFile(path.join(work, 'outside.dtd'), '<!ELEMENT root EMPTY>');
++    if (kind === 'network') system = 'https://example.invalid/dependency.dtd';
++    if (kind === 'missing') system = 'missing.dtd';
++    if (kind === 'symlink') {
++      await fs.symlink(path.join(work, 'outside.dtd'), path.join(pkg, 'util/dtd/dependency.dtd'));
++      system = 'dependency.dtd';
++    }
++    const identifier = kind === 'public' ? `PUBLIC "synthetic public id" "${system}"` : `SYSTEM "${system}"`;
++    await fs.writeFile(path.join(pkg, 'util/dtd/root.dtd'), `<!ENTITY % dependency ${identifier}>%dependency;`);
++    const result = await validateBackboneFile(pkg, 'index.xml');
++    expect(result.dtd.valid).toBe(false);
++    expect(result.dtd.ran).toBe(false);
++    expect(result.dtd.errors.join(' ')).toMatch(/dependency|outside|external|missing|absent/i);
++  });
++  it('allows a literal package-contained secondary dependency and lets xmllint judge its grammar', async () => {
++    await fs.writeFile(path.join(pkg, 'util/dtd/root.dtd'), '<!ENTITY % dependency SYSTEM "dependency.dtd">%dependency;');
++    await fs.writeFile(path.join(pkg, 'util/dtd/dependency.dtd'), '<!ELEMENT root EMPTY>');
++    expect(await validateBackboneFile(pkg, 'index.xml')).toMatchObject({ dtd: { ran: true, valid: true } });
++  });
++  it('refuses unprovable declarations generated by parameter entities', async () => {
++    await fs.writeFile(path.join(pkg, 'util/dtd/root.dtd'), '<!ENTITY % generated "<!ELEMENT root EMPTY>">%generated;');
++    expect(await validateBackboneFile(pkg, 'index.xml')).toMatchObject({ dtd: { ran: false, valid: false } });
++  });
++});
+diff --git a/server/services/ectd/__tests__/checksum-buffers.test.ts b/server/services/ectd/__tests__/checksum-buffers.test.ts
+new file mode 100644
+index 000000000..34fd4de48
+--- /dev/null
++++ b/server/services/ectd/__tests__/checksum-buffers.test.ts
+@@ -0,0 +1,38 @@
++import { describe, expect, it } from 'vitest';
++import { createHash } from 'crypto';
++import { promises as fs } from 'fs';
++import * as os from 'os';
++import * as path from 'path';
++import { verifyChecksumBuffers, verifyChecksumManifest } from '../checksum-manifest';
++
++const bytes = Buffer.from('synthetic supportive bytes');
++const sha = createHash('sha256').update(bytes).digest('hex');
++describe('the existing checksum verifier over captured package bytes', () => {
++  it('checks the exact buffers, including stylesheets, and reports all three fault classes', () => {
++    const result = verifyChecksumBuffers([{ fileName: 'root.dtd', content: bytes }, { fileName: 'style.xsl', content: Buffer.from('tampered') },
++      { fileName: 'extra.dtd', content: bytes }], `${sha}  root.dtd\n${sha}  style.xsl\n${sha}  missing.dtd\n`);
++    expect(result).toMatchObject({ verified: ['root.dtd'], missingFiles: ['missing.dtd'], unlistedFiles: ['extra.dtd'], ok: false });
++    expect(result.mismatched).toEqual([{ fileName: 'style.xsl', expected: sha, actual: createHash('sha256').update('tampered').digest('hex') }]);
++  });
++  it('treats a missing manifest as unlisted files, and keeps the empty pre-vendoring result distinct', () => {
++    expect(verifyChecksumBuffers([{ fileName: 'root.dtd', content: bytes }], '')).toMatchObject({ ok: false, unlistedFiles: ['root.dtd'] });
++    expect(verifyChecksumBuffers([], '# no vendored files')).toMatchObject({ ok: true, verified: [] });
++  });
++  it('honors the existing extension filter', () => {
++    expect(verifyChecksumBuffers([{ fileName: 'notes.txt', content: bytes }, { fileName: 'root.dtd', content: bytes }], `${sha}  root.dtd`, ['.dtd']))
++      .toMatchObject({ ok: true, verified: ['root.dtd'], unlistedFiles: [] });
++  });
++  it('does not reread changed drop-point bytes; its filesystem wrapper uses the same result shape', async () => {
++    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'checksum-capture-'));
++    try {
++      const manifest = `${sha}  root.dtd\n`;
++      await fs.writeFile(path.join(dir, 'root.dtd'), bytes);
++      await fs.writeFile(path.join(dir, 'checksums.txt'), manifest);
++      const captured = [{ fileName: 'root.dtd', content: await fs.readFile(path.join(dir, 'root.dtd')) }];
++      expect(await verifyChecksumManifest(dir)).toEqual(verifyChecksumBuffers(captured, manifest));
++      await fs.writeFile(path.join(dir, 'root.dtd'), 'changed after capture');
++      expect(verifyChecksumBuffers(captured, manifest).ok).toBe(true);
++      expect((await verifyChecksumManifest(dir)).ok).toBe(false);
++    } finally { await fs.rm(dir, { recursive: true, force: true }); }
++  });
++});
+diff --git a/server/services/ectd/__tests__/dtd-bundler.test.ts b/server/services/ectd/__tests__/dtd-bundler.test.ts
+index 3f409a532..8c6210908 100644
+--- a/server/services/ectd/__tests__/dtd-bundler.test.ts
++++ b/server/services/ectd/__tests__/dtd-bundler.test.ts
+@@ -20,6 +20,7 @@ import {
+ } from '../dtd-bundler';
+ import { classifyRegionalBackbone } from '../regional-backbone-readiness';
+ import type { Region } from '../../submission-gateways/types';
++import { syntheticDtdStatus } from './_dtd-validation-fixture';
+ 
+ describe('requiredDtdsForRegion', () => {
+   it('always includes the ICH backbone plus the regional DTD', () => {
+@@ -120,7 +121,7 @@ describe('assessDtdReadiness', () => {
+     expect(r.blockers[0]).toContain('eu-regional.dtd');
+   });
+ 
+-  it('matches DTD names case-insensitively', () => {
++  it('does not claim exact package SYSTEM paths resolve to uppercase filenames', () => {
+     const r = assessDtdReadiness({
+       region: 'fda',
+       present: ['ICH-ECTD-3-2.DTD', 'US-REGIONAL-V3-3.DTD'],
+@@ -128,7 +129,8 @@ describe('assessDtdReadiness', () => {
+       environment: 'production',
+       requireDtd: true,
+     });
+-    expect(r.selfContained).toBe(true);
++    expect(r.selfContained).toBe(false);
++    expect(r.missing).toEqual([ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd']);
+   });
+ });
+ 
+@@ -181,7 +183,7 @@ describe('stylesheet self-containment — the second hole the DTD gate did not c
+     expect(r.blockers[0]).toContain('ectd-2-0.xsl');
+   });
+ 
+-  it('clears once the stylesheets are present too, matching names case-insensitively', () => {
++  it('requires the exact stylesheet case used by package processing instructions', () => {
+     const r = assessDtdReadiness({
+       region: 'fda',
+       present: [ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd'],
+@@ -189,9 +191,9 @@ describe('stylesheet self-containment — the second hole the DTD gate did not c
+       environment: 'production',
+       requireDtd: true,
+     });
+-    expect(r.missingStylesheets).toEqual([]);
+-    expect(r.selfContained).toBe(true);
+-    expect(r.cleared).toBe(true);
++    expect(r.missingStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
++    expect(r.selfContained).toBe(false);
++    expect(r.cleared).toBe(false);
+   });
+ 
+   it('report-only when not required: names the missing stylesheets but does not block', () => {
+@@ -243,7 +245,8 @@ describe('a fully vendored drop-point clears the DTD gate WITHOUT making a regio
+        now, and with a clean build report only FDA is. */
+     const byRegionAlone = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`).regionConformant);
+     expect(byRegionAlone).toEqual([]);
+-    const withCleanReport = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`, []).regionConformant);
++    const withCleanReport = ALL.filter((r) => classifyRegionalBackbone(r as Region,
++      r === 'fda' ? 'm1/us/us-regional.xml' : `m1/x/${r}-regional.xml`, [], syntheticDtdStatus().validation).regionConformant);
+     expect(withCleanReport).toEqual(['fda']);
+   });
+ });
+diff --git a/server/services/ectd/__tests__/dtd-validation-proof.test.ts b/server/services/ectd/__tests__/dtd-validation-proof.test.ts
+new file mode 100644
+index 000000000..325484742
+--- /dev/null
++++ b/server/services/ectd/__tests__/dtd-validation-proof.test.ts
+@@ -0,0 +1,64 @@
++/** Persisted self-containment/passed booleans are not complete DTD proof. */
++import { describe, expect, it } from 'vitest';
++import { classifyRegionalBackbone } from '../regional-backbone-readiness';
++import { hasPassedPackageDtdValidation } from '../dtd-bundler';
++import { evaluatePreTransmit } from '../../submission-gateways/pre-transmit-check';
++import type { SubmissionBundle } from '../../submission-gateways/types';
++import { REGIONAL_XML as regional, syntheticDtdStatus as status } from './_dtd-validation-fixture';
++
++function transmit(dtdStatus?: SubmissionBundle['dtdStatus'], stf?: SubmissionBundle['stf']) {
++  return evaluatePreTransmit({ region: 'fda', environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_DTD: 'true' },
++    bundle: { path: '/synthetic.zip', sha256: 'a'.repeat(64), sizeBytes: 100, format: 'ectd', builtRegion: 'fda', dtdStatus, stf } });
++}
++
++describe('existing DTD gate requires complete validation proof', () => {
++  it.each(['xml-errors', 'missing-present', 'missing-styles-inventory', 'duplicate-required'] as const)('canonical proof rejects contradictory %s details', mode => {
++      const data = status();
++      if (mode === 'xml-errors') data.validation.files[0].dtd.errors.push('validation error');
++      if (mode === 'missing-present') data.present = [];
++      if (mode === 'missing-styles-inventory') data.presentStylesheets = [];
++      if (mode === 'duplicate-required') data.required.push(data.required[0]);
++      expect(hasPassedPackageDtdValidation(data)).toBe(false);
++    });
++  it('refuses absent historical status and presence-only historical status when required', () => {
++    expect(transmit().cleared).toBe(false);
++    const presence = { ...status(), validation: undefined };
++    expect(transmit(presence).cleared).toBe(false);
++  });
++  it('accepts actual complete proof while preserving the default/report-only posture', () => {
++    expect(transmit(status()).cleared).toBe(true);
++    expect(evaluatePreTransmit({ region: 'fda', environment: 'staging', enforceExternal: false, env: { ECTD_REQUIRE_DTD: 'true' },
++      bundle: { path: '/synthetic.zip', sha256: 'a'.repeat(64), sizeBytes: 100, format: 'ectd', builtRegion: 'fda' } }).cleared).toBe(true);
++  });
++  it.each(['empty', 'duplicate', 'missing-row', 'skipped', 'doctype', 'integrity', 'missing-required-style', 'nonboolean'] as const)('refuses incomplete or forged %s proof despite passed:true', mode => {
++      const data = status();
++      if (mode === 'empty') { data.validation.expectedFiles = []; data.validation.files = []; }
++      if (mode === 'duplicate') { data.validation.expectedFiles = ['index.xml', 'index.xml']; data.validation.files[1] = data.validation.files[0]; }
++      if (mode === 'missing-row') data.validation.files.pop();
++      if (mode === 'skipped') data.validation.files[0].dtd.ran = false;
++      if (mode === 'doctype') data.validation.files[0].doctype.valid = false;
++      if (mode === 'integrity') data.validation.integrity.ok = false;
++      if (mode === 'missing-required-style') data.validation.integrity.verified = data.validation.integrity.verified.filter(name => name !== 'us-regional.xsl');
++      if (mode === 'nonboolean') data.validation.passed = 'true' as unknown as boolean;
++      expect(transmit(data).cleared).toBe(false);
++    });
++  it('refuses omitted STF coverage in a study package', () => {
++    const data = status();
++    data.required.push('ich-stf-v2-2.dtd'); data.present.push('ich-stf-v2-2.dtd'); data.validation.integrity.verified.push('ich-stf-v2-2.dtd');
++    expect(transmit(data, { studies: 2, leaves: 3, untagged: 0 }).cleared).toBe(false);
++  });
++});
++
++describe('regional classification needs current regional DTD and integrity proof', () => {
++  it('does not establish conformance from a clean structural-gap report alone', () => {
++    expect(classifyRegionalBackbone('fda', regional, []).regionConformant).toBe(false);
++  });
++  it('accepts a clean structural report only with current complete regional proof', () => {
++    expect(classifyRegionalBackbone('fda', regional, [], status().validation).regionConformant).toBe(true);
++    const proof = status().validation; proof.files[1].dtd.valid = false;
++    expect(classifyRegionalBackbone('fda', regional, [], proof).regionConformant).toBe(false);
++  });
++  it('retains structural refusals even with an XML-valid synthetic grammar', () => {
++    expect(classifyRegionalBackbone('fda', regional, ['missing regulatory contact'], status().validation)).toMatchObject({ regionConformant: false, conformanceGap: 'missing regulatory contact' });
++  });
++});
+diff --git a/server/services/ectd/__tests__/regional-backbone-readiness.test.ts b/server/services/ectd/__tests__/regional-backbone-readiness.test.ts
+index c33edc841..65799bd57 100644
+--- a/server/services/ectd/__tests__/regional-backbone-readiness.test.ts
++++ b/server/services/ectd/__tests__/regional-backbone-readiness.test.ts
+@@ -23,6 +23,7 @@ import {
+ } from '../regional-backbone-readiness';
+ import { packageLeafBytes } from '../package-leaf-bytes';
+ import type { Region } from '../../submission-gateways/types';
++import { syntheticDtdStatus } from './_dtd-validation-fixture';
+ 
+ const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+ 
+@@ -201,8 +202,9 @@ describe('classifyRegionalBackbone', () => {
+     expect(s.placeholderOf).toBeUndefined();
+     expect(s.conformanceGap).toMatch(/cannot be claimed for the region alone/);
+   });
+-  it('FDA is conformant when its builder reports nothing it cannot stand behind', () => {
+-    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', [])).toEqual({
++  it('FDA requires a current regional DTD result as well as its clean structural report', () => {
++    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', []).regionConformant).toBe(false);
++    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', [], syntheticDtdStatus().validation)).toEqual({
+       region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true,
+     });
+   });
+@@ -338,7 +340,7 @@ describe('evaluateRegionalBackboneGate', () => {
+     expect(g.warnings).toHaveLength(1);
+   });
+   it('a conformant region passes cleanly', () => {
+-    const g = evaluateRegionalBackboneGate({ status: conformant, environment: 'production', required: true });
++    const g = evaluateRegionalBackboneGate({ status: conformant, environment: 'production', required: true, validation: syntheticDtdStatus().validation });
+     expect(g.check?.passed).toBe(true);
+     expect(g.blockers).toEqual([]);
+     expect(g.warnings).toEqual([]);
+@@ -348,10 +350,11 @@ describe('evaluateRegionalBackboneGate', () => {
+     const g = evaluateRegionalBackboneGate({ status: tampered, environment: 'production', required: true });
+     expect(g.blockers).toHaveLength(1);
+   });
+-  it('a required flag with no status is a warning (cannot prove conformance), not a silent pass', () => {
++  it('a required production flag refuses absent historical evidence', () => {
+     const g = evaluateRegionalBackboneGate({ status: undefined, environment: 'production', required: true });
+     expect(g.warnings).toHaveLength(1);
+     expect(g.check).toBeUndefined();
++    expect(g.blockers).toHaveLength(1);
+   });
+   it('the env flag is true only for the literal "true"', () => {
+     expect(regionalBackboneRequiredFromEnv({ ECTD_REQUIRE_REGIONAL_BACKBONE: 'true' } as NodeJS.ProcessEnv)).toBe(true);
+diff --git a/server/services/ectd/__tests__/xml-validator-capability.test.ts b/server/services/ectd/__tests__/xml-validator-capability.test.ts
+new file mode 100644
+index 000000000..94ecf5bc6
+--- /dev/null
++++ b/server/services/ectd/__tests__/xml-validator-capability.test.ts
+@@ -0,0 +1,32 @@
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++
++const child = vi.hoisted(() => ({ execFile: vi.fn() }));
++vi.mock('child_process', () => ({ execFile: child.execFile }));
++import { __resetXmllintProbe, isXmllintAvailable, validateAgainstDtd } from '../xml-validator';
++
++beforeEach(() => { child.execFile.mockReset(); __resetXmllintProbe(); });
++
++describe('xmllint execution facts after its capability probe', () => {
++  it('does not report execution when the previously available binary disappears', async () => {
++    child.execFile.mockImplementation((_binary, args, _options, callback) => {
++      if (args.includes('--version')) callback(null, '', 'libxml version');
++      else callback(Object.assign(new Error('xmllint unavailable after probe'), { code: 'ENOENT' }), '', '');
++    });
++    expect(await isXmllintAvailable()).toBe(true);
++    const result = await validateAgainstDtd('/synthetic/package/index.xml');
++    expect(result).toMatchObject({ ran: false, valid: false });
++    expect(result.errors.join(' ')).toMatch(/unavailable after probe/);
++  });
++  it('preserves a failed execution even when stderr is empty, with catalogs disabled per command', async () => {
++    child.execFile.mockImplementation((_binary, args, _options, callback) => {
++      if (args.includes('--version')) callback(null, '', 'libxml version');
++      else callback(Object.assign(new Error('xmllint failed without stderr'), { code: 4 }), '', '');
++    });
++    const result = await validateAgainstDtd('/synthetic/package/index.xml');
++    expect(result).toMatchObject({ ran: true, valid: false });
++    expect(result.errors.join(' ')).toMatch(/failed without stderr/);
++    const execution = child.execFile.mock.calls.find(call => call[1].includes('--valid'));
++    expect(execution?.[1]).toEqual(expect.arrayContaining(['--nocatalogs', '--nonet']));
++    expect(execution?.[2].env).toMatchObject({ XML_CATALOG_FILES: '', SGML_CATALOG_FILES: '' });
++  });
++});
+diff --git a/server/services/ectd/assemble-from-core.ts b/server/services/ectd/assemble-from-core.ts
+index 2de5aa789..5ce58b3fe 100644
+--- a/server/services/ectd/assemble-from-core.ts
++++ b/server/services/ectd/assemble-from-core.ts
+@@ -520,13 +520,7 @@ export interface AssembleSubmissionResult {
+   // `missingStylesheets` travels with `missing`: selfContained is false when
+   // EITHER is non-empty, so a consumer that reads only `missing` cannot say
+   // which files are absent (see SubmissionBundle['dtdStatus']).
+-  dtdStatus?: {
+-    required: string[];
+-    present: string[];
+-    missing: string[];
+-    missingStylesheets?: string[];
+-    selfContained: boolean;
+-  };
++  dtdStatus?: import('../submission-gateways/types').SubmissionBundle['dtdStatus'];
+   stats: {
+     totalModules: number;
+     totalGranules: number;
+diff --git a/server/services/ectd/backbone-validation.ts b/server/services/ectd/backbone-validation.ts
+new file mode 100644
+index 000000000..5d16e5be7
+--- /dev/null
++++ b/server/services/ectd/backbone-validation.ts
+@@ -0,0 +1,144 @@
++/** Canonical package-relative XML/DTD checks, extracted from qualification. */
++import { promises as fs } from 'fs';
++import * as path from 'path';
++import { checkWellFormed, validateAgainstDtd, type XmlLintResult } from './xml-validator';
++
++export interface ValidatorRunReport {
++  name: string; ran: boolean; passed: boolean; errorCount: number; warningCount: number; sample: string[];
++}
++
++export function tallyValidationReport(name: string, ran: boolean, findings: Array<{ severity: string; message: string }>): ValidatorRunReport {
++  const errors = findings.filter(f => f.severity === 'error');
++  return { name, ran, passed: ran && errors.length === 0, errorCount: errors.length,
++    warningCount: findings.filter(f => f.severity === 'warning').length,
++    sample: findings.slice(0, 5).map(f => `[${f.severity}] ${f.message}`) };
++}
++
++export interface BackboneValidation {
++  relPath: string;
++  wellFormed: XmlLintResult;
++  doctype: { valid: boolean; errors: string[] };
++  dtd: XmlLintResult;
++  reports: ValidatorRunReport[];
++  dtdSkipped: { relPath: string; dtd: string } | null;
++}
++
++type FileResolution = { file: string | null; missing: boolean; error: string | null };
++const skipped = (mode: XmlLintResult['mode'], reason: string): XmlLintResult => ({ ran: false, valid: false, mode, errors: [reason] });
++const stripComments = (text: string) => text.replace(/<!--[\s\S]*?-->/g, '');
++/** Unsupported encodings remain unverified; never audit different text than libxml reads. */
++async function auditText(file: string): Promise<{ text: string; error: string | null }> {
++  try {
++    const bytes = await fs.readFile(file);
++    const text = bytes.toString('utf8');
++    const encoding = /^\s*<\?xml\b[^?]*\bencoding\s*=\s*(['"])(.*?)\1/i.exec(text)?.[2];
++    if (text.includes('\0') || !Buffer.from(text, 'utf8').equals(bytes) || (encoding && !/^utf-?8$/i.test(encoding))) {
++      return { text: '', error: 'Unsupported XML/DTD dependency encoding: only exact UTF-8 text can be proven package-contained.' };
++    }
++    return { text, error: null };
++  } catch { return { text: '', error: 'XML/DTD dependency became missing or unreadable during validation.' }; }
++}
++const within = (root: string, file: string) => {
++  const rel = path.relative(root, file);
++  return rel !== '' && rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel);
++};
++
++async function packagedFile(root: string, file: string): Promise<FileResolution> {
++  if (!within(root, file)) return { file: null, missing: false, error: 'Reference resolves outside the package directory.' };
++  try {
++    const real = await fs.realpath(file);
++    if (!within(root, real) || real !== file) return { file: null, missing: false, error: 'Symlinked XML/DTD dependency cannot prove package containment.' };
++    if (!(await fs.stat(real)).isFile()) return { file: null, missing: false, error: 'XML/DTD dependency is not a file.' };
++    return { file: real, missing: false, error: null };
++  } catch {
++    return { file: null, missing: true, error: 'XML/DTD dependency is missing or unreadable in the package.' };
++  }
++}
++
++function externalIdError(systemId: string): string | null {
++  if (/^[a-z][a-z0-9+.-]*:/i.test(systemId)) return 'External URI dependency is not contained in the package.';
++  if (path.isAbsolute(systemId) || systemId.startsWith('\\')) return 'Absolute dependency is not a portable package reference.';
++  if (/[&%]/.test(systemId)) return 'Dynamic external dependency cannot be proven package-contained.';
++  return null;
++}
++
++function declaredDependency(declaration: string): { id: string | null; error: string | null } {
++  if (/%\s*[\w:.-]+;/.test(declaration)) return { id: null, error: 'Unprovable DTD dependency: a parameter entity constructs an ENTITY declaration.' };
++  if (!/\s(?:SYSTEM|PUBLIC)\s/.test(declaration)) return { id: null, error: null };
++  const id = /\sSYSTEM\s+(['"])(.*?)\1\s*>$/.exec(declaration)?.[2] ??
++    /\sPUBLIC\s+(['"])(.*?)\1\s+(['"])(.*?)\3\s*>$/.exec(declaration)?.[4];
++  return { id: id ?? null, error: id ? externalIdError(id) : 'Unsupported external DTD dependency declaration.' };
++}
++
++/** Audit external identifiers conservatively; xmllint remains the grammar parser. */
++async function dependencyErrors(root: string, file: string, visited = new Set<string>()): Promise<string[]> {
++  if (visited.has(file)) return [];
++  visited.add(file);
++  if (visited.size > 128) return ['DTD dependency closure exceeds the supported proof limit.'];
++  const read = await auditText(file);
++  if (read.error) return [read.error];
++  const text = stripComments(read.text);
++  // Parameter entities capable of synthesizing declarations cannot be audited
++  // from literal identifiers. Refuse rather than certify unexamined resources.
++  const internals = [...text.matchAll(/<!ENTITY\s+%\s+[^\s]+\s+(['"])([\s\S]*?)\1\s*>/g)];
++  if (internals.some(match => /[<>]|&#/.test(match[2]))) return ['Unprovable DTD dependency: a parameter entity constructs declarations.'];
++  const errors: string[] = [];
++  const declarations = text.match(/<!ENTITY\s+[\s\S]*?>/g) ?? [];
++  for (const declaration of declarations) {
++    const { id, error } = declaredDependency(declaration);
++    if (error) { errors.push(error); continue; }
++    if (!id) continue;
++    const resolved = await packagedFile(root, path.resolve(path.dirname(file), id));
++    if (!resolved.file) { errors.push(`DTD dependency ${id}: ${resolved.error ?? 'Missing DTD dependency.'}`); continue; }
++    errors.push(...await dependencyErrors(root, resolved.file, visited));
++  }
++  return errors;
++}
++
++type DoctypeResolution = { valid: boolean; errors: string[]; file: string | null; missingName: string | null };
++async function referencedDtd(root: string, file: string, relPath: string): Promise<DoctypeResolution> {
++  const invalid = (message: string): DoctypeResolution => ({ valid: false, errors: [message], file: null, missingName: null });
++  const read = await auditText(file);
++  if (read.error) return invalid(read.error);
++  const xml = stripComments(read.text).replace(/<\?[\s\S]*?\?>/g, '').replace(/^\uFEFF/, '').trimStart();
++  if (!/^<!DOCTYPE\s/.test(xml)) return invalid(`${relPath} declares no DOCTYPE. An eCTD backbone must reference its DTD.`);
++  const declaration = /^<!DOCTYPE[^<>]*>/.exec(xml)?.[0];
++  if (!declaration || declaration.includes('[')) return invalid(`${relPath} has an unsupported DOCTYPE or internal subset; package-contained dependencies cannot be proven.`);
++  const systemId = /\sSYSTEM\s+(['"])(.*?)\1\s*>$/.exec(declaration)?.[2] ??
++    /\sPUBLIC\s+(['"])(.*?)\1\s+(['"])(.*?)\3\s*>$/.exec(declaration)?.[4];
++  if (!systemId) return invalid(`${relPath} has a DOCTYPE with no parseable SYSTEM identifier.`);
++  const unsafe = externalIdError(systemId);
++  if (unsafe) return invalid(`${relPath}: ${unsafe}`);
++  const resolved = await packagedFile(root, path.resolve(path.dirname(file), systemId));
++  if (resolved.missing) return { valid: true, errors: [], file: null, missingName: path.basename(systemId) };
++  if (!resolved.file) return invalid(`${relPath}: ${resolved.error}`);
++  const errors = await dependencyErrors(root, resolved.file);
++  return { valid: errors.length === 0, errors, file: resolved.file, missingName: null };
++}
++
++function lintReport(name: string, result: XmlLintResult): ValidatorRunReport {
++  const errors = result.valid ? [] : result.errors.length ? result.errors : ['XML validation did not pass.'];
++  return tallyValidationReport(name, result.ran, errors.map(message => ({ severity: 'error', message })));
++}
++
++function relativeLint(result: XmlLintResult, root: string): XmlLintResult {
++  return { ...result, errors: result.errors.map(error => error.split(root).join('.')) };
++}
++
++/** Validate one XML file against the actual declared, confined package DTD. */
++export async function validateBackboneFile(packageDir: string, relPath: string): Promise<BackboneValidation> {
++  const root = await fs.realpath(packageDir).catch(() => path.resolve(packageDir));
++  const resolved = path.isAbsolute(relPath) ? { file: null, error: 'Absolute XML path is not package-relative.' } : await packagedFile(root, path.resolve(root, relPath));
++  const referenced = resolved.file ? await referencedDtd(root, resolved.file, relPath) :
++    { valid: false, errors: [`${relPath} could not be read: ${resolved.error}`], file: null, missingName: null };
++  referenced.errors = referenced.errors.map(error => error.split(root).join('.'));
++  const wellFormed = relativeLint(resolved.file && referenced.valid ? await checkWellFormed(resolved.file, true) :
++    skipped('well-formed', referenced.errors.join(' ')), root);
++  const dtd = relativeLint(referenced.valid && referenced.file && resolved.file ? await validateAgainstDtd(resolved.file) :
++    skipped('dtd', referenced.missingName ? `Declared DTD ${referenced.missingName} is missing from the package.` : referenced.errors.join(' ')), root);
++  const reports = [lintReport(`xmllint well-formed (${relPath})`, wellFormed),
++    tallyValidationReport(`backbone DOCTYPE (${relPath})`, true, referenced.errors.map(message => ({ severity: 'error', message })))];
++  if (referenced.valid && referenced.file) reports.push(lintReport(`xmllint DTD (${relPath})`, dtd));
++  return { relPath, wellFormed, doctype: { valid: referenced.valid, errors: referenced.errors }, dtd, reports,
++    dtdSkipped: referenced.missingName ? { relPath, dtd: referenced.missingName } : null };
++}
+diff --git a/server/services/ectd/checksum-manifest.ts b/server/services/ectd/checksum-manifest.ts
+index 8d53ea532..3eedf4f9f 100644
+--- a/server/services/ectd/checksum-manifest.ts
++++ b/server/services/ectd/checksum-manifest.ts
+@@ -61,6 +61,34 @@ export async function verifyChecksumManifest(
+   manifestName = 'checksums.txt',
+   extensions: string[] = ['.dtd', '.xsd', '.xsl'],
+ ): Promise<ChecksumVerifyResult> {
++  let manifestText = '';
++  try { manifestText = await fs.readFile(path.join(dir, manifestName), 'utf8'); } catch { /* Unrecorded files remain unverified. */ }
++  let names: string[] = [];
++  try { names = (await fs.readdir(dir)).filter(name => extensions.some(ext => name.toLowerCase().endsWith(ext))); } catch { /* Pre-vendoring directory may be absent. */ }
++  const files: Array<{ fileName: string; content: Buffer }> = [];
++  const unreadable: string[] = [];
++  for (const fileName of names) {
++    try { files.push({ fileName, content: await fs.readFile(path.join(dir, fileName)) }); }
++    catch { unreadable.push(fileName); }
++  }
++  const result = verifyChecksumBuffers(files, manifestText, extensions);
++  const entries = new Map(parseManifest(manifestText).map(entry => [entry.fileName, entry.sha256]));
++  for (const fileName of unreadable) {
++    const expected = entries.get(fileName);
++    if (expected) result.mismatched.push({ fileName, expected, actual: '' });
++    else result.unlistedFiles.push(fileName);
++  }
++  result.missingFiles = result.missingFiles.filter(fileName => !unreadable.includes(fileName));
++  result.ok = result.ok && unreadable.length === 0;
++  return result;
++}
++
++/** Verify the exact supportive buffers captured for a package, without rereading their source. */
++export function verifyChecksumBuffers(
++  files: Array<{ fileName: string; content: Buffer }>,
++  manifestText: string,
++  extensions: string[] = ['.dtd', '.xsd', '.xsl'],
++): ChecksumVerifyResult {
+   const result: ChecksumVerifyResult = {
+     verified: [],
+     mismatched: [],
+@@ -69,22 +97,12 @@ export async function verifyChecksumManifest(
+     ok: true,
+   };
+ 
+-  let manifestText = '';
+-  try {
+-    manifestText = await fs.readFile(path.join(dir, manifestName), 'utf8');
+-  } catch {
+-    manifestText = '';
+-  }
+   const entries = parseManifest(manifestText);
+   const entryByName = new Map(entries.map((e) => [e.fileName, e.sha256]));
+ 
+-  // Actual vendored artifact files present.
+-  let names: string[] = [];
+-  try {
+-    names = (await fs.readdir(dir)).filter((n) => extensions.some((e) => n.toLowerCase().endsWith(e)));
+-  } catch {
+-    names = [];
+-  }
++  const selected = files.filter(file => extensions.some(ext => file.fileName.toLowerCase().endsWith(ext)));
++  const byName = new Map(selected.map(file => [file.fileName, file.content]));
++  const names = [...byName.keys()];
+ 
+   for (const name of names.sort()) {
+     const expected = entryByName.get(name);
+@@ -92,12 +110,7 @@ export async function verifyChecksumManifest(
+       result.unlistedFiles.push(name);
+       continue;
+     }
+-    let actual = '';
+-    try {
+-      actual = createHash('sha256').update(await fs.readFile(path.join(dir, name))).digest('hex');
+-    } catch {
+-      actual = '';
+-    }
++    const actual = createHash('sha256').update(byName.get(name)!).digest('hex');
+     if (actual === expected) result.verified.push(name);
+     else result.mismatched.push({ fileName: name, expected, actual });
+   }
+@@ -115,4 +128,4 @@ export async function verifyChecksumManifest(
+   return result;
+ }
+ 
+-export default { parseManifest, verifyChecksumManifest };
++export default { parseManifest, verifyChecksumManifest, verifyChecksumBuffers };
+diff --git a/server/services/ectd/dtd-bundler.ts b/server/services/ectd/dtd-bundler.ts
+index d0a5bf803..a41f0f28f 100644
+--- a/server/services/ectd/dtd-bundler.ts
++++ b/server/services/ectd/dtd-bundler.ts
+@@ -31,6 +31,7 @@
+ 
+ import { promises as fs } from 'fs';
+ import * as path from 'path';
++import type { DtdFileValidation, DtdValidationEvidence } from '../../../shared/regulatory/ectd-dtd-validation';
+ 
+ /** Every region the canonical packager can build a backbone for. Kept in sync
+  *  with regional-packager.ts backboneByRegion so `region as DtdRegion` at the
+@@ -57,6 +58,8 @@ export interface VendoredDtd {
+ 
+ /** The ICH backbone DTD every region's index.xml references. */
+ export const ICH_BACKBONE_DTD = 'ich-ectd-3-2.dtd';
++/** Grammar referenced by generated Study Tagging Files, when any are shipped. */
++export const STF_DTD = 'ich-stf-v2-2.dtd';
+ 
+ /** The ICH stylesheet index.xml references via <?xml-stylesheet?> (util/style/). */
+ export const ICH_BACKBONE_STYLESHEET = 'ectd-2-0.xsl';
+@@ -105,9 +108,10 @@ export function resolveDtdDir(env: NodeJS.ProcessEnv = process.env): string {
+  *  A region without a mapped regional DTD (e.g. an ICH-aligned region that reuses
+  *  the EMA backbone) requires only the ICH backbone DTD — never returns an
+  *  `undefined` entry (which previously crashed assessDtdReadiness). */
+-export function requiredDtdsForRegion(region: DtdRegion): string[] {
++export function requiredDtdsForRegion(region: DtdRegion, hasStudyTaggingFiles = false): string[] {
+   const regional = REGIONAL_DTD[region];
+-  return regional ? [ICH_BACKBONE_DTD, regional] : [ICH_BACKBONE_DTD];
++  const required = regional ? [ICH_BACKBONE_DTD, regional] : [ICH_BACKBONE_DTD];
++  return hasStudyTaggingFiles ? [...required, STF_DTD] : required;
+ }
+ 
+ /** The stylesheet filenames a region's package must contain under util/style/
+@@ -132,6 +136,8 @@ async function listVendored(dir: string, extension: string): Promise<VendoredDtd
+   for (const name of names.sort()) {
+     if (!name.toLowerCase().endsWith(extension)) continue;
+     try {
++      const stat = await fs.lstat(path.join(dir, name));
++      if (!stat.isFile() || stat.isSymbolicLink()) continue;
+       out.push({ fileName: name, bytes: await fs.readFile(path.join(dir, name)) });
+     } catch {
+       // Unreadable entry — skip; treated as absent by the readiness check.
+@@ -161,6 +167,8 @@ export interface DtdReadinessInput {
+   environment: 'staging' | 'production';
+   /** Wire from `ECTD_REQUIRE_DTD`; false ⇒ report-only (never blocks). */
+   requireDtd: boolean;
++  /** True only when this package actually generated one or more STFs. */
++  hasStudyTaggingFiles?: boolean;
+ }
+ 
+ export interface DtdReadinessResult {
+@@ -187,14 +195,16 @@ export interface DtdReadinessResult {
+  * ECTD_REQUIRE_DTD, governs both kinds of supportive file.
+  */
+ export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult {
+-  const required = requiredDtdsForRegion(input.region);
+-  const presentSet = new Set(input.present.map((p) => p.toLowerCase()));
+-  const missing = required.filter((r) => !presentSet.has(r.toLowerCase()));
++  const required = requiredDtdsForRegion(input.region, input.hasStudyTaggingFiles);
++  // Package paths are case-sensitive: an uppercase drop-point name cannot
++  // satisfy the lowercase SYSTEM path actually written in the XML.
++  const presentSet = new Set(input.present);
++  const missing = required.filter((r) => !presentSet.has(r));
+ 
+   const requiredStylesheets = requiredStylesheetsForRegion(input.region);
+   const presentStylesheets = input.presentStylesheets ?? [];
+-  const presentStyleSet = new Set(presentStylesheets.map((p) => p.toLowerCase()));
+-  const missingStylesheets = requiredStylesheets.filter((r) => !presentStyleSet.has(r.toLowerCase()));
++  const presentStyleSet = new Set(presentStylesheets);
++  const missingStylesheets = requiredStylesheets.filter((r) => !presentStyleSet.has(r));
+ 
+   const selfContained = missing.length === 0 && missingStylesheets.length === 0;
+   const blockers: string[] = [];
+@@ -222,6 +232,70 @@ export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult
+   };
+ }
+ 
++const stringList = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
++const uniqueList = (value: string[]) => new Set(value).size === value.length;
++const inventory = (value: unknown): value is string[] => stringList(value) && uniqueList(value) &&
++  value.every(name => name.length > 0 && name.trim() === name && !/[\\/]/.test(name));
++const object = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === 'object' && !Array.isArray(value));
++const packagePath = (value: string) => value.length > 0 && !value.includes('\\') && !path.posix.isAbsolute(value) &&
++  path.posix.normalize(value) === value && value.split('/').every(part => part !== '.' && part !== '..' && part !== '');
++
++function xmlProofPassed(value: unknown, mode: 'well-formed' | 'dtd'): boolean {
++  return object(value) && value.ran === true && value.valid === true && value.mode === mode && stringList(value.errors) && value.errors.length === 0;
++}
++
++/** Same proof interpretation for package aggregation and its existing gates. */
++export function dtdFileValidationPassed(value: unknown): value is DtdFileValidation {
++  if (!object(value) || typeof value.relPath !== 'string' || !packagePath(value.relPath) || !object(value.doctype)) return false;
++  return xmlProofPassed(value.wellFormed, 'well-formed') && value.doctype.valid === true &&
++    stringList(value.doctype.errors) && value.doctype.errors.length === 0 && xmlProofPassed(value.dtd, 'dtd');
++}
++
++export function dtdIntegrityPassed(value: unknown): value is DtdValidationEvidence['integrity'] {
++  return object(value) && value.ok === true && inventory(value.verified) && value.verified.length > 0 &&
++    Array.isArray(value.mismatched) && value.mismatched.length === 0 &&
++    stringList(value.missingFiles) && value.missingFiles.length === 0 && stringList(value.unlistedFiles) && value.unlistedFiles.length === 0;
++}
++
++function expectedXmlFiles(value: unknown): value is string[] {
++  return stringList(value) && value.length >= 2 && uniqueList(value) && value.every(packagePath) &&
++    value.includes('index.xml') && value.some(name => /^m1\/[^/]+\/[^/]+-regional\.xml$/.test(name));
++}
++
++/** A stored passed flag cannot stand in for nonempty, exact per-file coverage. */
++export function dtdValidationPassed(value: unknown): value is DtdValidationEvidence {
++  if (!object(value) || value.version !== 1 || value.passed !== true || !expectedXmlFiles(value.expectedFiles) ||
++      !Array.isArray(value.files) || value.files.length !== value.expectedFiles.length || !dtdIntegrityPassed(value.integrity)) return false;
++  const paths = value.files.map(file => object(file) ? file.relPath : null);
++  return paths.every((name): name is string => typeof name === 'string') && uniqueList(paths) &&
++    value.expectedFiles.every(name => paths.includes(name)) && value.files.every(dtdFileValidationPassed);
++}
++
++function inventoryComplete(required: unknown, present: unknown, mandatory: string[]): required is string[] {
++  return inventory(required) && required.length > 0 && inventory(present) &&
++    mandatory.every(name => required.includes(name)) && required.every(name => present.includes(name));
++}
++
++function packageInventoryComplete(value: Record<string, unknown>): boolean {
++  const { required, present, requiredStylesheets, presentStylesheets, missing, missingStylesheets } = value;
++  return value.selfContained === true && inventoryComplete(required, present, [ICH_BACKBONE_DTD]) &&
++    required.some(name => Object.values(REGIONAL_DTD).includes(name)) &&
++    inventoryComplete(requiredStylesheets, presentStylesheets, [ICH_BACKBONE_STYLESHEET]) &&
++    stringList(missing) && missing.length === 0 && stringList(missingStylesheets) && missingStylesheets.length === 0;
++}
++
++/** Complete current proof, including every declared required supportive file. */
++export function hasPassedPackageDtdValidation(value: unknown, expectedStudyFiles?: number): boolean {
++  if (!object(value) || !packageInventoryComplete(value) || !dtdValidationPassed(value.validation)) return false;
++  const required = value.required as string[];
++  const requiredStylesheets = value.requiredStylesheets as string[];
++  const proof = value.validation;
++  if (![...required, ...requiredStylesheets].every(name => proof.integrity.verified.includes(name))) return false;
++  const studyFiles = proof.expectedFiles.filter(name => /(?:^|\/)stf-[^/]+\.xml$/.test(name));
++  if (required.includes(STF_DTD) && studyFiles.length === 0) return false;
++  return expectedStudyFiles === undefined || (Number.isSafeInteger(expectedStudyFiles) && expectedStudyFiles >= 0 && studyFiles.length === expectedStudyFiles);
++}
++
+ /** Read the opt-in DTD enforcement flag from the environment. */
+ export function dtdRequiredFromEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+   return String(env.ECTD_REQUIRE_DTD ?? '').toLowerCase() === 'true';
+diff --git a/server/services/ectd/qualification/__tests__/qualification-stf.test.ts b/server/services/ectd/qualification/__tests__/qualification-stf.test.ts
+new file mode 100644
+index 000000000..76aa93c46
+--- /dev/null
++++ b/server/services/ectd/qualification/__tests__/qualification-stf.test.ts
+@@ -0,0 +1,25 @@
++import { describe, expect, it } from 'vitest';
++import { promises as fs } from 'fs';
++import * as os from 'os';
++import * as path from 'path';
++import { qualifyV3 } from '../qualify';
++
++describe('qualification reaches every generated STF', () => {
++  it('records original and lifecycle STF checks and explicit unvendored schema notes', async () => {
++    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'qualification-stf-'));
++    const previousDir = process.env.ECTD_DTD_DIR;
++    process.env.ECTD_DTD_DIR = path.join(work, 'empty-drop-point');
++    try {
++      const report = await qualifyV3('fda', work);
++      const names = report.validators.filter(row => row.name.includes('stf-study-001.xml')).map(row => row.name);
++      expect(names.some(name => name.startsWith('xmllint well-formed ('))).toBe(true);
++      expect(names.some(name => name.startsWith('0001/xmllint well-formed ('))).toBe(true);
++      expect(report.notes.join(' ')).toMatch(/stf-study-001\.xml.*ich-stf-v2-2\.dtd/);
++      expect(report.validators.filter(row => row.name.includes('stf-study-001.xml') && row.name.includes('well-formed')))
++        .toEqual(expect.arrayContaining([expect.objectContaining({ ran: true, passed: true })]));
++    } finally {
++      if (previousDir === undefined) delete process.env.ECTD_DTD_DIR; else process.env.ECTD_DTD_DIR = previousDir;
++      await fs.rm(work, { recursive: true, force: true });
++    }
++  }, 30000);
++});
+diff --git a/server/services/ectd/qualification/qualify.ts b/server/services/ectd/qualification/qualify.ts
+index 0ab959131..697f8f833 100644
+--- a/server/services/ectd/qualification/qualify.ts
++++ b/server/services/ectd/qualification/qualify.ts
+@@ -27,11 +27,10 @@ import JSZip from 'jszip';
+ import { packageEctdSubmission } from '../../submission-gateways/regional-packager';
+ // Region is declared in the gateway's types module; regional-packager only
+ // imports it (TS2459 if re-imported from there).
+-import type { Region } from '../../submission-gateways/types';
++import type { Region, SubmissionBundle } from '../../submission-gateways/types';
+ import { packageRpsSubmission, validateRpsMessage } from '../ectd4';
+ import {
+   checkWellFormed,
+-  validateAgainstDtd,
+   validateAgainstXsd,
+   isXmllintAvailable,
+ } from '../xml-validator';
+@@ -39,6 +38,9 @@ import { validateFdaCriteria, fdaCriteriaFallbackEnabled } from '../external-val
+ import { resolveExternalValidator, runExternalValidation } from '../external-validator';
+ import type { EctdRegion } from '../external-validator/types';
+ import { verifyChecksumManifest } from '../checksum-manifest';
++import { validateBackboneFile, tallyValidationReport as tally, type BackboneValidation, type ValidatorRunReport } from '../backbone-validation';
++export { validateBackboneFile } from '../backbone-validation';
++export type { BackboneValidation, ValidatorRunReport } from '../backbone-validation';
+ import { resolveDtdDir, listVendoredDtds } from '../dtd-bundler';
+ import { resolveSchemaDir, RPS_MESSAGE_XSD } from '../schema-bundler';
+ import {
+@@ -66,16 +68,6 @@ export const SPEC_VERSIONS = {
+ 
+ export type EctdVersion = keyof typeof SPEC_VERSIONS;
+ 
+-export interface ValidatorRunReport {
+-  name: string;
+-  ran: boolean;
+-  passed: boolean;
+-  errorCount: number;
+-  warningCount: number;
+-  /** First few messages, for the report (full findings are large). */
+-  sample: string[];
+-}
+-
+ export interface ChecksumVerification {
+   manifest: string;
+   filesChecked: number;
+@@ -166,150 +158,6 @@ async function verifyZipChecksums(zipPath: string): Promise<ChecksumVerification
+   return result;
+ }
+ 
+-function tally(name: string, ran: boolean, findings: Array<{ severity: string; message: string }>): ValidatorRunReport {
+-  const errors = findings.filter((f) => f.severity === 'error');
+-  const warnings = findings.filter((f) => f.severity === 'warning');
+-  return {
+-    name,
+-    ran,
+-    passed: ran && errors.length === 0,
+-    errorCount: errors.length,
+-    warningCount: warnings.length,
+-    sample: findings.slice(0, 5).map((f) => `[${f.severity}] ${f.message}`),
+-  };
+-}
+-
+-/**
+- * What a backbone's own DOCTYPE declares, as a discriminated result.
+- *
+- * The system id is relative to the backbone (index.xml → `util/dtd/…`;
+- * m1/us/us-regional.xml → `../../util/dtd/…`), so it is resolved from the
+- * backbone's own directory, exactly as xmllint resolves it.
+- *
+- * EVERY non-`declared` outcome is a DEFECT, not an absence: an eCTD backbone
+- * must reference the grammar it is written to, and that reference must resolve
+- * to a file the package itself ships. Collapsing them to `null` (as the first
+- * cut of the per-backbone activation did) makes a packager regression — a
+- * dropped DOCTYPE line — indistinguishable from a clean run.
+- */
+-type BackboneDoctype =
+-  | { kind: 'declared'; absPath: string; fileName: string; systemId: string }
+-  /** The file was read but carries no `<!DOCTYPE …>` at all. */
+-  | { kind: 'no-doctype' }
+-  /** A DOCTYPE is present but declares no parseable `SYSTEM "…"` identifier. */
+-  | { kind: 'no-system-id' }
+-  /** The system id is an absolute URI (http:, file:, …): the grammar is fetched
+-   *  from outside the package, so the package is not self-contained. */
+-  | { kind: 'external-uri'; systemId: string }
+-  /** The system id resolves outside the package directory. */
+-  | { kind: 'outside-package'; systemId: string }
+-  /** The backbone itself could not be read. */
+-  | { kind: 'unreadable'; reason: string };
+-
+-async function referencedDtd(packageDir: string, relPath: string): Promise<BackboneDoctype> {
+-  let xml: string;
+-  try {
+-    xml = await fs.readFile(path.join(packageDir, relPath), 'utf8');
+-  } catch (err) {
+-    return { kind: 'unreadable', reason: err instanceof Error ? err.message : String(err) };
+-  }
+-  if (!/<!DOCTYPE\s/i.test(xml)) return { kind: 'no-doctype' };
+-  // Stop the scan at `[` so an internal subset cannot be mistaken for a system
+-  // id, and accept either quote style (the packager emits double quotes; a
+-  // single-quoted DOCTYPE is still a valid declaration and must not read as
+-  // "no DTD declared").
+-  const m = /<!DOCTYPE[^>[]*\sSYSTEM\s+(?:"([^"]+)"|'([^']+)')/i.exec(xml);
+-  const systemId = m?.[1] ?? m?.[2];
+-  if (!systemId) return { kind: 'no-system-id' };
+-  if (/^[a-z][a-z0-9+.-]*:/i.test(systemId)) return { kind: 'external-uri', systemId };
+-  const absPath = path.resolve(path.dirname(path.join(packageDir, relPath)), systemId);
+-  // Containment: a system id that climbs out of the package would validate
+-  // against a DTD the shipped ZIP does not carry — certifying a package that is
+-  // not self-contained, on a build machine that happens to have the file.
+-  const rel = path.relative(path.resolve(packageDir), absPath);
+-  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
+-    return { kind: 'outside-package', systemId };
+-  }
+-  return { kind: 'declared', absPath, fileName: path.basename(systemId), systemId };
+-}
+-
+-/** The error message for each non-`declared` DOCTYPE outcome. One sentence of
+- *  fact, then what it means for the package. */
+-function doctypeDefect(relPath: string, d: Exclude<BackboneDoctype, { kind: 'declared' }>): string {
+-  switch (d.kind) {
+-    case 'no-doctype':
+-      return `${relPath} declares no DOCTYPE. An eCTD backbone must reference the DTD it is written to (<!DOCTYPE … SYSTEM "util/dtd/…">); DTD validity cannot be attempted without it.`;
+-    case 'no-system-id':
+-      return `${relPath} has a DOCTYPE with no parseable SYSTEM identifier, so no DTD can be resolved for it.`;
+-    case 'external-uri':
+-      return `${relPath} declares an EXTERNAL DTD (SYSTEM "${d.systemId}"): the package does not ship the grammar it references and is not self-contained.`;
+-    case 'outside-package':
+-      return `${relPath} declares SYSTEM "${d.systemId}", which resolves outside the package directory — the shipped package does not contain that DTD.`;
+-    case 'unreadable':
+-      return `${relPath} could not be read (${d.reason}), so its DOCTYPE could not be examined.`;
+-  }
+-}
+-
+-export interface BackboneValidation {
+-  reports: ValidatorRunReport[];
+-  /** Set when DTD validity could NOT be attempted because the DTD this
+-   *  backbone's DOCTYPE names is not in the package. Reported, never silent. */
+-  dtdSkipped: { relPath: string; dtd: string } | null;
+-}
+-
+-/**
+- * Run xmllint well-formedness on a backbone, plus DTD validity when — and only
+- * when — the DTD that backbone's OWN DOCTYPE names is present in the package.
+- *
+- * Activation used to be "does util/dtd/ hold any *.dtd at all?". That is
+- * all-or-nothing across regions, and vendoring is not: the acquisition runbook
+- * works agency by agency, so the ICH + FDA pair lands before EMA/PMDA/HC. Under
+- * the old test a partial drop switched DTD validation ON for every region, and
+- * xmllint --valid then reported "Validation failed: no DTD found !" against
+- * each backbone whose DTD was legitimately not vendored yet — rendering an
+- * un-acquired artifact as a validation FAILURE and failing the whole
+- * qualification. Deciding per backbone lets each region light up exactly when
+- * its own DTD arrives, and says so when it has not.
+- *
+- * Three outcomes, three different rows — never silence:
+- *   • DOCTYPE resolves to a DTD IN the package  → `xmllint DTD (…)` runs;
+- *   • DOCTYPE resolves to a DTD NOT vendored yet → `dtdSkipped`, stated in the
+- *     run notes (an un-acquired artifact, not a failure);
+- *   • no usable DOCTYPE at all (absent, unparseable, external, or escaping the
+- *     package) → a FAILING `backbone DOCTYPE (…)` row. That case is a packager
+- *     regression and must fail the qualification, exactly as it did under the
+- *     old all-or-nothing activation.
+- *
+- * Exported for the negative tests: the DOCTYPE is written by the packager, so a
+- * backbone without one cannot be produced through `qualifyV3`'s inputs.
+- */
+-export async function validateBackboneFile(packageDir: string, relPath: string): Promise<BackboneValidation> {
+-  const filePath = path.join(packageDir, relPath);
+-  const reports: ValidatorRunReport[] = [];
+-  const wf = await checkWellFormed(filePath, true);
+-  reports.push(tally(`xmllint well-formed (${relPath})`, wf.ran, wf.errors.map((m) => ({ severity: wf.valid ? 'info' : 'error', message: m }))));
+-
+-  // The DOCTYPE row is ALWAYS emitted, pass or fail. A backbone that declares no
+-  // usable DTD is a defect and must be reported as one — never an early return
+-  // that leaves the report byte-identical to a clean run (which is what a
+-  // dropped DOCTYPE line used to look like once activation became per-backbone).
+-  const referenced = await referencedDtd(packageDir, relPath);
+-  if (referenced.kind !== 'declared') {
+-    reports.push(tally(`backbone DOCTYPE (${relPath})`, true, [
+-      { severity: 'error', message: doctypeDefect(relPath, referenced) },
+-    ]));
+-    return { reports, dtdSkipped: null };
+-  }
+-  reports.push(tally(`backbone DOCTYPE (${relPath})`, true, []));
+-
+-  const dtdPresent = await fs.access(referenced.absPath).then(() => true).catch(() => false);
+-  if (!dtdPresent) return { reports, dtdSkipped: { relPath, dtd: referenced.fileName } };
+-
+-  const dtd = await validateAgainstDtd(filePath);
+-  reports.push(tally(`xmllint DTD (${relPath})`, dtd.ran, dtd.valid ? [] : dtd.errors.map((m) => ({ severity: 'error', message: m }))));
+-  return { reports, dtdSkipped: null };
+-}
+-
+ /**
+  * Every modified-file in an amendment must name a leaf the prior package
+  * carries: `../` once per folder the carrying backbone sits below the sequence
+@@ -407,11 +255,20 @@ async function dtdSkipNote(skips: Array<{ relPath: string; dtd: string }>): Prom
+   return (
+     lead +
+     `DTD *validity* is skipped for ${skips.map((sk) => `${sk.relPath} (needs ${sk.dtd})`).join(', ')} — ` +
+-    'that DTD is not in the package. Those backbones remain well-formed-validated. ' +
++    'that DTD is not in the package. See the separate per-file well-formedness results. ' +
+     'Drop the licensed DTD(s) into assets/ectd-dtd/ (or $ECTD_DTD_DIR) to enable it.'
+   );
+ }
+ 
++async function validateStudyTaggingFiles(packageDir: string, manifest: SubmissionBundle['leafManifest']) {
++  return Promise.all((manifest ?? []).filter(leaf => /(?:^|\/)stf-[^/]+\.xml$/.test(leaf.href))
++    .map(leaf => validateBackboneFile(packageDir, leaf.href)));
++}
++
++function sequenceDtdSkips(results: BackboneValidation[], sequence: string) {
++  return results.flatMap(result => result.dtdSkipped ? [{ ...result.dtdSkipped, relPath: `${sequence}/${result.dtdSkipped.relPath}` }] : []);
++}
++
+ /** Qualify one region for eCTD v3.2.2. */
+ export async function qualifyV3(region: Region, workDir: string): Promise<QualificationReport> {
+   const notes: string[] = [];
+@@ -434,10 +291,12 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
+   const regionalRel = `m1/${sub}/${sub}-regional.xml`;
+   const regionalBackbone = await validateBackboneFile(pkgDir, regionalRel);
+   validators.push(...regionalBackbone.reports);
++  const stfBackbones = await validateStudyTaggingFiles(pkgDir, bundle.leafManifest);
++  validators.push(...stfBackbones.flatMap(result => result.reports));
+   /** Backbones whose DTD validity could NOT be attempted because the DTD their
+    *  own DOCTYPE names is not in the package. Stated in the notes below — a
+    *  skipped check must never read as a passed one. */
+-  const dtdSkips = [indexBackbone.dtdSkipped, regionalBackbone.dtdSkipped]
++  const dtdSkips = [indexBackbone.dtdSkipped, regionalBackbone.dtdSkipped, ...stfBackbones.map(result => result.dtdSkipped)]
+     .filter((sk): sk is NonNullable<typeof sk> => sk !== null)
+     // Prefixed with the sequence, because the lifecycle amendment below
+     // validates a backbone of the SAME relPath in its OWN package directory and
+@@ -503,8 +362,10 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
+   const lcBundle = await packageEctdSubmission(v3GoldenInput({ region, sequence: '0001', applicationId: app, outputDir: outDir, paths, lifecycle: true, priorSequence: '0000' }));
+   const lcDir = path.join(outDir, `${app}-0001-${region}`);
+   const lcRegional = await validateBackboneFile(lcDir, regionalRel);
++  const lcStfs = await validateStudyTaggingFiles(lcDir, lcBundle.leafManifest);
++  validators.push(...lcStfs.flatMap(result => result.reports.map(report => ({ ...report, name: `0001/${report.name}` }))));
+   const lcChecksum = await verifyZipChecksums(lcBundle.path);
+-  const lcPassed = lcRegional.reports.every((v) => v.passed) && lcChecksum.ok;
++  const lcPassed = [lcRegional, ...lcStfs].every(result => result.reports.every(v => v.passed)) && lcChecksum.ok;
+   /* THE AMENDMENT'S SKIP IS ITS OWN FACT. `lcRegional.dtdSkipped` was computed
+      here and discarded, and a skip emits NO row — so `lcPassed`, which is
+      `reports.every(v => v.passed)`, stayed true and the report carried
+@@ -516,9 +377,7 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
+      DTDs and this reads `lcDir`, not `pkgDir`, so a lifecycle packager that
+      stops copying them into 0001 produces exactly this divergence — and
+      produced a clean report. */
+-  if (lcRegional.dtdSkipped) {
+-    dtdSkips.push({ ...lcRegional.dtdSkipped, relPath: `0001/${lcRegional.dtdSkipped.relPath}` });
+-  }
++  dtdSkips.push(...sequenceDtdSkips([lcRegional, ...lcStfs], '0001'));
+   if (dtdSkips.length) notes.push(await dtdSkipNote(dtdSkips));
+ 
+   // Read the operation attributes ACTUALLY emitted into the amendment's
+diff --git a/server/services/ectd/regional-backbone-readiness.ts b/server/services/ectd/regional-backbone-readiness.ts
+index 762e8a6f2..5381b5a9d 100644
+--- a/server/services/ectd/regional-backbone-readiness.ts
++++ b/server/services/ectd/regional-backbone-readiness.ts
+@@ -33,6 +33,8 @@
+  */
+ 
+ import type { Region } from '../submission-gateways/types';
++import type { DtdValidationEvidence } from '../../../shared/regulatory/ectd-dtd-validation';
++import { dtdFileValidationPassed, dtdIntegrityPassed, requiredDtdsForRegion } from './dtd-bundler';
+ 
+ /**
+  * Regions whose builder writes the agency's own Module 1 structure AND reports
+@@ -118,6 +120,7 @@ export function classifyRegionalBackbone(
+   region: Region,
+   file: string,
+   buildGaps?: readonly string[],
++  validation?: DtdValidationEvidence,
+ ): RegionalBackboneStatus {
+   if (STRUCTURE_REPORTING_REGIONS.has(region)) {
+     if (!buildGaps) {
+@@ -126,7 +129,9 @@ export function classifyRegionalBackbone(
+         conformanceGap: 'its builder reported nothing about the Module 1 structure it wrote, so conformance cannot be claimed for the region alone',
+       };
+     }
+-    if (!buildGaps.length) return { region, file, regionConformant: true };
++    if (!buildGaps.length) return regionalDtdVerified(region, file, validation)
++      ? { region, file, regionConformant: true }
++      : { region, file, regionConformant: false, conformanceGap: 'current regional DTD execution and supportive-file integrity are not verified' };
+     return { region, file, regionConformant: false, conformanceGap: summariseBuildGaps(buildGaps) };
+   }
+   const gap = FLAT_MODULE1_GAP[region];
+@@ -134,6 +139,14 @@ export function classifyRegionalBackbone(
+   return { region, file, regionConformant: false, placeholderOf: PLACEHOLDER_OF[region] ?? 'ema' };
+ }
+ 
++function regionalDtdVerified(region: Region, file: string, validation: DtdValidationEvidence | undefined): boolean {
++  if (validation?.version !== 1 || !Array.isArray(validation.expectedFiles) || !validation.expectedFiles.includes(file) ||
++      !Array.isArray(validation.files) || !dtdIntegrityPassed(validation.integrity)) return false;
++  const regionalRows = validation.files.filter(row => row?.relPath === file);
++  return regionalRows.length === 1 && dtdFileValidationPassed(regionalRows[0]) &&
++    requiredDtdsForRegion(region).every(name => validation.integrity.verified.includes(name));
++}
++
+ /** Read the opt-in enforcement flag (mirrors dtdRequiredFromEnv / pdfaRequiredFromEnv). */
+ export function regionalBackboneRequiredFromEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+   return String(env.ECTD_REQUIRE_REGIONAL_BACKBONE ?? '').toLowerCase() === 'true';
+@@ -144,6 +157,7 @@ export interface RegionalBackboneGateInput {
+   environment: 'staging' | 'production';
+   /** Wire from regionalBackboneRequiredFromEnv(); false ⇒ report-only. */
+   required: boolean;
++  validation?: DtdValidationEvidence;
+ }
+ 
+ export interface RegionalBackboneGateResult {
+@@ -177,18 +191,20 @@ export function evaluateRegionalBackboneGate(input: RegionalBackboneGateInput):
+       warnings.push(
+         'ECTD_REQUIRE_REGIONAL_BACKBONE is set but the bundle carries no regional-backbone status — cannot prove Module 1 conformance at transmit time.',
+       );
++      if (input.environment === 'production') blockers.push('Required regional backbone conformance has no current validation evidence. Re-assemble and validate the package.');
+     }
+     return { blockers, warnings };
+   }
+   const R = status.region.toUpperCase();
++  const conformant = status.regionConformant === true && regionalDtdVerified(status.region, status.file, input.validation);
+   const check = {
+     name: 'regional-backbone-conformant',
+-    passed: status.regionConformant,
+-    detail: status.regionConformant
++    passed: conformant,
++    detail: conformant
+       ? `${status.region} Module 1 backbone is region-conformant (${status.file})`
+       : `${status.region} Module 1 backbone is not region-conformant: ${nonConformanceReason(status)} (${status.file})`,
+   };
+-  if (!status.regionConformant) {
++  if (!conformant) {
+     const msg =
+       `${status.file} is NOT an ${R}-conformant Module 1 backbone — ${nonConformanceReason(status)}. ` +
+       `A regional validator will not accept it as ${R} Module 1.`;
+diff --git a/server/services/ectd/stf-generator.ts b/server/services/ectd/stf-generator.ts
+index acc38f067..1a5cfd427 100644
+--- a/server/services/ectd/stf-generator.ts
++++ b/server/services/ectd/stf-generator.ts
+@@ -49,6 +49,7 @@
+  */
+ 
+ import { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
++import { STF_DTD } from './dtd-bundler';
+ export { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
+ import { FDA_STUDY_DATA_TRC, recall } from '../ind/ctd/regulatory-basis';
+ import type { RegulatoryBasis } from '../ind/ctd/types';
+@@ -202,7 +203,7 @@ function checkStfLeaf(leaf: StfLeaf, warnings: string[]): void {
+ }
+ 
+ /** The STF document for one study: study-identifier, then a doc-content per tagged leaf. */
+-function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]): string {
++function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[], dtdSystemPath = STF_DTD): string {
+   const docContents = tagged.map(
+     (l) =>
+       `    <doc-content xlink:href="${escapeXml(`${l.indexRelPath}#${l.indexLeafId}`)}">\n` +
+@@ -213,7 +214,7 @@ function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]):
+ 
+   return (
+     `<?xml version="1.0" encoding="UTF-8"?>\n` +
+-    `<!DOCTYPE ectd:study SYSTEM "ich-stf-v2-2.dtd">\n` +
++    `<!DOCTYPE ectd:study SYSTEM "${escapeXml(dtdSystemPath)}">\n` +
+     `<ectd:study xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="${STF_DTD_VERSION}">\n` +
+     `  <study-identifier>\n` +
+     `    <title>${escapeXml(title)}</title>\n` +
+@@ -236,7 +237,7 @@ function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]):
+  *   1735 list; when a study id cannot form an eCTD file name; or when two study
+  *   ids fold to the same file name.
+  */
+-export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = []): StfResult {
++export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = [], options: { dtdSystemPath?: (studyId: string) => string } = {}): StfResult {
+   const metaById = new Map(studyMeta.map((m) => [m.studyId, m]));
+   const byStudy = new Map<string, StfLeaf[]>();
+   const warnings: string[] = [];
+@@ -280,7 +281,7 @@ export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] =
+     // A study whose leaves are all deleted in this sequence has nothing to tag.
+     if (tagged.length === 0) continue;
+ 
+-    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged);
++    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged, options.dtdSystemPath?.(studyId));
+     files.push({ studyId, fileName, xml, leafCount: tagged.length });
+   }
+ 
+diff --git a/server/services/ectd/xml-validator.ts b/server/services/ectd/xml-validator.ts
+index 4b4a31685..c4958c4ac 100644
+--- a/server/services/ectd/xml-validator.ts
++++ b/server/services/ectd/xml-validator.ts
+@@ -50,13 +50,15 @@ export function __resetXmllintProbe(): void {
+   xmllintAvailable = null;
+ }
+ 
+-function run(args: string[], timeoutMs = 30000): Promise<{ code: number; stderr: string }> {
++function run(args: string[], timeoutMs = 30000): Promise<{ code: number; stderr: string; ran: boolean }> {
+   return new Promise((resolve) => {
+-    execFile('xmllint', args, { timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024 }, (err, _stdout, stderr) => {
++    execFile('xmllint', ['--nocatalogs', ...args], { timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024,
++      env: { ...process.env, XML_CATALOG_FILES: '', SGML_CATALOG_FILES: '' } }, (err, _stdout, stderr) => {
+       const code = err && typeof (err as NodeJS.ErrnoException).code === 'number'
+         ? ((err as unknown as { code: number }).code)
+         : err ? 1 : 0;
+-      resolve({ code, stderr: stderr?.toString() ?? '' });
++      const ran = !err || !['ENOENT', 'EACCES', 'ENOEXEC'].includes(String((err as NodeJS.ErrnoException).code));
++      resolve({ code, ran, stderr: stderr?.toString() || (err ? err.message || `xmllint failed with status ${code}` : '') });
+     });
+   });
+ }
+@@ -85,8 +87,8 @@ export async function checkWellFormed(xmlOrPath: string, isPath = false): Promis
+     return { ran: false, valid: false, errors: ['xmllint not available'], mode: 'well-formed' };
+   }
+   const exec = async (file: string) => {
+-    const { code, stderr } = await run(['--noout', '--nonet', file]);
+-    return { ran: true, valid: code === 0, errors: parseErrors(stderr), mode: 'well-formed' as const };
++    const { code, stderr, ran } = await run(['--noout', '--nonet', file]);
++    return { ran, valid: ran && code === 0, errors: parseErrors(stderr), mode: 'well-formed' as const };
+   };
+   return isPath ? exec(xmlOrPath) : withTempFile(xmlOrPath, exec);
+ }
+@@ -104,8 +106,8 @@ export async function validateAgainstDtd(xmlPath: string, dtdPath?: string): Pro
+   const args = dtdPath
+     ? ['--noout', '--nonet', '--dtdvalid', dtdPath, xmlPath]
+     : ['--noout', '--nonet', '--valid', xmlPath];
+-  const { code, stderr } = await run(args);
+-  return { ran: true, valid: code === 0, errors: parseErrors(stderr), mode: 'dtd' };
++  const { code, stderr, ran } = await run(args);
++  return { ran, valid: ran && code === 0, errors: parseErrors(stderr), mode: 'dtd' };
+ }
+ 
+ /** Validate an XML file (or string) against an XSD schema. */
+@@ -114,8 +116,8 @@ export async function validateAgainstXsd(xmlOrPath: string, xsdPath: string, isP
+     return { ran: false, valid: false, errors: ['xmllint not available'], mode: 'xsd' };
+   }
+   const exec = async (file: string) => {
+-    const { code, stderr } = await run(['--noout', '--nonet', '--schema', xsdPath, file]);
+-    return { ran: true, valid: code === 0, errors: parseErrors(stderr), mode: 'xsd' as const };
++    const { code, stderr, ran } = await run(['--noout', '--nonet', '--schema', xsdPath, file]);
++    return { ran, valid: ran && code === 0, errors: parseErrors(stderr), mode: 'xsd' as const };
+   };
+   return isPath ? exec(xmlOrPath) : withTempFile(xmlOrPath, exec);
+ }
+diff --git a/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts b/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+index 32ca01603..ea7d74748 100644
+--- a/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
++++ b/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+@@ -189,9 +189,9 @@ describe('evaluatePreTransmit', () => {
+     expect(prod.blockers.join(' ')).toMatch(/not itemised/);
+   });
+ 
+-  it('warns (does not block) when a required flag is set but the bundle has no evidence', () => {
++  it('refuses absent DTD proof when required while preserving PDF/A warning semantics', () => {
+     const r = evaluatePreTransmit({ region: 'fda', bundle: bundle(), environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_PDFA: 'true', ECTD_REQUIRE_DTD: 'true' } });
+-    expect(r.cleared).toBe(true);
++    expect(r.cleared).toBe(false);
+     // PDF/A, DTD — and the bundle records no region it was built for.
+     expect(r.warnings.length).toBe(3);
+     expect(r.warnings.some((w) => /no record of the region it was built for/.test(w))).toBe(true);
+@@ -423,7 +423,7 @@ describe('guarded transmit', () => {
+  * packager and this fails.
+  */
+ describe('packager → pre-transmit: the stylesheet gap survives the bundle', () => {
+-  const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'];
++  const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
+   const STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl'];
+ 
+   async function buildFdaBundle(dropFiles: string[]): Promise<SubmissionBundle> {
+@@ -483,7 +483,7 @@ describe('packager → pre-transmit: the stylesheet gap survives the bundle', ()
+     expect(blocker).not.toMatch(/not itemised/);
+   }, 30000);
+ 
+-  it('POSITIVE CONTROL: a complete drop-point clears the same gate', async () => {
++  it('a complete placeholder drop-point proves presence but cannot clear actual DTD validation', async () => {
+     const built = await buildFdaBundle([...DTDS, ...STYLESHEETS]);
+     expect(built.dtdStatus?.selfContained).toBe(true);
+     expect(built.dtdStatus?.missingStylesheets).toEqual([]);
+@@ -495,6 +495,8 @@ describe('packager → pre-transmit: the stylesheet gap survives the bundle', ()
+       env: { ECTD_REQUIRE_DTD: 'true' },
+     });
+     expect(r.checks.find((c) => c.name === 'dtd-self-contained')?.passed).toBe(true);
++    expect(r.checks.find((c) => c.name === 'package-dtd-validation')?.passed).toBe(false);
++    expect(r.cleared).toBe(false);
+     expect(r.blockers.join(' ')).not.toMatch(/self-contained/);
+   }, 30000);
+ });
+diff --git a/server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts b/server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts
+new file mode 100644
+index 000000000..6ed5be9e8
+--- /dev/null
++++ b/server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts
+@@ -0,0 +1,160 @@
++/** Exact normal-package bytes are validated with explicitly synthetic grammars.
++ * These schemas prove engine execution; they are not agency schemas/conformance. */
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { promises as fs } from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import { createHash } from 'node:crypto';
++import JSZip from 'jszip';
++import { packageEctdSubmission, type PackagerInput } from '../regional-packager';
++import { writeGoldenLeaves, v3GoldenInput } from '../../ectd/qualification/golden-fixtures';
++import type { DtdValidationEvidence } from '@shared/regulatory/ectd-dtd-validation';
++
++let work: string;
++let input: PackagerInput;
++let drop: string;
++const hash = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
++
++beforeEach(async () => {
++  work = await fs.mkdtemp(path.join(os.tmpdir(), 'synthetic-package-dtd-'));
++  drop = path.join(work, 'drop');
++  await fs.mkdir(drop);
++  vi.stubEnv('ECTD_DTD_DIR', drop);
++  vi.stubEnv('ECTD_REQUIRE_DTD', 'false');
++  const paths = await writeGoldenLeaves(path.join(work, 'leaves'));
++  input = { ...v3GoldenInput({ region: 'fda', sequence: '0000', applicationId: '123456', outputDir: path.join(work, 'out'), paths }), emitUnzipped: false, environment: 'staging' };
++});
++afterEach(async () => { vi.unstubAllEnvs(); vi.restoreAllMocks(); if (work) await fs.rm(work, { recursive: true, force: true }); });
++
++/** A permissive test grammar for exactly the generated element/attribute names. */
++function syntheticDtd(xml: string): string {
++  const elements = new Map<string, Set<string>>();
++  for (const match of xml.matchAll(/<([A-Za-z_][\w:.-]*)(\s[^<>]*?)?\/?\s*>/g)) {
++    const attributes = elements.get(match[1]) ?? new Set<string>();
++    for (const attribute of (match[2] ?? '').matchAll(/([\w:.-]+)\s*=\s*(["']).*?\2/g)) attributes.add(attribute[1]);
++    elements.set(match[1], attributes);
++  }
++  return '<!-- SYNTHETIC QUALIFICATION GRAMMAR; NOT AN AGENCY DTD -->\n' + [...elements].map(([name, attributes]) =>
++    `<!ELEMENT ${name} ANY>\n${attributes.size ? `<!ATTLIST ${name} ${[...attributes].map(a => `${a} CDATA #IMPLIED`).join(' ')}>\n` : ''}`,
++  ).join('');
++}
++
++async function writeManifest() {
++  const names = (await fs.readdir(drop)).filter(name => /\.(dtd|xsl)$/.test(name)).sort();
++  const lines = await Promise.all(names.map(async name => `${hash(await fs.readFile(path.join(drop, name)))}  ${name}`));
++  await fs.writeFile(path.join(drop, 'checksums.txt'), lines.join('\n') + '\n');
++}
++
++async function provisionSyntheticSupport() {
++  const seed = await packageEctdSubmission(input);
++  const zip = await JSZip.loadAsync(await fs.readFile(seed.path));
++  for (const name of Object.keys(zip.files).filter(name => name === 'index.xml' || name.endsWith('-regional.xml') || /\/stf-[^/]+\.xml$/.test(name))) {
++    const xml = await zip.file(name)!.async('string');
++    const system = /<!DOCTYPE[^>]*SYSTEM\s+"([^"]+)"/.exec(xml)?.[1];
++    expect(system).toBeTruthy();
++    await fs.writeFile(path.join(drop, path.posix.basename(system!)), syntheticDtd(xml));
++  }
++  for (const file of ['ectd-2-0.xsl', 'us-regional.xsl']) await fs.writeFile(path.join(drop, file), '<!-- SYNTHETIC QUALIFICATION STYLESHEET -->');
++  await writeManifest();
++}
++
++async function capture(label: string, bundle: Awaited<ReturnType<typeof packageEctdSubmission>>) {
++  const evidenceDir = process.env.DTD_QUALIFICATION_OUTPUT_DIR;
++  if (evidenceDir) {
++    await fs.mkdir(evidenceDir, { recursive: true });
++    await fs.writeFile(path.join(evidenceDir, `${label}.json`), JSON.stringify({ syntheticSchemas: true, agencyAcceptance: false,
++      packageSha256: bundle.sha256, dtdStatus: bundle.dtdStatus, regionalBackbone: bundle.regionalBackbone }, null, 2) + '\n');
++    await fs.copyFile(bundle.path, path.join(evidenceDir, `${label}.zip`));
++  }
++}
++
++describe('normal package DTD execution evidence', () => {
++  it('records every generated backbone/STF as unverified when the drop-point is empty', async () => {
++    const bundle = await packageEctdSubmission(input);
++    const validation = bundle.dtdStatus?.validation as DtdValidationEvidence;
++    expect(validation).toBeDefined();
++    const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
++    const expected = Object.keys(zip.files).filter(name => name === 'index.xml' || name.endsWith('-regional.xml') || /\/stf-[^/]+\.xml$/.test(name)).sort();
++    expect(validation.expectedFiles.sort()).toEqual(expected);
++    expect(validation.files.map(file => file.relPath).sort()).toEqual(expected);
++    expect(validation.passed).toBe(false);
++    expect(bundle.dtdStatus?.missing).toContain('ich-stf-v2-2.dtd');
++    expect(validation.files.every(file => file.dtd.ran === false && file.dtd.valid === false)).toBe(true);
++    await capture('missing-assets', bundle);
++  }, 30_000);
++
++  it('validates all captured ZIP XML and checksum-pins its exact supportive bytes', async () => {
++    await provisionSyntheticSupport();
++    const mkdir = vi.spyOn(fs, 'mkdtemp');
++    const bundle = await packageEctdSubmission(input);
++    const validation = bundle.dtdStatus?.validation as DtdValidationEvidence;
++    expect(validation).toMatchObject({ version: 1, passed: true, integrity: { ok: true } });
++    expect(validation.files).toHaveLength(3);
++    for (const file of validation.files) {
++      expect(file.wellFormed).toMatchObject({ ran: true, valid: true });
++      expect(file.doctype).toMatchObject({ valid: true });
++      expect(file.dtd).toMatchObject({ ran: true, valid: true });
++      expect(JSON.stringify(file)).not.toContain(os.tmpdir());
++    }
++    const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
++    for (const name of validation.integrity.verified) {
++      const prefix = name.endsWith('.xsl') ? 'util/style' : 'util/dtd';
++      const bytes = await zip.file(`${prefix}/${name}`)!.async('nodebuffer');
++      expect(hash(bytes)).toBe(hash(await fs.readFile(path.join(drop, name))));
++    }
++    const stfPath = validation.expectedFiles.find(name => /\/stf-/.test(name))!;
++    const stf = await zip.file(stfPath)!.async('string');
++    const system = /<!DOCTYPE[^>]*SYSTEM\s+"([^"]+)"/.exec(stf)![1];
++    expect(path.posix.normalize(path.posix.join(path.posix.dirname(stfPath), system))).toBe('util/dtd/ich-stf-v2-2.dtd');
++    const privateDirs = await Promise.all(mkdir.mock.results.map(result => result.value));
++    expect(privateDirs.length).toBeGreaterThan(0);
++    for (const dir of privateDirs) await expect(fs.access(dir)).rejects.toMatchObject({ code: 'ENOENT' });
++    await capture('synthetic-valid', bundle);
++  }, 30_000);
++
++  it('records an invalid STF even when both backbones validate and all bytes are checksum-pinned', async () => {
++    await provisionSyntheticSupport();
++    await fs.writeFile(path.join(drop, 'ich-stf-v2-2.dtd'), '<!-- SYNTHETIC INVALID-STF CASE -->\n<!ELEMENT wrong-study EMPTY>');
++    await writeManifest();
++    const bundle = await packageEctdSubmission(input);
++    expect(bundle.dtdStatus?.validation).toMatchObject({ passed: false, integrity: { ok: true } });
++    const rows = bundle.dtdStatus!.validation!.files;
++    expect(JSON.stringify(rows)).not.toContain(os.tmpdir());
++    expect(rows.find(row => /\/stf-/.test(row.relPath))?.dtd).toMatchObject({ ran: true, valid: false });
++    expect(rows.filter(row => !/\/stf-/.test(row.relPath)).every(row => row.dtd.ran && row.dtd.valid)).toBe(true);
++    await capture('invalid-stf', bundle);
++  }, 30_000);
++
++  it('refuses to certify changed supportive bytes despite otherwise valid XML', async () => {
++    await provisionSyntheticSupport();
++    await fs.appendFile(path.join(drop, 'ich-ectd-3-2.dtd'), '\n<!-- CHANGED AFTER THE SYNTHETIC MANIFEST -->\n');
++    const bundle = await packageEctdSubmission(input);
++    expect(bundle.dtdStatus?.validation).toMatchObject({ passed: false, integrity: { ok: false,
++      mismatched: [expect.objectContaining({ fileName: 'ich-ectd-3-2.dtd' })] } });
++    await capture('tampered-support', bundle);
++  }, 30_000);
++
++  it('requires actual passing proof in production and cleans its private tree before refusing', async () => {
++    await provisionSyntheticSupport();
++    await fs.writeFile(path.join(drop, 'ich-stf-v2-2.dtd'), '<!ELEMENT wrong-study EMPTY>');
++    await writeManifest();
++    vi.stubEnv('ECTD_REQUIRE_DTD', 'true');
++    const outputDir = path.join(work, 'refused-output');
++    const mkdir = vi.spyOn(fs, 'mkdtemp');
++    const failure = await packageEctdSubmission({ ...input, environment: 'production', outputDir }).catch(error => error);
++    expect(failure).toBeInstanceOf(Error);
++    expect(failure.message).toMatch(/DTD.*valid|valid.*DTD/i);
++    expect(failure.message).toMatch(/stf-[^/\s]+\.xml/);
++    expect(failure.message).toMatch(/study|wrong-study/);
++    expect(failure.message).not.toContain(os.tmpdir());
++    expect(await fs.readdir(outputDir).catch(() => [])).toEqual([]);
++    const privateDirs = await Promise.all(mkdir.mock.results.map(result => result.value));
++    for (const dir of privateDirs) await expect(fs.access(dir)).rejects.toMatchObject({ code: 'ENOENT' });
++  }, 30_000);
++
++  it('does not require an STF DTD when this sequence generates no STF', async () => {
++    const bundle = await packageEctdSubmission({ ...input, leaves: input.leaves.filter(leaf => !leaf.studyId) });
++    expect(bundle.dtdStatus?.required).not.toContain('ich-stf-v2-2.dtd');
++    expect(bundle.dtdStatus?.validation?.expectedFiles).toHaveLength(2);
++  }, 30_000);
++});
+diff --git a/server/services/submission-gateways/pre-transmit-check.ts b/server/services/submission-gateways/pre-transmit-check.ts
+index 107bc7c87..09ad9f66f 100644
+--- a/server/services/submission-gateways/pre-transmit-check.ts
++++ b/server/services/submission-gateways/pre-transmit-check.ts
+@@ -39,7 +39,7 @@ import {
+   type ExternalValidator,
+ } from '../ectd/external-validator';
+ import { pdfaRequirementFrom, pdfaRequirementWho, type PdfARequirement } from '../ectd/pdfa-requirement';
+-import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
++import { dtdRequiredFromEnv, hasPassedPackageDtdValidation } from '../ectd/dtd-bundler';
+ import {
+   evaluateRegionalBackboneGate,
+   regionalBackboneRequiredFromEnv,
+@@ -134,18 +134,19 @@ export interface PreTransmitResult {
+ function evaluateDtdSelfContainment(
+   dtd: SubmissionBundle['dtdStatus'],
+   isProd: boolean,
+-  dtdRequired: boolean
+-): { check: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
++  dtdRequired: boolean,
++  studyFiles?: number,
++): { check: PreTransmitCheck | null; validationCheck: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
++  const validated = hasPassedPackageDtdValidation(dtd, studyFiles);
++  const validationCheck = packageDtdCheck(validated, Boolean(dtd) || dtdRequired);
++  const enforced = isProd && dtdRequired;
+   if (!dtd) {
++    const message = 'ECTD_REQUIRE_DTD is set but the bundle carries no DTD status or current validation proof — cannot prove package DTD validity at transmit time.';
+     return {
+       check: null,
+-      blockers: [],
+-      warnings:
+-        isProd && dtdRequired
+-          ? [
+-              'ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.',
+-            ]
+-          : [],
++      validationCheck,
++      blockers: enforced ? [message] : [],
++      warnings: enforced ? [message] : [],
+     };
+   }
+   // `dtdStatus` reaches this gate off a persisted bundle record, so its fields
+@@ -176,16 +177,23 @@ function evaluateDtdSelfContainment(
+         ? 'all required DTDs and stylesheets bundled'
+         : `missing: ${absentText}`,
+     },
++    validationCheck,
+     blockers:
+-      isProd && dtdRequired && !selfContained
++      enforced && !selfContained
+         ? [
+             `Package is not DTD self-contained (missing ${absentText}); ECTD_REQUIRE_DTD blocks this production transmit.`,
+           ]
+-        : [],
+-    warnings: [],
++        : enforced && !validated ? ['Package DTD validation is absent, incomplete or failed; ECTD_REQUIRE_DTD blocks this production transmit. Re-assemble and validate the package.'] : [],
++    warnings: !validated && !enforced ? ['Package DTD validation is unverified or failed; presence of DTDs and stylesheets alone does not prove validity.'] : [],
+   };
+ }
+ 
++function packageDtdCheck(passed: boolean, available: boolean): PreTransmitCheck | null {
++  return available ? { name: 'package-dtd-validation', passed,
++    detail: passed ? 'all package backbones/STFs passed current DTD checks with verified supportive bytes'
++      : 'current complete XML/DTD execution and supportive-file integrity proof is absent or failed; re-assemble and validate the package' } : null;
++}
++
+ /** Evaluate the pre-transmit preconditions for a package. Pure + deterministic. */
+ function checkPdfA(
+   grade: SubmissionBundle['submissionGrade'],
+@@ -270,9 +278,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult
+   const dtdGate = evaluateDtdSelfContainment(
+     input.bundle.dtdStatus,
+     isProd,
+-    dtdRequiredFromEnv(env)
++    dtdRequiredFromEnv(env),
++    input.bundle.stf?.studies,
+   );
+   if (dtdGate.check) checks.push(dtdGate.check);
++  if (dtdGate.validationCheck) checks.push(dtdGate.validationCheck);
+   blockers.push(...dtdGate.blockers);
+   warnings.push(...dtdGate.warnings);
+ 
+@@ -355,6 +365,7 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult
+     status: input.bundle.regionalBackbone,
+     environment: input.environment,
+     required: regionalBackboneRequiredFromEnv(env),
++    validation: input.bundle.dtdStatus?.validation,
+   });
+   if (regionalGate.check) checks.push(regionalGate.check);
+   blockers.push(...regionalGate.blockers);
+diff --git a/server/services/submission-gateways/regional-packager.ts b/server/services/submission-gateways/regional-packager.ts
+index e63c809c3..b691674e5 100644
+--- a/server/services/submission-gateways/regional-packager.ts
++++ b/server/services/submission-gateways/regional-packager.ts
+@@ -28,6 +28,7 @@
+ 
+ import { promises as fs } from 'fs';
+ import * as path from 'path';
++import * as os from 'os';
+ import { createHash } from 'crypto';
+ import JSZip from 'jszip';
+ import type { Region, SubmissionFormat, SubmissionBundle } from './types';
+@@ -50,8 +51,15 @@ import {
+   listVendoredStylesheets,
+   assessDtdReadiness,
+   dtdRequiredFromEnv,
++  resolveDtdDir,
++  STF_DTD,
++  hasPassedPackageDtdValidation,
++  type DtdReadinessResult,
+   type DtdRegion,
+ } from '../ectd/dtd-bundler';
++import { validateBackboneFile } from '../ectd/backbone-validation';
++import { verifyChecksumBuffers } from '../ectd/checksum-manifest';
++import type { DtdValidationEvidence } from '../../../shared/regulatory/ectd-dtd-validation';
+ import { classifyRegionalBackbone } from '../ectd/regional-backbone-readiness';
+ import {
+   resolveApplicationTypeCode,
+@@ -891,6 +899,75 @@ export function regionalBackbonePath(region: Region): string {
+ 
+ /* ─── Top-level packager ──────────────────────────────────────────── */
+ 
++interface CapturedPackageEntry { relPath: string; bytes: Buffer }
++
++async function capturedChecksumManifest(dir: string): Promise<string> {
++  const file = path.join(dir, 'checksums.txt');
++  try {
++    const stat = await fs.lstat(file);
++    return stat.isFile() && !stat.isSymbolicLink() ? await fs.readFile(file, 'utf8') : '';
++  } catch { return ''; }
++}
++
++async function capturePackageEntries(zip: JSZip): Promise<CapturedPackageEntry[]> {
++  const entries: CapturedPackageEntry[] = [];
++  for (const [relPath, file] of Object.entries(zip.files)) {
++    if (file.dir) continue;
++    const bytes = Buffer.from(await file.async('nodebuffer'));
++    entries.push({ relPath, bytes });
++    // Freeze input by replacing original references with the private captured
++    // buffers subsequently materialized for validation and written to the ZIP.
++    zip.file(relPath, bytes, { date: file.date });
++  }
++  return entries;
++}
++
++/** Shared materialization for private validation and optional unzipped output. */
++async function materializePackageEntries(dir: string, entries: CapturedPackageEntry[]): Promise<void> {
++  await fs.mkdir(dir, { recursive: true });
++  for (const { relPath, bytes } of entries) {
++    const dest = path.join(dir, relPath);
++    if (!isPathWithin(dir, dest) || relPath.includes('\\')) {
++      throw new ValidationError(`Package entry '${relPath}' would extract outside its directory.`, [
++        { ruleId: 'PACKAGE-ENTRY-ESCAPES', severity: 'error', filePath: relPath },
++      ]);
++    }
++    await fs.mkdir(path.dirname(dest), { recursive: true });
++    await fs.writeFile(dest, bytes);
++  }
++}
++
++async function validateCapturedPackage(entries: CapturedPackageEntry[], expectedFiles: string[], gate: DtdReadinessResult, manifestText: string): Promise<DtdValidationEvidence> {
++  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-package-validation-'));
++  try {
++    await materializePackageEntries(dir, entries);
++    const results = await Promise.all(expectedFiles.map(relPath => validateBackboneFile(dir, relPath)));
++    const files = results.map(({ relPath, wellFormed, doctype, dtd }) => ({ relPath, wellFormed, doctype, dtd }));
++    const supportive = entries.filter(entry => /^util\/(?:dtd|style)\/[^/]+\.(?:dtd|xsl)$/.test(entry.relPath))
++      .map(entry => ({ fileName: path.posix.basename(entry.relPath), content: entry.bytes }));
++    const integrity = verifyChecksumBuffers(supportive, manifestText, ['.dtd', '.xsl']);
++    const evidence: DtdValidationEvidence = { version: 1, expectedFiles, files, integrity, passed: true };
++    evidence.passed = hasPassedPackageDtdValidation({ ...gate, validation: evidence });
++    return evidence;
++  } finally { await fs.rm(dir, { recursive: true, force: true }); }
++}
++
++/** Bounded package-relative diagnostics reach the existing compile refusal. */
++function dtdRefusalDetails(validation: DtdValidationEvidence): string[] {
++  const failures = validation.files.flatMap(file => {
++    const diagnostic = !file.wellFormed.ran || !file.wellFormed.valid || file.wellFormed.errors.length
++      ? file.wellFormed.errors[0] ?? 'XML well-formedness did not run or failed'
++      : !file.doctype.valid ? file.doctype.errors[0] ?? 'DOCTYPE dependency verification failed'
++      : !file.dtd.ran || !file.dtd.valid || file.dtd.errors.length ? file.dtd.errors[0] ?? 'DTD validation did not run or failed' : null;
++    return diagnostic ? [`${file.relPath}: ${diagnostic.slice(0, 300)}`] : [];
++  });
++  if (!validation.integrity.ok) {
++    const names = [...validation.integrity.mismatched.map(item => item.fileName), ...validation.integrity.missingFiles, ...validation.integrity.unlistedFiles];
++    failures.push(`Supportive-file checksum verification failed: ${names.slice(0, 8).join(', ') || 'required supportive bytes are unverified'}.`);
++  }
++  return failures.length ? failures.slice(0, 6) : ['Required supportive-file verification or complete XML execution coverage is absent.'];
++}
++
+ export async function packageEctdSubmission(input: PackagerInput): Promise<SubmissionBundle> {
+   /* Resolve the caller-supplied submission type through the canonical bridge.
+      This normalizes any alias/legacy string (e.g. '510k', 'SNDA', 'ind') to
+@@ -1120,6 +1197,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+      and pointed at the PDFs relative to the study folder; the name and the
+      doc-content -> index.xml#ID shape now come from stf-generator.ts. */
+   const stfSyntheticLeaves: EctdLeaf[] = [];
++  const stfPaths: string[] = [];
+   /* `untagged` is the 1789 coverage gap found above (stfUncovered): zero for a
+      US sequence, which is refused otherwise; for another region the files that
+      package with no STF. Absent when the sequence has no study files at all. */
+@@ -1161,11 +1239,14 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+           });
+         }
+       }
+-      const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? []);
++      const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? [], {
++        dtdSystemPath: studyId => path.posix.relative(studyFolder.get(studyId)!, `util/dtd/${STF_DTD}`),
++      });
+       stfSummary = { studies: stfResult.summary.studies, leaves: stfResult.summary.leaves, untagged: stfUncovered.length };
+       for (const file of stfResult.files) {
+         const folder = studyFolder.get(file.studyId)!;
+         const relPath = `${folder}/${file.fileName}`;
++        stfPaths.push(relPath);
+         const bytes = Buffer.from(file.xml, 'utf8');
+         const md5 = createHash('md5').update(bytes).digest('hex');
+         const section = byStudy.get(file.studyId)![0].leaf.ctdSection;
+@@ -1243,7 +1324,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+      are vendored per assets/ectd-dtd/README.md (or come from $ECTD_DTD_DIR), so
+      this is a no-op when absent. DTDs are package files, so they are checksummed
+      into index-md5.txt alongside the leaves. */
+-  const vendoredDtds = await listVendoredDtds();
++  const dtdDir = resolveDtdDir();
++  const vendoredDtds = await listVendoredDtds(dtdDir);
++  const manifestText = await capturedChecksumManifest(dtdDir);
+   for (const dtd of vendoredDtds) {
+     const relPath = `util/dtd/${dtd.fileName}`;
+     zip.file(relPath, dtd.bytes);
+@@ -1253,7 +1336,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+   /* Bundle vendored stylesheets into util/style/ for the same reason: index.xml
+      references util/style/ectd-2-0.xsl and the FDA backbone references
+      ../../util/style/us-regional.xsl. Same drop-point, same MD5 treatment. */
+-  const vendoredStylesheets = await listVendoredStylesheets();
++  const vendoredStylesheets = await listVendoredStylesheets(dtdDir);
+   for (const xsl of vendoredStylesheets) {
+     const relPath = `util/style/${xsl.fileName}`;
+     zip.file(relPath, xsl.bytes);
+@@ -1269,6 +1352,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+     presentStylesheets: vendoredStylesheets.map((s) => s.fileName),
+     environment: input.environment ?? 'production',
+     requireDtd: dtdRequiredFromEnv(),
++    hasStudyTaggingFiles: stfPaths.length > 0,
+   });
+   if (!dtdGate.cleared) {
+     throw new ValidationError(
+@@ -1306,6 +1390,16 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+   zip.file('index-md5.txt', indexXmlMd5);
+   zip.file('util/index-md5.txt', buildMd5Index(checksums));
+ 
++  // Validate privately captured package entries before publishing its ZIP.
++  // Reuse these same buffers for ZIP output and optional validator extraction.
++  const captured = await capturePackageEntries(zip);
++  const validation = await validateCapturedPackage(captured, ['index.xml', regionalPath, ...stfPaths], dtdGate, manifestText);
++  if (dtdRequiredFromEnv() && (input.environment ?? 'production') === 'production' && !validation.passed) {
++    const reasons = dtdRefusalDetails(validation);
++    throw new ValidationError(`eCTD package DTD validation is incomplete or failed. ${reasons.join(' ')}`,
++      reasons.map(message => ({ ruleId: 'PACKAGE-DTD-VALIDATION', severity: 'error', message })));
++  }
++
+   /* Generate the zip + write to disk. */
+   if (!isPlainName(input.applicationId) || !isPlainName(input.sequence)) {
+     throw new ValidationError(
+@@ -1329,22 +1423,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+   /* Optionally extract for validator runs. */
+   if (input.emitUnzipped) {
+     const extractDir = path.join(input.outputDir, `${input.applicationId}-${input.sequence}-${region}`);
+-    await fs.mkdir(extractDir, { recursive: true });
+-    for (const [relPath, file] of Object.entries(zip.files)) {
+-      if (file.dir) continue;
+-      const dest = path.join(extractDir, relPath);
+-      // Every entry name is built here from plain names and fixed folders, so
+-      // this cannot fire today; it is what keeps a future entry from writing
+-      // outside the tree it is extracted into.
+-      if (!isPathWithin(extractDir, dest)) {
+-        throw new ValidationError(`Package entry '${relPath}' would extract outside its directory.`, [
+-          { ruleId: 'PACKAGE-ENTRY-ESCAPES', severity: 'error', filePath: relPath },
+-        ]);
+-      }
+-      await fs.mkdir(path.dirname(dest), { recursive: true });
+-      const content = await (file as JSZip.JSZipObject).async('nodebuffer');
+-      await fs.writeFile(dest, content);
+-    }
++    await materializePackageEntries(extractDir, captured);
+   }
+ 
+   // Per-sequence leaf manifest for cross-sequence lifecycle diffing: each shipped
+@@ -1408,7 +1487,10 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+       present: dtdGate.present,
+       missing: dtdGate.missing,
+       missingStylesheets: dtdGate.missingStylesheets,
++      requiredStylesheets: dtdGate.requiredStylesheets,
++      presentStylesheets: dtdGate.presentStylesheets,
+       selfContained: dtdGate.selfContained,
++      validation,
+     },
+     // Honest regional-M1 status: only fda/ema/pmda/ca have their own backbone
+     // builder; the eight widened regions reuse the EMA structure, so their
+@@ -1418,6 +1500,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
+       region,
+       regionalPath,
+       region === 'fda' ? fdaBackboneGaps(normalizedInput) : undefined,
++      validation,
+     ),
+     ...(stfSummary ? { stf: stfSummary } : {}),
+     ...(input.crossReferences?.length
+diff --git a/server/services/submission-gateways/types.ts b/server/services/submission-gateways/types.ts
+index fec589263..5ec35e02c 100644
+--- a/server/services/submission-gateways/types.ts
++++ b/server/services/submission-gateways/types.ts
+@@ -171,7 +171,10 @@ export interface SubmissionBundle {
+      * gate must read its absence as "not itemised", never as "none missing".
+      */
+     missingStylesheets?: string[];
++    requiredStylesheets?: string[];
++    presentStylesheets?: string[];
+     selfContained: boolean;
++    validation?: import('../../../shared/regulatory/ectd-dtd-validation').DtdValidationEvidence;
+   };
+   /**
+    * Optional regional Module 1 backbone status: whether the region has its OWN
+diff --git a/shared/regulatory/ectd-dtd-validation.ts b/shared/regulatory/ectd-dtd-validation.ts
+new file mode 100644
+index 000000000..ca31f76c1
+--- /dev/null
++++ b/shared/regulatory/ectd-dtd-validation.ts
+@@ -0,0 +1,29 @@
++/** Evidence from the existing XML engine for the exact captured eCTD package.
++ * Type-only transport contract; no validator or enforcement policy lives here. */
++export interface DtdXmlResult {
++  ran: boolean;
++  valid: boolean;
++  errors: string[];
++  mode: 'well-formed' | 'dtd' | 'xsd';
++}
++
++export interface DtdFileValidation {
++  relPath: string;
++  wellFormed: DtdXmlResult;
++  doctype: { valid: boolean; errors: string[] };
++  dtd: DtdXmlResult;
++}
++
++export interface DtdValidationEvidence {
++  version: 1;
++  expectedFiles: string[];
++  files: DtdFileValidation[];
++  integrity: {
++    verified: string[];
++    mismatched: Array<{ fileName: string; expected: string; actual: string }>;
++    missingFiles: string[];
++    unlistedFiles: string[];
++    ok: boolean;
++  };
++  passed: boolean;
++}
+diff --git a/tests/routes/ectd-compile-dtd-evidence.test.ts b/tests/routes/ectd-compile-dtd-evidence.test.ts
+new file mode 100644
+index 000000000..ee9880be1
+--- /dev/null
++++ b/tests/routes/ectd-compile-dtd-evidence.test.ts
+@@ -0,0 +1,135 @@
++/** The existing compiler records and exposes the packager's actual XML proof. */
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { promises as fs } from 'node:fs';
++import JSZip from 'jszip';
++import { createMockResponse } from '../setup';
++import type { DtdValidationEvidence } from '../../shared/regulatory/ectd-dtd-validation';
++const { poolQuery, assembleSequenceMock } = vi.hoisted(() => ({ poolQuery: vi.fn(), assembleSequenceMock: vi.fn() }));
++vi.mock('../../server/db', () => ({ pool: { query: poolQuery } }));
++vi.mock('../../server/db/requestDb', () => ({ requestDb: () => ({ query: poolQuery }) }));
++vi.mock('../../server/services/ectd/assemble-from-core', async original => {
++  const actual = await original<typeof import('../../server/services/ectd/assemble-from-core')>();
++  return { assembleSequence: assembleSequenceMock, assembledTransmitBlockers: actual.assembledTransmitBlockers };
++});
++import routes from '../../server/routes/ectd-compile';
++import { assembledResult, handlerOf, makeFdaPackageZip, makeReq, mockSpineOn, ORG } from './ectd-compile-spine.harness';
++
++const EXPECTED = ['index.xml', 'm1/us/us-regional.xml', 'm5/stf-study-101.xml'];
++const REQUIRED = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
++const STYLES = ['ectd-2-0.xsl', 'us-regional.xsl'];
++const mockSpine = mockSpineOn(poolQuery);
++const tempDirs = new Set<string>();
++function proof(): DtdValidationEvidence {
++  return { version: 1, expectedFiles: [...EXPECTED], passed: true,
++    files: EXPECTED.map(relPath => ({ relPath, wellFormed: { ran: true, valid: true, errors: [], mode: 'well-formed' },
++      doctype: { valid: true, errors: [] }, dtd: { ran: true, valid: true, errors: [], mode: 'dtd' } })),
++    integrity: { verified: [...EXPECTED.map(name => name.split('/').pop()!), ...REQUIRED, ...STYLES], mismatched: [], missingFiles: [], unlistedFiles: [], ok: true },
++  };
++}
++const dtdStatus = (validation: unknown = proof()) => ({ required: REQUIRED, present: REQUIRED, missing: [], missingStylesheets: [],
++  requiredStylesheets: STYLES, presentStylesheets: STYLES, selfContained: true, validation });
++type Finding = { rule: string; severity: string; message: string; evidence?: unknown };
++type CompilePayload = { package: { sha256: string; dtdStatus: unknown; regionalStatus: unknown }; status: string;
++  submissionReady: boolean; contentValidationPassed: boolean; validationResults: Finding[]; errors: string[]; warnings: string[]; submissionBlockers: string[] };
++async function compile(validation: unknown = proof()) {
++  mockSpine({ pack: [{ key: '2.5', mandatory: true }, { key: '3.2.S', mandatory: true }] });
++  const { zipPath } = await makeFdaPackageZip();
++  tempDirs.add(zipPath.slice(0, zipPath.lastIndexOf('/')));
++  const zip = await JSZip.loadAsync(await fs.readFile(zipPath));
++  zip.file(EXPECTED[2], '<study/>');
++  await fs.writeFile(zipPath, await zip.generateAsync({ type: 'nodebuffer' }));
++  const base = assembledResult(zipPath);
++  assembleSequenceMock.mockResolvedValue({ ...base, bundle: { ...base.bundle, dtdStatus: dtdStatus(validation),
++    regionalBackbone: { region: 'fda', file: EXPECTED[1], regionConformant: validation === undefined ? false : true } } });
++  const res = createMockResponse();
++  await handlerOf(routes, '/:projectIdent/compile', 'post')(makeReq(), res);
++  return res.json.mock.calls[0][0] as CompilePayload;
++}
++async function history(rows: unknown[]) {
++  mockSpine({ history: rows }); const res = createMockResponse();
++  await handlerOf(routes, '/:projectIdent/history', 'get')(makeReq(), res);
++  return res.json.mock.calls[0][0] as { compilations: Array<{ id: number; packageDtdValidation: unknown; external_validation?: unknown }> };
++}
++const recorded = (status: unknown) => ({ rule: 'package_dtd_validation', severity: 'info', message: 'Recorded DTD validation',
++  evidence: { packageSha256: 'a'.repeat(64), dtdStatus: status } });
++beforeEach(() => vi.clearAllMocks());
++afterEach(async () => { await Promise.all([...tempDirs].map(dir => fs.rm(dir, { recursive: true, force: true }))); tempDirs.clear(); });
++
++describe('compile carries the existing package DTD proof', () => {
++  it('projects complete index, regional and STF proof and persists it in the existing findings record', async () => {
++    const evidence = proof(); const payload = await compile(evidence);
++    expect(payload.package.dtdStatus).toEqual(dtdStatus(evidence));
++    expect(payload.package.regionalStatus).toMatchObject({ region: 'fda', file: EXPECTED[1], regionConformant: true });
++    const summary = payload.validationResults.find(row => row.rule === 'package_dtd_validation');
++    expect(summary).toMatchObject({ severity: 'info', evidence: { packageSha256: 'a'.repeat(64), dtdStatus: dtdStatus(evidence) } });
++    const insert = poolQuery.mock.calls.find(call => /INSERT INTO ectd_compilations/.test(String(call[0])));
++    expect(JSON.parse(String(insert?.[1]?.[5]))).toContainEqual(summary);
++    expect(payload.submissionReady).toBe(true);
++  });
++  it('counts an executed invalid STF as an error while preserving report-only compilation', async () => {
++    const evidence = proof(); evidence.files[2].dtd.valid = false; evidence.files[2].dtd.errors = ['Unexpected doc-content element']; evidence.passed = false;
++    const payload = await compile(evidence);
++    expect(payload.status).toBe('completed'); expect(payload.submissionReady).toBe(false);
++    expect(payload.contentValidationPassed).toBe(false);
++    expect(payload.errors.some(message => message.includes(EXPECTED[2]) && message.includes('Unexpected doc-content element'))).toBe(true);
++    expect(payload.submissionBlockers.join(' ')).toMatch(/DTD.*(not|failed|unverified)/i);
++  });
++  it('reports invalid XML even when an executed validator supplied no diagnostics', async () => {
++    const evidence = proof(); evidence.files[2].dtd.valid = false; evidence.passed = false;
++    const payload = await compile(evidence);
++    expect(payload.errors.some(message => message.includes(EXPECTED[2]) && /DTD/.test(message))).toBe(true);
++    expect(payload.contentValidationPassed).toBe(false);
++  });
++  it('never calls contradictory valid flags with diagnostics a passed DTD check', async () => {
++    const evidence = proof(); evidence.files[2].dtd.errors = ['Unexpected validator diagnostic'];
++    const payload = await compile(evidence);
++    expect(payload.submissionReady).toBe(false);
++    expect(payload.validationResults.find(row => row.rule === 'package_dtd_validation')?.severity).not.toBe('info');
++    expect(payload.warnings.join(' ')).toContain('Unexpected validator diagnostic');
++  });
++  it.each(['missing', 'empty', 'not-ran', 'duplicate'] as const)('never reads %s evidence as a passed DTD check', async kind => {
++    const evidence = proof();
++    if (kind === 'empty') { evidence.expectedFiles = []; evidence.files = []; }
++    if (kind === 'not-ran') evidence.files[2].dtd.ran = false;
++    if (kind === 'duplicate') evidence.files.push(evidence.files[0]);
++    const payload = await compile(kind === 'missing' ? null : evidence);
++    expect(payload.submissionReady).toBe(false);
++    const summary = payload.validationResults.find(row => row.rule === 'package_dtd_validation');
++    expect(summary).toBeTruthy(); expect(summary?.severity).not.toBe('info');
++    expect(payload.submissionBlockers.join(' ')).toMatch(/DTD/i);
++  });
++  it('reports integrity failures through the existing validation findings and counters', async () => {
++    const evidence = proof(); evidence.integrity.missingFiles = ['util/dtd/ich-stf-v2-2.dtd']; evidence.integrity.ok = false; evidence.passed = false;
++    const payload = await compile(evidence);
++    expect(payload.submissionReady).toBe(false);
++    expect(payload.errors.join(' ')).toMatch(/ich-stf-v2-2\.dtd/);
++  });
++});
++
++describe('compile history decodes its existing JSON evidence defensively', () => {
++  it('projects the typed proof and preserves the separate imported agency report', async () => {
++    const status = dtdStatus(); const report = { validator: 'External validator', errorCount: 0 };
++    const result = await history([{ id: 3, validation_results: [recorded(status)], external_validation: report }]);
++    expect(result.compilations[0].packageDtdValidation).toEqual({ packageSha256: 'a'.repeat(64), dtdStatus: status });
++    expect(result.compilations[0].external_validation).toEqual(report);
++    const read = poolQuery.mock.calls.find(call => /FROM ectd_compilations/.test(String(call[0])));
++    expect(String(read?.[0])).toMatch(/validation_results/); expect(read?.[1]?.[0]).toBe(ORG);
++  });
++  it.each([undefined, [], [{ rule: 'other', severity: 'info', message: 'Not DTD proof' }],
++    [recorded({ selfContained: true, validation: { passed: true } })],
++    [recorded(dtdStatus()), recorded(dtdStatus())],
++    [{ ...recorded(dtdStatus()), evidence: { packageSha256: 'bad', dtdStatus: dtdStatus() } }],
++  ])('returns unverified for absent, ambiguous or malformed stored proof %#', async validation_results => {
++    const result = await history([{ id: 4, status: 'completed', has_manifest: true, validation_results }]);
++    expect(result.compilations[0].packageDtdValidation).toBeNull();
++  });
++  it.each(['empty', 'duplicate', 'not-ran', 'missing-integrity'] as const)('rejects forged passed history with %s proof', async kind => {
++    const evidence = proof();
++    if (kind === 'empty') { evidence.expectedFiles = []; evidence.files = []; }
++    if (kind === 'duplicate') evidence.files.push(evidence.files[0]);
++    if (kind === 'not-ran') evidence.files[0].dtd.ran = false;
++    if (kind === 'missing-integrity') evidence.integrity.verified = [];
++    const result = await history([{ id: 5, status: 'completed', has_manifest: true, validation_results: [recorded(dtdStatus(evidence))] }]);
++    expect(result.compilations[0].packageDtdValidation).toBeNull();
++  });
++});

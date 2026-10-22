@@ -166,7 +166,7 @@ export function buildMinimalIndOrchestratorInputs(
   return {
     organizationId: orgId,
     submissionId: 'fixture-ind-submission-001',
-    applicationNumber: 'IND-TEST-001',
+    applicationNumber: '123456',
     sequenceNumber: '0000',
     region: 'US',
     submissionType: 'IND',

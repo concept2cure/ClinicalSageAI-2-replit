@@ -20,11 +20,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const holder = vi.hoisted(() => ({
   packetRows: [] as unknown[],
   inserted: [] as Record<string, unknown>[],
+  query: vi.fn(),
 }));
 
 vi.mock('../../middleware/auth', () => ({
   authenticateToken: (req: any, _res: any, next: any) => {
     req.user = { id: 3, organizationId: 7 };
+    req.dbClient = { query: holder.query };
     next();
   },
 }));
@@ -41,6 +43,9 @@ vi.mock('../../db', () => ({
     }),
   },
   pool: {},
+}));
+vi.mock('../../services/authoring/authoring-program-access', async original => ({
+  ...(await original<typeof import('../../services/authoring/authoring-program-access')>()), authorizeAuthoringProgram: vi.fn(async () => undefined),
 }));
 vi.mock('../../services/c2c/program-access', () => ({ programInOrganization: async () => true }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
@@ -65,6 +70,7 @@ const post = (body: unknown) =>
 beforeEach(() => {
   holder.packetRows = [];
   holder.inserted = [];
+  holder.query.mockReset().mockImplementation(async () => ({ rows: holder.packetRows }));
 });
 
 describe('reviewer-simulation route: facts from the records', () => {

@@ -49,6 +49,12 @@ export interface TransitionRequest {
   toBoundary: BoundaryLevel;
   actorId?: number;
   actorRole?: string;
+  /** The artifact's type, for a rule scoped to artifact types (see ruleScope). */
+  artifactType?: string;
+  /** The domain track, for a rule scoped to one. */
+  domainTrack?: string;
+  /** The regulator the transition is for, for a rule scoped to one. */
+  regulatorBody?: string;
 }
 
 export interface TransitionResult {
@@ -168,6 +174,98 @@ export function confidenceRequirement(ruleName: string, minimum: string, decisio
   return { met: true, statement: `Rule "${ruleName}": decision ${decisionId} records confidence "${recorded.confidence_level}", which meets the minimum "${minimum}".` };
 }
 
+/** Trimmed text, or null when blank or not text. */
+function statedText(v: unknown): string | null {
+  return typeof v === 'string' && v.trim() !== '' ? v.trim() : null;
+}
+
+/** How a stored value that is not a list of names reads in a refusal. */
+function describeStored(v: unknown): string {
+  if (v === null || v === undefined) return 'NULL';
+  if (Array.isArray(v)) return 'a list with an entry that is not a name';
+  return typeof v === 'string' ? `the text "${v}"` : `a value of type ${typeof v}`;
+}
+
+/**
+ * A rule row's role and artifact-type lists as stored, or why the row cannot be
+ * read — pure. Until 2026-10-15 required_roles was read `?? []`: NULL meant "no
+ * role required", an object was skipped and text threw, so a row nobody could
+ * read passed as a rule with no requirement. Both columns default to '[]'.
+ */
+export function readRuleLists(rule: GovernanceBoundaryRule): { requiredRoles: string[]; artifactTypes: string[] } | { malformed: string } {
+  const columns: Array<[string, unknown]> = [['required_roles', rule.requiredRoles], ['artifact_types', rule.artifactTypes]];
+  for (const [column, value] of columns) {
+    if (!Array.isArray(value) || value.some((entry) => statedText(entry) === null)) {
+      return { malformed: `rule "${rule.ruleName}" (${rule.id}) records ${column} as ${describeStored(value)}, not a list of names` };
+    }
+  }
+  return { requiredRoles: rule.requiredRoles as string[], artifactTypes: rule.artifactTypes as string[] };
+}
+
+/** Whether a rule governs a transition, by its declared scope; null = undetermined. */
+export type RuleScopeFinding = { applies: true } | { applies: false } | { applies: null; statement: string };
+
+/**
+ * Whether a rule's declared scope covers a transition — pure. Until 2026-10-15 a
+ * rule applied to every transition between its two boundaries, whatever its
+ * artifactTypes / domainTrack / regulatorBody said. A stated value outside a
+ * declared scope: the rule does not govern the transition. A declared scope the
+ * request states nothing for: whether the rule applies is undetermined, and the
+ * transition is refused with that reason — the rule is never skipped. Values
+ * compare trimmed and case-insensitively.
+ */
+export function ruleScope(rule: GovernanceBoundaryRule, artifactTypes: string[], request: TransitionRequest): RuleScopeFinding {
+  const scopes: Array<{ name: string; field: 'artifactType' | 'domainTrack' | 'regulatorBody'; allowed: string[] }> = [];
+  if (artifactTypes.length > 0) scopes.push({ name: 'artifact types', field: 'artifactType', allowed: artifactTypes });
+  const track = statedText(rule.domainTrack);
+  if (track) scopes.push({ name: 'domain track', field: 'domainTrack', allowed: [track] });
+  const regulator = statedText(rule.regulatorBody);
+  if (regulator) scopes.push({ name: 'regulator', field: 'regulatorBody', allowed: [regulator] });
+
+  const unstated: string[] = [];
+  for (const scope of scopes) {
+    const stated = statedText(request[scope.field]);
+    if (stated === null) unstated.push(`${scope.name} ${scope.allowed.join(', ')} (${scope.field})`);
+    else if (!scope.allowed.some((a) => a.trim().toLowerCase() === stated.toLowerCase())) return { applies: false };
+  }
+  if (unstated.length === 0) return { applies: true };
+  const them = unstated.length === 1 ? 'it' : 'them';
+  return { applies: null, statement: `Rule "${rule.ruleName}": applies only to ${unstated.join(' and ')}, and the request does not state ${them}, so whether the rule applies could not be determined. Failing closed.` };
+}
+
+/** What a rule is created from (createRule and the default set). */
+export interface GovernanceRuleInput {
+  organizationId: number; projectId?: number; ruleName: string; ruleDescription?: string;
+  fromBoundary: BoundaryLevel; toBoundary: BoundaryLevel;
+  requiresReview?: boolean; requiresApproval?: boolean; requiresAllAssumptionsApproved?: boolean; requiresAllDecisionsResolved?: boolean;
+  minimumConfidence?: string; requiredRoles?: string[]; artifactTypes?: string[]; domainTrack?: string; regulatorBody?: string; createdById?: number;
+}
+
+/** The row a rule input writes — the named fields only. */
+function ruleValues(i: GovernanceRuleInput): typeof governanceBoundaryRules.$inferInsert {
+  return {
+    organizationId: i.organizationId, projectId: i.projectId, ruleName: i.ruleName, ruleDescription: i.ruleDescription,
+    fromBoundary: i.fromBoundary, toBoundary: i.toBoundary,
+    requiresReview: i.requiresReview ?? false, requiresApproval: i.requiresApproval ?? false,
+    requiresAllAssumptionsApproved: i.requiresAllAssumptionsApproved ?? false, requiresAllDecisionsResolved: i.requiresAllDecisionsResolved ?? false,
+    minimumConfidence: i.minimumConfidence, requiredRoles: i.requiredRoles ?? [], artifactTypes: i.artifactTypes ?? [],
+    domainTrack: (i.domainTrack ?? null) as GovernanceBoundaryRule['domainTrack'], regulatorBody: i.regulatorBody, createdById: i.createdById,
+  };
+}
+
+/** The default rules seeded for an organization that has none. */
+const DEFAULT_RULES: ReadonlyArray<Omit<GovernanceRuleInput, 'organizationId' | 'createdById'>> = [
+  { ruleName: 'Advisory to Governed Draft', fromBoundary: 'advisory', toBoundary: 'governed_draft', requiresReview: true,
+    ruleDescription: 'AI-generated advisory output must be reviewed before becoming a governed draft.' },
+  { ruleName: 'Governed Draft to Approved', fromBoundary: 'governed_draft', toBoundary: 'approved', requiresApproval: true, requiresAllAssumptionsApproved: true,
+    ruleDescription: 'Governed drafts require explicit approval and all linked assumptions must be approved.' },
+  { ruleName: 'Approved to Locked', fromBoundary: 'approved', toBoundary: 'locked', requiresAllDecisionsResolved: true, minimumConfidence: 'moderate',
+    ruleDescription: 'Approved content can only be locked when all decisions are resolved.' },
+  { ruleName: 'Locked to Submission Ready', fromBoundary: 'locked', toBoundary: 'submission_ready',
+    requiresAllAssumptionsApproved: true, requiresAllDecisionsResolved: true, minimumConfidence: 'strong',
+    ruleDescription: 'Locked content moves to submission-ready only with strong confidence.' },
+];
+
 export class GovernanceBoundaryService {
   private static instance: GovernanceBoundaryService;
 
@@ -187,46 +285,12 @@ export class GovernanceBoundaryService {
   // RULE MANAGEMENT
   // ─────────────────────────────────────────────────────────────────────────
 
-  async createRule(input: {
-    organizationId: number;
-    projectId?: number;
-    ruleName: string;
-    ruleDescription?: string;
-    fromBoundary: BoundaryLevel;
-    toBoundary: BoundaryLevel;
-    requiresReview?: boolean;
-    requiresApproval?: boolean;
-    requiresAllAssumptionsApproved?: boolean;
-    requiresAllDecisionsResolved?: boolean;
-    minimumConfidence?: string;
-    requiredRoles?: string[];
-    artifactTypes?: string[];
-    domainTrack?: string;
-    regulatorBody?: string;
-    createdById?: number;
-  }): Promise<GovernanceBoundaryRule> {
+  async createRule(input: GovernanceRuleInput): Promise<GovernanceBoundaryRule> {
     const database = this.getDb();
 
     const [rule] = await database
       .insert(governanceBoundaryRules)
-      .values({
-        organizationId: input.organizationId,
-        projectId: input.projectId,
-        ruleName: input.ruleName,
-        ruleDescription: input.ruleDescription,
-        fromBoundary: input.fromBoundary,
-        toBoundary: input.toBoundary,
-        requiresReview: input.requiresReview ?? false,
-        requiresApproval: input.requiresApproval ?? false,
-        requiresAllAssumptionsApproved: input.requiresAllAssumptionsApproved ?? false,
-        requiresAllDecisionsResolved: input.requiresAllDecisionsResolved ?? false,
-        minimumConfidence: input.minimumConfidence,
-        requiredRoles: input.requiredRoles ?? [],
-        artifactTypes: input.artifactTypes ?? [],
-        domainTrack: input.domainTrack as any,
-        regulatorBody: input.regulatorBody,
-        createdById: input.createdById,
-      })
+      .values(ruleValues(input))
       .returning();
 
     return rule;
@@ -259,9 +323,6 @@ export class GovernanceBoundaryService {
     const database = this.getDb();
     const blockedReasons: string[] = [];
 
-    // 0. Auto-seed default rules if none exist (lazy initialization)
-    await this.ensureDefaultRules(request.organizationId);
-
     // 1. Validate transition direction
     if (request.fromBoundary === request.toBoundary) {
       blockedReasons.push(
@@ -280,9 +341,12 @@ export class GovernanceBoundaryService {
     // 2. Find applicable rules — FAIL CLOSED if they cannot be loaded.
     // If this throws to the caller, every caller's catch{} falls back to a
     // weaker check and the whole rule layer silently disappears (C-8). An
-    // unreadable rule store must block, not bypass.
+    // unreadable rule store must block, not bypass. Seeding the default rules
+    // is part of loading them (2026-10-15: a failed seed was swallowed, and an
+    // organization left with no rules had none applied).
     let rules: GovernanceBoundaryRule[] = [];
     try {
+      await this.ensureDefaultRules(request.organizationId);
       rules = await this.getRules(request.organizationId, request.projectId);
     } catch (err) {
       blockedReasons.push(
@@ -305,7 +369,22 @@ export class GovernanceBoundaryService {
     // decision and confidence checks were skipped when their input was missing —
     // and the transition was still recorded as allowed under the rule.
     for (const rule of applicableRules) {
+      // A row whose lists cannot be read refuses; a rule whose declared scope
+      // does not cover this transition does not govern it, and one whose scope
+      // the request leaves undetermined refuses (readRuleLists, ruleScope).
+      const lists = readRuleLists(rule);
+      if ('malformed' in lists) {
+        matchedRuleIds.push(rule.id);
+        blockedReasons.push(`Governance rules could not be loaded: ${lists.malformed}. Failing closed: transition to ${request.toBoundary} is blocked until the rule is corrected.`);
+        continue;
+      }
+      const scope = ruleScope(rule, lists.artifactTypes, request);
+      if (scope.applies === false) continue;
       matchedRuleIds.push(rule.id);
+      if (scope.applies === null) {
+        blockedReasons.push(scope.statement);
+        continue;
+      }
 
       // Review and approval: this boundary reads no review or approval record,
       // so neither can be shown here.
@@ -313,7 +392,7 @@ export class GovernanceBoundaryService {
       if (rule.requiresApproval) blockedReasons.push(`Rule "${rule.ruleName}": requires an explicit approval before ${request.toBoundary}, and this boundary reads no approval record, so no approval is shown. Failing closed.`);
 
       // Check role requirement
-      const requiredRoles = (rule.requiredRoles as string[] | null) ?? [];
+      const requiredRoles = lists.requiredRoles;
       if (requiredRoles.length > 0) {
         const role = request.actorRole;
         if (!role) blockedReasons.push(`Rule "${rule.ruleName}": requires one of the roles ${requiredRoles.join(', ')}, and no actor role was given. Failing closed.`);
@@ -648,19 +727,17 @@ export class GovernanceBoundaryService {
 
   /**
    * Ensure default rules exist for the organization.
-   * Called lazily on first evaluateTransition() — idempotent.
+   * Called lazily on first evaluateTransition() — idempotent. A failure throws
+   * and evaluateTransition refuses the transition; until 2026-10-15 it was
+   * swallowed ("non-blocking") and the organization was evaluated with no rules.
    */
   private async ensureDefaultRules(organizationId: number): Promise<void> {
     if (this.seededOrgs.has(organizationId)) return;
-    try {
-      const existing = await this.getRules(organizationId);
-      if (existing.length === 0) {
-        await this.seedDefaultRules(organizationId);
-      }
-      this.seededOrgs.add(organizationId);
-    } catch {
-      // Non-blocking — seeding failure doesn't prevent transition evaluation
+    const existing = await this.getRules(organizationId);
+    if (existing.length === 0) {
+      await this.seedDefaultRules(organizationId);
     }
+    this.seededOrgs.add(organizationId);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -672,56 +749,12 @@ export class GovernanceBoundaryService {
    * Called when a new organization enables the operating system layer.
    */
   async seedDefaultRules(organizationId: number, createdById?: number): Promise<GovernanceBoundaryRule[]> {
-    const rules: GovernanceBoundaryRule[] = [];
-
-    // Rule 1: advisory → governed_draft requires review
-    rules.push(await this.createRule({
-      organizationId,
-      ruleName: 'Advisory to Governed Draft',
-      ruleDescription: 'AI-generated advisory output must be reviewed before becoming a governed draft.',
-      fromBoundary: 'advisory',
-      toBoundary: 'governed_draft',
-      requiresReview: true,
-      createdById,
-    }));
-
-    // Rule 2: governed_draft → approved requires approval + all assumptions approved
-    rules.push(await this.createRule({
-      organizationId,
-      ruleName: 'Governed Draft to Approved',
-      ruleDescription: 'Governed drafts require explicit approval and all linked assumptions must be approved.',
-      fromBoundary: 'governed_draft',
-      toBoundary: 'approved',
-      requiresApproval: true,
-      requiresAllAssumptionsApproved: true,
-      createdById,
-    }));
-
-    // Rule 3: approved → locked requires all decisions resolved
-    rules.push(await this.createRule({
-      organizationId,
-      ruleName: 'Approved to Locked',
-      ruleDescription: 'Approved content can only be locked when all decisions are resolved.',
-      fromBoundary: 'approved',
-      toBoundary: 'locked',
-      requiresAllDecisionsResolved: true,
-      minimumConfidence: 'moderate',
-      createdById,
-    }));
-
-    // Rule 4: locked → submission_ready requires strong confidence
-    rules.push(await this.createRule({
-      organizationId,
-      ruleName: 'Locked to Submission Ready',
-      ruleDescription: 'Locked content moves to submission-ready only with strong confidence.',
-      fromBoundary: 'locked',
-      toBoundary: 'submission_ready',
-      requiresAllAssumptionsApproved: true,
-      requiresAllDecisionsResolved: true,
-      minimumConfidence: 'strong',
-      createdById,
-    }));
-
-    return rules;
+    // One INSERT, so the set is written whole or not at all (2026-10-15). Rule
+    // by rule, a failure part-way left a partial set, and an organization with
+    // any rule is never re-seeded — the missing boundaries applied no rule.
+    return this.getDb()
+      .insert(governanceBoundaryRules)
+      .values(DEFAULT_RULES.map((r) => ruleValues({ ...r, organizationId, createdById })))
+      .returning();
   }
 }

@@ -171,7 +171,10 @@ export interface SubmissionBundle {
      * gate must read its absence as "not itemised", never as "none missing".
      */
     missingStylesheets?: string[];
+    requiredStylesheets?: string[];
+    presentStylesheets?: string[];
     selfContained: boolean;
+    validation?: import('../../../shared/regulatory/ectd-dtd-validation').DtdValidationEvidence;
   };
   /**
    * Optional regional Module 1 backbone status: whether the region has its OWN
@@ -279,6 +282,14 @@ export interface GatewayTransmitRequest {
   submissionType?: string;
   /** Free-form metadata stored on the transmittal row. */
   metadata?: Record<string, unknown>;
+  /** Internal server binding; public transmit routes do not accept this field. */
+  dispatchBinding?: {
+    attemptId: string;
+    organizationId: number;
+    sequenceId: number;
+    signatureActionId: string;
+    bundleSha256: string;
+  };
   /**
    * The organisation's chosen account for this gateway and environment —
    * the platform's or its own (gateway-accounts.ts). Set by the guard in
@@ -342,14 +353,10 @@ export interface GatewayAcknowledgment {
   transmissionId: string;
   contentType: string;
   buffer: Buffer;
-  /**
-   * When the transmittal row recorded the acknowledgement, or null when it
-   * recorded none — a pending transmission, a rejection, an MDN that could not
-   * be tied to the message. Both builders used to fall back to `new Date()`,
-   * so a receipt nobody recorded read as received at the moment of download,
-   * and AnA's get_submission_ack reported that time (2026-10-15).
-   */
+  /** Actual recorded receipt time; null when unknown, never the download time. */
   receivedAt: Date | null;
+  /** When this platform generated its own summary, separate from agency receipt. */
+  generatedAt?: Date;
   /**
    * Who authored these bytes.
    *

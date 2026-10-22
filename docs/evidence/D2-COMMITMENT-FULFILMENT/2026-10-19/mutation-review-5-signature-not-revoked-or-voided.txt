@@ -1,0 +1,29 @@
+# Review mutation 5 — the COMMIT-time guard refuses a revoked or voided signature (finding 2, withdrawal clause)
+#
+# Replaced in public.regulatory_commitments_signed_fulfilment_guard() (as migrations/20261019_commitment_fulfilment_evidence.sql defines it), applied to the test database with psql:
+#   -        AND COALESCE(es.verification_status, '') NOT IN ('revoked', 'voided')
+# with:
+#
+# Test selection: tests/db/commitment-fulfilment-database.dbtest.ts (-t "forged signature correct|revoked|voided"), run as the runtime role app_service with RLS on.
+# Function definition md5: before b5f668ac939308c03e26c827f6823b27, mutated 77ed0875f5b275446d68eea4f93af812, restored b5f668ac939308c03e26c827f6823b27 (identical to before)
+# Restored by re-applying migrations/20261019_commitment_fulfilment_evidence.sql with psql, as deploy-migrate does on every deploy.
+
+## Control: the same selection on the unmutated database
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > control: a forged signature correct in every respect the guard reads is accepted, so each refusal below is for its own clause 100ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature revoked (withdrawn) does not count (M5) 31ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature voided (withdrawn) does not count (M5) 52ms
+ Test Files  1 passed (1)
+      Tests  3 passed | 22 skipped (25)
+
+## With the mutation in place
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > control: a forged signature correct in every respect the guard reads is accepted, so each refusal below is for its own clause 91ms
+ × tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature revoked (withdrawn) does not count (M5) 35ms
+   → the COMMIT went through: expected true to be false // Object.is equality
+ × tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature voided (withdrawn) does not count (M5) 27ms
+   → the COMMIT went through: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature revoked (withdrawn) does not count (M5)
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature voided (withdrawn) does not count (M5)
+AssertionError: the COMMIT went through: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 22 skipped (25)

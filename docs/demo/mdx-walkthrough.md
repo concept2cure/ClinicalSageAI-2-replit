@@ -5,7 +5,9 @@ IVD prospect. **What it shows:** one fictional manufacturer (Concept2Cure
 Diagnostics) taking one fictional IVD (NeuroPanel-Dx, a multiplex CSF PCR panel)
 through a US 510(k) — program, dossier, authored 510(k) content, sequence,
 readiness verdict, quality system, audit trail — entirely on records created
-through the product's own API by `node scripts/demo/launch-demo/seed.mjs --pack mdx`.
+through the product's own API by
+`DEMO_SEED_EMAIL=<your dev-login address> node scripts/demo/launch-demo/seed.mjs --pack mdx`
+(or `DEMO_SEED_TOKEN=…` for a hosted server).
 
 Every record name below starts with `[Demo · MDX]`. Every document says in its
 footer that it is seeded demonstration content, not model-drafted (no AI

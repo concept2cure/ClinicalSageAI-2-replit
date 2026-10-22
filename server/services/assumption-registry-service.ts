@@ -560,12 +560,17 @@ export class AssumptionRegistryService {
   private async triggerDriftDetection(organizationId: number, projectId: number): Promise<void> {
     try {
       const { contradictionEngineService } = await import('./contradiction-engine-service');
-      const findings = await contradictionEngineService.detectAssumptionDrift(
+      const { findings, coverage } = await contradictionEngineService.detectAssumptionDrift(
         organizationId,
         projectId
       );
       if (findings.length > 0) {
-        log.info('Assumption drift detected', { projectId, count: findings.length });
+        log.info('Assumption drift detected', { projectId, count: findings.length, coverage });
+      } else if (coverage.comparedNothing || coverage.readTruncated) {
+        /* No drift found is not the same as no drift: with one assumption per category there
+           is no pair to compare, and a read that stopped at its limit left records
+           uncompared. Logged so the breadcrumb is not "detected none". */
+        log.info('Assumption drift: nothing established', { projectId, coverage });
       }
     } catch {
       // Contradiction engine may not have tables yet — silently skip
@@ -644,7 +649,7 @@ export class AssumptionRegistryService {
     const context = 'assumptionRegistryService.supersede';
     const replacementId = statedText(input.replacementId, 'replacementId', context);
     const reason = statedText(input.reason, 'reason', context);
-    statedText(input.performedBy, 'performedBy', context);
+    const performedBy = statedText(input.performedBy, 'performedBy', context);
     log.info('Superseding assumption', { id, replacementId });
 
     const result = await pool!.query(
@@ -661,7 +666,7 @@ export class AssumptionRegistryService {
 
     // Reactive propagation: mark downstream objects stale
     if (record) {
-      this.propagateChange(record, 'assumption_superseded', input.reason).catch(err => {
+      this.propagateChange(record, 'assumption_superseded', input.reason, performedBy).catch(err => {
         log.warn('Reactive propagation failed (non-blocking)', {
           error: err instanceof Error ? err.message : String(err),
         });
@@ -673,7 +678,9 @@ export class AssumptionRegistryService {
 
   /**
    * Propagate assumption change to downstream dependencies.
-   * Marks linked artifacts/decisions as stale.
+   * Marks linked artifacts/decisions as stale. `triggeredBy` is the user who
+   * made the change (2026-10-15: never passed, so the cascade was logged as the
+   * reactive-dependency machine actor); unstated, that actor is still logged.
    */
   private async propagateChange(
     assumption: AssumptionRecord,
@@ -682,7 +689,8 @@ export class AssumptionRegistryService {
       | 'assumption_updated'
       | 'assumption_challenged'
       | 'assumption_withdrawn',
-    reason: string
+    reason: string,
+    triggeredBy: string | undefined
   ): Promise<void> {
     try {
       const { reactiveDependencyService } = await import('./reactive-dependency-service');
@@ -694,6 +702,7 @@ export class AssumptionRegistryService {
         sourceId: assumption.id,
         sourceLabel: assumption.title,
         reason,
+        triggeredBy,
       });
     } catch {
       // Reactive service may not have tables yet — silently skip
@@ -724,7 +733,7 @@ export class AssumptionRegistryService {
         challenged: 'assumption_challenged',
         withdrawn: 'assumption_withdrawn',
       };
-      this.propagateChange(record, triggerMap[status], `Assumption ${status}`).catch(err => {
+      this.propagateChange(record, triggerMap[status], `Assumption ${status}`, reviewedBy).catch(err => {
         log.warn('Status change propagation failed (non-blocking)', {
           error: err instanceof Error ? err.message : String(err),
         });

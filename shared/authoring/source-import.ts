@@ -5,7 +5,9 @@ export type BinaryImportSource =
 
 export type WorkflowImportSource =
   | { kind: 'protocol'; documentId: number }
-  | { kind: 'csr'; jobId: number; sectionNumbers?: string[] };
+  | { kind: 'csr'; jobId: number; sectionNumbers?: string[] }
+  | { kind: 'ivd-assessment'; documentId: string }
+  | { kind: 'ivd-document'; documentId: string };
 
 export type AuthoringImportSource = BinaryImportSource | WorkflowImportSource;
 
@@ -42,7 +44,7 @@ export interface WorkflowImportOrigin {
   selection: WorkflowImportSource;
   gaps: string[];
   version: string | null;
-  conversion: 'protocol-structure' | 'ich-e3-sections';
+  conversion: 'protocol-structure' | 'ich-e3-sections' | 'ivd-assessment-snapshot' | 'ivd-document-snapshot';
   sourceScope: { level: 'organization' | 'program' | 'project'; programId: string | null; projectId: number | null };
   association: { mode: 'recorded' | 'explicit'; reason: string | null };
   sectionOrigins: WorkflowSectionOrigin[];
@@ -70,8 +72,15 @@ export interface AuthoringSourceImportPreviewData {
   association: WorkflowImportAssociation;
 }
 
+export function isWorkflowSourceKind(kind: unknown): kind is WorkflowImportSource['kind'] {
+  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document';
+}
+export const WORKFLOW_SOURCE_LABELS: Readonly<Record<WorkflowImportSource['kind'], string>> = {
+  protocol: 'protocol', csr: 'CSR', 'ivd-assessment': 'IVD assessment', 'ivd-document': 'IVD generated document',
+};
+
 export function isWorkflowImportOrigin(origin: AuthoringImportOrigin): origin is WorkflowImportOrigin {
-  return origin.kind === 'protocol' || origin.kind === 'csr';
+  return isWorkflowSourceKind(origin.kind);
 }
 
 export interface AuthoringSourceImportData {

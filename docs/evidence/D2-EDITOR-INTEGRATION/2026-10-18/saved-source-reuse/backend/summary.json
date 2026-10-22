@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "productionAndTestSourceFrozen": true,
+  "sourcePinCount": 56,
+  "beforeAfterPinsEqual": true,
+  "missingFeatureRed": {
+    "file": "initial-red.log",
+    "exitCode": 1,
+    "failedTests": 1,
+    "cause": "Authenticated source-based build succeeded; saved-reference GET absent returned404 rather than admitted200."
+  },
+  "savedSourceHttp": {
+    "file": "saved-source-tests.log",
+    "exitCode": 0,
+    "passedTests": 27,
+    "files": 1
+  },
+  "combinedHttpReplay": {
+    "file": "final-tests.log",
+    "exitCode": 0,
+    "passedTests": 89,
+    "files": 3,
+    "breakdown": {
+      "newSavedReferenceHttp": 27,
+      "unchangedAssemblyHttp": 48,
+      "unchangedSelectedSourceAnAHttp": 14
+    }
+  },
+  "lint": {
+    "file": "lint-final.json",
+    "files": 3,
+    "errors": 0,
+    "warnings": 0
+  },
+  "qualification": "Signed-JWT HTTP and real PGlite canonical migrations/SQL with deterministic late-change seams; no native PostgreSQL concurrency, live provider, human test or deployment claim. Root owns compiler/build/security/ratchet/publication."
+}

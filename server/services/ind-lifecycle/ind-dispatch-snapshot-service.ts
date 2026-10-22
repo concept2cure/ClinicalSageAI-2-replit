@@ -21,11 +21,13 @@ import {
   indDispatchSnapshots,
   type IndDispatchSnapshot,
 } from '../../../shared/schema/ind-dispatch-snapshots';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { DISPATCH_VERDICT_SOURCE } from './ind-cockpit';
 
 const logger = createScopedLogger('ind-dispatch-snapshot-service');
+
+export type AuditedIndDispatchSnapshot = IndDispatchSnapshot & { auditTrail: AuditRowOutcome };
 
 export type SnapshotCtx = { organizationId: number; userId: number };
 
@@ -48,7 +50,7 @@ export interface CreateSnapshotInput {
 export async function createDispatchSnapshot(
   input: CreateSnapshotInput,
   ctx: SnapshotCtx,
-): Promise<IndDispatchSnapshot> {
+): Promise<AuditedIndDispatchSnapshot> {
   const [row] = await db
     .insert(indDispatchSnapshots)
     .values({
@@ -65,7 +67,7 @@ export async function createDispatchSnapshot(
     })
     .returning();
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_DISPATCH_SNAPSHOT_CREATED',
@@ -79,7 +81,7 @@ export async function createDispatchSnapshot(
     canDispatch: input.verdict.canDispatch,
     organizationId: ctx.organizationId,
   });
-  return row as IndDispatchSnapshot;
+  return { ...(row as IndDispatchSnapshot), auditTrail };
 }
 
 /** List a sequence's dispatch snapshots, newest first (org-scoped). */

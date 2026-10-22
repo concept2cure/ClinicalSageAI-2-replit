@@ -1,0 +1,5 @@
+ × tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again 50ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes 69ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a closed letter takes no new question and no edited response 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 18 passed (21)

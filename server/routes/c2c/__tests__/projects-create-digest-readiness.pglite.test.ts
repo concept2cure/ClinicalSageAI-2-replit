@@ -62,6 +62,7 @@ beforeAll(async () => {
       'migrations/20260925b_submissions_program_anchor.sql',
       'migrations/20260907_regulatory_programs_application_number.sql',
       'migrations/20260903_regulatory_programs_estar_device_fields.sql',
+      'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',
       'migrations/20261001b_projects_one_anchor_per_program.sql',
     ],

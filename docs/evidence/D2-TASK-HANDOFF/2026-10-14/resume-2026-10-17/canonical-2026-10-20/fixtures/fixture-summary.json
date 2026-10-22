@@ -1,0 +1,337 @@
+{
+  "status": "qualified-with-separated-executions",
+  "initial40": {
+    "source": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+    "files": 40,
+    "cases": 369,
+    "passed": 348,
+    "failed": 21,
+    "pending": 0,
+    "wholeGreenFiles": 34,
+    "wholeGreenCases": 328,
+    "evidence": "initial-summary.json"
+  },
+  "correctedSubset": {
+    "source": "c24db62ac5dce1b5007d1cbc67981dd5a462b757",
+    "files": 7,
+    "cases": 45,
+    "passed": 45,
+    "failed": 0,
+    "pending": 0,
+    "exitCode": 0,
+    "pinnedFiles": 2043,
+    "headBefore": "c24db62ac5dce1b5007d1cbc67981dd5a462b757",
+    "headAfter": "c24db62ac5dce1b5007d1cbc67981dd5a462b757",
+    "beforeAfterPinsUnchanged": true,
+    "paths": [
+      "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx",
+      "client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx"
+    ],
+    "changedPaths": [
+      "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx"
+    ],
+    "unchangedReplayedPath": "client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx",
+    "rawPrefix": "task-handoff-oct20-fixtures-corrected"
+  },
+  "retainedGreenFiles": {
+    "source": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+    "verifiedAgainstSource": "c24db62ac5dce1b5007d1cbc67981dd5a462b757",
+    "files": 33,
+    "cases": 324,
+    "allTestFileHashesMatchCorrectedCommit": true,
+    "pathsWithHashes": [
+      {
+        "path": "client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx",
+        "cases": 3,
+        "passed": 3,
+        "failed": 0,
+        "sha256": "0a406af010cbd99ce44164c713e6591c086736f9b9a1023621efa227758ea8d1"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx",
+        "cases": 10,
+        "passed": 10,
+        "failed": 0,
+        "sha256": "9b4bca21aebb3504ddb4b88dce98949c825de0a676d669c8099410da78ff66e1"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx",
+        "cases": 7,
+        "passed": 7,
+        "failed": 0,
+        "sha256": "7a99b62fc36f21eb5e567250e2436e34d0af612f801351b1622d9a84f58259d6"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx",
+        "cases": 8,
+        "passed": 8,
+        "failed": 0,
+        "sha256": "7fd16a4f8b3ed8dad4633af7ed0b22c74c517ef986ec3741a6f2d2b1115bbb04"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringClaimSurvivesRefusedSave.test.tsx",
+        "cases": 4,
+        "passed": 4,
+        "failed": 0,
+        "sha256": "05eecd0697659f492326ea2c236746fad64c36432950891c18219af6f8a77c08"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx",
+        "cases": 2,
+        "passed": 2,
+        "failed": 0,
+        "sha256": "8e4a10eb0d86c98b4894b9704b451252af2ba8755c66fb33298c916636d856d9"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx",
+        "cases": 4,
+        "passed": 4,
+        "failed": 0,
+        "sha256": "c1e76c092ae3836e9d95bd4e721b8f34b14fe554905057cc11f69101b2f2df31"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx",
+        "cases": 5,
+        "passed": 5,
+        "failed": 0,
+        "sha256": "56764366d5b5f3b64606eefec84a43c7ef387417c03b980dfcce3e95c3150af9"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx",
+        "cases": 22,
+        "passed": 22,
+        "failed": 0,
+        "sha256": "1bef38636fc0fa4004bcee90f3d57f90abf01fe2d8c75a9f6d84386969f642b9"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx",
+        "cases": 21,
+        "passed": 21,
+        "failed": 0,
+        "sha256": "c40b947135688548297b467d21c43fad820d8215f51a000cefb7d6d57a48f99d"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx",
+        "cases": 5,
+        "passed": 5,
+        "failed": 0,
+        "sha256": "2660b0682b2ddc7bf498d65547721db69a53942f3a1b0dc6dfd5a562009c5a59"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx",
+        "cases": 13,
+        "passed": 13,
+        "failed": 0,
+        "sha256": "c99009f912696d1bd3482b62fbee9e6105837dd4d0bf671c26d24b131c21fc70"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx",
+        "cases": 2,
+        "passed": 2,
+        "failed": 0,
+        "sha256": "7d1a1bd721dee999baaab88bb59c296b619c05dbcf8add16e5713b890aa64c18"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+        "cases": 14,
+        "passed": 14,
+        "failed": 0,
+        "sha256": "38cf3983f442c311e6b076ccf704d9b3b4922a83f9a4023451e12fbd293b10c6"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx",
+        "cases": 11,
+        "passed": 11,
+        "failed": 0,
+        "sha256": "f9a13e074e88391a3b3f32e09f1589646cdb881e0226512d6b6886b23c71e56f"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx",
+        "cases": 14,
+        "passed": 14,
+        "failed": 0,
+        "sha256": "aefc3c66666ecc2c0386f329fb5351c67152492d21d0783b80aefead9bce4efe"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx",
+        "cases": 4,
+        "passed": 4,
+        "failed": 0,
+        "sha256": "f980ed828ef9926d311d1c6afb4bc812a292eb38f47c46c3ec2c3ec740a8e228"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx",
+        "cases": 3,
+        "passed": 3,
+        "failed": 0,
+        "sha256": "f20a3a54ed1f1c507cfc9fb2bb0f1ea964a30bec1474fb255c10b8c5bbb7b5ec"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx",
+        "cases": 7,
+        "passed": 7,
+        "failed": 0,
+        "sha256": "765fdbd3ca63a57a41bfdc72f575fef49bcbd46eeae8176d736eedc2709f69e1"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx",
+        "cases": 9,
+        "passed": 9,
+        "failed": 0,
+        "sha256": "97679aa307d6ee339b1fe62270b75decf87b67158750a5d9d205f723d9444d29"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx",
+        "cases": 5,
+        "passed": 5,
+        "failed": 0,
+        "sha256": "830087fa6aef1dcbce46e0a265b27436e479a5df9d64583fb9ca004699c5e771"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/sendForReview.test.tsx",
+        "cases": 22,
+        "passed": 22,
+        "failed": 0,
+        "sha256": "50a048d8a0764a3ff172bea041b4e6f0986151e09c7cabcb2fcddaa212d09c6f"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx",
+        "cases": 23,
+        "passed": 23,
+        "failed": 0,
+        "sha256": "ee2ab486634cb5a12e67f37b52eda76cfd06bd7411f855afa040303f9efb5224"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx",
+        "cases": 18,
+        "passed": 18,
+        "failed": 0,
+        "sha256": "8f27ff9abc6854f1aabe50973f02151e34f05a85f4cc827882e22216f48a6fc0"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx",
+        "cases": 1,
+        "passed": 1,
+        "failed": 0,
+        "sha256": "dca8451b2364ebfe953a5f0c0478dd54639dcad4e833fb0924f09b0cafc80286"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+        "cases": 10,
+        "passed": 10,
+        "failed": 0,
+        "sha256": "c21a5fa7d38f8cf788d1edf84d281de19cd47bf581fb7031a5a2644bc096832d"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx",
+        "cases": 9,
+        "passed": 9,
+        "failed": 0,
+        "sha256": "ff78dafc84d02481489f70aadb3d0694d4bf9d235dcf20e7537c756f2837f281"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx",
+        "cases": 3,
+        "passed": 3,
+        "failed": 0,
+        "sha256": "28c8f60a3b1830ece8fe818b20dc054022044fb2fa721a7f3be66d9119227e84"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx",
+        "cases": 44,
+        "passed": 44,
+        "failed": 0,
+        "sha256": "6ffff2bb0d3d1847b1669ad3b2993e3278af6bdc9c559e2255f489cd255edaab"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx",
+        "cases": 6,
+        "passed": 6,
+        "failed": 0,
+        "sha256": "7505d6b7eb33d1ec82fb3123a3b0265d74148b0e31606457743f3cc8056736d8"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx",
+        "cases": 5,
+        "passed": 5,
+        "failed": 0,
+        "sha256": "ea190e5ad15920c05472abe8ba0bc7a83a4fe4fe7a02ad89479adfd1bb78ebad"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+        "cases": 1,
+        "passed": 1,
+        "failed": 0,
+        "sha256": "2d46ca808f4502c1aee341507c9f84072e41420c72498ff014f7ec50d5deda1c"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx",
+        "cases": 9,
+        "passed": 9,
+        "failed": 0,
+        "sha256": "d8d0c13eab803bb6ac877dafea6811747b538af664ab2e90983dfc54a3b31da1"
+      }
+    ]
+  },
+  "derivedCoverage": {
+    "files": 40,
+    "cases": 369,
+    "boundary": "Derived from 33 complete green files/324 cases in the initial execution plus the separate corrected7/45 execution. This is not one all-green40-file run. The20 passing cases in the six initially red files are not counted twice."
+  },
+  "repairBoundary": "Five files now address exact Save or Check buttons instead of matching the existing saved-source controls. The termination fixture supplies operation.headers from owner.headers(). All expectation statements remain unchanged. Conversation refusal tests were replayed unchanged, with no timeout increase or fixture/production changes. No production files changed between ec57 and c24.",
+  "qualificationBoundary": "Default Vitest synthetic UI/service fixtures only. No live provider, native database, human witnessing, complete CI, or regulatory-use qualification claim. Compiler/publication are recorded by root in the parent packet.",
+  "archives": [
+    {
+      "path": "task-handoff-oct20-fixtures-corrected.files.txt.gz",
+      "originalBytes": 511,
+      "originalSha256": "c0af7c279f9334db2c2482cf30d1457fc0ca4ce2fcebd94b903f32650d37fe17",
+      "gzipSha256": "9c9a3b91cca9672d39584ce5ccc3edfae4166da19cc2600606db094c239513dd"
+    },
+    {
+      "path": "task-handoff-oct20-fixtures-corrected.command.json.gz",
+      "originalBytes": 1090,
+      "originalSha256": "3bc48ecb899c9ef03b9ac7f10d87b387a4f50bafddfb2a1ce84533cbf28b064a",
+      "gzipSha256": "8d4b1ca0c6682ec17fe4308c3d3b61a5c68bd188528597fa980839612979b4d1"
+    },
+    {
+      "path": "task-handoff-oct20-fixtures-corrected.log.gz",
+      "originalBytes": 64990,
+      "originalSha256": "54100bdca6a8b9db43eee28f92d1744e14028de67914bb8e4014f8c8fb1ff8a8",
+      "gzipSha256": "3abdbb223d72b9ae3bb830d9cfb2341f191baf6c252ee447875707fc92e289bc"
+    },
+    {
+      "path": "task-handoff-oct20-fixtures-corrected.json.gz",
+      "originalBytes": 19178,
+      "originalSha256": "f201cbed600e42cb1cd72f6764c42c08262372e6c6d29529341deee2f0ed5fe1",
+      "gzipSha256": "d09ff9a961f303b7544ed368df03a1e4b8b6cec6f0e3ffa88fc9ebeb78940231"
+    },
+    {
+      "path": "task-handoff-oct20-fixtures-corrected.pins.json.gz",
+      "originalBytes": 545338,
+      "originalSha256": "17432fea8b889a122166eac3c3f22e993f6be3513bc8887f88d0d481b35cef45",
+      "gzipSha256": "a9de1757c0b05c4b1869fb965dc1eb97066280a310295906d49a79ad52393ee5"
+    },
+    {
+      "path": "task-handoff-oct20-fixtures-corrected.before-pins.json.gz",
+      "originalBytes": 268269,
+      "originalSha256": "b2c68f1fce1e1bb6355d20d4639d7ed13723df5bd6bba4c1b5c9e46ca600b223",
+      "gzipSha256": "090d46d45793f201e6433b7ee2e210c9cd7d3f35cf2e3cdeef565833a11412d0"
+    },
+    {
+      "path": "fixture-selector-and-captured-headers.patch.gz",
+      "originalBytes": 6240,
+      "originalSha256": "df98ed9e52605656709f6fa8ffd08a5a5420e13dbb6a7c733ff0312367e6c914",
+      "gzipSha256": "f67ae8c5e66c352e3c7ef56d49a78fded1069846424a0286a492656f941c77e0"
+    }
+  ]
+}

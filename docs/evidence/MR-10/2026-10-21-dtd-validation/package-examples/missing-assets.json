@@ -1,0 +1,115 @@
+{
+  "syntheticSchemas": true,
+  "agencyAcceptance": false,
+  "packageSha256": "106baf066966744de652632825da463d04d8f853862c849f6bb43c0a48fdfd21",
+  "dtdStatus": {
+    "required": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd"
+    ],
+    "present": [],
+    "missing": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd"
+    ],
+    "missingStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl"
+    ],
+    "requiredStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl"
+    ],
+    "presentStylesheets": [],
+    "selfContained": false,
+    "validation": {
+      "version": 1,
+      "expectedFiles": [
+        "index.xml",
+        "m1/us/us-regional.xml",
+        "m5/5-3-5-1/study-001/stf-study-001.xml"
+      ],
+      "files": [
+        {
+          "relPath": "index.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": false,
+            "valid": false,
+            "mode": "dtd",
+            "errors": [
+              "Declared DTD ich-ectd-3-2.dtd is missing from the package."
+            ]
+          }
+        },
+        {
+          "relPath": "m1/us/us-regional.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": false,
+            "valid": false,
+            "mode": "dtd",
+            "errors": [
+              "Declared DTD us-regional-v3-3.dtd is missing from the package."
+            ]
+          }
+        },
+        {
+          "relPath": "m5/5-3-5-1/study-001/stf-study-001.xml",
+          "wellFormed": {
+            "ran": true,
+            "valid": true,
+            "errors": [],
+            "mode": "well-formed"
+          },
+          "doctype": {
+            "valid": true,
+            "errors": []
+          },
+          "dtd": {
+            "ran": false,
+            "valid": false,
+            "mode": "dtd",
+            "errors": [
+              "Declared DTD ich-stf-v2-2.dtd is missing from the package."
+            ]
+          }
+        }
+      ],
+      "integrity": {
+        "verified": [],
+        "mismatched": [],
+        "missingFiles": [],
+        "unlistedFiles": [],
+        "ok": true
+      },
+      "passed": false
+    }
+  },
+  "regionalBackbone": {
+    "region": "fda",
+    "file": "m1/us/us-regional.xml",
+    "regionConformant": false,
+    "conformanceGap": "applicant contact \"Jane Smith\" has no telephone, so no <telephones>; form-356h.pdf is written twice, under <form> and under <m1-1-forms>, with one ID; leaf IDs must be unique in a backbone (ectd-packager/leaf-id.ts)"
+  }
+}

@@ -120,6 +120,15 @@ export async function listReportRunHistory(
     if (!filters.accessibleProjectIds.every(id => Number.isSafeInteger(id) && id > 0)) throw new Error('Invalid accessible project IDs.');
     const permitted = bind(filters.accessibleProjectIds);
     const allowLegacy = bind(filters.allowUnboundProgramReports === true);
+    // Source projects constrain every saved scope, including an account report
+    // whose selected context carries no project of its own. Filter before count/page.
+    conditions.push(`CASE
+      WHEN r.dependency_summary::jsonb #> '{summary,accessProjectIds}' IS NULL THEN true
+      WHEN jsonb_typeof(r.dependency_summary::jsonb #> '{summary,accessProjectIds}') = 'array' THEN
+        NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.dependency_summary::jsonb #> '{summary,accessProjectIds}') AS source(id)
+          WHERE jsonb_typeof(source.id) <> 'number' OR source.id::text !~ '^[1-9][0-9]*$'
+            OR NOT(source.id::text = ANY(${permitted}::int[]::text[])))
+      ELSE false END`);
     conditions.push(`(
       (r.scope_type = 'account' AND r.scope_id = r.organization_id::text)
       OR (r.scope_type = 'project' AND r.scope_id = ANY(${permitted}::int[]::text[]))

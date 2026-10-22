@@ -1,0 +1,34 @@
+# MUTATION-REVIEW 10 the inbox adopting its read in an effect after commit again (the stale-seed frame)
+# Finding: Findings 8, 13: one committed frame showed role=alert 'That letter is not in this project's inbox' (and 'No agency communications yet') over a listed letter.
+# File: client/src/concept2cure/v2/surfaces/AgencyInbox.tsx
+# Replaced:
+#   -   const [adopted, setAdopted] = React.useState<CommRow[]>(seed);
+#   -   if (adopted !== seed) {
+#   -     setAdopted(seed);
+#   -     setComms(seed.map((c) => ({ ...c })));
+#   -   }
+# With:
+#   +   const seedRef = React.useRef<CommRow[]>(seed);
+#   +   React.useEffect(() => {
+#   +     if (seed !== seedRef.current) {
+#   +       seedRef.current = seed;
+#   +       setComms(seed.map((c) => ({ ...c })));
+#   +     }
+#   +   }, [seed]);
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored client/src/concept2cure/v2/surfaces/AgencyInbox.tsx: sha256 1ae3365185aca0f8… before = 1ae3365185aca0f8… after (byte-identical)
+
+ ✓ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > on mount: the inbox, that letter's card open with its questions, focus on it 180ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > when already mounted, the channel's event opens the letter 46ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > a letter that is not in this project's inbox is said to be so, and no other letter opens 29ms
+ × client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > never says, even for one frame, that a listed letter is absent, or that the inbox is empty 59ms
+   → expected [ 'absent', 'alert', 'empty' ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > the card a link opened is a region named by its own title, never a role-less div with a label 154ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx > Communication opens the letter another screen links to > an id that is not id-shaped opens nothing 39ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'absent', 'alert', 'empty' ] to deeply equal []
+- Expected
++ Received

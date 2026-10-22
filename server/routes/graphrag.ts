@@ -21,11 +21,11 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { aiComplete } from '../lib/unified-ai-client';
 import { clampGraphRagBounds } from './graphrag-util.js';
-import { getPool } from '../db';
+import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { respondVerificationUnavailable } from '../lib/verification-outcome';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -363,7 +363,7 @@ interface TraversalResult {
 }
 
 async function traverseGraph(
-  pool: Pool,
+  pool: RequestSqlClient,
   seedEntityIds: string[],
   maxHops: number,
   entityTypeFilter?: EntityType[]
@@ -381,67 +381,62 @@ async function traverseGraph(
 
     currentIds.forEach(id => visited.add(id));
 
-    try {
-      // Fetch neighboring entities via knowledge_graph_edges
-      const edgeQuery = `
-        SELECT DISTINCT
-          kge.id as edge_id,
-          kge.source_id,
-          kge.target_id,
-          kge.relationship_type,
-          kge.weight,
-          kge.metadata as edge_metadata,
-          kgn.id as node_id,
-          kgn.entity_type,
-          kgn.name,
-          kgn.description,
-          kgn.metadata as node_metadata
-        FROM knowledge_graph_edges kge
-        JOIN knowledge_graph_nodes kgn
-          ON (kgn.id = kge.target_id OR kgn.id = kge.source_id)
-        WHERE (kge.source_id = ANY($1::text[]) OR kge.target_id = ANY($1::text[]))
-          ${typeFilter}
-        LIMIT 200
-      `;
+    // Fetch neighboring entities via knowledge_graph_edges
+    const edgeQuery = `
+      SELECT DISTINCT
+        kge.id as edge_id,
+        kge.source_id,
+        kge.target_id,
+        kge.relationship_type,
+        kge.weight,
+        kge.metadata as edge_metadata,
+        kgn.id as node_id,
+        kgn.entity_type,
+        kgn.name,
+        kgn.description,
+        kgn.metadata as node_metadata
+      FROM knowledge_graph_edges kge
+      JOIN knowledge_graph_nodes kgn
+        ON (kgn.id = kge.target_id OR kgn.id = kge.source_id)
+      WHERE (kge.source_id = ANY($1::text[]) OR kge.target_id = ANY($1::text[]))
+        ${typeFilter}
+      LIMIT 200
+    `;
 
-      const params: any[] = [currentIds];
-      if (entityTypeFilter?.length) params.push(entityTypeFilter);
+    const params: any[] = [currentIds];
+    if (entityTypeFilter?.length) params.push(entityTypeFilter);
 
-      const result = await pool.query(edgeQuery, params);
+    const result = await pool.query(edgeQuery, params);
 
-      for (const row of result.rows) {
-        edgesTraversed++;
-        if (!visited.has(row.node_id)) {
-          seedEntityIds.push(row.node_id);
-          allEntities.push({
-            id: row.node_id,
-            entityType: row.entity_type,
-            name: row.name,
-            description: row.description,
-            aliases: [],
-            metadata: row.node_metadata || {},
-            confidence: 0.8,
-            createdAt: new Date(),
-          });
-        }
-        allRelationships.push({
-          id: row.edge_id,
-          sourceEntityId: row.source_id,
-          targetEntityId: row.target_id,
-          relationshipType: row.relationship_type,
-          weight: row.weight || 1.0,
-          evidence: [],
-          sourceDocumentIds: [],
+    for (const row of result.rows as any[]) {
+      edgesTraversed++;
+      if (!visited.has(row.node_id)) {
+        seedEntityIds.push(row.node_id);
+        allEntities.push({
+          id: row.node_id,
+          entityType: row.entity_type,
+          name: row.name,
+          description: row.description,
+          aliases: [],
+          metadata: row.node_metadata || {},
           confidence: 0.8,
-          metadata: row.edge_metadata || {},
           createdAt: new Date(),
         });
       }
-    } catch (dbErr) {
-      // Tables may not exist — log and return what we have
-      console.warn('[GraphRAG] Traversal hop failed:', (dbErr as Error).message);
-      break;
+      allRelationships.push({
+        id: row.edge_id,
+        sourceEntityId: row.source_id,
+        targetEntityId: row.target_id,
+        relationshipType: row.relationship_type,
+        weight: row.weight || 1.0,
+        evidence: [],
+        sourceDocumentIds: [],
+        confidence: 0.8,
+        metadata: row.edge_metadata || {},
+        createdAt: new Date(),
+      });
     }
+
   }
 
   return {
@@ -453,7 +448,7 @@ async function traverseGraph(
 }
 
 // ---------------------------------------------------------------------------
-// COMMUNITY DETECTION (Leiden-inspired hierarchical clustering)
+// COMMUNITY DETECTION (connected components)
 // ---------------------------------------------------------------------------
 
 function detectCommunities(
@@ -592,47 +587,27 @@ const logger = createScopedLogger('graphrag');
 
 const router = Router();
 
-/**
- * Resolve the pg pool for a request. The router is mounted without a
- * per-request pool injection, and nothing ever sets `req.pool` / `req.app.pool`
- * — so both were always undefined and every route 500'd on `pool.query` of
- * undefined. Fall back to the canonical pool while still honoring an explicit
- * injection if a test or caller provides one.
- *
- * ── What this pool does NOT do (corrected 2026-10-12) ──────────────────────
- * This comment used to claim the canonical pool "carries RLS tenant scoping
- * when a scope is active on the request". It does not, and the difference is
- * the whole behaviour of this file. `server/db/runtime.ts` (behind the
- * `server/db.ts` re-export) sets NO session variables and installs no connect
- * hook; `applySessionScope` is called from exactly two places,
- * `middleware/establishRequestTenantScope.ts` and `db/withTenantConnection.ts`,
- * both of which pin ONE connection and apply the GUCs to that. A checkout from
- * this shared pool therefore carries no `app.current_tenant_id`, whatever
- * scope is active in AsyncLocalStorage.
- *
- * knowledge_graph_nodes, knowledge_graph_edges and (since 2026-10-12)
- * citation_chains are policied by
- * db/migrations/20260813_knowledge_graph_tenant_keys.sql with an UNCONDITIONAL
- * predicate — `organization_id = current_setting('app.current_tenant_id')`,
- * with no `app.rls_enforce` bypass arm and no super-admin arm, deliberately, so
- * unattributed rows reach nobody. On a connection with no GUC that predicate is
- * NULL for every row, so every read through this pool returns ZERO rows.
- * Measured on a deploy-shaped database as the real runtime role: three seeded
- * nodes, `SELECT count(*)` = 0 unscoped, 1 scoped to the owning tenant.
- *
- * So these routes are fail-closed — they cannot leak — but they are also
- * INERT, and they report that inertness as success with an empty graph. That is
- * a dead feature wearing a 200, and it is recorded rather than quietly fixed
- * here: making GraphRAG serve data again means moving these reads onto
- * `requestPgClient(req)` (server/db/requestDb.ts — the request-pinned client
- * that carries the scope and never falls back to this pool), which is a
- * behaviour change on a surface outside the launch catalog and therefore a
- * product call, not a session's.
- * See docs/work-orders/WO-19-graphrag-reads-are-inert.md and
- * docs/evidence/D3/2026-10-12-citation-chains-tenant-key/.
- */
-function resolvePool(req: Request): Pool {
-  return (req as any).pool || (req.app as any).pool || getPool();
+/** All graph reads use the authenticated request's pinned tenant connection.
+ * WO-19's shared-pool fallback carried no tenant GUC and returned empty success.
+ * Repairing that retained reader does not change the launch catalog or flags. */
+router.use((req, res, next) => {
+  if (!getSecureOrgId(req)) {
+    return res.status(403).json({ success: false, error: 'ORG_REQUIRED', message: 'Organization context required.' });
+  }
+  try {
+    requestPgClient(req);
+  } catch (error) {
+    return respondVerificationUnavailable(res, logger, 'Graph data', error, {
+      code: 'GRAPH_SCOPE_UNAVAILABLE', message: 'Graph data is unavailable because the authenticated tenant database scope could not be established.',
+    });
+  }
+  return next();
+});
+
+function graphUnavailable(res: Response, error: unknown) {
+  return respondVerificationUnavailable(res, logger, 'Graph data', error, {
+    code: 'GRAPH_DATA_UNAVAILABLE', message: 'Graph data could not be read. No empty graph or zero activity is being reported.',
+  });
 }
 
 /**
@@ -641,17 +616,14 @@ function resolvePool(req: Request): Pool {
  */
 router.post('/query', async (req: Request, res: Response) => {
   const startTime = Date.now();
-  const pool: Pool = resolvePool(req);
+  const pool = requestPgClient(req);
   const body: GraphRAGQuery = req.body;
 
   if (!body.query) return res.status(400).json({ error: 'query is required' });
 
   const queryId = uuidv4();
-  /* Every graph table this route reads is org-keyed and policied, citation_chains
-     included since 2026-10-12. The citation read still states the organisation
-     explicitly — and skips the enrichment entirely when none can be resolved,
-     rather than running unscoped — because RLS alone scopes nothing on this
-     router's unscoped pool checkout (see resolvePool). */
+  /* Graph tables retain FORCE RLS on the request-pinned tenant connection.
+     Citation enrichment also predicates the organization explicitly. */
   const queryOrganizationId = getSecureOrgId(req);
   const weights = body.hybridWeights || {
     vectorSimilarity: 0.4,
@@ -669,23 +641,19 @@ router.post('/query', async (req: Request, res: Response) => {
     // Step 2: Vector search for seed entities
     const vectorStart = Date.now();
     let vectorHits: Array<{ id: string; score: number }> = [];
-    try {
-      const vectorResult = await pool.query(
-        `
-        SELECT id, name, entity_type,
-          1 - (embedding <=> (SELECT embedding FROM knowledge_graph_nodes WHERE name ILIKE $1 LIMIT 1)) as similarity
-        FROM knowledge_graph_nodes
-        WHERE embedding IS NOT NULL
-        ORDER BY embedding <=> (SELECT embedding FROM knowledge_graph_nodes WHERE name ILIKE $1 LIMIT 1)
-        LIMIT $2
-      `,
-        [body.query.split(' ')[0], topK]
-      );
-      vectorHits = vectorResult.rows.map((r: any) => ({ id: r.id, score: r.similarity || 0.5 }));
-    } catch (vecErr) {
-      // pgvector tables may not exist yet
-      console.warn('[GraphRAG] Vector search unavailable:', (vecErr as Error).message);
-    }
+    const vectorResult = await pool.query(
+      `
+      SELECT id, name, entity_type,
+        1 - (embedding <=> (SELECT embedding FROM knowledge_graph_nodes WHERE name ILIKE $1 LIMIT 1)) as similarity
+      FROM knowledge_graph_nodes
+      WHERE embedding IS NOT NULL
+      ORDER BY embedding <=> (SELECT embedding FROM knowledge_graph_nodes WHERE name ILIKE $1 LIMIT 1)
+      LIMIT $2
+    `,
+      [body.query.split(' ')[0], topK]
+    );
+    vectorHits = vectorResult.rows.map((r: any) => ({ id: r.id, score: r.similarity || 0.5 }));
+
     const vectorSearchMs = Date.now() - vectorStart;
 
     // Step 3: Graph traversal from seed entities
@@ -711,43 +679,37 @@ router.post('/query', async (req: Request, res: Response) => {
     // Step 6: Build citation chains
     const citationChains: CitationChain[] = [];
     if (body.includeCitationChains && queryOrganizationId) {
-      try {
-        /* These ids come from an org-scoped traversal, so they are already
-           this tenant's — but citation_chains has no tenant column and no
-           policy, so the constraint is stated here too rather than assumed.
-           Same shape as the citation-trace read below. */
-        const citResult = await pool.query(
-          `
-          SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context, c.confidence
-          FROM citation_chains c
-          WHERE (
-                  (c.source_document_id = ANY($1::text[]) AND EXISTS (
-                     SELECT 1 FROM knowledge_graph_nodes n
-                      WHERE n.organization_id = $2::int
-                        AND n.source_document_id = c.source_document_id))
-               OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
-                     SELECT 1 FROM knowledge_graph_nodes n
-                      WHERE n.organization_id = $2::int
-                        AND n.source_document_id = c.target_document_id))
-                )
-          LIMIT 50
-        `,
-          [traversalResult.entities.filter(e => e.entityType === 'document').map(e => e.id), queryOrganizationId]
-        );
-        for (const row of citResult.rows) {
-          citationChains.push({
-            id: row.id,
-            sourceDocumentId: row.source_document_id,
-            targetDocumentId: row.target_document_id,
-            citationType: row.citation_type,
-            context: row.context,
-            confidence: row.confidence,
-            extractedAt: new Date(),
-          });
-        }
-      } catch {
-        // citation_chains table may not exist
+      /* Retain the explicit organization constraint beside FORCE RLS. */
+      const citResult = await pool.query(
+        `
+        SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context, c.confidence
+        FROM citation_chains c
+        WHERE (
+                (c.source_document_id = ANY($1::text[]) AND EXISTS (
+                   SELECT 1 FROM knowledge_graph_nodes n
+                    WHERE n.organization_id = $2::int
+                      AND n.source_document_id = c.source_document_id))
+             OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
+                   SELECT 1 FROM knowledge_graph_nodes n
+                    WHERE n.organization_id = $2::int
+                      AND n.source_document_id = c.target_document_id))
+              )
+        LIMIT 50
+      `,
+        [traversalResult.entities.filter(e => e.entityType === 'document').map(e => e.id), queryOrganizationId]
+      );
+      for (const row of citResult.rows as any[]) {
+        citationChains.push({
+          id: row.id,
+          sourceDocumentId: row.source_document_id,
+          targetDocumentId: row.target_document_id,
+          citationType: row.citation_type,
+          context: row.context,
+          confidence: row.confidence,
+          extractedAt: new Date(),
+        });
       }
+
     }
 
     const totalMs = Date.now() - startTime;
@@ -779,7 +741,7 @@ router.post('/query', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (err) {
     console.error('[GraphRAG] Query failed:', err);
-    return serverError(res, logger, 'querying', err);
+    return graphUnavailable(res, err);
   }
 });
 
@@ -788,7 +750,7 @@ router.post('/query', async (req: Request, res: Response) => {
  * Ingest a document into the knowledge graph
  */
 router.post('/ingest', async (req: Request, res: Response) => {
-  const pool: Pool = resolvePool(req);
+  const pool = requestPgClient(req);
   const body: IngestionRequest = req.body;
 
   if (!body.documentId || !body.content) {
@@ -905,7 +867,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
  * Get the local neighborhood of an entity (1-hop)
  */
 router.get('/entities/:entityId/neighborhood', async (req: Request, res: Response) => {
-  const pool: Pool = resolvePool(req);
+  const pool = requestPgClient(req);
   const { entityId } = req.params as { entityId: string };
   const maxHops = parseInt(req.query.hops as string) || 1;
   const entityTypes = req.query.types
@@ -928,7 +890,7 @@ router.get('/entities/:entityId/neighborhood', async (req: Request, res: Respons
       },
     });
   } catch (err) {
-    return serverError(res, logger, 'loading neighborhood', err);
+    return graphUnavailable(res, err);
   }
 });
 
@@ -937,7 +899,7 @@ router.get('/entities/:entityId/neighborhood', async (req: Request, res: Respons
  * List all detected communities in the knowledge graph
  */
 router.get('/communities', async (req: Request, res: Response) => {
-  const pool: Pool = resolvePool(req);
+  const pool = requestPgClient(req);
   const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
 
   try {
@@ -996,7 +958,7 @@ router.get('/communities', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    return serverError(res, logger, 'loading communities', err);
+    return graphUnavailable(res, err);
   }
 });
 
@@ -1005,36 +967,13 @@ router.get('/communities', async (req: Request, res: Response) => {
  * Trace all citations from/to a document
  */
 router.get('/citation-trace/:documentId', async (req: Request, res: Response) => {
-  const pool: Pool = resolvePool(req);
+  const pool = requestPgClient(req);
   const { documentId } = req.params;
   const depth = parseInt(req.query.depth as string) || 2;
 
-  /* `citation_chains` carries NO tenant column, has RLS OFF and zero policies
-     (verified on a deploy-shaped database, 2026-10-12), and this read was
-     `WHERE source_document_id = ANY($1) OR target_document_id = ANY($1)` with
-     $1 starting as the UNCHECKED path parameter and widening a hop per
-     `?depth=`. This router is mounted behind authenticateToken alone
-     (bootstrap/register-advanced-platform-routes.ts:158), so any authenticated
-     user of any tenant could pass another tenant's document id and walk that
-     tenant's citation graph — the linked ids, the citation type, the `context`
-     (the quoted source text), the page and the section. The write path at :762
-     already resolved an organisation; this read never did, and the sibling
-     tables created by the same migration (knowledge_graph_nodes/_edges) were
-     given organization_id and a policy while this one was not.
-
-     The organisation is required, and traversal may only start from, and step
-     through, documents this organisation can see — proved against
-     knowledge_graph_nodes, which IS org-keyed and policied.
-
-     The structural half landed the same day: citation_chains now carries
-     organization_id with RLS, FORCE and the same unconditional policy as its
-     two siblings, backfilled from knowledge_graph_nodes where the citing
-     document resolves to exactly one organisation and left NULL — visible to
-     nobody — where it does not. The predicate below is kept as well, and on
-     purpose: it is the only thing scoping this read on a connection that
-     carries no tenant GUC, which is every connection this router gets today
-     (see resolvePool). Two independent controls, neither relying on the other.
-     Evidence docs/evidence/D3/2026-10-12-citation-chains-tenant-key/. */
+  /* The graph tables, including citation_chains, carry organization keys and
+     FORCE RLS. Keep the org-keyed document constraint as a second guard: a
+     guessed document id must not start a trace outside this tenant's graph. */
   const organizationId = getSecureOrgId(req);
   if (!organizationId) {
     return res.status(403).json({
@@ -1049,50 +988,46 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
     let currentDocIds = [documentId];
 
     for (let d = 0; d < depth; d++) {
-      try {
-        /* The end that matched our frontier must be a document this
-           organisation can see, so a traversal cannot begin at — or step onto —
-           a foreign document. Both arms are needed: a chain is reachable from
-           either of its ends. */
-        const result = await pool.query(
-          `
-          SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context,
-                 c.page_number, c.section_id, c.confidence, c.created_at
-          FROM citation_chains c
-          WHERE (
-                  (c.source_document_id = ANY($1::text[]) AND EXISTS (
-                     SELECT 1 FROM knowledge_graph_nodes n
-                      WHERE n.organization_id = $2::int
-                        AND n.source_document_id = c.source_document_id))
-               OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
-                     SELECT 1 FROM knowledge_graph_nodes n
-                      WHERE n.organization_id = $2::int
-                        AND n.source_document_id = c.target_document_id))
-                )
-        `,
-          [currentDocIds, organizationId]
-        );
+      /* The end that matched our frontier must be a document this
+         organisation can see, so a traversal cannot begin at — or step onto —
+         a foreign document. Both arms are needed: a chain is reachable from
+         either of its ends. */
+      const result = await pool.query(
+        `
+        SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context,
+               c.page_number, c.section_id, c.confidence, c.created_at
+        FROM citation_chains c
+        WHERE (
+                (c.source_document_id = ANY($1::text[]) AND EXISTS (
+                   SELECT 1 FROM knowledge_graph_nodes n
+                    WHERE n.organization_id = $2::int
+                      AND n.source_document_id = c.source_document_id))
+             OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
+                   SELECT 1 FROM knowledge_graph_nodes n
+                    WHERE n.organization_id = $2::int
+                      AND n.source_document_id = c.target_document_id))
+              )
+      `,
+        [currentDocIds, organizationId]
+      );
 
-        const newDocIds: string[] = [];
-        for (const row of result.rows) {
-          chains.push({
-            id: row.id,
-            sourceDocumentId: row.source_document_id,
-            targetDocumentId: row.target_document_id,
-            citationType: row.citation_type,
-            context: row.context,
-            pageNumber: row.page_number,
-            sectionId: row.section_id,
-            confidence: row.confidence,
-            extractedAt: row.created_at,
-          });
-          newDocIds.push(row.source_document_id, row.target_document_id);
-        }
-        currentDocIds = [...new Set(newDocIds)].filter(id => !currentDocIds.includes(id));
-      } catch (citErr) {
-        console.warn('[GraphRAG] Citation trace query failed:', (citErr as Error).message);
-        break; // Table doesn't exist yet
+      const newDocIds: string[] = [];
+      for (const row of result.rows as any[]) {
+        chains.push({
+          id: row.id,
+          sourceDocumentId: row.source_document_id,
+          targetDocumentId: row.target_document_id,
+          citationType: row.citation_type,
+          context: row.context,
+          pageNumber: row.page_number,
+          sectionId: row.section_id,
+          confidence: row.confidence,
+          extractedAt: row.created_at,
+        });
+        newDocIds.push(row.source_document_id, row.target_document_id);
       }
+      currentDocIds = [...new Set(newDocIds)].filter(id => !currentDocIds.includes(id));
+
     }
 
     res.json({
@@ -1105,7 +1040,7 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
       },
     });
   } catch (err) {
-    return serverError(res, logger, 'loading citation trace', err);
+    return graphUnavailable(res, err);
   }
 });
 
@@ -1114,29 +1049,28 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
  * GraphRAG service health check
  */
 router.get('/health', async (req: Request, res: Response) => {
-  const pool: Pool = resolvePool(req);
+  const pool = requestPgClient(req);
 
-  let graphNodesCount = 0;
-  let graphEdgesCount = 0;
-  let neo4jAvailable = false;
-
-  try {
-    const nodeCount = await pool.query('SELECT COUNT(*) as cnt FROM knowledge_graph_nodes');
-    graphNodesCount = parseInt(nodeCount.rows[0]?.cnt || '0');
-  } catch {
-    /* table may not exist */
+  let graphNodesCount: number | null = null;
+  let graphEdgesCount: number | null = null;
+  const failures: unknown[] = [];
+  for (const [statement, assign] of [
+    ['SELECT COUNT(*) as cnt FROM knowledge_graph_nodes', (n: number) => { graphNodesCount = n; }],
+    ['SELECT COUNT(*) as cnt FROM knowledge_graph_edges', (n: number) => { graphEdgesCount = n; }],
+  ] as const) {
+    try {
+      const result = await pool.query(statement);
+      const count = Number(result.rows[0]?.cnt);
+      if (!Number.isSafeInteger(count) || count < 0) throw new Error('Graph count was not returned');
+      assign(count);
+    } catch (error) { failures.push(error); }
   }
-
-  try {
-    const edgeCount = await pool.query('SELECT COUNT(*) as cnt FROM knowledge_graph_edges');
-    graphEdgesCount = parseInt(edgeCount.rows[0]?.cnt || '0');
-  } catch {
-    /* table may not exist */
-  }
-
-  // Check Neo4j connectivity
-  if (process.env.NEO4J_URI) {
-    neo4jAvailable = true; // Delegate to lumen_cortex/enterprise/neo4j_connector.py
+  if (failures.length) {
+    logger.error('Graph health read unavailable', { failureCount: failures.length });
+    return res.status(503).json({ status: 'unavailable', service: 'graphrag',
+      error: 'GRAPH_DATA_UNAVAILABLE', message: 'Graph storage could not be read. Unavailable counts are unknown, not zero.',
+      graphStore: { postgres: { nodes: graphNodesCount, edges: graphEdgesCount } },
+    });
   }
 
   res.json({
@@ -1145,18 +1079,19 @@ router.get('/health', async (req: Request, res: Response) => {
     graphStore: {
       postgres: { nodes: graphNodesCount, edges: graphEdgesCount },
       neo4j: {
-        available: neo4jAvailable,
+        configured: Boolean(process.env.NEO4J_URI),
+        available: null, // Configuration is not a connectivity check.
         uri: process.env.NEO4J_URI ? '***configured***' : 'not_configured',
       },
     },
     features: {
-      entityExtraction: 'openai-gpt4o-mini',
+      entityExtraction: 'governed-ai-with-lexicon-fallback',
       fallbackNER: 'regex-biomedical',
       graphTraversal: 'bfs-multi-hop',
-      communityDetection: 'leiden-hierarchical',
-      hybridSearch: 'vector+graph+bm25',
+      communityDetection: 'connected-components',
+      hybridSearch: 'stored-vector+graph+token-overlap',
       citationTracing: true,
-      embeddingProviders: ['openai-ada-002', 'pubmedbert', 'sentence-transformers'],
+      embeddingSource: 'stored-node-embeddings',
     },
   });
 });

@@ -60,6 +60,15 @@ export interface WarGameReport {
   executiveSummary: string;
   topPriorities: string[];
   regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
+  /** Rules in the auditor. */
+  rulesTotal: number;
+  /** Rules whose every read is a field the source interview asks. */
+  rulesAssessed: number;
+  /**
+   * Rules that read a field the source interview does not ask. They produce
+   * no finding and no score: "missing" there means "never asked".
+   */
+  notAssessed: Array<{ ruleId: string; title: string; unaskedFields: string[] }>;
 }
 
 export interface AuditRule {

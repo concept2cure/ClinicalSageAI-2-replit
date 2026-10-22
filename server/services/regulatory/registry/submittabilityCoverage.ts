@@ -133,8 +133,8 @@ export type SubmissionChannel =
  * EMA made the eSubmission Gateway / Web Client mandatory for every
  * centralised-procedure eCTD submission from 2014-03-01 — new MAAs, variations,
  * renewals, PSURs, ASMFs — and tells applicants not to send those submissions to
- * NCAs via CESP as well (regulator text, ema.europa.eu; basis in
- * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * NCAs via CESP as well (recall, from ema.europa.eu search extracts, the pages
+ * not read; basis in docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-submission-channel-function-facts.md rows 1-2). REGION_IDENTITY.EU.defaultGateway
  * stays `cesp`: that IS the channel for national, MRP and DCP filings, which the
  * registry marks agency 'National_Competent_Authority'.
@@ -178,8 +178,9 @@ const EMA_CENTRALISED_FAMILIES = new Set([
  * 2026-10-05 (step g-eu-medicines-dated-facts) the registry declared these
  * filings 'eCTD' and only this module knew better. The registry entry is now
  * the one statement; the map below only words each filing's reason. Each row
- * is regulator text (ema.europa.eu search results, g-submission-channel-function
- * facts rows 4-5; g-eu-medicines-dated-facts facts). The platform has no IRIS
+ * is recall, from ema.europa.eu search results, not the pages themselves
+ * (g-submission-channel-function facts rows 4-5; g-eu-medicines-dated-facts
+ * facts). The platform has no IRIS
  * connector (Rule 2), so these are `unconnected`, not `portal`: this module
  * does not assert that no machine channel exists, so IRIS is deliberately not
  * in PORTAL_ONLY_FORMATS.
@@ -225,6 +226,19 @@ const NOTIFIED_BODY_STEP =
 
 const DEVICE_FAMILIES = new Set(['device_approval', 'device_clearance']);
 
+/** Regional gateways do not establish a channel to these device recipients.
+ * Medicinal DCP/NCA filings retain the existing regional CESP route. */
+function unmodelledDeviceRecipient(entry: RegulatoryApplicationType): string | null {
+  if (entry.agency === 'Registered_Certification_Body') return 'Registered certification body';
+  const device = ['medical_devices', 'diagnostics_ivd'].includes(entry.segment ?? '')
+    || DEVICE_FAMILIES.has(entry.applicationFamily);
+  if (entry.region !== 'EU' || !device) return null;
+  if (entry.agency === 'National_Competent_Authority') return 'National competent authority';
+  if (entry.agency === 'EU_Reference_Laboratory') return 'EU reference laboratory';
+  if (entry.agency === 'EMA') return 'EMA';
+  return 'Applicable device or IVD recipient';
+}
+
 export function submissionChannelFor(entry: RegulatoryApplicationType): SubmissionChannel {
   // The entry's own declared format first: a registered gateway for the region
   // is not a channel for a filing whose entry says it goes to a portal.
@@ -240,10 +254,15 @@ export function submissionChannelFor(entry: RegulatoryApplicationType): Submissi
     };
   }
 
+  const recipient = unmodelledDeviceRecipient(entry);
+  if (recipient) return {
+    kind: 'unconnected',
+    channel: `${recipient} — channel not modelled`,
+    reason: `This device or IVD recipient's submission channel is not modelled on the platform; the regional default gateway is not assumed`,
+    applicantStep: `Confirm whether and where submission is required, then submit through the channel specified by the ${recipient}.`,
+  };
+
   if (entry.region === 'EU' && entry.agency === 'EMA') {
-    if (DEVICE_FAMILIES.has(String(entry.applicationFamily))) {
-      return { kind: 'gateway', region: 'ema', name: 'eudamed' };
-    }
     if (entry.submissionFormat === 'IRIS') {
       return {
         kind: 'unconnected',

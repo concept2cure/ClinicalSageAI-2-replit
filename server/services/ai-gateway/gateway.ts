@@ -1196,6 +1196,23 @@ function usesFilesApiDocument(request: GatewayRequest): boolean {
   );
 }
 
+function sourceCheckpointRefusal(): GatewayPolicyError & { code: 'SOURCE_CONTEXT_UNAVAILABLE' } {
+  return Object.assign(new GatewayPolicyError(
+    'Selected project sources are unavailable, changed, or could not be verified. Refresh the source records before retrying.',
+  ), { code: 'SOURCE_CONTEXT_UNAVAILABLE' as const });
+}
+
+/** Capture the trusted callback before asynchronous policy or placement work. */
+function captureBeforeDispatch(request: GatewayRequest): GatewayRequest['beforeDispatch'] {
+  try {
+    const callback = request.beforeDispatch;
+    if (callback === undefined || typeof callback === 'function') return callback;
+  } catch {
+    // A throwing property accessor is also an invalid checkpoint, never a raw error.
+  }
+  throw sourceCheckpointRefusal();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Provider health — what counts against a provider
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1378,6 +1395,7 @@ export class AIGateway {
     // between agentic rounds. Spend nothing: no classification, no policy
     // pass, no provider call, no audit row for work that was never done.
     if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+    const beforeDispatch = captureBeforeDispatch(request);
 
     // A sub-agent's tool may not call a model (model-call-scope.ts). Refused
     // here, before anything is spent: no placement lookup, no classification,
@@ -1534,7 +1552,7 @@ export class AIGateway {
     if (admit(selectedModel)) {
       try {
         const response = await this.retryWithBackoff(
-          () => this.executeProvider(selectedModel, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
+          () => this.executeProvider(selectedModel, request, requestId, startTime, beforeDispatch), primaryRetries, 1000, overloadPolicy
         );
         this.recordSuccess(selectedModel.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
@@ -1573,7 +1591,7 @@ export class AIGateway {
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
         const response = await this.retryWithBackoff(
-          () => this.executeProvider(fallback, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
+          () => this.executeProvider(fallback, request, requestId, startTime, beforeDispatch), primaryRetries, 1000, overloadPolicy
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
@@ -1928,7 +1946,8 @@ export class AIGateway {
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
-    startTime: number
+    startTime: number,
+    beforeDispatch?: GatewayRequest['beforeDispatch'],
   ): Promise<GatewayResponse> {
     assertContentBlocksCarried(modelConfig, request);
     await this.assertTenantPlacement(modelConfig, request, requestId, startTime);
@@ -1958,7 +1977,16 @@ export class AIGateway {
     // Waiting for capacity must stop too, without ever starting a provider.
     let dispatchStarted = false;
     const response = await this.outboundLimiter
-      .run(() => {
+      .run(async () => {
+        if (beforeDispatch) {
+          try {
+            await beforeDispatch();
+          } catch {
+            throw sourceCheckpointRefusal();
+          }
+        }
+        // Cancellation can land while the source checkpoint is awaiting its reads.
+        request.signal?.throwIfAborted();
         dispatchStarted = true;
         return this.dispatchProvider(modelConfig, governed.request, requestId, startTime);
       }, request.signal)

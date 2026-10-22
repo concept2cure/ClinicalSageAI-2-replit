@@ -1,0 +1,223 @@
+{
+  "status": "Final six-file mocked-transport/native-client integration replay passed; no native database, official TypeScript, build or hosted result is inferred from this replay.",
+  "initialMergedBase": "6bc0027fe3733ae6ccd08a72adf126ed0ee71c15",
+  "currentCommittedBase": "8d3bd4688f96765bf267be99bfac74ba4034e2a0",
+  "initialDrawerRed": {
+    "failed": 9,
+    "passed": 4,
+    "cases": 13,
+    "log": "red.log.gz",
+    "scope": "Actual CreateExport/C2CForm/TaskTray with synthetic authenticated transport. Test helpers later awaited tray state changes to remove React act warnings; assertions preserved."
+  },
+  "actualHostRed": {
+    "failed": 2,
+    "selectedCases": 2,
+    "filteredOut": 13,
+    "log": "actual-host-red.log.gz",
+    "testSnapshot": "actual-host-red.test.tsx.gz",
+    "scope": "Real DocumentAuthoring/Workbench/native creation+TaskTray; valid scoped recovery followed by actual failed503 host refresh incorrectly allowed exact-task navigation."
+  },
+  "explicitAcknowledgementRed": {
+    "failed": 4,
+    "selectedCases": 4,
+    "filteredOut": 81,
+    "log": "explicit-host-red.log.gz"
+  },
+  "firstSixSuiteGreen": {
+    "passed": 188,
+    "files": 6,
+    "failed": 0,
+    "scope": "Initial ledger/408 connection before explicit host result contract; not final host-refresh qualification."
+  },
+  "currentTwoSuiteGreen": {
+    "passed": 100,
+    "files": 2,
+    "failed": 0,
+    "log": "explicit-host-green-first.log.gz",
+    "scope": "Strict acknowledgement hook plus15 drawer/actual-host failure cases and85 creation recovery cases; backend happy-path host wiring not yet included."
+  },
+  "originalCreationRecovery81Preserved": true,
+  "fixtureOnlyExistingTestChange": "The successful host callback explicitly returns true; all original test bodies/assertions preserved. Four absent/false acknowledgement cases appended.",
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+      "sha256": "e4da54ba9205a1423b8cc3106978f5b29008bc69f93187766b185411e825a8ca"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "sha256": "e9069c7398c6d4293147fef03f93cbd249c019fda131a072ab135f10bfe6c85c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx",
+      "sha256": "713e774d226731c128eb1a86f8676bd16f62532883369cf9d032fa0b261ab239"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+      "sha256": "a414af180af12ca9361d64068ac6c3d7ce3b05e7f53f417601f5be24c3055377"
+    }
+  ],
+  "authScopeLimit": "Existing host authentication ownership remains authoritative; this patch adds no auth/session framework.",
+  "artifacts": [
+    {
+      "path": "red.log.gz",
+      "rawBytes": 47399,
+      "rawSha256": "95096a90d3b423810b8a5a07fd2c0bcedf0f3aeb5de2435c7e0f1e1870d7bff9",
+      "sha256": "ebdcec8e28e222ad553a8bc8e4e2eb88438214833445bebe464fa4dfda2d00cd"
+    },
+    {
+      "path": "green-first.log.gz",
+      "rawBytes": 9830,
+      "rawSha256": "f80731510462e61f1e98cd30e2f049b3749c1fe3980463c8a270876b9b495ed3",
+      "sha256": "2cd808e09cb923bf3e70f85a4d7cb3400d957c7970b79f2dbc7211d5bccd626d"
+    },
+    {
+      "path": "actual-host-red.log.gz",
+      "rawBytes": 5135,
+      "rawSha256": "8cd4c352e8c555542e2322eb8323c1d375288922c366b5f5be9865ae835d55b1",
+      "sha256": "7fa6991f70de24794f62a89b9205804d6f470b4f322b7159227a6296055dab0c"
+    },
+    {
+      "path": "actual-host-red.test.tsx.gz",
+      "rawBytes": 15298,
+      "rawSha256": "37cadfa4196779fd5bb62c261c89c413adf84edd35e3cc2b9139bcb7cbc0edc2",
+      "sha256": "de5a8b877a3fd11bddef5ff98f082b7dbd201520334cfa0cff1490c4f9fd115e"
+    },
+    {
+      "path": "explicit-host-red.log.gz",
+      "rawBytes": 19073,
+      "rawSha256": "73e67940f6ebae2ed1421b520cca933c7fc31506f430dd6b1662e220c6844c6e",
+      "sha256": "ad011c1f7424056975a08fd23c7c87afa4dfad3a9772a5228b8214e381a4d454"
+    },
+    {
+      "path": "explicit-host-green-first.log.gz",
+      "rawBytes": 21077,
+      "rawSha256": "02b4dfc4ff3c630a8bdb0763ae1e1fce42a5aa7fe2f147ea741ebada0ccfaa68",
+      "sha256": "24d3950845bee058d12a6e7f1baa5210b37e3f2d520d76f54006fd679412c27f"
+    },
+    {
+      "path": "final-focused.log.gz",
+      "rawBytes": 43127,
+      "rawSha256": "d1aeb91d9cab1385019f3615f0c8cfc8a6b47adda9bf2a40429e5591bb0ac46c",
+      "sha256": "979c14c410f8f5269d55a1afd7e358d4e503a16128e7441a4e792ec97f3ad5b8"
+    },
+    {
+      "path": "final-focused.json.gz",
+      "rawBytes": 71439,
+      "rawSha256": "05082e14e6a9faccbdaa6e73f17d95e6b02f4dfbc6f9aad34722946d309d57f9",
+      "sha256": "ebc5895e3211d5fcddbbaafca7ea2b736b0cc083e5a1e42a5c5494bab508dd59"
+    },
+    {
+      "path": "lint-first.json.gz",
+      "rawBytes": 530,
+      "rawSha256": "d21e208ccb59f7313b73c2725fa91dbc6984441dea9169941feec3786451d547",
+      "sha256": "b4d09191d8cca0be6f1095603c88adf379a392b4fe5e8f87acbf62e303c4212f"
+    },
+    {
+      "path": "lint-final.json.gz",
+      "rawBytes": 530,
+      "rawSha256": "d21e208ccb59f7313b73c2725fa91dbc6984441dea9169941feec3786451d547",
+      "sha256": "b4d09191d8cca0be6f1095603c88adf379a392b4fe5e8f87acbf62e303c4212f"
+    },
+    {
+      "path": "lint-explicit-host.json.gz",
+      "rawBytes": 1064,
+      "rawSha256": "67714758e40a2381e33b268a59a7618cd8740f75484dcfcc5b1118f1e5f77fe6",
+      "sha256": "015d2633d6a8b450791f0817ba085f4b318804599d384c311537358d4aa42ef7"
+    },
+    {
+      "path": "useAuthoringCreation.before.ts.gz",
+      "rawBytes": 10659,
+      "rawSha256": "8746f8c0c65db27b724dcada76d51ee24c4c0a3cf361733b7f7d9d185283aded",
+      "sha256": "a28fd771da5248412f0d829dcd9cd6d211661c966a00eb65c01a7b901b780edb"
+    },
+    {
+      "path": "actual-host-green.log.gz",
+      "rawBytes": 3383,
+      "rawSha256": "825132b67efe1860a882b22e192fbe36442621a9de643de6eea313bf17f7f4b2",
+      "sha256": "8cba0e78025e1442c68c609987686630fe8908345dcc3321720308bbe6e0dce1"
+    },
+    {
+      "path": "final-host-integrated.log.gz",
+      "rawBytes": 46132,
+      "rawSha256": "213421c2fdff443ccb11b5f30c8bda372392a9a2ac9d7408cce20d86b400a299",
+      "sha256": "2684cae39b34b4375084b5d8e8cf456eb203a26ca68b273744cbc5d2cb25bb64"
+    },
+    {
+      "path": "final-host-integrated.json.gz",
+      "rawBytes": 76810,
+      "rawSha256": "124dd4eb5abd3c02267fba112892e6c6ecdaf38555b228b90ae19c7c642b4a5d",
+      "sha256": "7725d0dd97fed2eb680e537a1fb5f4468d946172f943e9797cb6ea52274f4bdd"
+    },
+    {
+      "path": "lint-final-owned.json.gz",
+      "rawBytes": 1064,
+      "rawSha256": "67714758e40a2381e33b268a59a7618cd8740f75484dcfcc5b1118f1e5f77fe6",
+      "sha256": "015d2633d6a8b450791f0817ba085f4b318804599d384c311537358d4aa42ef7"
+    }
+  ],
+  "hostSourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "065fa4e4efbc797734486731aad60ebd64dd8b7636ca1fc8034fc85533a83ee4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+      "sha256": "d666367cbe528173881adbc192f7f758e692321843dc3ae6972ba17796d54203"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+      "sha256": "90f191d13603d529251b4c9086cb2416e3b0da017371668989d789f8431b511b"
+    }
+  ],
+  "finalSixSuiteGreen": {
+    "passed": 203,
+    "failed": 0,
+    "skipped": 0,
+    "files": 6,
+    "durationSeconds": 28.53,
+    "log": "final-host-integrated.log.gz",
+    "json": "final-host-integrated.json.gz",
+    "filesAndCases": [
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx",
+        "passed": 26
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+        "passed": 85
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx",
+        "passed": 35
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx",
+        "passed": 17
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx",
+        "passed": 14
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx",
+        "passed": 26
+      }
+    ],
+    "scope": "Existing native CreateExport, C2CForm, TaskTray, TaskBoard and real DocumentAuthoring/Workbench components; authenticated transport is synthetic. Includes actual host refresh 503/wrong-scope refusals and explicit host boolean contract."
+  },
+  "actualHostGreen": {
+    "passed": 2,
+    "filteredOut": 13,
+    "log": "actual-host-green.log.gz",
+    "scope": "The same two actual-host 503 cases captured failing before host repair; final replay additionally includes two wrong-scope actual-host cases."
+  },
+  "finalOwnedLint": {
+    "errors": 0,
+    "warnings": 0,
+    "files": 4,
+    "log": "lint-final-owned.json.gz"
+  },
+  "stderrScope": "The final run contains existing React act warnings from unchanged authoringCreateExport.test.tsx and taskTrayHonestReads.test.tsx. The new taskDrawerCreationGuard.test.tsx has no stderr entry.",
+  "normalConfirmedReceiptPolicy": "A validated created receipt releases its ledger entry before the existing exact-receipt callback; the leave guard never treats Cancel as a transport cancellation.",
+  "unknownReleasePolicy": "A scoped recovery GET plus current host callback explicitly returning true is required to release unknown; absent, false, rejection, malformed/foreign response, pending refresh and HTTP408 remain guarded."
+}

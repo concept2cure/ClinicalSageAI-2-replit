@@ -25,6 +25,17 @@ const S = vi.hoisted(() => ({
 
 vi.mock('../../db.js', () => ({
   pool: {
+    connect: async () => ({
+      query: async (sql: string, params: unknown[] = []) => {
+        if (/^\s*INSERT/i.test(sql)) {
+          if (S.failInsert) throw new Error('SENTINEL-DB-DETAIL: synthetic refused insert');
+          S.inserts.push(params);
+          return { rows: [{ id: 101 }] };
+        }
+        return { rows: [] };
+      },
+      release: () => undefined,
+    }),
     query: async (sql: string, params: unknown[] = []) => {
       if (/^\s*INSERT/i.test(sql)) {
         if (S.failInsert) throw new Error('SENTINEL-DB-DETAIL: null value in column "type" violates not-null constraint');
@@ -74,8 +85,10 @@ describe('generateFigure — a failed store is a failure', () => {
     const r = await generateFigure({ ...BASE, rawData: [{ arm: 'treatment', orr: 0.42 }] });
 
     expect(r.success).toBe(false);
-    expect(r.figure).toBeUndefined();
-    expect(r.error).toMatch(/could not be stored/);
+    expect(r.storage).toMatchObject({ status: 'not_saved', code: 'FIGURE_NOT_SAVED' });
+    // The model draft is preserved for review, while no durable storage is claimed.
+    expect(r.figure?.generatedContent).toBe('{"type":"bar"}');
+    expect(r.error).toMatch(/not saved/);
     expect(r.error).not.toContain('SENTINEL-DB-DETAIL');
     expect(S.audits).toEqual([]);
     expect(S.provenance).toEqual([]);

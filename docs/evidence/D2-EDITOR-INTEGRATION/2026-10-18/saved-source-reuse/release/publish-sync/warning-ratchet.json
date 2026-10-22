@@ -1,0 +1,18 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:eslint-ratchet:since",
+    "--",
+    "aad0eb124",
+    "--gate"
+  ],
+  "startedAt": "2026-10-18T00:42:55.863921+00:00",
+  "elapsedSeconds": 4.332,
+  "exitCode": 0,
+  "node": "v22.23.3",
+  "executionBase": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+  "rawSha256": "250df06ee59afb4d34edd18bdae61895e05990c8874e30d44e456002b66abb6e",
+  "output": "[ci:eslint-warning-ratchet] --since aad0eb124 (aad0eb124) -- 21 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since aad0eb124.\n"
+}

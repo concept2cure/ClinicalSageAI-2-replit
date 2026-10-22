@@ -52,6 +52,7 @@ const h = vi.hoisted(() => ({
   logAction: vi.fn(async (_row: Record<string, unknown>) => undefined),
   isDevelopment: false,
   scope: vi.fn(),
+  assessProgramCompositionScope: vi.fn(),
 }));
 vi.mock('../../services/csr/project-scope', async importOriginal => ({ ...(await importOriginal<typeof import('../../services/csr/project-scope')>()), resolveCsrScope: h.scope }));
 
@@ -70,6 +71,11 @@ vi.mock('../../services/cmc/final-export-gate.js', () => ({
 }));
 vi.mock('../../services/cmc/load-cmc-sources-for-project.js', () => ({
   loadCmcSourcesForProject: h.loadCmcSourcesForProject,
+}));
+/* The composition boundary (decision P-28), asked once the gate opens; it is
+   judged on a real engine in composition-boundary-readers.pglite.test.ts. */
+vi.mock('../../services/cmc/module3-compile.js', () => ({
+  assessProgramCompositionScope: h.assessProgramCompositionScope,
 }));
 
 /* The other two Mode A loaders are not this suite's subject; they belong to the
@@ -108,7 +114,7 @@ function app() {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: 5 };
+    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: 5, role: 'member' };
     next();
   });
   a.use('/api/submission-orchestrator', orchestratorRouter);
@@ -175,6 +181,7 @@ beforeEach(() => {
   h.loadSubmissionFkBySubmissionIdText.mockResolvedValue(null);
   h.loadCmcSourcesForProject.mockResolvedValue([A_SOURCE]);
   h.evaluateFinalExportGate.mockResolvedValue(GATE_OPEN);
+  h.assessProgramCompositionScope.mockReset().mockResolvedValue(null);
 });
 
 describe('CMC data cannot be supplied in the request', () => {
@@ -306,6 +313,35 @@ describe('Mode A carries Module 3 only when the program’s export gate is open'
     expect(String(res.body.outputs.m3Refusal)).toMatch(/could not be evaluated/);
     // Not "this program has no CMC data" — nothing is known about it.
     expect(String(res.body.outputs.m3Refusal)).toMatch(/Nothing is known about its approval state/);
+  });
+
+  /* The gate judges approval, not what the program is. A biologic, or a
+     program filing an NDA, whose sections were approved before the boundary
+     existed passes it, and its Module 3 was composed and signed into the
+     package (2026-10-22). */
+  it('carries NO Module 3 for a program outside the composition boundary, though the gate opened, and says why', async () => {
+    const MAB = "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.";
+    h.assessProgramCompositionScope.mockResolvedValue({ code: 'CMC_MODALITY_OUT_OF_SCOPE', modality: 'biologic', message: MAB });
+
+    const res = await request(app()).post('/api/submission-orchestrator/runs').send(modeABody());
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(h.assessProgramCompositionScope).toHaveBeenCalledWith(ORG, PROGRAM);
+    expect(inputsPassed().cmcSources).toEqual([]);
+    expect(h.loadCmcSourcesForProject).not.toHaveBeenCalled();
+    expect(inputsPassed().module3ExportRefusal).toBe(MAB);
+    expect(assemblyAudit()).toMatchObject({ cmcExportGate: 'closed', cmcExportGateReason: MAB, cmcSourceCount: 0 });
+  });
+
+  it('a boundary that cannot be evaluated carries none and reads as unknown', async () => {
+    h.assessProgramCompositionScope.mockRejectedValue(new Error('connection terminated'));
+
+    const res = await request(app()).post('/api/submission-orchestrator/runs').send(modeABody());
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(inputsPassed().cmcSources).toEqual([]);
+    expect(assemblyAudit()).toMatchObject({ cmcExportGate: 'unknown' });
+    expect(String(res.body.outputs.m3Refusal)).toMatch(/could not be established/);
   });
 
   it('does not ask the gate at all when no CMC program is named', async () => {

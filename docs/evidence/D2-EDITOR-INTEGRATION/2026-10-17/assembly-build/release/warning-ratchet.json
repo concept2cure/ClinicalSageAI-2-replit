@@ -1,0 +1,7 @@
+{
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH npm run --silent ci:eslint-ratchet:since -- 4b0e3ff1e --gate",
+  "qualificationBase": "4b0e3ff1e",
+  "exitCode": 0,
+  "rawSha256": "29f7c6b285120b72c4935b20dd98bf8e6c0b9e47db439378badc90f8678a688b",
+  "rawOutput": "[ci:eslint-warning-ratchet] --since 4b0e3ff1e (4b0e3ff1e) -- 39 lintable file(s) changed; linting both versions of each...\n\n    -3  client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx  (5 -> 2)\n\n[ci:eslint-warning-ratchet] net -3 warning(s) across the files changed since 4b0e3ff1e.\n"
+}

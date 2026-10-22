@@ -1,0 +1,4 @@
+ × tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the contract is falsifiable > a v1.1 row with the right node count and one flag flipped stops the corrections file
+   → promise resolved "[ { rows: [], fields: [], …(1) } ]" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 13 skipped (14)

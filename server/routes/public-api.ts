@@ -305,7 +305,7 @@ router.get('/docs', (_req: Request, res: Response) => {
         parameters: {
           indication: { type: 'string', description: 'Disease/condition' },
           agency: { type: 'string', description: 'Regulatory agency' },
-          submissionType: { type: 'string', description: 'Submission type (NDA, BLA, 510k, etc.)' },
+          submissionType: { type: 'string', required: true, description: 'Submission type (NDA, BLA, 510(k), PMA, etc.)' },
           limit: { type: 'number', default: 10, description: 'Max results to return' },
         },
       },
@@ -315,6 +315,7 @@ router.get('/docs', (_req: Request, res: Response) => {
         scope: 'trial-design:read',
         description: 'Get trial design suggestions combining precedent intelligence with endpoint analytics',
         parameters: {
+          submissionType: { type: 'string', required: true, description: 'Submission type (NDA, BLA, 510(k), PMA, etc.)' },
           indication: { type: 'string', description: 'Disease/condition' },
           phase: { type: 'string', description: 'Trial phase' },
           primaryEndpoint: { type: 'string', description: 'Primary endpoint under consideration' },
@@ -580,6 +581,9 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
     }
     const phase = sanitizeQueryParam(req.query.phase);
     const therapeuticArea = sanitizeQueryParam(req.query.therapeuticArea);
+    // The corpus read is the key's organization's (2026-10-15).
+    const organizationId = resolveApiOrg(req, res);
+    if (organizationId === undefined) return res;
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_endpoint_recommend', 1, {
@@ -593,6 +597,7 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
 
     const recommender = getEndpointRecommenderService();
     const { recommendations, sources } = await recommender.getComprehensiveEndpointRecommendations(
+      organizationId,
       indication,
       phase,
       10,
@@ -629,8 +634,17 @@ router.get('/precedent/search', requireApiScope('precedent:read'), requireScope(
   try {
     const indication = sanitizeQueryParam(req.query.indication);
     const agency = sanitizeQueryParam(req.query.agency);
+    // Required: it defaulted to NDA, so a request that named none was answered
+    // with NDA precedents (2026-10-15).
     const submissionType = sanitizeQueryParam(req.query.submissionType);
+    if (!submissionType) {
+      return res.status(400).json({ error: 'submissionType is required (e.g. NDA, BLA, 510(k), PMA)' });
+    }
     const limit = parsePositiveInt(req.query.limit, 10, 50);
+    // The key's organization, so its own private precedents are searched with the
+    // public ones. 2026-10-22: none was passed, and they were silently omitted.
+    const organizationId = resolveApiOrg(req, res);
+    if (organizationId === undefined) return res;
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_precedent_search', 1, {
@@ -642,25 +656,35 @@ router.get('/precedent/search', requireApiScope('precedent:read'), requireScope(
       });
     }
 
-    let precedents = await precedentEngine.search({
+    const found = await precedentEngine.search({
       indication: indication as string,
-      submissionType: submissionType || 'NDA',
+      submissionType,
       query: indication as string,
       limit: limit * 2, // Over-fetch to allow agency filtering
-    });
+    }, organizationId);
 
-    // Filter by agency if provided
-    if (agency) {
-      precedents = precedents.filter((p: any) =>
-        !p.agency || p.agency.toLowerCase().includes((agency as string).toLowerCase())
-      );
-    }
-    precedents = precedents.slice(0, limit);
+    /* Filter by agency if provided. A precedent recording another agency is
+       dropped; one recording none is kept and labelled 'not_recorded'.
+       2026-10-22: one with no agency was kept as if it matched, unlabelled. */
+    const recordedAgency = (p: object): string | null => {
+      const a = (p as { agency?: unknown }).agency;
+      return typeof a === 'string' && a.trim() ? a : null;
+    };
+    const precedents = (agency
+      ? found
+          .filter((p) => recordedAgency(p) === null || recordedAgency(p)!.toLowerCase().includes(agency.toLowerCase()))
+          .map((p) => ({ ...p, agencyMatch: recordedAgency(p) === null ? 'not_recorded' as const : 'matched' as const }))
+      : found
+    ).slice(0, limit);
+    const agencyNotRecorded = agency
+      ? precedents.filter((p) => (p as { agencyMatch?: string }).agencyMatch === 'not_recorded').length
+      : null;
 
     return res.json({
       query: { indication, agency, submissionType },
       precedents,
       total: precedents.length,
+      agencyNotRecorded,
       limit,
       _apiVersion: 'v1',
     });
@@ -687,6 +711,8 @@ router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requir
     if (!resolvedSubmissionType) {
       return res.status(400).json({ error: 'submissionType is required (e.g. NDA, BLA, 510(k), PMA)' });
     }
+    const organizationId = resolveApiOrg(req, res);
+    if (organizationId === undefined) return res;
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_trial_design', 1, {
@@ -707,9 +733,10 @@ router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requir
         submissionType: resolvedSubmissionType,
         indication: indication as string,
         query: primaryEndpoint as string,
-      }, req.apiOrganizationId ?? undefined),
+      }, organizationId),
       endpointIndication
         ? getEndpointRecommenderService().getComprehensiveEndpointRecommendations(
+            organizationId,
             endpointIndication,
             sanitizeQueryParam(phase),
             5,

@@ -1270,59 +1270,53 @@ export async function markAuthoringPlanExecuted(
  * Find the active (draft or pending_approval) plan for the given
  * (project, section) — used by docx-ledger-collector and the section
  * generator to attach a plan to a downstream artifact.
+ *
+ * 2026-10-15: this and getLatestAuthoringPlanForArtifact answered a missing
+ * authoring_plans table (42P01) with null — "no plan" — before a caller could
+ * say the store was unread. The error now reaches the caller.
  */
 export async function getActiveAuthoringPlanForSection(
   projectId: number,
   organizationId: number,
   ctdSection: string
 ): Promise<AuthoringPlan | null> {
-  try {
-    const { rows } = await getPool().query(
-      `SELECT * FROM authoring_plans
-        WHERE organization_id = $1
-          AND project_id      = $2
-          AND ctd_section     = $3
-          AND status IN ('draft','pending_approval','approved')
-        ORDER BY
-          CASE status
-            WHEN 'approved' THEN 0
-            WHEN 'pending_approval' THEN 1
-            WHEN 'draft' THEN 2
-          END,
-          created_at DESC
-        LIMIT 1`,
-      [organizationId, projectId, ctdSection]
-    );
-    if (rows.length === 0) return null;
-    return rowToPlan(rows[0]);
-  } catch (err: any) {
-    if (err?.code === '42P01') return null;
-    throw err;
-  }
+  const { rows } = await getPool().query(
+    `SELECT * FROM authoring_plans
+      WHERE organization_id = $1
+        AND project_id      = $2
+        AND ctd_section     = $3
+        AND status IN ('draft','pending_approval','approved')
+      ORDER BY
+        CASE status
+          WHEN 'approved' THEN 0
+          WHEN 'pending_approval' THEN 1
+          WHEN 'draft' THEN 2
+        END,
+        created_at DESC
+      LIMIT 1`,
+    [organizationId, projectId, ctdSection]
+  );
+  if (rows.length === 0) return null;
+  return rowToPlan(rows[0]);
 }
 
 /**
  * Find the most recently-created plan (any status) attached to a given
  * artifact — used by docx-ledger-collector when an artifact carries an
- * artifact_id.
+ * artifact_id. A missing table throws (see getActiveAuthoringPlanForSection).
  */
 export async function getLatestAuthoringPlanForArtifact(
   artifactId: string,
   organizationId: number
 ): Promise<AuthoringPlan | null> {
-  try {
-    const { rows } = await getPool().query(
-      `SELECT * FROM authoring_plans
-        WHERE organization_id = $1
-          AND (artifact_id = $2 OR executed_artifact_id = $2)
-        ORDER BY created_at DESC
-        LIMIT 1`,
-      [organizationId, artifactId]
-    );
-    if (rows.length === 0) return null;
-    return rowToPlan(rows[0]);
-  } catch (err: any) {
-    if (err?.code === '42P01') return null;
-    throw err;
-  }
+  const { rows } = await getPool().query(
+    `SELECT * FROM authoring_plans
+      WHERE organization_id = $1
+        AND (artifact_id = $2 OR executed_artifact_id = $2)
+      ORDER BY created_at DESC
+      LIMIT 1`,
+    [organizationId, artifactId]
+  );
+  if (rows.length === 0) return null;
+  return rowToPlan(rows[0]);
 }

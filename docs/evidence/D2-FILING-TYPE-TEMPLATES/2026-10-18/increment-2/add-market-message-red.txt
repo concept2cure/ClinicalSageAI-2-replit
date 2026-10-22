@@ -1,0 +1,23 @@
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action 86ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the home filing is still the one an authored section binds to 76ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a newer market document of the home filing's own class never takes the home binding 28ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the project's own market with no submission yet gets its submission, and no second document 67ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a project with no filing of its own is refused, so the market never becomes its only document 46ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a repeat is refused (409), and nothing more is written 61ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a UK IND (the UK has no IND) with 422, says why, and writes nothing 21ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses Health Canada (no outline) with 422, says why, and writes nothing 18ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a device project with 422, says why, and writes nothing 17ms
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a supplement market on an NDA project with 422, says why, and writes nothing 23ms
+   → expected 'This project\'s filing is a document …' to match /^A Prior Approval Supplement is autho…/
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a clinical study report market on an NDA project with 422, says why, and writes nothing 14ms
+   → expected 'This project\'s filing is a document …' to match /^A clinical study report is authored …/
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an application market on a project that is a document class (a PAS) with 422, says why, and writes nothing 17ms
+   → expected 'This project\'s filing is a document …' to match /^No market is added to this project: …/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a supplement market on an NDA project with 422, says why, and writes nothing
+AssertionError: expected 'This project\'s filing is a document …' to match /^A Prior Approval Supplement is autho…/
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a clinical study report market on an NDA project with 422, says why, and writes nothing
+AssertionError: expected 'This project\'s filing is a document …' to match /^A clinical study report is authored …/
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an application market on a project that is a document class (a PAS) with 422, says why, and writes nothing
+AssertionError: expected 'This project\'s filing is a document …' to match /^No market is added to this project: …/
+      Tests  3 failed | 9 passed (12)

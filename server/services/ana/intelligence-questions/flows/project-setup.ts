@@ -477,7 +477,7 @@ export function createProjectSetupFlow(): FlowDefinition {
             id: 'product_code',
             label: 'FDA Product Code',
             type: 'text',
-            placeholder: 'e.g., QAS (Class II, Cardiovascular)',
+            placeholder: 'e.g., QAS (Class II, Radiology)',
           },
           {
             id: 'eu_mdr_class',
@@ -539,14 +539,39 @@ export function createProjectSetupFlow(): FlowDefinition {
             optionsFrom: 'device_pathway_positions',
             allowOther: { prompt: 'Which route are you taking, in your own words?' },
           },
+          /* The predicate OF RECORD, in the two facts the official eSTAR
+             prints from `predicate_devices[0]`: the trade name and the
+             submission number. One field asking for
+             "K123456 — Brand Name by Manufacturer" could fill neither — the
+             projection refused it, because reading a trade name out of that
+             blob would be asserting one — so a programme named its predicate
+             and the record kept nothing (2026-10-19).
+
+             The ids are the 510(k) flow's own (`device-510k.ts`,
+             `predicate_info`), which is also what `PREDICATE_FIELDS` names:
+             one vocabulary, so a predicate named in either interview is the
+             same fact to every rule that reads it.
+
+             Every 510(k) names a predicate — Traditional, Special and
+             Abbreviated alike — so both are gated on the pathway. */
           {
-            id: 'predicate_device',
-            label: 'Predicate Device (for 510(k))',
+            id: 'predicate_device_name',
+            label: 'Predicate Device Name (for 510(k))',
             type: 'text',
-            placeholder: 'e.g., K123456 — Brand Name by Manufacturer',
-            /* Every 510(k) names a predicate — Traditional, Special and
-               Abbreviated alike — so this is gated on the pathway, and the
-               flavour is the 510(k) flow's own question. */
+            placeholder: 'the predicate’s trade name, as it is marketed',
+            helpText:
+              'The trade name the official eSTAR prints beside the predicate’s submission number. It is the device you are claiming substantial equivalence to under 21 CFR 807.87(f), not a comparison you are considering.',
+            visibleWhen: { field: 'device_submission_pathway', operator: 'eq', value: 'US_510K' },
+          },
+          {
+            id: 'predicate_510k_number',
+            label: 'Predicate 510(k) Number (for 510(k))',
+            type: 'text',
+            placeholder: 'e.g. K123456',
+            validation: {
+              pattern: '^[Kk]\\d{6}$',
+              patternMessage: '510(k) number must be in the format K followed by 6 digits',
+            },
             visibleWhen: { field: 'device_submission_pathway', operator: 'eq', value: 'US_510K' },
           },
           {

@@ -1,0 +1,93 @@
+{
+  "scope": "Exact candidate-ordering SQL only; not HTTP, link integrity, source ACL or concurrent-scheduling qualification.",
+  "sourcePath": "server/services/authoring/authoring-saved-assembly-sources.ts",
+  "sourceBefore": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5",
+  "sourceAfter": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5",
+  "sourceUnchanged": true,
+  "querySha256": "5efcc67d3df36045a9988d7de46749785cedddae4e170576f559d7cca10ea19e",
+  "savedQuerySha256": "d630a4a674be78578b1e3a3765b38e460cc1b5315995e0052817b13670bb7bc0",
+  "node": "v22.23.3",
+  "passed": 16,
+  "results": [
+    {
+      "name": "empty",
+      "passed": true,
+      "orderingValid": true
+    },
+    {
+      "name": "one exact pair",
+      "passed": true,
+      "orderingValid": true
+    },
+    {
+      "name": "beyond 500 unrelated events",
+      "passed": true,
+      "orderingValid": true
+    },
+    {
+      "name": "newest numeric sequence",
+      "passed": true,
+      "orderingValid": true
+    },
+    {
+      "name": "newest null sequence",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "newest zero sequence",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "newest trail without chain",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "newest chain without trail",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "duplicate links",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "duplicate positions",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "damaged operation unchained metadata retained",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "damaged trail and action labels payload marker retained",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "damaged all operation labels metadata retained",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "malformed section source event",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "wrong chain record parent",
+      "passed": true,
+      "orderingValid": false
+    },
+    {
+      "name": "foreign tenant chain cannot repair own trail",
+      "passed": true,
+      "orderingValid": false
+    }
+  ]
+}

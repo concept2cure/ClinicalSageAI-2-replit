@@ -34,11 +34,11 @@ export const START_LEGACY_IMPORT: AnaTool = {
   },
 };
 
-// 2026-10-15: said mapping_source='manual'; the handler stores 'ana' ('manual' is the REST PATCH's).
+// 2026-10-15: said mapping_source='manual' (the handler stores 'ana'; 'manual' is the REST PATCH's) and mapping_confidence=1.00, which a person's placement is not.
 export const OVERRIDE_IMPORT_MAPPING: AnaTool = {
   name: 'override_import_mapping',
   description:
-    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='ana' and mapping_confidence=1.00.",
+    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='ana' and stores no mapping confidence: a confirmed or corrected placement is a person's decision, not a measurement. Name at least one field to change.",
   input_schema: {
     type: 'object',
     properties: {
@@ -671,7 +671,7 @@ export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
 export const BATCH_DRAFT_SECTIONS: AnaTool = {
   name: 'batch_draft_sections',
   description:
-    "Draft MANY document sections in ONE parallel batch instead of one section per turn. Use this when the author asks to draft/regenerate several sections at once (e.g. 'draft all the TODO sections in Module 2', 'give me first drafts of 2.4, 2.5 and 2.7'). Each request is a section to draft with its own instructions; they run concurrently (bounded) through the same framework-grade drafting engine used for single sections, so a five-section batch returns in roughly the time of the slowest one rather than five sequential turns. Returns every requested slot with its original requestIndex, per-section drafted content or failure, saved:false, savedCount:0, and retryIndices for failed slots. Nothing is auto-saved. For a requested document deliverable, promote successful content through draft_authoring_document and its existing gates; claim saved only after a durable authoringDocId is returned. Retry only failed slots and retain existing saved IDs. Do NOT use it to fabricate quantitative results; where a value is unknown the draft must say so.",
+    "Draft MANY document sections in ONE parallel batch instead of one section per turn. Use this when the author asks to draft/regenerate several sections at once (e.g. 'draft all the TODO sections in Module 2', 'give me first drafts of 2.4, 2.5 and 2.7'). Each request is a section to draft with its own instructions; they run concurrently (bounded) through the same framework-grade drafting engine used for single sections, so a five-section batch returns in roughly the time of the slowest one rather than five sequential turns. Returns every requested slot with its original requestIndex, per-section drafted content or failure, saved:false, savedCount:0, and retryIndices for failed slots; slots stopped by the person are listed in cancelledIndices and are not retried unless the person asks again. Nothing is auto-saved. For a requested document deliverable, promote successful content through draft_authoring_document and its existing gates; claim saved only after a durable authoringDocId is returned. Retry only failed slots and retain existing saved IDs. Do NOT use it to fabricate quantitative results; where a value is unknown the draft must say so.",
   input_schema: {
     type: 'object',
     properties: {

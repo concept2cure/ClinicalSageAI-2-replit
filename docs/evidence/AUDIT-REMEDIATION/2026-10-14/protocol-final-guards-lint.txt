@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx
+  63:44  warning  Arrow function has too many lines (176). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)
+

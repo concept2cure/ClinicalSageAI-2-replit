@@ -1,0 +1,613 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=saved
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=lost
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=lost
+{
+  "timestamp": "2026-10-14T20:36:39.076Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "2",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=lost
+{
+  "timestamp": "2026-10-14T20:36:39.080Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_TAGS_UPDATED",
+    "resourceType": "device_data_center",
+    "resourceId": "2",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=throw
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=throw
+{
+  "timestamp": "2026-10-14T20:36:39.085Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=throw
+{
+  "timestamp": "2026-10-14T20:36:39.088Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_TAGS_UPDATED",
+    "resourceType": "device_data_center",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=tamper-only
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:36:39.092Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "4"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:36:39.095Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DOCUMENT_TAGS_UPDATED",
+    "resourceType": "device_data_center",
+    "resourceId": "4"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a foreign tenant cannot read or update the document through a guessed id
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a foreign tenant cannot read or update the document through a guessed id
+Error updating document tags: Error: Document not found
+    at DocumentDataCenterService.updateDocumentTags (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:745:15)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:63:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a business failure writes neither a document nor a misleading successful audit
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a business failure writes neither a document nor a misleading successful audit
+Error uploading document: DrizzleQueryError: Failed query: insert into "device_data_center" ("id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, $8, default, $9, default, default, default, default, $10, default, $11, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $12, $13, default, $14, default, default, $15, $16, $17, default, default, default, default, default, default, default) returning "id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at"
+params: 9,source.txt,txt,21,/tmp/content-audit-H8ZKSq/source.txt,496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f,Unknown Device,uncategorized,{},{},draft,{},{},,{"aiTagging":{"method":"keyword","provider":null,"model":null,"confidence":null,"timestamp":"2026-10-14T20:36:39.107Z"},"fileMetadata":{"originalName":"source.txt","mimeType":"text/plain","uploadedAt":"2026-10-14T20:36:39.107Z"}},Recorded source text.,7
+    at PglitePreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at PglitePreparedQuery.execute (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at DocumentDataCenterService.uploadDocument (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:481:29)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:68:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  query: 'insert into "device_data_center" ("id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, $8, default, $9, default, default, default, default, $10, default, $11, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $12, $13, default, $14, default, default, $15, $16, $17, default, default, default, default, default, default, default) returning "id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at"',
+  params: [
+    9,
+    'source.txt',
+    'txt',
+    21,
+    '/tmp/content-audit-H8ZKSq/source.txt',
+    '496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f',
+    'Unknown Device',
+    'uncategorized',
+    '{}',
+    '{}',
+    'draft',
+    '{}',
+    '{}',
+    null,
+    '{"aiTagging":{"method":"keyword","provider":null,"model":null,"confidence":null,"timestamp":"2026-10-14T20:36:39.107Z"},"fileMetadata":{"originalName":"source.txt","mimeType":"text/plain","uploadedAt":"2026-10-14T20:36:39.107Z"}}',
+    'Recorded source text.',
+    '7'
+  ],
+  cause: error: new row for relation "device_data_center" violates check constraint "content_business_failure"
+      at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+      at Object.Module._PostgresMainLongJmp (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+      at O.execProtocolRawSync (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+      at O.execProtocolRaw (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+      at O.execProtocolStream (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+      at O.y (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+    length: 823,
+    severity: 'ERROR',
+    code: '23514',
+    detail: 'Failing row contains (6, 9, source.txt, txt, 21, /tmp/content-audit-H8ZKSq/source.txt, 496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f, Unknown Device, null, null, uncategorized, null, {}, null, null, null, null, {}, null, draft, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, {}, {}, null, null, null, null, {"aiTagging":{"method":"keyword","provider":null,"model":null,"c..., Recorded source text., 7, null, null, null, 2026-10-14 20:36:39.108, 2026-10-14 20:36:39.108, null, null).',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'device_data_center',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'content_business_failure',
+    file: 'execMain.c',
+    line: '2081',
+    routine: 'ExecConstraints',
+    query: 'insert into "device_data_center" ("id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, $8, default, $9, default, default, default, default, $10, default, $11, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $12, $13, default, $14, default, default, $15, $16, $17, default, default, default, default, default, default, default) returning "id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at"',
+    params: [
+      9,
+      'source.txt',
+      'txt',
+      21,
+      '/tmp/content-audit-H8ZKSq/source.txt',
+      '496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f',
+      'Unknown Device',
+      'uncategorized',
+      '{}',
+      '{}',
+      'draft',
+      '{}',
+      '{}',
+      null,
+      '{"aiTagging":{"method":"keyword","provider":null,"model":null,"confidence":null,"timestamp":"2026-10-14T20:36:39.107Z"},"fileMetadata":{"originalName":"source.txt","mimeType":"text/plain","uploadedAt":"2026-10-14T20:36:39.107Z"}}',
+      'Recorded source text.',
+      '7'
+    ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=lost
+{
+  "timestamp": "2026-10-14T20:36:39.136Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=lost
+{
+  "timestamp": "2026-10-14T20:36:39.140Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "UPDATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=lost
+{
+  "timestamp": "2026-10-14T20:36:39.143Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "4",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=throw
+{
+  "timestamp": "2026-10-14T20:36:39.148Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "5",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=throw
+{
+  "timestamp": "2026-10-14T20:36:39.152Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "UPDATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "5",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=throw
+{
+  "timestamp": "2026-10-14T20:36:39.158Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "6",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:36:39.163Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "7"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:36:39.167Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "UPDATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "7"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:36:39.171Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "8"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > refuses a foreign device before creating any template, report or audit
+Error generating CER: Error: Device not found
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:220:15)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:82:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > version history rolls back with a failed content update and a later recovery increments once
+Error updating CER version: DrizzleQueryError: Failed query: update "cer_reports" set "cer_version" = $1, "conclusions" = $2, "change_log" = $3, "updated_by" = $4, "updated_at" = $5 where ("cer_reports"."id" = $6 and "cer_reports"."organization_id" = $7) returning "id", "organization_id", "cer_project_id", "report_id", "device_id", "device_name", "device_manufacturer", "device_type", "device_class", "cer_number", "cer_version", "cer_status", "regulatory_framework", "notified_body_id", "executive_summary", "device_description", "essential_requirements", "clinical_background", "clinical_evidence", "literature_review", "risk_benefit_analysis", "conclusions", "template_id", "template_version", "template_checksum", "status", "version", "content", "metadata", "change_log", "created_by", "updated_by", "created_by_id", "created_at", "updated_at"
+params: 1.1,{"text":"Refused"},[{"version":"1.0","date":"2026-10-14T20:36:39.179Z","author":7,"changes":"Initial CER creation"},{"version":"1.1","date":"2026-10-14T20:36:39.183Z","author":7,"changes":"Rejected"}],7,2026-10-14T20:36:39.183Z,9,9
+    at PglitePreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at PglitePreparedQuery.execute (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at /workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:376:30
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740 {
+  query: 'update "cer_reports" set "cer_version" = $1, "conclusions" = $2, "change_log" = $3, "updated_by" = $4, "updated_at" = $5 where ("cer_reports"."id" = $6 and "cer_reports"."organization_id" = $7) returning "id", "organization_id", "cer_project_id", "report_id", "device_id", "device_name", "device_manufacturer", "device_type", "device_class", "cer_number", "cer_version", "cer_status", "regulatory_framework", "notified_body_id", "executive_summary", "device_description", "essential_requirements", "clinical_background", "clinical_evidence", "literature_review", "risk_benefit_analysis", "conclusions", "template_id", "template_version", "template_checksum", "status", "version", "content", "metadata", "change_log", "created_by", "updated_by", "created_by_id", "created_at", "updated_at"',
+  params: [
+    '1.1',
+    '{"text":"Refused"}',
+    '[{"version":"1.0","date":"2026-10-14T20:36:39.179Z","author":7,"changes":"Initial CER creation"},{"version":"1.1","date":"2026-10-14T20:36:39.183Z","author":7,"changes":"Rejected"}]',
+    7,
+    '2026-10-14T20:36:39.183Z',
+    9,
+    9
+  ],
+  cause: error: new row for relation "cer_reports" violates check constraint "content_business_failure"
+      at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+      at O.execProtocolRawSync (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+      at O.execProtocolRaw (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+      at O.execProtocolStream (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+      at O.y (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2646 {
+    length: 1068,
+    severity: 'ERROR',
+    code: '23514',
+    detail: 'Failing row contains (9, 9, null, CER-2026-0001, 1, Synthetic device nine, null, null, IIa, CER-2026-0001, 1.1, draft, MDR_2017_745, null, {"title":"Executive Summary","content":{"deviceName":"Synthetic ..., {"title":"Device Description","content":{"generalDescription":"N..., {"title":"Essential Requirements","content":{"assessmentBasis":"..., {"title":"Clinical Background","content":{}}, {"title":"Clinical Evidence","content":{"overview":"No clinical ..., {"title":"Literature Review","content":{"searchStrategy":"No lit..., {"title":"Risk-Benefit Analysis","content":{"identifiedRisks":[]..., {"text":"Refused"}, default_cer_template, 1.0, f1e20d78dfc1254bb7f715378ed7b9326eac584030b143f90ba8a447df7fa96a, draft, 1.0.0, null, null, [{"version":"1.0","date":"2026-10-14T20:36:39.179Z","author":7,"..., 7, 7, null, 2026-10-14 20:36:39.179, 2026-10-14 20:36:39.183).',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'cer_reports',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'content_business_failure',
+    file: 'execMain.c',
+    line: '2081',
+    routine: 'ExecConstraints',
+    query: 'update "cer_reports" set "cer_version" = $1, "conclusions" = $2, "change_log" = $3, "updated_by" = $4, "updated_at" = $5 where ("cer_reports"."id" = $6 and "cer_reports"."organization_id" = $7) returning "id", "organization_id", "cer_project_id", "report_id", "device_id", "device_name", "device_manufacturer", "device_type", "device_class", "cer_number", "cer_version", "cer_status", "regulatory_framework", "notified_body_id", "executive_summary", "device_description", "essential_requirements", "clinical_background", "clinical_evidence", "literature_review", "risk_benefit_analysis", "conclusions", "template_id", "template_version", "template_checksum", "status", "version", "content", "metadata", "change_log", "created_by", "updated_by", "created_by_id", "created_at", "updated_at"',
+    params: [
+      '1.1',
+      '{"text":"Refused"}',
+      '[{"version":"1.0","date":"2026-10-14T20:36:39.179Z","author":7,"changes":"Initial CER creation"},{"version":"1.1","date":"2026-10-14T20:36:39.183Z","author":7,"changes":"Rejected"}]',
+      7,
+      '2026-10-14T20:36:39.183Z',
+      9,
+      9
+    ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > refuses section updates to an approved CER and foreign report ids
+Error updating CER version: Error: CER report not found or access denied
+    at /workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:367:32
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > refuses section updates to an approved CER and foreign report ids
+Error updating CER version: Error: Only a draft CER can be changed through this operation
+    at /workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:369:17
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > independent tenants can both create their first CER without global identity collisions
+Error generating CER: DrizzleQueryError: Failed query: insert into "cer_templates" ("id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, default, default) returning "id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at"
+params: default_cer_template,10,Default CER Template,1.0,{"sections":["executiveSummary","deviceDescription","essentialRequirements","clinicalBackground","clinicalEvidence","literatureReview","riskBenefitAnalysis","conclusions"],"formatting":{"font":"Arial","fontSize":11,"lineSpacing":1.5}},{"templateType":"full_cer","status":"active","requiredFields":["deviceName","deviceClass","intendedUse","clinicalEvidence","riskAnalysis","conclusions"],"deviceClasses":["I","IIa","IIb","III"],"regulatoryFrameworks":["MDR_2017_745","IVDR_2017_746"],"createdBy":7,"templateChecksum":"525fb7eddc1cc3b396ebd128082ef97ad8bb3c8fcf7f7b6c7c790f6e43ad0552"}
+    at PglitePreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at PglitePreparedQuery.execute (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at CerGenerationService.getOrCreateTemplate (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:452:27)
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:224:24)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:106:56
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  query: 'insert into "cer_templates" ("id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, default, default) returning "id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at"',
+  params: [
+    'default_cer_template',
+    10,
+    'Default CER Template',
+    '1.0',
+    '{"sections":["executiveSummary","deviceDescription","essentialRequirements","clinicalBackground","clinicalEvidence","literatureReview","riskBenefitAnalysis","conclusions"],"formatting":{"font":"Arial","fontSize":11,"lineSpacing":1.5}}',
+    '{"templateType":"full_cer","status":"active","requiredFields":["deviceName","deviceClass","intendedUse","clinicalEvidence","riskAnalysis","conclusions"],"deviceClasses":["I","IIa","IIb","III"],"regulatoryFrameworks":["MDR_2017_745","IVDR_2017_746"],"createdBy":7,"templateChecksum":"525fb7eddc1cc3b396ebd128082ef97ad8bb3c8fcf7f7b6c7c790f6e43ad0552"}'
+  ],
+  cause: error: duplicate key value violates unique constraint "cer_templates_template_id_unique"
+      at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+      at O.execProtocolRawSync (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+      at O.execProtocolRaw (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+      at O.execProtocolStream (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+      at O.y (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2646 {
+    length: 260,
+    severity: 'ERROR',
+    code: '23505',
+    detail: 'Key (template_id)=(default_cer_template) already exists.',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'cer_templates',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'cer_templates_template_id_unique',
+    file: 'nbtinsert.c',
+    line: '673',
+    routine: '_bt_check_unique',
+    query: 'insert into "cer_templates" ("id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, default, default) returning "id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at"',
+    params: [
+      'default_cer_template',
+      10,
+      'Default CER Template',
+      '1.0',
+      '{"sections":["executiveSummary","deviceDescription","essentialRequirements","clinicalBackground","clinicalEvidence","literatureReview","riskBenefitAnalysis","conclusions"],"formatting":{"font":"Arial","fontSize":11,"lineSpacing":1.5}}',
+      '{"templateType":"full_cer","status":"active","requiredFields":["deviceName","deviceClass","intendedUse","clinicalEvidence","riskAnalysis","conclusions"],"deviceClasses":["I","IIa","IIb","III"],"regulatoryFrameworks":["MDR_2017_745","IVDR_2017_746"],"createdBy":7,"templateChecksum":"525fb7eddc1cc3b396ebd128082ef97ad8bb3c8fcf7f7b6c7c790f6e43ad0552"}'
+    ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+ ❯ server/services/__tests__/content-save-audit-outcomes.pglite.test.ts (18 tests | 1 failed) 1831ms
+     ✓ upload and tags retain their saved values with audit=saved 25ms
+     ✓ upload and tags retain their saved values with audit=lost 9ms
+     ✓ upload and tags retain their saved values with audit=throw 8ms
+     ✓ upload and tags retain their saved values with audit=tamper-only 8ms
+     ✓ a foreign tenant cannot read or update the document through a guessed id 9ms
+     ✓ a business failure writes neither a document nor a misleading successful audit 8ms
+     ✓ CER create, version and facade preserve saved draft with audit=saved 18ms
+     ✓ CER create, version and facade preserve saved draft with audit=lost 12ms
+     ✓ CER create, version and facade preserve saved draft with audit=throw 15ms
+     ✓ CER create, version and facade preserve saved draft with audit=tamper-only 13ms
+     ✓ refuses a foreign device before creating any template, report or audit 4ms
+     ✓ version history rolls back with a failed content update and a later recovery increments once 15ms
+     ✓ rejects immutable or governed fields {"organizationId":10} 6ms
+     ✓ rejects immutable or governed fields {"cerStatus":"approved"} 5ms
+     ✓ rejects immutable or governed fields {"createdBy":99} 7ms
+     ✓ rejects immutable or governed fields {"id":999} 5ms
+     ✓ refuses section updates to an approved CER and foreign report ids 9ms
+     × independent tenants can both create their first CER without global identity collisions 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > independent tenants can both create their first CER without global identity collisions
+Error: Failed query: insert into "cer_templates" ("id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, default, default) returning "id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at"
+params: default_cer_template,10,Default CER Template,1.0,{"sections":["executiveSummary","deviceDescription","essentialRequirements","clinicalBackground","clinicalEvidence","literatureReview","riskBenefitAnalysis","conclusions"],"formatting":{"font":"Arial","fontSize":11,"lineSpacing":1.5}},{"templateType":"full_cer","status":"active","requiredFields":["deviceName","deviceClass","intendedUse","clinicalEvidence","riskAnalysis","conclusions"],"deviceClasses":["I","IIa","IIb","III"],"regulatoryFrameworks":["MDR_2017_745","IVDR_2017_746"],"createdBy":7,"templateChecksum":"525fb7eddc1cc3b396ebd128082ef97ad8bb3c8fcf7f7b6c7c790f6e43ad0552"}
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ PglitePreparedQuery.execute node_modules/src/pglite/session.ts:95:17
+ ❯ CerGenerationService.getOrCreateTemplate server/services/cerGenerationService.ts:452:27
+    450|
+    451|     // Create default template
+    452|     const [newTemplate] = await db
+       |                           ^
+    453|       .insert(cerTemplates)
+    454|       .values({
+ ❯ CerGenerationService.generateCER server/services/cerGenerationService.ts:224:24
+ ❯ server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:106:56
+
+Caused by: error: duplicate key value violates unique constraint "cer_templates_template_id_unique"
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:4097716
+ ❯ O.execProtocolRawSync node_modules/@electric-sql/pglite/dist/index.js:3:286371
+ ❯ O.execProtocolRaw node_modules/@electric-sql/pglite/dist/index.js:3:286638
+ ❯ O.execProtocolStream node_modules/@electric-sql/pglite/dist/index.js:3:287295
+ ❯ O.y node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046
+ ❯ node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2646
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 260, severity: 'ERROR', code: '23505', detail: 'Key (template_id)=(default_cer_template) already exists.', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'public', table: 'cer_templates', dataType: undefined, constraint: 'cer_templates_template_id_unique', file: 'nbtinsert.c', routine: '_bt_check_unique', query: 'insert into "cer_templates" ("id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, default, default) returning "id", "template_id", "organization_id", "name", "version", "content", "metadata", "created_at", "updated_at"', params: [ 'default_cer_template', 10, 'Default CER Template', '1.0', '{"sections":["executiveSummary","deviceDescription","essentialRequirements","clinicalBackground","clinicalEvidence","literatureReview","riskBenefitAnalysis","conclusions"],"formatting":{"font":"Arial","fontSize":11,"lineSpacing":1.5}}', '{"templateType":"full_cer","status":"active","requiredFields":["deviceName","deviceClass","intendedUse","clinicalEvidence","riskAnalysis","conclusions"],"deviceClasses":["I","IIa","IIb","III"],"regulatoryFrameworks":["MDR_2017_745","IVDR_2017_746"],"createdBy":7,"templateChecksum":"525fb7eddc1cc3b396ebd128082ef97ad8bb3c8fcf7f7b6c7c790f6e43ad0552"}' ], queryOptions: { rowMode: 'array', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+   Start at  20:36:35
+   Duration  3.63s (transform 728ms, setup 60ms, import 1.55s, tests 1.83s, environment 0ms)
+

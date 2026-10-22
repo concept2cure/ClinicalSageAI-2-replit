@@ -30,11 +30,11 @@ describe('create_ibc_registration', () => {
 });
 
 describe.each([
-  ['review_iacuc_protocol', REVIEW_IACUC_PROTOCOL, 'reviewStatus', 'approval \\+ 3 years'],
-  ['review_ibc_registration', REVIEW_IBC_REGISTRATION, 'expiration', 'approval \\+ 1 year'],
+  ['review_iacuc_protocol', REVIEW_IACUC_PROTOCOL, 'reviewStatus', 'approval + 3 years'],
+  ['review_ibc_registration', REVIEW_IBC_REGISTRATION, 'expiration', 'approval + 1 year'],
 ])('%s', (_name, tool, field, computedAs) => {
   it("says the expiry is the date on record, else a computed one labelled 'computed'", () => {
-    expect(tool.description).toMatch(new RegExp(`expiration date on record \\(${field}\\.expirationSource 'recorded'\\), else ${computedAs}, labelled 'computed'`));
+    expect(tool.description).toContain(`expiration date on record (${field}.expirationSource 'recorded'), else ${computedAs}, labelled 'computed'`);
     expect(tool.description).toMatch(/with neither date it is undetermined \('none'\)/);
   });
 });

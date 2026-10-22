@@ -1,0 +1,55 @@
+{
+  "testedHead": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
+  "completedAt": "2026-10-17T22:58:49.105Z",
+  "productionSourceSha256": {
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "239b1af372b6850bbd47a477933fb418b4d53335bd0f74f1ff5d293fde6b6108",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "a95aa8806603a2e8f20a5914bf837e393edc1449a7a9e76d11e8f7ed0ed90818",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "cb816858b00d9e058df2173d735988caccb711fbf4b93843097ce7a4be0076b1",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "efa1ae075c94b90448d916caf9860d37c42f14df963b337a18fcde92959d00e5",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "073aab2362b7ce738083c8dfe6f77d9554b99d679113bb1eeba04bc37f14a442",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "c3c811770792008ee764daf27c4a8b77f714c0b23c270cdca4aa593f26588897",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "b55fb518ecc44591104645b18054bc62b1ceacd6bd493e1e954b514cfa63563b",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editor/savedTemplateContext.ts": "433ead62982705de14125e676cf7e7cece3d6b99ad9d3c203dc62f2307d2d235",
+    "client/src/concept2cure/v2/shellProject.ts": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7",
+    "client/src/services/portal/authService.tsx": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db",
+    "client/src/lib/queryClient.ts": "9ac80be7062f273e6c06992a11c45a15c0cbf22a8bdc9501202bf6eb892f5a5f",
+    "shared/authoring/assembly.ts": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27",
+    "client/src/concept2cure/v2/styles/app-v2.css": "382da1e5c23e1ba5d5439fc6a019a1749a2bde766e57c806a8803c8c1a0f733b",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "fac483294e7b1750fcc731e081ef3d3ae4ea9c87ae3f19ec24dff57e923bf5d3",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d01eaa1a721ca28e6acd6d336fedac38a1d3d392a51771a57241001480c0fd78"
+  },
+  "fixtureSourceSha256": {
+    "probe.tsx": "c8f8f90db05ff32afdf5059d99ff0b1159c38d0b06359c7b5c95c3b0f23028ac",
+    "server.mjs": "badc1b75cfbcd4695c0e65d5974fbc5900ee8c67afe10a3e72b4530c54784c0a",
+    "browser.mjs": "2e10d598d88ea4791b47e17a2c0468b4563a8933ff00af39d8cc8f4b5eadceb3",
+    "mock-api.mjs": "96d853be4a8fa76052b96a0f453bc3c327abbf6e97f1ea153f266581231b0886",
+    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36"
+  },
+  "productionFrozenDuringCapture": false,
+  "browserVersion": "154.0.8037.57",
+  "caseCount": 2,
+  "passed": 0,
+  "stages": 0,
+  "status": "fail",
+  "cases": [
+    {
+      "key": "touch-light-deterministic",
+      "status": "fail",
+      "error": "locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('ai-draft-panel')\u001b[22m\n\n    at measure (/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:45:16)\n    at runCase (/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:110:25)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:191:93"
+    },
+    {
+      "key": "touch-light-ana",
+      "status": "fail",
+      "error": "AssertionError [ERR_ASSERTION]: assembly must not overflow internally\n    at measure (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:74:12)\n    at async runCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:139:19)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:191:93"
+    }
+  ],
+  "qualification": "Actual DocumentWorkbench, canonical build controller, AuthoringAiDraft, rich editor and product styles; synthetic HTTP/auth only. The fixture mounts embedded Workbench without the conversation thread or full shell. No backend transaction/authorization, live provider, filing, deployment, human-review or accessibility-compliance claim."
+}

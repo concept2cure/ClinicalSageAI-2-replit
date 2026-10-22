@@ -1,0 +1,140 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses absent historical status and presence-only historical status when required 13ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > accepts actual complete proof while preserving the default/report-only posture 1ms
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged empty proof despite passed:true 2ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged duplicate proof despite passed:true 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-row proof despite passed:true 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged skipped proof despite passed:true 2ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged doctype proof despite passed:true 4ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged integrity proof despite passed:true 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-required-style proof despite passed:true 2ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged nonboolean proof despite passed:true 10ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses omitted STF coverage in a study package 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > does not establish conformance from a clean structural-gap report alone 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > accepts a clean structural report only with current complete regional proof 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > retains structural refusals even with an XML-valid synthetic grammar 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses absent historical status and presence-only historical status when required
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/dtd-validation-proof.test.ts:24:32
+     22| describe('existing DTD gate requires complete validation proof', () =>…
+     23|   it('refuses absent historical status and presence-only historical st…
+     24|     expect(transmit().cleared).toBe(false);
+       |                                ^
+     25|     const { validation: _unused, ...presence } = status();
+     26|     expect(transmit(presence).cleared).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged empty proof despite passed:true
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged duplicate proof despite passed:true
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-row proof despite passed:true
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged skipped proof despite passed:true
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged doctype proof despite passed:true
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged integrity proof despite passed:true
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-required-style proof despite passed:true
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged nonboolean proof despite passed:true
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/dtd-validation-proof.test.ts:44:38
+     42|       if (mode === 'missing-required-style') data.validation.integrity…
+     43|       if (mode === 'nonboolean') data.validation.passed = 'true' as un…
+     44|       expect(transmit(data).cleared).toBe(false);
+       |                                      ^
+     45|     });
+     46|   it('refuses omitted STF coverage in a study package', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses omitted STF coverage in a study package
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/dtd-validation-proof.test.ts:49:76
+     47|     const data = status();
+     48|     data.required.push('ich-stf-v2-2.dtd'); data.present.push('ich-stf…
+     49|     expect(transmit(data, { studies: 2, leaves: 3, untagged: 0 }).clea…
+       |                                                                            ^
+     50|   });
+     51| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > does not establish conformance from a clean structural-gap report alone
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/dtd-validation-proof.test.ts:55:76
+     53| describe('regional classification needs current regional DTD and integ…
+     54|   it('does not establish conformance from a clean structural-gap repor…
+     55|     expect(classifyRegionalBackbone('fda', regional, []).regionConform…
+       |                                                                            ^
+     56|   });
+     57|   it('accepts a clean structural report only with current complete reg…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > accepts a clean structural report only with current complete regional proof
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/dtd-validation-proof.test.ts:60:83
+     58|     expect(classifyRegionalBackbone('fda', regional, [], status().vali…
+     59|     const proof = status().validation; proof.files[1].dtd.valid = fals…
+     60|     expect(classifyRegionalBackbone('fda', regional, [], proof).region…
+       |                                                                                   ^
+     61|   });
+     62|   it('retains structural refusals even with an XML-valid synthetic gra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 2 passed (14)
+   Start at  00:28:12
+   Duration  2.49s (transform 1.42s, setup 126ms, import 1.58s, tests 47ms, environment 0ms)
+

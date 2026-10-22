@@ -251,7 +251,7 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
         if (!(e instanceof SafetyReportError)) throw e; // unknown/foreign draft id is non-fatal to the filing
       }
     }
-    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}) });
+    res.status(201).json({ ...filed, form1571, ...(draft ? { draft, meta: { auditTrail: draft.auditTrail } } : {}) });
   } catch (err) {
     fail(res, err);
   }
@@ -262,6 +262,15 @@ function unacknowledgedGaps(gaps: AnnualReportGap[], acknowledged: unknown): Ann
   const ack = new Set(Array.isArray(acknowledged) ? acknowledged.map(String) : []);
   return gaps.filter((g) => !ack.has(g.sectionKey));
 }
+
+/** The report fields of POST /annual-report/file (IndAnnualReportInput). indNumber
+ *  is not one here: beside a draftId it is checked against the draft. */
+const ANNUAL_REPORT_FIELDS = [
+  'organizationId', 'projectId', 'productName', 'reportingPeriodStart', 'reportingPeriodEnd',
+  'studyStatuses', 'safetyReportsInPeriod', 'noSafetyReportsInPeriod', 'ibChanges', 'noIbChangesInPeriod',
+  'safetySummary', 'investigationalPlan', 'phase1ProtocolModifications', 'foreignMarketingDevelopments',
+  'outstandingBusiness',
+] as const;
 
 /**
  * File a 312.33 IND Annual Report as an `annual` eCTD sequence + m1.13 leaf.
@@ -286,6 +295,12 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
   try {
     let report: IndAnnualReportModel;
     if (b.draftId) {
+      // 2026-10-15: report fields beside a draftId were silently ignored (the
+      // draft's stored report is what is filed). They are refused instead.
+      const ignored = ANNUAL_REPORT_FIELDS.filter((k) => b[k] !== undefined);
+      if (ignored.length > 0) {
+        return res.status(400).json({ error: { code: 'VALIDATION', message: `A named draft files its own stored report; remove the report field(s) ${ignored.join(', ')} or file without draftId. Nothing was filed.` } });
+      }
       const loaded = await loadDraft(() => getAnnualReport(String(b.draftId), ctx), (e) => e instanceof AnnualReportError && e.code === 'NOT_FOUND');
       if ('refusal' in loaded) return draftRefusal(res, loaded.refusal);
       if (loaded.draft.status === 'filed') return draftRefusal(res, ALREADY_FILED);
@@ -335,7 +350,14 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
     };
     const form1571 = await form1571LeafSource(b, ctx);
     if (form1571.source) sources['m1.1'] = form1571.source;
-    const filed = await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, sources);
+    // Every open section reaching here was acknowledged (per key, or a draft's
+    // acknowledgeGaps: true); the filing audits who acknowledged which, for the
+    // sequence (2026-10-15: it was recorded only on this response).
+    const openSectionsFiled = report.gaps.map((g) => g.sectionKey);
+    const filed = await persistAnnualReport(
+      Number(b.submissionId), String(b.sequenceNumber), ctx, sources,
+      openSectionsFiled.length > 0 ? { sectionKeys: openSectionsFiled } : undefined,
+    );
     // When filing a tracked draft, mark it filed + link the sequence.
     let draft;
     if (b.draftId) {
@@ -345,12 +367,10 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
         if (!(e instanceof AnnualReportError)) throw e; // unknown/foreign draft id is non-fatal
       }
     }
-    // The open 312.33 sections filed (acknowledged above) are recorded on the response.
-    const openSectionsFiled = report.gaps.map((g) => g.sectionKey);
     res.status(201).json({
       ...filed,
       form1571,
-      ...(draft ? { draft } : {}),
+      ...(draft ? { draft, meta: { auditTrail: draft.auditTrail } } : {}),
       ...(openSectionsFiled.length > 0 ? { filedWithOpenGaps: openSectionsFiled.length, openSectionsFiled } : {}),
     });
   } catch (err) {
@@ -395,7 +415,7 @@ router.post('/amendment/file', limiter, requireRole(AUTHOR), async (req, res) =>
         if (!(e instanceof AmendmentError)) throw e; // unknown/foreign draft id is non-fatal
       }
     }
-    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}) });
+    res.status(201).json({ ...filed, form1571, ...(draft ? { draft, meta: { auditTrail: draft.auditTrail } } : {}) });
   } catch (err) {
     fail(res, err);
   }

@@ -16,6 +16,7 @@
  *   Requires running app or will fail explicitly
  */
 import { test, expect, Page } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 const BASE_URL = process.env.BASE_URL || process.env.APP_BASE || 'http://localhost:5000';
 const SCREENSHOT_DIR = 'test-results/beta-pulse-screenshots';
@@ -51,7 +52,7 @@ async function authenticateAndLand(page: Page): Promise<void> {
       await demoPersona.click();
     }
   } else {
-    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
+    await page.fill('input[type="email"]', devLoginEmail());
     await page.click('button:has-text("Continue")');
     const passwordInput = page.locator('input[type="password"]');
     await expect(passwordInput).toBeVisible({ timeout: 10000 });
@@ -72,7 +73,7 @@ async function authenticateAndLand(page: Page): Promise<void> {
 
   if (!redirected) {
     const devLogin = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jonmichaelpsmith@gmail.com' },
+      data: { email: devLoginEmail() },
     });
     const payload = await devLogin.json();
     if (!devLogin.ok() || !payload?.success || !payload?.accessToken || !payload?.user) {

@@ -1,0 +1,938 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > discovers saved runs for the open UUID program without requiring a pasted id 235ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > starts from the selected program and exposes missing source inputs 43ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > forwards the real signature ceremony then offers continuation retry without a second signature 119ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > reports discovery failure instead of an empty run history 23ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > keeps the latest selected run and excludes late audit and signature results from a previous run 58ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > clears the former program run before a delayed response can become a signing target 42ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > retains the recorded signature notice while the refreshed run is still loading 90ms
+   → Unable to find an element with the text: /Signature #42 is recorded.*continuation needs retry/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-body"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mCompile & Export eCTD[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+            [33mstyle[39m=[32m"display: flex; align-items: center; gap: 8px;"[39m
+          [36m>[39m
+            [0mGoverned program[0m
+            [36m<button[39m
+              [33mclass[39m=[32m"reg-cta"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Explain this compilation[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"ectd-region"[39m
+            [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRegion[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mid[39m=[32m"ectd-region"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"FDA"[39m
+            [36m>[39m
+              [0mUS · FDA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"EMA"[39m
+            [36m>[39m
+              [0mEU · EMA[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"ectd-subtype"[39m
+            [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mSubmission[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mid[39m=[32m"ectd-subtype"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"initial"[39m
+            [36m>[39m
+              [0minitial[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"amendment"[39m
+            [36m>[39m
+              [0mamendment[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"margin-left: auto; display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 11 3 3L22 4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mValidate[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mCompile eCTD[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mModule readiness[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rd-chip tone-warn"[39m
+          [36m>[39m
+            [0m% · [0m
+            [0mincomplete[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"c2c-empty-ic"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-layers"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-t"[39m
+              [36m>[39m
+                [0mNo module readiness yet[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-h"[39m
+              [36m>[39m
+                [0mReadiness is derived from the program’s sections. Draft and approve sections, then readiness appears per CTD module.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mCompilation history[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"c2c-empty-ic"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-clock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                  [36m<polyline[39m
+                    [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-t"[39m
+              [36m>[39m
+                [0mNo compilations yet[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-h"[39m
+              [36m>[39m
+                [0mEach Compile run is recorded here with its status and version.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mOrchestrator run[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mbuild or select a saved run[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 10px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 10px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+            [36m>[39m
+              [0mBuild package run[0m
+            [36m</button>[39m
+            [36m<label>[39m
+              [0mSaved package runs [0m
+              [36m<select[39m
+                [33maria-label[39m=[32m"Saved package runs"[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m>[39m
+                  [0mChoose a saved run[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"run-1"[39m
+                [36m>[39m
+                  [0mrun-1[0m
+                  [0m · [0m
+                  [0mawaiting-signature[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Orchestrator run id"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mplaceholder[39m=[32m"orchestrator run id"[39m
+            [33mstyle[39m=[32m"height: 30px; width: 320px;"[39m
+            [33mvalue[39m=[32m"run-1"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.3-4.3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Load run[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding-top: 0px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-busy[39m=[32m"true"[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic c2c-empty-ic-busy"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-zap"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mLoading run…[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > retains the recorded signature notice while the refreshed run is still loading
+TestingLibraryElementError: Unable to find an element with the text: /Signature #42 is recorded.*continuation needs retry/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-body"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mCompile & Export eCTD[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+            [33mstyle[39m=[32m"display: flex; align-items: center; gap: 8px;"[39m
+          [36m>[39m
+            [0mGoverned program[0m
+            [36m<button[39m
+              [33mclass[39m=[32m"reg-cta"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Explain this compilation[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"ectd-region"[39m
+            [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRegion[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mid[39m=[32m"ectd-region"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"FDA"[39m
+            [36m>[39m
+              [0mUS · FDA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"EMA"[39m
+            [36m>[39m
+              [0mEU · EMA[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"ectd-subtype"[39m
+            [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mSubmission[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mid[39m=[32m"ectd-subtype"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"initial"[39m
+            [36m>[39m
+              [0minitial[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"amendment"[39m
+            [36m>[39m
+              [0mamendment[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"margin-left: auto; display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 11 3 3L22 4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mValidate[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mstyle[39m=[32m"height: 32px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mCompile eCTD[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mModule readiness[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rd-chip tone-warn"[39m
+          [36m>[39m
+            [0m% · [0m
+            [0mincomplete[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"c2c-empty-ic"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-layers"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-t"[39m
+              [36m>[39m
+                [0mNo module readiness yet[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-h"[39m
+              [36m>[39m
+                [0mReadiness is derived from the program’s sections. Draft and approve sections, then readiness appears per CTD module.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mCompilation history[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding: 0px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"c2c-empty-ic"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-clock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                  [36m<polyline[39m
+                    [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-t"[39m
+              [36m>[39m
+                [0mNo compilations yet[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-h"[39m
+              [36m>[39m
+                [0mEach Compile run is recorded here with its status and version.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mOrchestrator run[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mbuild or select a saved run[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 10px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 10px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+            [36m>[39m
+              [0mBuild package run[0m
+            [36m</button>[39m
+            [36m<label>[39m
+              [0mSaved package runs [0m
+              [36m<select[39m
+                [33maria-label[39m=[32m"Saved package runs"[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m>[39m
+                  [0mChoose a saved run[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"run-1"[39m
+                [36m>[39m
+                  [0mrun-1[0m
+                  [0m · [0m
+                  [0mawaiting-signature[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Orchestrator run id"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mplaceholder[39m=[32m"orchestrator run id"[39m
+            [33mstyle[39m=[32m"height: 30px; width: 320px;"[39m
+            [33mvalue[39m=[32m"run-1"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.3-4.3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Load run[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+          [33mstyle[39m=[32m"padding-top: 0px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-busy[39m=[32m"true"[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic c2c-empty-ic-busy"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-zap"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mLoading run…[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx:114:19
+    112|     await screen.findByText(/Signature #42 is recorded.*continuation n…
+    113|     await act(async () => { await Promise.resolve(); });
+    114|     expect(screen.getByText(/Signature #42 is recorded.*continuation n…
+       |                   ^
+    115|   } finally {
+    116|     await act(async () => { release(); await delayed; });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  03:53:54
+   Duration  1.65s (transform 358ms, setup 118ms, import 446ms, tests 615ms, environment 374ms)
+

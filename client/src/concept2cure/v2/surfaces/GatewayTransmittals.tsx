@@ -37,6 +37,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest, ApiRequestError, serverMessage, redactInternals } from '@/lib/queryClient';
@@ -46,12 +47,16 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
 import { gatewayLabel, transmittalStatusTone as statusTone } from '../gatewayLabels';
+import { useTransmittalTarget } from './useTransmittalTarget';
+import { ceremonyOpen } from '../ceremony';
+import { canGovernedWrite } from '@shared/constants/permissions';
+import { As2ReceiptUpload } from './As2ReceiptUpload';
 
 interface Transmittal {
   // region/status are declared nullable because the log genuinely serves rows
   // that have them null — a narrowed SELECT, or a row written before its gateway
   // replied. The render guards below exist for those rows, not for a bad envelope.
-  id: number; region?: string | null; gateway?: string | null; format?: string | null; submission_type?: string | null;
+  id: number; program_id?: string | null; region?: string | null; gateway?: string | null; format?: string | null; submission_type?: string | null;
   transmission_id?: string | null; status?: string | null; error_class?: string | null; error_message?: string | null;
   submitted_at?: string | null; ack_received_at?: string | null; completed_at?: string | null;
   submitted_by?: number | null; submitted_by_name?: string | null;
@@ -174,6 +179,41 @@ function rejectionRecordedMessage(id: number, r: RejectionRecorded, signer: stri
     + `and the next assembly reuses sequence ${r.sequence}.${moved}${cleared}${signed}`;
 }
 
+/**
+ * How a refusal names the transmittals on screen: the log number exactly as the
+ * `#` column renders it, with the Gateway ref beside it when the row has one.
+ * AnA cannot see this table, so a miss that lists these turns a dead end into a
+ * retry with a real number (listedChoices, surfaceActions.ts).
+ */
+function transmittalChoices(rows: ReadonlyArray<Transmittal>): string[] {
+  return rows.map((t) => `#${t.id}${t.transmission_id ? ` · ${t.transmission_id}` : ''}`);
+}
+
+/**
+ * The transmittal a name picks out of the log on screen — log number first
+ * ("#12" or "12"), then an exact gateway reference, then a unique containment
+ * on the reference. Resolved against the rows the table renders and nothing
+ * else: this is the person's own table, not a lookup over anything they cannot
+ * see. A miss returns the candidates it did match so the caller can say how
+ * many, and never guesses between them.
+ */
+function resolveTransmittal(
+  rows: ReadonlyArray<Transmittal>,
+  raw: string,
+): { match: Transmittal } | { hits: Transmittal[] } {
+  const wanted = raw.trim().replace(/^#/, '').trim();
+  const lower = wanted.toLowerCase();
+  const byNumber = rows.find((t) => String(t.id) === wanted);
+  if (byNumber) return { match: byNumber };
+  // Only a non-empty name matches a reference: a row whose Gateway ref column
+  // reads '—' holds null, and an empty name would otherwise equal it and pick
+  // that row — a bare "#" would silently resolve to whichever row has no ref.
+  const byRef = lower ? rows.find((t) => (t.transmission_id ?? '').toLowerCase() === lower) : undefined;
+  if (byRef) return { match: byRef };
+  const hits = lower ? rows.filter((t) => (t.transmission_id ?? '').toLowerCase().includes(lower)) : [];
+  return hits.length === 1 ? { match: hits[0] } : { hits };
+}
+
 export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
   /* Whether this person may sign the technical rejection, as the server's
@@ -183,6 +223,14 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
      QA 2026-10-08 (j6): a manager reached a signature's password. */
   const [canSign, setCanSign] = useState<boolean | null>(null);
   const [rows, setRows] = useState<Transmittal[]>([]);
+  const linked = useTransmittalTarget<Transmittal>();
+  const logRows = linked.record ? [linked.record,...rows.filter(row=>row.id!==linked.record?.id)] : rows;
+  useEffect(()=>{
+    if(linked.state==='ready' && linked.record && !ceremonyOpen()) {
+      const row=document.getElementById(`transmittal-row-${linked.record.id}`);
+      row?.focus();row?.scrollIntoView?.({block:'nearest'});
+    }
+  },[linked.state,linked.record]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [dialog, setDialog] = useState<{ rejection: number } | null>(null);
   const [statusView, setStatusView] = useState<{ id: number; body: Record<string, unknown> } | null>(null);
@@ -303,14 +351,91 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
       availableActions: [
         'Explain why a transmittal failed, from its error class',
         'Explain which transmittals are still awaiting acknowledgement',
+        // The one operation she can take here (submission-gateway.show-status):
+        // the row's own Status control. Everything else on the log is a read she
+        // explains, or a signed technical rejection that stays a person's act.
+        "Show one transmittal's gateway status, by its log number or gateway reference",
       ],
     }),
     [state, rows],
   );
   usePublishSurfaceContext('gateway-transmittals', anaContext);
 
+  /* AnA operates this log through the row's own Status control (checkStatus).
+     The screen is read-only since the 2026-10-17 audit (FILING_SPINE F12):
+     transmit, assemble and unsigned rollback left it for the sequence's
+     Dispatch tab, and with them the refusal card the old
+     `submission-gateway.reload-findings` action drove — so that action left the
+     registry in the same change that brought this one onto the new screen. The
+     signed technical rejection stays a person's own click. The handler is
+     synchronous and the read is not, so the detail says what was STARTED; the
+     card and the toast carry the server's answer. */
+  useSurfaceActionHandlers('gateway-transmittals', {
+    'submission-gateway.show-status': (params) => {
+      const raw = (params.transmittal ?? '').trim();
+      // `logRows`, not `rows`: a transmittal linked from another screen is
+      // pinned at the top of the table even when the log read does not carry
+      // it, and a person can press its Status button — so AnA can name it too.
+      const logged = () => listedChoices(transmittalChoices(logRows), 'Transmittals logged');
+      if (!raw) {
+        return {
+          ok: false,
+          reason: 'Name a transmittal to show — its log number as listed (e.g. "#12") or its gateway reference.' + logged(),
+        };
+      }
+      if (state === 'loading') return { ok: false, reason: 'The transmittal log is still loading.', retry: true };
+      if (state === 'error') {
+        // Never reported as an empty log: this is the table an operator reads to
+        // confirm what has or has not already been sent to an agency.
+        return {
+          ok: false,
+          reason:
+            'The transmittal log could not be read, so no transmittals are listed to show a status for. ' +
+            'That is not the same as this organization having none.',
+        };
+      }
+      if (logRows.length === 0) {
+        return { ok: false, reason: 'No transmittals have been logged for this organization yet, so there is none to show a status for.' };
+      }
+      const found = resolveTransmittal(logRows, raw);
+      if (!('match' in found)) {
+        return {
+          ok: false,
+          reason:
+            found.hits.length > 1
+              ? `"${raw}" matches ${found.hits.length} transmittals — name one exactly.` +
+                listedChoices(transmittalChoices(found.hits), 'Matched')
+              : `No transmittal "${raw}" in this log.` + logged(),
+        };
+      }
+      const t = found.match;
+      // The card for this row is already on screen, and the Status control
+      // re-reads the whole log on success; say so rather than re-polling the
+      // agency for what the person is looking at.
+      if (statusView?.id === t.id) return { ok: true, detail: `Already showing the gateway status for transmittal #${t.id}` };
+      void checkStatus(t.id);
+      return {
+        ok: true,
+        detail:
+          `Showing the gateway status for transmittal #${t.id} — the card appears below when the gateway ` +
+          'answers, and a gateway that refuses reports its reason instead.',
+      };
+    },
+  });
+  /* The ready signal for the hold above. Gated on the read SETTLING and nothing
+     else: a failed read must reach a held action as the handler's own refusal,
+     not as a twenty-second timeout (surfaceReadySignal.test.ts). */
+  useEffect(() => {
+    if (state !== 'loading') notifySurfaceActionReady('gateway-transmittals');
+  }, [state]);
+
   return (
     <div className="cm-body">
+      {linked.id && <div className="pj-card" role={linked.state==='error'?'alert':'status'}>
+        <div className="pj-card-b">{linked.state==='loading' ? 'Loading the linked transmittal…' : linked.state==='error'
+          ? <>The linked transmittal could not be read in this program, or is no longer available. No other row was selected. <button className="btn ghost" onClick={linked.retry}>Retry linked transmittal</button></>
+          : <>Linked transmittal #{linked.record?.id} is selected in the log below.</>}</div>
+      </div>}
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Transmittal log</span>
@@ -337,8 +462,9 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
             : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t read the transmittal log" hint="The log did not respond, so whether anything was sent is not shown here. Sign in to your tenant and retry." /></div>
             : rows.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No transmittals yet" hint="Every transmission is recorded here with its gateway reference, status and acknowledgment." /></div>
             : <table className="reg-tbl"><thead><tr><th>#</th><th>Route</th><th>Gateway ref</th><th>Status</th><th>Submitted</th><th>Transmitted by</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
-              <tbody>{rows.map((t) => (
-                <tr key={t.id}>
+              <tbody>{logRows.map((t) => (
+                <tr key={t.id} id={`transmittal-row-${t.id}`} tabIndex={linked.record?.id===t.id?-1:undefined}
+                  aria-label={linked.record?.id===t.id?`Linked transmittal #${t.id}`:undefined}>
                   <td className="mono">#{t.id}</td>
                   {/* region is nullable on partially-migrated transmittal rows. */}
                   <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}
@@ -346,19 +472,14 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
                     {accountLine(t) && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>{accountLine(t)}</div>}</td>
                   <td className="mono" style={{ fontSize: 12 }}>{t.transmission_id ?? '—'}</td>
                   {/* status is likewise nullable (a row written before its gateway replied);
-                      no chip is honest, an invented tone is not. */}
-                  <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
-                    {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}
-                    {technicalRejectionNote(t)}</td>
+                       no chip is honest, an invented tone is not. */}
+                  <TransmittalStatusCell t={t} />
                   <td style={{ whiteSpace: 'nowrap' }}>{t.submitted_at ? new Date(t.submitted_at).toLocaleString() : '—'}</td>
-                  {/* Who: resolved to a person by the server; a bare id is shown as such, never as a name. */}
-                  <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}
-                    {/* The §11.50 meaning declared at transmit, as recorded on the row
-                        with its signature. A row without it says nothing. */}
-                    {t.metadata?.signature?.meaning && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>signed · meaning: {t.metadata.signature.meaning}</div>}</td>
+                  <TransmittalSignatureCell t={t} />
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>
+                    {t.region === 'fda' && t.gateway === 'esg' && canGovernedWrite(authUser) && <As2ReceiptUpload transmittalId={t.id} onRecorded={load} />}
                     {offerRejection(t) && (
                       <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rejection: t.id })}
                         title="Record that the agency did not load the sequence this transmittal filed">{I.alertTriangle} Technical rejection</button>
@@ -386,3 +507,16 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
     </div>
   );
 }
+
+function TransmittalStatusCell({ t }: { t: Transmittal }) { return (
+                  <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
+                    {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}
+                    {technicalRejectionNote(t)}</td>
+  ); }
+function TransmittalSignatureCell({ t }: { t: Transmittal }) { return (
+                  <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}
+                    {/* 2026-09-28 (Q-0928-3): the §11.50 meaning declared at transmit, as
+                        recorded on the row with its signature. A row without it says nothing
+                        — never an invented meaning. */}
+                    {t.metadata?.signature?.meaning && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>signed · meaning: {t.metadata.signature.meaning}</div>}</td>
+  ); }

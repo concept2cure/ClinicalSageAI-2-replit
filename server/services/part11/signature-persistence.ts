@@ -64,6 +64,8 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
 import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
 import { CONTENT_BINDERS } from './governed-target-binders.js';
+import type { RecordedPackageIdentitySnapshot } from '../ectd/package-identity';
+import { deriveEctdSequenceBinding } from './ectd-sequence-binding';
 import {
   chooseSignatureToRevoke,
   revocationCandidateOf,
@@ -134,6 +136,26 @@ export const BINDING_BASIS = {
    * ceremony at all.
    */
   INTERIM_SNAPSHOT_CONTENT: 'interim-snapshot-content-sha256',
+  /**
+   * sha256 over one answer to an agency: the inbox letter's id, the question as
+   * the agency numbered and worded it, and the exact response text
+   * (agency-responses/response-logic.ts agencyResponseDigest, the one recipe the
+   * approval read uses too). No revision, author or time, so the signature
+   * stops approving the response the moment its words change, and only then.
+   * Added 2026-10-18 with agency_communication_questions.
+   */
+  AGENCY_RESPONSE_CONTENT: 'agency-response-content-sha256',
+  /**
+   * sha256 (recipe commitment-fulfilment/v1, ha-interactions/ha-logic.ts
+   * commitmentFulfilmentDigest) over a regulatory commitment's fulfilment: the
+   * commitment's type, words, basis and due date, the date it was met, and
+   * what met it, the sequence (id, number, submission) and the Vault version
+   * (id and the sha256 of its bytes). Signed on `regulatory-commitment:<id>`
+   * when a PMR, PMC or REMS is recorded fulfilled (P-41, 2026-10-19). The
+   * database refuses that fulfilment at COMMIT unless its signature carries
+   * this basis (migrations/20261019_commitment_fulfilment_evidence.sql).
+   */
+  COMMITMENT_FULFILMENT_CONTENT: 'commitment-fulfilment-content-sha256',
   /**
    * sha256 over the eCTD release package the submission orchestrator assembled:
    * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
@@ -504,6 +526,11 @@ export interface GovernedBinding {
   basis: BindingBasis;
   /** Honest human-readable note recorded in the signature manifest. */
   note: string;
+  /** Exact FDA applicant/application facts included in this digest. Internal
+   *  consumers must package this captured proof, never a later mutable read. */
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
+  /** Original sequence/leaf digest, retained to distinguish stale identity from changed content. */
+  sequenceContentDigest?: string;
 }
 
 /**
@@ -539,82 +566,10 @@ export async function deriveGovernedTargetBinding(
 
   try {
     switch (prefix) {
-      case 'ectd-sequence': {
-        /* ── `status` is deliberately NOT bound (amended 2026-09-21) ──────────
-           It used to be in this SELECT, and that made a signature destroy
-           itself through the act it authorized. applyGovernedSequenceTransition
-           signs for 'dispatch' while the sequence is frozen and then UPDATEs
-           status to 'dispatched'. Gate 1 never sees it, because each signature
-           is verified BEFORE its own transition. The release-signature gate
-           re-derives that same dispatch signature at TRANSMIT time, after the
-           status has moved, so the digest could not match: verdict 'invalid' —
-           the TAMPERING verdict, which blocks unconditionally — reported as
-           "the sequence changed after it was signed" when no content had
-           changed at all. Transmit was unreachable for every submission type
-           that requires a release signature. Reproduced against the real
-           migrations in sequence-release-signature.pglite.integration.test.ts
-           ("survives the dispatch it authorized").
-
-           What remains is identity and content: the sequence's id, submission,
-           region, number and type, plus its ordered leaf manifest below. That
-           is what the basis name and note have always claimed
-           (`ectd-sequence-leaf-manifest-sha256`), and what a §11.70 signature
-           is for — a signature that stops verifying the moment it is used is
-           not durable evidence of anything. The workflow state it was signed
-           under is still recorded, on the governed action and the audit chain,
-           which is where an event belongs rather than inside a content hash.
-           `frozen_at`, `dispatch_status` and `updated_at` were already
-           excluded on the same reasoning; `status` was the one mutable column
-           left in.
-
-           NOTE: a signature taken before this change binds the old digest and
-           will now be refused — honestly, by Gate 1, with "re-sign the current
-           content". The dispatch-intent signatures it affects were already
-           unverifiable the instant they were used, so nothing that worked
-           stops working.
-
-           The `document:` and `section:` branches below select a `status`
-           column of their own and have the same shape, but no caller
-           re-derives either binding after a status transition (the only two
-           consumers of this function, sequence-release-signature.ts:181 and
-           submission-service.ts:503, are both ectd-sequence). They are left
-           alone rather than changed on an unproven hunch. */
-        const seq = await client.query(
-          `SELECT id, submission_id, region, sequence_number, type
-             FROM ectd_sequences
-            WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-            LIMIT 1`,
-          [rest, orgId],
-        );
-        if (seq.rows.length === 0) return ledgerFallback('sequence row not readable at signing time');
-        /* ── document_uuid and document_content_sha256 are bound (2026-09-22,
-           W5/D7) ──────────────────────────────────────────────────────────────
-           A vault leaf names its document by document_uuid (its document_id is
-           NULL), and the content pin records what the source held when it was
-           placed. Neither was digested, so re-pointing a signed vault leaf at a
-           different PDF — upsertLeaf re-pins, so DOCUMENT_CONTENT_MISMATCH does
-           not fire either — left this digest byte-identical, and Gate 1 accepted
-           a signature over a document the signer never saw. Both columns are
-           written only by upsertLeaf, when a leaf is placed or changed, never by
-           a workflow transition, so this cannot recreate the self-invalidating
-           signature described above. A signature taken before this change binds
-           the old digest and is refused by Gate 1 with "re-sign the current
-           content", as with the 2026-09-21 amendment. */
-        const leaves = await client.query(
-          `SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
-                  document_content_sha256, checksum, title
-             FROM submission_leaves
-            WHERE sequence_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-            ORDER BY section_code, id`,
-          [rest, orgId],
-        );
-        const payload = canonicalJson({ sequence: seq.rows[0], leaves: leaves.rows });
-        return {
-          digest: sha256Hex(payload),
-          basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid and content pin) at signing time.`,
-        };
-      }
+      case 'ectd-sequence':
+        return await deriveEctdSequenceBinding(client, rest, orgId, {
+          basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST, hashPayload: sha256CanonicalJson, ledgerFallback,
+        });
       case 'document': {
         const doc = await client.query(
           `SELECT id, doc_type, agency, rule_pack_version, title, status
@@ -721,7 +676,7 @@ export interface GovernedSignParams {
  */
 export interface GovernedActionSignatureParams extends GovernedSignParams {
   /** Explicit, honest binding. `digest: null` ⇒ the audit chain hash is bound. */
-  binding: GovernedBinding | { digest: string | null; basis: string; note: string };
+  binding: Omit<GovernedBinding, 'basis'> & { basis: string };
   /** electronic_signatures.signature_type. Default 'governed-action'. */
   signatureType?: string;
   /** manifest `kind` discriminator. Default 'governed-sign'. */
@@ -823,6 +778,7 @@ export async function persistGovernedActionSignature(
     bindingBasis: binding.basis,
     bindingNote: binding.note,
     ...(params.extraManifest ?? {}),
+    ...(binding.recordedPackageIdentity ? { recordedPackageIdentity: binding.recordedPackageIdentity, sequenceContentDigest: binding.sequenceContentDigest } : {}),
   };
   const signatureHash = manifestSignatureHash(signatureManifest);
 

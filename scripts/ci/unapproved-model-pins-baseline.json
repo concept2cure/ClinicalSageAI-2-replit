@@ -33,10 +33,6 @@
       "count": 1,
       "reason": "Unreachable: no importer is reachable from server/index.ts since its route was deleted in 3cc8547d2. Listed for deletion by an owner; if revived it must route as document_drafting / regulatory_review."
     },
-    "server/services/keywordExtractionService.ts": {
-      "count": 1,
-      "reason": "Keyword and term extraction for search and linking; regex matches override the model's terms and the result is not a governed record (classified 2026-09-23)."
-    },
     "server/services/cognitive-ecosystem/agent-runtime.service.ts": {
       "count": 1,
       "reason": "A default written into a private config object that nothing reads; no model call uses it (classified 2026-09-23)."

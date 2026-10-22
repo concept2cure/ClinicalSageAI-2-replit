@@ -59,6 +59,48 @@ function badInput(message: string): Error {
 }
 
 /**
+ * A reporting-period date as the caller declared it. Absent (undefined, null or
+ * blank) is not declared. Otherwise a valid Date, or an ISO 8601 date string
+ * (YYYY-MM-DD, optionally with a time) naming a real calendar day; anything else
+ * is PM_BAD_INPUT naming the field. 2026-10-15: both callers parsed this
+ * themselves and turned an unparseable value into "not declared", and `new Date`
+ * rolls 2025-02-30 over to 2 March and reads a bare "2025" as 1 January.
+ */
+function declaredPeriodDate(value: unknown, field: string): Date | null {
+  if (value === undefined || value === null) return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) throw badInput(`${field} is not a valid date.`);
+    return value;
+  }
+  if (typeof value === 'string' && !value.trim()) return null;
+  const text = typeof value === 'string' ? value.trim() : '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T.+)?$/.exec(text);
+  if (m) {
+    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const day = new Date(Date.UTC(y, mo - 1, d));
+    const at = new Date(text);
+    const realDay = day.getUTCFullYear() === y && day.getUTCMonth() === mo - 1 && day.getUTCDate() === d;
+    if (realDay && !Number.isNaN(at.getTime())) return at;
+  }
+  throw badInput(`${field} must be a real calendar date in ISO 8601 form (YYYY-MM-DD, optionally with a time).`);
+}
+
+/**
+ * The declared reporting period, each end null when not declared. 2026-10-15:
+ * a start after its end was stored as the period; it is PM_BAD_INPUT.
+ */
+function declaredPeriod(start: unknown, end: unknown): { reportingPeriodStart: Date | null; reportingPeriodEnd: Date | null } {
+  const reportingPeriodStart = declaredPeriodDate(start, 'reportingPeriodStart');
+  const reportingPeriodEnd = declaredPeriodDate(end, 'reportingPeriodEnd');
+  if (reportingPeriodStart && reportingPeriodEnd && reportingPeriodStart.getTime() >= reportingPeriodEnd.getTime()) {
+    throw badInput(
+      `reportingPeriodStart (${reportingPeriodStart.toISOString()}) must be before reportingPeriodEnd (${reportingPeriodEnd.toISOString()}).`
+    );
+  }
+  return { reportingPeriodStart, reportingPeriodEnd };
+}
+
+/**
  * Serious incidents per unit placed on the market in the reporting period.
  * Deterministic; the one figure the retired report-authoring.ts buildPsur
  * computed, moved here so the PSUR has a single builder. Not rounded: buildPsur
@@ -381,8 +423,12 @@ export interface AuthorPostMarketArgs {
   regulation?: 'MDR' | 'IVDR';
   relatedCerReportId?: number;
   title?: string;
-  reportingPeriodStart?: Date;
-  reportingPeriodEnd?: Date;
+  /**
+   * The reporting period as the caller received it — a Date or an ISO 8601 date
+   * string — validated here (declaredPeriodDate), so every caller refuses alike.
+   */
+  reportingPeriodStart?: unknown;
+  reportingPeriodEnd?: unknown;
   /** PSUR only: the sponsor's sales and serious-incident figures for the period. */
   psurExposure?: PsurExposureFigures;
 }
@@ -408,6 +454,12 @@ export async function authorPostMarketDocument(
       code: 'PM_BAD_TYPE',
     });
   }
+
+  // Reporting period: what the caller declared, or null. 2026-10-15: a missing
+  // date used to become a trailing 12 months ending today, disclosed only in
+  // `summary`; the period findings (PMSR-001, PMCFE-001, PSUR-001, PMPFE-001)
+  // check presence, so the invented window passed them. Refused before anything is read.
+  const { reportingPeriodStart, reportingPeriodEnd } = declaredPeriod(args.reportingPeriodStart, args.reportingPeriodEnd);
 
   let deviceName = args.deviceName?.trim() || '';
   let deviceClass = args.deviceClass ?? null;
@@ -467,12 +519,6 @@ export async function authorPostMarketDocument(
     psurExposure: args.psurExposure,
   });
 
-  // Reporting period: what the caller declared, or null. 2026-10-15: a missing
-  // date used to become a trailing 12 months ending today, disclosed only in
-  // `summary`; the period findings (PMSR-001, PMCFE-001, PSUR-001, PMPFE-001)
-  // check presence, so the invented window passed them.
-  const reportingPeriodStart: Date | null = args.reportingPeriodStart ?? null;
-  const reportingPeriodEnd: Date | null = args.reportingPeriodEnd ?? null;
   const periodNote =
     spec.needsReportingPeriod && (!reportingPeriodStart || !reportingPeriodEnd)
       ? ' Reporting period not declared: set its start and end before approval.'

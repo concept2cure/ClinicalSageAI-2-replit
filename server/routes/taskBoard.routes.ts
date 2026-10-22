@@ -71,7 +71,9 @@ import { Router, Request, Response } from 'express';
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
-import { requestDb, type RequestDb } from '../db/requestDb';
+import { requestDb, requestPgClient, type RequestDb } from '../db/requestDb';
+import { loadTaskHomePrograms, type TaskHomeProgram } from '../services/tasking/task-home-programs';
+import { loadTaskFilingHome, TaskFilingHomeError } from '../services/tasking/task-filing-home';
 import {
   loadUnifiedWork,
   type UnifiedWorkItem,
@@ -79,7 +81,6 @@ import {
   type UnifiedWorkStatus,
 } from '../services/unified-work/unified-work-view';
 import { getSecureOrgId } from '../utils/tenantContext';
-import { isMissingAnchorColumn, listProgramAnchorCandidates } from '../services/c2c/program-project-anchor';
 import { unifiedTasks, taskDependencies, users, organizationUsers } from '../../shared/schema';
 import { memberLabels } from '../../shared/utils/member-labels';
 
@@ -184,14 +185,12 @@ interface TaskBoardItem {
    * changed. Absent on the board's own tasks.
    */
   readOnly?: boolean;
-  /**
-   * The screen that owns a read-only card, and its project. `programId` is the
-   * regulatory_programs UUID that project anchors (projects.regulatory_program_id),
-   * the id every v2 surface opens on; null when the project anchors no program.
-   * The client publishes only `programId` as the open project, never the number
-   * (DOCUMENT_STORE_CONSOLIDATION.md step 7).
-   */
-  home?: { surface: 'project-home' | 'submission-center'; projectId: number | null; programId: string | null };
+  /** The screen that owns a read-only card, and its project. */
+  home?: {
+    surface: 'project-home' | 'submission-center'; projectId: number | null;
+    programId: string | null; programTitle: string | null;
+    source: UnifiedWorkItem['source']; nativeId: string;
+  };
   /** The owning store's own note (a blocker, a module, a catalogue key), when it has one. */
   detail?: string | null;
 }
@@ -279,10 +278,7 @@ const HOME: Record<Exclude<UnifiedWorkItem['source'], 'board'>, 'project-home' |
  * record are empty, never invented: no assignee id, no progress, no approval,
  * no dependency edges, no impact score.
  */
-export function otherStoreCard(
-  item: UnifiedWorkItem,
-  programOfProject: ReadonlyMap<number, string> = new Map(),
-): TaskBoardItem | null {
+export function otherStoreCard(item: UnifiedWorkItem, program?: TaskHomeProgram): TaskBoardItem | null {
   if (item.source === 'board') return null;
   const status = BOARD_STATUS[item.status];
   const due = item.dueAt ? new Date(item.dueAt) : null;
@@ -315,9 +311,9 @@ export function otherStoreCard(
     estimatedHours: null,
     readOnly: true,
     home: {
-      surface: HOME[item.source],
-      projectId: item.projectId,
-      programId: item.projectId != null ? programOfProject.get(item.projectId) ?? null : null,
+      surface: HOME[item.source], projectId: item.projectId,
+      programId: program?.id ?? null, programTitle: program?.title ?? null,
+      source: item.source, nativeId: item.nativeId,
     },
     detail: item.detail,
   };
@@ -329,14 +325,13 @@ export function otherStoreCard(
  * board mirror is on the board (AnA's create_task writes both).
  */
 export function otherStoreCards(
-  items: UnifiedWorkItem[],
-  mirroredProjectTaskIds: ReadonlySet<string>,
-  programOfProject: ReadonlyMap<number, string> = new Map(),
+  items: UnifiedWorkItem[], mirroredProjectTaskIds: ReadonlySet<string>,
+  programs: ReadonlyMap<number, TaskHomeProgram> = new Map(),
 ): TaskBoardItem[] {
   const out: TaskBoardItem[] = [];
   for (const item of items) {
     if (item.source === 'schedule' && mirroredProjectTaskIds.has(item.nativeId)) continue;
-    const card = otherStoreCard(item, programOfProject);
+    const card = otherStoreCard(item, item.projectId != null ? programs.get(item.projectId) : undefined);
     if (card) out.push(card);
   }
   return out;
@@ -444,29 +439,31 @@ async function readOwnBoard(
   return { tasks, mirrored };
 }
 
-/**
- * Each anchor project's program, org-scoped, through the one anchor reader
- * (listProgramAnchorCandidates). Other stores key their work by the numeric
- * `projects` anchor intake creates per program; the shell opens programs by
- * UUID, so a card's hand-off carries this. A database without the anchor
- * column has no anchors; any other failed read throws.
- */
-async function programsOfAnchors(db: RequestDb, organizationId: number): Promise<Map<number, string>> {
-  try {
-    const candidates = await listProgramAnchorCandidates(db, { orgId: organizationId, eligibility: 'non-deleted' });
-    const out = new Map<number, string>();
-    for (const c of candidates) if (c.anchor) out.set(c.anchor.id, c.programId.toLowerCase());
-    return out;
-  } catch (error) {
-    if (isMissingAnchorColumn(error)) return new Map();
-    throw error;
-  }
-}
-
 // ── Router factory ──────────────────────────────────────────────────────────────
 
 export default function createTaskBoardRoutes(): Router {
   const router = Router();
+
+  /** Read the exact native tracker row; its integer project and UUID programme
+   * remain separate, with current project sharing checked before either opens. */
+  router.get('/filings/:filingId', async (req: Request, res: Response) => {
+    const organizationId = Number(getSecureOrgId(req));
+    const userId = Number(req.userId ?? req.user?.id);
+    if (!Number.isSafeInteger(organizationId) || organizationId <= 0 || !Number.isSafeInteger(userId) || userId <= 0) {
+      return res.status(403).json({ success: false, error: 'Authenticated organization membership is required.', code: 'FILING_ACCESS_DENIED' });
+    }
+    try {
+      const data = await loadTaskFilingHome(requestDb(req), requestPgClient(req), {
+        organizationId, userId, filingId: String(req.params.filingId),
+      });
+      return res.json({ success: true, data });
+    } catch (error) {
+      const refusal = error instanceof TaskFilingHomeError ? error
+        : new TaskFilingHomeError('FILING_READ_UNAVAILABLE', 503, 'The tracked filing could not be read. Retry this exact filing.');
+      logger.warn('tracked filing handoff refused', { code: refusal.code, status: refusal.status });
+      return res.status(refusal.status).json({ success: false, error: refusal.message, code: refusal.code });
+    }
+  });
 
   /**
    * GET /api/task-management/board
@@ -504,7 +501,11 @@ export default function createTaskBoardRoutes(): Router {
       for (const [table, outcome] of Object.entries(view.sources) as Array<[UnifiedWorkSourceTable, { ran: boolean }]>) {
         if (table !== 'unified_tasks' && !outcome.ran) unreadSources.push(table);
       }
-      const cards = [...tasks, ...otherStoreCards(view.items, mirroredProjectTaskIds, await programsOfAnchors(db, organizationId))];
+      const projectIds = view.items.flatMap((item) => item.source !== 'board' && item.projectId != null ? [item.projectId] : []);
+      const programs = projectIds.length
+        ? await loadTaskHomePrograms(requestPgClient(req), organizationId, projectIds)
+        : new Map<number, TaskHomeProgram>();
+      const cards = [...tasks, ...otherStoreCards(view.items, mirroredProjectTaskIds, programs)];
       const meta: BoardReadMeta = { partial: unreadSources.length > 0, unreadSources };
       return res.json({ success: true, data: cards, total: cards.length, meta });
     } catch (error) {

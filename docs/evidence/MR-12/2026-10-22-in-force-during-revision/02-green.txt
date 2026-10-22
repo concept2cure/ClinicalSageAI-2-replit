@@ -1,0 +1,56 @@
+# GREEN at 9e77eca23 + this change (2026-10-22T00:22:30Z)
+## real PostgreSQL 16, app_service, RLS_ENFORCE=on
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > reads retained versions and counts actual current-version training
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > rolls back the personal receipt with its mandatory audit on failure and recovers on a fresh request
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > refuses exact foreign records, training acknowledgments and program claims without exposing prose
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > uses fresh membership to refuse an unshared member despite an admin token claim
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > recovers a genuinely committed legacy signature after lost COMMIT reply and discards its physical connection
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > uses an actual non-owner NOSUPERUSER/NOBYPASSRLS runtime connection under tenant RLS
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > binds a genuine independently signed release to a personal receipt and its canonical chained audit
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > withdraws current training after actual post-release revocation while retaining the old personal receipt and signature history
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses approve after actual target wait and signer demotion without domain/audit/signature writes
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses change after actual target wait and signer demotion without domain/audit/signature writes
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses an actor disabled during the actual target wait
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > allows a genuinely authorized signer through the same actual target wait
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > honors an actual strict resource denial added during the target wait
+ Test Files  4 passed (4)
+      Tests  38 passed (38)
+
+## unit + PGlite: server QMS, QMS routes, client Quality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > permits an uninvolved signer and records enforced two-person attribution when contributors exist without an original author
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > returns explicit recovery and discards the request connection when the COMMIT reply is lost
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > still creates a draft
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document writes an audit row
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 35 passed (38)
+      Tests  7 failed | 521 passed (528)
+
+The 7 failures above fail identically on trunk at 9e77eca23 with this change's files reverted (7 there, 7 here, none added).

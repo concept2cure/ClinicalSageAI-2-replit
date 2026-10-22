@@ -1,0 +1,32 @@
+{
+  "productionUnchanged": true,
+  "tests": [
+    {
+      "file": "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+      "sha256": "939e4a342aef50792673f6417b9737bcc0389e01faa8bf6e81c79b0eaa32f5c9",
+      "baselineExpectedFailures": 15,
+      "baselinePassingControls": 13
+    },
+    {
+      "file": "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+      "sha256": "d705d6ea6142a144c97ef100a2d8e6b16562be708a3a6f0c4e49d4e9aebee5e0",
+      "baselineExpectedFailures": 7,
+      "baselinePassingControls": 6
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+      "sha256": "fdaff67d6433e9d3dcef84a512a3aa3284b55f90ed10540aea3fb7572fee3f49",
+      "baselineExpectedFailures": 4,
+      "baselinePassingControls": 4
+    },
+    {
+      "file": "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts",
+      "sha256": "9fc869adfdd795c5bb51175a5fedeecc081d02aa9cc00964bbe4de3a3e01b14e",
+      "baselineExpectedFailures": 2,
+      "baselinePassingControls": 2
+    }
+  ],
+  "total": 53,
+  "expectedFailures": 28,
+  "passingControls": 25
+}

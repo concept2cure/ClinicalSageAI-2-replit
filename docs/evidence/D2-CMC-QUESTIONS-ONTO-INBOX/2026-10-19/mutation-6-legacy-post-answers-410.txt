@@ -1,0 +1,62 @@
+# MUTATION 6 the legacy write route is retired (POST writes reg_questions again)
+# File: server/routes/cmc-agency-questions.routes.ts
+# Replaced:
+#   -   router.post('/', readOnly);
+# With:
+#   +   router.post('/', async (req: Request, res: Response) => {
+#   +     const r = await q(`insert into reg_questions (organization_id, question_text, status) values ($1, $2, 'OPEN') returning id`, [resolveOrgId(req), req.body?.questionText]);
+#   +     return res.status(201).json({ success: true, data: r.rows[0] });
+#   +   });
+# Command: npx vitest run server/routes/__tests__/cmcAgencyQuestions.test.ts
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored: sha256 2bafc55a96b25750… before = 2bafc55a96b25750… after (byte-identical)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/cmcAgencyQuestions.test.ts > GET /api/cmc/agency-questions — the earlier file, as history > lists every row of the organisation, scoped by the verified org, with the counts from the store 30ms
+ ✓ server/routes/__tests__/cmcAgencyQuestions.test.ts > GET /api/cmc/agency-questions — the earlier file, as history > serves what the row holds: the status verbatim, the dates as stored text, no closure date 9ms
+ ✓ server/routes/__tests__/cmcAgencyQuestions.test.ts > GET /api/cmc/agency-questions — the earlier file, as history > a file that was never created here is an empty history, said as such; a failed read is an error 16ms
+ ✓ server/routes/__tests__/cmcAgencyQuestions.test.ts > GET /api/cmc/agency-questions — the earlier file, as history > refuses with 401 when no org context resolves, and reads nothing 4ms
+ × server/routes/__tests__/cmcAgencyQuestions.test.ts > the earlier file's writes are retired > POST answers 410 naming the letter as the record, with no query issued 16ms
+   → expected 500 to be 410 // Object.is equality
+ ✓ server/routes/__tests__/cmcAgencyQuestions.test.ts > the earlier file's writes are retired > PATCH answers 410 for any body, including a close, with no query issued 18ms
+ ✓ server/routes/__tests__/cmcAgencyQuestions.test.ts > the earlier file's writes are retired > there is no DELETE either 3ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  10:31:30
+   Duration  677ms (transform 144ms, setup 96ms, import 192ms, tests 100ms, environment 0ms)
+
+stderr | server/routes/__tests__/cmcAgencyQuestions.test.ts > GET /api/cmc/agency-questions — the earlier file, as history > a file that was never created here is an empty history, said as such; a failed read is an error
+{
+  "timestamp": "2026-10-19T10:31:31.147Z",
+  "level": "error",
+  "message": "[cmc-agency-questions] earlier agency-question file read failed",
+  "context": {
+    "error": "connection terminated"
+  }
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/cmcAgencyQuestions.test.ts > the earlier file's writes are retired > POST answers 410 naming the letter as the record, with no query issued
+AssertionError: expected 500 to be 410 // Object.is equality
+
+- Expected
++ Received
+
+- 410
++ 500
+
+ ❯ server/routes/__tests__/cmcAgencyQuestions.test.ts:154:24
+    152|       .post('/api/cmc/agency-questions')
+    153|       .send({ questionText: 'Provide the ICH Q1E extrapolation analysi…
+    154|     expect(res.status).toBe(410);
+       |                        ^
+    155|     expect(res.body).toMatchObject({ success: false, error: { code: 'C…
+    156|     expect(res.body.error.message).toMatch(/letter/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

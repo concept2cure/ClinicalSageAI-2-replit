@@ -1,0 +1,66 @@
+{
+  "at": "2026-10-20T23:58:04.646191+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/authoring/authoring-assembly-source.ts",
+    "server/services/authoring/authoring-assembly-plan.ts",
+    "server/services/market-specs/document-preparation.ts",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "server/routes/__tests__/_authoring-assembly-filing-cases.ts",
+    "--format",
+    "json"
+  ],
+  "elapsedSeconds": 1.365,
+  "exitCode": 0,
+  "rawOutput": "lint-green-output.txt.gz",
+  "outputSha256": "1c1c8a26b587827cae669d5449d2acf6743985235f2104b99bef3e29fec8eef4",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "d957f5ec6cc8866d21e8a25aeeb8105828be9a324553762f126abddd02aae9b9",
+    "server/services/authoring/authoring-assembly-plan.ts": "cc47f6e9b96d72f15856fbd5c319c3974d94016faff71a80d0a150aa894ae5ee",
+    "server/services/market-specs/document-preparation.ts": "89f691d9f8b4bc6a70c45a582d09891422cef3d536ea138d3c43673dce8b7685",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": "3a90cc6f6236452aea72366222df716ad0daacb7b1d6933649b3e0e1e84882e6",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "505a55e44ea19e6eebc71f5e19477f7c054f6040aaa31577be8af619859fb777",
+    "server/routes/__tests__/_authoring-assembly-filing-cases.ts": "ddebb09b9bca7a741cfb61f81ad4e92c14a63ecc01c87905ca36dc81f34832fd"
+  },
+  "sourceDrift": [],
+  "summary": [
+    {
+      "file": "/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-assembly-filing-cases.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "/workspace/ClinicalSageAI/server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly-plan.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly-source.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "/workspace/ClinicalSageAI/server/services/market-specs/document-preparation.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

@@ -73,6 +73,9 @@ export function mountGenerateExecuteRoutes(router: Router): void {
       }
 
       const { orgId, userId } = extractRequestContext(req);
+      // 2026-10-15: a request with no user reached the generator, whose refusal
+      // was answered as 502 GENERATION_FAILED.
+      if (!userId) return sendError(res, 401, 'A signed-in user is required', null, 'NO_AUTH');
 
       if (!orgId) {
         return sendError(res, 403, 'Organization context required', null, 'NO_ORG');
@@ -85,9 +88,9 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         actionType: action_type as DocumentActionType,
         conversationContext: conversation_context,
         projectId: Number(project_id),
-        // orgId guaranteed truthy by the guard above.
+        // orgId and userId guaranteed by the guards above.
         organizationId: Number(orgId),
-        userId: userId ? Number(userId) : undefined,
+        userId,
         userRole: user_role,
         intentLens: intent_lens,
         title,
@@ -118,8 +121,10 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         model: result.model,
       });
     } catch (error: any) {
+      // 2026-10-15: the 500 body carried error.message (driver text included);
+      // the detail is logged, the caller gets a fixed message.
       logger.error('Generate error', { err: error instanceof Error ? error.message : String(error) });
-      return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
+      return sendError(res, 500, 'Artifact generation failed unexpectedly', null, 'INTERNAL_ERROR');
     }
   });
 
@@ -178,13 +183,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
       );
     } catch (error: any) {
       logger.error('Command execution error', { err: error instanceof Error ? error.message : String(error) });
-      return sendError(
-        res,
-        500,
-        error?.message || 'Command execution failed',
-        null,
-        'EXECUTION_ERROR'
-      );
+      return sendError(res, 500, 'Command execution failed', null, 'EXECUTION_ERROR');
     }
   });
 }

@@ -1,0 +1,17 @@
+{
+  "completedAtUtc": "2026-10-17T23:03:08.586409+00:00",
+  "exitCode": 0,
+  "log": "/workspace/audit/oct17-api-publication-full-prepush.log",
+  "logSha256": "79ea1dcf608b7fa475722c0e0a29e0920540ec7cbbda6f0e9f3c732db9045f7c",
+  "hooksUnchanged": true,
+  "hooksPath": ".husky",
+  "qualifiedSourceAtStart": "94c2927cf9d98503bc13a354deef377489490ba2",
+  "canonicalSource": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+  "canonicalProof": "a4200db6051ae62a9038b19cf67199318fe2743a",
+  "postHookDelta": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "postHookDeltaSourceChanges": false,
+  "postHookRepoHealthGuardExit": 0
+}

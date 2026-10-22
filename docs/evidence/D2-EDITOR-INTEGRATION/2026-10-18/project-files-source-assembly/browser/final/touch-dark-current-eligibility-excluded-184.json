@@ -1,0 +1,94 @@
+{
+  "kind": "project-files-rail",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "panel": {
+    "x": 10,
+    "y": 0,
+    "right": 390,
+    "bottom": 844,
+    "width": 380,
+    "height": 844,
+    "clientWidth": 379,
+    "scrollWidth": 379
+  },
+  "pageWidth": 390,
+  "scrollOwner": {
+    "className": "ed-comments",
+    "overflowY": "auto",
+    "scrollTop": 0,
+    "clientHeight": 844,
+    "scrollHeight": 844
+  },
+  "footer": {
+    "x": 25,
+    "y": 508.125,
+    "right": 376,
+    "bottom": 830,
+    "width": 351,
+    "height": 321.875,
+    "clientWidth": 351,
+    "scrollWidth": 351
+  },
+  "controls": [
+    {
+      "text": " Open",
+      "disabled": false,
+      "bounds": {
+        "x": 37,
+        "y": 570.125,
+        "right": 118.734375,
+        "bottom": 614.125,
+        "width": 81.734375,
+        "height": 44,
+        "clientWidth": 80,
+        "scrollWidth": 80
+      }
+    },
+    {
+      "text": " Build in editor",
+      "disabled": true,
+      "bounds": {
+        "x": 37,
+        "y": 620.125,
+        "right": 344.84375,
+        "bottom": 664.125,
+        "width": 307.84375,
+        "height": 44,
+        "clientWidth": 306,
+        "scrollWidth": 306
+      }
+    },
+    {
+      "text": " Work on document",
+      "disabled": true,
+      "bounds": {
+        "x": 37,
+        "y": 692,
+        "right": 199.015625,
+        "bottom": 736,
+        "width": 162.015625,
+        "height": 44,
+        "clientWidth": 160,
+        "scrollWidth": 160
+      }
+    },
+    {
+      "text": " Cite in §3.2.P.8.1",
+      "disabled": false,
+      "bounds": {
+        "x": 205.015625,
+        "y": 692,
+        "right": 349.015625,
+        "bottom": 736,
+        "width": 144,
+        "height": 44,
+        "clientWidth": 142,
+        "scrollWidth": 142
+      }
+    }
+  ],
+  "text": "Synthetic earlier Vault source.pdfSHA-256 777777777777… Open Build in editorBuild in editor: This source is excluded from active data use. Work on document Cite in §3.2.P.8.1This is an earlier source version. Use its current version to create a working copy.The original file is unavailable. Use retained data-room text with AnA where data use is still permitted."
+}

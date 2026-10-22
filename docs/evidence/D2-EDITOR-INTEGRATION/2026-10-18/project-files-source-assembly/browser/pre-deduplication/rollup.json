@@ -1,0 +1,75 @@
+{
+  "cases": 6,
+  "passed": 6,
+  "stageCount": 31,
+  "screenshots": 25,
+  "commits": 6,
+  "previews": 10,
+  "generations": 4,
+  "explicitAccepts": 2,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "unexpectedHttp": 0,
+  "navigation": 0,
+  "chooserAssertionsPerAdmittedCase": {
+    "exactProjectScopedReads": 2,
+    "noAuthoringMutationBeforeHandoff": true,
+    "exactVaultUuidAndHashShown": true
+  },
+  "perCase": [
+    {
+      "key": "desktop-dark-ana",
+      "status": "pass",
+      "commits": 1,
+      "previews": 2,
+      "generations": 2,
+      "accepts": 1,
+      "stages": 6
+    },
+    {
+      "key": "desktop-light-deterministic",
+      "status": "pass",
+      "commits": 2,
+      "previews": 3,
+      "generations": 0,
+      "accepts": 0,
+      "stages": 6
+    },
+    {
+      "key": "touch-dark-current-eligibility",
+      "status": "pass",
+      "commits": 0,
+      "previews": 0,
+      "generations": 0,
+      "accepts": 0,
+      "stages": 3
+    },
+    {
+      "key": "touch-dark-deterministic",
+      "status": "pass",
+      "commits": 2,
+      "previews": 3,
+      "generations": 0,
+      "accepts": 0,
+      "stages": 6
+    },
+    {
+      "key": "touch-light-ana",
+      "status": "pass",
+      "commits": 1,
+      "previews": 2,
+      "generations": 2,
+      "accepts": 1,
+      "stages": 6
+    },
+    {
+      "key": "touch-light-read-only",
+      "status": "pass",
+      "commits": 0,
+      "previews": 0,
+      "generations": 0,
+      "accepts": 0,
+      "stages": 4
+    }
+  ]
+}

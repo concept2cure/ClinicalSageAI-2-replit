@@ -56,6 +56,9 @@ vi.mock('../../db.js', () => ({
     query: { concept2cureArtifacts: { findFirst: H.findFirst, findMany: H.findMany } },
     update: () => ({ set: () => ({ where: async () => [] }) }),
   },
+  // harmonize-sections proves the project is the caller's organization's
+  // (projectBelongsToTenant) before it reads; project 12 is.
+  getPool: () => ({ query: async () => ({ rows: [{ present: 1 }] }) }),
 }));
 vi.mock('../../../shared/schema/index.js', () => ({ concept2cureArtifacts: { id: 'id' } }));
 vi.mock('../../services/resolution/rewrite-coordinator.js', () => ({ identifyRewriteTargets: H.identifyRewriteTargets }));

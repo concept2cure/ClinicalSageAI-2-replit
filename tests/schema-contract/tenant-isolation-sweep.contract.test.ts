@@ -37,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
 import { immutableReportRecords, reportDomainEnum, sealStatusEnum, regulatoryBodyEnum } from '../../shared/schema';
+import { extractTableDdl } from '../golden-journeys/harness';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 // Imported, not re-typed: the same string used to be hardcoded in four places,
@@ -154,6 +155,20 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // set order.
   await safe(readMig('migrations/20260527_mutation_primitives.sql'));
   await safe(readMig('migrations/20260528_phase9_document_schema.sql'));
+  // Fresh installs create the notification base before the batch's Oct 14
+  // recipient receipt FK/index. The old journal omits both base tables; use
+  // their actual creator DDL rather than placeholder notification columns.
+  await pg.exec(extractTableDdl('migrations/20260510_notifications_and_clinical.sql', [
+    'mdx_notifications', 'mdx_notification_subscriptions',
+  ]));
+  // The real deploy applies the canonical authoring subsystem before the C2C
+  // batch. Its original loop tables are the parent of the controlled-QMS
+  // binding migration in this batch; the old base journal omits that lineage.
+  await pg.exec(readMig('db/migrations/20260725_authoring_document_loop_tables.sql'));
+  // Keep the deployed authoring lineage closed: router columns and immutable
+  // revision-ledger ALTERs follow the loop creator on every real deployment.
+  await pg.exec(readMig('db/migrations/20260730_authoring_comments_router_columns.sql'));
+  await pg.exec(readMig('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
   // The Part 11 port precedes this batch on real deployments. Its status
   // widening needs the REAL orchestrator store port, which itself needs the
   // canonical submissions store above. This fixture omitted both pre-batch
@@ -173,6 +188,36 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // installer pushes. This fixture's old journal never declared it; provision
   // the model rather than weakening the repair's missing-table refusal.
   await provisionReportLedgerFixture(pg);
+  // Same shape as report_type_registry above. mdx_notifications and
+  // mdx_notification_subscriptions are in shared/schema.ts, so drizzle push
+  // creates them on a provisioned database — and deploy-migrate never runs
+  // drizzle push (it preflights that the base schema already exists), so they
+  // are a PRECONDITION of the set rather than a member of it: their creator,
+  // migrations/20260510_notifications_and_clinical.sql, is on no deploy path
+  // and is baselined as such. The journal this fixture replays predates both.
+  // 20261014_notification_recipient_receipts.sql, which joined the set, FKs
+  // mdx_notifications(id) and re-indexes mdx_notification_subscriptions, so
+  // without them the slice failed `relation "mdx_notifications" does not
+  // exist` — a fixture smaller than the deploy it models, not a regressed set.
+  // deploy-migrate STEP 3 — the authoring subsystem — runs before STEP 4 applies
+  // the set, so a deploy presents its tables to the set and this fixture must
+  // too. Read from AUTHORING_SUBSYSTEM_FILES rather than restated here, so the
+  // fixture cannot drift from the step it models. Without it the slice failed
+  // `relation "public.authoring_documents" does not exist` on
+  // 20261014_qms_controlled_authoring_content.sql, which is a file in the set
+  // reaching across to a step-3 table — correct on a deploy, absent here.
+  const authoring = (await import('../../scripts/db/authoring-subsystem.mjs')) as {
+    AUTHORING_SUBSYSTEM_FILES: string[];
+  };
+  for (const rel of authoring.AUTHORING_SUBSYSTEM_FILES) await safe(readMig(rel));
+  const notifications = readMig('migrations/20260510_notifications_and_clinical.sql');
+  for (const table of ['mdx_notifications', 'mdx_notification_subscriptions']) {
+    const ddl = notifications.match(
+      new RegExp(`CREATE TABLE IF NOT EXISTS ${table} \\([\\s\\S]*?\\n\\);`),
+    );
+    if (!ddl) throw new Error(`20260510_notifications_and_clinical.sql no longer creates ${table}`);
+    await safe(ddl[0]);
+  }
   return pg;
 }
 

@@ -12,6 +12,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications';
 import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,12 +32,7 @@ export const FIRE_NOTIFICATION: AnaTool = {
       recipient_role:    { type: 'string' },
       category: {
         type: 'string',
-        enum: [
-          'submission_status', 'validation_finding', 'q_sub_response',
-          'cdx_pairing', 'ldt_milestone_due', 'gateway_credential_expiring',
-          'ana_draft_pending', 'risk_residual_high', 'capa_due',
-          'study_deviation', 'enrollment_milestone', 'admin', 'system',
-        ],
+        enum: [...NOTIFICATION_CATEGORIES],
       },
       severity:      { type: 'string', enum: ['info', 'warning', 'critical'] },
       title:         { type: 'string', description: 'Short one-line headline.' },
@@ -378,6 +374,7 @@ export const CREATE_PROTOCOL_DOCUMENT: AnaTool = {
       protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] },
       title: { type: 'string' },
       protocol_number: { type: 'string' },
+      program_id: { type: 'string', description: 'Optional explicitly selected owned program UUID; otherwise the current authorized program context is resolved.' },
       design_type: { type: 'string', enum: ['interventional', 'observational', 'expanded_access', 'animal_study', 'basic_science', 'registry', 'other'] },
       phase: { type: 'string' },
       therapeutic_area: { type: 'string' },
@@ -1280,7 +1277,7 @@ export const TRIAGE_COMPLIANCE_ATTENTION: AnaTool = {
 export const FULFILL_REGULATORY_COMMITMENT: AnaTool = {
   name: 'fulfill_regulatory_commitment',
   description:
-    "Mark a regulatory commitment (PMR/PMC/REMS/meeting commitment) fulfilled, optionally with the date it was met. Closes the commitment lifecycle. Governed + audited, org-scoped.",
+    "Mark an organisation-level meeting commitment or other commitment fulfilled, optionally with the date it was met. Governed + audited, org-scoped. AnA cannot sign: a PMR, PMC or REMS is recorded fulfilled only by the person's Part 11 signature naming the sequence or document that met it, so for those this tool records nothing and points to Communication, Meetings & commitments.",
   input_schema: { type: 'object', properties: { commitment_id: { type: 'number' }, fulfilled_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: STATED_REASON_INPUT }, required: ['commitment_id'] },
 };
 
@@ -1491,16 +1488,17 @@ export const CREATE_TMF: AnaTool = {
   },
 };
 
+// 2026-10-15: said a zone-less artifact "is AUTO-CLASSIFIED"; an unmatched name is refused (etmf-logic).
 export const CLASSIFY_TMF_ARTIFACT: AnaTool = {
   name: 'classify_tmf_artifact',
   description:
-    "File a TMF artifact: when no zone is given, it is AUTO-CLASSIFIED into a DIA TMF Reference Model zone by name (deterministic). Set status (expected/received/in_review/final/missing/not_applicable). Returns the artifact id and the assigned zone. Governed + audited, org-scoped.",
+    "File a TMF artifact into a DIA TMF Reference Model zone. When no zone is given, the name is matched against deterministic zone keywords; a name that matches no zone keyword is unclassified and is not filed (the tool refuses, naming the missing zone): ask the user which zone (1-11) it belongs in and pass it. Set status (expected/received/in_review/final/missing/not_applicable). Returns the artifact id and the assigned zone. Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
       tmf_file_id: { type: 'number' },
       artifact_name: { type: 'string' },
-      zone: { type: 'number', description: 'DIA RM zone 1-11; omit to auto-classify.' },
+      zone: { type: 'number', description: 'DIA RM zone 1-11; omit to classify by name (an unmatched name is refused).' },
       status: { type: 'string', enum: ['expected','received','in_review','final','missing','not_applicable'] },
       document_date: { type: 'string' },
       reason: STATED_REASON_INPUT,

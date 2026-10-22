@@ -44,6 +44,11 @@
  * is the sequence spine's own digest over the full leaf rows
  * (`BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST`).
  *
+ * FDA coverage also requires the versioned applicant identity frozen into the
+ * signed package to equal the current recorded application, bound sponsor,
+ * DUNS and regulatory contact. An older intact snapshot without this proof
+ * cannot establish coverage; it is not evidence of snapshot tampering.
+ *
  * ## Why divergence is not `invalid`
  *
  * The orchestrator's signature is intact over the package it was taken on.
@@ -65,6 +70,14 @@ import type { Pool } from 'pg';
 import { pool as defaultPool } from '../../db.js';
 import type { ECTDLeaf } from './ectd4-validator.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
+import {
+  packageIdentityRefusal,
+  readSubmissionPackageIdentity,
+  recordedPackageIdentitySnapshot,
+  sameRecordedPackageIdentitySnapshot,
+  type RecordedPackageIdentitySnapshot,
+} from './package-identity.js';
 
 const log = createScopedLogger('signed-manifest-covers-sequence');
 
@@ -294,18 +307,24 @@ export async function readSequenceLeavesForComparison(params: {
   }
 }
 
+interface SequenceCoverageParams {
+  signedLeaves: readonly ECTDLeaf[];
+  sequenceId: number;
+  /** The submission the caller resolved this sequence from. */
+  submissionId?: number;
+  organizationId: number;
+  region?: string | null;
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
+  pool?: Pick<Pool, 'query'>;
+}
+
 /**
  * Does this signed snapshot cover the sequence that would be transmitted?
  *
  * The one entry point the dispatch gate uses. `unknown` on an unreadable
  * sequence; `covers: false` with a reason an operator can act on otherwise.
  */
-export async function signedManifestCoversSequence(params: {
-  signedLeaves: readonly ECTDLeaf[];
-  sequenceId: number;
-  organizationId: number;
-  pool?: Pick<Pool, 'query'>;
-}): Promise<ManifestCoverage> {
+export async function signedManifestCoversSequence(params: SequenceCoverageParams): Promise<ManifestCoverage> {
   const live = await readSequenceLeavesForComparison({
     sequenceId: params.sequenceId,
     organizationId: params.organizationId,
@@ -319,7 +338,61 @@ export async function signedManifestCoversSequence(params: {
         `them cannot be determined`,
     };
   }
-  return signedManifestCoversLeaves(comparableFromSignedLeaves(params.signedLeaves), live);
+  const leaves = signedManifestCoversLeaves(comparableFromSignedLeaves(params.signedLeaves), live);
+  if (!('covers' in leaves) || !leaves.covers || canonicalRegionOf(params.region) !== 'US') return leaves;
+  return fdaApplicantCoverage(params, leaves);
+}
+
+/** Extend the existing leaf correspondence with FDA's recorded applicant facts. */
+async function fdaApplicantCoverage(
+  params: SequenceCoverageParams,
+  leaves: Extract<ManifestCoverage, { covers: true }>,
+): Promise<ManifestCoverage> {
+  // A historical signature remains intact over its historical record. Its
+  // absence of applicant proof means it does not cover today's FDA identity;
+  // the existing sequence-signature fallback can authorize the current record.
+  if (!params.recordedPackageIdentity) {
+    return { covers: false, detail: 'the signed package has no recorded applicant identity snapshot; sign this sequence over its current applicant facts' };
+  }
+  if (!Number.isInteger(params.submissionId) || Number(params.submissionId) <= 0) {
+    return { unknown: true, detail: 'the submission was not resolved, so current applicant identity coverage cannot be determined' };
+  }
+  const db = params.pool ?? (defaultPool as unknown as Pick<Pool, 'query'>);
+  try {
+    // Resolve the sequence's actual parent before reading its applicant. A
+    // caller's duplicate submission key cannot lend another program's facts
+    // to a sequence with coincidentally identical leaves.
+    const sequence = await db.query(
+      `SELECT submission_id FROM ectd_sequences
+        WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [params.sequenceId, params.organizationId],
+    );
+    const submissionId = Number(sequence.rows[0]?.submission_id);
+    if (!Number.isInteger(submissionId) || submissionId <= 0) {
+      return { unknown: true, detail: 'the sequence parent could not be resolved, so current applicant identity coverage cannot be determined' };
+    }
+    if (submissionId !== params.submissionId) {
+      return { covers: false, detail: 'the signed run and current sequence name different submissions; applicant facts from another submission cannot establish coverage' };
+    }
+    const identity = await readSubmissionPackageIdentity(
+      { query: (text, values) => db.query(text, values) },
+      params.organizationId,
+      submissionId,
+    );
+    const refusal = packageIdentityRefusal(identity, 'No release covers these incomplete applicant facts.', { fda: true });
+    if (refusal) return { covers: false, detail: refusal.message };
+    if (!sameRecordedPackageIdentitySnapshot(params.recordedPackageIdentity, recordedPackageIdentitySnapshot(identity))) {
+      return { covers: false, detail: 'the signed package applicant identity differs from the current recorded application, sponsor or regulatory contact; sign this sequence over the current facts' };
+    }
+    return leaves;
+  } catch (err) {
+    log.warn('recorded applicant read failed; coverage cannot be determined', {
+      err: err instanceof Error ? err.message : String(err),
+      sequenceId: params.sequenceId,
+      organizationId: params.organizationId,
+    });
+    return { unknown: true, detail: 'the current recorded applicant identity could not be read, so signed package coverage cannot be determined' };
+  }
 }
 
 export default {

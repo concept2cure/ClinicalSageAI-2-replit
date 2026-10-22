@@ -1,0 +1,16 @@
+Selected safe fields from /workspace/scratch/6ff-projects-create-red.json
+Native route replay before the fixture repair; Node v22.23.3; process exit 1.
+
+"numTotalTests": 26
+"numPassedTests": 2
+"numFailedTests": 24
+"numPendingTests": 0
+"success": false
+
+First assertion result:
+"fullName": "POST /api/c2c/projects 400 when name is missing"
+"status": "failed"
+AssertionError: expected 403 to be 400 // Object.is equality
+    at /workspace/concept2cure/server/routes/c2c/__tests__/projects-create.test.ts:144:24
+
+This is a selected reporter excerpt, not the full process log.

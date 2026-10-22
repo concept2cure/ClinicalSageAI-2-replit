@@ -1,0 +1,14 @@
+{
+  "passedCases": 1,
+  "file": "golden-customer-journey.e2e.ts",
+  "title": "fixture-free golden journey persists evidence, content edits, review, provenance, and governed draft export",
+  "caseDuration": "13.1s",
+  "runDuration": "13.7s",
+  "runnerExit": 0,
+  "rawArtifact": {
+    "artifact": "oct17-shared-recovery-golden-browser.log",
+    "sha256": "14af1b0c6e642f10de9a7f1da205ff66daf05f570fd3a6685abeaeef6f7ff963",
+    "bytes": 562340
+  },
+  "scope": "Final merged source/DTO golden rerun replaces the earlier golden qualification; not an extra distinct browser case. No raw HTTP headers or payloads copied."
+}

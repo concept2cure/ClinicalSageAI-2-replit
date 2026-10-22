@@ -71,7 +71,7 @@ const STUDY = {
   dur: '13 wk',
   finding: null,
   cls: null,
-  send: 'in progress',
+  send: 'not validated',
 };
 
 /** What the per-study SEND read does. Set per test. */

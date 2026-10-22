@@ -1,0 +1,305 @@
+{
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "Article",
+            "headline": "eSTAR Program",
+            "name": "eSTAR Program",
+            "description": "Learn about the FDA’s eSTAR Program",
+            "datePublished": "Mon, 09/21/2026 - 09:25",
+            "dateModified": "Mon, 09/21/2026 - 00:00",
+            "author": {
+                "@type": "Organization",
+                "name": "Center for Devices and Radiological Health"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "FDA"
+            }
+        }
+    ]
+}
+eSTAR Program | FDA
+window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments)};gtag("js", new Date());gtag("set", "developer_id.dMDhkMT", true);gtag("config", "G-273DTKB5QW", {"groups":"default","page_placeholder":"PLACEHOLDER_page_location","allow_ad_personalization_signals":false});
+Skip to main content
+Skip to FDA Search
+Skip to in this section menu
+Skip to footer links
+An official website of the United States government
+Here’s how you know
+The .gov means it’s official.
+Federal government websites often end in .gov or .mil. Before sharing sensitive information, make sure you're on a federal government site.
+The site is secure.
+The
+https://
+ensures that you are connecting to the official website and that any information you provide is encrypted and transmitted securely.
+Search
+Menu
+Search FDA
+Submit search
+Featured
+Report a Product Problem
+Contact FDA
+FDA Guidance Documents
+Recalls, Market Withdrawals and Safety Alerts
+Press Announcements
+Warning Letters
+Advisory Committees
+En Español
+Products
+Food
+Drugs
+Medical Devices
+Radiation-Emitting Products
+Vaccines, Blood, and Biologics
+Animal and Veterinary
+Cosmetics
+Tobacco Products
+Topics
+About FDA
+Combination Products
+Regulatory Information
+Safety
+Emergency Preparedness
+International Programs
+News and Events
+Training and Continuing Education
+Inspections and Compliance
+Science and Research
+Information For
+Consumers
+Patients
+Industry
+Health Professionals
+Federal, State and Local Officials
+Home
+Medical Devices
+Device Advice: Comprehensive Regulatory Assistance
+How to Study and Market Your Device
+eSTAR Program
+How to Study and Market Your Device
+In this section
+How to Study and Market Your Device
+eSTAR Program
+Breakthrough Devices Program
+Safer Technologies Program (SteP) for Medical Devices
+eCopy Medical Device Submissions
+Total Product Life Cycle Advisory Program (TAP)
+Device Registration and Listing
+Premarket Submissions: Selecting and Preparing the Correct Submission
+eSTAR Program
+How to Study and Market Your Device
+eSTAR Program
+Breakthrough Devices Program
+Safer Technologies Program (SteP) for Medical Devices
+eCopy Medical Device Submissions
+Total Product Life Cycle Advisory Program (TAP)
+Device Registration and Listing
+Premarket Submissions: Selecting and Preparing the Correct Submission
+Update June 1, 2026
+The non-In Vitro Diagnostic (nIVD) and In Vitro Diagnostic (IVD) eSTARs now include the content of the Human Factors Content Guidance, published on May 29, 2026, and effective on August 1, 2026.
+The Early Submission Requests eSTAR (PreSTAR) is now available for voluntary use with these additional Q-Submission types: Submission Issue Requests, Informational Meetings, Study Risk Determinations, PMA Day 100 Meetings, and Accessory Classification Requests.
+The electronic Submission Template and Resource (eSTAR) is an interactive PDF form that guides applicants through the process of preparing a comprehensive medical device submission. eSTAR provides a standardized, structured format to make information accessible to both reviewers and applicants and complements the reviewers’ internal review templates. eSTAR is intended to enhance the incoming quality of submissions for a wide range of medical devices by helping ensure that applicants provide high-quality, comprehensive data for premarket review. With this standardized format, applicants can ensure their submissions are complete, and the FDA can conduct premarket reviews more efficiently to promote timely access to safe, effective, and high-quality medical devices.
+On this page:
+Mandatory Use of eSTAR
+Voluntary Use of eSTAR
+Current eSTAR Versions
+Accessing eSTAR
+Attachments in eSTAR
+Content in eSTAR
+Submitting an eSTAR
+eSTAR Review Timeline
+Responding to CDRH Requests
+Contact Information
+A. Mandatory Use of eSTAR
+All medical device premarket notification (510(k)) and De Novo submissions, unless exempted, to the Center for Devices and Radiological Health (CDRH) or to the Center for Biologics Evaluation and Research (CBER).
+510(k) and De Novo submissions for combination products sent to CDRH or CBER.
+Dual 510(k)/Clinical Laboratory Improvement Amendments (CLIA) Waiver in vitro diagnostic (IVD) submissions sent to CDRH.
+B. Voluntary Use of eSTAR
+Medical device premarket approval (PMA) application and supplement types to CDRH or CBER: Original PMAs, PMA Panel Track Supplements (PTS), PMA Real-Time (RT) Supplements, PMA 180 Day Supplements and 30-Day Notice/135-Day Supplements.
+Q-Submissions (Q-Sub) sent to CDRH or CBER, including Pre-Submissions, Submission Issue Requests, Informational Meetings, Study Risk Determinations, PMA Day 100 Meetings, and Accessory Classification Requests.
+Investigational Device Exemptions (IDE) sent to CDRH or CBER.
+513(g) requests for information sent to CDRH or CBER.
+C. Current eSTAR Versions:
+Template
+(you
+MUST
+right-click, then download/save link as)
+Used For:
+OMB numbers
+1
+:
+Non-In Vitro Diagnostic (nIVD) eSTAR Version 7.1
+510(k), De Novo, and PMA: medical device submissions for Non-In Vitro Diagnostic devices
+0910-0120, 0910-0844, 0910-0231
+In Vitro Diagnostic (IVD) eSTAR Version 7.1
+510(k), De Novo, and PMA medical device submissions for In Vitro Diagnostic devices
+0910-0120, 0910-0844, 0910-0231
+Early Submission Requests eSTAR (PreSTAR
+2
+) Version 3.1
+Q-Submissions, IDEs, and 513(g) requests for information for Non-In Vitro and In Vitro Diagnostic devices
+0910-0756, 0910-0078, 0910-0511
+1
+An agency may not conduct or sponsor, and a person is not required to respond to, a collection of information unless a currently valid OMB number is provided.
+2
+The third eSTAR, referred to as the PreSTAR, contains content for Early Submission Requests, including Q-Submissions, IDEs, and 513(g) requests for information and is available for voluntary use. It is intended for submissions for both nIVDs and IVDs submitted to CDRH or CBER. PreSTAR is intended for submitting Original IDEs and Supplements, as well as their Amendments, but not IDE Reports.
+D. Accessing eSTAR
+1. We clicked on the eSTAR template links, but the files did not open. How do I open the eSTAR template?
+You cannot open eSTAR directly by clicking the links on this webpage. Please follow the steps below, noting there are differences between Windows vs. macOS users.
+Download the proper eSTAR template from the table above and save it to your computer before you open it. NOTE: eSTAR cannot be opened in a web browser, due to the dynamic PDF nature of the file.
+Using Windows:
+In Microsoft Edge, Chrome, or Firefox, right-click the link and select "Save Link As."
+Using macOS:
+In Safari, press "control" + click the link and select "Download Linked File."
+Access the file from where it was saved to your computer and then open the file with Adobe Acrobat Pro (recommended), PDF Xchange Editor (Version 10.2.0 or higher), or FoxIt PDF Reader (Version 12.1 or higher). Though Adobe Acrobat Reader will open eSTAR, you will not be able to save the changes made to it nor will you be able to add attachments.
+2. Am I required to use the latest version of the eSTAR template?
+eSTAR has major and minor version updates, as explained in the Version History section on page one of eSTAR. A major version update consists of significant revisions to the template, such as policy or regulatory changes made to be consistent with updates or changes made via final guidance or final rules and is denoted by a major version number increment (e.g., version 1.2 to 2.0). A minor version update consists of other changes and is denoted by a minor version number increment (e.g., version 1.2 to 1.3).
+If you do not submit using the currently implemented major version of eSTAR, you may receive additional information requests related to the major changes, especially if the changes are applicable to the device type. However, if the changes in a major version update do not affect your device, you may continue using the previous major version (e.g., version 5.0 instead of 6.0) without increasing your risk of receiving additional information requests. For minor version updates, you will typically not receive additional information requests related to the minor changes even if you do not use the most recent minor version (e.g., version 6.1 instead of 6.2).
+Once you receive an FDA acknowledgment letter for your original submission, your submission is “grandfathered” to that eSTAR version; therefore, when preparing a response to an Additional Information (AI) or Technical Screening (TS) request, you should update your original eSTAR rather than switching to a newer version.
+3. What do you recommend when a team of people need to collaborate to complete an eSTAR?
+For group collaboration, eSTAR may be edited in SharePoint and Box. However, concurrent co-authoring in dynamic PDF documents is NOT supported; therefore, team members will need to work with the eSTAR file sequentially (i.e., only one person can edit it at a time). Although you cannot comment on a dynamic PDF, you can print out eSTAR as a static PDF, where team members may comment, mark-up, and review.
+4. What do you recommend if Adobe Acrobat is running slowly?
+There is a JavaScript bug in certain Adobe Acrobat Pro applications that causes dynamic PDFs that use JavaScript in their functionality, like eSTAR, to run slower than normal. This slowness bug is not present in FoxIt PDF Reader, PDF-XChange Editor, any version of Adobe Acrobat Pro 2017, and for at least some, but not all, users of the latest Adobe Acrobat Pro versions. Until it is resolved we recommend you either: 1) disable Protected Mode by going to Edit (or Menu)->Preferences->Security (Enhanced) and uncheck the "Enable Protected Mode" checkbox at the top, which should resolve the Adobe bug for most, or 2) switch to one of the unaffected applications provided above. We also found that using the 64-bit version of Adobe Acrobat Pro helps resolve the slowness. Alternatively, if you are unable to switch applications and disabling Protected Mode does not resolve the Adobe bug, please contact:
+eSubPilot@fda.hhs.gov
+.
+E. Attachments in eSTAR
+1. Are there file naming requirements for attachments?
+There is no required naming convention for attachments in eSTAR. We recommend you use concise, descriptive file names that help reviewers understand the purpose of the attachments. If you would like to use a numbering system for your attachments, we recommend using the internationally harmonized IMDRF system, which will display when you hover your cursor over the attachment question text (e.g., “1.01 Cover Letter.pdf”, “2.04.01 Device Description.docx”). In addition, there is a 124-character limit for attachment names; eSTAR will not accept names that exceed this limit.
+2. Are there any size limitations for attachments?
+Yes, to submit your eSTAR via the CDRH Portal, the attachment size limit is 1GB and the entire eSTAR size limit is 4GB. If an attachment is greater than 1 GB, or if the entire eSTAR is greater than 4 GB, please refer to the
+CDRH Portal
+website for directions on sending us the eSTAR via the postal service. Note that these limits apply to eCopy as well. Submissions to CBER through the FDA Electronic Submission Gateway (ESG) are limited to 100 GB in size.
+Please ensure any attached images and videos are compressed in a Microsoft Windows compatible format viewable in native Windows OS applications or the VLC Media Player application (for example, JPEG, AVC MP4, HEVC MP4). We highly recommend using HEVC video compression for videos. Ultra-High-Definition videos should only be provided if high resolution is necessary to support the review of the device. Carefully select a resolution that clearly displays the relevant features without unnecessarily increasing file size.
+3. Do attachments in the eSTAR template need to be PDF files?
+No, eSTAR accepts a wide range of attachment types besides PDF, such as Word documents, Excel sheets, and MP4s. Unacceptable attachment types (e.g., zip files) are automatically rejected in eSTAR with a message that clarifies all unacceptable attachment types.
+4. Can I add more than one attachment per attachment request?
+Yes, other than a few attachment questions (e.g., the cover letter request, since only one cover letter is needed), you may add multiple attachments one at a time (if needed) per attachment request. Please combine attachments of similar content (e.g., Software Requirements Specifications) when possible so that fewer attachments need to be provided for each attachment type question in eSTAR.
+Attachments may be combined in Adobe Acrobat Pro by choosing "Tools" then "Combine Files" or by combining in a PDF Portfolio. For combined documents, please consider using bookmarks or including a Table of Contents for easier review. In addition, we discourage submitting PDF attachments with any type of security setting (e.g., password protection) as this affects our ability to redact Confidential Commercial Information efficiently.
+5. Does the sequence of adding attachments matter?
+No, it does not matter. Please note that you may sort attachments in the Attachment Pane by name, description (location of attachments in eSTAR), modified time, or size. Our reviewers also use this sorting mechanism to recognize newer attachments.
+6. Can I link one attachment to another within an eSTAR?
+Yes, you can. Follow the directions below in Adobe Acrobat Pro to link one attachment to another:
+Open the attachment that will contain the link in eSTAR by clicking
+Open Attachment
+button.
+In the Adobe Acrobat window displaying the attachment, choose
+Tools > Edit PDF > Link > Add/Edit Web or Document Link
+. Select the area for the link. A
+Create Link
+dialog box will appear.
+Under
+Link Action
+, select the
+Go to a Page View
+option, and then click
+Next
+. A persistent window titled
+Create Go to View
+will appear.
+Return to the main eSTAR file and click the
+Open Attachment
+button next to the attachment you would like to link to. This attachment will open in a new tab.
+Choose the text in the document you would like to link to, and then click
+Set Link
+in the
+Create Go to View
+window.
+Be sure to Save the main eSTAR file to preserve the link.
+7. Can I submit documents outside of an eSTAR?
+When you use the CDRH Portal to submit an eSTAR, we strongly discourage submitting any document outside of your eSTAR. Occasionally it is necessary to submit documents in addition to the completed eSTAR for specific applications, such as statistical CDISC files, DICOM files, or large media files. In these cases, please follow the instructions in the CDRH Portal to submit an additional data package alongside eSTAR.
+8. I receive an error message stating the signed copy cannot be changed when I try to delete or add new attachments to my eSTAR. What should I do?
+If you need to add or delete any attachments in an eSTAR that has been electronically signed (e.g., e-signature in the Truthful and Accurate Statement), please first remove the electronic signature. Only the person who originally signed the eSTAR can clear the signature by right clicking the signature in Adobe Acrobat Pro and then selecting “Clear Signature”.
+If the electronic signature cannot be cleared, then look for an eSTAR file that was saved before it was signed. Even if the exact pre-signature version is not available, you may be able to use a version saved a day or a few days earlier and then incorporate the necessary updates to recreate the final version.
+Alternatively, you may export the data from the signed eSTAR file, and then import the data into a new, blank eSTAR file using the Import Data and Export Data buttons in the Verification section. Please note that Adobe Acrobat Pro is necessary for this process, plus all attachments will need to be reattached after you import the data.
+9. Can I attach documents from a shared drive into eSTAR?
+FDA has received feedback indicating that adding documents from a shared drive may sometimes result in the document not actually being attached or the document becoming corrupted. Therefore, please keep attachments on a local drive before attaching them to an eSTAR.
+F. Content in eSTAR
+1. Can I transfer my data from an old eSTAR version to a new version?
+Yes, if you use Adobe Acrobat Pro, you can transfer eSTAR data by first clicking the Export Data button at the end of your older eSTAR and saving the generated XML file. Next, click the Import Data button in the new eSTAR and choose the saved XML file to import your data. Please note that attachments will not be included in the XML file generated and therefore need to be re-added after import.
+2. Can I display all possible questions within an eSTAR?
+No. eSTAR is an interactive PDF form that guides applicants through the process of preparing a comprehensive medical device submission. Only relevant sections and requests will be displayed based on the applicant’s answers; therefore, you will not be able to display all possible questions in an eSTAR.
+3. I could not locate a specific standard in the dropdown box in the eSTAR Standards section. How do I include a standard that is not listed in the dropdown box in the eSTAR?
+FDA recognized standards are listed in the dropdown boxes of the eSTAR’s Standards section. You may manually enter non-recognized standards in that section by typing in their information. Note: the FDA Recognition number field will remain blank for non-recognized standards.
+4. Can I edit contents of the eSTAR generated 510(k) Summary?
+Yes, you may manually edit the eSTAR generated 510(k) Summary. If during Interactive review, you receive edit suggestions from the review team, you may revise the eSTAR generated 510(k) Summary in your eSTAR, print it out as a separate PDF file, and then share it with the review teams.
+5. Can a bundled 510(k) submission be prepared using eSTAR?
+Yes, you can use eSTAR to prepare a bundled devices submission. When bundling devices, please choose a primary product code for the submission in the Classification section, then provide the other product codes in the Associated Product Codes text field. The primary product code is intended to reflect the primary purpose of the devices, as determined by the Indications for Use. Be sure to view the help text for the Indications for Use field for instructions on dividing up the Indications for Use by each device.
+G. Submitting an eSTAR
+After you complete your eSTAR submission correctly, the status message at the top of the eSTAR template will indicate "eSTAR COMPLETE." If you submit your eSTAR submission while the status message still indicates "eSTAR INCOMPLETE," it will not be accepted by the CDRH Portal. An incomplete eSTAR submitted by mail or ESG will be placed on hold for up to 180 days.
+For CDRH, send eSTAR premarket submissions online through the CDRH Portal:
+Send and Track Medical Device Premarket Submissions Online: CDRH Portal
+Note: 510(k) and De Novo submissions MUST be submitted using the CDRH Portal. If your submission exceeds file size limitations, see CDRH Portal page for further instructions.
+For CBER, send eSTAR premarket submissions online through the FDA's ESG. Instructions available at:
+Regulated Submissions in Electronic and Paper Format for CBER-Regulated Products
+Please be advised that the benefits of eSTAR (for example, no RTA review) are dependent on accurate responses and the FDA intends to verify the accuracy of your responses. Inaccurate responses (for example, inaccurate responses to drop down fields causing the eSTAR to omit subsequent questions) may lead to an early hold in the review of your submission.
+You do not need to provide an "Indications for Use" page (Form FDA 3881), the "Premarket Review Submission Cover Sheet" (Form FDA 3514), or a "Declaration of Conformity" (if applicable) with your eSTAR since all are built into the eSTAR template. In addition, if you choose to use eSTAR to create your 510(k) Summary, you do not need to provide an additional 510(k) Summary with your eSTAR.
+H. eSTAR Review Timeline
+After the FDA receives an eSTAR submission, given that a properly prepared electronic submission should represent a complete submission, eSTAR submissions are not anticipated to undergo a Refuse to Accept (RTA) process. However, the FDA intends to employ a virus scanning and technical screening process for eSTAR.
+If eSTAR does not pass technical screening (i.e., an eSTAR is provided where none of the attachments to a question are relevant to the question, or if an inaccurate response is provided to any question), the submission may be put on a technical screening hold for up to 180 days. Notification of hold will be sent via email. If a replacement eSTAR is not received within 180 days of the technical screening deficiency notification, FDA will consider the submission withdrawn and will close it in the system.
+For more information, see
+Electronic Submission Template for Medical Device 510(k) Submissions
+and "
+Electronic Submission Template for Medical Device De Novo Requests
+."
+I. Responding to CDRH Requests
+1. How do I use eSTAR to respond to Additional Information or Technical Screening hold requests?
+The instructions on how to respond to an Additional Information (AI) request or Technical Screening (TS) hold are built into the eSTAR. In general, please follow these instructions:
+Modify your original eSTAR to submit your AI or TS responses.
+Select Additional Information option under Application Sub-Type and read the popup instructions and the help texts in the blue question mark boxes on the right.
+After selecting the Additional Information radio button, the Additional Information Response section will appear at the end of your eSTAR.
+Copy and paste each individual AI/TS question from FDA and provide your response below it. If there is more than one question, click the “Add Response” button and repeat the process for each question.
+Add new attachments to the sections impacted by the deficiencies. Sections not affected by the deficiencies, including their attachments, should remain unchanged. In short, include all original information along with any updated information or attachments needed to address the AI/TS request.
+2. I cannot add graphs or tables to the text boxes in the Additional Information Response section in eSTAR. What should I do?
+Tables and graphs cannot be inserted directly into text boxes in eSTAR. Instead, include them as attachments in the appropriate sections of the eSTAR, and reference those attachments within your text responses.
+3. How do I submit meeting minutes using the Early Submission Requests eSTAR (PreSTAR)?
+Pre-submission’s meeting minutes and presentation slides are submitted in eCopy format via the CDRH Portal. Please see reminders about this matter in two places in PreSTAR:
+Help text to the Application Sub-type question
+Instruction at the beginning of the Additional Information section
+J. Contact Information
+If you have questions or feedback regarding the use of the eSTAR for medical devices regulated by CDRH, or if you have general questions about medical devices, please contact the
+Division of Industry and Consumer Education (DICE)
+.
+If you find any malfunctions or errors in the eSTAR template for medical devices regulated by CDRH, please contact
+eSubPilot@fda.hhs.gov
+.
+If you have questions regarding 510(k)s, De Novo requests, PMAs, 513(g)s, or Q-Submissions for medical devices regulated by CDRH, please contact
+OPEQSubmissionSupport@fda.hhs.gov
+.
+If you have questions or feedback regarding CBER's eSTAR Program, an eSTAR file submitted to CBER, or if you have general questions about medical devices submitted to CBER, please contact
+Industry.biologics@fda.hhs.gov
+.
+If you have any questions of submissions to CBER through the ESG, please contact
+ESUBPREP@fda.hhs.gov
+.
+Content current as of:
+09/21/2026
+Regulated Product(s)
+Medical Devices
+Radiation-Emitting Products
+Feedback
+Subscribe to CDRH Industry
+Receive email updates for new or updated content that is specifically related to industry.
+Enter your email address to subscribe:
+FDA Archive
+About FDA
+Accessibility
+Visitor Information
+Website Policies / Privacy
+No FEAR Act
+Vulnerability Disclosure Policy
+FOIA
+HHS.gov
+USA.gov
+Contact FDA
+Follow FDA on Facebook
+Follow FDA on X
+Follow FDA on Instagram
+Follow FDA on LinkedIn
+View FDA videos on YouTube
+Subscribe to FDA RSS feeds
+Contact Number
+1-888-INFO-FDA (1-888-463-6332)
+Back to
+Top
+{"path":{"baseUrl":"\/","pathPrefix":"","currentPath":"node\/378292","currentPathIsAdmin":false,"isFront":false,"currentLanguage":"en"},"pluralDelimiter":"\u0003","suppressDeprecationErrors":true,"fda_ckeditor_enhancements":{"basePath":"modules\/custom\/fda_ckeditor_enhancements"},"google_analytics":{"account":"G-273DTKB5QW","trackOutbound":true,"trackMailto":true,"trackTel":true,"trackDownload":true,"trackDownloadExtensions":"7z|aac|arc|arj|asf|asx|avi|bin|csv|doc(x|m)?|dot(x|m)?|exe|flv|gif|gz|gzip|hqx|jar|jpe?g|js|mp(2|3|4|e?g)|mov(ie)?|msi|msp|pdf|phps|png|ppt(x|m)?|pot(x|m)?|pps(x|m)?|ppam|sld(x|m)?|thmx|qtm?|ra(m|r)?|sea|sit|tar|tgz|torrent|txt|wav|wma|wmv|wpd|xls(x|m|b)?|xlt(x|m)|xlam|xml|z|zip"},"bootstrap":{"forms_has_error_value_toggle":1,"modal_animation":1,"modal_backdrop":"true","modal_focus_input":1,"modal_keyboard":1,"modal_select_text":1,"modal_show":1,"modal_size":"","popover_enabled":1,"popover_animation":1,"popover_auto_close":1,"popover_container":"body","popover_content":"","popover_delay":"0","popover_html":0,"popover_placement":"right","popover_selector":"","popover_title":"","popover_trigger":"click"},"ajax":[],"user":{"uid":0,"permissionsHash":"1b1b521ce0efd787b9481ef00f514b542eb396217a4d74c357d2ecd6b6b52a2d"}}

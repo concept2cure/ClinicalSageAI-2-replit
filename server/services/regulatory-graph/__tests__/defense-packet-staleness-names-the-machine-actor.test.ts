@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   rows: [] as unknown[],
-  audit: vi.fn(async (..._a: unknown[]) => 'audit-id'),
+  audit: vi.fn(async (..._a: unknown[]) => ({ persisted: true, chained: true, tamperProof: true })),
   downstream: vi.fn(async (..._a: unknown[]) => ({ nodes: [] as unknown[], edges: [] as unknown[] })),
 }));
 
@@ -27,6 +27,12 @@ vi.mock('../../../db', () => {
     return chain;
   };
   return {
+    pool: { query: async (text: string, values: unknown[]) => {
+      if (text.startsWith('UPDATE predicate.defense_packets')) {
+        return { rows: (h.rows as Array<{ id: string; status: string }>).filter(row => row.status === 'RENDERED' && (values[1] as string[]).includes(row.id)).map(row => ({ id: row.id })) };
+      }
+      return { rows: h.rows };
+    } },
     db: {
       select,
       update: () => ({ set: () => ({ where: async () => undefined }) }),

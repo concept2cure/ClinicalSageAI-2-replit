@@ -61,6 +61,8 @@ export interface DocxLogo {
 }
 
 export interface DocxStyle {
+  /** Portrait dimensions in twips; the DOCX runtime swaps them for landscape. */
+  page?: { width: number; height: number; orientation: 'portrait' | 'landscape' };
   /** page margins in twips */
   margins: { top: number; bottom: number; left: number; right: number };
   fonts: { body: string; heading: string; mono: string };
@@ -76,14 +78,17 @@ export interface DocxStyle {
     coverTitle: number;
     coverSubtitle: number;
   };
-  colors: { headerBg: string; borderGray: string; textDark: string; textMuted: string };
+  colors: { headerBg: string; borderGray: string; textDark: string; textMuted: string; accent?: string };
   /** line spacing in 240ths (240 = single, 276 = 1.15×) */
   lineSpacing: number;
   /** space after each body paragraph, in twips */
   paragraphSpaceAfter: number;
   confidentialityNotice: string;
   headerText?: string;
+  headerAlignment?: 'left' | 'center' | 'right';
+  organizationName?: string;
   footerText?: string;
+  footerPageNumberFormat?: string;
   footerShowPageNumbers: boolean;
   logo?: DocxLogo;
 }
@@ -201,6 +206,8 @@ export interface DocxMetadata {
 export interface DocxInput {
   metadata: DocxMetadata;
   sections: DocxSection[];
+  /** Correspondence can start on its letterhead; regulatory documents retain their cover by default. */
+  includeCover?: boolean;
 }
 
 export interface DocxOutput {
@@ -251,7 +258,6 @@ function sectionHeading(
   const displayTitle = sectionCode ? `${sectionCode}  ${title}` : title;
 
   return new Paragraph({
-    text: displayTitle,
     heading: headingMap[level],
     spacing: { before: 240, after: 120 },
     children: [
@@ -475,10 +481,15 @@ export async function generateRegulatory(
   const { metadata, sections } = input;
 
   // Cover page section
-  const coverChildren = buildCoverPage(metadata, style);
+  const coverChildren = input.includeCover === false ? [] : buildCoverPage(metadata, style);
 
   // Content sections
   const contentChildren: (Paragraph | Table)[] = [];
+  if (input.includeCover === false && style.logo?.placement === 'cover') {
+    const logo = logoImageRun(style.logo, 220, 90);
+    if (!logo) throw new Error('The saved letterhead logo could not be rendered. Nothing was exported.');
+    contentChildren.push(new Paragraph({ children: [logo], alignment: style.headerAlignment ?? AlignmentType.LEFT }));
+  }
 
   for (const section of sections) {
     // Page break before section (if requested)
@@ -555,20 +566,27 @@ export async function generateRegulatory(
   const headerChildren: (TextRun | ImageRun)[] = [];
   if (style.logo && style.logo.placement === 'header') {
     const run = logoImageRun(style.logo, 130, 40);
-    if (run) headerChildren.push(run);
+    if (!run) throw new Error('The saved letterhead logo could not be rendered. Nothing was exported.');
+    headerChildren.push(run);
   }
-  headerChildren.push(
-    new TextRun({
-      text: style.headerText ?? `${metadata.title} — ${metadata.submissionType}`,
+  if (style.organizationName) headerChildren.push(new TextRun({
+    text: `${headerChildren.length ? '  ' : ''}${style.organizationName}`, font: style.fonts.heading,
+    size: style.fontSizes.heading3, bold: true, color: style.colors.accent ?? style.colors.textDark,
+  }));
+  const headerText = style.headerText ?? `${metadata.title} — ${metadata.submissionType}`;
+  for (const [index, text] of headerText.replace(/\r\n?/g, '\n').split('\n').entries()) {
+    headerChildren.push(new TextRun({
+      text,
+      break: index > 0 || style.organizationName ? 1 : undefined,
       font: style.fonts.body,
       size: style.fontSizes.footer,
       color: style.colors.textMuted,
-    })
-  );
+    }));
+  }
 
   // Running footer — optional label + page numbers.
   const footerRuns: TextRun[] = [];
-  const footerLabel = style.footerText ?? 'CONFIDENTIAL';
+  const footerLabel = style.footerText ?? (input.includeCover === false ? '' : 'CONFIDENTIAL');
   if (footerLabel) {
     footerRuns.push(
       new TextRun({
@@ -580,9 +598,11 @@ export async function generateRegulatory(
     );
   }
   if (style.footerShowPageNumbers) {
+    const pageNumberChildren = (style.footerPageNumberFormat ?? 'Page {PAGE} of {PAGES}').split(/(\{PAGE\}|\{PAGES\})/)
+      .map(part => part === '{PAGE}' ? PageNumber.CURRENT : part === '{PAGES}' ? PageNumber.TOTAL_PAGES : part);
     footerRuns.push(
       new TextRun({
-        children: ['Page ', PageNumber.CURRENT, ' of ', PageNumber.TOTAL_PAGES],
+        children: pageNumberChildren,
         font: style.fonts.body,
         size: style.fontSizes.footer,
         color: style.colors.textMuted,
@@ -609,17 +629,18 @@ export async function generateRegulatory(
     },
     sections: [
       // Cover page
-      {
+      ...(input.includeCover === false ? [] : [{
         properties: {
-          page: { margin: style.margins },
+          page: { margin: style.margins, ...(style.page ? { size: style.page } : {}) },
         },
         children: coverChildren,
-      },
+      }]),
       // Content
       {
         properties: {
           page: {
             margin: style.margins,
+            ...(style.page ? { size: style.page } : {}),
             pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL },
           },
         },
@@ -628,7 +649,8 @@ export async function generateRegulatory(
             children: [
               new Paragraph({
                 children: headerChildren,
-                alignment: AlignmentType.RIGHT,
+                alignment: style.headerAlignment ?? AlignmentType.RIGHT,
+                ...(style.colors.accent ? { border: { bottom: { color: style.colors.accent, style: BorderStyle.SINGLE, size: 6, space: 4 } } } : {}),
               }),
             ],
           }),
@@ -636,6 +658,10 @@ export async function generateRegulatory(
         footers: {
           default: new Footer({
             children: [
+              ...(input.includeCover === false && style.confidentialityNotice ? [new Paragraph({
+                children: [new TextRun({ text: style.confidentialityNotice, font: style.fonts.body, size: style.fontSizes.footer, color: style.colors.textMuted })],
+                alignment: AlignmentType.CENTER,
+              })] : []),
               new Paragraph({
                 children: footerRuns,
                 alignment: AlignmentType.CENTER,

@@ -168,7 +168,7 @@ export class GoogleDriveConnector implements DataConnector {
         sourceConnector: this.id,
         title: String(file.name || ''),
         summary: `${String(file.mimeType || '')} — ${formatBytes(size)} — by ${ownerName} — ${String(file.modifiedTime || '')}`,
-        relevanceScore: 1 - idx * 0.01,
+        sourceRank: idx + 1,
         metadata: {
           mimeType: file.mimeType,
           size,

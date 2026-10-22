@@ -701,12 +701,27 @@ function assessAsMutagenicImpurity(
     return refuse('STRUCTURAL_ALERT_NOT_RECORDED', `No structural-alert assessment is recorded for ${impurityName}. ICH M7(R2) requires two complementary (Q)SAR assessments; record whether an alert is present, absent, or unknown.`);
   }
 
+  /* 2026-10-15: this refusal sat after classification, so an unrecorded cohort
+     was passed as "not CoC" and a Class 4/5 result said cohortOfConcern:false.
+     The class itself can turn on it (a nitrosamine is not cleared by a negative
+     Ames alone), so it is asked before classifying. */
+  const cohort = recordedCohortOfConcern(record);
+  if (!cohort) {
+    return refuse('COHORT_OF_CONCERN_NOT_RECORDED', `Whether ${impurityName} is in an ICH M7(R2) cohort of concern (aflatoxin-like, N-nitroso, alkyl-azoxy) is not recorded. The cohort sets a compound-specific limit far below the 1.5 µg/day TTC, and a negative Ames result does not clear an N-nitroso compound, so it may not be assumed.`);
+  }
+
+  const COHORT_ALERT: Record<Exclude<CohortOfConcern, 'not_coc'>, string> = {
+    CoC_nitrosamine: 'N-nitroso',
+    CoC_aflatoxin_like: 'aflatoxin-like',
+    CoC_alkyl_azoxy: 'alkyl-azoxy',
+  };
   const classification = classifyMutagenicImpurity({
     amesMutagenicity: ames,
     structuralAlertsPresent: alerts,
     carcinogenicityData: recordedCarcinogenicity(record),
     impurityRelationship: matrix === 'drug_product' ? 'degradation' : 'process_related',
-    cohortOfConcernStructure: recordedCohortOfConcern(record) !== null && recordedCohortOfConcern(record) !== 'not_coc',
+    cohortOfConcernStructure: cohort !== 'not_coc',
+    specificStructuralAlerts: cohort === 'not_coc' ? [] : [COHORT_ALERT[cohort]],
   });
   const unit = String(record.levelUnit ?? record.level_unit ?? '').trim();
   const observedAsRecorded = [String(record.observedLevel ?? record.observed_level ?? '').trim(), unit]
@@ -723,7 +738,7 @@ function assessAsMutagenicImpurity(
     citation: M7_CITATION,
   };
 
-  /* Class 4 (alert, Ames-negative) and Class 5 (no alert) carry no TTC limit:
+  /* Class 4 (alert shared with the API) and Class 5 (no alert, or Ames-negative) carry no TTC limit:
      M7 §5 controls them as non-mutagenic impurities under Q3A/Q3B. The fields
      the limit would need are therefore not owed for them. */
   if (classification.impurityClass >= 4) {
@@ -746,10 +761,6 @@ function assessAsMutagenicImpurity(
   const duration = recordedTreatmentDuration(record);
   if (!duration) {
     return refuse('TREATMENT_DURATION_NOT_RECORDED', `No treatment duration is recorded for ${impurityName}. The ICH M7(R2) acceptable intake is staged by duration (single dose, ≤1 month, 1-12 months, 1-10 years, lifetime) and cannot be chosen without it.`);
-  }
-  const cohort = recordedCohortOfConcern(record);
-  if (!cohort) {
-    return refuse('COHORT_OF_CONCERN_NOT_RECORDED', `Whether ${impurityName} is in an ICH M7(R2) cohort of concern (aflatoxin-like, N-nitroso, alkyl-azoxy) is not recorded. The cohort sets a compound-specific limit far below the 1.5 µg/day TTC, so it may not be assumed.`);
   }
   const route = recordedRoute(record);
   if (!route) {

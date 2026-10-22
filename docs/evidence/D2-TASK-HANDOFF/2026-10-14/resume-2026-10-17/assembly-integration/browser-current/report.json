@@ -1,0 +1,430 @@
+{
+  "status": "pass",
+  "completedAt": "2026-10-17T23:51:15.082Z",
+  "testedHead": "4ca7427dcc07e97b260d45e58077f9c24a6467f5",
+  "browserVersion": "154.0.8037.57",
+  "sourcePinsBefore": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c7881301aa5957d6d0f15dfd0495193a4ea122c89fb0fced3c2401ef26cb67d5",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "9478ece8b084a93164a1ff587d169ad924f2ae1fff6f3bd78740c970320633e7",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "a44a3ee1c3bd393a631310eebe492f73c7d9e0e60f25b0ff71c149d68b87abb7",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "9f9e5f1ad97db2183435add406e49466f8a562f71fcc97d868b9f51806e719e6",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "a14dc6ddfb666fbbfc9ae53e0e88e4befcd3c90f6e6f56bdbf490df8ad8abc1c",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "d741cc1fc8360b5ed92ad274521bbc95eca231f561bcb1247e184b42b8df32c3",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "b55fb518ecc44591104645b18054bc62b1ceacd6bd493e1e954b514cfa63563b",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/navParams.ts": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c",
+    "client/src/concept2cure/v2/TaskTray.tsx": "f9c99607fc0e4ee49ee71bd9db397add7a4a87b065c67ca7b6ff166e51b7ad87",
+    "client/src/concept2cure/v2/taskTarget.ts": "418d356efef8e314012f6b00355b5b5008fbeea06947d68b78525cfed12e1856",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/lib/queryClient.ts": "6318c21606fa70314ab80680175b1aca7ea978e264dc10a7436b6cc7f069403f",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+    "shared/authoring/assembly.ts": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27",
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/concept2cure/v2/styles/app-v2.css": "b1e969f21f1fdc3baf6f4b0ef90afd3648fa4eaea0b20d9ed7a6056e5995ee28",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "fac483294e7b1750fcc731e081ef3d3ae4ea9c87ae3f19ec24dff57e923bf5d3",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d01eaa1a721ca28e6acd6d336fedac38a1d3d392a51771a57241001480c0fd78",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx": "5c2fab4a0e1e47022f8020ddd86529ff1a1956a535cfe90c8ae8b6b9a051e3ba",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/server.mjs": "b66458c94f74e1054198917897b34535db625284d7669898431f3df775870201",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/browser.mjs": "579b0fd11f31d2afa2ed6cec09a30cbdb69d6307fcb5dc5788b78053fc86e6cb",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mock-api.mjs": "e924584d861d6f1bfafe9f9e26c7419b660ddcc741b65253e2bff663f1ae4974",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36"
+  },
+  "sourcePinsAfter": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c7881301aa5957d6d0f15dfd0495193a4ea122c89fb0fced3c2401ef26cb67d5",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "9478ece8b084a93164a1ff587d169ad924f2ae1fff6f3bd78740c970320633e7",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "a44a3ee1c3bd393a631310eebe492f73c7d9e0e60f25b0ff71c149d68b87abb7",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "9f9e5f1ad97db2183435add406e49466f8a562f71fcc97d868b9f51806e719e6",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "a14dc6ddfb666fbbfc9ae53e0e88e4befcd3c90f6e6f56bdbf490df8ad8abc1c",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "d741cc1fc8360b5ed92ad274521bbc95eca231f561bcb1247e184b42b8df32c3",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "b55fb518ecc44591104645b18054bc62b1ceacd6bd493e1e954b514cfa63563b",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/navParams.ts": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c",
+    "client/src/concept2cure/v2/TaskTray.tsx": "f9c99607fc0e4ee49ee71bd9db397add7a4a87b065c67ca7b6ff166e51b7ad87",
+    "client/src/concept2cure/v2/taskTarget.ts": "418d356efef8e314012f6b00355b5b5008fbeea06947d68b78525cfed12e1856",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/lib/queryClient.ts": "6318c21606fa70314ab80680175b1aca7ea978e264dc10a7436b6cc7f069403f",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+    "shared/authoring/assembly.ts": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27",
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/concept2cure/v2/styles/app-v2.css": "b1e969f21f1fdc3baf6f4b0ef90afd3648fa4eaea0b20d9ed7a6056e5995ee28",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "fac483294e7b1750fcc731e081ef3d3ae4ea9c87ae3f19ec24dff57e923bf5d3",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d01eaa1a721ca28e6acd6d336fedac38a1d3d392a51771a57241001480c0fd78",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx": "5c2fab4a0e1e47022f8020ddd86529ff1a1956a535cfe90c8ae8b6b9a051e3ba",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/server.mjs": "b66458c94f74e1054198917897b34535db625284d7669898431f3df775870201",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/browser.mjs": "579b0fd11f31d2afa2ed6cec09a30cbdb69d6307fcb5dc5788b78053fc86e6cb",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mock-api.mjs": "e924584d861d6f1bfafe9f9e26c7419b660ddcc741b65253e2bff663f1ae4974",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36"
+  },
+  "sourceFrozenDuringCapture": true,
+  "scratchPins": {
+    "server.mjs": "5e8d04af3aa889288534c921d87787c00164f761bcf5c0d1905bcb0ea569f7a2",
+    "browser.mjs": "e7a92a2a05a2dad259c0022c0913f03a4ffa701e5d99fc1632b3ad7fd37263ae"
+  },
+  "stages": [
+    {
+      "stage": "pending-back-held",
+      "navigation": [],
+      "refusal": "Document structure is still being built. Wait for its outcome before leaving; closing the panel does not cancel the request.",
+      "editor": "Existing saved stability evidence.",
+      "sameEditor": true,
+      "editorCount": 1,
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      },
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuilding…Preview only. Existing sections and text will be preserved.Organization stability assembly · 3 selected sectionsWorking text requires human review.3.2.P.8.1 Existing stability summary · Preserve existing section and text3.2.P.8.2 Post-approval stability protocol · Append empty section; scientific content is missingScientific content is missing.3.2.P.8.3 Stability data · Append empty section; scientific content is missingScientific content is missing.",
+      "commitRequests": 1,
+      "recoveryReads": 0
+    },
+    {
+      "stage": "408-unknown-back-held",
+      "navigation": [],
+      "refusal": "A document structure build is still unconfirmed. Check its exact saved document in its original project before leaving.",
+      "editor": "Existing saved stability evidence.",
+      "sameEditor": true,
+      "editorCount": 1,
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      },
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuild documentSynthetic 408: the structure outcome is unconfirmed. Check the saved document.Check saved documentOrganization stability assembly · 3 selected sectionsWorking text requires human review.3.2.P.8.1 Existing stability summary · Preserve existing section and text3.2.P.8.2 Post-approval stability protocol · Append empty section; scientific content is missingScientific content is missing.3.2.P.8.3 Stability data · Append empty section; scientific content is missingScientific content is missing.",
+      "commitRequests": 1,
+      "recoveryReads": 0
+    },
+    {
+      "stage": "verified-host-read-pending",
+      "navigation": [],
+      "refusal": "Document structure is still being checked. Wait for the saved record and editor to refresh before leaving.",
+      "editor": "Existing saved stability evidence.",
+      "sameEditor": true,
+      "editorCount": 1,
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      },
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuild documentSynthetic 408: the structure outcome is unconfirmed. Check the saved document.Organization stability assembly · 3 selected sectionsWorking text requires human review.3.2.P.8.1 Existing stability summary · Preserve existing section and text3.2.P.8.2 Post-approval stability protocol · Append empty section; scientific content is missingScientific content is missing.3.2.P.8.3 Stability data · Append empty section; scientific content is missingScientific content is missing.",
+      "commitRequests": 1,
+      "recoveryReads": 2
+    },
+    {
+      "stage": "verified-host-read-applied",
+      "navigation": [],
+      "refusal": null,
+      "editor": "Existing saved stability evidence.",
+      "sameEditor": true,
+      "editorCount": 1,
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      },
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuild documentChecked this exact document: 3 saved sections. This read cannot identify the interrupted request or prove which request wrote matching content. Inspect the saved record, then preview a deliberate new build.",
+      "commitRequests": 1,
+      "recoveryReads": 2
+    },
+    {
+      "stage": "back-released-after-recovery",
+      "navigation": [
+        {
+          "route": "host-back",
+          "target": null
+        }
+      ],
+      "refusal": null,
+      "sameEditor": false,
+      "editorCount": 0,
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": false
+      },
+      "savedDocumentText": "M3Assembly working document3 sections3.2.P.8.1Existing stability summary EditSaved text returned by verified recovery.3.2.P.8.2Post-approval stability protocol EditNot drafted yet.3.2.P.8.3Stability data EditNot drafted yet.",
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuild documentChecked this exact document: 3 saved sections. This read cannot identify the interrupted request or prove which request wrote matching content. Inspect the saved record, then preview a deliberate new build.",
+      "commitRequests": 1,
+      "recoveryReads": 2
+    }
+  ],
+  "commitRequests": 1,
+  "recoveryReads": 2,
+  "state": {
+    "mode": "deterministic",
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/session",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/templates",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/sources",
+        "query": "?limit=200&offset=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/citations",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/documents",
+        "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=home"
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/documents",
+        "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=market"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/session",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/realtime-collab/rooms",
+        "query": "",
+        "body": {
+          "documentId": "dddddddd-0000-4000-8000-000000000181",
+          "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/data-origins/document",
+        "query": "?documentTable=authoring_sections&documentId=aaaaaaaa-0000-4000-8000-000000000181"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000181/sources",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/realtime-collab/locks/dddddddd-0000-4000-8000-000000000181",
+        "query": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+        "query": "",
+        "body": {
+          "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+          "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+          "isTyping": false
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/templates",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+        "query": "",
+        "body": {
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "templateId": "cccccccc-0000-4000-8000-000000000181",
+          "selection": {
+            "target": "document"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+        "query": "",
+        "body": {
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "templateId": "cccccccc-0000-4000-8000-000000000181",
+          "selection": {
+            "target": "document"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+        "query": "",
+        "body": {
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "templateId": "cccccccc-0000-4000-8000-000000000181",
+          "selection": {
+            "target": "document"
+          },
+          "fingerprint": "synthetic-fingerprint-0-document",
+          "reason": "Append missing sections for deliberate human review."
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs",
+        "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000181"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+        "query": ""
+      }
+    ],
+    "unexpected": [],
+    "mutations": [
+      {
+        "method": "POST",
+        "path": "/api/realtime-collab/rooms",
+        "body": {
+          "documentId": "dddddddd-0000-4000-8000-000000000181",
+          "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+        }
+      },
+      {
+        "method": "PUT",
+        "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+        "body": {
+          "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+          "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+          "isTyping": false
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+        "body": {
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "templateId": "cccccccc-0000-4000-8000-000000000181",
+          "selection": {
+            "target": "document"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+        "body": {
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "templateId": "cccccccc-0000-4000-8000-000000000181",
+          "selection": {
+            "target": "document"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+        "body": {
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "templateId": "cccccccc-0000-4000-8000-000000000181",
+          "selection": {
+            "target": "document"
+          },
+          "fingerprint": "synthetic-fingerprint-0-document",
+          "reason": "Append missing sections for deliberate human review."
+        }
+      }
+    ],
+    "previews": 2,
+    "commits": 1,
+    "generations": 0,
+    "accepts": 0,
+    "activeGenerations": 0,
+    "maximumActiveGenerations": 0,
+    "sections": [
+      {
+        "id": "aaaaaaaa-0000-4000-8000-000000000181",
+        "doc_id": "dddddddd-0000-4000-8000-000000000181",
+        "code": "3.2.P.8.1",
+        "title": "Existing stability summary",
+        "content": "<p>Saved text returned by verified recovery.</p>",
+        "order_index": 7,
+        "track_changes": false,
+        "comment_count": 0,
+        "revision_count": 1,
+        "citation_count": 0,
+        "updated_at": "2026-10-17T20:00:00.000Z"
+      },
+      {
+        "id": "aaaaaaaa-0000-4000-8000-000000000182",
+        "doc_id": "dddddddd-0000-4000-8000-000000000181",
+        "code": "3.2.P.8.2",
+        "title": "Post-approval stability protocol",
+        "content": "",
+        "order_index": 8,
+        "track_changes": false,
+        "comment_count": 0,
+        "revision_count": 1,
+        "citation_count": 0,
+        "updated_at": "2026-10-17T20:00:00.000Z"
+      },
+      {
+        "id": "aaaaaaaa-0000-4000-8000-000000000183",
+        "doc_id": "dddddddd-0000-4000-8000-000000000181",
+        "code": "3.2.P.8.3",
+        "title": "Stability data",
+        "content": "",
+        "order_index": 9,
+        "track_changes": false,
+        "comment_count": 0,
+        "revision_count": 1,
+        "citation_count": 0,
+        "updated_at": "2026-10-17T20:00:00.000Z"
+      }
+    ],
+    "drafts": [],
+    "accepted": [],
+    "generationEvents": []
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 408 (Request Timeout)"
+  ],
+  "pageErrors": [],
+  "qualification": "Actual Workbench, native Back control and shared surfaceLeaveRefusal registry; synthetic auth/HTTP only. Scratch Vite transform shows the existing Back control and counts its callback. Recovery preserves the active rich-editor buffer; an explicit whole-document view verifies refreshed saved sections before Back is released. TaskTray and full shell are not mounted. HTTP 408 is injected after mock persistence. No backend, native scheduling, provider, deployment or human-review claim."
+}

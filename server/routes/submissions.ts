@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
-import { ok } from '../lib/api-response';
+import { ok, respondIfConverterBusy } from '../lib/api-response';
 import { requestDb, requestPgClient } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
@@ -28,6 +28,8 @@ import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-
 import {
   createSubmission,
   getSubmission,
+  getSequence,
+  sequenceDispatchAuthorizationEligibility,
   createSequence,
   transitionSequence,
   upsertLeaf,
@@ -59,9 +61,10 @@ import {
   getShadowReviewFindings,
 } from '../services/shadow-review/shadow-review-service';
 import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../services/ectd/shadow-finding-disposition';
-import { generateSection } from '../services/authoring/section-generation-service';
+import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
+import { stfFileName } from '../services/ectd/stf-generator';
 import {
   listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
   readSubmissionLeavesForRequest, requireSubmissionReadStillCurrent, readDeliverableEvaluationInput, SubmissionReadError,
@@ -125,6 +128,10 @@ function handleKnownCodeFailure(res: Response, err: unknown): boolean {
 }
 function fail(res: Response, err: unknown): void {
   if (handleReadRefusal(res, err)) return;
+  // Assemble, freeze, dispatch and transmit all assemble the package, which
+  // converts PDF leaves in conversion slots: a slot that never freed is 503
+  // with Retry-After, not a 500 (OPS-13, MR-03 Stage 2).
+  if (respondIfConverterBusy(res, err)) return;
   if (handleKnownCodeFailure(res, err)) return;
   const code = (err as { code?: string } | null)?.code;
 
@@ -236,6 +243,22 @@ const upsertLeafSchema = z.object({
   documentUuid: z.string().uuid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
+  studyId: z.string().trim().min(1).refine((value) => {
+    try { stfFileName(value); return true; } catch { return false; }
+  }, 'Study id must form a valid Study Tagging File name.').nullable().optional(),
+  stfFileTag: z.string().refine((value) =>
+    !Array.from(value).some((char) => char.charCodeAt(0) < 32 || (char.charCodeAt(0) >= 127 && char.charCodeAt(0) <= 159)),
+  'STF file-tag must contain no control characters.').transform((value) => value.trim()).pipe(z.string().min(1).max(128)).nullable().optional(),
+  studyTaggingEdit: z.object({
+    expectedStudyId: z.string().nullable(),
+    expectedStfFileTag: z.string().nullable(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+  }).optional(),
+}).superRefine((value, ctx) => {
+  if (value.studyTaggingEdit && (!value.leafId || value.studyId === undefined || value.stfFileTag === undefined)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['studyTaggingEdit'],
+      message: 'A study metadata edit requires leafId and explicit studyId and stfFileTag values.' });
+  }
 });
 
 const AUTHOR = 'regulatory-author';
@@ -1448,7 +1471,7 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
   (res as unknown as { flushHeaders?: () => void }).flushHeaders?.();
   // Stop writing once the client disconnects (avoids EPIPE / write-after-end).
   let closed = false;
-  req.on('close', () => {
+  res.on('close', () => {
     closed = true;
   });
   const send = (event: string, data: unknown) => {
@@ -1459,9 +1482,10 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
     const result = await generateSection({ submissionId: id, ...parsed.data }, ctx, (text) => send('chunk', { text }));
     send('done', result);
   } catch (err) {
-    const code = (err as { code?: string } | null)?.code ?? 'INTERNAL';
-    logger.error('section generation failed', { err: err instanceof Error ? err.message : String(err) });
-    send('error', { code, message: err instanceof Error ? err.message : 'Generation failed.' });
+    const known = err instanceof AuthoringError;
+    logger.error('section generation failed', { code: (err as { code?: string } | null)?.code ?? null });
+    send('error', { code: known ? err.code : 'GENERATION_FAILED',
+      message: known ? err.message : 'The section draft could not be completed. Its saved status has not been confirmed.' });
   } finally {
     res.end();
   }
@@ -1715,6 +1739,7 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
+      meta: { auditTrail: result.auditTrail },
     });
   } catch (err) {
     technicalFileFail(res, err);
@@ -1811,6 +1836,7 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
+      meta: { auditTrail: result.auditTrail },
     });
   } catch (err) {
     technicalFileFail(res, err);
@@ -1908,7 +1934,11 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
     const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-    const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
+    const [assessment, sequence] = await Promise.all([
+      assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId }),
+      getSequence(seqId, ctx),
+    ]);
+    const dispatchAuthorization = sequenceDispatchAuthorizationEligibility(sequence);
     // Whether THIS user may sign the sequence's freeze and dispatch, asked of
     // the sign step's own separation-of-duties check (signerIndependenceOf),
     // so the Dispatch tab can say so before a password is typed rather than
@@ -1918,7 +1948,7 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
     // 'independent'.
     const { signerIndependenceOf } = await import('../services/governance/separation-of-duties');
     const signer = { state: await signerIndependenceOf(`ectd-sequence:${seqId}`, ctx.organizationId, ctx.userId) };
-    res.json({ ...assessment, signer });
+    res.json({ ...assessment, signer, dispatchAuthorization });
   } catch (err) {
     fail(res, err);
   }

@@ -15,8 +15,10 @@
 
 import { getGateway } from '../ai-gateway/gateway';
 import { isTruncated } from '../ai-gateway/finish-reason';
+import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from './batch-draft-concurrency';
 import { classifyGatewayError, isGatewayError } from '../ai-gateway/gateway-error-map';
 import type { BatchDraftFailure, BatchDraftResult } from './batch-draft-result';
+import { cancelledDraft, isDraftCancellation, throwIfDraftCancelled, trustedSignal } from './batch-draft-result';
 import { createScopedLogger } from '../../utils/logger';
 import type {
   GatewayRequest,
@@ -42,9 +44,13 @@ import { getResolvedSectionBlueprint, getExactSectionBlueprint, getSectionBluepr
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
+import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
-import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
-import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type TemplateSection } from '../market-specs/document-template-library.js';
+import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings.js';
+import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation, isDeviceDocumentScope } from '../market-specs/document-preparation.js';
+import { DEVICE_DRAFTING_GUIDANCE } from '../market-specs/device-document-preparation.js';
+import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type DocumentTemplateStructure, type TemplateSection } from '../market-specs/document-template-library.js';
+import { lifecycleOutlineParts, lifecycleRecordOutlineFor, type LifecycleOutlinePart } from '../market-specs/lifecycle-record-outlines.js';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
 import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
 import { ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
@@ -157,7 +163,7 @@ DOCUMENT STRUCTURE:
 const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
   US_510K: 'fda_510k', '510k': 'fda_510k', '510K': 'fda_510k',
   US_PMA: 'fda_pma', pma: 'fda_pma', PMA: 'fda_pma',
-  EU_MDR_TECHDOC: 'eu_mdr', EU_IVDR_TECHDOC: 'eu_mdr',
+  EU_MDR_TECHDOC: 'eu_mdr',
   EU_CER: 'cer_clinical_evaluation', cer: 'cer_clinical_evaluation',
   US_IND: 'ich_clinical', US_NDA: 'ich_clinical', US_BLA: 'ich_clinical',
   EU_MAA: 'ich_clinical', EU_CTA: 'ich_clinical',
@@ -166,7 +172,7 @@ const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
 };
 
 function preparationRoute(entry: RegulatoryApplicationType | null) {
-  if (!entry || entry.segment !== 'pharma_biotech' || !['US', 'EU', 'CA', 'JP'].includes(entry.region)) return null;
+  if (!entry || (entry.segment !== 'pharma_biotech' && !isDeviceDocumentScope({ entry })) || !['US', 'EU', 'CA', 'JP'].includes(entry.region)) return null;
   return buildDocumentPreparation({ registryId: entry.id }).regionalRoute;
 }
 
@@ -359,12 +365,54 @@ function componentRequirements(entry: RegulatoryApplicationType, sectionType: st
   const template = componentId ? getDocumentTemplate(componentId) : undefined;
   if (!template) return null;
   const target = normTitle(sectionType);
-  const section = template.sections.find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
+  // Front matter and subsections too: a PBRER's executive summary and 16.2, an
+  // IB's title page, are nodes of the governed pack a class project scaffolds
+  // (review critic, 2026-10-18: only top-level sections were read).
+  const section = flattenSections([...(template.frontMatter ?? []), ...template.sections])
+    .find(s => sectionNames(s).some(v => normTitle(v) === target));
   if (entry.id === 'ICH_PROTOCOL') return protocolRequirements(section, sectionType);
-  if (!section) return { requirements: null, requirementsSource: 'none' };
+  // The CSR template shows E3's sixteen headings; its pack is E3 to full depth
+  // (119 nodes), so a section is answered from the E3 tree itself.
+  if (entry.id === 'ICH_CSR') return csrRequirements(sectionType);
+  if (!section) {
+    return {
+      requirements: `SECTION REQUIREMENTS: "${sectionType.trim()}" is not a section of the ${template.title} record. Confirm which section is meant; do not supply its requirements from memory.`,
+      requirementsSource: `outline:${template.outlineSource?.kind ?? 'canonical-record'}:${entry.id}:not-indexed`,
+    };
+  }
   return {
     requirements: `SECTION AUTHORING GUIDANCE (existing ${template.title} record):\n- Section: ${section.number} — ${section.heading}\n- ${section.purpose}\n- Recorded basis: ${template.regulatoryBasis}\n- Confirm applicability and the current agency/client template; platform required flags are not a completeness or approval verdict.`,
     requirementsSource: `outline:${template.outlineSource?.kind ?? 'canonical-record'}:${entry.id}:${section.number}`,
+  };
+}
+
+/**
+ * A CSR section by its E3 number (alone, or with its own E3 title) or its E3
+ * title: the E3 brief, or a named miss. "12-Week Efficacy Results" is a title,
+ * not §12; a title E3 holds twice is listed, never resolved to the first
+ * (review findings, 2026-10-18).
+ */
+function csrRequirements(requested: string): DraftingRequirements {
+  const m = /^(\d+(?:\.\d+)*)(?:\s+(.+))?$/.exec(requested.trim());
+  const byNumber = m ? ICH_E3_GUIDANCE.find((s) => s.number === m[1]) : undefined;
+  const numbered = byNumber && (!m?.[2] || normTitle(m[2]) === normTitle(byNumber.title)) ? byNumber : undefined;
+  const titled = numbered ? [numbered] : ICH_E3_GUIDANCE.filter((s) => normTitle(s.title) === normTitle(m?.[2] ?? requested));
+  if (titled.length > 1) {
+    return {
+      requirements: `SECTION REQUIREMENTS: ICH E3 holds "${requested.trim()}" at ${titled.map((s) => s.number).join(' and ')}. Ask which section is meant; do not merge their requirements or pick one from memory.`,
+      requirementsSource: 'record:outline:csr-e3:candidates',
+    };
+  }
+  const answer = titled[0] ? resolveRequirements({ document: 'csr', section: titled[0].number }) : null;
+  if (!answer || answer.kind !== 'answer') {
+    return {
+      requirements: `SECTION REQUIREMENTS: "${requested.trim()}" is not an ICH E3 heading the platform holds; do not supply its requirements from memory.`,
+      requirementsSource: 'record:outline:csr-e3:not-indexed',
+    };
+  }
+  return {
+    requirements: `SECTION REQUIREMENTS (from the platform's ICH E3 record — draft to these; do not add requirements from memory):\n${answer.requirements}`,
+    requirementsSource: `record:outline:csr-e3:${titled[0].number}:${answer.match}`,
   };
 }
 
@@ -416,7 +464,7 @@ function withBlueprintRow(ctx: CtdDraftContext, code: string, rec: DraftingRequi
 function candidateRequirements(ctx: CtdDraftContext, codes: string[]): DraftingRequirements {
   const { entry, outline, sectionType } = ctx;
   if (codes.length === 1) return withBlueprintRow(ctx, codes[0], recordRequirements(entry, codes[0], false));
-  const titleOf = (c: string) => CTD_AUTHORING_GUIDANCE[c]?.title ?? outline.find((s) => s.code === c)?.title ?? '';
+  const titleOf = (c: string) => recordTitle(c) ?? outline.find((s) => s.code === c)?.title ?? '';
   const listed = codes.map((c) => `${c} ${titleOf(c)}`.trim()).join('; ');
   return {
     requirements:
@@ -424,6 +472,26 @@ function candidateRequirements(ctx: CtdDraftContext, codes: string[]): DraftingR
       `Ask which section code is meant, or draft to the code given; do not merge their requirements or pick one from memory.`,
     requirementsSource: 'record:candidates',
   };
+}
+
+/** The record's title for a code, from either half (the guidance, or the structural ICH M4 headings). */
+const recordTitle = (code: string): string | undefined => CTD_AUTHORING_GUIDANCE[code]?.title ?? ichHeadingTitle(code) ?? undefined;
+
+/**
+ * The codes a Module 2 component's served outline holds under the title asked,
+ * where that outline is read from the CTD record (ctd-component-outlines.ts:
+ * 2.4, 2.5, 2.7). Its structural headings ("Benefit-Risk Assessment",
+ * "Pharmacology") are not guidance titles, so the record-wide title index never
+ * found them, and the entry's blueprint is the whole-Module-2 project copy
+ * (2026-10-20). Empty for any other entry or title.
+ */
+function componentOutlineCodes(entry: RegulatoryApplicationType, title: string): string[] {
+  const componentId = componentTemplateIdForRegistry(entry.id);
+  const template = componentId ? getDocumentTemplate(componentId) : undefined;
+  const source = template?.outlineSource;
+  if (!template || !source || !('record' in source) || !source.record.startsWith('CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:')) return [];
+  const target = normTitle(title);
+  return flattenSections(template.sections).filter((s) => normTitle(s.heading) === target).map((s) => s.number);
 }
 
 /**
@@ -435,7 +503,9 @@ function codeRequirements(ctx: CtdDraftContext, lead: { code: string; title: str
   const rec = withBlueprintRow(ctx, lead.code, recordRequirements(ctx.entry, lead.code, true));
   const title = lead.title?.trim();
   if (!title || rec.requirementsSource.startsWith('record:module1-not-indexed')) return rec;
-  const canonical = CTD_AUTHORING_GUIDANCE[lead.code]?.title;
+  // Either half of the record titles the code: "2.7.4.2.1.2 Deaths" is the
+  // record's own heading, never a mismatch (2026-10-20).
+  const canonical = recordTitle(lead.code);
   const rowTitle = ctx.outline.find((s) => sameCode(s.code, lead.code))?.title;
   if ([canonical, rowTitle].some((t) => t && normTitle(t) === normTitle(title))) return rec;
   const elsewhere = canonicalCodesForTitle(title).filter((c) => c !== lead.code);
@@ -524,11 +594,29 @@ export function resolveDraftingRequirements(
   }
   const norm = (s: string) => s.trim().toLowerCase();
   const target = norm(sectionType);
-  const matchRow = (s: BlueprintRow) =>
-    norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target;
+  // A row a correction retitled still answers to its former title, so a
+  // document bound to the earlier outline resolves (2026-10-18).
+  const matchRow = (s: BlueprintRow) => norm(s.code) === target ||
+    [s.title, ...(s.formerTitles ?? [])].some((t) => norm(t) === target || norm(`${s.code} ${t}`) === target);
 
   if (entry.id === 'US_IND_SR') return indSafetyRequirements(sectionType, blueprint, matchRow);
+  // A lifecycle-record outline answers what it holds; anything else goes the
+  // way it went before that outline existed (a document or project section
+  // bound to the earlier blueprint), and only a miss there too is named
+  // (review findings, 2026-10-18: a final miss here refused Module 1 codes,
+  // legacy blueprint codes and bootstrapped project sections).
+  const lifecycle = lifecycleOutlineRequirements(entry, sectionType);
+  if (lifecycle) return lifecycle;
+  const answered = blueprintRequirements(entry, blueprint, sectionType, matchRow);
+  const outline = answered.requirements ? undefined : lifecycleRecordOutlineFor(entry.id);
+  return outline ? lifecycleOutlineMiss(outline, sectionType) : answered;
+}
 
+/** The blueprint or CTD-record answer for a section, as resolveDraftingRequirements gave it before the lifecycle outlines. */
+function blueprintRequirements(
+  entry: RegulatoryApplicationType, blueprint: SectionBlueprint, sectionType: string, matchRow: (s: BlueprintRow) => boolean,
+): DraftingRequirements {
+  const none: DraftingRequirements = { requirements: null, requirementsSource: 'none' };
   if (!isCtdFramework(entry, blueprint)) {
     const component = componentRequirements(entry, sectionType);
     if (component) return component;
@@ -548,7 +636,127 @@ export function resolveDraftingRequirements(
   const lead = leadingSectionCode(sectionType);
   const scoped = scopedCtdRequirements(ctx, lead, matchRow);
   if (scoped) return scoped;
-  return lead ? codeRequirements(ctx, lead) : titleRequirements(ctx, matchRow) ?? none;
+  if (lead) return codeRequirements(ctx, lead);
+  // A component's own outline answers a title first; a title it holds twice
+  // ("Appendix" in 2.7) is listed, never resolved to the first.
+  const own = componentOutlineCodes(entry, sectionType);
+  return own.length ? candidateRequirements(ctx, own) : titleRequirements(ctx, matchRow) ?? none;
+}
+
+/**
+ * A filing whose outline is a lifecycle record (lifecycle-record-outlines.ts:
+ * the PAS and sBLA, the CBE, the NDA and IND annual reports, the Type A/B/C
+ * meeting packages) is answered from that record, so a drafted section and the
+ * outline it sits in are one source. Before this, these filings read the
+ * retired project blueprint, and no section of the served outline resolved:
+ * the supplement's own "Summary and Description of the Change" was drafted
+ * with no requirements and no "do not supply from memory" line (review
+ * finding, 2026-10-18). A CTD section the change updates is answered by the
+ * CTD record; a section the outline does not hold is named, never left to
+ * memory. Null for any other filing.
+ */
+function lifecycleOutlineRequirements(entry: RegulatoryApplicationType, requested: string): DraftingRequirements | null {
+  const outline = lifecycleRecordOutlineFor(entry.id);
+  if (!outline) return null;
+  const target = normTitle(requested);
+  const flat = flattenSections([...(outline.frontMatter ?? []), ...outline.sections]);
+  const section = flat.find((s) => sectionNames(s).some((v) => normTitle(v) === target));
+  const record = outline.outlineSource && 'record' in outline.outlineSource ? outline.outlineSource.record : outline.id;
+  if (!section) {
+    // A CTD code the outline holds, asked with any title ("3.2.P Drug Product
+    // (name, manufacturer)"), or a code below one it holds (3.2.P.5.1 under a
+    // supplement's 3.2.P) is the content the change updates: the CTD record
+    // answers it (review findings, 2026-10-18).
+    const lead = leadingSectionCode(requested);
+    const code = lead ? normalizeCtdCode(lead.code) : null;
+    const ctd = flat.map((s) => normalizeCtdCode(s.number)).filter((c): c is string => !!c);
+    return code && ctd.some((c) => code === c || code.startsWith(`${c}.`)) ? recordRequirements(entry, code, true) : null;
+  }
+  if (normalizeCtdCode(section.number)) return recordRequirements(entry, section.number, true);
+  if (section.subsections?.length) {
+    return {
+      requirements:
+        `SECTION REQUIREMENTS: ${section.number} — ${section.heading} holds sections, not text of its own: ` +
+        `${section.subsections.map((s) => `${s.number} ${s.heading}`).join('; ')}. ${section.purpose} Draft each section it holds.`,
+      requirementsSource: `record:lifecycle:${record}:${section.number}:container`,
+    };
+  }
+  return lifecyclePartBrief(entry, outline, section, record);
+}
+
+/**
+ * The names a section answers to: its number, its heading, both, and the same
+ * for each heading a correction replaced, so a document bound to an earlier
+ * outline ("…(CBE-30)", the PBRER's §3 before E2C(R2) wording) still resolves
+ * (review critic, 2026-10-19).
+ */
+function sectionNames(s: TemplateSection): string[] {
+  return [s.heading, ...(s.formerTitles ?? [])].flatMap((h) => [h, `${s.number} ${h}`]).concat(s.number);
+}
+
+/** Every section of an outline, depth first: front matter, sections and their subsections. */
+function flattenSections(list: TemplateSection[], out: TemplateSection[] = []): TemplateSection[] {
+  for (const s of list) { out.push(s); if (s.subsections?.length) flattenSections(s.subsections, out); }
+  return out;
+}
+
+/** A request neither the lifecycle outline nor the earlier blueprint holds: named, never left to memory. */
+function lifecycleOutlineMiss(outline: DocumentTemplateStructure, requested: string): DraftingRequirements {
+  const record = outline.outlineSource && 'record' in outline.outlineSource ? outline.outlineSource.record : outline.id;
+  return {
+    requirements:
+      `SECTION REQUIREMENTS: "${requested.trim()}" is not a section of the ${outline.title} outline (${record}). ` +
+      'Confirm which section is meant; do not supply its requirements from memory.',
+    requirementsSource: 'record:lifecycle:not-in-outline',
+  };
+}
+
+/**
+ * One part's brief. A part two records share (the CBE-30 and CBE-0 change
+ * description) is one node of the outline, keyed by the first record's code;
+ * each record's own brief is given, named by its variant, never the first
+ * one's alone (review critic, 2026-10-18: a CBE-0 safety labeling change was
+ * told to justify a moderate CMC change against SUPAC).
+ */
+function lifecyclePartBrief(
+  entry: RegulatoryApplicationType, outline: DocumentTemplateStructure, section: TemplateSection, record: string,
+): DraftingRequirements {
+  const all = lifecycleOutlineParts(entry.id);
+  const first = all.find((p) => p.code === section.number);
+  const parts = first ? all.filter((p) => p === first || p.title === first.title) : [];
+  const shared = parts.length > 1;
+  // A node no record part backs (a meeting package's MTG-SUPPORT) is the
+  // outline's own, and is named so, never attributed to the record (critic, 2026-10-19).
+  const source = shared ? record : first ? first.record : `outline:lifecycle-record:${entry.id}`;
+  const lines = [
+    first
+      ? `SECTION AUTHORING GUIDANCE (the platform's lifecycle record ${source}, served as the ${outline.title} outline — draft to it; do not add requirements from memory):`
+      : `SECTION AUTHORING GUIDANCE (the ${outline.title} outline's own section; no record part backs it — draft to it; do not add requirements from memory):`,
+    ...blaSupplementLine(entry),
+    `- Section: ${section.number} — ${section.heading}`,
+    `- ${section.required ? 'Required in this outline' : 'Conditional in this outline: applicability is unresolved, not waived'}`,
+    ...(shared ? [`- Which variant applies is the filer's classification of the change (${parts.map((p) => p.variant).join(' or ')}); draft to that variant's brief.`] : []),
+    ...partBriefs(parts, section),
+    `- Recorded basis: ${outline.regulatoryBasis}`,
+    ...(outline.outlineLimitations ?? []).map((l) => `- Scope limitation: ${l}`),
+  ];
+  return { requirements: lines.join('\n'), requirementsSource: `record:lifecycle:${source}:${section.number}` };
+}
+
+/** The sBLA's outline is the NDA PAS record: say which BLA rule it cites (review finding, 2026-10-18). */
+function blaSupplementLine(entry: RegulatoryApplicationType): string[] {
+  return entry.id === 'US_BLA_SUPP'
+    ? ['- For a BLA supplement: cite 21 CFR 601.12(b) (a manufacturing change) or 601.12(f)(1) (a labeling change) wherever this NDA record cites 21 CFR 314.70(b); the parts are the same.']
+    : [];
+}
+
+/** Each record's brief for a part, named by variant when two records share it; the outline's own purpose when no record part matches. */
+function partBriefs(parts: LifecycleOutlinePart[], section: TemplateSection): string[] {
+  if (parts.length > 1) {
+    return parts.flatMap((p) => [`- For a ${p.variant}: ${p.guidance}`, ...p.keyContentElements.map((k) => `  - Key content (${p.variant}): ${k}`)]);
+  }
+  const [part] = parts;
+  return [`- ${part?.guidance ?? section.purpose}`, ...(part?.keyContentElements ?? []).map((k) => `- Key content: ${k}`)];
 }
 
 /** Safety report subtype and sponsor status decide delivery; a narrative is
@@ -578,7 +786,11 @@ function scopedCtdRequirements(ctx: CtdDraftContext, lead: ReturnType<typeof lea
   const { entry, blueprint, sectionType } = ctx;
   if (!['CA_CTA', 'CA_CTA_A', 'ICH_NONCLIN_SUMMARY'].includes(entry.id)) return null;
   const requestedModule = /^module\s+([1-5])$/i.exec(sectionType.trim())?.[1];
-  const codes = lead ? [lead.code] : requestedModule ? [requestedModule] : canonicalCodesForTitle(sectionType);
+  // The outline's own rows answer a title before the record-wide index: the
+  // 2.6.4/2.6.6 leaves ("Absorption") are structural headings, not guidance
+  // titles, and were refused as outside the outline (2026-10-20).
+  const rows = blueprint.sections.filter(matchRow).map((s) => s.code);
+  const codes = lead ? [lead.code] : requestedModule ? [requestedModule] : rows.length ? rows : canonicalCodesForTitle(sectionType);
   const inScope = (code: string) => blueprint.sections.some(s => sameCode(s.code, code) || code.toLowerCase().startsWith(`${s.code.toLowerCase()}.`));
   if (codes.length && !codes.some(inScope)) {
     return { requirements: `SECTION REQUIREMENTS: "${sectionType}" is outside the selected ${entry.displayName} outline. Confirm the document and applicable section; do not substitute a full marketing CTD.`, requirementsSource: 'record:outside-outline' };
@@ -608,15 +820,18 @@ export function resolveSystemPrompt(submissionType: string): string {
   }
   // Direct framework key (e.g. 'fda_510k', 'ich_clinical') — backward compatible.
   if (REGULATORY_SYSTEM_PROMPTS[submissionType]) {
-    return `${REGULATORY_SYSTEM_PROMPTS[submissionType]}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
+    const guidance = ['fda_510k', 'fda_pma', 'eu_mdr', 'cer_clinical_evaluation'].includes(submissionType)
+      ? DEVICE_DRAFTING_GUIDANCE : BIOTECH_DRAFTING_GUIDANCE;
+    return `${REGULATORY_SYSTEM_PROMPTS[submissionType]}\n\n${guidance}`;
   }
   const entry = resolveToRegistryEntry(submissionType);
   if (entry) {
+    const guidance = isDeviceDocumentScope({ entry }) ? DEVICE_DRAFTING_GUIDANCE : BIOTECH_DRAFTING_GUIDANCE;
     const idKey = SUBMISSION_TYPE_TO_FRAMEWORK[entry.id];
     if (idKey && REGULATORY_SYSTEM_PROMPTS[idKey]) {
-      return `${REGULATORY_SYSTEM_PROMPTS[idKey]}\n\n${buildDynamicSystemPrompt(entry.id)}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
+      return `${REGULATORY_SYSTEM_PROMPTS[idKey]}\n\n${buildDynamicSystemPrompt(entry.id)}\n\n${guidance}`;
     }
-    return `${buildDynamicSystemPrompt(entry.id)}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
+    return `${buildDynamicSystemPrompt(entry.id)}\n\n${guidance}`;
   }
   return `${REGULATORY_SYSTEM_PROMPTS.general_regulatory}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
 }
@@ -669,6 +884,11 @@ export interface DocumentDraftRequest {
   organizationId?: string | number;
   userId?: string | number;
   projectId?: string | number;
+  /**
+   * Aborted when the person stops the run. Server-supplied only (the AnA
+   * tool's context signal); a value that is not a real AbortSignal is ignored.
+   */
+  signal?: AbortSignal;
 }
 
 export interface DocumentDraftResponse {
@@ -766,8 +986,33 @@ export interface VisionAnalysisRequest {
 export interface BatchDocumentRequest {
   /** Array of draft requests to process */
   requests: DocumentDraftRequest[];
-  /** Maximum concurrent requests */
+  /** Positive integer; defaults to 3 and is capped at 5. */
   concurrency?: number;
+  /** Stops later waves and is passed to every section. Server-supplied only. */
+  signal?: AbortSignal;
+}
+
+/** Pin caller-owned scalar fields and declared product context before awaits.
+ * The selected-source object itself must retain its private issuer identity. */
+function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftRequest {
+  const pinned = { ...request };
+  const signal = trustedSignal(pinned.signal);
+  if (signal) pinned.signal = signal;
+  else delete pinned.signal;
+  if (pinned.projectContext) pinned.projectContext = Object.freeze({ ...pinned.projectContext });
+  return Object.freeze(pinned);
+}
+
+/** Keep source authority and its guarded outbound callback on the server. */
+async function draftSourceCheckpoint(req: DocumentDraftRequest) {
+  const identity = Object.freeze({ organizationId: req.organizationId, userId: req.userId, projectId: req.projectId });
+  const { assertDraftSourceContextCurrent, draftSourcePrompt, draftSourceAudit } = await import('./draft-project-sources.js');
+  const assertCurrent = () => assertDraftSourceContextCurrent(req.sourceContext, identity, req.signal);
+  await assertCurrent();
+  const selectedSources = req.sourceContext?.status === 'loaded';
+  if (selectedSources && (req.onStream || req.enableTools)) throw new Error('SOURCE_CONTEXT_REQUIRES_NONSTREAMING_DRAFT');
+  return { assertCurrent, prompt: draftSourcePrompt(req.sourceContext), audit: draftSourceAudit(req.sourceContext),
+    dispatch: selectedSources ? { beforeDispatch: assertCurrent } : {} };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -788,8 +1033,12 @@ export class AnaDocumentDraftingService {
    * Draft a regulatory document section using the model with full feature set.
    */
   async draftDocument(req: DocumentDraftRequest): Promise<DocumentDraftResponse> {
+    req = snapshotDraftRequest(req);
+    const { signal } = req;
+    throwIfDraftCancelled(signal);
+    const sourceCheckpoint = await draftSourceCheckpoint(req);
+    throwIfDraftCancelled(signal);
     const gateway = getGateway();
-    const startTime = Date.now();
 
     // Prefer registry-driven prompt resolution (all 158+ types) when a
     // submissionType is supplied; otherwise use the hardcoded framework prompt.
@@ -826,8 +1075,7 @@ export class AnaDocumentDraftingService {
     if (req.existingContent) {
       userPrompt += `\n\nEXISTING CONTENT TO REVISE:\n${req.existingContent}`;
     }
-    const { draftSourcePrompt, draftSourceAudit } = await import('./draft-project-sources.js');
-    userPrompt += draftSourcePrompt(req.sourceContext);
+    userPrompt += sourceCheckpoint.prompt;
 
     // Build gateway request
     const gatewayRequest: GatewayRequest = {
@@ -845,13 +1093,15 @@ export class AnaDocumentDraftingService {
       userId: req.userId,
       projectId: req.projectId,
       callerModule: 'AnaDocumentDraftingService',
+      signal,
+      ...sourceCheckpoint.dispatch,
       metadata: {
         framework: req.framework,
         submissionType: req.submissionType,
         sectionType: req.sectionType,
         requirementsSource,
         ...productAdvisory.audit,
-        ...draftSourceAudit(req.sourceContext),
+        ...sourceCheckpoint.audit,
       },
     };
 
@@ -876,6 +1126,12 @@ export class AnaDocumentDraftingService {
     }
 
     const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
+    // A result that settled after stop — including a mid-stream partial the
+    // gateway returns as finishReason 'aborted' — is not offered as a draft,
+    // and no source recheck is started for it.
+    throwIfDraftCancelled(signal);
+    await sourceCheckpoint.assertCurrent();
+    throwIfDraftCancelled(signal);
 
     return {
       content: response.content,
@@ -1124,19 +1380,29 @@ ${documentContent}`,
    * is useful.
    */
   async batchDraft(req: BatchDocumentRequest): Promise<BatchDraftResult[]> {
-    const concurrency = req.concurrency || 3;
+    const concurrency = resolveBatchConcurrency(req.concurrency);
+    if (concurrency === null) throw new RangeError(BATCH_CONCURRENCY_MESSAGE);
+    const signal = trustedSignal(req.signal);
     const results: BatchDraftResult[] = [];
 
-    // Process in batches
+    // Process in batches. Stop is checked before each wave: sections drafted
+    // before it are kept, and no later wave is dispatched.
     for (let i = 0; i < req.requests.length; i += concurrency) {
       const batch = req.requests.slice(i, i + concurrency);
-      const settled = await Promise.allSettled(batch.map(r => this.draftDocument(r)));
+      if (signal?.aborted) {
+        results.push(...batch.map(r => cancelledDraft(r.sectionType)));
+        continue;
+      }
+      const settled = await Promise.allSettled(batch.map(r => this.draftDocument(withBatchSignal(r, signal))));
       settled.forEach((outcome, j) => {
         if (outcome.status === 'fulfilled') {
           results.push(outcome.value);
           return;
         }
-        results.push(describeBatchDraftFailure(batch[j], outcome.reason));
+        const stopped = signal?.aborted || trustedSignal(batch[j].signal)?.aborted;
+        results.push(stopped && isDraftCancellation(outcome.reason)
+          ? cancelledDraft(batch[j].sectionType)
+          : describeBatchDraftFailure(batch[j], outcome.reason));
       });
     }
 
@@ -1195,6 +1461,13 @@ ${documentContent}`,
 }
 
 const batchLog = createScopedLogger('ana-drafting-batch');
+
+/** A section keeps its own signal and also stops with the batch. */
+function withBatchSignal(request: DocumentDraftRequest, signal: AbortSignal | undefined): DocumentDraftRequest {
+  if (!signal) return request;
+  const own = trustedSignal(request.signal);
+  return { ...request, signal: own ? AbortSignal.any([own, signal]) : signal };
+}
 
 /**
  * The failure result for one section of a batch. A gateway refusal keeps its

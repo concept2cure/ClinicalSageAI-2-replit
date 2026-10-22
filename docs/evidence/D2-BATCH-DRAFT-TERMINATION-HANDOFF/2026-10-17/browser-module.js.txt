@@ -1,0 +1,27 @@
+// shared/ai/finish-reason.ts
+var TRUNCATING_FINISH_REASONS = /* @__PURE__ */ new Set([
+  "max_tokens",
+  // Anthropic: hit maxTokens
+  "length",
+  // OpenAI-shaped: hit max_tokens
+  "chunk_timeout"
+  // gateway: stream stalled, partial body returned on purpose
+]);
+function isTruncated(finishReason) {
+  return typeof finishReason === "string" && TRUNCATING_FINISH_REASONS.has(finishReason.trim());
+}
+var COMPLETE_FINISH_REASONS = /* @__PURE__ */ new Set([
+  "end_turn",
+  "stop",
+  "stop_sequence",
+  "tool_use",
+  "tool_calls"
+]);
+function isVerifiedComplete(finishReason) {
+  return typeof finishReason === "string" && COMPLETE_FINISH_REASONS.has(finishReason.trim());
+}
+export {
+  TRUNCATING_FINISH_REASONS,
+  isTruncated,
+  isVerifiedComplete
+};

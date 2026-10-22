@@ -30,6 +30,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 import { createHash } from 'node:crypto';
+import { StorageIntegrityError } from '../../services/storage/storage-provider';
 
 const { query, readFile } = vi.hoisted(() => ({ query: vi.fn(), readFile: vi.fn() }));
 /* The download's audit row is written in a transaction of its own (a chained
@@ -387,6 +388,28 @@ describe('download — where the bytes come from', () => {
     const res = await request(app()).get(url());
     expect(res.status).toBe(409);
     expect(readFile).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['size_mismatch', 'CONTENT_HASH_MISMATCH'],
+    ['digest_mismatch', 'CONTENT_HASH_MISMATCH'],
+    ['invalid_metadata', 'STORED_FILE_UNREADABLE'],
+  ] as const)('preserves the provider %s refusal as %s without serving or auditing a download', async (reason, code) => {
+    // A readable legacy file is present, so a fallback would disclose bytes
+    // despite the provider's refusal of this version's recorded identity.
+    store(DOC({ storage_version_id: VERSION }));
+    storageGet.mockRejectedValue(new StorageIntegrityError(reason));
+
+    const res = await request(app()).get(url());
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ success: false, error: code, message: expect.any(String) });
+    expect(res.text).not.toContain('%PDF');
+    expect(res.headers['content-disposition']).toBeUndefined();
+    expect(res.headers['x-content-sha256']).toBeUndefined();
+    expect(storageGet).toHaveBeenCalledExactlyOnceWith(VERSION, 7);
+    expect(readFile).not.toHaveBeenCalled();
+    expect(query.mock.calls.filter(([sql]) => /INSERT INTO audit_logs/i.test(String(sql)))).toHaveLength(0);
   });
 
   it('hash-verifies provider bytes against the record, same as disk bytes', async () => {

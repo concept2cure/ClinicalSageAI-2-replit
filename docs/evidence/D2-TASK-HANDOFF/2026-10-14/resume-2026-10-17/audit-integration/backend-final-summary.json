@@ -1,0 +1,168 @@
+{
+  "phase": "Current merged backend35 completed; product/native runtime frozen during independent client repair",
+  "sourceBaseCommit": "2d9d0d83e720c99ee75828e2567033af529d9f1e",
+  "incomingCanonical": "c5d278add74085cb629c70fa9286d04e39664d9b",
+  "totalTests": 742,
+  "passed": 742,
+  "failed": 0,
+  "pending": 0,
+  "physicalFiles": 35,
+  "sourcePins": [
+    {
+      "path": "server/routes/__tests__/ana-intelligence-source-context.test.ts",
+      "sha256": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182"
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+      "sha256": "c1ebe6c386594451825c91cc1835135e6c1d772af87792abaf7cdc3e425b0e69"
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "475ab7d3ab67de5c00ef340ac45577b058749d0748fed5700e53549be8eefbc0"
+    },
+    {
+      "path": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "sha256": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae"
+    },
+    {
+      "path": "server/routes/__tests__/submissions-request-current-access.pglite.test.ts",
+      "sha256": "6979ef9d2ddc4553bc37a52695c1dc5eeb3a87bd7d60770b33f02ebb651d307d"
+    },
+    {
+      "path": "server/routes/__tests__/vault-download.test.ts",
+      "sha256": "1daae000e5b5b3d25a128873b03cd5c79ac0c9972952778979e97bd6f028b6ba"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "5ab2e0104d8728d2442e4ee76e685101b66ed056bcb4f69b0f6b7d42019a7b79"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-create-fixture.ts",
+      "sha256": "9636491a3faf88d0d996d83259d06053de74851922fbd7a8119228d43ff935aa"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-create.test.ts",
+      "sha256": "7d66d65306ea9ebd94c79c0071c2ac0775527cbb8259edaf12e9eccc48abc64a"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/vault-download-integrity.test.ts",
+      "sha256": "d352d3dd4fde82b9cb35f3e0c338aa83b56286315033a522a3e7b96a03bb9360"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/vault-recorded-provider.test.ts",
+      "sha256": "66ef6c17204c7f7892be145aa174ddd3ee4a878462c3f201278a614027db6a9f"
+    },
+    {
+      "path": "server/routes/c2c/project-vault.ts",
+      "sha256": "168cd72d1fa20dbb98aa9c516a690448fb8bb1a1f99c24fb2467743562122759"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts",
+      "sha256": "698c48a7079a3df75bc0a9f6d4451f3ae98e3a50ecb7e5a19bfc71051ab9e3c7"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+      "sha256": "6559f7a1628faac5a3bbc58fa25a33d9c15c4b99fce251ccb1dec48203a9ea89"
+    },
+    {
+      "path": "server/services/ana/__tests__/batch-draft-sections.test.ts",
+      "sha256": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785"
+    },
+    {
+      "path": "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+      "sha256": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "sha256": "edcd80e2ed9effdb50da99bd54cf83db0871c1bf33916775eab8376c488d284d"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-authoring-source-schema.test.ts",
+      "sha256": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts",
+      "sha256": "364ad83313ba343653b7055b928a101690fd3c0323db1c1e239b0d91f610e505"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "sha256": "038050c181347aa4cef241eb7f0f569e900d3ea3714391f03409730189c550c6"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-context-authority.test.ts",
+      "sha256": "10c10d2d6d0fe0a0ca7273bf7c9dbefae60906067a56e9f9322256193d24ebb5"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-identity.test.ts",
+      "sha256": "afd9143794cf8af09d059839fdd9ac7cb5f13e4d4509a10cade99a8f4ac65854"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+      "sha256": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-current-role.test.ts",
+      "sha256": "7f7e177d0500eaf0412d82fd91b5af0d3a54969c88e31ddf745ebbbf04f75e85"
+    },
+    {
+      "path": "server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts",
+      "sha256": "de77a1df3d92b2a7133042033f1848f37c2bfbc47a3dc91333b80c4e55eae84c"
+    },
+    {
+      "path": "server/services/authoring/__tests__/draft-source-references.test.ts",
+      "sha256": "017fd18724a9fbcc77a36d061eb44b31634a641fd33e9921f4fa489cef582120"
+    },
+    {
+      "path": "server/services/authoring/__tests__/import-source-references.test.ts",
+      "sha256": "fd94084cf0a32be9066cdc8e0ae3fdc56ae7d31108a0d63c2d1028baba33414f"
+    },
+    {
+      "path": "server/services/authoring/__tests__/peer-review.pglite.integration.test.ts",
+      "sha256": "9f2d7f4eb4a892d780d68343eeb0edf1d7044f836811c7fc7dd4ccf18238b05f"
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "sha256": "fe38e93a6ab3249a6738110fd966315a31b0aec5232156c002d4377d551f2a8b"
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts",
+      "sha256": "fd6777c13fa09de38b2a4afa33663c8e038adb04a37bf91c190d46dfb5f9028f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",
+      "sha256": "e4da66ec580c8d1a93b2e2d91b4f4f25904c285e1b389191c555531e2d90ff33"
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "sha256": "1d6447982eff7d4b16c0d6b8a79c972ebf07c31569235d384e9a4746cfb6b959"
+    },
+    {
+      "path": "server/services/pathway-engines/__tests__/source-aware-manifest.test.ts",
+      "sha256": "31b07c959c0624156808e626951266ada5b8b06362899d7b399b0b3a973eb048"
+    },
+    {
+      "path": "server/services/storage/__tests__/storage-read-integrity.test.ts",
+      "sha256": "841541290590669e3a053fe3073bcd1d4503c0353e3c5487705f33b6e2083d2e"
+    },
+    {
+      "path": "server/services/storage/__tests__/storage-tenant-isolation.test.ts",
+      "sha256": "16fd348c8cb5fd9f28087ea0f4ee8efc8b89cc9aab303090c6fc18449ad5cac9"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-placement-current-writer.test.ts",
+      "sha256": "3e52ff348a5ee3c3cee081939d14a93fe7576abbf003fb1f95d484a56e827c78"
+    },
+    {
+      "path": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+      "sha256": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+    },
+    {
+      "path": "server/services/vault/__tests__/vault-fixity.test.ts",
+      "sha256": "559d34efad408e40e7f39517ae5f08f4e1591d56c6bbf51e7ce9cb62f384fc49"
+    },
+    {
+      "path": "shared/ana/__tests__/source-admission-receipts.test.ts",
+      "sha256": "41fc750ceb018d72d6f068651cebc4182dea4201e521065c22862754e7712e15"
+    }
+  ]
+}

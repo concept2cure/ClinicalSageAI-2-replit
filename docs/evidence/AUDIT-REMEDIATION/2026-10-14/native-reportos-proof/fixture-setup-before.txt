@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T06:56:48.275Z","pid":101525,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > distinguishes raw no-ALS RLS denial from global instrumented full-context positives
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > matches actual runtime global and canonical lazy request-client saved-history reads
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists the authenticated tenant own saved run while ignoring a foreign organization query claim
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > reads owned run details/render/dependencies/seal and refuses foreign IDs
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists the current tenant saved bundle from the global ORM while excluding foreign containers
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists current tenant subscriptions through the actual global service with foreign exclusion
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program
+ ↓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > serves reciprocal positive reads for the other authenticated tenant
+{"level":30,"time":"2026-10-14T06:56:48.278Z","pid":101525,"hostname":"851fa3de1b8e","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T06:56:48.278Z","pid":101525,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts [ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts ]
+error: inconsistent types deduced for parameter $3
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ seed docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts:28:3
+
+ ❯ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts:68:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 155, severity: 'ERROR', code: '42P08', detail: 'text versus character varying', hint: undefined, position: '153', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_param.c', routine: 'variable_coerce_param_hook' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 skipped (8)
+   Start at  06:56:46
+   Duration  1.65s (transform 652ms, setup 53ms, import 132ms, tests 1.27s, environment 0ms)
+

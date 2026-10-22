@@ -134,6 +134,7 @@ export interface PdevStudyDesign {
 }
 
 export interface PdevDoc {
+  programId?: string | null;
   id: string; title: string; shortTitle: string; kind: string;
   version: string; status: string; sponsor: string; pi: string;
   updated: string; completeness: number;

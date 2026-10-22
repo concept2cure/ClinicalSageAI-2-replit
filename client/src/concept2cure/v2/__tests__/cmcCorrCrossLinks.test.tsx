@@ -1,23 +1,31 @@
 // @vitest-environment jsdom
 /**
- * Correspondence cross-links in the CMC module, at render level.
+ * CMC / Module 3's agency questions, at render level, since they converged
+ * onto the letter's record (2026-10-19, rows D2 and D5; decisions P-38 and
+ * P-39 item 1).
  *
  * ── The gap ───────────────────────────────────────────────────────────────────
- * Open agency questions live on the Program records tab, but the two places a
- * CMC lead actually meets them are elsewhere: the Overview's IR-overdue count,
- * and the change simulator — where implementing a change that refiles a section
- * the agency is already asking about is a decision, not an accident. Neither
- * place offered a way through to the record.
+ * CMC kept a second home for agency questions: the reg_questions file, where a
+ * question was logged, assigned, sent for review, drafted into an authoring
+ * document and CLOSED by status update, with no signature and no reason, and
+ * an overdue count by its own rule. The questions have one home, the letter
+ * they came in, worked in Communication and Respond, where a response is
+ * approved by a Part 11 signature.
  *
  * ── What must be true ─────────────────────────────────────────────────────────
- *   • a POSITIVE IR-overdue count on the Overview is a real button that jumps
- *     to Program records via the module's __cmSetTab idiom;
- *   • a ZERO count is a plain figure — no button role, no dead-end click;
- *   • a simulated change whose type maps onto a cited section renders the
- *     correspondence signpost (the same CmCorrNotice the Specifications and
- *     Stability tabs use) naming that section;
- *   • questions citing UNRELATED sections render nothing — presence is
- *     asserted, absence never is.
+ *   • CMC reads the program's letters (one read at the module root) and shows
+ *     Module 3's view of them: the server's states, the server's overdue
+ *     verdict, counts by letter, what it could not count and why;
+ *   • every question has one door, "Open on its letter", the navigation-params
+ *     channel into Communication; CMC offers no write of its own and issues
+ *     none (no POST, PUT or PATCH to /api/cmc/agency-questions or to any
+ *     agency-communications path, checked after every case);
+ *   • the Overview's figure is per program, '—' when no program is open or the
+ *     read failed, never 0 for "not read"; its action opens the overdue letter
+ *     in Communication rather than asking AnA to draft or promising sign-offs;
+ *   • a section signpost matches whole segments (3.2.S.2 is not 3.2.S.20);
+ *   • the earlier CMC file is shown as read-only history, saying only what its
+ *     rows hold: no closure date, no overdue, a close that was a status change.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,130 +40,215 @@ vi.mock('@/services/portal/authService', async original => ({
   ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: '7', email: 'lead@example.test', displayName: 'R. Lead' } }),
 }));
+vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeEnforced: false }) }));
 
-import { CmOverview, CmChange } from '../surfaces/CmcModule';
+import { CmOverview, CmChange, CmPathway } from '../surfaces/CmcModule';
+import { CmcQuestionsProvider } from '../surfaces/cmcAgencyQuestions';
+import { consumeEditorTarget } from '../editorTarget';
+import { board, earlier, earlierRow, letterOf, m3Question, module3, serverModule3, EARLIER_PATH, MODULE3_PATH, PROGRAM } from './cmcCorrCrossLinks.fixtures';
 
 function res(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
 }
 
-/** Every call the surfaces made, as [method, url, body] triples. */
 const calls = () => apiRequest.mock.calls as Array<[string, string, unknown?]>;
-const boardReads = () =>
-  calls().filter((c) => c[0] === 'GET' && c[1] === '/api/cmc/module3-board');
+const module3Reads = () => calls().filter(([m, u]) => m === 'GET' && u.includes('/agency-questions?ctdModule='));
+/** Any write CMC might make about agency questions: there must never be one. */
+const questionWrites = () =>
+  calls().filter(([m, u]) => m !== 'GET' && (u.startsWith('/api/cmc/agency-questions') || /^\/api\/concept2cure\/projects\/[^/]+\/agency-communications/.test(u)));
 
-/** One open agency question citing the given section. */
-const question = (sectionRef: string) => ({
-  id: 1,
-  question: 'Please justify the proposed change and provide comparability data for the affected material.',
-  sectionRef,
-  priority: 'high',
-  severity: 'major',
-  status: 'open',
-  region: 'FDA',
-  dueDate: '2026-09-01',
-  overdue: true,
-  assignedTo: null,
-});
-
-/**
- * A live board with one submission, the given IR count, and the given questions.
- * `irOverdue: null` is the server saying the question store could not be read —
- * not that nothing is overdue.
- */
-const board = (irOverdue: number | null, correspondence: unknown[] = []) => ({
-  portfolio: [{ sub: 'BLA 761234', product: 'Compound A', region: 'FDA', type: 'BLA', rpi: 82, ir: irOverdue, source: 'rpi' }],
-  sections: null,
-  kpis: { submissions: 1, rpiAverage: 82, irOverdue, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
-  correspondence,
-  meta: { projectId: null, portfolioProvisioned: true, sectionsProvisioned: null, correspondenceUnreadable: irOverdue == null, generatedAt: '2026-08-24T00:00:00.000Z' },
-});
-
-/** The board answers as given; every other register read is honestly empty. */
-function wire(boardData: unknown) {
+interface Wiring {
+  module3?: unknown | 'error';
+  earlier?: unknown | 'error';
+}
+function wire(w: Wiring) {
   apiRequest.mockImplementation(async (m: string, u: string) => {
-    if (m === 'GET' && u === '/api/cmc/module3-board') return res({ success: true, data: boardData });
+    if (m === 'GET' && u === MODULE3_PATH) {
+      if (w.module3 === 'error') throw Object.assign(new Error('The agency questions could not be read.'), { status: 500 });
+      return res({ success: true, data: w.module3 ?? module3([]) });
+    }
+    if (m === 'GET' && u === EARLIER_PATH) {
+      if (w.earlier === 'error') throw Object.assign(new Error('The earlier CMC question file could not be read.'), { status: 500 });
+      return res(w.earlier ?? earlier([]));
+    }
+    if (m === 'GET' && u.startsWith('/api/cmc/module3-board')) return res({ success: true, data: board() });
+    if (m === 'POST' && u === '/api/cmc/variations/classify') return res({ success: true, data: { fdaReportingCategory: 'pas', emaVariationCategory: 'type_ii', rationale: ['Recorded site change'], validationRequirements: ['Review comparability'], impactedCtdSections: ['3.2.S.2'], citations: ['21 CFR 314.70'] } });
     return res({ success: true, data: [] });
   });
 }
 
-type CmWindow = { __cmSetTab?: (id: string) => void };
-
-/* A response draft is a governed document, and a governed document is created
-   in the open project and nowhere else (PF-07, founder decision 2026-09-26).
-   The drafting cases below open this one; without it the create is never
-   attempted and the draft cases would fail — or, worse, a refusal case would
-   pass for that reason alone. The Overview, simulator and log/close cases do
-   not open it: with a project in context the Overview reads the board as
-   `?projectId=…`, and those cases pin the org-scoped board this file wires.
-   None of them reaches the create path. */
-const PROGRAM = '3c1f8a2e-7b4d-4e9a-8c21-5d6e7f8a9b0c';
+type CmWindow = { __cmSetTab?: (id: string) => void; C2C_NAV_PARAMS?: { surfaceId: string; params: Record<string, string> } };
 const setProject = (p: unknown) => { (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = p; };
+const inModule = (el: React.ReactElement) => render(<CmcQuestionsProvider>{el}</CmcQuestionsProvider>);
+const navParams = () => (window as unknown as CmWindow).C2C_NAV_PARAMS;
 
-/** The body of the authoring-document create, if one was sent. */
-const docCreateBody = () => calls().find((c) => c[0] === 'POST' && c[1] === '/api/authoring/docs')?.[2];
-
-beforeEach(() => apiRequest.mockReset());
+beforeEach(() => {
+  apiRequest.mockReset();
+  setProject({ id: PROGRAM });
+});
 afterEach(() => {
+  // CMC writes nothing about agency questions, in any case below.
+  expect(questionWrites()).toEqual([]);
   cleanup();
   delete (window as unknown as CmWindow).__cmSetTab;
+  delete (window as unknown as CmWindow).C2C_NAV_PARAMS;
+  delete (window as unknown as { C2C_EDITOR_TARGET?: unknown }).C2C_EDITOR_TARGET;
   setProject(undefined);
 });
 
-/* ══════════════════ Overview — the IR-overdue tile ══════════════════ */
+/* ══════════════════ Overview — the per-program figure ══════════════════ */
 
-describe('CmOverview — the IR-overdue KPI deep-links to the correspondence', () => {
-  it('a positive count is a button that jumps to Program records', async () => {
-    wire(board(3));
+describe('CmOverview — Module 3 questions overdue on this program', () => {
+  it('a positive count is a button that opens the Module 3 questions', async () => {
+    wire({ module3: module3([m3Question('3.2.P.7'), m3Question('3.2.S.4.1')]) });
     const setTab = vi.fn();
     (window as unknown as CmWindow).__cmSetTab = setTab;
-    render(<CmOverview ask={vi.fn()} />);
-
-    const kpi = await screen.findByRole('button', { name: /IR overdue/ });
-    // The affordance says where it goes, not just that it goes.
-    expect(kpi.getAttribute('title')).toMatch(/agency correspondence/i);
-    expect(within(kpi).getByText('3')).toBeTruthy();
-
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
+    const kpi = await screen.findByRole('button', { name: /Module 3 questions overdue on this program/ });
+    expect(within(kpi).getByText('2')).toBeTruthy();
+    expect(kpi.getAttribute('title')).toMatch(/agency questions/i);
     fireEvent.click(kpi);
     expect(setTab).toHaveBeenCalledWith('pathway');
+    expect(module3Reads()).toHaveLength(1);
   });
 
-  it('a zero count is a plain figure — no button role, no dead-end click', async () => {
-    wire(board(0));
-    render(<CmOverview ask={vi.fn()} />);
-    // The board has loaded — the submission is on screen (the answer lead
-    // names it too, so the match is deliberately plural).
+  it('shows the server\'s figure: an approved answer on an overdue letter is not counted, a zero is a plain figure', async () => {
+    wire({ module3: module3([m3Question('3.2.P.7', { state: 'approved', outstanding: false, overdue: false, letter: letterOf({ overdue: true }) })]) });
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
     await screen.findAllByText('BLA 761234');
-
-    // The tile is there, as a figure…
-    const label = screen.getByText('IR overdue', { selector: '.reg-kpi-l' });
-    // …but not as a control, and not merely a button with no handler.
-    expect(screen.queryByRole('button', { name: /IR overdue/ })).toBeNull();
+    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const tile = label.closest('.reg-kpi') as HTMLElement;
+    await waitFor(() => expect(within(tile).getByText('0')).toBeTruthy());
     expect(label.closest('button')).toBeNull();
+    expect(screen.queryByText(/questions? (is|are) overdue/)).toBeNull();
   });
 
-  /* The third state. `provisioned:false` used to mean both "no such store" and
-     "that read failed", and on either the KPI fell back to the legacy
-     per-submission sum — so a failed read rendered as a confident "0 overdue".
-     A count the server could not establish is shown as unknown, and the lead
-     says so in words. */
-  it('an unestablished count is shown as unknown, never as zero', async () => {
-    wire(board(null));
-    render(<CmOverview ask={vi.fn()} />);
+  it('a read that failed is unknown, never zero, and the lead says so', async () => {
+    wire({ module3: 'error' });
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
     await screen.findAllByText('BLA 761234');
-
-    // The label carries the qualification, so the figure is never read alone.
-    const label = screen.getByText(/^IR overdue/, { selector: '.reg-kpi-l' });
-    expect(label.textContent).toMatch(/not established/i);
+    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    await waitFor(() => expect(label.textContent).toMatch(/not established/i));
     const tile = label.closest('.reg-kpi') as HTMLElement;
     expect(within(tile).getByText('—')).toBeTruthy();
     expect(within(tile).queryByText('0')).toBeNull();
-    expect(screen.queryByRole('button', { name: /IR overdue/ })).toBeNull();
-
-    // And the narrative says it too — the lead does not assert clearance it
-    // has no basis for. (Both the tile and the sentence carry the words.)
+    expect(screen.queryByRole('button', { name: /questions overdue/ })).toBeNull();
     expect(screen.getAllByText(/not established/i).length).toBeGreaterThan(1);
-    expect(screen.queryByText(/information requests overdue/)).toBeNull();
+  });
+
+  it('with no program open it claims no count and issues no read', async () => {
+    setProject(undefined);
+    wire({});
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
+    await screen.findAllByText('BLA 761234');
+    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    expect(label.textContent).toMatch(/counted per program; open one/);
+    expect(within(label.closest('.reg-kpi') as HTMLElement).getByText('—')).toBeTruthy();
+    expect(module3Reads()).toEqual([]);
+  });
+
+  it('its action opens the overdue letter in Communication; it neither drafts nor promises sign-offs', async () => {
+    wire({ module3: module3([m3Question('3.2.P.7', { letter: letterOf({ id: 'ace_late' }) })]) });
+    const ask = vi.fn();
+    const nav = vi.fn();
+    inModule(<CmOverview ask={ask} nav={nav} />);
+    const action = await screen.findByRole('button', { name: 'Open the overdue letters in Communication' });
+    expect(screen.queryByText(/route the sign-offs/)).toBeNull();
+    expect(screen.queryByText(/I'll draft the responses/)).toBeNull();
+    fireEvent.click(action);
+    expect(nav).toHaveBeenCalledWith('communication-center');
+    expect(navParams()).toMatchObject({ surfaceId: 'communication-center', params: { letterId: 'ace_late' } });
+    expect(ask).not.toHaveBeenCalled();
+  });
+
+  it('says what it did not count, each as what it counts: questions as questions, letters as letters, and the earlier file as organization-wide', async () => {
+    wire({
+      module3: module3([m3Question('3.2.P.7')], { withheld: 1, notCounted: { unclassifiedOutstanding: 2, overdueLettersWithoutQuestions: 1 } }),
+      earlier: earlier([earlierRow()], { total: 5, notClosed: 3 }),
+    });
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
+    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    await waitFor(() => expect(label.textContent).toMatch(/2 outstanding questions with no CTD section not counted/));
+    expect(label.textContent).toMatch(/1 overdue letter with no question or section not counted/);
+    expect(label.textContent).not.toMatch(/3 not counted/);
+    expect(label.textContent).toMatch(/1 letter you cannot open/);
+    const line = await screen.findByTestId('cmc-earlier-file-line');
+    expect(line.textContent).toMatch(/The earlier CMC question file \(organization-wide, read-only\) holds 3 questions not\s+closed there\./);
+    expect(line.textContent).toMatch(/nothing moves them onto a\s+letter: record each one still open on its letter in Communication/);
+    // Never that they are already on their letters, and never "Plus" under this program's figure.
+    expect(line.textContent).not.toMatch(/Each is recorded on its letter|^Plus/);
+  });
+
+  it('a failed read of the earlier file is said on the Overview, never taken for "nothing open"', async () => {
+    wire({ module3: module3([]), earlier: 'error' });
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
+    const line = await screen.findByTestId('cmc-earlier-file-line');
+    expect(line.textContent).toMatch(/The earlier CMC question file could not be read; whether it holds open questions is not known\./);
+  });
+
+  it('a zero is green only as an all-clear: never over letters withheld from this person', async () => {
+    wire({ module3: module3([], { withheld: 1 }) });
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
+    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    await waitFor(() => expect(label.textContent).toMatch(/1 letter you cannot open not counted/));
+    const tile = label.closest('.reg-kpi') as HTMLElement;
+    expect(within(tile).getByText('0')).toBeTruthy();
+    expect(tile.getAttribute('data-tone')).not.toBe('ok');
+  });
+
+  it('a zero over a measured, complete figure is green', async () => {
+    wire({ module3: module3([]) });
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
+    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const tile = label.closest('.reg-kpi') as HTMLElement;
+    await waitFor(() => expect(tile.getAttribute('data-tone')).toBe('ok'));
+  });
+});
+
+/* ══════════ Overview — the server's own counting, run here (review of 2026-10-19) ══════════
+   The payloads below are the server's moduleQuestionsView over the letters
+   described, so the client is read against the shape the route returns. */
+
+describe('CmOverview — what the server counts is said as what it is', () => {
+  it('an approved Module 3 answer on a letter overdue only on a Clinical question: no Module 3 overdue, no "no question recorded"', async () => {
+    const payload = serverModule3([
+      { eventId: 'ace_mix', questions: [{ id: 1, state: 'approved', ctdSection: '3.2.P.7' }, { id: 2, state: 'unanswered', ctdSection: '5.3.5.1' }] },
+    ]);
+    expect(payload.summary).toMatchObject({ questionsOverdue: 0, lettersOverdue: 0, lettersOverdueOnOtherQuestions: 1 });
+    wire({ module3: payload });
+    const nav = vi.fn();
+    inModule(<CmOverview ask={vi.fn()} nav={nav} />);
+    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    await waitFor(() => expect(label.textContent).toMatch(/1 letter overdue on other questions, Module 3's answered/));
+    expect(within(label.closest('.reg-kpi') as HTMLElement).getByText('0')).toBeTruthy();
+    expect(label.textContent).not.toMatch(/on 1 letter/);
+    expect(screen.queryByText(/no question (to answer )?recorded/)).toBeNull();
+    expect(screen.queryByText(/Module 3 letters? (is|are) overdue/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Open the overdue letters in Communication' })).toBeNull();
+  });
+
+  it('a Module 3 letter with nothing recorded, past its date: said as that, and the action opens that letter', async () => {
+    const payload = serverModule3([{ eventId: 'ace_bare', linkedSectionCodes: ['3.2.P.5'], questions: [] }]);
+    expect(payload.summary).toMatchObject({ lettersOverdue: 0, lettersWithoutQuestionsOverdue: 1 });
+    wire({ module3: payload });
+    const nav = vi.fn();
+    inModule(<CmOverview ask={vi.fn()} nav={nav} />);
+    expect(await screen.findByText(/1 Module 3 letter is overdue/)).toBeTruthy();
+    expect(screen.getByText(/with no question to answer recorded on it\. Record its questions on the letter, or mark it as needing no response, in Communication\./)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Open the overdue letters in Communication' }));
+    expect(nav).toHaveBeenCalledWith('communication-center');
+    expect(navParams()?.params).toEqual({ letterId: 'ace_bare' });
+  });
+
+  it('one question overdue on one letter, and another letter overdue only on a Clinical question: "on 1 letter"', async () => {
+    const payload = serverModule3([
+      { eventId: 'ace_a', questions: [{ id: 1, state: 'unanswered', ctdSection: '3.2.P.7' }] },
+      { eventId: 'ace_b', questions: [{ id: 2, state: 'approved', ctdSection: '3.2.S.4.1' }, { id: 3, state: 'unanswered', discipline: 'Clinical' }] },
+    ]);
+    wire({ module3: payload });
+    inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
+    expect(await screen.findByText(/1 Module 3 question is overdue/)).toBeTruthy();
+    expect(screen.getByText(/on 1 letter \(§3\.2\.P\.7\)/)).toBeTruthy();
   });
 });
 
@@ -163,531 +256,209 @@ describe('CmOverview — the IR-overdue KPI deep-links to the correspondence', (
 
 /** Drive the simulator: describe the change, keep the preselected markets, run. */
 function simulate(desc: string) {
-  fireEvent.change(
-    screen.getByPlaceholderText(/switch the drug-substance supplier/),
-    { target: { value: desc } },
-  );
-  fireEvent.click(screen.getByRole('button', { name: /Simulate change/ }));
+  fireEvent.change(screen.getByPlaceholderText(/switch the drug-substance supplier/), { target: { value: desc } });
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no'); choose('Site change', 'different_country');
+  fireEvent.click(screen.getByRole('button', { name: /Assess proposed variation/ }));
 }
 
-describe('CmChange — a simulated change collides with open agency questions', () => {
-  it('flags a change whose sections an open question cites, naming the section', async () => {
-    // The default change type is api_supplier_change → §3.2.S.2, and the open
-    // question cites §3.2.S.2.2 — a prefix match, exactly the collision a
-    // regulatory lead must see before implementing.
-    wire(board(0, [question('3.2.S.2.2')]));
-    render(<CmChange ask={vi.fn()} />);
+describe('CmChange — a simulated change collides with an outstanding agency question', () => {
+  it('names the section, and opens the question on its letter', async () => {
+    wire({ module3: module3([m3Question('3.2.S.2.2', { id: 55, letter: letterOf({ id: 'ace_s2' }) })]) });
+    const nav = vi.fn();
+    inModule(<CmChange ask={vi.fn()} nav={nav} />);
     simulate('Switch the drug-substance supplier from A to B; comparable process, new site');
-
     const notice = await screen.findByTestId('cmc-corr-notice');
     expect(within(notice).getByText(/3\.2\.S\.2\.2/)).toBeTruthy();
-    expect(within(notice).getByText(/the sections this change refiles/)).toBeTruthy();
-    // The signpost's jump goes to the record of truth.
-    const setTab = vi.fn();
-    (window as unknown as CmWindow).__cmSetTab = setTab;
-    fireEvent.click(within(notice).getByRole('button', { name: /Open correspondence/ }));
-    expect(setTab).toHaveBeenCalledWith('pathway');
+    expect(within(notice).getByText(/the sections this change affects/)).toBeTruthy();
+    fireEvent.click(within(notice).getByRole('button', { name: /Open its letter in Communication/ }));
+    expect(nav).toHaveBeenCalledWith('communication-center');
+    expect(navParams()?.params).toEqual({ letterId: 'ace_s2', questionId: '55' });
   });
 
-  it('stays silent when the open questions cite unrelated sections', async () => {
-    // Same simulated change, but the only open question is about container
-    // closure (§3.2.P.7) — no section this change refiles.
-    wire(board(0, [question('3.2.P.7')]));
-    render(<CmChange ask={vi.fn()} />);
-    simulate('Switch the drug-substance supplier from A to B');
+  it('counts by the server\'s "outstanding", and says "at least" when the server listed a page', async () => {
+    wire({
+      module3: module3([
+        m3Question('3.2.S.2.2', { id: 56, letter: letterOf({ id: 'ace_s2' }) }),
+        // The server says this one is not outstanding (its letter is closed): the signpost does not restate the rule.
+        m3Question('3.2.S.2.3', { id: 57, state: 'drafted', outstanding: false, overdue: false, letter: letterOf({ id: 'ace_s3', overdue: false }) }),
+      ], { truncated: true }),
+    });
+    inModule(<CmChange ask={vi.fn()} nav={vi.fn()} />);
+    simulate('Switch the drug-substance supplier from A to B; comparable process, new site');
+    const notice = await screen.findByTestId('cmc-corr-notice');
+    expect(within(notice).getByText(/^At least 1 outstanding agency question references the sections this change affects/)).toBeTruthy();
+  });
 
-    // The assessment itself rendered…
-    await screen.findByText('Regulatory Change Impact Assessment', { selector: '.cm-doc-kind' });
-    // …and the signpost DID read the board (so the silence below is a filtered
-    // result, not an unresolved fetch)…
-    await waitFor(() => expect(boardReads().length).toBeGreaterThan(0));
+  it('matches whole segments: a question at 3.2.S.20 is not about 3.2.S.2', async () => {
+    wire({ module3: module3([m3Question('3.2.S.20')]) });
+    inModule(<CmChange ask={vi.fn()} nav={vi.fn()} />);
+    simulate('Switch the drug-substance supplier from A to B');
+    await screen.findByText('Regulatory Change Impact Assessment', { selector: 'h3' });
+    await waitFor(() => expect(module3Reads().length).toBe(1));
     await act(async () => {});
-    // …and stayed silent: presence is asserted, absence never is.
     expect(screen.queryByTestId('cmc-corr-notice')).toBeNull();
   });
 });
 
-/* ── The correspondence WRITE half, at render level ──
-   The board reads reg_questions; until the agency-questions routes nothing in
-   the product could write it. Pinned: Log question POSTs the form to
-   /api/cmc/agency-questions and the card reloads from the server (never a
-   locally invented row); Close confirms, PATCHes CLOSED, and reloads. */
-import { CmPathway } from '../surfaces/CmcModule';
+/* ══════════════════ Program records — the Module 3 index ══════════════════ */
 
-const CORR_BOARD = {
-  success: true,
-  data: {
-    portfolio: [],
-    sections: null,
-    kpis: { submissions: 0, rpiAverage: null, irOverdue: 1, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
-    correspondence: [
-      { id: 9, question: 'Clarify the shelf-life claim.', sectionRef: '3.2.P.8.1', priority: 'medium', severity: 'MAJOR', status: 'OPEN', region: 'FDA', dueDate: '2026-09-03', overdue: false, assignedTo: null },
-    ],
-    meta: { projectId: null, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: 'now' },
-  },
-};
-
-/** The board serving that one question with the given fields changed. */
-const corrBoard = (row: Record<string, unknown>) =>
-  res({ ...CORR_BOARD, data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], ...row }] } });
-
-/** Every CmPathway case starts from clean channels — no project open, no
-    editor target. The drafting cases then open their project explicitly. */
-function resetPathwayChannels() {
-  apiRequest.mockReset();
-  setProject(undefined);
-  // The editor-target channel is one-shot; a target left by one test must
-  // not satisfy an assertion in the next.
-  delete window.C2C_EDITOR_TARGET;
-}
-
-describe('CmPathway — logging and closing agency questions', () => {
-  beforeEach(resetPathwayChannels);
-
-  it('Log question POSTs the form and reloads the card from the server', async () => {
-    const posts: Array<{ url: string; body: unknown }> = [];
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'POST' && url === '/api/cmc/agency-questions') {
-        posts.push({ url, body });
-        return res({ success: true, data: { id: 10, sectionRef: '3.2.S.2' } }, 201);
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
-    });
-
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    fireEvent.click(screen.getByRole('button', { name: /Log question/ }));
-    fireEvent.change(await screen.findByLabelText(/Question, as received/), {
-      target: { value: 'Justify the scale-up comparability approach.' },
-    });
-    fireEvent.change(screen.getByLabelText(/Module 3 section/), { target: { value: '3.2.S.2' } });
-    // The dialog's submit shares its label with the card-header opener — the
-    // dialog renders after it, so the LAST match is the submit.
-    const submits = screen.getAllByRole('button', { name: /^Log question$/ });
-    fireEvent.click(submits[submits.length - 1]);
-
-    await waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0].body).toMatchObject({
-      questionText: 'Justify the scale-up comparability approach.',
-      sectionReference: '3.2.S.2',
-      priority: 'medium',
-    });
-    // Confirmed + reloaded from the server, not appended locally.
-    await screen.findByText(/Agency question logged · §3\.2\.S\.2/);
-    expect(boardReads().length).toBeGreaterThanOrEqual(2);
+describe('CmPathway — the program\'s Module 3 questions, read from the letters', () => {
+  it('with no program open it asks for one and reads nothing', async () => {
+    setProject(undefined);
+    wire({});
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    expect(await screen.findByText('Open a program to see its agency questions')).toBeTruthy();
+    expect(module3Reads()).toEqual([]);
   });
 
-  it('Close confirms first, PATCHes CLOSED, and reloads', async () => {
-    const patches: Array<{ url: string; body: unknown }> = [];
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        patches.push({ url, body });
-        return res({ success: true, data: { id: 9, status: 'CLOSED' } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
-    });
+  it('lists each question with the server\'s state and one door: open it on its letter', async () => {
+    const late = m3Question('3.2.S.4.1', { id: 71, questionRef: 'Q2', owner: { userId: 41, name: 'Ines Okafor' }, letter: letterOf({ id: 'ace_late' }) });
+    const done = m3Question('3.2.P.7', { id: 72, questionRef: 'Q1', state: 'approved', outstanding: false, overdue: false, letter: letterOf({ id: 'ace_late' }) });
+    const fromLetter = m3Question('3.2.P.5', { id: 73, questionRef: 'Q3', sectionSource: 'letter', ctdSection: null, overdue: false, letter: letterOf({ id: 'ace_now', overdue: false, dueDate: null }) });
+    wire({ module3: module3([late, done, fromLetter]) });
+    const nav = vi.fn();
+    inModule(<CmPathway ask={() => {}} nav={nav} />);
 
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
+    const table = await screen.findByTestId('cmc-module3-questions');
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows).toHaveLength(3);
+    expect(within(rows[0]).getByText('No response')).toBeTruthy();
+    // The same chip the letter draws for the same state (one map, agencyQuestionState.ts).
+    expect(within(rows[0]).getByText('No response').className).toBe('rd-chip tone-idle');
+    expect(within(rows[0]).getByText(/overdue/)).toBeTruthy();
+    expect(within(rows[1]).getByText('Approved')).toBeTruthy();
+    expect(within(rows[1]).queryByText(/overdue/)).toBeNull();
+    expect(within(rows[2]).getByText(/3\.2\.P\.5 \(the letter's\)/)).toBeTruthy();
+    // The owner recorded on the letter, and none where none is.
+    expect(within(rows[0]).getByText('Ines Okafor')).toBeTruthy();
+    expect(within(rows[1]).getByText('none set')).toBeTruthy();
+    expect(screen.getByText(/2 outstanding · 1 overdue on 1 letter/)).toBeTruthy();
+    // The action column is named for assistive technology.
+    expect(within(table).getAllByRole('columnheader').every((th) => (th.textContent ?? '').trim().length > 0)).toBe(true);
 
-    fireEvent.click(screen.getByTitle(/Close this question/));
-    // Nothing PATCHed yet — the confirm is on screen.
-    expect(patches).toHaveLength(0);
-    await screen.findByText('Close this question?');
-    fireEvent.click(screen.getByRole('button', { name: /Close$/ }));
-
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toMatchObject({ status: 'CLOSED' });
-    await screen.findByText(/Question closed · §3\.2\.P\.8\.1/);
+    fireEvent.click(within(rows[0]).getByRole('button', { name: /Open on its letter/ }));
+    expect(nav).toHaveBeenCalledWith('communication-center');
+    expect(navParams()?.params).toEqual({ letterId: 'ace_late', questionId: '71' });
   });
 
-  it('Close carries the guard: the write names the status this screen read', async () => {
-    const patches: Array<{ body: unknown }> = [];
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        patches.push({ body });
-        return res({ success: true, data: { id: 9, status: 'CLOSED' } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-    fireEvent.click(screen.getByTitle(/Close this question/));
-    fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toMatchObject({ status: 'CLOSED', expectedStatus: 'OPEN' });
-  });
-});
-
-describe('CmPathway — lifecycle transitions are the ones the row allows, guarded', () => {
-  beforeEach(resetPathwayChannels);
-
-  it('a DRAFTED question can be SENT FOR REVIEW — the transition the row allows, guarded', async () => {
-    const patches: Array<{ body: unknown }> = [];
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        patches.push({ body });
-        return res({ success: true, data: { id: 9, status: 'IN_REVIEW' } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status: 'DRAFTED' });
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-    // The opposite leg is not offered on a DRAFTED row.
-    expect(screen.queryByRole('button', { name: /Return to drafting/ })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toMatchObject({ status: 'IN_REVIEW', expectedStatus: 'DRAFTED' });
-    await screen.findByText(/Sent for review/);
-  });
-
-  it('an IN_REVIEW question can be RETURNED TO DRAFTING — and only that', async () => {
-    const patches: Array<{ body: unknown }> = [];
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        patches.push({ body });
-        return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status: 'IN_REVIEW' });
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-    expect(screen.queryByRole('button', { name: /Send for review/ })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Return to drafting/ }));
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', expectedStatus: 'IN_REVIEW' });
-  });
-
-  it('a stale send-for-review states the 409 and refetches — never a silent overwrite', async () => {
-    let boardCalls = 0;
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        const err = new Error('The question is CLOSED now — it changed since this screen loaded. Nothing was updated.');
-        throw err;
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') {
-        boardCalls += 1;
-        return corrBoard({ status: 'DRAFTED' });
-      }
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
-    await screen.findByText(/Couldn’t update the question — The question is CLOSED now/);
-    // The stale row is re-read: the honest next state is the server's.
-    await waitFor(() => expect(boardCalls).toBeGreaterThanOrEqual(2));
-  });
-});
-
-describe('CmPathway — the response owner is editable in place', () => {
-  beforeEach(resetPathwayChannels);
-
-  it('the Assigned cell is editable in place: rename PATCHes the owner, blank clears it', async () => {
-    const patches: Array<{ body: unknown }> = [];
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        patches.push({ body });
-        return res({ success: true, data: { id: 9, assignedTo: 'r.lead@example.test' } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    // Unassigned renders as an 'Assign' door, not a dead dash.
-    fireEvent.click(screen.getByRole('button', { name: 'Assign' }));
-    const input = screen.getByLabelText(/Who owns the response/);
-    fireEvent.change(input, { target: { value: 'r.lead@example.test' } });
-    fireEvent.keyDown(input, { key: 'Enter' });
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toEqual({ assignedTo: 'r.lead@example.test' });
-    await screen.findByText(/Assigned to r\.lead@example\.test/);
-  });
-
-  it('clearing the assignment sends NULL — the server stores the truth, not an empty string', async () => {
-    const patches: Array<{ body: unknown }> = [];
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        patches.push({ body });
-        return res({ success: true, data: { id: 9, assignedTo: null } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ assignedTo: 'old.owner@x' });
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    fireEvent.click(screen.getByRole('button', { name: 'old.owner@x' }));
-    const input = screen.getByLabelText(/Who owns the response/);
-    fireEvent.change(input, { target: { value: '' } });
-    fireEvent.keyDown(input, { key: 'Enter' });
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toEqual({ assignedTo: null });
-  });
-});
-
-describe('CmPathway — the closed file, and refused writes', () => {
-  beforeEach(resetPathwayChannels);
-
-  it('the closed file is readable, and Reopen returns a question to the open list — guarded', async () => {
-    const patches: Array<{ body: unknown }> = [];
-    let closedReads = 0;
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === '/api/cmc/agency-questions?status=CLOSED') {
-        closedReads += 1;
-        return res({
-          success: true,
-          data: [
-            {
-              id: 31, question: 'Justify the impurity limit for compound Z.', sectionRef: '3.2.S.4.5',
-              priority: 'medium', severity: 'MAJOR', status: 'CLOSED', region: 'FDA', dueDate: null,
-              overdue: false, assignedTo: 'r.lead@x', responseDocId: 'DOC-ANS', updatedAt: '2026-08-20T09:00:00Z',
-            },
-          ],
-        });
-      }
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/31') {
-        patches.push({ body });
-        return res({ success: true, data: { id: 31, status: 'DRAFTED' } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} nav={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    fireEvent.click(screen.getByRole('button', { name: /Show the closed file/ }));
-    await screen.findByText('Justify the impurity limit for compound Z.');
-    // The answered response is a door from the history too.
-    expect(screen.getByTitle('Open the response that answered this question')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Reopen$/ }));
-    await waitFor(() => expect(patches).toHaveLength(1));
-    // Reopens to the TRUTHFUL state — DRAFTED, because a response draft is
-    // linked — and only from CLOSED (the guard).
-    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', expectedStatus: 'CLOSED' });
-    // Both halves refetch: the open board (corrEpoch) and the history.
-    await waitFor(() => expect(closedReads).toBeGreaterThanOrEqual(2));
-  });
-
-  it('a failed closed-file read is an ERROR on screen, never an empty history', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/cmc/agency-questions?status=CLOSED') {
-        return res({ success: false, error: 'The correspondence file could not be read.' }, 500);
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
-    });
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-    fireEvent.click(screen.getByRole('button', { name: /Show the closed file/ }));
-    await screen.findByText(/Couldn’t read the closed file/);
-    expect(screen.queryByText(/No closed questions yet/)).toBeNull();
-  });
-
-  it('a refused log says so and records nothing locally', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'POST' && url === '/api/cmc/agency-questions') {
-        return res({ success: false, error: 'The agency question could not be recorded.' }, 500);
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
-    });
-
-    render(<CmPathway ask={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-    fireEvent.click(screen.getByRole('button', { name: /Log question/ }));
-    fireEvent.change(await screen.findByLabelText(/Question, as received/), {
-      target: { value: 'Doomed.' },
-    });
-    const submits = screen.getAllByRole('button', { name: /^Log question$/ });
-    fireEvent.click(submits[submits.length - 1]);
-
-    await screen.findByText(/Couldn’t log the question/);
-    // Still exactly the one server row on screen.
-    expect(screen.getAllByText('Clarify the shelf-life claim.')).toHaveLength(1);
-  });
-});
-
-/* ── Drafting a response advances the question's lifecycle ──
-   The board renders OPEN/DRAFTED/IN_REVIEW; drafting used to leave the
-   question OPEN forever. Pinned: after the authoring write succeeds, an OPEN
-   question is PATCHed to DRAFTED before navigation; a non-OPEN question is
-   never downgraded by re-drafting. */
-
-/** The server answers every leg of the draft handoff; the board serves the
-    question at the given status and every PATCH to it is recorded. */
-function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
-  apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-    if (method === 'POST' && url === '/api/authoring/docs') {
-      return res({ success: true, document: { id: 'DOC9', title: 'Response…', client_program_id: PROGRAM } }, 201);
+  it('offers no working act of its own', async () => {
+    wire({ module3: module3([m3Question('3.2.P.7')]), earlier: earlier([earlierRow()], { notClosed: 1 }) });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    await screen.findByTestId('cmc-module3-questions');
+    await screen.findByText(/Earlier CMC question file/);
+    for (const name of [/Log question/, /^Close$/, /Reopen/, /Send for review/, /Return to drafting/, /Draft response/, /Re-draft/, /Create task/, /^Assign$/, /Record question/, /Approve/]) {
+      expect(screen.queryByRole('button', { name }), String(name)).toBeNull();
     }
-    if (method === 'POST' && url === '/api/authoring/sections') {
-      return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response', doc_id: 'DOC9', title: 'Response…' } }, 201);
-    }
-    if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-      patches.push({ url, body });
-      return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
-    }
-    if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status });
-    return res({ success: true, data: [] });
-  });
-}
-
-describe('CmPathway — draft response advances the question to DRAFTED', () => {
-  beforeEach(() => {
-    resetPathwayChannels();
-    // The draft is created in the open project (PF-07).
-    setProject({ id: PROGRAM });
   });
 
-  it('an OPEN question is marked DRAFTED once the draft persisted, then the editor opens', async () => {
-    const patches: Array<{ url: string; body: unknown }> = [];
-    const navd: string[] = [];
-    wireDraft('OPEN', patches);
-    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
-    await waitFor(() => expect(patches).toHaveLength(1));
-    // The draft was created IN the open project — the one the editor lists.
-    expect(docCreateBody()).toMatchObject({ client_program_id: PROGRAM });
-    // The flip carries the LINK: the file records which document holds the
-    // response, so "Open draft" works after any reload.
-    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', responseDocId: 'DOC9' });
-    await waitFor(() => expect(navd).toContain('document-authoring'));
-    // The editor opens ON the new draft — the deep-link channel names it.
-    expect(window.C2C_EDITOR_TARGET).toMatchObject({ docId: 'DOC9' });
-    // Ordering: the authoring write came before the status flip — a DRAFTED
-    // status with no draft behind it would be the dishonest order.
-    const urls = apiRequest.mock.calls.map((c) => String(c[1]));
-    expect(urls.indexOf('/api/authoring/docs')).toBeLessThan(urls.indexOf('/api/cmc/agency-questions/9'));
+  it('a failed read is an error, never the empty list', async () => {
+    wire({ module3: 'error' });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    expect(await screen.findByText("Couldn't read this program's agency questions")).toBeTruthy();
+    expect(screen.queryByText(/No Module 3 questions are recorded/)).toBeNull();
   });
 
-  it('a question already IN_REVIEW keeps its status but the LINK follows the new draft', async () => {
-    const patches: Array<{ url: string; body: unknown }> = [];
-    const navd: string[] = [];
-    wireDraft('IN_REVIEW', patches);
-    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
-    await waitFor(() => expect(patches).toHaveLength(1));
-    // The link follows the newest draft; NO status field is sent, so the
-    // reviewer's IN_REVIEW cannot be downgraded, and the guard means a
-    // concurrently closed question answers 409 instead of being re-linked.
-    expect(patches[0].body).toMatchObject({ responseDocId: 'DOC9', expectedStatus: 'IN_REVIEW' });
-    expect((patches[0].body as Record<string, unknown>).status).toBeUndefined();
-    expect(docCreateBody()).toMatchObject({ client_program_id: PROGRAM });
-    await waitFor(() => expect(navd).toContain('document-authoring'));
-  });
-
-  it('a failed link write is SAID, and the user stays on the card — never navigated away from the statement', async () => {
-    const navd: string[] = [];
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'POST' && url === '/api/authoring/docs') {
-        return res({ success: true, document: { id: 'DOC9', title: 'Response…', client_program_id: PROGRAM } }, 201);
-      }
-      if (method === 'POST' && url === '/api/authoring/sections') {
-        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response', doc_id: 'DOC9', title: 'Response…' } }, 201);
-      }
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        // A concurrent close: the expectedStatus guard answers 409.
-        return res({ success: false, error: 'The question is CLOSED now — it changed since this screen loaded. Nothing was updated.' }, 409);
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
-      return res({ success: true, data: [] });
+  it('says what it did not count, and names a Module 3 letter with no question recorded', async () => {
+    wire({
+      module3: module3([], {
+        withheld: 2,
+        notCounted: { unclassifiedOutstanding: 1, overdueLettersWithoutQuestions: 1 },
+        lettersWithoutQuestions: [{ ...letterOf({ id: 'ace_bare', communicationType: 'IR 9' }), sections: ['3.2.P.5'] }],
+      }),
     });
-    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
-    // The split state is stated with the server's own sentence…
-    await screen.findByText(/The draft was created, but the correspondence file was not updated — The question is CLOSED now/);
-    // …and the user is NOT navigated into the editor believing the file followed.
-    expect(navd).toHaveLength(0);
-    // The draft that WAS created is in the open project.
-    expect(docCreateBody()).toMatchObject({ client_program_id: PROGRAM });
+    const nav = vi.fn();
+    inModule(<CmPathway ask={() => {}} nav={nav} />);
+    expect(await screen.findByText(/2 letters on this program are restricted from you/)).toBeTruthy();
+    expect(screen.getByText(/1 outstanding question on this program carries no CTD section/)).toBeTruthy();
+    expect(screen.getByText(/Record each question's CTD section on its letter in Communication\./)).toBeTruthy();
+    expect(screen.getByText(/1 overdue letter has no question recorded and no section linked/)).toBeTruthy();
+    const bare = screen.getByText(/IR 9/).closest('li') as HTMLElement;
+    fireEvent.click(within(bare).getByRole('button', { name: /Open on its letter/ }));
+    expect(navParams()?.params).toEqual({ letterId: 'ace_bare' });
   });
 
-  it('a linked question renders the Open-draft door, which targets the EXACT document', async () => {
-    const navd: string[] = [];
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status: 'DRAFTED', responseDocId: 'DOC42' });
-      return res({ success: true, data: [] });
+  it('an empty program says where questions are recorded', async () => {
+    wire({ module3: module3([]) });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    expect(await screen.findByText("No Module 3 questions are recorded on this program's letters")).toBeTruthy();
+  });
+
+  it('an empty list over letters withheld from this person speaks only for the letters read', async () => {
+    wire({ module3: module3([], { withheld: 1 }) });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    expect(await screen.findByText(/1 letter on this program is restricted from you/)).toBeTruthy();
+    expect(screen.getByText('No Module 3 questions are recorded on the letters read here')).toBeTruthy();
+    expect(screen.queryByText("No Module 3 questions are recorded on this program's letters")).toBeNull();
+  });
+
+  it('as the server counts them: a letter overdue on its other questions is said, and its approved answer is not overdue', async () => {
+    wire({
+      module3: serverModule3([
+        { eventId: 'ace_mix', questions: [{ id: 1, state: 'approved', ctdSection: '3.2.P.7' }, { id: 2, state: 'unanswered', ctdSection: '5.3.5.1' }] },
+      ]),
     });
-    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-
-    fireEvent.click(screen.getByTitle('Open the drafted response in the document editor'));
-    expect(navd).toContain('document-authoring');
-    expect(window.C2C_EDITOR_TARGET).toMatchObject({ docId: 'DOC42' });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    const table = await screen.findByTestId('cmc-module3-questions');
+    const [row] = within(table).getAllByRole('row').slice(1);
+    expect(within(row).getByText('Approved')).toBeTruthy();
+    // The approved answer's row says nothing of overdue; the letter's other questions are said once, below.
+    expect(within(row).queryByText(/overdue/)).toBeNull();
+    expect(screen.getByText(/0 outstanding · 0 overdue on 0 letters/)).toBeTruthy();
+    expect(screen.getByText(/1 letter whose Module 3 answers stand is overdue on its other questions/)).toBeTruthy();
   });
 
-  it('an unlinked question offers no Open-draft door — a door must open something', async () => {
-    wireDraft('OPEN', []);
-    render(<CmPathway ask={() => {}} nav={() => {}} />);
-    await screen.findByText('Clarify the shelf-life claim.');
-    expect(
-      screen.queryByTitle('Open the drafted response in the document editor'),
-    ).toBeNull();
+  it('as the server counts them: a Module 3 letter whose only question is withdrawn is named once, and not "not counted"', async () => {
+    wire({ module3: serverModule3([{ eventId: 'ace_wd', communicationType: 'IR 12', questions: [{ id: 1, state: 'withdrawn', ctdSection: '3.2.P.7' }] }]) });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    const named = (await screen.findByText(/Module 3 letters with no question to answer recorded/)).parentElement as HTMLElement;
+    expect(within(named).getByText(/IR 12/)).toBeTruthy();
+    expect(within(named).getByText(/§3\.2\.P\.7/)).toBeTruthy();
+    expect(screen.queryByText(/no question recorded and no section linked/)).toBeNull();
   });
 });
 
-/* ── With no project open, nothing persists — so nothing advances ──
-   An OPEN question is marked DRAFTED only once its draft persisted (above).
-   Before PF-07 the draft was created org-wide when no project was open, where
-   no project's editor ever listed it; now the handoff refuses before any
-   request. So the question must stay OPEN, no link may be written to the file,
-   and the user must stay on the card where the refusal is stated. */
-describe('CmPathway — with no project open, a draft response is refused (PF-07)', () => {
-  beforeEach(resetPathwayChannels);
+/* ══════════════════ Program records — the earlier CMC file ══════════════════ */
 
-  it.each([
-    ['no project is open', undefined],
-    // A numeric workspace id is not a project: the draft would land where no
-    // project's list shows it.
-    ['the open id is not a project', { id: 7 }],
-  ])('when %s: nothing is written, the question stays OPEN, and the user stays put', async (_label, project) => {
-    setProject(project);
-    const patches: Array<{ url: string; body: unknown }> = [];
-    const navd: string[] = [];
-    wireDraft('OPEN', patches);
-    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
-    await screen.findByText('Clarify the shelf-life claim.');
+describe('CmPathway — the earlier CMC question file, read-only history', () => {
+  it('renders nothing when the file holds nothing', async () => {
+    wire({ module3: module3([]), earlier: earlier([]) });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    await screen.findByText("No Module 3 questions are recorded on this program's letters");
+    await waitFor(() => expect(calls().some(([m, u]) => m === 'GET' && u === EARLIER_PATH)).toBe(true));
+    await act(async () => {});
+    expect(screen.queryByText(/Earlier CMC question file/)).toBeNull();
+  });
 
-    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
-    // The refusal is stated, in the handoff's own words, and promises the work.
-    await screen.findByText(/open a project first/i);
-    expect(screen.getByText(/Nothing was saved; the draft response is still here/)).toBeTruthy();
+  it('says what each row holds, and nothing it does not', async () => {
+    wire({
+      module3: module3([]),
+      earlier: earlier([
+        earlierRow({ id: 1, status: 'CLOSED', responseDocId: 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e' }),
+        earlierRow({ id: 2, status: 'OPEN', question: 'Provide the Q1E analysis.', dueDate: '2026-01-01' }),
+      ], { total: 2, notClosed: 1 }),
+    });
+    const nav = vi.fn();
+    inModule(<CmPathway ask={() => {}} nav={nav} />);
+    const card = (await screen.findByText(/Earlier CMC question file/)).closest('.pj-card') as HTMLElement;
+    expect(within(card).getByText(/read-only history, organization-wide/)).toBeTruthy();
+    expect(within(card).getByText(/recorded in CMC, across the organization, before agency questions moved onto the letter \(2026-10-19\)\.\s+This file is read-only\. Nothing moves these onto a letter: record a question still open here on its letter in\s+Communication, by hand\./)).toBeTruthy();
+    expect(within(card).queryByText(/is recorded on its letter in Communication/)).toBeNull();
+    expect(within(card).getByText(/1 not closed in the earlier file/)).toBeTruthy();
+    expect(within(card).getAllByText(/Recorded 2026-08-24; status CLOSED, last changed 2026-09-02\./).length).toBe(1);
+    expect(within(card).getByText(/Closed by a status change, not a signed approval\./)).toBeTruthy();
+    expect(within(card).getByText(/Record it on its letter in Communication\. It will still read OPEN here: nothing writes this file any more\./)).toBeTruthy();
+    expect(within(card).queryByText(/overdue/i)).toBeNull();
+    expect(within(card).queryByText(/awaiting transfer/i)).toBeNull();
+    fireEvent.click(within(card).getByRole('button', { name: /Linked draft document \(not an approved response\)/ }));
+    expect(nav).toHaveBeenCalledWith('document-authoring');
+    expect(consumeEditorTarget()).toMatchObject({ docId: 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e' });
+  });
 
-    // Nothing was created — no document, no section…
-    const urls = calls().map((c) => String(c[1]));
-    expect(docCreateBody()).toBeUndefined();
-    expect(urls).not.toContain('/api/authoring/sections');
-    // …so no link and no status is written to the correspondence file…
-    expect(patches).toHaveLength(0);
-    expect(urls.some((u) => u.startsWith('/api/cmc/agency-questions'))).toBe(false);
-    // …the question has NOT advanced: still OPEN on its row, never DRAFTED…
-    const row = screen.getByText('Clarify the shelf-life claim.').closest('tr') as HTMLElement;
-    expect(within(row).getByText('OPEN')).toBeTruthy();
-    expect(within(row).queryByText('DRAFTED')).toBeNull();
-    expect(within(row).queryByTitle('Open the drafted response in the document editor')).toBeNull();
-    expect(screen.queryByText(/The draft was created/)).toBeNull();
-    // …and the user is not sent into an editor that has nothing in it.
-    expect(navd).toHaveLength(0);
-    expect(window.C2C_EDITOR_TARGET).toBeUndefined();
-    // The control is live again and still offers the first draft.
-    const again = screen.getByTitle(/Create a governed response draft/) as HTMLButtonElement;
-    expect(again.disabled).toBe(false);
-    expect(again.textContent).toMatch(/Draft response/);
+  it('a failed read of the earlier file is said, not hidden', async () => {
+    wire({ module3: module3([]), earlier: 'error' });
+    inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
+    expect(await screen.findByText(/The earlier CMC question file could not be read/)).toBeTruthy();
   });
 });

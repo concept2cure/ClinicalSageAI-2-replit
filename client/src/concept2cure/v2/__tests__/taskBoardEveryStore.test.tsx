@@ -10,9 +10,8 @@
  * route). This pins what a person sees of it:
  *   - another store's card is labelled with its store and offers no move;
  *   - it counts in the column it belongs to, Blocked included;
- *   - opening it says where it lives and opens that screen on its project's
- *     program UUID (never the numeric anchor id), never the board's editing
- *     controls; a project that anchors no program is not opened at all;
+ *   - opening it says where it lives and opens that screen on its project,
+ *     never the board's editing controls;
  *   - an unread store is named, so a short board does not read as complete;
  *   - the board's own cards keep their controls.
  */
@@ -20,6 +19,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -27,7 +27,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 'u-1', permissions: ['governed:write'] } }),
+  useAuth: () => ({ user: { id: '7', organizationId: 7, permissions: ['governed:write'] } }),
 }));
 const shell = vi.hoisted(() => ({ publishShellProject: vi.fn() }));
 vi.mock('../shellProject', async (importOriginal) => ({
@@ -47,18 +47,13 @@ const OWN = {
   ...base, taskId: 'TASK-OWN', title: 'Confirm the pre-IND meeting date', moduleType: 'ind', priority: 'high',
   status: 'pending', source: 'unified', blocked: false,
 };
-const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
 const SCHEDULE = {
   ...base, taskId: 'schedule:41', title: 'Statistical analysis plan', status: 'blocked', source: 'schedule',
-  blocked: true, readOnly: true, home: { surface: 'project-home', projectId: 12, programId: PROGRAM }, detail: 'Waiting on the SAP template',
+  blocked: true, readOnly: true, home: { surface: 'project-home', projectId: 12, programId: '11111111-1111-4111-8111-111111111111', programTitle: 'BX-1 programme', nativeId: '41', source: 'schedule' }, detail: 'Waiting on the SAP template',
 };
 const FILING = {
   ...base, taskId: 'filing:9f1c', title: '510(k) additional information', status: 'blocked', source: 'filing',
-  blocked: true, readOnly: true, home: { surface: 'submission-center', projectId: 12, programId: PROGRAM }, detail: '510k',
-};
-const UNLINKED = {
-  ...base, taskId: 'review:77', title: 'Legacy reviewer comments', status: 'pending', source: 'review',
-  blocked: false, readOnly: true, home: { surface: 'submission-center', projectId: 99, programId: null }, detail: null,
+  blocked: true, readOnly: true, home: { surface: 'submission-center', projectId: 12, programId: '11111111-1111-4111-8111-111111111111', programTitle: 'BX-1 programme', nativeId: '9f1c', source: 'filing' }, detail: '510k',
 };
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
 
@@ -66,6 +61,7 @@ let boardMeta: Record<string, unknown> = { partial: false, unreadSources: [] };
 let onNav: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 7 }))}.fixture`);
   boardMeta = { partial: false, unreadSources: [] };
   onNav = vi.fn();
   shell.publishShellProject.mockReset();
@@ -73,12 +69,12 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, rawPath: unknown) => {
     const path = String(rawPath ?? '');
     if (method !== 'GET') return ok({ success: true });
-    if (path === '/api/task-management/board') return ok({ data: [OWN, SCHEDULE, FILING, UNLINKED], meta: boardMeta });
+    if (path === '/api/task-management/board') return ok({ data: [OWN, SCHEDULE, FILING], meta: boardMeta });
     if (path === '/api/projects') return ok({ data: [{ id: 12, name: 'BX-1 programme' }] });
     return ok({ data: [] });
   });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); clearAuthToken(); });
 
 const mount = () =>
   render(
@@ -115,31 +111,19 @@ describe("TaskBoard — every store's work", () => {
     expect(within(detail).queryByRole('button', { name: /Archive/ })).toBeNull();
     expect(within(detail).queryByRole('button', { name: /Advance/ })).toBeNull();
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in Project home' }));
-    // The program, not the numeric anchor: a number handed to Submission
-    // Center reached eCTD compile as :projectIdent (step 7).
-    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: PROGRAM, title: 'BX-1 programme' }));
-    expect(shell.publishShellProject.mock.calls.some(([p]) => typeof p.id === 'number')).toBe(false);
+    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: SCHEDULE.home.programId, title: 'BX-1 programme' }));
     expect(onNav).toHaveBeenCalledWith('project-home');
     expect(apiRequest.mock.calls.filter(([m]) => m !== 'GET')).toHaveLength(0);
   });
 
-  it('opens a filing in the Submission Center', async () => {
+  it('requires an authorized exact native filing read before opening Submission Center', async () => {
     mount();
     fireEvent.click(await card(FILING.title));
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in Submission Center' }));
-    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: PROGRAM }));
-    expect(onNav).toHaveBeenCalledWith('submission-center');
-  });
-
-  it('does not open a project that anchors no program, and says why', async () => {
-    mount();
-    fireEvent.click(await card(UNLINKED.title));
-    const detail = await screen.findByRole('dialog', { name: 'Task detail' });
-    expect(within(detail).queryByRole('button', { name: /Open in/ })).toBeNull();
-    expect(within(detail).getByTestId('tb-home-unlinked').textContent).toMatch(/not linked to a program/);
-    expect(shell.publishShellProject).not.toHaveBeenCalled();
+    expect((await within(detail).findByRole('alert')).textContent).toMatch(/exact tracked filing could not be verified/i);
     expect(onNav).not.toHaveBeenCalled();
+    expect(shell.publishShellProject).not.toHaveBeenCalled();
   });
 
   it('names a store it could not read, and says nothing when every store was read', async () => {

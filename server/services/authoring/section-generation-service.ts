@@ -18,7 +18,7 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, coauthorDocuments } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 import { plainTextToHtml } from '@shared/authoring/plain-text-html';
@@ -46,6 +46,7 @@ export interface GenerateSectionResult {
   body: string;
   citations: Array<{ claim: string; evidenceId: string }>;
   ungrounded: string[];
+  auditTrail: AuditRowOutcome;
 }
 
 /** Recorded at the gateway, on the stored draft and in the audit row. */
@@ -126,7 +127,8 @@ export async function generateSection(
     });
     content = response.content;
   } catch (err) {
-    throw new AuthoringError('PROVIDER_UNAVAILABLE', `The AI request could not be completed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn('Section draft provider request unavailable', { code: (err as { code?: string })?.code ?? null });
+    throw new AuthoringError('PROVIDER_UNAVAILABLE', 'The AI request could not be completed. Check its availability before trying again.');
   }
 
   const { body: modelBody, citations, ungrounded } = splitBodyAndTrailer(content);
@@ -165,7 +167,7 @@ export async function generateSection(
     })
     .returning({ id: coauthorDocuments.id });
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'AI_GENERATE',
@@ -175,7 +177,7 @@ export async function generateSection(
   });
 
   logger.info('Generated section draft', { documentId: doc.id, sectionCode: params.sectionCode, organizationId: ctx.organizationId });
-  return { documentId: doc.id, sectionCode: params.sectionCode, body, citations, ungrounded };
+  return { documentId: doc.id, sectionCode: params.sectionCode, body, citations, ungrounded, auditTrail };
 }
 
 export default { generateSection, AuthoringError };

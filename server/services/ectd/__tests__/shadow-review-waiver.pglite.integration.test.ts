@@ -159,6 +159,7 @@ beforeAll(async () => {
     CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
     CREATE TABLE electronic_signatures (
       id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT,
+      signature_hash TEXT,
       bound_payload_digest TEXT, binding_basis TEXT, signature_type TEXT, signer_id INTEGER, signer_name TEXT,
       signed_at TIMESTAMP, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT,
       verification_date TIMESTAMP, updated_at TIMESTAMP);

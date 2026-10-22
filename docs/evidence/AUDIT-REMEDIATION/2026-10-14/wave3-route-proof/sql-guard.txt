@@ -1,0 +1,15 @@
+[ci:sql-interpolation] 13 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:30:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:33:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:46:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:70:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:70:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:79:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:521:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:130:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:437:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1028 baselined interpolation(s) in 215 file(s); the baseline may only shrink.

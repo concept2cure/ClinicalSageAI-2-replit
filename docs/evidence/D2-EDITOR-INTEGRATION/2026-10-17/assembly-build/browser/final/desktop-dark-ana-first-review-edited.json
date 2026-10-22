@@ -1,0 +1,167 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "documentWidth": 1440,
+  "bodyWidth": 1440,
+  "assembly": {
+    "x": 264,
+    "y": 138.5,
+    "width": 1132,
+    "height": 42,
+    "right": 1396,
+    "bottom": 180.5,
+    "scrollWidth": 1132,
+    "clientWidth": 1132
+  },
+  "ai": {
+    "x": 264,
+    "y": 296.296875,
+    "width": 1132,
+    "height": 703.328125,
+    "right": 1396,
+    "bottom": 999.625,
+    "scrollWidth": 1128,
+    "clientWidth": 1128
+  },
+  "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnADraft requirements (optional) Reason for build Preview buildBuild documentThe exact saved section was checked. Its retained candidate is ready for review; acceptance separately checks its saved base and your edit authority.Section candidatesCompleted candidates stay here while you review another section. Each acceptance uses the existing draft review and source-lineage controls.3.2.P.8.2 Post-approval stability protocol · readyReview 3.2.P.8.23.2.P.8.3 Stability data · readyReview 3.2.P.8.3",
+  "editorCount": 1,
+  "noticeOutsideToolbar": true,
+  "controls": [
+    {
+      "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+      "rect": {
+        "x": 276,
+        "y": 260.75,
+        "width": 1108,
+        "height": 30,
+        "right": 1384,
+        "bottom": 290.75,
+        "scrollWidth": 1106,
+        "clientWidth": 1106
+      },
+      "disabled": false
+    },
+    {
+      "label": "Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data",
+      "rect": {
+        "x": 276,
+        "y": 324.75,
+        "width": 1108,
+        "height": 30,
+        "right": 1384,
+        "bottom": 354.75,
+        "scrollWidth": 1106,
+        "clientWidth": 1106
+      },
+      "disabled": false
+    },
+    {
+      "label": "checkbox",
+      "rect": {
+        "x": 280,
+        "y": 365.75,
+        "width": 13,
+        "height": 13,
+        "right": 293,
+        "bottom": 378.75,
+        "scrollWidth": 13,
+        "clientWidth": 13
+      },
+      "disabled": false
+    },
+    {
+      "label": "text",
+      "rect": {
+        "x": 276,
+        "y": 416.75,
+        "width": 1108,
+        "height": 30,
+        "right": 1384,
+        "bottom": 446.75,
+        "scrollWidth": 1106,
+        "clientWidth": 1106
+      },
+      "disabled": false
+    },
+    {
+      "label": "Why sections are being assembled",
+      "rect": {
+        "x": 276,
+        "y": 480.75,
+        "width": 1108,
+        "height": 30,
+        "right": 1384,
+        "bottom": 510.75,
+        "scrollWidth": 1106,
+        "clientWidth": 1106
+      },
+      "disabled": false
+    },
+    {
+      "label": "Preview build",
+      "rect": {
+        "x": 276,
+        "y": 526.75,
+        "width": 108.28125,
+        "height": 32,
+        "right": 384.28125,
+        "bottom": 558.75,
+        "scrollWidth": 106,
+        "clientWidth": 106
+      },
+      "disabled": false
+    },
+    {
+      "label": "Build document",
+      "rect": {
+        "x": 392.28125,
+        "y": 526.75,
+        "width": 121.203125,
+        "height": 32,
+        "right": 513.484375,
+        "bottom": 558.75,
+        "scrollWidth": 121,
+        "clientWidth": 121
+      },
+      "disabled": true
+    },
+    {
+      "label": "Review 3.2.P.8.2",
+      "rect": {
+        "x": 618.6875,
+        "y": 715.015625,
+        "width": 121.984375,
+        "height": 32,
+        "right": 740.671875,
+        "bottom": 747.015625,
+        "scrollWidth": 120,
+        "clientWidth": 120
+      },
+      "disabled": false
+    },
+    {
+      "label": "Review 3.2.P.8.3",
+      "rect": {
+        "x": 501.828125,
+        "y": 747.015625,
+        "width": 121.984375,
+        "height": 32,
+        "right": 623.8125,
+        "bottom": 779.015625,
+        "scrollWidth": 120,
+        "clientWidth": 120
+      },
+      "disabled": false
+    }
+  ],
+  "aiBody": "Edited first retained candidate for explicit human acceptance.",
+  "editorBody": "",
+  "navigation": [],
+  "bridge": {
+    "docId": "dddddddd-0000-4000-8000-000000000181",
+    "sectionId": "aaaaaaaa-0000-4000-8000-000000000182",
+    "editable": true
+  }
+}

@@ -18,8 +18,17 @@
 /** The first four bytes of every PDF: `%PDF`. */
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46];
 
+declare const PDF_VIEWER_BLOB: unique symbol;
+/**
+ * A blob this module made: bytes that begin %PDF, typed application/pdf. The
+ * viewer frames nothing else (vaultPdfViewer.tsx `showPdf`), so a later caller
+ * cannot hand it HTML by accident: since frame-src admits blob:, this rule is
+ * what keeps a framed blob a PDF (security review 2026-10-22).
+ */
+export type PdfViewerBlob = Blob & { readonly [PDF_VIEWER_BLOB]: true };
+
 /** The blob the viewer frames, or null when these bytes are not a PDF. */
-export function pdfViewerBlob(bytes: Uint8Array): Blob | null {
+export function pdfViewerBlob(bytes: Uint8Array): PdfViewerBlob | null {
   const isPdf = PDF_MAGIC.every((b, i) => bytes[i] === b);
-  return isPdf ? new Blob([bytes], { type: 'application/pdf' }) : null;
+  return isPdf ? (new Blob([bytes], { type: 'application/pdf' }) as PdfViewerBlob) : null;
 }

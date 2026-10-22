@@ -120,7 +120,7 @@ vi.mock('../../ectd/assemble-from-core', async (orig) => {
 
 import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../../db/pglite-harness';
 import { assembleSequence } from '../../ectd/assemble-from-core';
-import { ORG, USER, FREEZE_GATE_SEED_SQL, freezeGateHelpers } from './_freeze-gate-fixture';
+import { ORG, USER, FREEZE_GATE_SEED_SQL, FREEZE_PROGRAM_ID, freezeGateHelpers } from './_freeze-gate-fixture';
 import { freezeSequence, dispatchSequence, upsertLeaf, removeLeaf } from '../submission-service';
 
 let h: IndPgliteDb;
@@ -148,7 +148,7 @@ const chainRows = async (seqId: number) =>
   )).rows;
 
 beforeAll(async () => {
-  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
+  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true, shadowReview: true });
   holder.db = h.db;
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
@@ -171,7 +171,7 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
     const err = await outcome(freezeSequence(1, ctx, sig));
     expect(err, 'a leaf the gate never judged was frozen').toMatchObject({
       code: 'INVALID_STATE',
-      message: expect.stringMatching(/leaves changed while this freeze was being checked/),
+      message: expect.stringMatching(/leaves or recorded application\/applicant facts changed while this freeze was being checked/),
     });
     // Not frozen. Since 2026-10-08 (QA j6) the leaf write itself returns a
     // Validated sequence to Assembling, so it no longer reads 'validated' over
@@ -191,7 +191,7 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
     const err = await outcome(freezeSequence(2, ctx, sig));
     expect(err, 'a sequence was frozen without a leaf the gate judged').toMatchObject({
       code: 'INVALID_STATE',
-      message: expect.stringMatching(/leaves changed while this freeze was being checked/),
+      message: expect.stringMatching(/leaves or recorded application\/applicant facts changed while this freeze was being checked/),
     });
     // Not frozen; the removal returned it to Assembling (2026-10-08, QA j6).
     expect((await statusOf(2)).status).toBe('assembling');
@@ -656,8 +656,8 @@ describe('a withdrawal that names no document still binds the ordering rule by s
 describe('freeze and dispatch refuse a signature that declares authorship', () => {
   async function validatedSequence(id: number, submissionId: number) {
     await h.pglite.exec(`
-      INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
-        VALUES (${submissionId}, 'sod ${id}', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
+      INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id)
+        VALUES (${submissionId}, 'sod ${id}', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${FREEZE_PROGRAM_ID}');
       INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status)
         VALUES (${id}, ${submissionId}, 'fda', '0000', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by)
@@ -691,11 +691,46 @@ describe('freeze and dispatch refuse a signature that declares authorship', () =
     expect((await statusOf(602)).status).toBe('dispatched');
   });
 
-  it('a signature recording no meaning is unchanged — it was checked for independence when signed', async () => {
-    // The sign route requires independence whenever the meaning is not an
-    // authorship one, absent included. Every existing case above signs this way.
+  // 2026-10-19 (D5, Part 11 audit): the authorship refusal above left every
+  // other meaning open, so a freeze, dispatch or transmit signed "review" was
+  // accepted, and the release resolver counted a "review" dispatch signature as
+  // the §11.70 release. Each step now takes approval, responsibility or release
+  // (RELEASE_ACT_MEANINGS), the three its own refusal text always named.
+  it('refuses a freeze signed as "review", and accepts the same freeze signed as approval', async () => {
+    await validatedSequence(604, 604);
+    const err = await outcome(freezeSequence(604, ctx, await sign(604, 'freeze', 'review')));
+    expect(err, 'a freeze signed "I reviewed" was accepted as an approval').toMatchObject({
+      code: 'GOVERNED_REQUIRED',
+      message: expect.stringMatching(/meaning 'review'/),
+    });
+    expect((await statusOf(604)).status).toBe('validated');
+
+    await freezeSequence(604, ctx, await sign(604, 'freeze', 'approval'));
+    expect((await statusOf(604)).status).toBe('frozen');
+  });
+
+  it('refuses a dispatch signed as "review" (the resolver half: sequence-release-signature.pglite)', async () => {
+    await validatedSequence(605, 605);
+    await freezeSequence(605, ctx, await sign(605, 'freeze', 'approval'));
+    const review = await sign(605, 'dispatch', 'review');
+
+    const err = await outcome(dispatchSequence(605, ctx, review));
+    expect(err, 'a dispatch signed "I reviewed" released the sequence').toMatchObject({
+      code: 'GOVERNED_REQUIRED',
+      message: expect.stringMatching(/meaning 'review'/),
+    });
+    expect((await statusOf(605)).status).toBe('frozen');
+
+    await dispatchSequence(605, ctx, await sign(605, 'dispatch', 'release'));
+    expect((await statusOf(605)).status).toBe('dispatched');
+  });
+
+  it('a signature recording no meaning is refused — no meaning is not an approval', async () => {
+    // Fail closed. The sign route has required a meaning since P1-21
+    // (2026-09-25); an unspent signature older than that is signed again.
     await validatedSequence(603, 603);
-    await freezeSequence(603, ctx, await sign(603, 'freeze'));
-    expect((await statusOf(603)).status).toBe('frozen');
+    const err = await outcome(freezeSequence(603, ctx, await sign(603, 'freeze', null)));
+    expect(err).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/meaning 'none'/) });
+    expect((await statusOf(603)).status).toBe('validated');
   });
 });

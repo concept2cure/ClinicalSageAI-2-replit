@@ -33,7 +33,12 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const query = vi.fn();
-vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a), connect: async () => ({ query: (...a: unknown[]) => query(...a), release: () => undefined }) } }));
+vi.mock('../../services/c2c/document-alias-map', () => ({ recordDocumentAlias: async () => ({ recorded: true }) }));
+// This suite isolates enlisted audit outcomes; real project admission is covered by QMS PGlite tests.
+vi.mock('../../services/authoring/authoring-program-access', () => ({ authorizeAuthoringProgram: async () => ({principal:{id:'7',email:null,roles:['ADMIN']}}), AuthoringProgramAccessError: class extends Error {} }));
+vi.mock('../../services/authoring/authoring-evidence', () => ({ createRevision: async () => 'revision', writeAuthoringAuditTrail: async () => undefined }));
+vi.mock('../../services/authoring/authoring-permissions', async (original) => ({ ...await original<typeof import('../../services/authoring/authoring-permissions')>(), grantAuthoringPermission: async () => undefined }));
 // The QMS write routes are editor-gated (6582e3a3e). The gate has its own tests;
 // this suite is about what an editor's write records, so the harness grants it.
 vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
@@ -52,6 +57,12 @@ vi.mock('../../services/audit/audit-write-outcome', () => ({
   },
 }));
 
+vi.mock('../c2c/actions', () => ({ recordGovernedAction: async (_client: unknown, entry: Record<string, any>) => {
+  AUDIT.entries.push({ action: entry.payload.kind === 'create' ? 'mdx.qms.document.create' : 'mdx.qms.document.update', tenantId: entry.orgId,
+    userId: entry.userId, resourceType: 'qms_document', resourceId: entry.target, reason: entry.reason });
+  if (!AUDIT.result.persisted) throw new Error('Audit write unavailable');
+  return { actionId: 'action', auditId: 'audit', sha256Chain: 'chain' };
+} }));
 import mdxQmsRouter from '../mdx-qms';
 
 function app(org: number | null = 9, userId = 7) {
@@ -59,6 +70,7 @@ function app(org: number | null = 9, userId = 7) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: userId };
+    if (org !== null) Object.assign(req, { dbClient: { query } });
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);
@@ -74,6 +86,10 @@ beforeEach(() => {
 /** Every pool.query resolves to one row — enough for a tenant gate then a write. */
 function rowsAlways(row: Record<string, unknown>) {
   query.mockResolvedValue({ rows: [row], rowCount: 1 });
+  // The section writer checks it got back the row it saved (ad372567d), so its insert is echoed.
+  query.mockImplementation(async (sql: unknown, params?: unknown[]) => /INSERT INTO authoring_sections/i.test(String(sql))
+    ? { rows: [{ id: params?.[0], doc_id: params?.[1], code: params?.[2], title: params?.[3], content: params?.[4] }], rowCount: 1 }
+    : { rows: [row], rowCount: 1 });
 }
 
 const CASES: Array<{
@@ -90,7 +106,7 @@ const CASES: Array<{
     name: 'creating a controlled document',
     method: 'post',
     path: '/api/mdx/qms/documents',
-    body: { docNumber: 'SOP-001', title: 'Design control', docType: 'sop' },
+    body: { docNumber: 'SOP-001', title: 'Design control', docType: 'sop', programId: '00000000-0000-4000-8000-000000000012', reason: 'Create controlled content' },
     action: 'mdx.qms.document.create',
     resourceType: 'qms_document',
     row: { id: 11, organization_id: 9, doc_number: 'SOP-001', version: '1.0', status: 'draft' },
@@ -100,10 +116,10 @@ const CASES: Array<{
     name: 'editing a controlled document',
     method: 'patch',
     path: '/api/mdx/qms/documents/11',
-    body: { title: 'Design control, rev B' },
+    body: { title: 'Design control, rev B', reason: 'Update controlled metadata' },
     action: 'mdx.qms.document.update',
     resourceType: 'qms_document',
-    row: { id: 11, organization_id: 9, title: 'Design control, rev B', version: '1.0' },
+    row: { id: 11, organization_id: 9, title: 'Design control, rev B', version: '1.0', status: 'draft' },
     status: 200,
   },
   {
@@ -179,6 +195,13 @@ describe('every governed QMS write records a §11.10(e) row', () => {
 
       const res = await request(app())[c.method](c.path).send(c.body);
 
+      if (c.resourceType === 'qms_document') {
+        // Canonical content mutations now fail closed when their enlisted ledger cannot persist.
+        expect(res.status).toBe(500);
+        expect(res.body.data).toBeUndefined();
+        expect(query.mock.calls.some(([sql]) => String(sql) === 'ROLLBACK')).toBe(true);
+        return;
+      }
       expect(res.status).toBe(c.status);
       expect(res.body.meta?.auditTrail?.persisted).toBe(false);
       expect(res.body.meta?.auditTrail?.code).toBe('AUDIT_ROW_NOT_PERSISTED');

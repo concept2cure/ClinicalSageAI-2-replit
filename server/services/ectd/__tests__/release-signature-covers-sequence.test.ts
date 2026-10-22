@@ -41,6 +41,7 @@ const mockResolveSignedPackageForExport = vi.fn();
 const mockDbExecute = vi.fn();
 const mockSequenceSpine = vi.fn();
 const mockPoolQuery = vi.fn();
+const mockReadIdentity = vi.fn();
 
 vi.mock('../signed-package-export.js', async () => {
   const actual = await vi.importActual<typeof import('../signed-package-export.js')>(
@@ -51,6 +52,11 @@ vi.mock('../signed-package-export.js', async () => {
     resolveSignedPackageForExport: (...args: unknown[]) => mockResolveSignedPackageForExport(...args),
   };
 });
+
+vi.mock('../package-identity.js', async () => ({
+  ...await vi.importActual<typeof import('../package-identity.js')>('../package-identity.js'),
+  readSubmissionPackageIdentity: (...args: unknown[]) => mockReadIdentity(...args),
+}));
 
 vi.mock('../sequence-release-signature.js', () => ({
   resolveSequenceReleaseSignature: (...args: unknown[]) => mockSequenceSpine(...args),
@@ -77,6 +83,12 @@ const ORG = 42;
 const SUBMISSION = 7;
 const THIS_SEQUENCE = '0001';
 const SEQUENCE_ID = 5150;
+const RECORDED_IDENTITY = {
+  programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+  applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+  applicantId: '123456789', contact: { name: 'Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+};
+const RECORDED_SNAPSHOT = { version: 1 as const, identity: RECORDED_IDENTITY };
 
 /** A leaf, stated the short way. */
 function leaf(sectionCode: string, checksum: string | null = 'md5-a', operation = 'new'): ComparableLeaf {
@@ -224,6 +236,7 @@ function signedOver(sequenceNumber: string, runId: string, leaves: Array<Record<
       region: 'US',
       submissionType: 'NDA',
       leaves,
+      recordedPackageIdentity: RECORDED_SNAPSHOT,
       signatureId: 991,
       payloadDigest: `digest-${runId}`,
       sealVerdict: 'ok',
@@ -237,9 +250,9 @@ const SIGNED_LEAVES = [
 ];
 
 function liveRows(rows: Array<[string, string, string | null]>) {
-  mockPoolQuery.mockResolvedValue({
-    rows: rows.map(([section_code, lifecycle_op, checksum]) => ({ section_code, lifecycle_op, checksum })),
-  });
+  mockPoolQuery.mockImplementation(async (sql: string) => /FROM ectd_sequences/i.test(sql)
+    ? { rows: [{ submission_id: SUBMISSION }] }
+    : { rows: rows.map(([section_code, lifecycle_op, checksum]) => ({ section_code, lifecycle_op, checksum })) });
 }
 
 describe('resolveReleaseSignatureStatus — the signature must cover the sequence that ships', () => {
@@ -248,7 +261,32 @@ describe('resolveReleaseSignatureStatus — the signature must cover the sequenc
     mockDbExecute.mockReset();
     mockSequenceSpine.mockReset();
     mockPoolQuery.mockReset();
+    mockReadIdentity.mockReset().mockResolvedValue(RECORDED_IDENTITY);
     mockSequenceSpine.mockResolvedValue({ verdict: 'unsigned', detail: 'no dispatch-intent signature' });
+  });
+
+  it('treats a historical FDA snapshot without applicant proof as intact but not covering, retaining the sequence fallback', async () => {
+    runsAre('historical');
+    const historical = signedOver(THIS_SEQUENCE, 'historical', SIGNED_LEAVES);
+    delete (historical.descriptor as { recordedPackageIdentity?: unknown }).recordedPackageIdentity;
+    mockResolveSignedPackageForExport.mockResolvedValue(historical);
+    liveRows([['1.us.cover', 'new', 'md5-cover'], ['2.3', 'new', 'md5-qos']]);
+    mockSequenceSpine.mockResolvedValue({ verdict: 'signed', detail: 'current sequence signed', signatureId: 77 });
+    const status = await resolveReleaseSignatureStatus({ submissionId: SUBMISSION, organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE, sequenceId: SEQUENCE_ID, region: 'fda' });
+    expect(status).toMatchObject({ verdict: 'signed', decidedBy: 'sequence', signatureId: 77 });
+    expect(mockReadIdentity).not.toHaveBeenCalled();
+  });
+
+  it('reports changed current contact as no covering signature rather than snapshot tampering', async () => {
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue(signedOver(THIS_SEQUENCE, 'run-a', SIGNED_LEAVES));
+    liveRows([['1.us.cover', 'new', 'md5-cover'], ['2.3', 'new', 'md5-qos']]);
+    mockReadIdentity.mockResolvedValue({ ...RECORDED_IDENTITY, contact: { ...RECORDED_IDENTITY.contact, email: 'updated@example.test' } });
+    const status = await resolveReleaseSignatureStatus({ submissionId: SUBMISSION, organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE, sequenceId: SEQUENCE_ID, region: 'fda' });
+    expect(status.verdict).toBe('unsigned');
+    expect(status.detail).toMatch(/applicant identity differs/);
   });
 
   it('clears a signature whose manifest IS this sequence, and says what corroborated it', async () => {
@@ -345,6 +383,7 @@ describe('resolveReleaseSignatureStatus — picking among runs, and saying what 
     mockDbExecute.mockReset();
     mockSequenceSpine.mockReset();
     mockPoolQuery.mockReset();
+    mockReadIdentity.mockReset().mockResolvedValue(RECORDED_IDENTITY);
     mockSequenceSpine.mockResolvedValue({ verdict: 'unsigned', detail: 'no dispatch-intent signature' });
   });
 

@@ -52,6 +52,12 @@ vi.mock('../../server/middleware/tenantContext', () => ({
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
+// Isolate this downstream governed-contract refusal. Mounted real-PGlite
+// regressions qualify current project membership/edit admission separately.
+vi.mock('../../server/routes/c2c/project-access', async importOriginal => ({
+  ...await importOriginal<typeof import('../../server/routes/c2c/project-access')>(),
+  requireProjectAdmission: vi.fn(async()=>({id:1,organizationId:1,settings:{}})),
+}));
 
 import concept2cureRouter from '../../server/routes/c2c/knowledge-sources';
 

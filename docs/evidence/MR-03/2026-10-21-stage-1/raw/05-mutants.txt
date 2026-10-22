@@ -1,0 +1,8 @@
+  run "every_bucket_name_carries_the_account_id"... fail
+tests/boot_contract.tftest.hcl... fail
+Failure! 60 passed, 1 failed.
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... fail
+tests/boot_contract.tftest.hcl... fail
+Failure! 60 passed, 1 failed.
+Error: Failed to query available provider packages
+locked provider registry.terraform.io/hashicorp/aws 5.70.0 does not match

@@ -48,17 +48,21 @@ const run = (over: Record<string, unknown>) => ({
   summary: { inputsSource: NOTHING_READ },
   ...over,
 });
+// The route supplies its already admitted request connection. This focused
+// fixture provides an explicit empty canonical packet result, not a pool fallback.
+const packetClient = { query: vi.fn(async (_text: string, _params?: unknown[]) => ({ rows: [] })) };
 const reviewerRow = async () => {
-  const r = await programFreshnessReport(ORG, PROGRAM);
+  const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
   return { row: r.artifacts.find(a => a.artifact === 'reviewer_simulation_run')!, report: r };
 };
 
-beforeEach(() => rows.perTable.clear());
+beforeEach(() => { rows.perTable.clear(); packetClient.query.mockClear(); });
 
 describe('reviewer simulation run freshness: fresh needs an assessment that ran', () => {
   it('a run that read nothing from the records is not assessed, not fresh', async () => {
     rows.perTable.set(reviewerSimulationRuns, [run({})]);
     const { row, report } = await reviewerRow();
+    expect(packetClient.query).toHaveBeenCalledWith(expect.stringContaining('FROM predicate.defense_packets'), [ORG, PROGRAM]);
     expect(row.state, 'a run that assessed no record was reported fresh').toBe('not_assessed');
     expect(row.reason).toMatch(/defense packet/);
     expect(row.reason).toMatch(/claim-health/);

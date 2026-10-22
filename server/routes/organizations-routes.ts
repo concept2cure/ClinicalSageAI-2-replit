@@ -12,7 +12,7 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { CONNECTOR_NOT_A_GENERAL_SETTING, ConnectorSettingRefusedError, namesClaudeConnector } from '../mcp/auth/connector-enablement';
-import { DISCOVERY_NOT_A_GENERAL_SETTING, DiscoverySettingRefusedError, asSettings, namesOnboardingDiscovery, overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
+import { DISCOVERY_NOT_A_GENERAL_SETTING, DiscoverySettingRefusedError, COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING, CompanyDocumentsSettingRefusedError, namesCompanyDocuments, generalSettingsView, asSettings, namesOnboardingDiscovery, overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
 
 const router = Router();
 
@@ -472,7 +472,7 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
       ? { ...defaultSettings, ...organization.settings }
       : defaultSettings;
 
-    res.json({ success: true, settings });
+    res.json({ success: true, settings: generalSettingsView(settings) });
   } catch (error) {
     console.error('Error fetching organization settings:', error);
     res.status(500).json({
@@ -494,8 +494,16 @@ function isGovernedSettingsBody(body: unknown): boolean {
 }
 
 function settingsMutationRefusal(error: unknown): string | null {
+  if (error instanceof CompanyDocumentsSettingRefusedError) return COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING;
   if (error instanceof ConnectorSettingRefusedError) return CONNECTOR_NOT_A_GENERAL_SETTING;
   if (error instanceof DiscoverySettingRefusedError) return DISCOVERY_NOT_A_GENERAL_SETTING;
+  return null;
+}
+
+function namedManagedSettingsRefusal(value: unknown): string | null {
+  if (namesClaudeConnector(value)) return CONNECTOR_NOT_A_GENERAL_SETTING;
+  if (namesOnboardingDiscovery(value)) return DISCOVERY_NOT_A_GENERAL_SETTING;
+  if (namesCompanyDocuments(value)) return COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING;
   return null;
 }
 
@@ -533,12 +541,8 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // requireOrgAdmin admits an administrator, so a body naming it is refused
     // whole, before anything is read (P1-49 fix round); the writer below
     // refuses any change to it from this door as well.
-    if (namesClaudeConnector(settingsUpdate)) {
-      return res.status(403).json({ success: false, error: CONNECTOR_NOT_A_GENERAL_SETTING });
-    }
-    if (namesOnboardingDiscovery(settingsUpdate)) {
-      return res.status(403).json({ success: false, error: DISCOVERY_NOT_A_GENERAL_SETTING });
-    }
+    const managedRefusal = namedManagedSettingsRefusal(settingsUpdate);
+    if (managedRefusal) return res.status(403).json({ success: false, error: managedRefusal });
 
     // DP-73 (2026-10-01): through the one settings writer. The stored
     // settings are read under a row lock, the update laid over them (a

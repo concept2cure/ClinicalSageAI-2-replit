@@ -29,6 +29,13 @@ const state = vi.hoisted(() => ({
 vi.mock('pg', () => {
   class Pool {
     async query(sql: string, params?: unknown[]) {
+      // Parameterless SQL may carry several statements (the workspace repair
+      // migration does); pg sends those over the simple protocol, PGlite's exec.
+      if (params === undefined) {
+        const results = await (state.db as unknown as PGlite).exec(sql);
+        const last = results[results.length - 1];
+        return { rows: last?.rows ?? [], rowCount: last?.affectedRows ?? 0 };
+      }
       const r = await state.db.query(sql, params);
       return { rows: r.rows, rowCount: r.affectedRows ?? r.rows.length };
     }
@@ -42,7 +49,7 @@ vi.mock('pg', () => {
 const ROOT = path.resolve(__dirname, '../..');
 const REMOTE = 'postgresql://u:p@uat-db.example.invalid:5432/c2c';
 const LOCAL = 'postgresql://postgres:postgres@127.0.0.1:5432/c2c';
-const KEYS = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'ADMIN_NAME'] as const;
+const KEYS = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'ADMIN_NAME', 'ADMIN_ORG_SLUG'] as const;
 
 let db: PGlite;
 
@@ -56,6 +63,9 @@ beforeAll(async () => {
       status text, default_organization_id int, failed_login_attempts int DEFAULT 0, password_changed_at timestamptz,
       locked_until timestamptz, must_change_password boolean DEFAULT false);
     CREATE TABLE organization_users (organization_id int, user_id int, role text, PRIMARY KEY (organization_id, user_id));
+    CREATE TABLE client_workspaces (
+      id serial PRIMARY KEY, organization_id int NOT NULL, name text NOT NULL, slug text NOT NULL,
+      description text, status text, created_by_id int, metadata json, UNIQUE (organization_id, slug));
   `);
 }, 60_000);
 
@@ -64,7 +74,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await db.exec('TRUNCATE organization_users, users, organizations RESTART IDENTITY');
+  await db.exec('TRUNCATE client_workspaces, organization_users, users, organizations RESTART IDENTITY');
 });
 
 /** Seed an account the way an operator would find it: locked, disabled, a viewer. */
@@ -126,6 +136,8 @@ describe('seed-admin against a database that is not on this machine', () => {
       DATABASE_URL: REMOTE,
       ADMIN_EMAIL: 'ops@customer.example',
       ADMIN_PASSWORD: 'a-real-secret-123',
+      // Off this machine the organisation is named (2026-10-15).
+      ADMIN_ORG_SLUG: 'customer',
     });
     expect(await accountRow('ops@customer.example')).toEqual({
       password_hash: 'old-hash',
@@ -141,10 +153,12 @@ describe('seed-admin against a database that is not on this machine', () => {
   }, 60_000);
 
   it('creates a new account, and does not print the password it was given', async () => {
+    await db.query(`INSERT INTO organizations (name, slug) VALUES ('Customer', 'customer')`);
     const r = await runSeedAdmin({
       DATABASE_URL: REMOTE,
       ADMIN_EMAIL: 'new-admin@customer.example',
       ADMIN_PASSWORD: 'a-real-secret-123',
+      ADMIN_ORG_SLUG: 'customer',
     });
     expect(r.exits).toEqual([]);
     const row = await accountRow('new-admin@customer.example');

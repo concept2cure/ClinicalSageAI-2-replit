@@ -49,7 +49,10 @@ beforeEach(() => {
   poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
     if (/FROM ectd_compilations/i.test(sql)) return { rows: [] };
     if (/FROM c2c_rule_packs/i.test(sql)) return { rows: [] };
-    if (/FROM organizations/i.test(sql)) return { rows: [{ name: 'Vorelinib Therapeutics Inc.' }] };
+    if (/FROM organizations/i.test(sql)) return { rows: [{ ...NDA_PROGRAM, name: 'Vorelinib Therapeutics Inc.', organization_name: 'Vorelinib Therapeutics Inc.',
+      applicant_sponsor_id: '11111111-1111-4111-8111-111111111111', sponsor_id: '11111111-1111-4111-8111-111111111111',
+      sponsor_name: 'Vorelinib Therapeutics Inc.', duns: '123456789', contact_name: 'Regulatory Contact',
+      contact_phone: '+1 617 555 0100', contact_email: 'regulatory@example.test' }] };
     if (/FROM regulatory_programs/i.test(sql)) return { rows: [NDA_PROGRAM] };
     // A named sequence, joined to its submission and held to this program.
     if (/FROM ectd_sequences/i.test(sql) && /JOIN submissions/i.test(sql)) {

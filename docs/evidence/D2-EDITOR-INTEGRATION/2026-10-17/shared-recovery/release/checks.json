@@ -1,0 +1,81 @@
+{
+  "branch": "concept2cure-v2",
+  "initialBase": "bfec9be6b",
+  "publicationBase": "d6a33d3a4a09e08a28d9a3b6047e30fe3a2532d1",
+  "node": "v22.23.3",
+  "checks": [
+    {
+      "check": "typecheck",
+      "exitCode": 0,
+      "receipt": "typecheck.json"
+    },
+    {
+      "check": "build",
+      "exitCode": 0,
+      "receipt": "build.json"
+    },
+    {
+      "check": "warning-ratchet",
+      "exitCode": 0,
+      "receipt": "warning-ratchet.json"
+    },
+    {
+      "check": "single-native-canvas",
+      "exitCode": 0,
+      "receipt": "single-native-canvas.json"
+    },
+    {
+      "check": "canvas-path",
+      "exitCode": 0,
+      "receipt": "canvas-path.json"
+    },
+    {
+      "check": "check-editor-integrity",
+      "exitCode": 0,
+      "receipt": "check-editor-integrity.json"
+    },
+    {
+      "check": "design-system",
+      "exitCode": 0,
+      "receipt": "design-system.json"
+    },
+    {
+      "check": "token-cascade",
+      "exitCode": 0,
+      "receipt": "token-cascade.json"
+    },
+    {
+      "check": "token-contrast",
+      "exitCode": 0,
+      "receipt": "token-contrast.json"
+    },
+    {
+      "check": "check-phantom-tokens",
+      "exitCode": 0,
+      "receipt": "check-phantom-tokens.json"
+    },
+    {
+      "check": "gateway-bypass",
+      "exitCode": 0,
+      "receipt": "gateway-bypass.json"
+    },
+    {
+      "check": "null-guard-lint",
+      "exitCode": 0,
+      "receipt": "null-guard-lint.json"
+    }
+  ],
+  "allPassed": true,
+  "humanCases": {
+    "total": 22,
+    "status": "Not run"
+  },
+  "deployment": "None; local Codespaces only",
+  "remoteAdvanceBeforeRetry": {
+    "commit": "3cdb25644",
+    "paths": [
+      "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md"
+    ],
+    "applicationAndTestBytesUnchangedAfterRebase": true
+  }
+}

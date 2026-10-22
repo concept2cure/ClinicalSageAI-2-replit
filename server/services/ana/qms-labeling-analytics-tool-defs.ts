@@ -26,10 +26,12 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
       title:      { type: 'string' },
       doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'] },
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
-      version:    { type: 'string' },
+      program_id: { type: 'string', description: 'UUID of an explicitly selected owned project for the canonical authored procedure.' },
+      template_key: { type: 'string', description: 'Optional key from the Quality SOP template library; seeds editable canonical sections.' },
+      next_review_date: { type: 'string', description: 'Optional YYYY-MM-DD the user named for the periodic review. Once effective, the document is listed for review from this date. Never choose one yourself.' },
       reason:     STATED_REASON_INPUT,
     },
-    required: ['doc_number', 'title', 'doc_type'],
+    required: ['title', 'doc_type', 'program_id', 'reason'],
   },
 };
 
@@ -68,6 +70,8 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
+      program_id: { type: 'string', description: 'Owned project UUID required to recover a historical register-only entry into a new authored draft.' },
+      template_key: { type: 'string', description: 'Optional Quality template for that new draft; never recreates historical procedure text.' },
       reason:      STATED_REASON_INPUT,
     },
     required: ['document_id', 'reason'],

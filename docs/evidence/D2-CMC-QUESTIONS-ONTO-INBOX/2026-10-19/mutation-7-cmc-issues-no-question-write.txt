@@ -1,0 +1,69 @@
+# MUTATION 7 CMC writes nothing about agency questions (the index door also PATCHes the earlier file)
+# File: client/src/concept2cure/v2/surfaces/CmcModule.tsx
+# Replaced:
+#   -       <CmcModule3QuestionIndex nav={nav} />
+# With:
+#   +       <CmcModule3QuestionIndex nav={(id) => { void apiRequest('PATCH', '/api/cmc/agency-questions/1', { status: 'CLOSED' }); nav?.(id); }} />
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored: sha256 2f30f16ad33b70ee… before = 2f30f16ad33b70ee… after (byte-identical)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a positive count is a button that opens the Module 3 questions 292ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > shows the server's figure: an approved answer on an overdue letter is not counted, a zero is a plain figure 28ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a read that failed is unknown, never zero, and the lead says so 51ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > with no program open it claims no count and issues no read 21ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > its action opens the overdue letter in Communication; it neither drafts nor promises sign-offs 70ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > says what it did not count: letters withheld, unclassified questions, and the earlier file 22ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > names the section, and opens the question on its letter 114ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > matches whole segments: a question at 3.2.S.20 is not about 3.2.S.2 81ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > with no program open it asks for one and reads nothing 16ms
+ × client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > lists each question with the server's state and one door: open it on its letter 82ms
+   → expected [ [ 'PATCH', …(2) ] ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > offers no working act of its own 264ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > a failed read is an error, never the empty list 29ms
+ × client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > says what it did not count, and names a Module 3 letter with no question recorded 41ms
+   → expected [ [ 'PATCH', …(2) ] ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty program says where questions are recorded 28ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > renders nothing when the file holds nothing 31ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > says what each row holds, and nothing it does not 41ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > a failed read of the earlier file is said, not hidden 21ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 15 passed (17)
+   Start at  10:31:32
+   Duration  3.83s (transform 1.31s, setup 162ms, import 1.59s, tests 1.24s, environment 670ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > lists each question with the server's state and one door: open it on its letter
+ FAIL  client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > says what it did not count, and names a Module 3 letter with no question recorded
+AssertionError: expected [ [ 'PATCH', …(2) ] ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   [
++     "PATCH",
++     "/api/cmc/agency-questions/1",
++     {
++       "status": "CLOSED",
++     },
++   ],
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx:91:28
+     89| afterEach(() => {
+     90|   // CMC writes nothing about agency questions, in any case below.
+     91|   expect(questionWrites()).toEqual([]);
+       |                            ^
+     92|   cleanup();
+     93|   delete (window as unknown as CmWindow).__cmSetTab;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+

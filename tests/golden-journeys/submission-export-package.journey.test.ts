@@ -93,6 +93,12 @@ beforeAll(async () => {
       ('${PROGRAM_A}', ${ORG_A}, 'Examplinib (IND)', 'EX-1', 'IND', 'Examplinib', '123456'),
       ('${PROGRAM_A_INCOMPLETE}', ${ORG_A}, 'Examplinib-2 (IND)', 'EX-2', 'IND', 'Examplinib-2', '123457'),
       ('${PROGRAM_A_UNNUMBERED}', ${ORG_A}, 'Examplinib-4 (IND)', 'EX-4', 'IND', 'Examplinib-4', NULL);
+    -- The applicant as FDA's us-regional backbone names it (ccd509c0): a bound
+    -- sponsor registry row with its D-U-N-S and regulatory contact. Its name is
+    -- what the package carries as the company name once bound.
+    INSERT INTO ind_sponsors (id, organization_id, name, duns, contact_name, contact_phone, contact_email) VALUES
+      ('b0000000-0000-4000-8000-0000000000b1', ${ORG_A}, 'Examplinib Therapeutics Inc.', '123456789', 'Regulatory Contact', '+1 212 555 0100', 'ra@example.test');
+    UPDATE regulatory_programs SET applicant_sponsor_id = 'b0000000-0000-4000-8000-0000000000b1' WHERE organization_id = ${ORG_A};
 
     -- Org A, submission 1: a fully materializable IND dossier (M2 + M3).
     INSERT INTO submissions (id, title, product_name, application_type, client_type, primary_region, organization_id, created_by, program_id)

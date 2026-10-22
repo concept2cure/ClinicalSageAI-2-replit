@@ -1,0 +1,504 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > refuses a following chunk that ends before the hit chunk does 2ms
+ ✓ server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > never returns an available context that does not contain the whole hit 2ms
+stdout | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-19T02:40:23.067Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:23.069Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-19T02:40:23.070Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > expands only public guidance or the supplied integer or verified UUID tenant 452ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > keeps scoped guidance and refuses foreign private rows and identities without a tenant 240ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > marks retained Vault, RAG and atom text, then excludes it after the later withdrawal without deleting history 407ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > withholds a generated answer when a real disposition commits during the provider await 304ms
+stdout | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-19T02:40:29.405Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:29.406Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-19T02:40:29.406Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > expandedContent is extracted_text.slice(span) read from the same row set, never joined chunk text 78ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > reports the context as available with a reference the existing identity helper re-derives 33ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > legacy chunks with NULL offsets: no_offsets, and no expandedContent at all 31ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > a backfill-style basis (chunked from the trimmed text, stored untrimmed): basis_mismatch, not approximated 26ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > a re-chunked document (the hit id is gone, its neighbours are not): chunk_set_changed 24ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > the hit's own content hash pins the read even without a source read scope 43ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > another organization's document of the same shape, asked for under this organization's uuid 51ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a document whose data was withdrawn (remove_data), while keep_data retains it 239ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a superseded version 26ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a content hash that is not the stored version, under a source read scope 24ms
+stdout | server/services/ana/__tests__/document-passage-tools-budget.test.ts
+{
+  "timestamp": "2026-10-19T02:40:34.003Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:34.004Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-tools-budget.test.ts
+{
+  "timestamp": "2026-10-19T02:40:34.005Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-tools-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > is 7,500 characters: under the 8,000-character cap, so the cap never cuts this result 3ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > the default limit, every context available (~6,000 + a ~4,000 chunk): within the budget, in rank order, nothing load-bearing dropped 34ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > 8 hits, available and ~4,000-character unavailable alternating: within the budget, in rank order, nothing load-bearing dropped 10ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > 8 hits, every context unavailable (~4,000-character text): within the budget, in rank order, nothing load-bearing dropped 7ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > 12 hits, mostly short contexts: within the budget, in rank order, nothing load-bearing dropped 17ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > the maximum limit, every context available: within the budget, in rank order, nothing load-bearing dropped 47ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > the maximum limit, mixed: within the budget, in rank order, nothing load-bearing dropped 42ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > pass 1 alone: the lowest-ranked contexts lose their text first and get the hit back; the top keeps its context 7ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > pass 2 starts only once every passage has lost its context text, and takes hit text from the bottom up 7ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > pass 3 drops whole passages from the end, counts them, and keeps the top ones 46ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > never drops the last passage, even when the budget cannot be met 3ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > a result that already fits > is unchanged except that an available context is not sent twice 3ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > a miss is still a miss with its coverage note 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > an unavailable index is reported as unavailable, not as zero passages 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > a scope refusal is returned as it was 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > an unexpected failure is a stated error, never a silent empty 2ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > a query too short to retrieve on is refused before any search 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > preserves an admitted viewer and keyless positive read 7ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > does not return old text/counts after access is revoked during meaning embedding 32ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rechecks old lexical identities when the optional provider becomes unavailable 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > withholds stale totals even when the changed source was outside the selected page 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > does not swallow changed actor authority as optional meaning unavailability 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rejects contradictory actor/source organisation before a source read 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > pins scope arrays before an asynchronous callback can mutate them 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rolls back unsupported meaning SQL ('42703') and preserves the authorised lexical result 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rolls back unsupported meaning SQL ('42704') and preserves the authorised lexical result 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > uses actor-filtered outside-index captures and current permitted programmes 6ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > refuses UUID/integer tenant mismatch before retrieval 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > withholds passage content and coverage when actor scope changes during retrieval 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > refuses a returned passage whose recorded programme is outside the allowed set 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization 6ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: an actor-filtered accessible library, or a named accessible program 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > requires the upstream request executor before source admission 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > refuses a role change between canonical source and request program admission 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project 17ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > read_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > catalog_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > place_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > the open project's own document is read 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_project_documents searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_document_passages searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > an open project with no program > reads nothing: not the organization, and not a named program 1ms
+stdout | server/services/vault/__tests__/passage-context-span.test.ts
+{
+  "timestamp": "2026-10-19T02:40:38.671Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:38.672Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/passage-context-span.test.ts
+{
+  "timestamp": "2026-10-19T02:40:38.672Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/passage-context-span.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > passage context constants > extends 1000 characters on each side and caps at the 12000-character identity span 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > fixture: the real chunker splits them into chunks 4, 5 and 6 with real overlap 3ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > the context is T.slice of the window: overlap once, no invented seam, verified identity 5ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > keeps a paragraph break only where the source has one 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > chunk_set_changed: the hit id is gone, sits at another index, or nothing came back 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > no_offsets: no extracted text, or any chunk (neighbour or hit) without offsets 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: offsets cut from backfill-trimmed text never shift onto the raw text 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: same-hash re-extraction changed the text under a chunk 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: offsets that slice() would quietly accept are still refused 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > not_contiguous: a missing index, a duplicate index, a gap, or a start that does not advance 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > touching chunks (start equal to the previous end) are contiguous 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > budget: a hit chunk longer than the cap is refused with its own hitSpan 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > a hit of exactly the cap is the whole context, clipped 3ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > chunk_set_changed beats no_offsets 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > no_offsets beats basis_mismatch 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > basis_mismatch beats not_contiguous 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > not_contiguous beats budget, and leaves hitSpan null 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > budget beats encoding 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > extends at most SIDE characters on each side of the hit 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > a hit at the start of the document extends only to the right 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > the hit alone is its own unclipped context 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trims the side farther from the hit first 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trimming that reaches both sides keeps the hit whole and the farther side no longer farther 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trimming with equal sides keeps the hit whole 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a left edge that splits a pair moves outward by one 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a right edge that splits a pair moves outward by one 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a split pair at the first chunk start cannot move outward: encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a split pair at the last chunk end cannot move outward: encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a lone surrogate anywhere in the text is refused by the identity helper: encoding 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a MAX cut inside an astral run never yields an over-budget or split-pair span 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > order independence and determinism > returns the same result for any input order, without reordering the caller array 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > order independence and determinism > is deterministic 1ms
+stdout | server/services/__tests__/rag-actor-programme-scope.test.ts
+{
+  "timestamp": "2026-10-19T02:40:39.907Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:39.908Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-actor-programme-scope.test.ts
+{
+  "timestamp": "2026-10-19T02:40:39.908Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-actor-programme-scope.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > passes source authority and allowed filters through the existing router 3ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > constrains dense materialisation and sparse candidates before ranking/limit 4ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > re-admits actor access after the query embedding resolves 2ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > recovers the lexical branch after missing vector SQL ('42883') instead of querying an aborted transaction 2ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > recovers the lexical branch after missing vector SQL ('42704') instead of querying an aborted transaction 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > context expansion preserves programme, exact byte hash, currentness and live-parent fences 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > source revalidation retains the allowed set after asynchronous processing 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > actor-scoped retrieval refuses a selected source when its byte identity changes 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > refuses source actor authority on a corpus that cannot apply its programme constraint 1ms
+stdout | server/services/__tests__/rag-context-expansion-span.test.ts
+{
+  "timestamp": "2026-10-19T02:40:41.163Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:41.164Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-context-expansion-span.test.ts
+{
+  "timestamp": "2026-10-19T02:40:41.165Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-context-expansion-span.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the statement > selects chunk ids, indices and offsets, and the extracted text on the hit row only 10ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the statement > pins the content hash when the hit carries one, even without a source read scope 2ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > is the exact source span: the overlap once, no invented seam, an identity that verifies 2ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > legacy chunks without offsets keep the hit text alone and say why 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > offsets that do not address the current text are refused, never shifted 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > a re-chunked document contributes no neighbours from the new chunk set 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext: unchanged behaviour (controls) > drops a vault candidate whose neighbour query returns no rows 0ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext: unchanged behaviour (controls) > rag_chunk expansion still joins its window and gains no passage context 1ms
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-19T02:40:42.456Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:42.458Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-19T02:40:42.458Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > hands back the passage with the document and locator that make it citable 6ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > caps the requested limit rather than passing it through 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > states how much of the vault is NOT indexed, and refuses to call it absence 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > gives the RECORDED reason a document failed to index, not just a count 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > does not invent a reason when none was recorded 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says the coverage is unknown rather than implying it searched everything 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > an EMPTY index is reported as empty, not as a provider failure or a miss 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says plainly when the vault holds no documents at all 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > will not claim full coverage while chat uploads sit outside the corpus 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > marks the count as a floor when there are more than it probed for 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > says nothing extra when there is nothing outside 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > an uncounted probe is reported as unchecked, never as zero 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > covers an EMPTY vault too — no documents filed is not "nothing to search" 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > reports an unavailable index as unavailable, not as zero passages 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > turns an unexpected failure into a stated error, never a silent empty 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > refuses a query too short to retrieve on 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > requires an organization context 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 4ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 2ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > reserves the existing source stores and verifies the same program, bytes and version 4ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: null 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","version":"1.0","catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted"}} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"2.0","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"1.0","disposition":"remove_data","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"22222222-2222-4222-8222-222222222222","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"1.0","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > preserves legacy candidates but refuses a malformed recorded receipt 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > uses one scoped executor and records the actual retrieval actor without creating source identities 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > keeps an unregistered actual Vault source uncited rather than inventing a registry entry 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal 0 before source retrieval 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal NaN before source retrieval 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal -5 before source retrieval 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > rechecks with the current accepting principal rather than the receipt retrieval actor 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > retains valid diagnostic scores while explicitly withholding unverified model attribution 5ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > keeps an unresolved positive and makes no retrieval or model call for it 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > does not silently omit an item whose judge failed while other items scored 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > preserves retrieval failures as errors instead of returning an honest-looking empty hit 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > records a positive grounded refusal as unjudged rather than dropping its hard item 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > does not compare a chunk id to an expected document id 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > rejects malformed judgment instead of clamping an arbitrary number into a passing score 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > retains a failed judge without exporting arbitrary SDK diagnostic content 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > executes a declared negative control only as a reported grounded refusal check 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > refuses absent scope and self-grading before invoking evaluation dependencies 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > refuses unverified live tenant/programme binding before a negative control can retrieve or dispatch 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > reports zero-item runs as incomplete and rejects duplicate item ids before evaluating 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > accepts explicit scope and finite thresholds 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --k=NaN before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --k=0 before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --min-hit-rate=NaN before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --min-faithfulness=1.5 before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --unexpected=value before DB acquisition 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > cannot replace current actor admission with a supplied allowlist 4ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > cannot widen canonical scope by adding a private allowed program 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > recognises the missing optional vector type, while preserving other undefined objects as unavailable 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds the allowed set before the lexical count and page limit 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > does not promote an empty allowed set into all programmes 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > bounds meaning counts and candidates before rank and limit 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > uses the caller executor for meaning SQL rather than a different pool 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds passage ledger to the current byte version, live parent and allowed programmes 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > propagates allowed programmes to the existing passage router 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > retains SQL failures as unknown coverage rather than zero 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > does not fabricate zero coverage from an absent ledger aggregate row 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > preserves allowed set through the router filter merge 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds array filters in the canonical SQL helper 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > refuses an actor programme constraint on a corpus without programme identity 0ms
+stdout | server/services/__tests__/rag-context-expansion.test.ts
+{
+  "timestamp": "2026-10-19T02:40:46.572Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:46.574Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-context-expansion.test.ts
+{
+  "timestamp": "2026-10-19T02:40:46.574Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-context-expansion.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > refuses the stale chunk when the neighbour query fails
+[RAG] context expansion unavailable; refusing the stale chunk: Error: db down
+    at Object.<anonymous> (/home/user/ClinicalSageAI-2-replit/server/services/__tests__/rag-context-expansion.test.ts:82:13)
+    at Object.Mock [as query] (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /home/user/ClinicalSageAI-2-replit/server/services/advancedRAGPipeline.ts:1269:46
+    at Array.map (<anonymous>)
+    at AdvancedRAGPipeline.expandContext (/home/user/ClinicalSageAI-2-replit/server/services/advancedRAGPipeline.ts:1235:17)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/rag-context-expansion.test.ts:84:43
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > expands a rag_chunk to its ±window neighbours, joined in order 4ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > does not annotate when the window adds no neighbours (single row) 1ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > skips the query entirely when window <= 0 1ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > passes through documents without a chunk index (project atoms, memory) 0ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > refuses the stale chunk when the neighbour query fails 7ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > drops a chunk whose policy-filtered neighbour query no longer finds it 1ms
+stdout | server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+{
+  "timestamp": "2026-10-19T02:40:48.492Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:48.494Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+{
+  "timestamp": "2026-10-19T02:40:48.494Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+{
+  "timestamp": "2026-10-19T02:40:48.802Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > under modelCalls 'refuse', retrieves with no model call: basic strategy, no reranking 8ms
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > inside a model-call refusal scope, with no ctx flag, takes the same model-free path (what the gateway enforces decides) 2ms
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > otherwise asks for exactly what it always did 2ms
+stdout | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-19T02:40:58.421Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-19T02:40:58.423Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-19T02:40:58.423Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-generation-request.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves source numbering, separators and compressed/expanded/raw precedence exactly 2ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves the pre-extraction prompt, task, sampling and token budget exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > the actual production generation method sends that exact canonical request 7ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the explicit generator pin while reusing the canonical request 2ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the existing empty-source refusal without calling a model 1ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > passes an available context through with its hit span and content hash 8ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > a hit that was never expanded says not_expanded, with no span 2ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > passes an unavailable reason through unchanged, with the hit span when the expansion had one 2ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits: unchanged mapping (controls) > text stays the hit chunk content, never the expanded window 1ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits: unchanged mapping (controls) > keeps the existing locator fields 1ms
+
+ Test Files  18 passed (18)
+      Tests  201 passed (201)
+   Start at  02:40:20
+   Duration  39.31s (transform 10.14s, setup 415ms, import 27.31s, tests 8.06s, environment 2ms)
+

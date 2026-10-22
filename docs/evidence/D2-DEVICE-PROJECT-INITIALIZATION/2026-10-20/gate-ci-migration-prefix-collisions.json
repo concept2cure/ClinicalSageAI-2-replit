@@ -1,0 +1,15 @@
+{
+  "gate": "ci:migration-prefix-collisions",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-prefix-collisions"
+  ],
+  "at": "2026-10-20T22:28:22.832055+00:00",
+  "elapsedSeconds": 0.573,
+  "exitCode": 0,
+  "stdout": "[ci:migration-prefix-collisions] OK \u2014 no NEW collisions (3 baselined collision prefix(es) tolerated)\n",
+  "stderr": "",
+  "sourceFreeze": "source-freeze.json"
+}

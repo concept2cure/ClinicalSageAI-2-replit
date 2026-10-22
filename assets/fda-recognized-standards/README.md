@@ -10,6 +10,15 @@ It mirrors the vendored-asset pattern already used by `assets/estar-templates/`
 loader that reads it, and a fail-closed lookup that reports an explicitly
 labelled empty result rather than guessing when the asset is absent.
 
+The complete official database snapshot acquired on **2026-10-14** is now
+vendored: **1,738 recognition records**, **1,621 product codes** and **7,582
+explicit FDA-published code/recognition associations**. All 1,738 official SIS
+pages were acquired successfully and matched to the unfiltered official export.
+The dataset SHA-256 is
+`8795ab4429987c05e2912434e87b25c2754dc36ee736521c72dcc76f6411ee7a`.
+Source hashes, exact export, normalization rules and canonical loader proof are
+in [the acquisition evidence](../../docs/evidence/AUDIT-REMEDIATION/2026-10-14/agency-assets/recognized-standards/verification.md).
+
 ## Why this is a vendored dataset and not an API client
 
 openFDA exposes `device/classification.json`, `device/510k.json`, MAUDE, recalls,
@@ -21,8 +30,8 @@ Recognized Consensus Standards search at
 
 so there is no endpoint for `server/services/integrations/openfda-device-client.ts`
 to call. The only honest way to answer "which standards apply to product code
-X" is to hold FDA's own published list. That makes this a procurement/ops
-acquisition (runbook B21), not an engineering gap.
+X" is to hold FDA's own published list. The public acquisition and strict
+normalization described below remedy the previous runbook B21 asset gap.
 
 ## The one rule that governs this directory
 
@@ -58,10 +67,12 @@ Or point `FDA_RECOGNIZED_STANDARDS_DIR` at a directory that holds it.
 
 ### Shape
 
-The shape is **ours** — a normalization of FDA's published records, because FDA
-distributes the database through a search UI rather than as a single canonical
-machine-readable export. The acquisition step is therefore "export from FDA,
-normalize into this shape, record where it came from".
+The shape is **ours** — a normalization of FDA's published records. The
+unfiltered `results.cfm` page exposes a browser export form to
+`standards_Excel.cfm`; its official CSV contains designations and recognition
+numbers but omits product codes. Those associations come exclusively from each
+identity-matched official SIS page's Product Code cells. The full export and all
+SIS records must normalize successfully before replacing this file.
 
 ```json
 {
@@ -122,17 +133,35 @@ The middle row is the one that matters. "We do not have the data" and "the data
 says nothing here" are different claims, and a surface that collapses them into
 one empty table is lying by omission.
 
-## Vendoring policy — this dataset is gitignored by default
+## Vendoring policy
 
 FDA's recognition records are US-government public information, so nothing
-*licensed* blocks committing them. They are gitignored anyway, for two reasons:
+*licensed* blocks committing them. New exports require deliberate asset review:
 
 1. It is a bulk export that is superseded whenever FDA publishes a new
    Recognition List, not source code.
-2. It keeps a hand-written list of standards from arriving in the repository as
-   an ordinary-looking commit. Committing this file is a deliberate act
-   (`git add -f`) that must carry the provenance block and be reviewed as an
-   asset acquisition — the same treatment `assets/ectd-dtd/` gives DTDs.
+2. A hand-written list of standards must not arrive in the repository as an
+   ordinary-looking commit. The 2026-10-14 acquisition has an explicit exception
+   in this directory's `.gitignore`, accompanied by the provenance block,
+   pinned checksum and complete source manifest. Subsequent replacements must
+   carry equivalent whole-export acquisition and validation evidence.
+
+The snapshot is cumulative, with individual record recognition lists **003–067**
+preserved in the asset. `publishedOn` is **2026-09-07**, the latest Date of Entry
+published in the official database. The asset's `publishedOnBasis` and acquisition
+manifest explicitly distinguish this from a Federal Register publication date.
+The separate FR documents page currently ends at list 066, published
+2026-08-24; one actual SIS record publishes list 067. No FR date for that record
+is invented.
+
+**681** complete recognition records publish no explicit product code and remain
+unmapped: 402 have no association section, 208 have a section without a code
+table, and 71 have a table without code values. Their source state and uncoded
+citations are retained in the asset/manifest. Their empty arrays follow the
+existing loader contract; no product associations are inferred from citations.
+The manifest also preserves broader FDA scope declarations such as “All Medical
+Devices.” The native lookup labels its results as explicit code associations;
+broader published recognition scope needs separate regulatory review.
 
 Note what this dataset is **not**: it is the recognition *list*, not the
 standards themselves. The text of ISO 14971, IEC 60601-1 and the rest is

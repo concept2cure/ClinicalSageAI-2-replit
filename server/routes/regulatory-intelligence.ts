@@ -330,14 +330,24 @@ router.get('/agency-requirements', asyncHandler(async (req: Request, res: Respon
   res.json({ success: true, data });
 }));
 
-/** Platform standing that may validate a requirement every tenant is served. */
-const REQUIREMENT_CURATOR_ROLES = ['super_admin', 'platform_admin'] as const;
+/**
+ * Platform standing that may WRITE reference data every tenant is served.
+ *
+ * Two surfaces ask it: validating an agency requirement, and re-seeding the
+ * document templates whose section codes authored text binds to. One constant,
+ * because it is one question — two with the same contents drift apart.
+ *
+ * Deliberately not `requirePlatformAdmin`, which also admits `support`: a
+ * support session reads across the platform, it does not re-key every
+ * customer's regulatory outlines.
+ */
+const PLATFORM_CURATOR_ROLES = ['super_admin', 'platform_admin'] as const;
 
 /** The session user, when they hold platform curator standing; else null. */
-async function requirementCuratorId(req: Request): Promise<number | null> {
+async function platformCuratorId(req: Request): Promise<number | null> {
   const userId = authedUserId(req);
   if (userId === null || !Number.isSafeInteger(userId) || userId < 1) return null;
-  return (await holdsPlatformRole(req, REQUIREMENT_CURATOR_ROLES)) ? userId : null;
+  return (await holdsPlatformRole(req, PLATFORM_CURATOR_ROLES)) ? userId : null;
 }
 
 router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Response) => {
@@ -357,7 +367,7 @@ router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Resp
      every tenant. Validating needs platform curator standing; the validator
      is the session's user. Anyone else's requirement is recorded unvalidated. */
   const wantsValidation = !!body.validateImmediately;
-  const curatorId = wantsValidation ? await requirementCuratorId(req) : null;
+  const curatorId = wantsValidation ? await platformCuratorId(req) : null;
   const result = await promotePatternToRequirement({
     organizationId: guard.orgId,
     patternId,
@@ -567,8 +577,30 @@ router.post('/templates/validate', asyncHandler(async (req: Request, res: Respon
 router.post('/templates/seed', asyncHandler(async (req: Request, res: Response) => {
   const guard = requireAuthedOrgId(req, res);
   if (!guard.ok) return;
+  /* 2026-10-18: this was guarded by authentication alone, and seedTemplates()
+     is unconditional and global — it UPDATEs every seeded template row, then
+     replaces that template's section rows from source. document_templates has
+     no organization column and no RLS policy, so one member of one tenant
+     could re-key the outlines every OTHER tenant's authored text binds to
+     (filingSectionKey joins on the code). A cross-tenant INTEGRITY surface,
+     and the quietest kind: afterwards both stores are internally consistent,
+     so no agreement check can report it.
+     Safe to gate only since the boot seeder started correcting drift
+     (template-seeds.ts, 2026-10-18). Before that this route was the ONLY way
+     to apply a corrected section_code, so a gate here would have removed the
+     sole path to a correction; now the deploy is that path. */
+  const curatorId = await platformCuratorId(req);
+  if (curatorId === null) {
+    return res.status(403).json({
+      error: 'forbidden',
+      message:
+        'Refreshing the regulatory document templates needs platform curator standing, '
+        + 'because every tenant is served the same templates. A corrected template reaches '
+        + 'this environment on the next deploy.',
+    });
+  }
   const data = await seedTemplates();
-  log.info(`Template seeding by org=${guard.orgId}: ${JSON.stringify(data)}`);
+  log.info(`Template seeding by curator=${curatorId} org=${guard.orgId}: ${JSON.stringify(data)}`);
   res.json({ success: true, data });
 }));
 
@@ -592,6 +624,14 @@ router.get('/templates/prompt-hints', asyncHandler(async (req: Request, res: Res
   res.json({ success: true, data });
 }));
 
+/**
+ * A number the body stated, or undefined when it is absent, null, '' or not a
+ * number. 2026-10-15: POST /readiness read `Number.isFinite(Number(x))`, and
+ * Number(null) and Number('') are 0, so `projectId: null` became project 0 and
+ * a null count became "0 issues".
+ */
+const statedNumber = (v: unknown): number | undefined => (v == null || v === '' || !Number.isFinite(Number(v)) ? undefined : Number(v));
+
 // ─── Composite readiness — thin enrichment on POST /score ────────────────────
 //
 // Calls the same `scoreSubmissionDraft` orchestrator and attaches the three
@@ -602,6 +642,8 @@ router.post('/readiness', asyncHandler(async (req: Request, res: Response) => {
   const guard = requireAuthedOrgId(req, res);
   if (!guard.ok) return;
   const body = req.body ?? {};
+  const projectId = statedNumber(body.projectId);
+  if (body.projectId != null && !(Number.isSafeInteger(projectId) && Number(projectId) > 0)) return res.status(400).json({ error: 'invalid_request', message: 'projectId, when sent, must be a positive integer' });
   const submissionType = typeof body.submissionType === 'string' ? body.submissionType : null;
   const presentSections = Array.isArray(body.presentSections) ? body.presentSections.map(String) : null;
   if (!submissionType || !presentSections) {
@@ -609,7 +651,7 @@ router.post('/readiness', asyncHandler(async (req: Request, res: Response) => {
   }
   const data = await computeReadiness({
     organizationId: guard.orgId,
-    projectId: Number.isFinite(Number(body.projectId)) ? Number(body.projectId) : undefined,
+    projectId,
     submissionId: typeof body.submissionId === 'string' ? body.submissionId : undefined,
     artifactId: typeof body.artifactId === 'string' ? body.artifactId : undefined,
     submissionType,
@@ -620,8 +662,7 @@ router.post('/readiness', asyncHandler(async (req: Request, res: Response) => {
       body.sectionScores && typeof body.sectionScores === 'object' && !Array.isArray(body.sectionScores)
         ? (body.sectionScores as Record<string, number>)
         : undefined,
-    harmonizeIssueCount: Number.isFinite(Number(body.harmonizeIssueCount)) ? Number(body.harmonizeIssueCount) : undefined,
-    openEscalations: Number.isFinite(Number(body.openEscalations)) ? Number(body.openEscalations) : undefined,
+    harmonizeIssueCount: statedNumber(body.harmonizeIssueCount), openEscalations: statedNumber(body.openEscalations),
   });
   res.json({ success: true, data });
 }));

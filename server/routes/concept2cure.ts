@@ -27,7 +27,7 @@
  * - Full database persistence for conversations/artifacts
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, type RequestHandler } from 'express';
 import {
   type AuditEntry,
   type Conversation,
@@ -37,6 +37,7 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   normalizeConnectedApps,
   normalizeKnowledge,
@@ -53,6 +54,8 @@ import {
   loadProjectSharingState,
   normalizeProjectSettings,
   resolveClientWorkspaceId,
+  requireProjectAdmission,
+  ProjectAdmissionRefusal,
 } from './c2c/project-access';
 import { z } from 'zod';
 import { eq, desc, and, inArray } from 'drizzle-orm';
@@ -64,7 +67,6 @@ import { cacheResponse } from '../middleware/enterprise-performance';
 import {
   regulatoryAuditLogs,
   projects,
-  users,
   organizationUsers,
   projectMembers,
   projectVisibilitySettings,
@@ -83,9 +85,58 @@ import {
   canUseProject,
   getProjectSharingState,
 } from '../services/project-sharing-access';
+import { readCsrProjectActor } from '../services/csr/project-scope';
+import { canCreateProgram } from '../services/c2c/program-access';
+import { installProjectSharingRoutes } from './c2c/project-sharing';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
+
+/** Creation uses the established open-role project policy; changing existing records still uses their write ACL. */
+const currentProjectCreator: RequestHandler = async (req, res, next) => {
+  try {
+    // Unlike read/export admission, creation requires an active tenant even
+    // during the pending-deletion data-return window.
+    const actor = await readCsrProjectActor(pool, getOrganizationId(req), getUserId(req));
+    const role = String(actor.role).trim().toLowerCase();
+    if (!canCreateProgram({ orgRole: role })) {
+      throw new ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current organization role cannot create a project.');
+    }
+    req.userRole = role;
+    next();
+  } catch (error) {
+    const refusal = (error as { status?: number })?.status === 403 && !(error instanceof ProjectAdmissionRefusal)
+      ? new ProjectAdmissionRefusal(403, 'PROJECT_MEMBERSHIP_REQUIRED', 'Current active organization membership is required.') : error;
+    sendProjectAdmissionError(res, refusal);
+  }
+};
+
+function sendProjectAdmissionError(res: Response, error: unknown) {
+  const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(
+    503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.',
+  );
+  return sendError(res, refusal.status, refusal.message, undefined, refusal.code);
+}
+
+function projectRecordAdmission(forWrite: boolean, manage = false): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      if (!getProjectScope(req.params.id ?? req.params.projectId)) {
+        return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+      }
+      const project = await requireProjectAdmission(req, req.params.id ?? req.params.projectId, forWrite);
+      if (manage) {
+        const sharing = await loadProjectSharingState(project.id, getOrganizationId(req), project);
+        if (!canManageProject({ actor: { userId: getUserId(req), orgRole: req.userRole },
+          project: { createdById: project.createdById, ownerId: project.ownerId,
+            settings: applyProjectSharingState(normalizeProjectSettings(project.settings), sharing) } })) {
+          throw new ProjectAdmissionRefusal(403, 'PROJECT_MANAGE_PERMISSION_DENIED', 'Current project ownership or organization management permission is required.');
+        }
+      }
+      next();
+    } catch (error) { sendProjectAdmissionError(res, error); }
+  };
+}
 
 
 import { parseIntegerProjectId } from '../lib/project-id.js';
@@ -164,16 +215,6 @@ const createProjectSchema = z.object({
 });
 
 const updateProjectSchema = createProjectSchema.partial();
-
-const projectVisibilitySchema = z.object({
-  visibility: z.enum(['private', 'org_public']),
-});
-
-const upsertProjectMemberSchema = z.object({
-  userId: z.number().int().positive(),
-  role: z.enum(['use', 'edit']),
-});
-
 
 const ownershipPreferencesSchema = z
   .object({
@@ -1004,7 +1045,7 @@ function getSuggestedActionsForType(
  * @security Bearer token required
  * @body {name, submissionType, description?, customInstructions?}
  */
-router.post('/projects', async (req: Request, res: Response) => {
+router.post('/projects', currentProjectCreator, async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -1028,90 +1069,93 @@ router.post('/projects', async (req: Request, res: Response) => {
     };
 
     // Insert into database with tenant context
-    const [newProject] = await db
-      .insert(projects)
-      .values({
-        organizationId,
-        clientWorkspaceId,
-        name: sanitizedData.name,
-        description: sanitizedData.description,
-        type: 'concept2cure',
-        status: 'planning',
-        createdById: userId,
-        ownerId: userId,
-        metadata: {
-          submissionType: data.submissionType,
-          registryId: data.registryId ?? null,
-          applicationFamily: data.applicationFamily ?? null,
-          applicationType: data.applicationType ?? null,
-          agency: data.agency ?? data.targetAgency ?? null,
-          country: data.country ?? null,
-          productClass: data.productClass ?? null,
-          dossierStandard: data.dossierStandard ?? null,
-          lifecycleStage: data.lifecycleStage ?? null,
-          targetSubmissionDate: data.targetSubmissionDate,
-          sponsor: data.sponsor,
-          product: data.product,
-          region: data.region,
-          pinned: data.pinned ?? false,
-          targetAgency: data.targetAgency ?? null,
-          color: data.color ?? null,
-        },
-        settings: {
-          customInstructions: sanitizedData.customInstructions,
-          ownership: {
-            chatHistory: [],
-            documentInventory: [],
-            vaultLinkedFilesEvidence: [],
-            projectInstructions: sanitizedData.customInstructions || '',
-            reusableSnippetsKnowledge: [],
-            reports: [],
-            reviewState: 'draft',
-            approvals: [],
-            readinessState: 'not_started',
-            activityHistory: [],
-            currentWorkbenchContext: '',
+    const newProject = await db.transaction(async tx => {
+      const [newProject] = await tx
+        .insert(projects)
+        .values({
+          organizationId,
+          clientWorkspaceId,
+          name: sanitizedData.name,
+          description: sanitizedData.description,
+          type: 'concept2cure',
+          status: 'planning',
+          createdById: userId,
+          ownerId: userId,
+          metadata: {
+            submissionType: data.submissionType,
+            registryId: data.registryId ?? null,
+            applicationFamily: data.applicationFamily ?? null,
+            applicationType: data.applicationType ?? null,
+            agency: data.agency ?? data.targetAgency ?? null,
+            country: data.country ?? null,
+            productClass: data.productClass ?? null,
+            dossierStandard: data.dossierStandard ?? null,
+            lifecycleStage: data.lifecycleStage ?? null,
+            targetSubmissionDate: data.targetSubmissionDate,
+            sponsor: data.sponsor,
+            product: data.product,
+            region: data.region,
+            pinned: data.pinned ?? false,
+            targetAgency: data.targetAgency ?? null,
+            color: data.color ?? null,
           },
-        },
-      })
-      .returning();
+          settings: {
+            customInstructions: sanitizedData.customInstructions,
+            ownership: {
+              chatHistory: [],
+              documentInventory: [],
+              vaultLinkedFilesEvidence: [],
+              projectInstructions: sanitizedData.customInstructions || '',
+              reusableSnippetsKnowledge: [],
+              reports: [],
+              reviewState: 'draft',
+              approvals: [],
+              readinessState: 'not_started',
+              activityHistory: [],
+              currentWorkbenchContext: '',
+            },
+          },
+        })
+        .returning();
 
-    await db
-      .insert(projectVisibilitySettings)
-      .values({
-        organizationId,
-        projectId: newProject.id,
-        visibility: 'private',
-        updatedById: userId,
-      })
-      .onConflictDoNothing();
+      await tx
+        .insert(projectVisibilitySettings)
+        .values({
+          organizationId,
+          projectId: newProject.id,
+          visibility: 'private',
+          updatedById: userId,
+        })
+        .onConflictDoNothing();
 
-    await db
-      .insert(projectMembers)
-      .values({
-        organizationId,
-        projectId: newProject.id,
-        userId,
-        role: 'owner',
-        status: 'active',
-        invitedById: userId,
-        acceptedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [projectMembers.projectId, projectMembers.userId],
-        set: {
+      await tx
+        .insert(projectMembers)
+        .values({
+          organizationId,
+          projectId: newProject.id,
+          userId,
           role: 'owner',
           status: 'active',
           invitedById: userId,
           acceptedAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [projectMembers.projectId, projectMembers.userId],
+          set: {
+            role: 'owner',
+            status: 'active',
+            invitedById: userId,
+            acceptedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      return newProject;
+    });
 
     const projectId = `proj_${newProject.id}`;
 
     // Log audit entry for 21 CFR Part 11 compliance
-    await logAuditEntry(req, 'CREATE', 'project', projectId, null, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', projectId, null, {
       name: sanitizedData.name,
       submissionType: data.submissionType,
       organizationId,
@@ -1361,7 +1405,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       })(),
     ]).catch(() => {}); // guard: each task logs its own failure
 
-    return sendSuccess(res.status(201), response);
+    return sendSuccess(res.status(201), response, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1380,7 +1424,7 @@ router.post('/projects', async (req: Request, res: Response) => {
  * @security Bearer token required
  * @param req.params.id - Project ID
  */
-router.put('/projects/:id', async (req: Request, res: Response) => {
+router.put('/projects/:id', projectRecordAdmission(true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
@@ -1460,7 +1504,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       .returning();
 
     // Log audit entry for 21 CFR Part 11 compliance
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.id, existing, updated);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', req.params.id, existing, updated);
 
     // Transform response with DB conversations
     const conversations = await getConversationsFromDb(numericId, organizationId);
@@ -1482,7 +1526,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     };
 
     logger.info('Updated project', { projectId: req.params.id, organizationId });
-    return sendSuccess(res, response);
+    return sendSuccess(res, response, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1492,7 +1536,13 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Response) => {
+/* Held to its sibling PUT /projects/:id: same admission, same audit (IAM-31,
+   weekly review 2026-10-19). This writes settings.customInstructions — the
+   text getProjectInstructionsBlock puts into AnA's prompt for every session on
+   the project — and it ran with the router's organization check only, so any
+   member, a viewer included, could rewrite a private project's instructions,
+   unaudited. */
+router.patch('/projects/:id/ownership-preferences', projectRecordAdmission(true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
@@ -1558,6 +1608,10 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
+    // The same Part 11 audit entry the PUT writes, before/after values included;
+    // its outcome is disclosed on the response rather than assumed.
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', String(numericId), existing, updated);
+
     const conversations = await getConversationsFromDb(numericId, organizationId);
     await getOwnershipDerivationData([numericId], organizationId);
     return sendSuccess(res, {
@@ -1575,7 +1629,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1651,72 +1705,15 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
   }
 });
 
-/**
- * GET /api/concept2cure/projects/:id/sharing
- * Retrieve sharing visibility and member assignments for a project.
- */
-router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    const sharing = await loadProjectSharingState(projectAccess.project.id, organizationId);
-    if (
-      !canUseProject({
-        actor: { userId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: applyProjectSharingState(
-            normalizeProjectSettings(projectAccess.project.settings),
-            sharing
-          ),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(
-        projectAccess.project.id,
-        sharing,
-        projectAccess.legacyFallbackApplied
-      )
-    );
-  } catch (error: any) {
-    logger.error('Failed to fetch project sharing', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to fetch project sharing');
-  }
-});
+// Existing sharing paths are registered once through their current-admission helper.
+installProjectSharingRoutes(router);
 
 /**
  * PUT /api/concept2cure/projects/:projectId/collaborators
  * Replaces project collaborator permission assignments.
  * @deprecated Use PATCH /projects/:id/sharing/visibility + PUT /projects/:id/sharing/members/:userId
  */
-router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+router.put('/projects/:projectId/collaborators', projectRecordAdmission(true, true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
@@ -1789,7 +1786,7 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
       collaborators,
       action: 'update_collaborators',
     });
@@ -1798,7 +1795,7 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
       projectId: `proj_${numericId}`,
       collaborators,
       updatedAt: updated.updatedAt,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1812,292 +1809,6 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
 });
 
 /**
- * PATCH /api/concept2cure/projects/:id/sharing/visibility
- * Update project visibility policy (private | org_public).
- */
-router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-    const { visibility } = projectVisibilitySchema.parse(req.body);
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    if (
-      !canManageProject({
-        actor: { userId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: normalizeProjectSettings(projectAccess.project.settings),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    const [existingVisibility] = await db
-      .select({
-        id: projectVisibilitySettings.id,
-      })
-      .from(projectVisibilitySettings)
-      .where(
-        and(
-          eq(projectVisibilitySettings.organizationId, organizationId),
-          eq(projectVisibilitySettings.projectId, scope.numericId)
-        )
-      )
-      .limit(1);
-
-    if (existingVisibility) {
-      await db
-        .update(projectVisibilitySettings)
-        .set({
-          visibility,
-          updatedById: userId,
-          updatedAt: new Date(),
-        })
-        .where(eq(projectVisibilitySettings.id, existingVisibility.id));
-    } else {
-      await db.insert(projectVisibilitySettings).values({
-        organizationId,
-        projectId: scope.numericId,
-        visibility,
-        updatedById: userId,
-      });
-    }
-
-    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
-    );
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
-    }
-    logger.error('Failed to update project sharing visibility', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to update project sharing visibility');
-  }
-});
-
-/**
- * PUT /api/concept2cure/projects/:id/sharing/members/:userId
- * Add/update explicit project member with use/edit role.
- */
-router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const actorUserId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-
-    const pathUserId = Number.parseInt(paramStr(req.params.userId), 10);
-    if (!Number.isFinite(pathUserId) || pathUserId <= 0) {
-      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
-    }
-
-    const payload = upsertProjectMemberSchema.parse({
-      userId: pathUserId,
-      role: req.body?.role,
-    });
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId: actorUserId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    if (
-      !canManageProject({
-        actor: { userId: actorUserId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: normalizeProjectSettings(projectAccess.project.settings),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    const [targetUser] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, payload.userId))
-      .limit(1);
-    if (!targetUser) {
-      return sendError(res, 404, 'Target user not found');
-    }
-
-    const [orgMembership] = await db
-      .select({ id: organizationUsers.id })
-      .from(organizationUsers)
-      .where(
-        and(
-          eq(organizationUsers.organizationId, organizationId),
-          eq(organizationUsers.userId, payload.userId)
-        )
-      )
-      .limit(1);
-    if (!orgMembership) {
-      return sendError(
-        res,
-        400,
-        'Target user is not a member of this organization',
-        undefined,
-        'ORG_MEMBERSHIP_REQUIRED'
-      );
-    }
-
-    const [existingMember] = await db
-      .select({ id: projectMembers.id })
-      .from(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.organizationId, organizationId),
-          eq(projectMembers.projectId, scope.numericId),
-          eq(projectMembers.userId, payload.userId)
-        )
-      )
-      .limit(1);
-
-    if (existingMember) {
-      await db
-        .update(projectMembers)
-        .set({
-          role: payload.role,
-          status: 'active',
-          invitedById: actorUserId,
-          acceptedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(projectMembers.id, existingMember.id));
-    } else {
-      await db.insert(projectMembers).values({
-        organizationId,
-        projectId: scope.numericId,
-        userId: payload.userId,
-        role: payload.role,
-        status: 'active',
-        invitedById: actorUserId,
-        acceptedAt: new Date(),
-      });
-    }
-
-    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
-    );
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
-    }
-    logger.error('Failed to upsert project member', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to upsert project member');
-  }
-});
-
-/**
- * DELETE /api/concept2cure/projects/:id/sharing/members/:userId
- * Remove explicit member access from project.
- */
-router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const actorUserId = getUserId(req);
-    const actorRole = getActorRole(req);
-    const scope = getProjectScope(req.params.id);
-    if (!scope) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-    const targetUserId = Number.parseInt(paramStr(req.params.userId), 10);
-
-    if (!Number.isFinite(targetUserId) || targetUserId <= 0) {
-      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
-    }
-
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
-      projectId: scope.numericId,
-      userId: actorUserId,
-      actorRole,
-    });
-
-    if (!projectAccess.project) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    if (
-      !canManageProject({
-        actor: { userId: actorUserId, orgRole: actorRole },
-        project: {
-          createdById: projectAccess.project.createdById ?? null,
-          ownerId: projectAccess.project.ownerId ?? null,
-          settings: normalizeProjectSettings(projectAccess.project.settings),
-        },
-      })
-    ) {
-      return sendError(res, 403, 'Forbidden');
-    }
-
-    await db
-      .delete(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.organizationId, organizationId),
-          eq(projectMembers.projectId, scope.numericId),
-          eq(projectMembers.userId, targetUserId)
-        )
-      );
-
-    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
-    return sendSuccess(
-      res,
-      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
-    );
-  } catch (error: any) {
-    logger.error('Failed to remove project member', {
-      error: error.message,
-      projectId: paramStr(req.params.id),
-    });
-    return sendError(res, 500, 'Failed to remove project member');
-  }
-});
-
-/**
  * DELETE /api/concept2cure/projects/:id
  * Soft delete a project for 21 CFR Part 11 compliance.
  * Records are never truly deleted - just marked with actualEndDate.
@@ -2105,7 +1816,7 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
  * @security Bearer token required
  * @param req.params.id - Project ID
  */
-router.delete('/projects/:id', async (req: Request, res: Response) => {
+router.delete('/projects/:id', projectRecordAdmission(true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -2129,32 +1840,34 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
       return sendError(res, 404, 'Project not found');
     }
 
-    // Soft delete by setting actualEndDate (21 CFR Part 11 compliant)
-    await db
-      .update(projects)
-      .set({
-        actualEndDate: new Date(),
-        status: 'archived',
-        updatedAt: new Date(),
-      })
-      .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)));
+    // Archive the project and its conversations together; a partial archive must not look retryable.
+    await db.transaction(async tx => {
+      await tx
+        .update(projects)
+        .set({
+          actualEndDate: new Date(),
+          status: 'archived',
+          updatedAt: new Date(),
+        })
+        .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)));
 
-    // Soft delete related conversations in DB (set status to archived)
-    await db
-      .update(concept2cureConversations)
-      .set({ status: 'archived', updatedAt: new Date() })
-      .where(
-        and(
-          eq(concept2cureConversations.projectId, scope.numericId),
-          eq(concept2cureConversations.organizationId, organizationId)
-        )
-      );
+      // Soft delete related conversations in DB (set status to archived)
+      await tx
+        .update(concept2cureConversations)
+        .set({ status: 'archived', updatedAt: new Date() })
+        .where(
+          and(
+            eq(concept2cureConversations.projectId, scope.numericId),
+            eq(concept2cureConversations.organizationId, organizationId)
+          )
+        );
+    });
 
     // Log audit entry for 21 CFR Part 11 compliance
-    await logAuditEntry(req, 'DELETE', 'project', req.params.id, existing, null);
+    const auditOutcome = await logAuditEntry(req, 'DELETE', 'project', req.params.id, existing, null);
 
     logger.info('Soft-deleted project', { projectId: req.params.id, organizationId });
-    return sendSuccess(res, { deleted: true, projectId: req.params.id });
+    return sendSuccess(res, { deleted: true, projectId: req.params.id }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logger.error('Failed to delete project', { error: error.message });
     return sendError(res, 500, 'Failed to delete project');
@@ -2167,7 +1880,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
  * subscriber can back up / share / archive their work. Tenant-scoped,
  * audited as EXPORT.
  */
-router.post('/projects/:id/export', async (req: Request, res: Response) => {
+router.post('/projects/:id/export', projectRecordAdmission(false), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const rawId = String(req.params.id ?? '');
@@ -2201,8 +1914,8 @@ router.post('/projects/:id/export', async (req: Request, res: Response) => {
       conversations,
     };
 
-    await logAuditEntry(req, 'EXPORT', 'project', rawId, existing, snapshot);
-    return sendSuccess(res, snapshot);
+    const auditOutcome = await logAuditEntry(req, 'EXPORT', 'project', rawId, existing, snapshot);
+    return sendSuccess(res, snapshot, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logger.error('Failed to export project', { error: error.message });
     return sendError(res, 500, 'Failed to export project');
@@ -2218,7 +1931,7 @@ router.post('/projects/:id/export', async (req: Request, res: Response) => {
  *
  * Body (optional): { name?: string }   — defaults to "Copy of <orig>"
  */
-router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
+router.post('/projects/:id/duplicate', currentProjectCreator, projectRecordAdmission(false), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -2242,22 +1955,38 @@ router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
         ? sanitizeContent(req.body.name.trim()).slice(0, 200)
         : `Copy of ${existing.name}`;
 
-    const [created] = await db
-      .insert(projects)
-      .values({
+    // Copy reusable project configuration, never source memberships, decisions,
+    // document pointers, programme identity or a previous transfer intent.
+    const sourceMetadata = normalizeProjectSettings(existing.metadata);
+    const sourceSettings = normalizeProjectSettings(existing.settings);
+    const metadata: Record<string, unknown> = {};
+    for (const key of ['submissionType', 'registryId', 'applicationFamily', 'applicationType', 'agency', 'country',
+      'productClass', 'dossierStandard', 'lifecycleStage', 'targetSubmissionDate', 'sponsor', 'product', 'region', 'targetAgency', 'color']) {
+      if (sourceMetadata[key] !== undefined) metadata[key] = sourceMetadata[key];
+    }
+    const created = await db.transaction(async tx => {
+      const [copy] = await tx.insert(projects).values({
         organizationId,
         clientWorkspaceId: existing.clientWorkspaceId,
-        createdById: userId ?? existing.createdById ?? null,
+        createdById: userId,
+        ownerId: userId,
         name: overrideName,
         description: existing.description,
         type: existing.type,
         status: 'active',
-        metadata: existing.metadata,
-        settings: existing.settings,
-      })
-      .returning();
+        metadata,
+        settings: { customInstructions: typeof sourceSettings.customInstructions === 'string' ? sourceSettings.customInstructions : '',
+          ownership: { chatHistory: [], documentInventory: [], vaultLinkedFilesEvidence: [],
+            projectInstructions: typeof sourceSettings.customInstructions === 'string' ? sourceSettings.customInstructions : '',
+            reusableSnippetsKnowledge: [], reports: [], reviewState: 'draft', approvals: [],
+            readinessState: 'not_started', activityHistory: [], currentWorkbenchContext: '' } },
+      }).returning();
+      await tx.insert(projectVisibilitySettings).values({ organizationId, projectId: copy.id, visibility: 'private', updatedById: userId });
+      await tx.insert(projectMembers).values({ organizationId, projectId: copy.id, userId, role: 'owner', status: 'active', invitedById: userId, acceptedAt: new Date() });
+      return copy;
+    });
 
-    await logAuditEntry(req, 'DUPLICATE', 'project', `proj_${created.id}`, existing, created);
+    const auditOutcome = await logAuditEntry(req, 'DUPLICATE', 'project', `proj_${created.id}`, existing, created);
     return sendSuccess(res, {
       id: `proj_${created.id}`,
       name: created.name,
@@ -2267,7 +1996,7 @@ router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
       sourceProjectId: rawId,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logger.error('Failed to duplicate project', { error: error.message });
     return sendError(res, 500, 'Failed to duplicate project');
@@ -2288,7 +2017,7 @@ const transferProjectSchema = z.object({
  * workspace-picker kit ships; until then this endpoint captures the
  * subscriber's intent and the audit trail of who initiated it.
  */
-router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
+router.post('/projects/:id/transfer', projectRecordAdmission(true, true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -2340,8 +2069,8 @@ router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'TRANSFER', 'project', rawId, existing, updated);
-    return sendSuccess(res, { id: rawId, transfer: transferRecord });
+    const auditOutcome = await logAuditEntry(req, 'TRANSFER', 'project', rawId, existing, updated);
+    return sendSuccess(res, { id: rawId, transfer: transferRecord }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error?.name === 'ZodError') {
       return sendError(res, 400, 'Invalid payload', error.errors, 'INVALID_INPUT');

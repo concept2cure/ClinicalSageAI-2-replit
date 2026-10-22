@@ -35,7 +35,9 @@ describe("a market's document takes only its own sections", () => {
   it.each(['M3', '2.5'])('refuses common section %s by name, and writes nothing', async (code) => {
     const { client, queries } = makeClient(code, 'market');
     const out = await commit(client);
-    expect(out).toEqual({ committed: false, reason: expect.stringMatching(new RegExp(`^Section ${code} is part of the project's home filing`)) });
+    expect(out).toMatchObject({ committed: false });
+    const prefix = `Section ${code} is part of the project's home filing`;
+    expect('reason' in out ? out.reason.slice(0, prefix.length) : undefined).toBe(prefix);
     expect(queries.some((q) => /set_config|UPDATE c2c_document_sections/.test(q))).toBe(false);
   });
 

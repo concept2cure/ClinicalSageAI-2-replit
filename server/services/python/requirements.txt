@@ -48,11 +48,11 @@ pinecone-client==2.2.4
 # API and HTTP
 requests==2.34.2
 httpx==0.28.1
-# 3.14.3 fixes CVE-2026-69244 (HIGH) — out-of-bounds heap read in the C HTTP
-# response parser's error path on a malformed response. No Python source in this
-# repo imports aiohttp directly, so this is a transitive pin and the bump is
-# confined to the dependency graph.
-aiohttp==3.14.3
+# 3.14.4 retains the CVE-2026-69244 parser fix and resolves the two HIGH
+# advisories reported by current CI (CVE-2026-111064, GHSA-2g87-pp6c-29x5).
+# No Python source in this repo imports aiohttp directly; this existing
+# transitive pin changes no runtime entrypoint. Reviewed 2026-10-20.
+aiohttp==3.14.4
 
 # Utilities
 python-dotenv==1.2.2

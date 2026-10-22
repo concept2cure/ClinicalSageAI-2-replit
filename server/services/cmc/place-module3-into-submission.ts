@@ -54,6 +54,8 @@ import { evaluateFinalExportGate, type FinalExportGateVerdict } from './final-ex
 import { getSectionLabels } from '../module3-convergence-service';
 import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Composer';
 import { MODULE3_PLACED_FROM } from './module3-placement-marker';
+import { applicationRefusal, type CompositionRefusal } from './composition-scope';
+import { assessProgramCompositionScope } from './module3-compile';
 
 /**
  * Wording for the one refusal this seam adds: a section whose stored
@@ -198,6 +200,19 @@ export type PlaceModule3Result =
       error: string;
       /** The vocabulary the target actually files on — named, not implied. */
       vocabulary: PlacementVocabulary;
+    }
+  | {
+      placed: false;
+      /**
+       * The composition boundary (decision P-28: small-molecule Module 3 for a
+       * US IND) refused: the program is outside it, or the target submission
+       * files something other than a US IND. Refused before anything is read
+       * or written.
+       */
+      refusedBy: 'composition-scope';
+      error: string;
+      /** The boundary's own refusal; the route answers its 409 body. */
+      refusal: CompositionRefusal;
     }
   | {
       placed: false;
@@ -421,6 +436,57 @@ async function isOtherProject(orgId: number, cmcProjectId: string, submissionPro
   return anchor.state === 'linked' && anchor.artifactProjectId !== Number(id);
 }
 
+/**
+ * Whether Module 3 may be placed into this target at all, asked before
+ * anything is read or written. Null when it may.
+ *
+ * 2a. The target must file on CTD headings. upsertLeaf judges every section
+ * code against the vocabulary of its submission's application type
+ * (shared/regulatory/placement-vocabulary.ts), and a Module 3 section code is
+ * a CTD code — 'm3.2.S.1' is not an IRB slot and not an eSTAR device section.
+ * Asked at the submission, before anything is read or written, because
+ * discovering it inside the per-section loop meant: the first section's
+ * coauthor_documents snapshot was already inserted, upsertLeaf then threw a
+ * VALIDATION error the route's catch did not recognise, and the caller got a
+ * 500 whose body told a CMC lead to file their drug substance at
+ * 'irb.consent'. The vocabulary is read through the one resolver, so a new
+ * submission type cannot make this check and upsertLeaf's disagree.
+ *
+ * 2a'. The target files a US IND, and the program is inside the composition
+ * boundary (decision P-28). Compose refuses a marketing application, but the
+ * IND-composed text could still be placed into one: 'ctd' admits NDA, BLA,
+ * ANDA and MAA, and an NDA created under the same program passes the
+ * cross-project check. What would have reached the agency is IND Module 3 in
+ * a marketing application — 3.2.R statements that say marketing items "do not
+ * apply to an IND", no §3.2.S.4.5 / §3.2.P.5.6 justification. The program is
+ * judged again too, because a section approved before the boundary existed can
+ * still pass the gate (2026-10-15 launch-boundary re-proof,
+ * docs/evidence/D2-API-SCOPE/2026-10-15-reproof/cmc-boundary/).
+ */
+async function refusedTarget(
+  orgId: number,
+  cmcProjectId: string,
+  applicationType: string | null,
+): Promise<PlaceModule3Result | null> {
+  const targetVocabulary = vocabularyForApplicationType(applicationType);
+  if (targetVocabulary !== 'ctd') {
+    return {
+      placed: false,
+      refusedBy: 'wrong-submission-type',
+      error:
+        `Module 3 files on CTD headings, and this submission files on ${targetVocabulary} ` +
+        'sections. Nothing was written. Place Module 3 into the program’s US IND, the one application ' +
+        'Module 3 is composed for here.',
+      vocabulary: targetVocabulary,
+    };
+  }
+  const scopeRefusal =
+    applicationRefusal(applicationType, 'submission') ?? (await assessProgramCompositionScope(orgId, cmcProjectId));
+  return scopeRefusal
+    ? { placed: false, refusedBy: 'composition-scope', error: scopeRefusal.message, refusal: scopeRefusal }
+    : null;
+}
+
 export async function placeModule3IntoSubmission(input: PlaceModule3Input): Promise<PlaceModule3Result> {
   const { orgId, userId, cmcProjectId, submissionId, sequenceId } = input;
 
@@ -448,32 +514,13 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
     throw new Error('NOT_FOUND: The sequence does not belong to the stated submission.');
   }
 
-  // 2a. The target must file on CTD headings. upsertLeaf judges every section
-  // code against the vocabulary of its submission's application type
-  // (shared/regulatory/placement-vocabulary.ts), and a Module 3 section code is
-  // a CTD code — 'm3.2.S.1' is not an IRB slot and not an eSTAR device section.
-  // Asked at the submission, before anything is read or written, because
-  // discovering it inside the per-section loop meant: the first section's
-  // coauthor_documents snapshot was already inserted, upsertLeaf then threw a
-  // VALIDATION error the route's catch did not recognise, and the caller got a
-  // 500 whose body told a CMC lead to file their drug substance at
-  // 'irb.consent'. The vocabulary is read through the one resolver, so a new
-  // submission type cannot make this check and upsertLeaf's disagree.
   const submission = await getSubmission(submissionId, { organizationId: orgId });
-  const targetVocabulary = vocabularyForApplicationType(
+  const targetRefused = await refusedTarget(
+    orgId,
+    cmcProjectId,
     (submission as { applicationType?: string | null }).applicationType ?? null,
   );
-  if (targetVocabulary !== 'ctd') {
-    return {
-      placed: false,
-      refusedBy: 'wrong-submission-type',
-      error:
-        `Module 3 files on CTD headings, and this submission files on ${targetVocabulary} ` +
-        'sections. Nothing was written. Place Module 3 into an eCTD submission ' +
-        '(IND, NDA, BLA or their equivalents).',
-      vocabulary: targetVocabulary,
-    };
-  }
+  if (targetRefused) return targetRefused;
 
   // 2b. The submission is this project's (PF-11; founder decision 2026-09-26).
   // Each section is snapshotted into coauthor_documents with no alias, so

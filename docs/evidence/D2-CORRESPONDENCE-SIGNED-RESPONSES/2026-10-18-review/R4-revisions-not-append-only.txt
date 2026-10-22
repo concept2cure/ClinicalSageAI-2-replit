@@ -1,0 +1,55 @@
+# mutation R4-revisions-not-append-only
+# file: scripts/db/provision-app-role.mjs
+# replaced: "    { schema: 'public', name: 'agency_question_response_revisions' },\n"
+# with: ''
+# command: npx vitest run --config vitest.db.config.ts tests/db/append-only-store-grants.dbtest.ts -t withholds UPDATE, DELETE and TRUNCATE
+# exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous)
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 19ms
+   → expected [ Array(1) ] to deeply equal []
+ ↓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not
+ ↓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store
+ ↓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only)
+ ↓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back
+ ↓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied
+ ↓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name
+ ↓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store
+ ↓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger
+ ↓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row
+ ↓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501)
+ ↓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger
+ ↓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  21:49:21
+   Duration  1.29s (transform 132ms, setup 96ms, import 91ms, tests 698ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.agency_question_response_revisions: UPDATE,DELETE",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:234:46
+    232| describe('the grant recipe (provisionAppServiceRole) on a per-run role…
+    233|   it('withholds UPDATE, DELETE and TRUNCATE on every append-only store…
+    234|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+       |                                              ^
+    235|     const held = await privileges(runtimeRole);
+    236|     for (const { store } of present) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

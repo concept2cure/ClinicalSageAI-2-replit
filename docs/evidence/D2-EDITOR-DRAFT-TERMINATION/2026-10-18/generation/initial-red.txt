@@ -1,0 +1,534 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:41:19.373Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:41:23.881Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:41:23.882Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:41:23.882Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn
+{
+  "timestamp": "2026-10-18T00:41:24.656Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the AI gateway declined the request",
+  "context": {
+    "code": "PROVIDER_UNAVAILABLE",
+    "sectionId": "298497a1-3a42-4430-9216-a88a1729a11b"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent
+{
+  "timestamp": "2026-10-18T00:41:24.672Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the provider returned no draft content",
+  "context": {
+    "sectionId": "acb0be5b-cde1-43eb-8b00-e11312a6f0dc",
+    "model": "claude-opus-5-5"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+{
+  "timestamp": "2026-10-18T00:41:24.694Z",
+  "level": "error",
+  "message": "[authoring-router] drafting AI failed",
+  "context": {
+    "err": "socket hang up at 10.0.0.xxx",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+Error generating AI draft: TypeError: Cannot read properties of null (reading 'content')
+    at /workspace/Concept2Cure/server/routes/authoring.router.ts:3979:37
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+{
+  "timestamp": "2026-10-18T00:41:24.726Z",
+  "level": "error",
+  "message": "[authoring-router] drafting AI failed",
+  "context": {
+    "err": "Cannot read properties of null (reading 'content')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 111ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > opens the record before the model is asked, so the turn starts when it did 34ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn 19ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent 17ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence 50ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'max_tokens' with 'valid JSON' before publishing or parking prose 24ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"924cd94b-e62c-478d-b8e9-49a1696f5cb0","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"b0abf182-deb2-4a7a-abd1-3b5ebade9ba6","sha256":"ccf2e9948253bb4ebef423d47a5d12ef5be9dd0e45082f8d0cae0e32a8740e27","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.751Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'max_tokens' with 'broken JSON' before publishing or parking prose 21ms
+   → {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"2b49f0f5-59e9-4c4f-829e-0fcfadf2d7f0","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"65a1169e-e45a-47eb-892f-7bdc7e03b5bc","sha256":"74794bfeff980c9e3ac058a3a4cc65e56487168185a76445f80b1935ff3a4a77","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.775Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'max_tokens' with 'plain prose' before publishing or parking prose 21ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"a24ff69a-6d65-4bde-97f1-935f03cc9757","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"9c202544-a4f0-4e6b-a002-d056d5d92cb5","sha256":"c652a7bf7b1bfcad336fa819497c1166af8738c9c1bd05450bf8ac153076f13c","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.795Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'length' with 'valid JSON' before publishing or parking prose 20ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"49360ce5-d1e6-41f7-9900-91ff9a316dcf","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"be3d6f48-56ee-40eb-8149-e30e51bce0ea","sha256":"4f8ecc73a0519f48db5e22375c648bb688eea4d667d707eb1dc3d8d663f652bb","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.815Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'length' with 'broken JSON' before publishing or parking prose 21ms
+   → {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"d826ad5d-61d9-4087-85bb-9a0efb9d9199","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"384a22d0-52d2-4155-ab94-d2e8e537a6b0","sha256":"0bb2d17b6b1e7bb16b6359ac1faeceabf7d380288a8e3a061c4ceadc4ee5057f","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.836Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'length' with 'plain prose' before publishing or parking prose 19ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"7b86391d-1a23-405a-a9f0-30c63b7accb9","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"223043ef-74d9-4a04-bf1e-baa19a9e61a4","sha256":"0cc887467f4b1c0f0c414f130a55c31a6a80c5be4d02f1c1cfd3cda0f306655b","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.856Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'chunk_timeout' with 'valid JSON' before publishing or parking prose 23ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"1718e20b-1ab1-4e97-afb0-93e7dfce1690","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"e5d06711-c43f-4c07-866c-30a5a6f744e1","sha256":"a8d46144f103afb31433ccc0b4c7e78b7af7bb4b3da062ed698a2db1c71bb7fc","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.876Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'chunk_timeout' with 'broken JSON' before publishing or parking prose 19ms
+   → {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"2798ee45-f953-4907-8690-a42307681b7b","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"1c5a6a4a-b0c8-40ea-9e0e-7d3a3e004580","sha256":"42fdcd56ffe7d6c1c7751a21f6dc09de8a878619a46f91a33b76b96d51fe4a1b","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.898Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'chunk_timeout' with 'plain prose' before publishing or parking prose 19ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"b23173a0-a9d0-46af-b601-f58207058c8c","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"85dd64f1-704a-426a-a8cb-9c0150757d2b","sha256":"f76bfe597bc6b6f83f5b27e64936d79d57a986f8afaeee2accbadfe71b0e2279","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.917Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses ' max_tokens ' with 'valid JSON' before publishing or parking prose 19ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"749ebec3-191f-4dd4-86d7-4289336fabb8","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"e158f674-dcba-4b45-91a1-0d2e984f93fb","sha256":"2d62d595b26981206e4e1d6093e6d1dfc3ee3ff96351a14b307f24ec1b8dc9b2","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.935Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses ' max_tokens ' with 'broken JSON' before publishing or parking prose 19ms
+   → {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"2d73dcaa-3c41-4faa-a2f1-0b9071b41e0e","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"41f371cc-0809-4e82-be70-acbea4f1d457","sha256":"fb6acf0245c4f1efcdbb4e5bec2ad4c8f9b546c92f76fb438ab8d989552fd62c","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.955Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses ' max_tokens ' with 'plain prose' before publishing or parking prose 17ms
+   → {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"9f74c8a8-7e19-443e-b2ec-a0289c33c892","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"468125f7-4bed-41b4-bc66-77863e820a38","sha256":"c921d869d154c6b7732c3778dd830b7604342db36d2d01b0c9d463672bad712d","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.972Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'complete JSON' reviewable and accepts its exact candidate 20ms
+   → expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: 'end_turn', …(3) }
+(16 matching properties omitted from actual)
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'whitespace complete prose' reviewable and accepts its exact candidate 16ms
+   → expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: ' stop ', …(3) }
+(16 matching properties omitted from actual)
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'unknown JSON' reviewable and accepts its exact candidate 16ms
+   → expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: 'unknown', …(3) }
+(16 matching properties omitted from actual)
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence
+[Authoring] Data Room retrieval failed (non-fatal): connect ECONNREFUSED 10.0.0.1:5432
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'unrecognized prose' reviewable and accepts its exact candidate 17ms
+   → expected { model: 'claude-opus-5-5', …(7) } to match object { …(4) }
+(16 matching properties omitted from actual)
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'null JSON' reviewable and accepts its exact candidate 18ms
+   → expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: null, …(3) }
+(16 matching properties omitted from actual)
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'absent prose' reviewable and accepts its exact candidate 14ms
+   → expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: null, …(3) }
+(16 matching properties omitted from actual)
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > names the claims no source holds and the verdict it states; the person’s words are theirs, not a source 19ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > the evidence the model was shown is the block without its instructions to the model 0ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a citation the section’s own heading gave the model is found there, never “not found” 15ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a figure past the 600-character cut is not found: the model was never shown it 15ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence 19ms
+stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from
+{
+  "timestamp": "2026-10-18T00:41:25.191Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ad-0000-4000-8000-0000000000ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 53ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'max_tokens' with 'valid JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"924cd94b-e62c-478d-b8e9-49a1696f5cb0","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"b0abf182-deb2-4a7a-abd1-3b5ebade9ba6","sha256":"ccf2e9948253bb4ebef423d47a5d12ef5be9dd0e45082f8d0cae0e32a8740e27","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.751Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'max_tokens' with 'broken JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"2b49f0f5-59e9-4c4f-829e-0fcfadf2d7f0","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"65a1169e-e45a-47eb-892f-7bdc7e03b5bc","sha256":"74794bfeff980c9e3ac058a3a4cc65e56487168185a76445f80b1935ff3a4a77","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.775Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'max_tokens' with 'plain prose' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"a24ff69a-6d65-4bde-97f1-935f03cc9757","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"9c202544-a4f0-4e6b-a002-d056d5d92cb5","sha256":"c652a7bf7b1bfcad336fa819497c1166af8738c9c1bd05450bf8ac153076f13c","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.795Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'length' with 'valid JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"49360ce5-d1e6-41f7-9900-91ff9a316dcf","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"be3d6f48-56ee-40eb-8149-e30e51bce0ea","sha256":"4f8ecc73a0519f48db5e22375c648bb688eea4d667d707eb1dc3d8d663f652bb","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.815Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'length' with 'broken JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"d826ad5d-61d9-4087-85bb-9a0efb9d9199","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"384a22d0-52d2-4155-ab94-d2e8e537a6b0","sha256":"0bb2d17b6b1e7bb16b6359ac1faeceabf7d380288a8e3a061c4ceadc4ee5057f","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.836Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'length' with 'plain prose' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"7b86391d-1a23-405a-a9f0-30c63b7accb9","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"223043ef-74d9-4a04-bf1e-baa19a9e61a4","sha256":"0cc887467f4b1c0f0c414f130a55c31a6a80c5be4d02f1c1cfd3cda0f306655b","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.856Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'chunk_timeout' with 'valid JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"1718e20b-1ab1-4e97-afb0-93e7dfce1690","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"e5d06711-c43f-4c07-866c-30a5a6f744e1","sha256":"a8d46144f103afb31433ccc0b4c7e78b7af7bb4b3da062ed698a2db1c71bb7fc","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.876Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'chunk_timeout' with 'broken JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"2798ee45-f953-4907-8690-a42307681b7b","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"1c5a6a4a-b0c8-40ea-9e0e-7d3a3e004580","sha256":"42fdcd56ffe7d6c1c7751a21f6dc09de8a878619a46f91a33b76b96d51fe4a1b","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.898Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses 'chunk_timeout' with 'plain prose' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"b23173a0-a9d0-46af-b601-f58207058c8c","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"85dd64f1-704a-426a-a8cb-9c0150757d2b","sha256":"f76bfe597bc6b6f83f5b27e64936d79d57a986f8afaeee2accbadfe71b0e2279","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.917Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses ' max_tokens ' with 'valid JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"749ebec3-191f-4dd4-86d7-4289336fabb8","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"e158f674-dcba-4b45-91a1-0d2e984f93fb","sha256":"2d62d595b26981206e4e1d6093e6d1dfc3ee3ff96351a14b307f24ec1b8dc9b2","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.935Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses ' max_tokens ' with 'broken JSON' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"{\"content\":\"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"2d73dcaa-3c41-4faa-a2f1-0b9071b41e0e","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"41f371cc-0809-4e82-be70-acbea4f1d457","sha256":"fb6acf0245c4f1efcdbb4e5bec2ad4c8f9b546c92f76fb438ab8d989552fd62c","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.955Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > known cutoff never becomes an editor candidate > refuses ' max_tokens ' with 'plain prose' before publishing or parking prose
+AssertionError: {"success":true,"source":"model","draft":{"content":"UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE","draftId":"9f74c8a8-7e19-443e-b2ec-a0289c33c892","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"468125f7-4bed-41b4-bc66-77863e820a38","sha256":"c921d869d154c6b7732c3778dd830b7604342db36d2d01b0c9d463672bad712d","servedBy":[{"provider":"anthropic","model":"claude-opus-5-5","qualified":true,"approvedForHighRisk":true,"pq":"pending"}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-18T00:41:24.972Z","model":"claude-opus-5-5","provider":"anthropic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:275:50
+    273|     const res = await author(request(app).post(`/api/authoring/section…
+    274|
+    275|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    276|     expect(res.body).toMatchObject({ success: false, error: { code: 'D…
+    277|     expect(res.body.error.message).toMatch(/shorten/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'complete JSON' reviewable and accepts its exact candidate
+AssertionError: expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: 'end_turn', …(3) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": "end_turn",
+    "requestId": "req-editor-reviewable",
+-   "truncated": false,
+    "turnRecordId": "804791ea-0a9b-4a10-b862-25df0ec4d9b7",
+  }
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:326:33
+    324|     )).rows[0];
+    325|     expect(candidate.content).toBe(content);
+    326|     expect(candidate.generator).toMatchObject({ finishReason: finishRe…
+       |                                 ^
+    327|       requestId: 'req-editor-reviewable', turnRecordId: res.body.draft…
+    328|     const accepted = await author(request(app).post(`/api/authoring/se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'whitespace complete prose' reviewable and accepts its exact candidate
+AssertionError: expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: ' stop ', …(3) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": " stop ",
+    "requestId": "req-editor-reviewable",
+-   "truncated": false,
+    "turnRecordId": "dcfec504-6bc2-46e0-ab68-b840ab82c930",
+  }
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:326:33
+    324|     )).rows[0];
+    325|     expect(candidate.content).toBe(content);
+    326|     expect(candidate.generator).toMatchObject({ finishReason: finishRe…
+       |                                 ^
+    327|       requestId: 'req-editor-reviewable', turnRecordId: res.body.draft…
+    328|     const accepted = await author(request(app).post(`/api/authoring/se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'unknown JSON' reviewable and accepts its exact candidate
+AssertionError: expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: 'unknown', …(3) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": "unknown",
+    "requestId": "req-editor-reviewable",
+-   "truncated": false,
+    "turnRecordId": "66c5f3ac-a272-44c9-a8a6-87cab740fd14",
+  }
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:326:33
+    324|     )).rows[0];
+    325|     expect(candidate.content).toBe(content);
+    326|     expect(candidate.generator).toMatchObject({ finishReason: finishRe…
+       |                                 ^
+    327|       requestId: 'req-editor-reviewable', turnRecordId: res.body.draft…
+    328|     const accepted = await author(request(app).post(`/api/authoring/se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'unrecognized prose' reviewable and accepts its exact candidate
+AssertionError: expected { model: 'claude-opus-5-5', …(7) } to match object { …(4) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": "provider_future_stop",
+    "requestId": "req-editor-reviewable",
+-   "truncated": false,
+    "turnRecordId": "cd03fcd7-6dfd-4d23-9998-21e6e6e516b1",
+  }
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:326:33
+    324|     )).rows[0];
+    325|     expect(candidate.content).toBe(content);
+    326|     expect(candidate.generator).toMatchObject({ finishReason: finishRe…
+       |                                 ^
+    327|       requestId: 'req-editor-reviewable', turnRecordId: res.body.draft…
+    328|     const accepted = await author(request(app).post(`/api/authoring/se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'null JSON' reviewable and accepts its exact candidate
+AssertionError: expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: null, …(3) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": null,
+    "requestId": "req-editor-reviewable",
+-   "truncated": false,
+    "turnRecordId": "22a3404b-ab9c-4f1e-9408-3814d2d2cccf",
+  }
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:326:33
+    324|     )).rows[0];
+    325|     expect(candidate.content).toBe(content);
+    326|     expect(candidate.generator).toMatchObject({ finishReason: finishRe…
+       |                                 ^
+    327|       requestId: 'req-editor-reviewable', turnRecordId: res.body.draft…
+    328|     const accepted = await author(request(app).post(`/api/authoring/se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+
+ FAIL  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > viable editor candidates retain reported termination without inventing completion > keeps 'absent prose' reviewable and accepts its exact candidate
+AssertionError: expected { model: 'claude-opus-5-5', …(7) } to match object { finishReason: null, …(3) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finishReason": null,
+    "requestId": "req-editor-reviewable",
+-   "truncated": false,
+    "turnRecordId": "f93125b0-dcaa-44d8-8fd7-c20f05c6e9e1",
+  }
+
+ ❯ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts:326:33
+    324|     )).rows[0];
+    325|     expect(candidate.content).toBe(content);
+    326|     expect(candidate.generator).toMatchObject({ finishReason: finishRe…
+       |                                 ^
+    327|       requestId: 'req-editor-reviewable', turnRecordId: res.body.draft…
+    328|     const accepted = await author(request(app).post(`/api/authoring/se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 11 passed (29)
+   Start at  00:41:17
+   Duration  7.26s (transform 2.82s, setup 72ms, import 1.34s, tests 5.62s, environment 0ms)
+

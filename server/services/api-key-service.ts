@@ -9,11 +9,64 @@
  */
 
 import { createHash, randomBytes } from 'crypto';
-import type { PoolClient } from 'pg';
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { setTenantContextTx } from './tenant/governed-tenant-context';
 
 const log = createScopedLogger('api-key-service');
+
+export interface ApiKeyAuditContext { reason?: string; ipAddress?: string; userAgent?: string }
+interface KeyClient { query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }> }
+export class ApiKeyLifecycleError extends Error {
+  readonly status = 503;
+  readonly code: 'API_KEY_LIFECYCLE_UNAVAILABLE' | 'API_KEY_COMMIT_UNCONFIRMED';
+  constructor(commitStarted: boolean, readonly keyId?: number) {
+    super(commitStarted ? 'The API-key change could not be confirmed. Check the key list before trying again.'
+      : 'The API-key change and its audit entry could not be committed. No change was applied. Try again.');
+    this.code = commitStarted ? 'API_KEY_COMMIT_UNCONFIRMED' : 'API_KEY_LIFECYCLE_UNAVAILABLE';
+  }
+}
+function identified(id: number): void {
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid API-key lifecycle identity');
+}
+async function keyTransaction<T>(organizationId: number, work: (client: KeyClient) => Promise<T>): Promise<T> {
+  identified(organizationId);
+  const client = await pool.connect();
+  let commitStarted = false;
+  let released = false;
+  let writtenKeyId: number | undefined;
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, organizationId);
+    const result = await work(client);
+    if (result && typeof result === 'object' && 'keyId' in result && typeof result.keyId === 'number') writtenKeyId = result.keyId;
+    commitStarted = true;
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    if (commitStarted) {
+      client.release(error instanceof Error ? error : new Error('API-key commit unconfirmed'));
+      released = true;
+    } else {
+      try { await client.query('ROLLBACK'); }
+      catch (rollbackError) { client.release(rollbackError instanceof Error ? rollbackError : new Error('API-key rollback unconfirmed')); released = true; }
+    }
+    log.warn('API-key lifecycle transaction unavailable', { organizationId, commitConfirmed: false, commitStarted });
+    throw new ApiKeyLifecycleError(commitStarted, commitStarted ? writtenKeyId : undefined);
+  } finally { if (!released) client.release(); }
+}
+async function lifecycleAudit(client: KeyClient, entry: {
+  organizationId: number; userId?: number; keyId: number;
+  action: 'api_key_created' | 'api_key_revoked' | 'api_key_expired';
+  context?: ApiKeyAuditContext; details: Record<string, unknown>;
+}): Promise<void> {
+  // Lazy import avoids loading the audit initialization chain during credential lookup.
+  const { writeChainedAuditRow } = await import('./auditService');
+  await writeChainedAuditRow(client, { tenantId: entry.organizationId, userId: entry.userId,
+    action: entry.action, resourceType: 'api_key', resourceId: String(entry.keyId),
+    reason: entry.context?.reason, ipAddress: entry.context?.ipAddress, userAgent: entry.context?.userAgent,
+    details: { outcome: 'success', ...entry.details, reason: entry.context?.reason } });
+}
 
 // ============================================================================
 // TYPES
@@ -65,11 +118,16 @@ export interface ApiKeyUsageStats {
  * hashes it with SHA-256, and stores the hash + prefix. The raw key is
  * returned exactly once — it cannot be retrieved later.
  */
-export async function generateApiKey(
-  input: { organizationId: number; name: string; scopes: string[]; createdBy: number; expiresAt?: Date; rateLimit?: number; metadata?: Record<string, unknown> },
-  client: Pick<PoolClient, 'query'> = pool,
-): Promise<{ rawKey: string; keyId: number; keyPrefix: string }> {
-  const { organizationId, name, scopes, createdBy, expiresAt, rateLimit = 60, metadata } = input;
+export interface ApiKeyInput {
+  organizationId: number; name: string; scopes: string[]; createdBy: number;
+  expiresAt?: Date; rateLimit?: number; metadata?: Record<string, unknown>; auditContext?: ApiKeyAuditContext;
+}
+type GeneratedKey = { rawKey: string; keyId: number; keyPrefix: string };
+/** A supplied client belongs to an already-open caller transaction. The caller
+ * commits only after this function writes the credential and canonical chain. */
+export async function generateApiKey(input: ApiKeyInput, suppliedClient?: KeyClient): Promise<GeneratedKey> {
+  const { organizationId, name, scopes, createdBy, expiresAt, rateLimit = 60, metadata, auditContext = {} } = input;
+  identified(organizationId); identified(createdBy);
   // Generate 32 random bytes → base64url for a high-entropy key
   const randomPart = randomBytes(32).toString('base64url');
   const rawKey = `csai_${randomPart}`;
@@ -78,6 +136,7 @@ export async function generateApiKey(
   const keyHash = createHash('sha256').update(rawKey).digest('hex');
   const keyPrefix = rawKey.substring(0, 12); // "csai_" + first 7 chars of random
 
+  const write = async (client: KeyClient): Promise<GeneratedKey> => {
   const result = await client.query(
     `INSERT INTO api_keys (
       organization_id, name, key_hash, key_prefix, scopes, status,
@@ -97,11 +156,17 @@ export async function generateApiKey(
     ]
   );
 
+  const keyId = Number(result.rows[0]?.id);
+  identified(keyId);
+  await lifecycleAudit(client, { organizationId, userId: createdBy, keyId,
+    action: 'api_key_created', context: auditContext, details: { keyPrefix, scopes } });
   return {
     rawKey,
-    keyId: result.rows[0].id,
+    keyId,
     keyPrefix,
   };
+  };
+  return suppliedClient ? write(suppliedClient) : keyTransaction(organizationId, write);
 }
 
 // ============================================================================
@@ -171,31 +236,13 @@ export async function validateApiKey(rawKey: string): Promise<ApiKeyValidationRe
   // at Y" in the official audit trail, not just discover it via a
   // 401 in their downstream service.
   if (key.expires_at && new Date(key.expires_at) < new Date()) {
-    await pool.query(
-      `UPDATE api_keys SET status = 'expired' WHERE id = $1`,
-      [key.id]
-    );
-    // Fire-and-forget audit write. Dynamic import so this module
-    // doesn't pull the auditService chain at load time (it would
-    // create a cycle via the db pool import).
-    (async () => {
-      try {
-        const { default: auditService } = await import('./auditService');
-        await auditService.logAction({
-          tenantId: key.organization_id,
-          action: 'api_key_expired',
-          resourceType: 'api_key',
-          resourceId: String(key.id),
-          details: {
-            outcome: 'expired',
-            reason: 'past_expires_at',
-            expiresAt: key.expires_at,
-          },
-        });
-      } catch {
-        /* audit failure is non-fatal */
-      }
-    })();
+    await keyTransaction(key.organization_id, async client => {
+      const expired = await client.query(`UPDATE api_keys SET status='expired'
+        WHERE id=$1 AND organization_id=$2 AND status='active' AND expires_at<=NOW() RETURNING id`, [key.id,key.organization_id]);
+      if (expired.rows.length) await lifecycleAudit(client, { organizationId: key.organization_id,
+        keyId: key.id, action: 'api_key_expired', context: { reason: 'past_expires_at' },
+        details: { outcome: 'expired', expiresAt: key.expires_at } });
+    });
     return { valid: false, reason: 'API key has expired' };
   }
 
@@ -234,10 +281,14 @@ export async function validateApiKey(rawKey: string): Promise<ApiKeyValidationRe
  * Revoke an API key. Sets status to 'revoked' and records the revocation timestamp.
  */
 export async function revokeApiKey(
-  keyId: number,
-  organizationId: number,
-  client: Pick<PoolClient, 'query'> = pool,
+  keyId: number, organizationId: number,
+  clientOrActor: KeyClient | (ApiKeyAuditContext & { userId: number }),
+  suppliedActor?: ApiKeyAuditContext & { userId: number },
 ): Promise<boolean> {
+  const suppliedClient = 'query' in clientOrActor ? clientOrActor : undefined;
+  const actor = suppliedClient ? suppliedActor : clientOrActor as ApiKeyAuditContext & { userId: number };
+  identified(keyId); identified(organizationId); identified(actor?.userId ?? 0);
+  const write = async (client: KeyClient): Promise<boolean> => {
   const result = await client.query(
     `UPDATE api_keys
      SET status = 'revoked', revoked_at = NOW()
@@ -246,7 +297,12 @@ export async function revokeApiKey(
     [keyId, organizationId]
   );
 
-  return result.rows.length > 0;
+  if (!result.rows.length) return false;
+  await lifecycleAudit(client, { organizationId, userId: actor!.userId, keyId,
+    action: 'api_key_revoked', context: actor, details: {} });
+  return true;
+  };
+  return suppliedClient ? write(suppliedClient) : keyTransaction(organizationId, write);
 }
 
 // ============================================================================

@@ -4,7 +4,7 @@
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
--- Purpose: Replace four placeholder engine functions on databases that have them.
+-- Purpose: Replace seven placeholder engine functions on databases that have them.
 --
 -- eCTD/CTD Context:
 --   - Module(s): none directly (submission-outcome predictions about any program)
@@ -30,11 +30,19 @@
 --     random(), labelled an 'aipw' estimate;
 --   - cortex.generate_counterfactual stored a 0.5 base probability, 0.05 per
 --     intervention with no estimated effect and a 0.6 "confidence".
--- Nothing calls them. 074 and 076 are amended in place the same day, which
+-- Extended the same day (2026-10-15) with three more, from 074 and
+-- db/migrations/078_gcc_cross_domain_transfer.sql (also install-fresh only):
+--   - cortex.record_prediction_outcome stored 0.25 as the prediction error of
+--     any outcome other than approval, CRL or RTF;
+--   - cortex.compute_domain_similarity stored 0.5 for a missing embedding
+--     similarity or concept overlap, weighted 0.6 / 0.4, and cached it;
+--   - cortex.suggest_transfer_mapping graded risk into fixed bands (0.7 / 0.5 /
+--     0.3 / 0.1) and recommended a transfer from them.
+-- Nothing calls them. 074, 076 and 078 are amended in place the same day, which
 -- reaches only databases installed after it; this file is in the deploy set
 -- and replaces the functions wherever an earlier install created them. Each now
 -- raises feature_not_supported and runs as its caller (SECURITY INVOKER), the
--- same definitions 074 and 076 now create. The signatures and parameter
+-- same definitions 074, 076 and 078 now create. The signatures and parameter
 -- defaults are kept: CREATE OR REPLACE cannot change them. CLAUDE.md RULE 2:
 -- this removes fabricated output; it builds nothing.
 
@@ -134,6 +142,76 @@ empty set, which read as "no signals", for an extraction it never performed.'
       COMMENT ON FUNCTION cortex.generate_counterfactual(uuid, jsonb, jsonb, uuid, uuid) IS
       'Refuses (feature_not_supported): no causal model exists. It used to store a 0.5 base
 probability, 0.05 per intervention with no estimated effect and a 0.6 confidence.'
+    $fn$;
+  END IF;
+
+  IF to_regprocedure('cortex.record_prediction_outcome(uuid, text, date)') IS NOT NULL THEN
+    EXECUTE $fn$
+      CREATE OR REPLACE FUNCTION cortex.record_prediction_outcome(
+        p_prediction_id UUID,
+        p_actual_outcome TEXT,
+        p_actual_date DATE DEFAULT NULL
+      ) RETURNS VOID
+      LANGUAGE plpgsql
+      SECURITY INVOKER
+      AS $body$
+      BEGIN
+        RAISE EXCEPTION 'cortex.record_prediction_outcome scores no prediction: no prediction model exists'
+          USING ERRCODE = 'feature_not_supported';
+      END;
+      $body$
+    $fn$;
+    EXECUTE $fn$
+      COMMENT ON FUNCTION cortex.record_prediction_outcome(uuid, text, date) IS
+      'Refuses (feature_not_supported): no prediction model exists, so there is no prediction
+to score. It used to store 0.25 as the prediction error of any outcome other than
+approval, CRL or RTF, and counted pattern hits against predictions no model made.'
+    $fn$;
+  END IF;
+
+  IF to_regprocedure('cortex.compute_domain_similarity(uuid, uuid)') IS NOT NULL THEN
+    EXECUTE $fn$
+      CREATE OR REPLACE FUNCTION cortex.compute_domain_similarity(
+        p_domain_a_id UUID,
+        p_domain_b_id UUID
+      ) RETURNS NUMERIC
+      LANGUAGE plpgsql
+      SECURITY INVOKER
+      AS $body$
+      BEGIN
+        RAISE EXCEPTION 'cortex.compute_domain_similarity computes no similarity: no similarity model exists'
+          USING ERRCODE = 'feature_not_supported';
+      END;
+      $body$
+    $fn$;
+    EXECUTE $fn$
+      COMMENT ON FUNCTION cortex.compute_domain_similarity(uuid, uuid) IS
+      'Refuses (feature_not_supported): no similarity model exists. It used to store 0.5 for a
+missing embedding similarity or concept overlap, weighted the two 0.6 / 0.4 with no
+source, and cached the result.'
+    $fn$;
+  END IF;
+
+  IF to_regprocedure('cortex.suggest_transfer_mapping(uuid, uuid)') IS NOT NULL THEN
+    EXECUTE $fn$
+      CREATE OR REPLACE FUNCTION cortex.suggest_transfer_mapping(
+        p_source_domain_id UUID,
+        p_target_domain_id UUID
+      ) RETURNS JSONB
+      LANGUAGE plpgsql
+      SECURITY INVOKER
+      AS $body$
+      BEGIN
+        RAISE EXCEPTION 'cortex.suggest_transfer_mapping suggests no mapping: no transfer model exists'
+          USING ERRCODE = 'feature_not_supported';
+      END;
+      $body$
+    $fn$;
+    EXECUTE $fn$
+      COMMENT ON FUNCTION cortex.suggest_transfer_mapping(uuid, uuid) IS
+      'Refuses (feature_not_supported): no transfer model exists. It used to grade risk into
+fixed bands (0.7 / 0.5 / 0.3 / 0.1) and derive a transfer strength and a
+recommendation from them and from compute_domain_similarity''s placeholder 0.5.'
     $fn$;
   END IF;
 END

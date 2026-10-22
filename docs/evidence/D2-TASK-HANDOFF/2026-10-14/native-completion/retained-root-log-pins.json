@@ -1,0 +1,64 @@
+{
+  "files": [
+    {
+      "path": "baseline/merged-32-before-census.json",
+      "sha256": "61126daf7fdd9b3e49863349afa5dad41225ccd9811df4a5e8af0bbb7a6f46d4",
+      "bytes": 5793
+    },
+    {
+      "path": "baseline/merged-32-before-source-pins.json",
+      "sha256": "6db6505a411ee5c36a340d108ad64920b26fbe9b07fcd86c0e3595af6b1fdb3e",
+      "bytes": 4985
+    },
+    {
+      "path": "baseline/merged-32-before.json",
+      "sha256": "1f30ee40b25efa0429f459129a61a48c6e23b2745cec216fb3f67357a35826f6",
+      "bytes": 143094
+    },
+    {
+      "path": "baseline/merged-32-before.log",
+      "sha256": "d45b6054a92b69f7f419764f0c601e2d5908391cecf01b5d43a76ae8d5856309",
+      "bytes": 247636
+    },
+    {
+      "path": "baseline/prior-32-files.txt",
+      "sha256": "12810c9ef95888d59de32b2002afed23133d2e0c9277be6e70016ebeb3a513bd",
+      "bytes": 1293
+    },
+    {
+      "path": "provision/deploy-migrate.log",
+      "sha256": "2807450f517452dec2dab9e3a43145dfcc7cee92ce05c219a2d28f331f63a236",
+      "bytes": 67206
+    },
+    {
+      "path": "provision/install-fresh.log",
+      "sha256": "ef4fc4aa0b9a980060af48e8b2414fdc1de3a97ae67ca0cd3fefb86bf6e30658",
+      "bytes": 8116
+    },
+    {
+      "path": "workflow/workflow-binding-after.json",
+      "sha256": "984396c4e1ec558387b01b09eb4965578523ba488bac1e8ba8fbac0755818111",
+      "bytes": 9598
+    },
+    {
+      "path": "workflow/workflow-binding-after.log",
+      "sha256": "2ff4a2578c1595f9ae552627e5e5798f830fed478f9ec86efae6109d2fc52616",
+      "bytes": 34268
+    },
+    {
+      "path": "workflow/workflow-binding-extracted-final.json",
+      "sha256": "0b19f93139a37a380a97fd4278cc61e535aaeb0105a43362a1dd9403ffdcaee1",
+      "bytes": 9610
+    },
+    {
+      "path": "workflow/workflow-binding-extracted-final.log",
+      "sha256": "d250cce0364d64460f3ec7749e596132312cde67f247b0680caf2d5a50e5e038",
+      "bytes": 34278
+    },
+    {
+      "path": "workflow/workflow-binding-lint-final.json",
+      "sha256": "af06f588ae1699f05c1fcc7ed3c08860b3afed471517d283c7efc6957dbfe11e",
+      "bytes": 491
+    }
+  ]
+}

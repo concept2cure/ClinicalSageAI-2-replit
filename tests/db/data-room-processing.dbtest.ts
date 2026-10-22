@@ -14,23 +14,25 @@
  * Real PostgreSQL, the real projects router behind the real request tenant
  * scope, and bytes on disk read through the one verified loader.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { databaseUrl } from '../setup.db';
-import { seedNativeCatalogProject } from './catalog-native-fixture';
+import type { RequestSqlClient } from '../../server/db/requestDb';
+import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime } from './vault-current-access-fixture';
+import { shouldUseSsl } from '../../server/db/ssl';
 
 const PROBE = 'dbtest-dataroom';
 /* Captures are append-only (VR-16: DELETE is the table owner's alone), so a
    run cannot remove what it wrote. Each run's projects are its own. */
-const RUN = Date.now().toString(36);
+const RUN = nativeCatalogRunId();
 /** Stored bytes live under uploads/org-<id>/: the loader refuses any other path. */
 const uploadDir = () => path.resolve(process.cwd(), 'uploads', `org-${orgId}`);
-const written: string[] = [];
 
 let owner: Pool;
 let app: express.Express;
@@ -47,12 +49,9 @@ const PROTOCOL_TEXT =
   'bexotinib in adults with idiopathic pulmonary fibrosis. The primary endpoint is the annual rate of decline ' +
   'in forced vital capacity measured by spirometry at week 52.';
 
-async function asTenant<T>(fn: () => Promise<T>): Promise<T> {
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
-  return runWithTenantScope(
-    { tenantId: String(orgId), orgUuid, role: 'admin', source: 'request', caller: 'tests/db/data-room-processing.dbtest.ts' },
-    fn,
-  );
+async function asTenant<T>(fn: (sqlClient: RequestSqlClient) => Promise<T>): Promise<T> {
+  return withNativeCatalogClient({ organizationId: orgId, organizationUuid: orgUuid, userId, role: 'admin',
+    caller: 'tests/db/data-room-processing.dbtest.ts' }, fn);
 }
 
 async function buildApp(): Promise<express.Express> {
@@ -65,7 +64,7 @@ async function buildApp(): Promise<express.Express> {
     r.userId = userId;
     r.tenantId = orgId;
     r.userRole = 'admin';
-    r.user = { id: userId, organizationId: orgId, organizationUuid: orgUuid, role: 'admin', email: 'dr@dbtest.local' };
+    r.user = { id: userId, organizationId: orgId, organizationUuid: orgUuid, role: 'admin', email: `${PROBE}-${RUN}@dbtest.local` };
     next();
   });
   a.use(establishRequestTenantScope);
@@ -79,7 +78,6 @@ async function conversationFile(name: string, body: string): Promise<string> {
   const bytes = Buffer.from(body, 'utf8');
   await fs.mkdir(uploadDir(), { recursive: true });
   await fs.writeFile(path.join(uploadDir(), id), bytes);
-  written.push(path.join(uploadDir(), id));
   await owner.query(
     `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
      VALUES ($1, $2, $3, $4, 'text/plain', $5, $6, $7, 'uploaded', NOW())`,
@@ -104,62 +102,73 @@ async function source(program: string, title: string, text: string | null, extra
   return Number(rows[0].id);
 }
 
-async function cleanup(): Promise<void> {
-  await owner.query(`DELETE FROM audit_logs WHERE details::text LIKE $1`, [`%${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM cre_evidence_sources WHERE title LIKE $1`, [`${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM vault.documents WHERE document_code LIKE $1`, [`${PROBE.toUpperCase()}%`]).catch(() => {});
-  await owner.query(`DELETE FROM file_uploads WHERE id LIKE $1`, [`${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)`, [`${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM regulatory_programs WHERE name LIKE $1`, [`${PROBE}%`]).catch(() => {});
-  for (const f of written.splice(0)) await fs.rm(f, { force: true });
+type DataRoomFixture = { orgId: number; orgUuid: string; otherOrgId: number; userId: number;
+  programId: string; siblingProgramId: string; otherProgramId: string };
+const fixtureActors = new Map<number, number>();
+const fixturePrefixes = new Map<number, string>();
+let baseFixture: DataRoomFixture;
+function activateFixture(fixture: DataRoomFixture): void {
+  ({ orgId, orgUuid, otherOrgId, userId, programId, siblingProgramId, otherProgramId } = fixture);
+}
+
+/** Every fixture owns new identities and real current private-programme parents.
+ * Retain its captures, audit records and bytes; none is cleanup garbage. */
+async function freshFixture(label: string): Promise<DataRoomFixture> {
+  const prefix = `${PROBE}-${label}-${randomUUID()}`;
+  const organizations = (await owner.query<{ id: number; uuid: string }>(
+    `INSERT INTO organizations(name,slug,status) VALUES($1,$1,'active'),($2,$2,'active') RETURNING id,uuid`,
+    [`${prefix}-own`, `${prefix}-foreign`],
+  )).rows;
+  const accounts = (await owner.query<{ id: number }>(
+    `INSERT INTO users(email,name,password_hash,status) VALUES($1,'Synthetic Data Room actor','unused-fixture-hash','active'),
+      ($2,'Synthetic foreign Data Room actor','unused-fixture-hash','active') RETURNING id`,
+    [`${prefix}-own@example.invalid`, `${prefix}-foreign@example.invalid`],
+  )).rows;
+  for (let i = 0; i < organizations.length; i += 1) {
+    const organization = organizations[i]; const actor = accounts[i].id;
+    await owner.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'admin')", [organization.id, actor]);
+    fixtureActors.set(organization.id, actor); fixturePrefixes.set(organization.id, `${prefix}-${i}`);
+  }
+  const own = organizations[0], foreign = organizations[1];
+  return { orgId: own.id, orgUuid: own.uuid, otherOrgId: foreign.id, userId: accounts[0].id,
+    programId: await program('main', own.id), siblingProgramId: await program('sibling', own.id), otherProgramId: await program('foreign', foreign.id) };
 }
 
 async function program(name: string, org: number): Promise<string> {
-  const { rows } = await owner.query(
-    `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-     VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', 'Bexotinib') RETURNING id`,
-    [`${PROBE} ${name} ${RUN}`, `DR-${name}-${RUN}`.toUpperCase(), org],
+  const actor = fixtureActors.get(org), prefix = fixturePrefixes.get(org);
+  if (!actor || !prefix) throw new Error('A current Data Room fixture parent is required');
+  const { rows } = await owner.query<{ id: string }>(
+    `INSERT INTO regulatory_programs(name,code,organization_id,program_type,product_type,primary_agency,product_name,lead_user_id)
+     VALUES($1,$2,$3,'IND','drug','FDA','Synthetic qualification product',$4) RETURNING id`,
+    [`${PROBE} ${name} ${prefix}`, `DR-${name}-${createHash('sha256').update(prefix).digest('hex').slice(0, 24)}`.toUpperCase(), org, actor],
   );
-  return String(rows[0].id);
+  const id = rows[0].id;
+  const { projectId } = await seedNativeCatalogProject(owner, { organizationId: org, userId: actor,
+    programId: id, namespace: `${prefix}-${name}` });
+  await owner.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,$2,'private')", [org, projectId]);
+  return id;
 }
 
 beforeAll(async () => {
+  if (!process.env.APP_DATABASE_URL) throw new Error('APP_DATABASE_URL must name the non-bypass runtime role');
+  const runtime = new Pool({ connectionString: process.env.APP_DATABASE_URL, max: 1 });
+  try {
+    const role = (await runtime.query('SELECT current_user AS role,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user')).rows[0];
+    expect(role).toEqual({role:'app_service',rolsuper:false,rolbypassrls:false});
+    // Local CI plaintext is distinct from the external verified-TLS proof.
+    expect((await runtime.query('SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()')).rows[0].ssl).toBe(shouldUseSsl(process.env.APP_DATABASE_URL));
+  } finally { await runtime.end(); }
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
-  const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE} org`, `${PROBE}-org`],
-  );
-  orgId = Number(org.rows[0].id);
-  orgUuid = String(org.rows[0].uuid);
-  const other = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE} other`, `${PROBE}-other`],
-  );
-  otherOrgId = Number(other.rows[0].id);
-  const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, 'DR', 'x')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE}@dbtest.local`],
-  );
-  userId = Number(user.rows[0].id);
-  await cleanup();
-  programId = await program('main', orgId);
-  siblingProgramId = await program('sibling', orgId);
-  otherProgramId = await program('foreign', otherOrgId);
-  // The current-access gate (14362ef00, 2026-10-14) admits a current member through the project
-  // the program is anchored to; the suite predates it and supplied neither.
-  await owner.query(
-    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
-       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
-  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId, namespace: `${PROBE}-${RUN}` });
+  await assertVaultFixtureDatabase(owner);
+  baseFixture = await freshFixture('main'); activateFixture(baseFixture);
   app = await buildApp();
+  await assertVaultFixtureRuntime({ orgId, orgUuid, programId });
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
+  // Retain each newly namespaced capture, immutable record and original bytes.
   await owner?.end();
+  await closeVaultFixtureRuntime();
 });
 
 describe('an adopted conversation file is read, classified and stored', () => {
@@ -196,6 +205,8 @@ describe('an adopted conversation file is read, classified and stored', () => {
 });
 
 describe('the pending sweep reads what was captured before', () => {
+  beforeEach(async () => { activateFixture(await freshFixture('pending')); });
+  afterEach(() => { activateFixture(baseFixture); });
   it('processes a pending capture from its stored bytes, and names one it cannot read', async () => {
     const body='Stability summary for batch 23-104: assay 98.4 percent at six months.';
     const fileId = await conversationFile('Stability summary.txt',body);
@@ -209,7 +220,7 @@ describe('the pending sweep reads what was captured before', () => {
     );
     const unreadable = await source(programId, 'no file', null);
     const { processPendingSources } = await import('../../server/services/clinical-regulatory-evidence/data-room-processing');
-    const dry = await asTenant(() => processPendingSources(orgId, { limit: 50 }));
+    const dry = await asTenant(exec => processPendingSources(orgId, { limit: 50, exec }));
     expect(dry.dryRun).toBe(true);
     expect(dry.examined).toBeGreaterThanOrEqual(1);
     expect(dry.processed).toBe(0);
@@ -236,7 +247,7 @@ describe('the pending sweep reads what was captured before', () => {
     [orgId,`${PROBE} Legacy recovery.txt`,digest,programId,`uploads/org-${orgId}/${fileId}`,JSON.stringify({origin:'chat_upload',fileUploadId:fileId})]);
     const id=Number(inserted.rows[0].id);
     const {processPendingSources,processCapturedSource}=await import('../../server/services/clinical-regulatory-evidence/data-room-processing');
-    const dry=await asTenant(()=>processPendingSources(orgId,{sourceId:id,limit:1}));
+    const dry=await asTenant(exec=>processPendingSources(orgId,{sourceId:id,limit:1,exec}));
     expect(dry.items).toEqual([{sourceId:id,status:'candidate'}]); expect(dry.processed).toBe(0);
     const applied=await asTenant(()=>processPendingSources(orgId,{sourceId:id,limit:1,apply:true}));
     expect(applied).toMatchObject({examined:1,processed:1,completed:1,failed:0});
@@ -249,8 +260,73 @@ describe('the pending sweep reads what was captured before', () => {
   },60_000);
 });
 
+describe('the sweep validates timestamp metadata on PostgreSQL 15', () => {
+  it('safely classifies UTC calendar boundaries and hostile stage timestamps without a dry-run write', async () => {
+    const fileName = 'Timestamp boundary capture.txt';
+    const body = 'Retained timestamp-boundary capture; all sweep observations must leave its source and bytes unchanged.';
+    const fileId = await conversationFile(fileName, body);
+    const digest = createHash('sha256').update(body).digest('hex');
+    const inserted = await owner.query(`INSERT INTO cre_evidence_sources
+      (organization_id,visibility_class,source_type,title,checksum,client_program_id,stored_artifact_ref,
+       ingestion_status,extraction_status,provenance,metadata)
+      VALUES($1,'project_private','client_document',$2,$3,$4,$5,'ingested','pending',$6::jsonb,'{"mimeType":"text/plain"}') RETURNING id`,
+    [orgId, `${PROBE} ${fileName}`, digest, programId, `uploads/org-${orgId}/${fileId}`, JSON.stringify({ origin: 'adopt', fileUploadId: fileId })]);
+    const id = Number(inserted.rows[0].id);
+    const { processCapturedSource, processPendingSources } = await import('../../server/services/clinical-regulatory-evidence/data-room-processing');
+    const captured = await asTenant(() => processCapturedSource(orgId, id, { bytes: Buffer.from(body), fileName,
+      mimeType: 'text/plain', programId, expectedWorkspaceId: null, processedBy: 'dbtest timestamp fixture' }));
+    expect(captured).toMatchObject({ ok: true, status: 'completed' });
+    const { rows: [retained] } = await owner.query('SELECT metadata FROM cre_evidence_sources WHERE id=$1', [id]);
+    const running = { ...retained.metadata.dataRoomProcessing, state: 'running',
+      claimedAt: '2000-02-29T00:00:00.001Z', leaseExpiresAt: '2000-02-29T00:14:00.999Z',
+      completedAt: null, nextRetryAt: null, retryable: false, reasonCode: null };
+    const completed = { ...running, state: 'completed', leaseExpiresAt: null, completedAt: '2000-02-29T00:15:00.999Z' };
+    const failed = { ...running, state: 'failed', leaseExpiresAt: null, retryable: true,
+      nextRetryAt: '2000-02-29T00:15:00.999Z', reasonCode: 'PROCESSING_UNAVAILABLE' };
+    const now = Date.now();
+    const future = new Date(now + 14 * 60_000).toISOString();
+    const observations: Array<{ label: string; stage: Record<string, unknown>; status: string; reasonCode?: string }> = [
+      { label: 'valid leap-century expired lease with milliseconds', stage: running, status: 'candidate' },
+      { label: 'valid completed stage missing derived text', stage: completed, status: 'candidate' },
+      { label: 'valid due retry', stage: failed, status: 'candidate' },
+      { label: 'valid live lease', stage: { ...running, claimedAt: new Date(now).toISOString(), leaseExpiresAt: future }, status: 'busy', reasonCode: 'ATTEMPT_BUSY' },
+      { label: 'valid future retry', stage: { ...failed, nextRetryAt: future }, status: 'retry_not_due', reasonCode: 'RETRY_NOT_DUE' },
+    ];
+    const hostileTimes: unknown[] = [undefined, null, 42, true, {}, [], '', 'infinity', '-infinity',
+      '0000-01-01T00:00:00.000Z', '1900-02-29T00:00:00.000Z', '2026-02-29T00:00:00.000Z',
+      '2026-04-31T00:00:00.000Z', '2026-00-01T00:00:00.000Z', '2026-13-01T00:00:00.000Z',
+      '2026-01-00T00:00:00.000Z', '2026-01-01T24:00:00.000Z', '2026-01-01T23:60:00.000Z',
+      '2026-01-01T23:59:60.000Z', '2026-01-01T00:00:00.000+00:00', '2026-01-01T00:00:00Z',
+      '2026-01-01T00:00:00.000Z\n', '2026-01-01T00:00:00.000Zgarbage', '２０２６-01-01T00:00:00.000Z'];
+    for (const claimedAt of hostileTimes) observations.push({ label: `hostile claimedAt ${JSON.stringify(claimedAt)}`,
+      stage: { ...running, claimedAt }, status: 'blocked', reasonCode: 'STAGE_METADATA_INVALID' });
+    for (const [field, base] of [['leaseExpiresAt', running], ['completedAt', completed], ['nextRetryAt', failed]] as const) {
+      for (const invalid of ['1900-02-29T00:00:00.000Z', '2026-00-01T00:00:00.000Z', null, {}]) {
+        observations.push({ label: `hostile ${field} ${JSON.stringify(invalid)}`, stage: { ...base, [field]: invalid },
+          status: 'blocked', reasonCode: 'STAGE_METADATA_INVALID' });
+      }
+    }
+    for (const observation of observations) {
+      await owner.query(`UPDATE cre_evidence_sources SET extracted_text=NULL,char_count=NULL,
+        metadata=$2::jsonb WHERE id=$1`, [id, JSON.stringify({ ...retained.metadata, dataRoomProcessing: observation.stage })]);
+      const before = await owner.query('SELECT to_jsonb(s) AS source FROM cre_evidence_sources s WHERE id=$1', [id]);
+      const dry = await asTenant(exec => processPendingSources(orgId, { sourceId: id, limit: 1, exec }));
+      expect(dry.dryRun, observation.label).toBe(true);
+      expect(dry.processed, observation.label).toBe(0);
+      expect(dry.items, observation.label).toEqual([{ sourceId: id, status: observation.status,
+        ...(observation.reasonCode ? { reasonCode: observation.reasonCode } : {}) }]);
+      const after = await owner.query('SELECT to_jsonb(s) AS source FROM cre_evidence_sources s WHERE id=$1', [id]);
+      expect(after.rows, observation.label).toEqual(before.rows);
+    }
+    expect(await fs.readFile(path.join(uploadDir(), fileId), 'utf8')).toBe(body);
+  }, 60_000);
+
+});
+
 describe('the room pages past 200, and stays in its project', () => {
   beforeAll(async () => {
+    // Paging has its own baseline; it never relies on a pending sweep's captures.
+    await source(programId, 'paging baseline', 'Independent paging baseline capture.');
     for (let i = 0; i < 250; i += 1) await source(programId, `bulk ${String(i).padStart(3, '0')}`, `Routine batch record ${i}.`);
     await source(siblingProgramId, 'sibling spirometry report', 'Spirometry results for the sibling project.');
     await source(otherProgramId, 'foreign spirometry report', 'Spirometry results for another organization.', { org: otherOrgId });
@@ -299,7 +375,7 @@ describe('the Vault lane counts every current source of the project', () => {
       [roomProgram, orgId, `${PROBE.toUpperCase()}-FILED-${RUN}`, filed.checksum],
     );
     const { countDataRoomStages } = await import('../../server/services/vault/vault-data-room-filing');
-    const counts = await countDataRoomStages(owner, roomProgram, orgId);
+    const counts = await asTenant(exec => countDataRoomStages(exec, roomProgram, orgId));
     expect(counts).toEqual({ captured: 208, classified: 2, filed: 1, needsReview: 1 });
   }, 120_000);
 });

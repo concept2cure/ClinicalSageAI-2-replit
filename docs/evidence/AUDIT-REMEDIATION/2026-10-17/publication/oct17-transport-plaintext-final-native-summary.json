@@ -1,0 +1,98 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-transport-plaintext-final-native.json",
+    "sha256": "4c453183dfef099b42505bca753ac94bb70fd775fa4ce3af392c0efc938a94f4",
+    "bytes": 22480
+  },
+  "success": true,
+  "passedCases": 51,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 7,
+  "rows": [
+    {
+      "file": "tests/db/adoption-commit-outcome.dbtest.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/agency-requirement-tenant-isolation.dbtest.ts",
+      "status": "passed",
+      "cases": 9,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/csr-vault-source-input.dbtest.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/data-room-processing.dbtest.ts",
+      "status": "passed",
+      "cases": 8,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/mdx-qms-request-rls.dbtest.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/part11-audit-receipts.dbtest.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/tenant-source-read-receipt-retention.dbtest.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

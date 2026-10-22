@@ -1,0 +1,44 @@
+// @vitest-environment jsdom
+// THROWAWAY PROBE (honest-state review 2026-10-19). Lives in the scratchpad, not the repo.
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
+import { ProtocolWorkspace } from '@/concept2cure/v2/surfaces/ProtocolDev';
+import { clearShellProject, publishShellProject } from '@/concept2cure/v2/shellProject';
+const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as Response;
+const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';
+afterEach(() => { cleanup(); clearShellProject(); });
+
+async function run(scopeParam: string | null, withProgram: boolean) {
+  window.history.replaceState(null, '', '/p/protocol-dev' + (scopeParam ? `?protocolScope=${scopeParam}` : ''));
+  clearShellProject();
+  if (withProgram) publishShellProject({ id: PROGRAM, title: 'BX-256' });
+  const seen: string[] = [];
+  apiRequest.mockReset();
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    seen.push(url);
+    if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ success: true, data: [] });
+    return ok({});
+  });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(<QueryClientProvider client={client}><ProtocolWorkspace surface={{ id: 'protocol-dev', label: 'Protocol', navTier: 'project' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" /></QueryClientProvider>);
+  await screen.findByText(/No protocol in development/);
+  const scopeSel = screen.getByRole('combobox', { name: 'Protocol scope' }) as HTMLSelectElement;
+  return { title: screen.getByText(/No protocol in development/).textContent, scope: scopeSel.value, reads: seen };
+}
+
+describe('PROBE: protocol empty-state title vs selected scope', () => {
+  it('program open, scope = Unfiled protocols (zero unfiled)', async () => {
+    const r = await run('unfiled', true);
+    console.log('PROBE-RESULT-PROTO-unfiled+program ' + JSON.stringify(r));
+    expect(r.title).not.toMatch(/for BX-256/);
+  });
+  it('no program open, scope = Unfiled protocols (zero unfiled)', async () => {
+    const r = await run('unfiled', false);
+    console.log('PROBE-RESULT-PROTO-unfiled+noprogram ' + JSON.stringify(r));
+    expect(r.title).not.toMatch(/yet$/);
+  });
+});

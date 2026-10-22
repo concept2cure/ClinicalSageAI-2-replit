@@ -1,0 +1,51 @@
+{
+  "sourcePinsMatch": true,
+  "changed": [],
+  "test": {
+    "exitCode": 0,
+    "files": 6,
+    "passed": 54,
+    "log": "pinned-final-54.json",
+    "command": "NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run server/routes/__tests__/authoring-assembly.pglite.test.ts server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts server/services/authoring/__tests__/assembly-template-guidance.test.ts server/services/authoring/__tests__/assembly-plan.test.ts server/services/authoring/__tests__/create-section-placement.pglite.test.ts server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts"
+  },
+  "lint": {
+    "exitCode": 0,
+    "files": 13,
+    "errors": 0,
+    "warnings": 0,
+    "log": "scoped-eslint-final.json"
+  },
+  "pureOutlinePlanning": {
+    "templates": 305,
+    "sections": 4308,
+    "maximumOutline": 295,
+    "qualification": "Pure plan coverage; persistence and drafting are not claimed for every row."
+  },
+  "limits": [
+    "PGlite single connection; no native concurrency or deployed RLS qualification.",
+    "No provider/model requests, human testing or deployment.",
+    "Normal direct publication and repository-wide checks belong to the root workstream."
+  ],
+  "typingCorrection": {
+    "reason": "Eight unknown SQL-row field accesses found by the official root compiler; explicit known-projection fixture types added. No production, SQL or assertion changes.",
+    "changed": [
+      "server/routes/__tests__/authoring-assembly.pglite.test.ts"
+    ],
+    "productionUnchanged": true,
+    "httpReplay": {
+      "exitCode": 0,
+      "files": 1,
+      "passed": 30,
+      "log": "typed-http-final-30.json",
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run server/routes/__tests__/authoring-assembly.pglite.test.ts"
+    },
+    "lintReplay": {
+      "exitCode": 0,
+      "files": 1,
+      "errors": 0,
+      "warnings": 0,
+      "log": "typed-http-eslint-final.json"
+    },
+    "qualification": "Repeated affected cases; not 30 additional unique tests. Root retains complete compiler RED and official final compiler."
+  }
+}
