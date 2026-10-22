@@ -82,6 +82,27 @@ function sourceInterview(category: WarGameCategory, sourceFlowId: string): Sourc
   return { flow: own, asked, note };
 }
 
+/**
+ * Yes/no answers arrive as booleans from the interview UI and as 'yes'/'no'
+ * strings from the AnA tool surface (start_war_game takes the model's JSON).
+ * A rule tests one reading, so a stated "yes" could read as not-true and draw
+ * a finding. Every yes_no field of the source interview is read as a boolean
+ * here, once, for every auditor.
+ */
+function normalizeYesNo(answers: Record<string, unknown>, flow: FlowDefinition | null): Record<string, unknown> {
+  if (!flow) return answers;
+  const yesNo = new Set(flow.nodes.flatMap((n) => n.fields.filter((f) => f.type === 'yes_no').map((f) => f.id)));
+  const out = { ...answers };
+  for (const id of yesNo) {
+    const v = out[id];
+    if (typeof v !== 'string') continue;
+    const t = v.trim().toLowerCase();
+    if (t === 'yes' || t === 'true') out[id] = true;
+    else if (t === 'no' || t === 'false') out[id] = false;
+  }
+  return out;
+}
+
 /** Run one rule, recording every answer key it reads. */
 function runRecorded(rule: WarGameAuditor['rules'][number], answers: Record<string, unknown>): { finding: WarGameFinding | null; read: Set<string> } {
   const read = new Set<string>();
@@ -114,6 +135,7 @@ export function runWarGame(
 
   // ── Run all rules and collect findings ──────────────────────────────
   const source = sourceInterview(category, sourceFlowId);
+  const read = normalizeYesNo(flatAnswers, source.flow);
   /* 2026-10-22 (D2): most auditors read answer keys their own interview never
      asks, so a fully answered interview drew "missing" criticals about
      questions the client was never put, and value checks never fired. A rule
@@ -122,8 +144,8 @@ export function runWarGame(
   const findings: WarGameFinding[] = [];
   const notAssessed: WarGameReport['notAssessed'] = [];
   for (const rule of auditor.rules) {
-    const { finding, read } = runRecorded(rule, flatAnswers);
-    const unaskedFields = source.flow ? [...read].filter((k) => !source.asked.has(k)) : [];
+    const { finding, read: keys } = runRecorded(rule, read);
+    const unaskedFields = source.flow ? [...keys].filter((k) => !source.asked.has(k)) : [];
     if (unaskedFields.length > 0) {
       notAssessed.push({ ruleId: rule.id, title: rule.title, unaskedFields });
       continue;
