@@ -7,7 +7,7 @@
  *
  * Routes:
  *   GET  /api/c2c/projects/:id                     project metadata
- *   GET  /api/c2c/projects/:id/workstreams          section counts grouped by CTD module
+ *   GET  /api/c2c/projects/:id/dossier              approved sections: home filing, each market, each module
  *   GET  /api/c2c/projects/:id/drafts?limit=7       recent section drafts
  *   GET  /api/c2c/projects/:id/team                 project members
  *   GET  /api/c2c/projects/:id/evidence?pinned=1    pinned evidence cards
@@ -22,6 +22,7 @@ import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
+import { readDossier } from '../../services/c2c/dossier-read.js';
 import { requestPgClient } from '../../db/requestDb';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import type { PoolClient } from 'pg';
@@ -1154,47 +1155,25 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ── GET /api/c2c/projects/:id/workstreams ─────────────────────────────────────
+// ── GET /api/c2c/projects/:id/dossier ─────────────────────────────────────────
 //
-// Groups c2c_document_sections by CTD module prefix (the first component of
-// section_key, e.g. 'm3', 'm4', 'm5', 'm2', 'm1'). Each group returns a
-// status rollup and a completion percentage.
-//
-// Falls back gracefully when no sections exist yet.
+// The project's dossier, read once (FILING_SPINE F23, server/services/c2c/
+// dossier-read): the home filing's figure, each market's own line, and one row
+// per module, on one definition of complete. It replaces /workstreams, whose
+// weighted mean (review 75, drafted 50, locked 0) and split of "M1" from "1.1"
+// disagreed with the header beside it. A store this environment has not
+// provisioned answers 200 with each figure 'unavailable' and the reason; any
+// other failure is a 500, never an empty dossier.
 
-router.get('/:id/workstreams', async (req: Request, res: Response) => {
+router.get('/:id/dossier', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
     if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
-
-    const { rows } = await pool.query(
-      `SELECT
-         split_part(ds.section_key, '.', 1) AS module,
-         COUNT(*)                            AS total,
-         COUNT(*) FILTER (WHERE ds.status = 'approved') AS approved,
-         COUNT(*) FILTER (WHERE ds.status = 'review')   AS review,
-         COUNT(*) FILTER (WHERE ds.status = 'drafted')  AS drafted,
-         COUNT(*) FILTER (WHERE ds.status = 'todo')     AS todo,
-         ROUND(
-           AVG(CASE WHEN ds.status = 'approved' THEN 100
-                    WHEN ds.status = 'review'   THEN  75
-                    WHEN ds.status = 'drafted'  THEN  50
-                    ELSE 0 END)
-         )::integer AS completion_pct,
-         MAX(ds.updated_at) AS last_updated
-       FROM c2c_document_sections ds
-       JOIN c2c_documents d ON d.id = ds.document_id
-       WHERE d.project_id = $1 AND d.org_id = $2
-       GROUP BY 1
-       ORDER BY 1`,
-      [req.params.id, orgId],
-    );
-
-    return res.json({ workstreams: rows });
+    return res.json(await readDossier(pool, orgId, String(req.params.id)));
   } catch (err: unknown) {
-    return serverError(res, logger, 'loading the workstreams', err, { programId: String(req.params.id) });
+    return serverError(res, logger, 'reading the dossier', err, { programId: String(req.params.id) });
   }
 });
 

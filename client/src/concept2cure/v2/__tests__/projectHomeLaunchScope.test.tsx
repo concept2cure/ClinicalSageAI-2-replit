@@ -50,8 +50,9 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-204', status: 'active' });
-    if (url.includes('/workstreams') || url.includes('workstream'))
-      return ok({ workstreams: [{ module: 'm2', total: 4, completion_pct: 25 }] });
+    if (url === `/api/c2c/projects/${PID}/dossier`)
+      return ok({ projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 25, counted: 4, complete: 1 }, markets: [],
+        rows: [{ group: 'module', module: '2', agency: null, label: 'Module 2 · Summaries', documentId: 'd', counted: 4, complete: 1, inReview: 0, drafted: 0, figure: { state: 'measured', pct: 25, counted: 4, complete: 1 }, lastUpdated: null }] });
     return ok({});
   });
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
@@ -102,7 +103,8 @@ describe('Project home and the launch scope', () => {
     // its module, by id (projectHomeDocuments.test.tsx), so it needs one.
     apiRequest.mockImplementation(async (_m: string, url: string) => {
       if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-204', status: 'active' });
-      if (url.includes('/workstreams')) return ok({ workstreams: [{ module: 'm2', total: 4, completion_pct: 25 }] });
+      if (url === `/api/c2c/projects/${PID}/dossier`) return ok({ projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 25, counted: 4, complete: 1 }, markets: [],
+        rows: [{ group: 'module', module: '2', agency: null, label: 'Module 2 · Summaries', documentId: 'd', counted: 4, complete: 1, inReview: 0, drafted: 0, figure: { state: 'measured', pct: 25, counted: 4, complete: 1 }, lastUpdated: null }] });
       if (url === `/api/authoring/docs?programId=${PID}`) {
         return ok({ documents: [{ id: 'doc-2', title: 'Summaries', module: 'M2', status: 'draft', program_id: PID }] });
       }
