@@ -200,7 +200,8 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
-      // audit_logs chain columns + the c2c_ana_actions ledger the scaffold's governed action writes to.
+      // audit_logs chain columns + the c2c_ana_actions ledger the scaffold's
+      // governed action writes to.
       'migrations/20260527_mutation_primitives.sql',
       // public.actor_name (D3, 2026-09-29): the program list names its lead
       // through it since users took row-level security; after mutation
@@ -209,9 +210,9 @@ beforeAll(async () => {
       'migrations/20260609_audit_hmac_seal.sql',
       // regulatory_programs — the uuid program spine intake writes.
       'migrations/20260524_program_workbench_schema.sql',
-      // application_number (WO-9 Click 1) and the EU device classes: both written on create.
-      'migrations/20260907_regulatory_programs_application_number.sql',
-      'migrations/20261012b_regulatory_programs_eu_device_classes.sql', // eu_mdr_class/eu_ivdr_class, written on create since 352ca5aa
+      // regulatory_programs.application_number (WO-9 Click 1) and eu_mdr_class / eu_ivdr_class
+      // (352ca5aa): the columns the create handler now writes, replayed in deploy order.
+      'migrations/20260907_regulatory_programs_application_number.sql', 'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
       // c2c_documents / c2c_document_sections / c2c_rule_packs (13 packs,
       // including k510 × FDA) — the outline intake scaffolds.
       'migrations/20260528_phase9_document_schema.sql',
