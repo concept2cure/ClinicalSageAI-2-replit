@@ -171,13 +171,18 @@ describe('the real registry, launch scope on', () => {
      the AnA tool measurement (2026-09-26); the device kit is outside the launch
      catalog. */
   it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
-    for (const p of ['/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris']) {
+    /* /api/mdx/vault is the device kit's vault aggregator. It was passed here
+       from 2026-09-26 on a walker misattribution (fixed in f9eee2670) and
+       left the launch scope on 2026-10-22: the launch Vault reads
+       /api/c2c/project-vault (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/). */
+    for (const p of [
+      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris',
+      '/api/mdx/vault', '/api/mdx/vault/7/versions',
+    ]) {
       expect(await refused(p), p).toBe(true);
     }
     for (const p of [
       '/api/mdx/gateways/transmittals',
-      '/api/mdx/vault',
-      '/api/mdx/vault/7/versions',
       '/api/mdx/qms/documents',
       '/api/mdx/admin/users',
       '/api/mdx/industry-profile',
