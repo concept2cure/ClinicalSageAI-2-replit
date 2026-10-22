@@ -319,13 +319,13 @@ const HOPS: Hop[] = [
   },
   {
     id: 'placed-document-to-sequence',
-    from: 'Place into filing, "Open in Submission Center" (and the market row, once F9 builds it)',
+    from: 'Place into filing, "Open in Submission Center", from Authoring or the Vault (and the market row, once F9 builds it)',
     to: 'the Submission Center, on that sequence',
     check(s) {
       if (!consumesParam(s.read(SUBMISSION_CENTER), 'submission-center', 'sequenceId')) {
         return { ok: false, why: "the Submission Center does not read a sequenceId from consumeNavParams('submission-center')" };
       }
-      for (const rel of [PLACE_INTO_FILING, `${V2}/surfaces/ProjectMarkets.tsx`]) {
+      for (const rel of [PLACE_INTO_FILING, `${V2}/surfaces/ProjectMarkets.tsx`, `${V2}/surfaces/VaultPlaceIntoSubmission.tsx`]) {
         const src = s.read(rel);
         if (src === null) continue;
         if (!/onNav\(\s*['"]submission-center['"]\s*\)/.test(src)) continue;
