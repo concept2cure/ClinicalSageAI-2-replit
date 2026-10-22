@@ -22,6 +22,7 @@ import {
 import { initializeProofDatabasePersistence } from '../../services/proof/database-setup';
 import FeatureToggleService from '../services/featureToggleService';
 import { ensureCoreTables } from '../db/ensureCoreTables';
+import { missingAuthSchema } from '../db/bootstrap/auth-schema';
 import { setSchemaReadiness } from './readiness-state';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 import { assertAuditImmutabilityForProduction } from './audit-enforcement';
@@ -126,8 +127,22 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
   try {
     // Schema verification is estate-wide, not tenant work — same reason the
     // connectivity probe above declares a system scope.
+    // Production verifies and creates nothing, on the runtime pool: the schema
+    // is the deploy's (install-fresh, deploy-migrate), and the API holds no
+    // owner credential to create it with (MR-03 Stage 3, OPS-16). Elsewhere the
+    // owner URL, when set, still lets a developer's database be filled in.
     const result = await runWithSystemTenantScope('startup:ensure-core-tables', async () =>
-      ensureCoreTables(process.env.DATABASE_URL)
+      process.env.NODE_ENV === 'production'
+        ? ensureCoreTables(undefined, { verifyOnly: true })
+        : ensureCoreTables(process.env.DATABASE_URL)
+    );
+    // The auth columns and the membership and module tables, which the boot
+    // used to ALTER into shape on the owner connection; now
+    // migrations/20261022_auth_schema_and_seeded_organizations.sql. Checked,
+    // not created. A check that cannot run throws to the catch below and fails
+    // readiness closed.
+    const authMissing = await runWithSystemTenantScope('startup:verify-auth-schema', async () =>
+      missingAuthSchema(pool)
     );
     // A regulated subsystem that is partially or wholly absent fails readiness
     // even when the flat critical-table check passes — a database that cannot
@@ -181,6 +196,13 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
         '   Auth, RBAC and licensing cannot function. Run: node scripts/db/install-fresh.mjs',
       );
       console.error('   on a fresh database, then node scripts/db/deploy-migrate.mjs.');
+    } else if (authMissing.length > 0) {
+      // Sign-in, membership and the module catalog read these columns. A
+      // database without them answers every auth request with an error.
+      const detail = `auth schema incomplete: ${authMissing.join(', ')}`;
+      setSchemaReadiness('missing', detail);
+      console.error(`❌ CRITICAL: ${detail}`);
+      console.error('   Run: node scripts/db/deploy-migrate.mjs (it applies the auth schema).');
     } else if (result.success) {
       // Remaining "important" tables are module surfaces (CERV2 sections,
       // templates, assembly docs). Their absence breaks those modules but not
@@ -270,16 +292,17 @@ export async function initializeEarlyServices(): Promise<void> {
     console.log('   Proof system will operate with in-memory audit (not compliant for production)');
   }
 
-  // Ensure auth tables have the columns auth routes expect (idempotent).
-  // Must complete before app.listen() since auth routes are already mounted.
-  // Imported from the explicit bootstrap path rather than the db facade so
-  // the "startup calls bootstrap intentionally" boundary is visible here.
-  try {
-    const { ensureAuthTables } = await import('../db/bootstrap/index.js');
-    await ensureAuthTables();
-    console.log('✅ Auth schema bootstrap complete');
-  } catch (error: any) {
-    console.error('⚠️ Auth schema bootstrap warning:', error.message);
+  // The auth schema is checked in verifyDatabaseConnection; the deploy creates
+  // it. What remains here is the development demo admin, never seeded in
+  // production. Imported from the explicit bootstrap path rather than the db
+  // facade so the "startup calls bootstrap intentionally" boundary is visible.
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const { seedDemoAdminOutsideProduction } = await import('../db/bootstrap/index.js');
+      await seedDemoAdminOutsideProduction();
+    } catch (error: any) {
+      console.error('⚠️ Demo admin seed warning:', error.message);
+    }
   }
 
   // Login OTP is mandatory 2FA delivered by email. If SMTP is unconfigured in

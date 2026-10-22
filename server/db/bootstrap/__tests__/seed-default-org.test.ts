@@ -90,12 +90,14 @@ describe('seedGaDemoUser — SEED_DEMO_USER gate', () => {
     expect(client.query).not.toHaveBeenCalled();
   });
 
-  it('PRODUCTION: proceeds only when SEED_DEMO_USER=true (explicit opt-in)', async () => {
+  // MR-03 Stage 3 (work order step 2): production never seeds the demo admin.
+  // Until 2026-10-22 SEED_DEMO_USER=true opted a production deployment in.
+  it.each(['true', '1', 'yes', 'on'])('PRODUCTION: never seeds, even with SEED_DEMO_USER=%s', async value => {
     process.env.NODE_ENV = 'production';
-    process.env.SEED_DEMO_USER = 'true';
+    process.env.SEED_DEMO_USER = value;
     const client = mockClient([]);
     await seedGaDemoUser(client);
-    expect(client.query).toHaveBeenCalled();
+    expect(client.query).not.toHaveBeenCalled();
   });
 });
 

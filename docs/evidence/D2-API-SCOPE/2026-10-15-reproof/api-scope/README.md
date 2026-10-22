@@ -66,6 +66,36 @@ encoded the misattribution now expects the refusal.
 | `ci:launch-scope-api` (`ci-gate-green.txt`) | 421 paths named by launch and shell screens; none refused |
 | `launch-scope-api-gate.test.ts` | 41/41, with `/api/mdx/vault` now expected refused |
 
+## The adversarial review of this change
+
+Workflow `wf_c9944a27-c35` reviewed the commit through three lenses: hidden
+callers, the exclusions and claims, and collateral verdict changes. Two
+skeptics checked each finding. Two of nine survived:
+
+- **Letter case bypassed the gate (medium, and wider than the review saw).**
+  Express routes ignore case: a mount at `/api/chat` serves `/api/Chat/…` and
+  `/API/chat/…`, which I checked on a bare Express 5.2.1 app. The verdict
+  compared case-sensitively, so `/api/mdx/qms/Suppliers` skipped the exclusion
+  list and matched the `/api/mdx/qms` launch root. Worse, the gate itself
+  judged only paths starting `/api/`. `/API/mdx/risk-items/1`, or any
+  out-of-scope route under `/API/`, was served unjudged, and that has been so
+  since the gate was written. Encoded, doubled-slash and dot-segment variants do not
+  route (also checked), and a trailing slash is already matched at the segment
+  boundary. The verdict and the gate now lower-case the path, and a test holds
+  every key they match to lower case. Red: 14 cases from the exclusion list
+  (`case-verdict-red.txt`) and the gate's `/API/` case (`case-gate-red.txt`);
+  green 253/253 (`case-green.txt`). Re-measured: lower-casing changed no
+  verdict among the 3,358 mounted routes.
+- **The `export-pptx` exclusion's reason was false (low).** Since `f8af76fb1`
+  the route renders supplied content with `pptxgenjs` and uses no model. The
+  reason now says so. The route is still dead: no client has ever called it.
+
+`server/middleware/moduleEntitlementGate.ts` was edited by `…01TzCCfq` at
+2026-10-22T00:12Z, inside its 24-hour window. Its one-line change here,
+lower-casing the path it judges, is disclosed on the board rather than
+deferred, because the bypass left launch scope open to anyone who typed
+`/API/`.
+
 ## Not changed
 
 The roots `/api/chat`, `/api/concept2cure/artifacts` and

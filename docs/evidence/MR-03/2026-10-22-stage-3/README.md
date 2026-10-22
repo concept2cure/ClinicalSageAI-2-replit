@@ -18,8 +18,8 @@ are not done here.
 | Slice | What | State |
 |---|---|---|
 | A | `/api/tenants` off the owner connection | done |
-| B | The boot without the owner credential: the auth schema and organisation seeds into the migration set, a verify-only production boot, CI's boot smoke without `DATABASE_URL` | next |
-| C | Terraform: a migrate task definition that alone holds the owner secrets; the deploy preflight and one-off tasks | open |
+| B | The boot without the owner credential: the auth schema and organisation seeds into the migration set, a verify-only production boot, CI's boot smoke without `DATABASE_URL` | done |
+| C | Terraform: a migrate task definition that alone holds the owner secrets; the deploy preflight and one-off tasks | next |
 
 ## Re-confirmed at head before starting
 
@@ -98,6 +98,93 @@ owner URL. Two tests that mocked the `postgres` driver now mock the pool.
 - **Related tests** (`raw/a5`): 97/97. eslint reports 0 errors, with warnings
   per file unchanged.
 
+## Slice B: the boot without the owner credential
+
+**What changed.** The schema is the deploy's; the boot checks it.
+
+- **The auth schema and the two organisation seeds are a migration.**
+  `migrations/20261022_auth_schema_and_seeded_organizations.sql` carries the
+  statements `ensureAuthTables` ran at every boot, unchanged: the organizations
+  and users columns, the guarded email constraint, and the membership and
+  module-catalog tables. It also seeds `default` and `concept2cure`, and asserts
+  both rows exist.
+  - It sits in `C2C_MIGRATION_FILES` immediately before
+    `20260923_organization_default_client_workspace.sql`, so each seeded
+    organisation gets its workspace on the same deploy.
+  - It is replay-safe under Rule 1: every statement is `IF NOT EXISTS`,
+    `ON CONFLICT` or guarded. It drops nothing.
+- **The boot runs no DDL in production.**
+  - `server/db/bootstrap/auth-schema.ts` holds no DDL. `missingAuthSchema`
+    reads `information_schema.columns` as the runtime role.
+    `server/startup/services.ts` sets readiness to `missing`, naming each
+    absent column. A test holds the column list to the migration.
+  - `ensureCoreTables` runs verify-only in production, on the runtime pool. It
+    creates no schema or extension and reports what is absent.
+  - `ensureAuthTables` and `seedOrganizations` are deleted. Their replacement
+    is the migration above, which `scripts/db/deploy-migrate.mjs` applies as
+    the owner on every deploy. No capability is removed.
+- **The demo admin stays a development convenience.** Outside production the
+  boot still seeds it (`seedDemoAdminOutsideProduction`). Production never
+  does: `SEED_DEMO_USER=true` no longer opts a production process in, and is
+  logged as ignored. Two things already held that in practice: the pilot
+  go/no-go gate fails on it (`scripts/ops/pilot-go-no-go.mjs`, gate 3), and the
+  seed needs the owner connection a production process no longer has.
+- **Production needs only `APP_DATABASE_URL`.**
+  - `server/startup/env.ts` requires it in production, and requires the owner
+    URL nowhere.
+  - `server/config/environment.ts` and `server/db.js` accept it where they
+    demanded `DATABASE_URL`.
+  - `ci.yml`'s `production-boot-smoke` and `production-image-boot` no longer
+    give the booting process `DATABASE_URL`. Their provisioning steps still
+    run as the owner, as the deploy does.
+
+**Verified by making it fail.**
+
+- **Unit tests** (`raw/b1`, `raw/b2`). Against head's source:
+  - 7 of the new and changed tests fail;
+  - the auth-schema test file cannot load, because the check it tests does not
+    exist.
+
+  After the change, those tests pass 47/47. The suites around the boot modules
+  pass 1,387 of 1,387 run, across 137 files (25 tests in 3 files skip, as at head). eslint reports 0 errors, with warnings per
+  file unchanged.
+- **The boot on real Postgres** (`raw/b3`). Postgres 16.15 with TLS,
+  provisioned by `install-fresh` and `deploy-migrate`, with the production
+  bundle booted from a root without `.env`:
+  - with `APP_DATABASE_URL` only, `/readyz` answers 200;
+  - the deploy applied the new migration, and each seeded organisation has one
+    workspace;
+  - with connection logging on, the boot connected only as `app_service`. It
+    still does with the owner URL also present, as Terraform supplies it until
+    slice C;
+  - **the negative case:** the owner drops `users.bio`, and the boot answers
+    503 with `schemaDetail: "auth schema incomplete: users.bio"`. The column is
+    still absent after that boot. One `deploy-migrate` run restores it, and the
+    next boot answers 200.
+
+  At head, the same boot without the owner URL exits at import (`raw/b0`).
+- **The seed on the deploy-provisioned database** (`raw/b4`).
+  `tests/db/signup-launch-catalog.dbtest.ts` applies the migration and the
+  workspace sweep twice, as consecutive deploys do, and finds one workspace per
+  seeded organisation. 15 of 16 pass. The one failure is the communication-center
+  tier-lock case, which fails at head too.
+- **Gates** (`raw/b4`): all pass.
+  - `ci:migration-set-order` (422 migrations, sweep last);
+  - `ci:migration-drop-safety`;
+  - `ci:migration-deploy-path`;
+  - `ci:runtime-ddl` and its self-test. The baseline entry for
+    `auth-schema.ts` is removed, because the file has no DDL left.
+
 ## Not shown here
 
-- Slices B and C are not done yet; their sections follow when they land.
+- Slice C is not done yet. Until it lands, the ECS task definition still
+  carries `DATABASE_URL`. The boot no longer uses it, as the
+  owner-present boot above shows.
+- **The Helm chart cannot run a production install, at head or now.**
+  `charts/concept2cure-app` names only `DATABASE_URL`, and its migrate init
+  container runs `dist/scripts/migrate.js`, which does not exist. A production
+  boot already required the non-superuser runtime role under `RLS_ENFORCE=on`,
+  and both `licenses` and the Part 11 audit store already required
+  `deploy-migrate`. The chart is not a launch deployment path (hosted ECS, or
+  self-host compose with `npm run db:provision`). Fixing it is recorded, not
+  done here.

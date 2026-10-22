@@ -174,7 +174,10 @@ export function moduleEntitlementGate(
   const launchScopeOn = (opts.launchScope ?? readLaunchScopeMode()) === 'on';
   const unattributed = opts.unattributed ?? readUnattributedApiMode();
   return async function gate(req: Request, res: Response, next: NextFunction) {
-    const pathname = (req.path || req.originalUrl || '').split('?')[0];
+    /* Lower-cased as Express routes it: a mount at /api/… serves /API/… too, and
+       a gate that only judged paths starting '/api/' served those unjudged
+       (2026-10-22, launch-scope-api.ts). */
+    const pathname = (req.path || req.originalUrl || '').split('?')[0].toLowerCase();
     if (launchScopeOn && refusedByLaunchScope(req, pathname, prefixMap, unattributed, res)) return;
 
     const { mode } = await currentEnforcementMode();

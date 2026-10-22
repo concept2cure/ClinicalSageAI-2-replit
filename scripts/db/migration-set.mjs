@@ -2578,6 +2578,16 @@ export const C2C_MIGRATION_FILES = [
   // to_regclass; above the final pair, which ci:migration-set-order pins last.
   'migrations/20260922e_amendment_declarations_nullable.sql',
 
+  // ── The auth schema and the two seeded organisations (MR-03 Stage 3) ─────
+  // What the API ran on the OWNER connection at every boot, until 2026-10-22:
+  // server/db/bootstrap/auth-schema.ts (organizations/users columns, the
+  // membership and module tables) and seedOrganizations ('default',
+  // 'concept2cure'). The API now boots as app_service and only verifies
+  // (OPS-16), so the deploy does it. Additive and guarded throughout; the seed
+  // asserts both rows. Placed immediately before the workspace sweep below so
+  // the seeded organisations get their default workspace in the same deploy.
+  'migrations/20261022_auth_schema_and_seeded_organizations.sql',
+
   // ── Every organisation gets its own client workspace ─────────────────────
   // The repair half of the fix for NO_CLIENT_WORKSPACE. The three organisation
   // creators now write the workspace inside their own transaction

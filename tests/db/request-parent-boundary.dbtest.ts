@@ -85,11 +85,18 @@ describe("A request cannot name another tenant's parent, or write another user's
       [ORG_A, `${TAG}-program-A`, ORG_B, `${TAG}-program-B`]
     );
     [progA, progB] = programs.rows.map(r => r.id);
+    // A CAPA write now requires the programme to be anchored by exactly one
+    // project (server/services/capa-mdr/governed-context.ts, 409
+    // PROJECT_ANCHOR_UNRESOLVED otherwise). Anchor each programme to its own
+    // tenant's fixture project so the parent-boundary refusal, not the anchor
+    // gate, is what these cases exercise.
+    await owner.query('UPDATE projects SET regulatory_program_id=$1 WHERE id=$2 AND organization_id=$3', [progA, ids.A.projects, ORG_A]);
+    await owner.query('UPDATE projects SET regulatory_program_id=$1 WHERE id=$2 AND organization_id=$3', [progB, ids.B.projects, ORG_B]);
 
     complaintB = (
       await owner.query(
-        `INSERT INTO complaints (program_id, complaint_code, source, channel, received_at, event_narrative)
-         VALUES ($1,'CMP-B','customer','email',now(),$2) RETURNING id::text AS id`,
+        `INSERT INTO complaints (program_id, complaint_code, source, channel, received_at, event_narrative, patient_harm, severity_assessment)
+         VALUES ($1,'CMP-B','customer','email',now(),$2,'none','minor') RETURNING id::text AS id`,
         [progB, `${TAG} fixture complaint B`]
       )
     ).rows[0].id;
@@ -157,8 +164,8 @@ describe("A request cannot name another tenant's parent, or write another user's
     // still link.
     const own = (
       await owner.query(
-        `INSERT INTO complaints (program_id, complaint_code, source, channel, received_at, event_narrative)
-         VALUES ($1,'CMP-A','customer','email',now(),$2) RETURNING id::text AS id`,
+        `INSERT INTO complaints (program_id, complaint_code, source, channel, received_at, event_narrative, patient_harm, severity_assessment)
+         VALUES ($1,'CMP-A','customer','email',now(),$2,'none','minor') RETURNING id::text AS id`,
         [progA, `${TAG} fixture complaint A`]
       )
     ).rows[0].id;

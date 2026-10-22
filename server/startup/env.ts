@@ -127,9 +127,15 @@ function refuseHostedOverrides(env: NodeJS.ProcessEnv): void {
 
 export function validateEnvironment(): void {
   const isProduction = process.env.NODE_ENV === 'production';
-  const required: string[] = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET'].some(k => process.env[k])
-    ? []
-    : ['DATABASE_URL'];
+  // Production serves from the runtime role (APP_DATABASE_URL, NOSUPERUSER
+  // NOBYPASSRLS) and needs nothing else: the owner credential is the deploy's,
+  // and the boot creates no schema (MR-03 Stage 3, OPS-16). Elsewhere any one
+  // database URL will do, as before.
+  const required: string[] = isProduction
+    ? ['APP_DATABASE_URL']
+    : ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'APP_DATABASE_URL'].some(k => process.env[k])
+      ? []
+      : ['DATABASE_URL'];
 
   const jwtEnvByNodeEnv: Record<string, string> = {
     development: 'JWT_SECRET_DEV',
